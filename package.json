@@ -1,0 +1,20 @@
+{
+  "name": "trimma-monorepo",
+  "private": true,
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "node -e \"const cp = require('child_process'); cp.spawn('npm', ['run', 'start', '--workspace=react-example'], { stdio: 'inherit', shell: true }); cp.spawn('npm', ['run', 'start:prod', '--workspace=@trimma/api-gateway'], { stdio: 'inherit', shell: true });\"",
+    "lint": "turbo run lint",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}

@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: 'Outfit', var(--font-sans);
+    --font-sans: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+    
+    /* Official Trimma Branding Colors */
+    --color-brand-pink: #E91E63;
+    --color-brand-purple: #7B1E5A;
+    --color-brand-dark: #0F172A;
+    --color-brand-surface-dark: #111827;
+    --color-brand-surface-light: #F8FAFC;
+    --color-brand-text-light: #0F172A;
+    --color-brand-text-dark: #F8FAFC;
+    --color-brand-secondary-text: #94A3B8;
+}
+
+:root {
+    --background: #F8FAFC;
+    --foreground: #0F172A;
+    --card: #FFFFFF;
+    --card-foreground: #0F172A;
+    --popover: #FFFFFF;
+    --popover-foreground: #0F172A;
+    
+    /* Primary brand color for buttons, selections, etc. */
+    --primary: #E91E63;
+    --primary-foreground: #FFFFFF;
+    
+    /* Secondary brand color */
+    --secondary: #7B1E5A;
+    --secondary-foreground: #FFFFFF;
+    
+    --muted: #F1F5F9;
+    --muted-foreground: #64748B;
+    --accent: #F1F5F9;
+    --accent-foreground: #E91E63;
+    --destructive: #EF4444;
+    --border: #E2E8F0;
+    --input: #E2E8F0;
+    --ring: #E91E63;
+    --chart-1: #E91E63;
+    --chart-2: #7B1E5A;
+    --chart-3: #6366F1;
+    --chart-4: #F59E0B;
+    --chart-5: #10B981;
+    --radius: 0.75rem; /* Rounded-xl by default */
+    
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #0F172A;
+    --sidebar-primary: #E91E63;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #F1F5F9;
+    --sidebar-accent-foreground: #E91E63;
+    --sidebar-border: #E2E8F0;
+    --sidebar-ring: #E91E63;
+}
+
+.dark {
+    --background: #0F172A;
+    --foreground: #F8FAFC;
+    --card: #111827;
+    --card-foreground: #F8FAFC;
+    --popover: #111827;
+    --popover-foreground: #F8FAFC;
+    
+    --primary: #E91E63;
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: #7B1E5A;
+    --secondary-foreground: #FFFFFF;
+    
+    --muted: #1E293B;
+    --muted-foreground: #94A3B8;
+    --accent: #1E293B;
+    --accent-foreground: #E91E63;
+    --destructive: #EF4444;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.08);
+    --ring: #E91E63;
+    --chart-1: #E91E63;
+    --chart-2: #7B1E5A;
+    --chart-3: #6366F1;
+    --chart-4: #F59E0B;
+    --chart-5: #10B981;
+    
+    --sidebar: #111827;
+    --sidebar-foreground: #F8FAFC;
+    --sidebar-primary: #E91E63;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #1E293B;
+    --sidebar-accent-foreground: #E91E63;
+    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-ring: #E91E63;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50 transition-colors duration-200 ease-in-out;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-brand-pink/20 selection:text-brand-pink;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight font-semibold;
+  }
+
+  /* 50% H1 Typography Downscales */
+  h1.text-7xl { font-size: 2.25rem !important; line-height: 1 !important; }
+  h1.text-6xl { font-size: 1.875rem !important; line-height: 1 !important; }
+  h1.text-5xl { font-size: 1.5rem !important; line-height: 1.1 !important; }
+  h1.text-4xl { font-size: 1.125rem !important; line-height: 1.2 !important; }
+  h1.text-3xl { font-size: 0.9375rem !important; line-height: 1.2 !important; }
+  h1.text-2xl { font-size: 0.75rem !important; line-height: 1.2 !important; }
+  h1.text-xl  { font-size: 0.625rem !important; line-height: 1.2 !important; }
+
+  @media (min-width: 768px) {
+    h1.md\:text-7xl { font-size: 2.25rem !important; line-height: 1 !important; }
+    h1.md\:text-6xl { font-size: 1.875rem !important; line-height: 1 !important; }
+    h1.md\:text-5xl { font-size: 1.5rem !important; line-height: 1.1 !important; }
+    h1.md\:text-4xl { font-size: 1.125rem !important; line-height: 1.2 !important; }
+    h1.md\:text-3xl { font-size: 0.9375rem !important; line-height: 1.2 !important; }
+  }
+}
+
+@layer utilities {
+  .bg-primary-gradient {
+    background: linear-gradient(135deg, #7B1E5A 0%, #E91E63 100%);
+  }
+  .bg-dark-gradient {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, #7B1E5A 0%, #E91E63 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .shadow-soft-glow {
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.15);
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 25px rgba(233, 30, 99, 0.25);
+    transform: translateY(-1px);
+  }
+  .glassmorphism {
+    @apply bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md border border-white/20 dark:border-white/5;
+  }
+}

@@ -1,0 +1,18 @@
+import { NavLink } from "react-router-dom";
+
+export default function SidebarItem({ icon, label, path }: any) {
+  return (
+    <NavLink
+      to={path}
+      end={path === "/admin"}
+      className={({ isActive }) =>
+        `flex items-center gap-3 p-2 rounded-lg transition ${
+          isActive ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-700 hover:text-gray-900"
+        }`
+      }
+    >
+      {icon}
+      <span className="text-sm font-medium">{label}</span>
+    </NavLink>
+  );
+}

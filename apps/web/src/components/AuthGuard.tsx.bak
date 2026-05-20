@@ -1,0 +1,76 @@
+import { useEffect, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { supabase } from "../config/supabase";
+
+export default function AuthGuard({ allowedRoles }: { allowedRoles?: string[] }) {
+  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setLoading(false);
+        return;
+      }
+
+      setUser(session.user);
+
+      // Fetch role
+      const { data: roleData, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+        
+      if (roleData) {
+        setRole(roleData.role);
+      } else {
+        setRole(null);
+      }
+      
+      setLoading(false);
+    };
+
+    checkUser();
+
+    // Set up listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        setUser(session.user);
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+        if (roleData) setRole(roleData.role);
+      } else {
+        setUser(null);
+        setRole(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-zinc-500">Loading workspace...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles && role && !allowedRoles.includes(role)) {
+    // If they have a role but it's not allowed here, redirect them to their native dashboard
+    if (role === 'admin') return <Navigate to="/admin" replace />;
+    if (role === 'salon_owner') return <Navigate to="/dashboard" replace />;
+    if (role === 'agent') return <Navigate to="/agent" replace />;
+    return <Navigate to="/login" replace />; // Redirect to login if role is not authorized or unknown
+  }
+
+  return <Outlet />;
+}

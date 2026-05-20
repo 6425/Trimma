@@ -1,0 +1,165 @@
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import MainLayout from './layouts/MainLayout';
+import DashboardLayout from './layouts/DashboardLayout';
+import CustomerDashboardLayout from './layouts/CustomerDashboardLayout';
+import AdminLayout from './layouts/AdminLayout';
+import AgentLayout from './layouts/AgentLayout';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import OnboardingPage from './pages/OnboardingPage';
+import DashboardBookings from './pages/dashboard/DashboardBookings';
+import DashboardServices from './pages/dashboard/DashboardServices';
+import DashboardStaff from './pages/dashboard/DashboardStaff';
+import CustomerDashboard from './pages/customer/CustomerDashboard';
+import Dashboard from './pages/dashboard/Dashboard';
+import AgentDashboard from './pages/agent/AgentDashboard';
+import ProvinceDetailPage from './pages/ProvinceDetailPage';
+import DistrictDetailPage from './pages/DistrictDetailPage';
+import CityDetailPage from './pages/CityDetailPage';
+import IntentLandingPage from './pages/IntentLandingPage';
+import SeoGuidePage from './pages/SeoGuidePage';
+import ProvincesPage from './pages/ProvincesPage';
+import SalonPage from './pages/SalonPage';
+import CategoryPage from './pages/CategoryPage';
+import AuthGuard from './components/AuthGuard';
+import AuthCallback from './pages/AuthCallback';
+import { Toaster } from 'sonner';
+
+import Leads from './pages/leads/Leads';
+import Salons from './pages/salons/Salons';
+import AdminAgents from './pages/admin/AdminAgents';
+import AdminBookings from './pages/admin/AdminBookings';
+import AdminPayments from './pages/admin/AdminPayments';
+import AdminSeo from './pages/admin/AdminSeo';
+import AdminSettings from './pages/admin/AdminSettings';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+
+// User Management Imports
+import AdminUserManagement from './pages/admin/users/AdminUserManagement';
+import AdminUserDashboard from './pages/admin/users/AdminUserDashboard';
+import AdminUserList from './pages/admin/users/AdminUserList';
+import AdminUserRoles from './pages/admin/users/AdminUserRoles';
+import AdminUserVerification from './pages/admin/users/AdminUserVerification';
+import AdminUserActivityLogs from './pages/admin/users/AdminUserActivityLogs';
+import AdminUserSuspended from './pages/admin/users/AdminUserSuspended';
+import AdminUserSessions from './pages/admin/users/AdminUserSessions';
+import AdminAgentManagement from './pages/admin/users/AdminAgentManagement';
+import AdminUserCreate from './pages/admin/users/AdminUserCreate';
+
+// Territory & Marketplace Management
+import ProvinceManagement from './pages/admin/territories/ProvinceManagement';
+import DistrictManagement from './pages/admin/territories/DistrictManagement';
+import CityManagement from './pages/admin/territories/CityManagement';
+import CategoryManagement from './pages/admin/marketplace/CategoryManagement';
+import GlobalServiceManagement from './pages/admin/marketplace/GlobalServiceManagement';
+import SubscriptionPlanManagement from './pages/admin/marketplace/SubscriptionPlanManagement';
+
+function App() {
+  return (
+    <Router>
+      <Toaster position="top-right" richColors />
+      <Routes>
+        {/* Public Marketing & Listing */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/salons/:slug" element={<SalonPage />} />
+          <Route path="/search" element={<CategoryPage />} />
+          <Route path="/category/:slug" element={<CategoryPage />} />
+          <Route path="/provinces" element={<ProvincesPage />} />
+          <Route path="/province/:id" element={<ProvinceDetailPage />} />
+          <Route path="/district/:id" element={<DistrictDetailPage />} />
+          <Route path="/city/:id" element={<CityDetailPage />} />
+          <Route path="/guides/:slug" element={<SeoGuidePage />} />
+          <Route path="/:category/:location" element={<IntentLandingPage />} />
+        </Route>
+
+        {/* Authentication */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        
+        {/* Onboarding */}
+        <Route element={<AuthGuard />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+        </Route>
+
+        {/* Customer Dashboard */}
+        <Route element={<AuthGuard allowedRoles={['customer']} />}>
+          <Route path="/customer" element={<CustomerDashboardLayout />}>
+            <Route index element={<CustomerDashboard />} />
+          </Route>
+        </Route>
+
+        {/* Agent Dashboard */}
+        <Route element={<AuthGuard allowedRoles={['agent', 'admin']} />}>
+          <Route path="/agent" element={<AgentLayout />}>
+            <Route index element={<AgentDashboard />} />
+            <Route path="*" element={<div className="p-8"><h1 className="text-2xl font-bold text-zinc-900 mb-4">Module Loading...</h1><p className="text-zinc-500">This agent module is currently under development.</p></div>} />
+          </Route>
+        </Route>
+
+        {/* Salon Dashboard */}
+        <Route element={<AuthGuard allowedRoles={['salon_owner', 'admin']} />}>
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="/dashboard/bookings" replace />} />
+            <Route path="bookings" element={<DashboardBookings />} />
+            <Route path="services" element={<DashboardServices />} />
+            <Route path="staff" element={<DashboardStaff />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+        </Route>
+
+        {/* Admin Dashboard */}
+        <Route element={<AuthGuard allowedRoles={['admin']} />}>
+          <Route path="/admin" element={<DashboardLayout />}>
+            <Route index element={<AdminDashboard />} />
+            
+            {/* Nested User Management */}
+            <Route path="users" element={<AdminUserManagement />}>
+              <Route index element={<Navigate to="analytics" replace />} />
+              <Route path="analytics" element={<AdminUserDashboard />} />
+              <Route path="all" element={<AdminUserList />} />
+              <Route path="create" element={<AdminUserCreate />} />
+              <Route path="customers" element={<AdminUserList />} />
+              <Route path="owners" element={<AdminUserList />} />
+              <Route path="staff" element={<AdminUserList />} />
+              <Route path="agents" element={<AdminAgentManagement />} />
+              <Route path="admins" element={<AdminUserList />} />
+              <Route path="roles" element={<AdminUserRoles />} />
+              <Route path="verification" element={<AdminUserVerification />} />
+              <Route path="logs" element={<AdminUserActivityLogs />} />
+              <Route path="suspended" element={<AdminUserSuspended />} />
+              <Route path="sessions" element={<AdminUserSessions />} />
+            </Route>
+
+            <Route path="salons" element={<Salons />} />
+            <Route path="categories" element={<CategoryManagement />} />
+            <Route path="global-services" element={<GlobalServiceManagement />} />
+            <Route path="services-mgmt" element={<DashboardServices />} />
+            
+            {/* Territory Management Nested */}
+            <Route path="territories">
+              <Route index element={<Navigate to="provinces" replace />} />
+              <Route path="provinces" element={<ProvinceManagement />} />
+              <Route path="districts" element={<DistrictManagement />} />
+              <Route path="cities" element={<CityManagement />} />
+            </Route>
+
+            <Route path="leads" element={<Leads />} />
+            <Route path="agents" element={<AdminAgents />} />
+            <Route path="payments-config" element={<AdminPayments />} />
+            <Route path="payments" element={<AdminPayments />} />
+            <Route path="subscriptions" element={<SubscriptionPlanManagement />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+        </Route>
+
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
