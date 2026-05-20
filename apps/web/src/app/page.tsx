@@ -9,6 +9,17 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";
+import { 
+  SmartFeatures, 
+  BookingJourney, 
+  SalonGrowth, 
+  Testimonials, 
+  SuccessStories, 
+  MobileAppShowcase, 
+  TrustSecurity, 
+  FAQAccordion, 
+  PremiumCTA 
+} from "../components/landing";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -17,6 +28,7 @@ export default function LandingPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [dbSalons, setDbSalons] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const handleSearch = () => {
     router.push(`/salons?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`);
@@ -48,6 +60,7 @@ export default function LandingPage() {
         const { data, error } = await supabase
           .from("salons")
           .select("*")
+          .limit(12)
           .order("created_at", { ascending: false });
         if (error) throw error;
         
@@ -65,6 +78,8 @@ export default function LandingPage() {
         }
       } catch (err) {
         console.error("Failed to fetch landing page salons:", err);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -180,7 +195,11 @@ export default function LandingPage() {
             </Link>
           </div>
           
-          {featuredSalons.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center py-24">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-pink"></div>
+            </div>
+          ) : featuredSalons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                {featuredSalons.map((salon, i) => (
                  <Link href={`/salons/${salon.slug}`} key={i} className="group flex flex-col bg-white dark:bg-brand-surface-dark rounded-3xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -224,20 +243,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Partner CTA */}
-      <section className="py-24 bg-white dark:bg-brand-surface-dark border-t dark:border-white/5">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-6">Own a salon?</h2>
-          <p className="text-lg text-zinc-500 dark:text-zinc-400 mb-8 max-w-2xl mx-auto font-medium">
-            Join the Trimma ecosystem. Manage bookings, staff, and subscriptions all in one modern platform designed for growth.
-          </p>
-          <Link href="/onboarding">
-            <Button size="lg" className="rounded-xl px-8 bg-primary-gradient hover:opacity-95 text-white border-none shadow-md shadow-brand-pink/20">
-              Get Started for Free
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* NEW PREMIUM BODY SECTIONS */}
+      <SmartFeatures />
+      <BookingJourney />
+      <SalonGrowth />
+      <Testimonials />
+      <SuccessStories />
+      <MobileAppShowcase />
+      <TrustSecurity />
+      <FAQAccordion />
+      <PremiumCTA />
     </div>
   );
 }

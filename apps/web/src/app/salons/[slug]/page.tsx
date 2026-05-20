@@ -651,10 +651,16 @@ export default function SalonPage() {
       if (match) {
         setSelectedServiceId(match.id);
         setSelectedTimeSlot(null);
-        // Scroll directly to the sidebar booking card for desktop
-        const sidebarElement = document.getElementById("booking-sidebar-card");
-        if (sidebarElement) {
-          sidebarElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        setInitialBookingService(match.name);
+        
+        if (typeof window !== "undefined" && window.innerWidth < 1024) {
+          setIsBookingOpen(true);
+        } else {
+          // Scroll directly to the sidebar booking card for desktop
+          const sidebarElement = document.getElementById("booking-sidebar-card");
+          if (sidebarElement) {
+            sidebarElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
         }
       }
     } else {

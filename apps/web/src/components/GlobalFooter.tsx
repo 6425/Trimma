@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import Logo from "./Logo";
 
 export default function GlobalFooter() {
   return (
@@ -10,13 +11,8 @@ export default function GlobalFooter() {
           {/* Brand Section */}
           <div className="col-span-2 flex flex-col justify-between">
             <div className="space-y-4">
-              <Link href="/" className="inline-flex items-center gap-3 group">
-                <div className="bg-brand-pink/10 p-2.5 rounded-2xl border border-brand-pink/20 items-center justify-center flex transition-transform group-hover:scale-105 duration-300">
-                  <img src="/logo.svg" className="w-6 h-6 object-contain" alt="Trimma Logo" />
-                </div>
-                <span className="text-2xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
-                  Trimma
-                </span>
+              <Link href="/" className="inline-flex items-center gap-3 group hover:opacity-90 transition-opacity">
+                <Logo showTagline={false} />
               </Link>
               <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed max-w-sm">
                 Smart Salon Booking & Management Platform. Powering the next generation of beauty-tech operations and discovery.

@@ -3,5 +3,5 @@ cd /d "%~dp0"
 echo =======================================
 echo Starting Trimma OS Next.js Dev Server
 echo =======================================
-call npm run dev
+set PORT=3000 && call npm run dev
 pause

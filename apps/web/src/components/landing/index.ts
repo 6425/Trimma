@@ -1,0 +1,9 @@
+export { SmartFeatures } from "./SmartFeatures";
+export { BookingJourney } from "./BookingJourney";
+export { SalonGrowth } from "./SalonGrowth";
+export { Testimonials } from "./Testimonials";
+export { SuccessStories } from "./SuccessStories";
+export { MobileAppShowcase } from "./MobileAppShowcase";
+export { TrustSecurity } from "./TrustSecurity";
+export { FAQAccordion } from "./FAQAccordion";
+export { PremiumCTA } from "./PremiumCTA";
