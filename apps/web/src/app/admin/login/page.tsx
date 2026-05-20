@@ -23,7 +23,7 @@ export default function AdminLogin() {
     const email = (document.getElementById('email') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
     
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -32,6 +32,12 @@ export default function AdminLogin() {
       setError(authError.message);
       setLoading(false);
       return;
+    }
+
+    // Set cookies so Next.js edge middleware can authorize the request
+    if (data.session) {
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax; secure`;
+      document.cookie = `user-role=admin; path=/; max-age=${data.session.expires_in}; SameSite=Lax; secure`;
     }
 
     // Route directly to admin dashboard

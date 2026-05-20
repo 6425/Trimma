@@ -74,7 +74,8 @@ function SalonsDirectoryList() {
             category
           )
         `)
-        .or("status.eq.verified,status.eq.active,status.eq.pending,is_verified.eq.true");
+        .or("status.eq.verified,status.eq.active,status.eq.pending,is_verified.eq.true")
+        .limit(10);
 
       if (error) throw error;
 

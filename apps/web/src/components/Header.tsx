@@ -12,16 +12,25 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
 
+  const [userRole, setUserRole] = useState<string>("customer");
+
+  const fetchUserRole = async (userId: string) => {
+    const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
+    if (data?.role) setUserRole(data.role);
+  };
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) fetchUserRole(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) fetchUserRole(session.user.id);
     });
 
     return () => {
@@ -29,6 +38,13 @@ export default function Header() {
       subscription.unsubscribe();
     };
   }, []);
+
+  const getDashboardLink = () => {
+    if (userRole === 'admin') return '/admin';
+    if (userRole === 'salon_owner') return '/dashboard';
+    if (userRole === 'agent') return '/agent';
+    return '/customer';
+  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
@@ -51,13 +67,13 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
-                <Link href="/customer" className={`text-sm font-bold flex items-center gap-2 ${isScrolled ? 'text-brand-purple hover:text-brand-pink' : 'text-white hover:text-brand-pink'}`}>
+                <Link href={getDashboardLink()} className={`text-sm font-bold flex items-center gap-2 ${isScrolled ? 'text-brand-purple hover:text-brand-pink' : 'text-white hover:text-brand-pink'}`}>
                   <User className="w-4 h-4" />
                   {user.user_metadata?.first_name || user.email?.split('@')[0]}
                 </Link>
                 <div className={`h-4 w-px ${isScrolled ? 'bg-zinc-300' : 'bg-white/30'}`}></div>
                 <button 
-                  onClick={() => supabase.auth.signOut()} 
+                  onClick={() => { supabase.auth.signOut().then(() => window.location.href = '/'); }} 
                   className={`text-sm font-medium flex items-center gap-1 ${isScrolled ? 'text-zinc-500 hover:text-red-500' : 'text-white/70 hover:text-red-300'}`}
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -112,10 +128,10 @@ export default function Header() {
                   <div className="text-xs text-zinc-500">{user.email}</div>
                 </div>
               </div>
-              <Link href="/customer" onClick={() => setMobileMenuOpen(false)}>
+              <Link href={getDashboardLink()} onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full justify-center h-10 rounded-lg font-bold bg-primary-gradient text-white border-none">My Dashboard</Button>
               </Link>
-              <Button variant="ghost" onClick={() => { supabase.auth.signOut(); setMobileMenuOpen(false); }} className="w-full justify-center h-10 rounded-lg font-medium text-red-500 hover:text-red-600 hover:bg-red-50">Sign Out</Button>
+              <Button variant="ghost" onClick={() => { supabase.auth.signOut().then(() => window.location.href = '/'); setMobileMenuOpen(false); }} className="w-full justify-center h-10 rounded-lg font-medium text-red-500 hover:text-red-600 hover:bg-red-50">Sign Out</Button>
             </div>
           ) : (
             <>
