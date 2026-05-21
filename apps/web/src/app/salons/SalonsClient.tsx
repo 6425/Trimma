@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as Icons from "lucide-react";
 import {
   Search, MapPin, Star, Grid, Map as MapIcon,
@@ -18,6 +19,7 @@ import {
   WhyTrimmaSection,
   SalonOnboardingCTA,
 } from "../../components/marketplace/MarketplaceSections";
+import { SalonCard } from "../../components/marketplace/SalonCard";
 
 interface Salon {
   id: string;
@@ -49,9 +51,31 @@ interface Props {
 }
 
 export default function SalonsClient({ salons, categories }: Props) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const qParam = searchParams?.get("q") || "";
+  const lParam = searchParams?.get("l") || "";
+  const categoryParam = searchParams?.get("category") || "";
+
+  const [searchQuery, setSearchQuery] = useState(qParam);
+  const [selectedLocation, setSelectedLocation] = useState(lParam);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+
+  useEffect(() => {
+    setSearchQuery(qParam);
+  }, [qParam]);
+
+  useEffect(() => {
+    setSelectedLocation(lParam);
+  }, [lParam]);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    if (selectedLocation) params.set("l", selectedLocation);
+    if (categoryParam) params.set("category", categoryParam);
+    router.push(`/salons?${params.toString()}`);
+  };
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("en-LK", {
@@ -73,11 +97,20 @@ export default function SalonsClient({ salons, categories }: Props) {
         salon.name.toLowerCase().includes(q) ||
         salon.popularService.toLowerCase().includes(q) ||
         salon.tags.some((t) => t.toLowerCase().includes(q));
+      
       const matchesLocation =
         selectedLocation === "" ||
         salon.location.toLowerCase().includes(selectedLocation.toLowerCase());
-      return matchesSearch && matchesLocation;
-    }), [salons, searchQuery, selectedLocation]);
+
+      const catParam = categoryParam.toLowerCase();
+      const normalizedCatParam = catParam.replace(/-/g, " ");
+      const matchesCategory =
+        catParam === "" ||
+        salon.category.toLowerCase().includes(normalizedCatParam) ||
+        salon.tags.some((t) => t.toLowerCase().includes(normalizedCatParam));
+
+      return matchesSearch && matchesLocation && matchesCategory;
+    }), [salons, searchQuery, selectedLocation, categoryParam]);
 
   const mappedSalons = filteredSalons.map((s) => ({
     id: s.id,
@@ -162,6 +195,7 @@ export default function SalonsClient({ salons, categories }: Props) {
               </select>
             </div>
             <Button
+              onClick={handleSearch}
               size="lg"
               className="h-12 px-8 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold border-none shadow-md shadow-brand-pink/20"
             >
@@ -272,6 +306,12 @@ export default function SalonsClient({ salons, categories }: Props) {
             <Scissors className="w-12 h-12 text-zinc-300 mb-4" />
             <p className="text-zinc-800 font-black text-lg">No salons match your search</p>
             <p className="text-zinc-400 text-xs mt-1">Try clearing your filters or adjusting your search.</p>
+          </div>
+        ) : searchQuery !== "" || selectedLocation !== "" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {mappedSalons.map((salon) => (
+              <SalonCard key={salon.id} salon={salon as any} />
+            ))}
           </div>
         ) : (
           <>

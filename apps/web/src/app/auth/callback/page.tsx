@@ -16,16 +16,37 @@ export default function AuthCallback() {
         return;
       }
 
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('global_role')
-        .eq('email', session.user.email)
-        .single();
-        
-      console.log('AuthCallback: raw user data:', userData, 'error:', userError);
+      // Explicitly set the session cookie so the server-side middleware can read it!
+      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=86400; SameSite=Lax`;
 
-      const role = userData?.global_role || null;
+      // Fetch role from user_roles as primary source of truth
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      let role = roleData?.role || null;
+      console.log('AuthCallback: primary role from user_roles:', role, 'error:', roleError);
+
+      if (!role) {
+        // Fallback to global_role in users table
+        const { data: userData } = await supabase
+          .from('users')
+          .select('global_role')
+          .eq('email', session.user.email)
+          .maybeSingle();
+        role = userData?.global_role || null;
+      }
+
       console.log('AuthCallback: Final role determined:', role);
+      
+      // Set the role cookie for middleware RBAC checks
+      if (role) {
+        document.cookie = `user-role=${role}; path=/; max-age=86400; SameSite=Lax`;
+      } else {
+        document.cookie = `user-role=customer; path=/; max-age=86400; SameSite=Lax`; // safe fallback
+      }
 
       // Route based on role
       if (role === 'admin') {

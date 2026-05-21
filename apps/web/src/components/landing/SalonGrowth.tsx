@@ -61,7 +61,7 @@ export function SalonGrowth() {
 
               <div className="mt-10">
                 <Link href="/onboarding">
-                  <Button size="lg" className="rounded-xl px-8 bg-brand-purple hover:bg-purple-700 text-white shadow-lg shadow-purple-900/20 font-bold h-14 text-base">
+                  <Button size="lg" className="rounded-xl px-8 bg-brand-purple hover:bg-brand-purple/90 text-white shadow-lg shadow-brand-purple/20 font-bold h-14 text-base">
                     Register Your Salon
                   </Button>
                 </Link>

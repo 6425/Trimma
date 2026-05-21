@@ -25,8 +25,6 @@ export default function LandingPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [dbSalons, setDbSalons] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,44 +50,48 @@ export default function LandingPage() {
         }
       } catch (err) {
         console.error("Failed to fetch categories:", err);
-      }
-    }
-
-    async function fetchSalons() {
-      try {
-        const { data, error } = await supabase
-          .from("salons")
-          .select("*")
-          .limit(12)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          const mapped = data.map((s: any) => ({
-            name: s.name,
-            location: s.city || s.district || "Colombo",
-            rating: s.rating || 4.9,
-            reviews: 24,
-            category: "Baber Salon", // default category filter mapping to match spelling
-            image: s.cover_url || s.hero_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2940&auto=format&fit=crop",
-            slug: s.slug
-          }));
-          setDbSalons(mapped);
-        }
-      } catch (err) {
-        console.error("Failed to fetch landing page salons:", err);
       } finally {
         setLoading(false);
       }
     }
 
     fetchCategories();
-    fetchSalons();
   }, []);
 
-  const featuredSalons = selectedCategory === "All" 
-    ? dbSalons 
-    : dbSalons.filter(salon => salon.category === selectedCategory);
+  const featuredSalons = [
+    {
+      name: "TrimHub",
+      location: "No: 241/1/D, Mahawela Road",
+      rating: 4.8,
+      reviews: 37,
+      image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop",
+      slug: "trimhub"
+    },
+    {
+      name: "Trimma Elite Studio",
+      location: "Colombo 07",
+      rating: 4.9,
+      reviews: 39,
+      image: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=600&auto=format&fit=crop",
+      slug: "trimma-test-salon-1779260657670"
+    },
+    {
+      name: "Trimma Grooming Lounge",
+      location: "Colombo 03",
+      rating: 4.8,
+      reviews: 46,
+      image: "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=600&auto=format&fit=crop",
+      slug: "trimma-test-salon-1779254419984"
+    },
+    {
+      name: "Trimma Style & Co.",
+      location: "Kandy",
+      rating: 4.9,
+      reviews: 32,
+      image: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop",
+      slug: "trimma-test-salon-1779254361240"
+    }
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -148,28 +150,24 @@ export default function LandingPage() {
       <section className="py-12 bg-white dark:bg-brand-surface-dark border-b dark:border-white/5">
         <div className="container mx-auto px-4">
           <div className="flex overflow-x-auto gap-4 pb-4 hide-scrollbar snap-x">
-             <button
-                onClick={() => setSelectedCategory("All")}
-                className={`snap-start shrink-0 flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border-2 transition-all w-[88px] cursor-pointer ${
-                  selectedCategory === "All" ? "border-transparent bg-primary-gradient text-white shadow-md shadow-brand-pink/15" : "border-slate-100 dark:border-white/5 hover:border-brand-pink/30 text-zinc-600 dark:text-zinc-400 bg-slate-50 dark:bg-brand-dark/50"
-                }`}
+             <Link
+                href="/salons"
+                className="snap-start shrink-0 flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border-2 transition-all w-[88px] cursor-pointer border-transparent bg-primary-gradient text-white shadow-md shadow-brand-pink/15"
               >
                 <div className="mb-1">
                   <Star className="w-6 h-6" />
                 </div>
                 <span className="text-xs font-bold text-center">All</span>
-              </button>
+             </Link>
             {categories.map((category, i) => (
-              <button
+              <Link
                 key={i}
-                onClick={() => setSelectedCategory(category.name)}
-                className={`snap-start shrink-0 flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border-2 transition-all w-[88px] cursor-pointer ${
-                  selectedCategory === category.name ? "border-transparent bg-primary-gradient text-white shadow-md shadow-brand-pink/15" : "border-slate-100 dark:border-white/5 hover:border-brand-pink/30 text-zinc-600 dark:text-zinc-400 bg-slate-50 dark:bg-brand-dark/50"
-                }`}
+                href={`/salons?category=${category.slug}`}
+                className="snap-start shrink-0 flex flex-col items-center justify-center py-2 px-2.5 rounded-xl border-2 transition-all w-[88px] cursor-pointer border-slate-100 dark:border-white/5 hover:border-brand-pink/30 text-zinc-600 dark:text-zinc-400 bg-slate-50 dark:bg-brand-dark/50"
               >
                 <div className="mb-1">{renderIcon(category.icon)}</div>
                 <span className="text-xs font-bold text-center leading-tight">{category.name}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </div>
@@ -181,65 +179,44 @@ export default function LandingPage() {
           <div className="flex items-end justify-between mb-12">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
-                {selectedCategory === "All" ? "Featured Partners" : selectedCategory}
+                Featured Partners
               </h2>
               <p className="text-zinc-500 dark:text-zinc-400">
-                {selectedCategory === "All" ? "Highly rated salons ready for your booking." : `Explore top-rated ${selectedCategory.toLowerCase()}.`}
+                Highly rated salons ready for your booking.
               </p>
             </div>
             <Link 
-              href={selectedCategory === "All" ? "/salons" : `/category/${selectedCategory.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`} 
+              href="/salons" 
               className="hidden md:flex items-center text-sm font-semibold text-brand-pink hover:text-brand-purple transition-colors"
             >
               View all <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           </div>
           
-          {loading ? (
-            <div className="flex justify-center items-center py-24">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-pink"></div>
-            </div>
-          ) : featuredSalons.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {featuredSalons.map((salon, i) => (
-                 <Link href={`/salons/${salon.slug}`} key={i} className="group flex flex-col bg-white dark:bg-brand-surface-dark rounded-3xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                   <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100">
-                     <img src={salon.image} alt={salon.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+             {featuredSalons.map((salon, i) => (
+               <Link href={`/salons/${salon.slug}`} key={i} className="group flex flex-col bg-white dark:bg-brand-surface-dark rounded-3xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                 <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100">
+                   <img src={salon.image} alt={salon.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                 </div>
+                 <div className="p-6 flex flex-col justify-between flex-1">
+                   <div>
+                     <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-brand-pink transition-colors line-clamp-1">{salon.name}</h3>
+                     <p className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center mt-1 font-medium line-clamp-1">
+                       <MapPin className="w-3.5 h-3.5 mr-1 text-brand-pink shrink-0" /> {salon.location}
+                     </p>
                    </div>
-                   <div className="p-6 flex justify-between items-start">
-                     <div>
-                       <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-brand-pink transition-colors">{salon.name}</h3>
-                       <p className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center mt-1 font-medium">
-                         <MapPin className="w-3.5 h-3.5 mr-1 text-brand-pink" /> {salon.location}
-                       </p>
-                     </div>
+                   <div className="flex items-center justify-between mt-4">
                      <div className="flex items-center text-sm font-bold bg-slate-50 dark:bg-brand-dark px-2.5 py-1.5 rounded-lg border border-slate-100 dark:border-white/5">
                        <Star className="w-3.5 h-3.5 fill-current text-amber-500 mr-1" />
                        <span className="text-zinc-800 dark:text-zinc-200">{salon.rating}</span>
                      </div>
+                     <span className="text-xs text-zinc-400 font-semibold">{salon.reviews} reviews</span>
                    </div>
-                 </Link>
-               ))}
-            </div>
-          ) : (
-            <div className="text-center py-24 bg-white dark:bg-brand-surface-dark rounded-3xl border-2 border-dashed border-slate-200 dark:border-white/5">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-brand-dark mb-4">
-                <Search className="w-8 h-8 text-slate-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">No salons found</h3>
-              <p className="text-slate-500 dark:text-zinc-400 max-w-md mx-auto">
-                We couldn't find any {selectedCategory.toLowerCase()} in your selected area yet. 
-                We're constantly expanding our partner network!
-              </p>
-              <Button 
-                variant="outline" 
-                className="mt-6 border-slate-200 rounded-xl"
-                onClick={() => setSelectedCategory("All")}
-              >
-                View all salons
-              </Button>
-            </div>
-          )}
+                 </div>
+               </Link>
+             ))}
+          </div>
         </div>
       </section>
 

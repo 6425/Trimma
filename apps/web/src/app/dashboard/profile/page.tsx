@@ -453,7 +453,7 @@ export default function SalonProfilePage() {
         </head>
         <body class="bg-zinc-50 min-h-screen flex items-center justify-center p-4">
           <div class="max-w-md w-full bg-white border-2 border-zinc-100 rounded-[2.5rem] p-12 text-center shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 inset-x-0 h-4 bg-gradient-to-r from-rose-500 via-purple-600 to-amber-500"></div>
+            <div class="absolute top-0 inset-x-0 h-4 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
             
             <div class="mb-8">
               <span class="inline-flex bg-rose-50 text-[#D81E5B] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4">Book Online</span>

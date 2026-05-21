@@ -175,7 +175,7 @@ export default function AgentDashboard() {
               { title: "Assigned Leads", value: stats.assignedCount, trend: "In your pipeline", icon: <Users className="w-5 h-5 text-indigo-500" /> },
               { title: "Active Pipeline", value: stats.assignedCount - stats.convertedCount, trend: "Leads to contact", icon: <Rocket className="w-5 h-5 text-amber-500" /> },
               { title: "Converted Salons", value: stats.convertedCount, trend: "Subscribed live", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> },
-              { title: "Exp. Commission", value: `Rs ${(stats.convertedCount * 5000).toLocaleString()}`, trend: `Rate: ${stats.commissionRate}% per sale`, icon: <Target className="w-5 h-5 text-sky-500" /> },
+              { title: "Total Earnings", value: `Rs ${(stats.convertedCount * 5000).toLocaleString()}`, trend: `Estimated referral earnings`, icon: <Target className="w-5 h-5 text-sky-500" /> },
             ].map((kpi, i) => (
               <div key={i} className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                 <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10 ${
@@ -322,6 +322,37 @@ export default function AgentDashboard() {
                    </Button>
                  </div>
               </div>
+
+               {/* Agent Commission Summary */}
+               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+                 <div className="absolute top-0 right-0 p-4 opacity-10">
+                   <Target className="w-24 h-24 text-emerald-500" />
+                 </div>
+                 <h3 className="font-bold text-zinc-900 text-lg mb-4">Referral Earnings</h3>
+                 
+                 <div className="space-y-4 relative z-10">
+                   <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                     <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Estimated Payout</p>
+                     <p className="text-2xl font-black text-emerald-700">Rs {(stats.convertedCount * 5000).toLocaleString()}</p>
+                   </div>
+                   
+                   <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                     <span className="text-xs font-semibold text-zinc-500">Subscription Sales</span>
+                     <span className="text-sm font-bold text-zinc-900">Rs {(stats.convertedCount * 5000).toLocaleString()}</span>
+                   </div>
+                   <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                     <span className="text-xs font-semibold text-zinc-500">Booking Splits</span>
+                     <span className="text-sm font-bold text-[#D81E5B]">10% per Referral</span>
+                   </div>
+                   
+                   <Button 
+                     onClick={() => router.push("/agent/commissions")}
+                     className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl mt-2"
+                   >
+                     View Commission Ledger
+                   </Button>
+                 </div>
+               </div>
 
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
                  <h3 className="font-bold text-zinc-900 text-lg border-b border-slate-100 pb-3">Upcoming Tasks</h3>

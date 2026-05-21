@@ -17,7 +17,7 @@ export function SuccessStories() {
     {
       name: "Glow & Glamour Spa",
       logo: "GG",
-      color: "from-rose-500 to-pink-600",
+      color: "from-amber-400 to-amber-600",
       stats: [
         { label: "Online Bookings", value: "85%", type: "metric" },
         { label: "Time Saved/Wk", value: "20hrs", type: "metric" },

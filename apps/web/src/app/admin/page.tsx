@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminCard from "../../components/ui/AdminCard";
 import { supabase } from "@/config/supabase";
-import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Play, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Play, ShieldAlert, ShieldCheck, Globe, Users, Activity, BarChart3, Database, Lock, Server, Zap, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
 
@@ -39,7 +40,7 @@ export default function AdminDashboard() {
         bookings: bookings.count || 0,
         leads: leads.count || 0,
         templates: templates.count || 0,
-        revenue: "2.4M" // Mock for now and keep it consistent with UI
+        revenue: "3.2M" // Mock for Platform MRR / GMV
       });
     } catch (err) {
       console.error("Error fetching stats:", err);
@@ -313,203 +314,215 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* SYSTEM ACTIONS */}
-      <div className="bg-dark-gradient p-8 rounded-3xl text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl relative overflow-hidden border border-white/5">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-brand-pink/15 flex items-center justify-center text-brand-pink">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">System Integrity Check</h2>
-            <p className="text-white/50 text-sm font-medium">Verify and synchronize marketplace master data.</p>
-          </div>
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-screen-2xl mx-auto">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-[#1A1C29] tracking-tight">Master Command Center</h1>
+          <p className="text-zinc-500 text-sm mt-1">Global platform overview, SaaS fleet operations, and security integrity.</p>
         </div>
-        <div className="flex flex-col items-end gap-2 relative z-10">
-          <Button 
-            disabled={syncing}
-            onClick={handleSyncData}
-            className="h-14 px-8 rounded-2xl bg-primary-gradient hover:opacity-95 text-white font-bold text-lg shadow-xl shadow-brand-pink/20 flex items-center gap-3 transition-all active:scale-95 border-none"
-          >
-            {syncing ? (
-              <Loader2 className="w-6 h-6 animate-spin" />
-            ) : (
-              <RefreshCw className="w-6 h-6" />
-            )}
-            {syncing ? 'Synchronizing Service Catalog...' : 'Sync Marketplace Database'}
-          </Button>
-          <p className="text-[10px] text-white/30 uppercase tracking-widest font-black flex items-center gap-1">
-            <AlertCircle className="w-3 h-3 text-brand-pink" />
-            If sync fails, use SQL script in project root
-          </p>
+        <div className="flex items-center gap-3">
+          <Badge className="bg-amber-100 text-amber-700 border-none px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Systems Operational
+          </Badge>
         </div>
       </div>
 
-      {/* KPI GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <AdminCard title="Total Salons" value={loading ? "..." : stats.salons.toLocaleString()} />
-        <AdminCard title="Active Bookings" value={loading ? "..." : stats.bookings.toLocaleString()} />
-        <AdminCard title="Revenue" value={`LKR ${stats.revenue}`} />
-        <AdminCard title="Pending Leads" value={loading ? "..." : stats.leads.toLocaleString()} />
-        <AdminCard title="Global Templates" value={loading ? "..." : stats.templates.toLocaleString()} />
-      </div>
-
-      {/* RLS & DATABASE DIAGNOSTICS */}
-      <div className="bg-white dark:bg-brand-surface-dark p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-4">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-50 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-brand-pink" />
-              Row-Level Security (RLS) & Database Diagnostics
-            </h3>
-            <p className="text-gray-500 dark:text-zinc-400 text-sm">
-              Verify database permission locks, public checkouts, and guest creation parameters live.
-            </p>
+      {/* PLATFORM KPI GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full group-hover:scale-150 transition-transform duration-700 ease-out z-0"></div>
+          <div className="relative z-10 flex justify-between items-start mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+              <Globe className="w-6 h-6" />
+            </div>
+            <Badge className="bg-emerald-50 text-emerald-600 border-none">+12% MRR</Badge>
           </div>
-          <button
-            disabled={runningDiag}
-            onClick={runDiagnostics}
-            className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold flex items-center gap-2 transition-all active:scale-95 shrink-0 disabled:opacity-50 border-none cursor-pointer"
-          >
-            {runningDiag ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Play className="w-4 h-4" />
-            )}
-            {runningDiag ? "Testing..." : "Run RLS Diagnostics"}
-          </button>
+          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Platform MRR</h3>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">LKR {stats.revenue}</p>
         </div>
 
-        {diagResults.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {diagResults.map((result, idx) => (
-              <div
-                key={idx}
-                className={`p-4 rounded-2xl border transition-all ${
-                  result.status === "PASS"
-                    ? "bg-brand-pink/5 border-brand-pink/10 text-brand-purple dark:text-brand-pink"
-                    : result.status === "SKIP"
-                    ? "bg-amber-50/50 border-amber-100 text-amber-950 dark:bg-amber-500/5 dark:border-amber-500/10 dark:text-amber-300"
-                    : "bg-rose-50/50 border-rose-100 text-rose-950 dark:bg-rose-500/5 dark:border-rose-500/10 dark:text-rose-300"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="font-bold text-sm">{result.test}</h4>
-                    <p className="text-xs opacity-70 mt-0.5">{result.desc}</p>
-                  </div>
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase shrink-0 ${
-                      result.status === "PASS"
-                        ? "bg-brand-pink text-white"
-                        : result.status === "SKIP"
-                        ? "bg-amber-500 text-white"
-                        : "bg-rose-500 text-white animate-pulse"
-                    }`}
-                  >
-                    {result.status}
-                  </span>
-                </div>
+        <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-700 ease-out z-0"></div>
+          <div className="relative z-10 flex justify-between items-start mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <Badge className="bg-emerald-50 text-emerald-600 border-none">+4 this week</Badge>
+          </div>
+          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Active Fleet</h3>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.salons.toLocaleString()}</p>
+        </div>
 
-                {result.error && (
-                  <div className="mt-3 p-3 rounded-lg bg-black/5 font-mono text-[11px] space-y-1 overflow-x-auto text-slate-700 max-h-36">
-                    <div className="font-bold text-rose-700">Error: {result.error.message}</div>
-                    {result.error.code && <div>PG Code: {result.error.code}</div>}
-                    {result.error.details && <div>Details: {result.error.details}</div>}
-                    {result.error.hint && <div>Hint: {result.error.hint}</div>}
-                  </div>
-                )}
+        <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-50 rounded-full group-hover:scale-150 transition-transform duration-700 ease-out z-0"></div>
+          <div className="relative z-10 flex justify-between items-start mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
+              <Activity className="w-6 h-6" />
+            </div>
+            <Badge className="bg-zinc-100 text-zinc-600 border-none">99.9% Uptime</Badge>
+          </div>
+          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Total Bookings GMV</h3>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.bookings.toLocaleString()}</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden group">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-700 ease-out z-0"></div>
+          <div className="relative z-10 flex justify-between items-start mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <CreditCard className="w-6 h-6" />
+            </div>
+            <Badge className="bg-amber-500 text-amber-950 font-black border-none px-2 py-0.5 text-[10px] uppercase tracking-widest">
+              Action Req
+            </Badge>
+          </div>
+          <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
+          <p className="text-3xl font-black text-white relative z-10">{loading ? "..." : stats.leads.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* CORE OPERATIONS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Marketplace & Fleet Operations */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-3xl p-8 border border-zinc-100 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-xl font-bold text-zinc-900">Fleet Security & Compliance</h2>
+                <p className="text-sm text-zinc-500">Run global diagnostics and synchronize master templates.</p>
               </div>
-            ))}
+              <ShieldCheck className="w-8 h-8 text-amber-400" />
+            </div>
 
-            {/* ACTIONABLE ADVICE BANNERS */}
-            {diagResults.some(r => r.status === "FAIL") && (
-              <div className="col-span-1 md:col-span-2 p-5 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-3">
-                <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
-                  <ShieldAlert className="w-5 h-5" />
-                  Security Diagnostics Action Recommended
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Sync Action */}
+              <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 hover:border-amber-200 transition-colors group">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-zinc-900">Master Data Sync</h3>
                 </div>
-                <p className="text-xs text-amber-950">
-                  Your database is actively blocking writes due to strict Row Level Security policies. Copy-paste and run this command in your <strong>Supabase SQL Editor</strong> to bypass this block immediately:
-                </p>
-                <pre className="p-3 bg-black/90 text-amber-300 font-mono text-xs rounded-xl overflow-x-auto select-all">
+                <p className="text-xs text-zinc-500 mb-4 leading-relaxed">Ensure all partner salons have the latest service catalogs, subscription tiers, and geolocation boundaries.</p>
+                <Button 
+                  disabled={syncing}
+                  onClick={handleSyncData}
+                  className="w-full bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl h-10 text-xs font-bold"
+                >
+                  {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                  {syncing ? 'Synchronizing...' : 'Sync Fleet Database'}
+                </Button>
+              </div>
+
+              {/* RLS Action */}
+              <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 hover:border-amber-200 transition-colors group">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-zinc-900">RLS Audit</h3>
+                </div>
+                <p className="text-xs text-zinc-500 mb-4 leading-relaxed">Simulate tenant isolation and guest checkout flows to verify Row-Level Security integrity across the SaaS.</p>
+                <Button 
+                  disabled={runningDiag}
+                  onClick={runDiagnostics}
+                  variant="outline"
+                  className="w-full border-zinc-200 hover:bg-zinc-100 text-zinc-900 rounded-xl h-10 text-xs font-bold"
+                >
+                  {runningDiag ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                  {runningDiag ? 'Running Audit...' : 'Execute Security Audit'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Diagnostic Results */}
+            {diagResults.length > 0 && (
+              <div className="mt-6 border-t border-zinc-100 pt-6">
+                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4">Audit Output Log</h4>
+                <div className="space-y-3">
+                  {diagResults.map((result, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-zinc-50 px-4 py-3 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${result.status === "PASS" ? "bg-emerald-500" : result.status === "SKIP" ? "bg-amber-500" : "bg-rose-500"}`} />
+                        <span className="text-sm font-bold text-zinc-800">{result.test}</span>
+                      </div>
+                      <Badge className={
+                        result.status === "PASS" ? "bg-emerald-100 text-emerald-700 border-none" : 
+                        result.status === "SKIP" ? "bg-amber-100 text-amber-700 border-none" : 
+                        "bg-rose-100 text-rose-700 border-none animate-pulse"
+                      }>
+                        {result.status}
+                      </Badge>
+                    </div>
+                  ))}
+                  {diagResults.some(r => r.status === "FAIL") && (
+                    <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                      <div className="flex items-center gap-2 text-amber-800 font-bold text-sm mb-2">
+                        <ShieldAlert className="w-4 h-4" /> Policy Action Required
+                      </div>
+                      <p className="text-xs text-amber-900 mb-2">Supabase is blocking guest writes. Run this in your SQL editor to bypass:</p>
+                      <pre className="p-3 bg-zinc-900 text-amber-400 font-mono text-[10px] rounded-lg overflow-x-auto">
 {`ALTER TABLE public.bookings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.global_services DISABLE ROW LEVEL SECURITY;`}
-                </pre>
-                <p className="text-[10px] text-amber-700 italic">
-                  💡 Running this SQL query will completely turn off RLS restrictions for bookings, profiles, and master catalogs in your sandbox database, enabling successful testing and synchronization instantly.
-                </p>
+ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center p-8 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 text-center space-y-2">
-            <ShieldCheck className="w-8 h-8 text-slate-400" />
-            <div className="font-semibold text-slate-700 text-sm">Diagnostics Ready</div>
-            <p className="text-xs text-slate-400 max-w-sm">
-              Click the "Run RLS Diagnostics" button above to execute simulated guest queries and map your active policies.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* CHART SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 h-64 flex flex-col">
-          <h3 className="font-semibold text-gray-900 mb-2">Booking Trends</h3>
-          <div className="flex-1 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-            [Chart Placeholder]
-          </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 h-64 flex flex-col">
-          <h3 className="font-semibold text-gray-900 mb-2">Revenue Growth</h3>
-          <div className="flex-1 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-            [Chart Placeholder]
-          </div>
-        </div>
-      </div>
+        {/* Audit Log / Activity Stream */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-[#1A1C29] rounded-3xl p-6 border border-[#2D3042] shadow-xl text-white h-full relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl z-0"></div>
+            
+            <div className="relative z-10 flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">Fleet Activity Stream</h2>
+              <Server className="w-5 h-5 text-amber-400 opacity-50" />
+            </div>
 
-      {/* RECENT ACTIVITY */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-brand-surface-dark p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Recent Activity</h3>
+            <div className="relative z-10 space-y-5">
+              <div className="flex gap-4 group">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                  <Building2 className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-zinc-200">New Salon Registration</p>
+                  <p className="text-xs text-zinc-500 mt-1"><span className="text-amber-400 font-medium">Glam Studio Colombo</span> passed verification and is now live on the marketplace.</p>
+                  <p className="text-[10px] text-zinc-600 mt-2 font-mono">14 mins ago</p>
+                </div>
+              </div>
 
-          <ul className="space-y-3 text-sm text-zinc-600 dark:text-zinc-400">
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-pink"></span>
-              New salon added: Glam Studio Colombo
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-purple"></span>
-              Lead assigned to Agent #Agent12
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-brand-pink"></span>
-              Booking completed - Salon Colombo
-            </li>
-          </ul>
-        </div>
+              <div className="flex gap-4 group">
+                <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
+                  <CreditCard className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-zinc-200">Commission Disbursed</p>
+                  <p className="text-xs text-zinc-500 mt-1">Platform automatically routed <span className="text-emerald-400">LKR 124,000</span> to 45 partner salons.</p>
+                  <p className="text-[10px] text-zinc-600 mt-2 font-mono">2 hours ago</p>
+                </div>
+              </div>
 
-        <div className="bg-white dark:bg-brand-surface-dark p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
-          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Marketplace Management</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <a href="/admin/categories" className="flex flex-col items-center justify-center p-4 rounded-xl bg-brand-pink/5 border border-brand-pink/10 hover:bg-brand-pink/10 transition-colors">
-              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-pink mb-2 shadow-sm italic font-bold">C</div>
-              <span className="text-xs font-bold text-[#0F172A] dark:text-zinc-200">Categories</span>
-            </a>
-            <a href="/admin/global-services" className="flex flex-col items-center justify-center p-4 rounded-xl bg-brand-pink/5 border border-brand-pink/10 hover:bg-brand-pink/10 transition-colors">
-              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-pink mb-2 shadow-sm italic font-bold">GS</div>
-              <span className="text-xs font-bold text-[#0F172A] dark:text-zinc-200">Global Services</span>
-            </a>
-            <a href="/admin/subscriptions" className="flex flex-col items-center justify-center p-4 rounded-xl bg-brand-purple/5 border border-brand-purple/10 hover:bg-brand-purple/10 transition-colors">
-              <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-brand-purple mb-2 shadow-sm italic font-bold">SP</div>
-              <span className="text-xs font-bold text-[#0F172A] dark:text-zinc-200">Subscription Plans</span>
-            </a>
+              <div className="flex gap-4 group">
+                <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                  <Settings className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-zinc-200">Global Service Added</p>
+                  <p className="text-xs text-zinc-500 mt-1">Master template "Keratin Treatment Level 3" published to network.</p>
+                  <p className="text-[10px] text-zinc-600 mt-2 font-mono">5 hours ago</p>
+                </div>
+              </div>
+            </div>
+            
+            <Button variant="ghost" className="w-full mt-8 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs font-bold rounded-xl relative z-10">
+              View Full Audit Log <ExternalLink className="w-3 h-3 ml-2" />
+            </Button>
           </div>
         </div>
       </div>

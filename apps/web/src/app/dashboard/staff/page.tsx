@@ -497,7 +497,7 @@ export default function DashboardStaff() {
             onSubmit={handleAddStaffSubmit}
             className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-4 space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden my-auto max-h-[85vh] overflow-y-auto"
           >
-            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-rose-500 via-purple-600 to-amber-500"></div>
+            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
 
             <div className="flex justify-between items-start">
               <div>
@@ -704,7 +704,7 @@ export default function DashboardStaff() {
             onSubmit={handleEditStaffSubmit}
             className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-4 space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden my-auto max-h-[85vh] overflow-y-auto"
           >
-            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-rose-500 via-purple-600 to-amber-500"></div>
+            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
 
             <div className="flex justify-between items-start">
               <div>

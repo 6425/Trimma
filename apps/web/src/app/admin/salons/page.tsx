@@ -99,6 +99,7 @@ export default function Salons() {
                 <th className="px-8 py-5">Core Category</th>
                 <th className="px-8 py-5">Location</th>
                 <th className="px-8 py-5">Platform Rating</th>
+                <th className="px-8 py-5">Comm / Payout</th>
                 <th className="px-8 py-5">Operational Status</th>
                 <th className="px-8 py-5 text-right">Terminal</th>
               </tr>
@@ -106,14 +107,14 @@ export default function Salons() {
             <tbody className="divide-y divide-zinc-50">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-24 text-center">
+                  <td colSpan={7} className="px-8 py-24 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B] mx-auto mb-4" />
                     <p className="text-zinc-400 font-medium font-sans">Accessing salon global directory...</p>
                   </td>
                 </tr>
               ) : filteredSalons.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-24 text-center text-zinc-400">
+                  <td colSpan={7} className="px-8 py-24 text-center text-zinc-400">
                     <Store className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p className="font-medium font-sans">No matching salons found in current viewport.</p>
                   </td>
@@ -151,6 +152,14 @@ export default function Salons() {
                         <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                         <span className="text-sm font-black text-zinc-800">{salon.rating || "4.5"}</span>
                         <span className="text-[10px] font-medium text-zinc-400">(240 rev)</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-sm font-bold text-zinc-900">{salon.reservation_commission_percent || 10}% Rate</div>
+                        <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                          Payout: <span className="text-emerald-600 font-black">LKR {(salon.pending_payout || 0).toLocaleString()}</span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">

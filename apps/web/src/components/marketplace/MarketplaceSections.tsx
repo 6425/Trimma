@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { 
   Sparkles, Star, MapPin, CheckCircle2, ChevronRight, 
   ArrowRight, ShieldCheck, Clock, Award, Landmark, Gift, Tag, Percent
@@ -64,10 +65,12 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
               className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
             >
               <div className="h-52 relative overflow-hidden bg-slate-100">
-                <img 
-                  src={salon.image} 
+                <Image 
+                  src={salon.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2940&auto=format&fit=crop"} 
                   alt={salon.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-700" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent" />
                 <div className="absolute top-3 left-3 flex gap-2">
@@ -178,7 +181,7 @@ export function DiscountsOffersSection() {
       desc: "Get an premium aesthetic skin restoration and hydra treatment.",
       code: "AURA25",
       expiry: "Expires in 2 days",
-      gradient: "from-pink-500 to-rose-600"
+      gradient: "from-amber-500 to-amber-700"
     },
     {
       title: "15% OFF Skin Fade & Sculpt",

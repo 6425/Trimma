@@ -153,6 +153,9 @@ export default function OnboardingPage() {
 
       toast.success("Welcome to Trimma! Your salon has been onboarded on the Free Plan! 🚀");
       
+      // Update the user-role cookie so middleware allows access to the dashboard
+      document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
+
       // Redirect to salon dashboard
       router.push("/dashboard");
     } catch (err: any) {

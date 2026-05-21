@@ -25,7 +25,7 @@ const hasPermission = (userRole: UserRole | null | undefined, route: string): bo
 };
 
 // Define public routes that do not require authentication
-const publicRoutes = ['/', '/login', '/signup', '/register', '/about', '/contact', '/pricing', '/unauthorized'];
+const publicRoutes = ['/', '/login', '/signup', '/register', '/about', '/contact', '/pricing', '/unauthorized', '/onboarding'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -42,7 +42,14 @@ export async function middleware(req: NextRequest) {
   }
 
   // 2. Allow public routes (exact match or ending in login/signup)
-  if (publicRoutes.includes(pathname) || pathname.endsWith('/login') || pathname.endsWith('/signup')) {
+  if (
+    publicRoutes.includes(pathname) || 
+    pathname.endsWith('/login') || 
+    pathname.endsWith('/signup') ||
+    pathname.startsWith('/salons') ||
+    pathname.startsWith('/locations') ||
+    pathname.startsWith('/category')
+  ) {
     return NextResponse.next();
   }
 

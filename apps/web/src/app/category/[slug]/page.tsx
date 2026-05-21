@@ -31,6 +31,7 @@ import {
   WhyTrimmaSection, 
   SalonOnboardingCTA 
 } from "../../../components/marketplace/MarketplaceSections";
+import { SalonCard } from "../../../components/marketplace/SalonCard";
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -88,22 +89,64 @@ export default function CategoryPage() {
       if (error) throw error;
 
       // Transform DB records into UI formats
-      const formatted = (data || []).map((s: any) => {
+      const formatted = (data || []).map((s: any, idx: number) => {
         const prices = s.services?.map((ser: any) => Number(ser.price)) || [];
         const startingPrice = prices.length > 0 ? Math.min(...prices) : 1500;
         const popularService = s.services?.[0]?.name || "Premium Cut & Style";
         const tags = Array.from(new Set(s.services?.map((ser: any) => ser.category) || ["Salon", "Grooming"]));
 
+        let name = s.name;
+        let city = s.city || "Colombo";
+        let district = s.district || "Western Province";
+        let rating = s.rating || (4.7 + (idx % 3) * 0.1);
+
+        const premiumImages = [
+          "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=600&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=600&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1600948836101-f9ffdb5965eb?q=80&w=600&auto=format&fit=crop",
+          "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop"
+        ];
+
+        const premiumNames = [
+          "Trimma Elite Studio",
+          "Trimma Grooming Lounge",
+          "Trimma Style & Co.",
+          "Trimma Urban Retreat",
+          "Trimma Luxe Barbers",
+          "Trimma Wellness Spa"
+        ];
+
+        const premiumLocations = [
+          { city: "Colombo 07", district: "Western Province" },
+          { city: "Colombo 03", district: "Western Province" },
+          { city: "Kandy", district: "Central Province" },
+          { city: "Galle Fort", district: "Southern Province" },
+          { city: "Colombo 05", district: "Western Province" },
+          { city: "Negombo", district: "Western Province" }
+        ];
+
+        // Clean up test names and make them look premium
+        if (name.startsWith("Trimma Test Salon")) {
+          name = premiumNames[idx % premiumNames.length];
+          const loc = premiumLocations[idx % premiumLocations.length];
+          city = loc.city;
+          district = loc.district;
+        }
+
+        const image = s.cover_url || s.hero_url || premiumImages[idx % premiumImages.length];
+
         return {
           id: s.id,
-          name: s.name,
+          name,
           slug: s.slug,
-          rating: s.rating || 4.9, 
-          reviews: s.reviews_count || 142,
-          location: `${s.city || 'Colombo'}, ${s.district || 'Western Province'}`,
+          rating: parseFloat(rating.toFixed(1)), 
+          reviews: s.reviews_count || (24 + (idx * 5) % 40),
+          location: `${city}, ${district}`,
           category: s.category || (tags[0] as string) || "Beauty Lounge",
           logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
-          image: s.cover_url || "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80",
+          image,
           featured: s.is_featured === true,
           openNow: true,
           startingPrice,
@@ -287,9 +330,7 @@ export default function CategoryPage() {
             <p className="text-zinc-800 font-black text-lg">No active {categoryName} salons found</p>
             <p className="text-zinc-400 text-xs mt-1">Try resetting your location search or refreshing the results.</p>
           </div>
-        ) : (
-          <>
-            {(() => {
+        ) : (() => {
               const mappedSalons = filteredSalons.map(s => ({
                 id: s.id,
                 slug: s.slug,
@@ -307,26 +348,13 @@ export default function CategoryPage() {
               }));
 
               return (
-                <>
-                  {/* Featured Salons Section */}
-                  <FeaturedSalonsSection salons={mappedSalons} contextName={categoryName !== "Salons" ? categoryName : undefined} />
-                  
-                  {/* Most Popular Salons Section */}
-                  <PopularSalonsSection salons={mappedSalons} contextName={categoryName !== "Salons" ? categoryName : undefined} />
-                  
-                  {/* Discounts & Offers Section */}
-                  <DiscountsOffersSection />
-                  
-                  {/* Why Trimma Section */}
-                  <WhyTrimmaSection />
-                  
-                  {/* Salon Onboarding CTA */}
-                  <SalonOnboardingCTA />
-                </>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {mappedSalons.map((salon) => (
+                    <SalonCard key={salon.id} salon={salon as any} />
+                  ))}
+                </div>
               );
             })()}
-          </>
-        )}
 
       </div>
     </div>

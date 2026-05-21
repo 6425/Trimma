@@ -15,6 +15,11 @@ export class BookingsController {
     return this.bookingsService.getAvailability(salonId, date, serviceId, staffId);
   }
 
+  @Get('salons/:salonId/bookings')
+  async getBookingsBySalon(@Param('salonId') salonId: string) {
+    return this.bookingsService.getBookingsBySalon(salonId);
+  }
+
   @Post('bookings')
   async createBooking(@Body() body: any) {
     return this.bookingsService.createBooking(body);

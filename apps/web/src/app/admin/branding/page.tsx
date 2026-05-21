@@ -414,10 +414,10 @@ export default function AdminBrandingPage() {
               </button>
               <button 
                 type="button" 
-                onClick={() => applyTemplate("cyber")}
-                className="p-3 rounded-xl border border-pink-100 hover:border-pink-400 bg-pink-50/20 hover:bg-pink-50 text-left transition-all"
+                key="cyberpunk"
+                className="p-3 rounded-xl border border-amber-100 hover:border-amber-400 bg-amber-50/20 hover:bg-amber-50 text-left transition-all"
               >
-                <div className="text-[10px] font-black uppercase text-pink-700 tracking-wider">Cyberpunk</div>
+                <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider">Cyberpunk</div>
                 <p className="text-[9px] text-zinc-400 mt-0.5 leading-normal">Space Grotesk, bright neon hot-pink & cyan stars.</p>
               </button>
               <button 

@@ -63,4 +63,15 @@ export class BookingsService {
       total_price: booking.amount
     };
   }
+
+  async getBookingsBySalon(salonId: string) {
+    const client = this.supabase.getClient();
+    const { data, error } = await client
+      .from('bookings')
+      .select('*')
+      .eq('salon_id', salonId);
+
+    if (error) throw new InternalServerErrorException(error.message);
+    return data;
+  }
 }
