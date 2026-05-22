@@ -136,7 +136,7 @@ function AdminUserCreateInner() {
           <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-xl shadow-zinc-200/20 space-y-6">
             <div className="space-y-4">
               <h3 className="font-bold text-[#1A1C29] flex items-center gap-2">
-                <User className="w-4 h-4 text-[#D81E5B]" /> Personal Information
+                <User className="w-4 h-4 text-brand" /> Personal Information
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -146,7 +146,7 @@ function AdminUserCreateInner() {
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                     placeholder="e.g. Thusitha Jayalath" 
                     required 
-                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-[#D81E5B]/20 transition-all rounded-xl" 
+                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 transition-all rounded-xl" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -157,7 +157,7 @@ function AdminUserCreateInner() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="name@trimma.io" 
                     required 
-                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-[#D81E5B]/20 transition-all rounded-xl" 
+                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 transition-all rounded-xl" 
                   />
                 </div>
               </div>
@@ -165,7 +165,7 @@ function AdminUserCreateInner() {
 
             <div className="space-y-4 pt-4 border-t border-zinc-50">
               <h3 className="font-bold text-[#1A1C29] flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#D81E5B]" /> Access & Role
+                <Shield className="w-4 h-4 text-brand" /> Access & Role
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -175,7 +175,7 @@ function AdminUserCreateInner() {
                     onValueChange={(val) => setFormData({ ...formData, role: val })}
                     required
                   >
-                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-[#D81E5B]/20 rounded-xl">
+                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 rounded-xl">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
@@ -194,7 +194,7 @@ function AdminUserCreateInner() {
                     onValueChange={(val) => setFormData({ ...formData, territory: val })}
                     defaultValue="Colombo"
                   >
-                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-[#D81E5B]/20 rounded-xl">
+                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 rounded-xl">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
@@ -210,7 +210,7 @@ function AdminUserCreateInner() {
 
             <div className="space-y-4 pt-4 border-t border-zinc-50">
               <h3 className="font-bold text-[#1A1C29] flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#D81E5B]" /> Security Setup
+                <Lock className="w-4 h-4 text-brand" /> Security Setup
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -221,7 +221,7 @@ function AdminUserCreateInner() {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="••••••••" 
                     required 
-                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-[#D81E5B]/20 transition-all rounded-xl" 
+                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 transition-all rounded-xl" 
                   />
                 </div>
                 <div className="space-y-2">
@@ -232,7 +232,7 @@ function AdminUserCreateInner() {
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     placeholder="••••••••" 
                     required 
-                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-[#D81E5B]/20 transition-all rounded-xl" 
+                    className="h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 transition-all rounded-xl" 
                   />
                 </div>
               </div>
@@ -243,7 +243,7 @@ function AdminUserCreateInner() {
                 </div>
                 <p className="text-xs text-zinc-400 mb-4">Passwords are 100% managed by administrators. The agent will use these credentials to access the field applications.</p>
                 <div className="flex items-center gap-2">
-                   <div className="w-4 h-4 bg-[#D81E5B] rounded flex items-center justify-center">
+                   <div className="w-4 h-4 bg-brand rounded flex items-center justify-center">
                       <Check className="w-3 h-3 text-white" />
                    </div>
                    <span className="text-xs font-bold text-zinc-700">Confirm security policy and provisioning</span>
@@ -321,7 +321,7 @@ export default function AdminUserCreate() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 animate-in fade-in duration-300">
-        <Loader2 className="w-10 h-10 text-[#D81E5B] animate-spin" />
+        <Loader2 className="w-10 h-10 text-brand animate-spin" />
         <p className="text-zinc-500 font-bold text-sm">Loading Form...</p>
       </div>
     }>

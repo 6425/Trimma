@@ -1,18 +1,12 @@
-// apps/web/src/app/dashboard/finance/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { DollarSign, History, Calendar, FileText, ArrowDownRight, Activity, Loader2, ArrowRight, TrendingUp, Sparkles, Filter } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { DollarSign, History, Calendar, FileText, ArrowRight, Activity, Loader2, TrendingUp, Sparkles, Store, Briefcase, Handshake, CreditCard, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/config/supabase";
 import { useRouter } from "next/navigation";
-
-interface BookingSplit {
-  entity_type: "platform" | "salon" | "agent";
-  amount: number;
-  description: string;
-}
+import { toast } from "sonner";
 
 interface BookingWithSplits {
   id: string;
@@ -23,7 +17,10 @@ interface BookingWithSplits {
   status: string;
   customer_email: string;
   created_at: string;
-  splits: BookingSplit[];
+  platform_commission_amount: number;
+  salon_upfront_amount: number;
+  payhere_fee_amount: number;
+  agent_commission_amount: number;
 }
 
 export default function FinanceDashboard() {
@@ -31,83 +28,72 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [salon, setSalon] = useState<any>(null);
   const [bookings, setBookings] = useState<BookingWithSplits[]>([]);
-  const [filter, setFilter] = useState<string>("all"); // 'all' | 'completed' | 'pending' | 'cancelled'
+  const [filter, setFilter] = useState<string>("all");
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
 
+  // Stats
   const [stats, setStats] = useState({
     grossRevenue: 0,
     platformComm: 0,
+    salonComm: 0,
     agentComm: 0,
-    netYield: 0,
+    payhereComm: 0,
     completedCount: 0
   });
 
   useEffect(() => {
     async function loadFinanceData() {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
-        
-        // 1. Resolve Salon ID dynamically from active user session
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           router.replace("/login?redirectTo=/dashboard/finance");
           return;
         }
 
-        const { data: salonData } = await supabase
-          .from("salons")
-          .select("*")
-          .eq("owner_email", session.user.email)
-          .maybeSingle();
+        // 1. Fetch Salon Data
+        const { data: salonData } = await supabase.from("salons").select("id").eq("owner_email", session.user.email).maybeSingle();
+        
+        let salonId = null;
+        if (salonData) salonId = salonData.id;
 
-        if (!salonData) {
+        // 3. Fetch Bookings (Only theirs)
+        let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
+        if (salonId) {
+          query = query.eq("salon_id", salonId);
+        } else if (roleData?.global_role !== 'admin') {
           setLoading(false);
-          return;
+          return; // Neither admin nor salon owner
         }
 
-        setSalon(salonData);
-
-        // 2. Fetch bookings
-        const bookingsRes = await fetch(`${API_URL}/salons/${salonData.id}/bookings`);
-        if (bookingsRes.ok) {
-          const bookingsData = await bookingsRes.json();
+        const { data: bookingsData, error } = await query;
+        if (!error && bookingsData) {
           
-          // Sort bookings by creation date descending
-          bookingsData.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          
-          // 3. Resolve splits for each booking dynamically
-          const resolvedBookings = bookingsData.map((b: any) => {
-            const amount = parseFloat(b.amount || 0);
-            
-            // Standard 80/10/10 split
-            const splits: BookingSplit[] = [
-              { entity_type: "salon", amount: amount * 0.8, description: "Salon Net Yield (80%)" },
-              { entity_type: "platform", amount: amount * 0.1, description: "Platform Fee (10%)" },
-              { entity_type: "agent", amount: amount * 0.1, description: "Agent Commission (10%)" }
-            ];
-
-            return {
-              ...b,
-              splits
-            };
-          });
+          const resolvedBookings = bookingsData.map((b: any) => ({
+            ...b,
+            amount: parseFloat(b.total_price || 0),
+            platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
+            salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
+            payhere_fee_amount: parseFloat(b.payhere_fee_amount || 0),
+            agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
+          }));
 
           setBookings(resolvedBookings);
 
-          // 4. Calculate aggregates (based on completed/confirmed bookings)
+          // 4. Calculate aggregates
           let gross = 0;
           let platform = 0;
+          let salonUpfront = 0;
           let agent = 0;
-          let net = 0;
+          let payhere = 0;
           let completed = 0;
 
           resolvedBookings.forEach((b: BookingWithSplits) => {
             if (b.status === "completed" || b.status === "confirmed") {
-              const amt = parseFloat(b.amount as any || 0);
-              gross += amt;
-              platform += amt * 0.1;
-              agent += amt * 0.1;
-              net += amt * 0.8;
+              gross += b.amount;
+              platform += b.platform_commission_amount;
+              salonUpfront += b.salon_upfront_amount;
+              agent += b.agent_commission_amount;
+              payhere += b.payhere_fee_amount;
               completed += 1;
             }
           });
@@ -115,8 +101,9 @@ export default function FinanceDashboard() {
           setStats({
             grossRevenue: gross,
             platformComm: platform,
+            salonComm: salonUpfront,
             agentComm: agent,
-            netYield: net,
+            payhereComm: payhere,
             completedCount: completed
           });
         }
@@ -140,11 +127,7 @@ export default function FinanceDashboard() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric"
-      });
+      return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     } catch (e) {
       return dateStr;
     }
@@ -152,14 +135,10 @@ export default function FinanceDashboard() {
 
   const getStatusStyle = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "completed":
-        return "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20";
-      case "confirmed":
-        return "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20";
-      case "pending":
-        return "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20";
-      default:
-        return "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20";
+      case "completed": return "bg-emerald-50 text-emerald-700 border-emerald-100";
+      case "confirmed": return "bg-blue-50 text-blue-700 border-blue-100";
+      case "pending": return "bg-amber-50 text-amber-700 border-amber-100";
+      default: return "bg-rose-50 text-rose-700 border-rose-100";
     }
   };
 
@@ -172,148 +151,131 @@ export default function FinanceDashboard() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <Loader2 className="w-10 h-10 animate-spin text-[#D81E5B]" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand" />
         <p className="text-zinc-500 font-medium">Reconciling financial ledgers...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto p-4">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto p-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider bg-brand-primary/10 text-[#D81E5B] uppercase rounded-full">Sprint 5 Ledger</span>
+            <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider bg-brand/10 text-brand uppercase rounded-full">Sprint 5 Ledger</span>
             <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400">
-              <Sparkles className="w-3 h-3 text-amber-500 animate-pulse" /> Direct Splits Enabled
+              <Sparkles className="w-3 h-3 text-amber-500 animate-pulse" /> Direct Database Reads Enabled
             </span>
           </div>
-          <h1 className="text-3xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">Finance &amp; Revenue</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-0.5">Real-time ledger audit showing gross bookings, platform fee deductions, and referrer splits.</p>
+          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Finance &amp; Revenue</h1>
+          <p className="text-zinc-500 text-sm mt-0.5">Real-time ledger audit showing gross bookings, platform fee deductions, and referrer splits.</p>
         </div>
         <div className="flex gap-2">
-          <Button className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-750 font-bold rounded-2xl shadow-sm h-11 px-5 flex items-center gap-2 text-xs transition-all">
+          <Button className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-2xl shadow-sm h-11 px-5 flex items-center gap-2 text-xs transition-all">
             <FileText className="w-4 h-4" /> Export Ledger
           </Button>
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Stats Section (5 Cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Gross Revenue */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Gross Bookings</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-50">{formatLKR(stats.grossRevenue)}</h3>
-            <p className="text-[10px] text-zinc-500">From {stats.completedCount} successful bookings</p>
-          </div>
-        </div>
-
-        {/* Salon Share */}
-        <div className="bg-gradient-to-br from-[#1A1C29] to-[#2D3142] rounded-3xl p-5 shadow-xl text-white space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Salon Net Yield (80%)</span>
-            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white">
-              🏢
-            </div>
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-2xl font-black text-white">{formatLKR(stats.netYield)}</h3>
-            <p className="text-[10px] text-white/60">Calculated salon net share</p>
+            <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.grossRevenue)}</h3>
+            <p className="text-[10px] text-zinc-500">{stats.completedCount} successful bookings</p>
           </div>
         </div>
 
         {/* Platform Share */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
+        <div className="bg-[#1A1C29] border border-[#1A1C29] rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all text-white">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Platform Fee (10%)</span>
-            <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-[#D81E5B]">
-              💼
+            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Platform Fee ({globalRates.platform}%)</span>
+            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white">
+              <Briefcase className="w-4 h-4" />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-50">{formatLKR(stats.platformComm)}</h3>
-            <p className="text-[10px] text-zinc-500">Base engine fee applied</p>
+            <h3 className="text-xl font-black text-white">{formatLKR(stats.platformComm)}</h3>
+            <p className="text-[10px] text-white/50">Base engine fee applied</p>
+          </div>
+        </div>
+
+        {/* Salon Upfront Reservation */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Salon Res. ({globalRates.salon}%)</span>
+            <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
+              <Store className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.salonComm)}</h3>
+            <p className="text-[10px] text-zinc-500">Upfront online deposit</p>
+          </div>
+        </div>
+
+        {/* PayHere Fee */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">PayHere ({globalRates.payhere}%)</span>
+            <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.payhereComm)}</h3>
+            <p className="text-[10px] text-zinc-500">Payment Gateway Costs</p>
           </div>
         </div>
 
         {/* Agent Share */}
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
+        <div className="bg-brand/5 border border-brand/20 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Agent Commission (10%)</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-450">
-              🤝
+            <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Agent Comm.</span>
+            <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-brand">
+              <Handshake className="w-4 h-4" />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-50">{formatLKR(stats.agentComm)}</h3>
-            <p className="text-[10px] text-zinc-500">Referrer acquisition payouts</p>
+            <h3 className="text-xl font-black text-brand">{formatLKR(stats.agentComm)}</h3>
+            <p className="text-[10px] text-brand/70">From Platform cut (5-20%)</p>
           </div>
         </div>
       </div>
 
       {/* Main Ledger Section */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-white/5 pb-5">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div>
-            <h2 className="font-bold text-lg text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h2 className="font-bold text-lg text-zinc-900 flex items-center gap-2">
               <Activity className="w-5 h-5 text-zinc-400" /> Bookings Ledger &amp; Breakdown
             </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Click any booking row to review the platform, salon, and agent split breakdowns.</p>
+            <p className="text-xs text-zinc-500 mt-0.5">Click any booking row to review the platform, salon, payhere, and agent split breakdowns.</p>
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-2xl">
-            <Button
-              onClick={() => setFilter("all")}
-              className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none ${
-                filter === "all"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white"
-                  : "bg-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-            >
-              All
-            </Button>
-            <Button
-              onClick={() => setFilter("completed")}
-              className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none ${
-                filter === "completed"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white"
-                  : "bg-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-            >
-              Settled
-            </Button>
-            <Button
-              onClick={() => setFilter("pending")}
-              className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none ${
-                filter === "pending"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white"
-                  : "bg-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-            >
-              Pending
-            </Button>
-            <Button
-              onClick={() => setFilter("cancelled")}
-              className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none ${
-                filter === "cancelled"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-950 dark:text-white"
-                  : "bg-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900"
-              }`}
-            >
-              Cancelled
-            </Button>
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl">
+            {['all', 'completed', 'pending', 'cancelled'].map(f => (
+              <Button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none capitalize ${
+                  filter === f ? "bg-white text-zinc-950" : "bg-transparent text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                {f === 'completed' ? 'Settled' : f}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* Ledger Table */}
         <div className="space-y-3">
           {filteredBookings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
@@ -324,100 +286,59 @@ export default function FinanceDashboard() {
             filteredBookings.map((booking) => {
               const isExpanded = expandedBooking === booking.id;
               return (
-                <div
-                  key={booking.id}
-                  className={`border rounded-2xl transition-all ${
-                    isExpanded
-                      ? "border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-zinc-800/10"
-                      : "border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10"
-                  }`}
-                >
+                <div key={booking.id} className={`border rounded-2xl transition-all ${isExpanded ? "border-slate-300 bg-slate-50/50" : "border-slate-100 hover:border-slate-200"}`}>
                   {/* Row Summary */}
-                  <div
-                    onClick={() => setExpandedBooking(isExpanded ? null : booking.id)}
-                    className="flex flex-col md:flex-row md:items-center justify-between p-4 cursor-pointer select-none gap-4"
-                  >
+                  <div onClick={() => setExpandedBooking(isExpanded ? null : booking.id)} className="flex flex-col md:flex-row md:items-center justify-between p-4 cursor-pointer select-none gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center font-black text-[#1A1C29] dark:text-zinc-200 text-xs">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-[#1A1C29] text-xs">
                         {booking.booking_no?.substring(4) || "BK"}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-zinc-900 dark:text-zinc-150 text-sm">
-                            {booking.booking_no || "TRM-000000"}
-                          </span>
-                          <span className={`px-2 py-0.5 border text-[10px] font-bold rounded-full ${getStatusStyle(booking.status)}`}>
-                            {booking.status}
-                          </span>
+                          <span className="font-bold text-zinc-900 text-sm">{booking.booking_no || "TRM-000000"}</span>
+                          <span className={`px-2 py-0.5 border text-[10px] font-bold rounded-full ${getStatusStyle(booking.status)}`}>{booking.status}</span>
                         </div>
-                        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-                          {booking.customer_email} • {formatDate(booking.booking_date)} at {booking.booking_time}
-                        </p>
+                        <p className="text-xs text-zinc-400 mt-0.5">{booking.customer_email} • {formatDate(booking.booking_date)}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-none pt-3 md:pt-0">
                       <div className="text-left md:text-right">
-                        <span className="text-sm font-black text-zinc-900 dark:text-zinc-100">
-                          {formatLKR(booking.amount)}
-                        </span>
-                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Gross Amount</p>
+                        <span className="text-sm font-black text-zinc-900">{formatLKR(booking.amount)}</span>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">Gross Amount</p>
                       </div>
-                      <div className="text-zinc-400 dark:text-zinc-600">
-                        <ArrowRight className={`w-4 h-4 transform transition-transform ${isExpanded ? "rotate-90 text-[#D81E5B]" : ""}`} />
+                      <div className="text-zinc-400">
+                        <ArrowRight className={`w-4 h-4 transform transition-transform ${isExpanded ? "rotate-90 text-brand" : ""}`} />
                       </div>
                     </div>
                   </div>
 
                   {/* Expanded Breakdown */}
                   {isExpanded && (
-                    <div className="border-t border-slate-150 dark:border-white/5 p-5 bg-white dark:bg-zinc-950 rounded-b-2xl space-y-4">
+                    <div className="border-t border-slate-200 p-5 bg-white rounded-b-2xl space-y-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Commission Split Breakdown</h4>
-                        {booking.status !== "completed" && booking.status !== "confirmed" && (
-                          <span className="text-[10px] text-rose-500 font-semibold bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded-md">
-                            * Splits are simulated for pending/cancelled bookings
-                          </span>
-                        )}
+                        <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Direct Database Fee Breakdown</h4>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Salon Share */}
-                        <div className="bg-[#EAFDF8]/50 dark:bg-[#EAFDF8]/5 p-4 rounded-xl border border-[#EAFDF8] dark:border-emerald-500/10 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] font-bold text-[#00A878] uppercase tracking-wider">🏢 Salon Share (80%)</span>
-                            <h5 className="text-lg font-black text-[#00A878] mt-1">{formatLKR(booking.amount * 0.8)}</h5>
-                          </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">💼 Platform Gross</span>
+                          <h5 className="text-lg font-black text-zinc-900 mt-1">{formatLKR(booking.platform_commission_amount)}</h5>
                         </div>
 
-                        {/* Platform Cut */}
-                        <div className="bg-[#FDF2F4]/50 dark:bg-[#FDF2F4]/5 p-4 rounded-xl border border-[#FDF2F4] dark:border-rose-500/10 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] font-bold text-[#D81E5B] uppercase tracking-wider">💼 Platform Cut (10%)</span>
-                            <h5 className="text-lg font-black text-[#D81E5B] mt-1">{formatLKR(booking.amount * 0.1)}</h5>
-                          </div>
+                        <div className="bg-teal-50/50 p-4 rounded-xl border border-teal-100">
+                          <span className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">🏢 Salon Res.</span>
+                          <h5 className="text-lg font-black text-teal-700 mt-1">{formatLKR(booking.salon_upfront_amount)}</h5>
                         </div>
 
-                        {/* Agent Cut */}
-                        <div className="bg-[#EEF2FF]/50 dark:bg-[#EEF2FF]/5 p-4 rounded-xl border border-[#EEF2FF] dark:border-indigo-500/10 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] font-bold text-[#4F46E5] uppercase tracking-wider">🤝 Agent Cut (10%)</span>
-                            <h5 className="text-lg font-black text-[#4F46E5] mt-1">{formatLKR(booking.amount * 0.1)}</h5>
-                          </div>
+                        <div className="bg-rose-50/50 p-4 rounded-xl border border-rose-100">
+                          <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">💳 PayHere Fee</span>
+                          <h5 className="text-lg font-black text-rose-600 mt-1">{formatLKR(booking.payhere_fee_amount)}</h5>
                         </div>
-                      </div>
 
-                      {/* Split Ratio Bar Visualizer */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold px-0.5">
-                          <span>Salon Share (80%)</span>
-                          <span>Platform (10%)</span>
-                          <span>Agent (10%)</span>
-                        </div>
-                        <div className="h-2.5 w-full flex rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800">
-                          <div className="h-full bg-emerald-500 dark:bg-emerald-600 transition-all" style={{ width: "80%" }} />
-                          <div className="h-full bg-[#D81E5B] transition-all" style={{ width: "10%" }} />
-                          <div className="h-full bg-indigo-500 dark:bg-indigo-650 transition-all" style={{ width: "10%" }} />
+                        <div className="bg-brand/5 p-4 rounded-xl border border-brand/10">
+                          <span className="text-[10px] font-bold text-brand uppercase tracking-wider">🤝 Agent Cut</span>
+                          <h5 className="text-lg font-black text-brand mt-1">{formatLKR(booking.agent_commission_amount)}</h5>
                         </div>
                       </div>
                     </div>
@@ -428,6 +349,7 @@ export default function FinanceDashboard() {
           )}
         </div>
       </div>
+
     </div>
   );
 }

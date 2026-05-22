@@ -175,7 +175,7 @@ function AdminUserList() {
             <Download className="w-4 h-4" /> Export CSV
           </Button>
           <Button 
-            className="bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white h-10 px-4 text-sm font-medium flex items-center gap-2"
+            className="bg-brand hover:bg-brand/90 text-white h-10 px-4 text-sm font-medium flex items-center gap-2"
             onClick={() => navigate.push("/admin/users/create")}
           >
             <UserPlus className="w-4 h-4" /> Create User
@@ -246,7 +246,7 @@ function AdminUserList() {
                           <AvatarFallback>{(user.full_name || "U")[0]}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <div className="font-bold text-[#1A1C29] group-hover:text-[#D81E5B] transition-colors truncate">{user.full_name || "New Identity"}</div>
+                          <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors truncate">{user.full_name || "New Identity"}</div>
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
                             ID: {user.email.substring(0, 8).toUpperCase()}
                           </div>
@@ -266,7 +266,7 @@ function AdminUserList() {
                     <td className="px-6 py-4">
                       <Badge className={`rounded-lg px-2.5 py-0.5 text-[11px] font-bold shadow-none border-none capitalize ${
                          (user.global_role || "").includes('admin') ? 'bg-[#1A1C29] text-white' : 
-                         user.global_role === 'salon_owner' ? 'bg-[#D81E5B]/10 text-[#D81E5B]' :
+                         user.global_role === 'salon_owner' ? 'bg-brand/10 text-brand' :
                          user.global_role === 'customer' ? 'bg-zinc-100 text-zinc-600' :
                          'bg-purple-100 text-purple-600'
                       }`}>
@@ -346,7 +346,7 @@ function AdminUserList() {
                   value={editingUser?.full_name || ""}
                   onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
                   placeholder="Full legal name"
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-[#D81E5B]/20"
+                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-brand/20"
                 />
               </div>
               
@@ -365,7 +365,7 @@ function AdminUserList() {
                   value={editingUser?.phone || ""}
                   onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
                   placeholder="+94 XX XXX XXXX"
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-[#D81E5B]/20"
+                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-brand/20"
                 />
               </div>
 
@@ -375,7 +375,7 @@ function AdminUserList() {
                   value={editingUser?.global_role || "user"}
                   onValueChange={(val) => setEditingUser({ ...editingUser, global_role: val })}
                 >
-                  <SelectTrigger className="w-full h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-[#D81E5B]/20">
+                  <SelectTrigger className="w-full h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-brand/20">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -400,7 +400,7 @@ function AdminUserList() {
               <Button 
                 onClick={handleUpdateUser}
                 disabled={isUpdating}
-                className="flex-[2] bg-[#D81E5B] hover:bg-[#BF1A50] text-white h-12 rounded-xl font-bold shadow-lg shadow-[#D81E5B]/20"
+                className="flex-[2] bg-brand hover:bg-brand-hover text-white h-12 rounded-xl font-bold shadow-lg shadow-brand/20"
               >
                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
               </Button>
@@ -416,7 +416,7 @@ export default function AdminUserListPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 space-y-4">
-        <Loader2 className="w-10 h-10 text-[#D81E5B] animate-spin" />
+        <Loader2 className="w-10 h-10 text-brand animate-spin" />
         <p className="text-zinc-500 font-bold text-sm">Loading Users...</p>
       </div>
     }>

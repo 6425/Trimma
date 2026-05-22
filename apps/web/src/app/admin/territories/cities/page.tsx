@@ -119,7 +119,7 @@ export default function CityManagement() {
         {!editId && (
           <Button 
             onClick={() => { setEditId(null); setFormData({ name: "", slug: "", district_id: "" }); }}
-            className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-[#D81E5B]/20 flex items-center gap-2"
+            className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
           >
             <Plus className="w-5 h-5" /> Add New City
           </Button>
@@ -189,7 +189,7 @@ export default function CityManagement() {
                         </td>
                         <td className="px-8 py-6 text-zinc-500 font-mono text-xs">{city.slug}</td>
                         <td className="px-8 py-6 text-center">
-                          <span className="font-bold text-[#D81E5B]">
+                          <span className="font-bold text-brand">
                             {city.salons?.[0]?.count || 0}
                           </span>
                         </td>
@@ -223,7 +223,7 @@ export default function CityManagement() {
         </div>
 
         <div className="space-y-6">
-          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-[#D81E5B]' : 'bg-zinc-900'}`}>
+          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-zinc-900'}`}>
             <Navigation className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update City' : 'Create City'}</h3>
             <p className="text-white/60 text-sm mb-6">Add a specific city location to the platform.</p>
@@ -278,7 +278,7 @@ export default function CityManagement() {
                 <Button 
                   disabled={saving}
                   type="submit" 
-                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-[#D81E5B] hover:bg-zinc-100' : 'bg-[#D81E5B] hover:bg-[#BF1A50] text-white'}`}
+                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-white'}`}
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : editId ? 'Update City' : 'Save City'}
                 </Button>

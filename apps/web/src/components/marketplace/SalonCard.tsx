@@ -18,22 +18,34 @@ export interface SalonCardInternalProps {
     categories: string[];
     nextAvailable: string;
     priceFrom: number;
+    isVerified?: boolean;
   };
 }
 
 export function SalonCard(props: SalonCardInternalProps) {
   const { salon } = props;
   const linkTarget = `/salons/${salon.slug || salon.id}`;
+  const isVerified = salon.isVerified !== false; // Default to true if missing
 
   return (
-    <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col">
+    <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative">
       <div className="relative h-56 overflow-hidden bg-slate-100">
         <Image src={salon.image} alt={salon.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
-        <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-colors border border-white/20">
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent" />
+        
+        {!isVerified && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <Badge className="bg-rose-500/90 hover:bg-rose-500 text-white border-rose-400 font-black text-xs uppercase tracking-widest px-4 py-1.5 shadow-xl">
+              Not Verified
+            </Badge>
+          </div>
+        )}
+
+        <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-colors border border-white/20 z-20">
           <Heart className="w-5 h-5" />
         </button>
         {salon.status === "Open Now" && (
-          <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm">
+          <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm z-20">
             Open Now
           </div>
         )}
@@ -76,12 +88,18 @@ export function SalonCard(props: SalonCardInternalProps) {
                >
                  View
                </Link>
-               <Link 
-                 href={`${linkTarget}?action=book`}
-                 className="inline-flex items-center justify-center rounded-xl px-5 sm:px-6 bg-primary-gradient hover:opacity-95 text-white font-bold shadow-md transition-colors h-10 border-none"
-               >
-                 Book
-               </Link>
+               {isVerified ? (
+                 <Link 
+                   href={`${linkTarget}?action=book`}
+                   className="inline-flex items-center justify-center rounded-xl px-5 sm:px-6 bg-primary-gradient hover:opacity-95 text-white font-bold shadow-md transition-colors h-10 border-none"
+                 >
+                   Book
+                 </Link>
+               ) : (
+                 <div className="inline-flex items-center justify-center rounded-xl px-5 sm:px-6 bg-slate-100 text-slate-400 font-bold h-10 border-none cursor-not-allowed">
+                   Book
+                 </div>
+               )}
              </div>
           </div>
         </div>

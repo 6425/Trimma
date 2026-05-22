@@ -87,8 +87,8 @@ export default function LocationsHubPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center w-full">
-          <Badge className="bg-[#D81E5B]/15 text-[#D81E5B] border border-[#D81E5B]/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#D81E5B] mr-1.5 animate-pulse inline" /> Islandwide Discovery Hub
+          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> Islandwide Discovery Hub
           </Badge>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">
             Find Your Next Salon
@@ -200,7 +200,7 @@ export default function LocationsHubPage() {
         <div className="flex items-center justify-between mb-8 md:mb-12">
           <div>
             <h2 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
-              <MapPin className="w-7 h-7 text-[#D81E5B]" /> Explore by Province
+              <MapPin className="w-7 h-7 text-brand" /> Explore by Province
             </h2>
             <p className="text-zinc-400 text-xs md:text-sm mt-1.5 font-medium">Swipe or use controls to browse active local regions.</p>
           </div>
@@ -243,10 +243,10 @@ export default function LocationsHubPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/85 via-zinc-950/20 to-transparent flex flex-col justify-end p-6 text-white">
                   <div className="flex items-center gap-2 mb-1.5">
-                    <MapPin className="w-5 h-5 text-[#D81E5B]" />
+                    <MapPin className="w-5 h-5 text-brand" />
                     <h3 className="text-xl font-black tracking-tight">{province.name}</h3>
                   </div>
-                  <p className="text-[#D81E5B] font-bold text-sm">{province.salonCount} Active Partners</p>
+                  <p className="text-brand font-bold text-sm">{province.salonCount} Active Partners</p>
                 </div>
               </div>
               
@@ -261,7 +261,7 @@ export default function LocationsHubPage() {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center justify-between text-zinc-900 font-bold group-hover:text-[#D81E5B] transition-colors pt-4 border-t border-slate-100 mt-auto">
+                <div className="flex items-center justify-between text-zinc-900 font-bold group-hover:text-brand transition-colors pt-4 border-t border-slate-100 mt-auto">
                    Explore Region <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
@@ -273,7 +273,7 @@ export default function LocationsHubPage() {
       {/* 3. PREMIUM ADVANTAGE BLOCK */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 md:mt-36">
          <div className="bg-white rounded-3xl p-10 md:p-14 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-8 md:gap-12 text-center md:text-left">
-            <div className="w-20 h-20 rounded-2xl bg-[#D81E5B]/10 text-[#D81E5B] flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-20 h-20 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0 shadow-sm">
                <Navigation2 className="w-10 h-10 animate-pulse" />
             </div>
             <div>

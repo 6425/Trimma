@@ -221,7 +221,7 @@ export default function AdminPayments() {
           onClick={() => setActiveTab("keys")}
           className={`pb-4 px-6 font-bold text-sm border-b-2 transition-all ${
             activeTab === "keys" 
-              ? "border-[#D81E5B] text-[#D81E5B]" 
+              ? "border-brand text-brand" 
               : "border-transparent text-zinc-400 hover:text-zinc-600"
           }`}
         >
@@ -234,7 +234,7 @@ export default function AdminPayments() {
           onClick={() => setActiveTab("transactions")}
           className={`pb-4 px-6 font-bold text-sm border-b-2 transition-all ${
             activeTab === "transactions" 
-              ? "border-[#D81E5B] text-[#D81E5B]" 
+              ? "border-brand text-brand" 
               : "border-transparent text-zinc-400 hover:text-zinc-600"
           }`}
         >
@@ -246,7 +246,7 @@ export default function AdminPayments() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-zinc-100">
-          <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B] mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-brand mb-4" />
           <p className="text-zinc-500 font-bold text-sm">Accessing platform payment vault...</p>
         </div>
       ) : activeTab === "keys" ? (
@@ -258,7 +258,7 @@ export default function AdminPayments() {
             {/* Mode Switcher */}
             <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-xs space-y-4">
               <div className="flex items-center gap-3 text-[#1A1C29] font-extrabold text-sm uppercase tracking-wider">
-                <Settings className="w-5 h-5 text-[#D81E5B]" />
+                <Settings className="w-5 h-5 text-brand" />
                 <span>Environment Configuration</span>
               </div>
               <p className="text-xs text-zinc-400 font-medium">
@@ -310,7 +310,7 @@ export default function AdminPayments() {
             {/* Active Gateways Selector */}
             <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-xs space-y-4">
               <div className="flex items-center gap-3 text-[#1A1C29] font-extrabold text-sm uppercase tracking-wider">
-                <CreditCard className="w-5 h-5 text-[#D81E5B]" />
+                <CreditCard className="w-5 h-5 text-brand" />
                 <span>Active Gateways Selector</span>
               </div>
               <p className="text-xs text-zinc-400 font-medium">
@@ -319,7 +319,7 @@ export default function AdminPayments() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className={`flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer select-none transition-all ${
-                  payhereEnabled ? 'border-[#D81E5B]/20 bg-rose-50/10' : 'border-zinc-100 bg-white hover:border-zinc-200'
+                  payhereEnabled ? 'border-brand/20 bg-rose-50/10' : 'border-zinc-100 bg-white hover:border-zinc-200'
                 }`}>
                   <input
                     type="checkbox"
@@ -334,7 +334,7 @@ export default function AdminPayments() {
                 </label>
 
                 <label className={`flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer select-none transition-all ${
-                  paypalEnabled ? 'border-[#D81E5B]/20 bg-rose-50/10' : 'border-zinc-100 bg-white hover:border-zinc-200'
+                  paypalEnabled ? 'border-brand/20 bg-rose-50/10' : 'border-zinc-100 bg-white hover:border-zinc-200'
                 }`}>
                   <input
                     type="checkbox"
@@ -487,7 +487,7 @@ export default function AdminPayments() {
               <Button
                 type="button"
                 onClick={simulateTestTransaction}
-                className="w-full bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold h-11 rounded-xl shadow-lg shadow-[#D81E5B]/20 flex items-center justify-center gap-2 text-xs"
+                className="w-full bg-brand hover:bg-brand-hover text-white font-bold h-11 rounded-xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 text-xs"
               >
                 <Play className="w-4 h-4 fill-white" />
                 Trigger Sandbox Capture
@@ -555,7 +555,7 @@ export default function AdminPayments() {
                 {loadingRealPayments ? (
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center">
-                      <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B] mx-auto mb-4" />
+                      <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
                       <p className="text-zinc-400 text-xs font-semibold">Accessing live ledger...</p>
                     </td>
                   </tr>
@@ -582,7 +582,7 @@ export default function AdminPayments() {
                         <Badge className={`text-[9px] font-black uppercase tracking-widest border-none ${
                           p.provider === 'paypal' 
                             ? "bg-blue-50 text-blue-600" 
-                            : "bg-rose-50 text-[#D81E5B]"
+                            : "bg-rose-50 text-brand"
                         }`}>
                           {p.provider === 'paypal' ? 'PayPal Checkout' : 'PayHere Hosted'}
                         </Badge>

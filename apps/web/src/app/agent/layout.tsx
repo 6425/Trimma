@@ -29,8 +29,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
     {
       title: "Leads & Pipeline",
       items: [
-        { name: "My Leads", path: "/agent/leads", icon: <CheckSquare className="w-4 h-4" /> },
-        { name: "Pipeline Board", path: "/agent/pipeline", icon: <KanbanSquare className="w-4 h-4" /> },
+        { name: "My Assigned Salons", path: "/agent/leads", icon: <KanbanSquare className="w-4 h-4" /> },
       ]
     },
     {
@@ -141,7 +140,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 pb-safe z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         {[
           { name: "Home", path: "/agent", icon: <Home className="w-6 h-6" /> },
-          { name: "Pipeline", path: "/agent/pipeline", icon: <KanbanSquare className="w-6 h-6" /> },
+          { name: "My Salons", path: "/agent/leads", icon: <KanbanSquare className="w-6 h-6" /> },
           { name: "Discover", path: "/agent/discover", icon: <Map className="w-6 h-6" /> },
           { name: "Tasks", path: "/agent/tasks", icon: <PhoneCall className="w-6 h-6" /> },
           { name: "Profile", path: "/agent/profile", icon: <User className="w-6 h-6" /> },

@@ -38,7 +38,7 @@ export default function SocialMediaPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <Share2 className="w-6 h-6 text-[#D81E5B]" />
+            <Share2 className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Social Media & Integrations</h1>
@@ -83,7 +83,7 @@ export default function SocialMediaPage() {
                   </Button>
                 </>
               ) : (
-                <Button className="rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs h-10 px-5 shadow-sm flex items-center gap-1.5">
+                <Button className="rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs h-10 px-5 shadow-sm flex items-center gap-1.5">
                   <Play className="w-3.5 h-3.5" /> Setup Sync
                 </Button>
               )}

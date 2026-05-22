@@ -188,7 +188,7 @@ export default function GlobalServiceManagement() {
         </div>
         <Button 
           onClick={() => handleOpenDialog()}
-          className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-[#D81E5B]/20"
+          className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20"
         >
           <Plus className="w-5 h-5 mr-2" />
           New Global Service
@@ -203,7 +203,7 @@ export default function GlobalServiceManagement() {
               placeholder="Search master services..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-11 h-12 bg-zinc-50 border-none rounded-2xl font-medium focus:ring-2 focus:ring-[#D81E5B]/10" 
+              className="pl-11 h-12 bg-zinc-50 border-none rounded-2xl font-medium focus:ring-2 focus:ring-brand/10" 
             />
           </div>
           <Button variant="outline" className="h-12 rounded-2xl px-5 border-zinc-100 font-bold text-zinc-500">
@@ -225,7 +225,7 @@ export default function GlobalServiceManagement() {
               {loading ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-24 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B] mx-auto mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
                     <p className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Synchronizing Catalog...</p>
                   </td>
                 </tr>
@@ -256,7 +256,7 @@ export default function GlobalServiceManagement() {
                             setLoading(false);
                           }
                         }}
-                        className="bg-[#D81E5B] hover:bg-[#BF1A50] w-full"
+                        className="bg-brand hover:bg-brand-hover w-full"
                       >
                         Sync Global Templates
                       </Button>
@@ -270,7 +270,7 @@ export default function GlobalServiceManagement() {
                     <tr key={service.id} className="hover:bg-zinc-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-[#D81E5B]/10 group-hover:text-[#D81E5B] transition-colors">
+                          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
                             <IconComp className="w-6 h-6" />
                           </div>
                           <div>
@@ -430,7 +430,7 @@ export default function GlobalServiceManagement() {
               <Button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-[2] bg-[#D81E5B] hover:bg-[#BF1A50] text-white h-12 rounded-xl font-bold shadow-lg"
+                className="flex-[2] bg-brand hover:bg-brand-hover text-white h-12 rounded-xl font-bold shadow-lg"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Master Template"}
               </Button>

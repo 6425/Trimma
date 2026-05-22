@@ -21,6 +21,7 @@ export default function DashboardStaff() {
   // Modal Open States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [globalRoles, setGlobalRoles] = useState<any[]>([]);
 
   // ADD FORM STATES
   const [newName, setNewName] = useState("");
@@ -103,6 +104,25 @@ export default function DashboardStaff() {
 
       if (staffData) {
         setStaff(staffData);
+      }
+
+      // 5. Fetch Global Staff Roles
+      const { data: rolesData } = await supabase
+        .from("global_staff_roles")
+        .select("*")
+        .order("category");
+      
+      if (rolesData && rolesData.length > 0) {
+        setGlobalRoles(rolesData);
+      } else {
+        // Fallback roles if table is empty or missing
+        setGlobalRoles([
+          { role_name: "Stylist", category: "Operational" },
+          { role_name: "Barber", category: "Operational" },
+          { role_name: "Therapist", category: "Operational" },
+          { role_name: "Manager", category: "Admin" },
+          { role_name: "Reception", category: "Admin" },
+        ]);
       }
     } catch (err) {
       console.error("Failed to fetch staff:", err);
@@ -364,7 +384,7 @@ export default function DashboardStaff() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Staff</h1>
-            <Badge className="bg-rose-50 text-[#D81E5B] hover:bg-rose-50/80 border-none font-bold text-[10px] rounded-full py-0.5 px-2.5">
+            <Badge className="bg-rose-50 text-brand hover:bg-rose-50/80 border-none font-bold text-[10px] rounded-full py-0.5 px-2.5">
                {subscriptionName} Package
             </Badge>
           </div>
@@ -372,7 +392,7 @@ export default function DashboardStaff() {
         </div>
         <Button 
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-[#D81E5B] text-white hover:bg-[#BF1A50] rounded-xl font-bold px-6 h-11 shadow-md shadow-[#D81E5B]/20 self-start sm:self-auto"
+          className="bg-brand text-white hover:bg-brand-hover rounded-xl font-bold px-6 h-11 shadow-md shadow-brand/20 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Staff
@@ -386,7 +406,7 @@ export default function DashboardStaff() {
           <span>Workforce Utilization: <span className="font-bold text-zinc-900">{staff.length}</span> of <span className="font-bold text-zinc-900">{maxStaffLimit}</span> active slots occupied.</span>
         </div>
         {staff.length >= maxStaffLimit && (
-          <span className="text-xs font-bold text-[#D81E5B] flex items-center gap-1">
+          <span className="text-xs font-bold text-brand flex items-center gap-1">
              <ShieldAlert className="w-3.5 h-3.5" /> Threshold Reached
           </span>
         )}
@@ -437,7 +457,7 @@ export default function DashboardStaff() {
                            {member.working_hours.assigned_services.map((as: any) => {
                              const matchedServ = salonServices.find(s => s.id === as.service_id);
                              return (
-                               <Badge key={as.service_id} className="bg-rose-50 text-[#D81E5B] border-none font-bold text-[9px] py-0 px-2 rounded">
+                               <Badge key={as.service_id} className="bg-rose-50 text-brand border-none font-bold text-[9px] py-0 px-2 rounded">
                                  {matchedServ?.name || "Service"} ({as.commission_rate}%)
                                </Badge>
                              );
@@ -467,7 +487,7 @@ export default function DashboardStaff() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => startEditing(member)}
-                          className="rounded-lg h-9 font-bold text-xs border-zinc-200 text-zinc-700 hover:bg-[#D81E5B]/5 hover:text-[#D81E5B] hover:border-[#D81E5B]/20 flex items-center gap-1"
+                          className="rounded-lg h-9 font-bold text-xs border-zinc-200 text-zinc-700 hover:bg-brand/5 hover:text-brand hover:border-brand/20 flex items-center gap-1"
                         >
                           <Pencil className="w-3 h-3" /> Edit Info
                         </Button>
@@ -518,7 +538,7 @@ export default function DashboardStaff() {
               {/* Identity fields */}
               <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Users className="w-4 h-4 text-[#D81E5B]" /> Personal Identity
+                   <Users className="w-4 h-4 text-brand" /> Personal Identity
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5 col-span-2">
@@ -551,10 +571,16 @@ export default function DashboardStaff() {
                       onChange={(e) => setNewRole(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                     >
-                      <option value="stylist">Stylist</option>
-                      <option value="barber">Barber</option>
-                      <option value="therapist">Therapist</option>
-                      <option value="manager">Manager</option>
+                      <optgroup label="Operational">
+                        {globalRoles.filter(r => r.category === 'Operational').map(r => (
+                          <option key={r.role_name} value={r.role_name}>{r.role_name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Admin">
+                        {globalRoles.filter(r => r.category === 'Admin').map(r => (
+                          <option key={r.role_name} value={r.role_name}>{r.role_name}</option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
 
@@ -577,7 +603,7 @@ export default function DashboardStaff() {
               {/* Working attributes */}
               <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Clock className="w-4 h-4 text-[#D81E5B]" /> Operational Scheduling & Rates
+                   <Clock className="w-4 h-4 text-brand" /> Operational Scheduling & Rates
                 </h3>
                 
                 <div className="space-y-1.5">
@@ -622,7 +648,7 @@ export default function DashboardStaff() {
               {/* Certified services checklist */}
               <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Tag className="w-4 h-4 text-[#D81E5B]" /> Certify Shop Services
+                   <Tag className="w-4 h-4 text-brand" /> Certify Shop Services
                 </h3>
 
                 {salonServices.length === 0 ? (
@@ -638,7 +664,7 @@ export default function DashboardStaff() {
                               type="checkbox" 
                               checked={config.enabled}
                               onChange={(e) => handleServiceCheckboxChange(service.id, e.target.checked)}
-                              className="rounded border-zinc-300 text-[#D81E5B] focus:ring-[#D81E5B]"
+                              className="rounded border-zinc-300 text-brand focus:ring-brand"
                             />
                             <span className="text-xs font-bold text-zinc-800">{service.name}</span>
                           </label>
@@ -688,7 +714,7 @@ export default function DashboardStaff() {
               <Button 
                 type="submit" 
                 disabled={adding}
-                className="flex-1 bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-[#D81E5B]/10"
+                className="flex-1 bg-brand hover:bg-brand-hover text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
               </Button>
@@ -728,7 +754,7 @@ export default function DashboardStaff() {
               {/* Identity details */}
               <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Users className="w-4 h-4 text-[#D81E5B]" /> Personal Identity
+                   <Users className="w-4 h-4 text-brand" /> Personal Identity
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5 col-span-2">
@@ -761,10 +787,16 @@ export default function DashboardStaff() {
                       onChange={(e) => setEditRole(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                     >
-                      <option value="stylist">Stylist</option>
-                      <option value="barber">Barber</option>
-                      <option value="therapist">Therapist</option>
-                      <option value="manager">Manager</option>
+                      <optgroup label="Operational">
+                        {globalRoles.filter(r => r.category === 'Operational').map(r => (
+                          <option key={r.role_name} value={r.role_name}>{r.role_name}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Admin">
+                        {globalRoles.filter(r => r.category === 'Admin').map(r => (
+                          <option key={r.role_name} value={r.role_name}>{r.role_name}</option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
 
@@ -787,7 +819,7 @@ export default function DashboardStaff() {
               {/* Working attributes */}
               <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Clock className="w-4 h-4 text-[#D81E5B]" /> Operational Scheduling & Rates
+                   <Clock className="w-4 h-4 text-brand" /> Operational Scheduling & Rates
                 </h3>
                 
                 <div className="space-y-1.5">
@@ -832,7 +864,7 @@ export default function DashboardStaff() {
               {/* Certified services checklist */}
               <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
                 <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Tag className="w-4 h-4 text-[#D81E5B]" /> Certify Shop Services
+                   <Tag className="w-4 h-4 text-brand" /> Certify Shop Services
                 </h3>
 
                 {salonServices.length === 0 ? (
@@ -848,7 +880,7 @@ export default function DashboardStaff() {
                               type="checkbox" 
                               checked={config.enabled}
                               onChange={(e) => handleEditServiceCheckboxChange(service.id, e.target.checked)}
-                              className="rounded border-zinc-300 text-[#D81E5B] focus:ring-[#D81E5B]"
+                              className="rounded border-zinc-300 text-brand focus:ring-brand"
                             />
                             <span className="text-xs font-bold text-zinc-800">{service.name}</span>
                           </label>
@@ -901,7 +933,7 @@ export default function DashboardStaff() {
               <Button 
                 type="submit" 
                 disabled={adding}
-                className="flex-1 bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-[#D81E5B]/10"
+                className="flex-1 bg-brand hover:bg-brand-hover text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
               </Button>

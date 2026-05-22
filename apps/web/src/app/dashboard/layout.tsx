@@ -186,7 +186,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Lead Mgmt", href: "/admin/leads", icon: <MapPin className="w-4 h-4" /> },
     { name: "Agent Mgmt", href: "/admin/agents", icon: <UserPlus className="w-4 h-4" /> },
     { name: "Payments", href: "/admin/payments", icon: <DollarSign className="w-4 h-4" /> },
-    { name: "Commission Mgmt", href: "/admin/commissions", icon: <CreditCard className="w-4 h-4" /> },
+    { name: "Finance & Commission", href: "/admin/finance", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Branding Settings", href: "/admin/branding", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Admin Profile", href: "/admin/profile", icon: <User className="w-4 h-4" /> },
     { name: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" /> },
@@ -244,7 +244,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           href={child.href}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${
                             isActive(child.href)
-                              ? "text-[#D81E5B] bg-[#D81E5B]/5"
+                              ? "text-brand bg-brand/5"
                               : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                           }`}
                         >

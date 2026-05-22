@@ -28,7 +28,7 @@ const FONT_FAMILIES = [
 
 // SVG Logo Presets
 const SVG_PRESETS = {
-  crown: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="46" fill="url(#logo-grad-bg)" stroke="#D81E5B" strokeWidth="3" /><circle cx="50" cy="50" r="38" fill="rgba(24, 24, 27, 0.95)" /><path d="M36 42 L42 48 L50 38 L58 48 L64 42 L60 62 L40 62 Z" fill="url(#logo-crown-grad)" opacity="0.9"/><path d="M44 52 L36 68 M56 52 L64 68" stroke="#D81E5B" strokeWidth="4.5" strokeLinecap="round" /><circle cx="36" cy="68" r="4.5" stroke="#D81E5B" strokeWidth="3" /><circle cx="64" cy="68" r="4.5" stroke="#D81E5B" strokeWidth="3" /><circle cx="50" cy="54" r="3" fill="#ffffff" /><defs><linearGradient id="logo-grad-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#D81E5B" /><stop offset="100%" stopColor="#18181b" /></linearGradient><linearGradient id="logo-crown-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>`,
+  crown: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="46" fill="url(#logo-grad-bg)" stroke="var(--color-brand)" strokeWidth="3" /><circle cx="50" cy="50" r="38" fill="rgba(24, 24, 27, 0.95)" /><path d="M36 42 L42 48 L50 38 L58 48 L64 42 L60 62 L40 62 Z" fill="url(#logo-crown-grad)" opacity="0.9"/><path d="M44 52 L36 68 M56 52 L64 68" stroke="var(--color-brand)" strokeWidth="4.5" strokeLinecap="round" /><circle cx="36" cy="68" r="4.5" stroke="var(--color-brand)" strokeWidth="3" /><circle cx="64" cy="68" r="4.5" stroke="var(--color-brand)" strokeWidth="3" /><circle cx="50" cy="54" r="3" fill="#ffffff" /><defs><linearGradient id="logo-grad-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--color-brand)" /><stop offset="100%" stopColor="#18181b" /></linearGradient><linearGradient id="logo-crown-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>`,
   comb_scissors: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="46" fill="#18181b" stroke="#f59e0b" strokeWidth="3" /><circle cx="50" cy="50" r="38" fill="rgba(24, 24, 27, 0.95)" /><path d="M38 32 L62 68 M62 32 L38 68" stroke="#f59e0b" strokeWidth="4.5" strokeLinecap="round"/><circle cx="38" cy="68" r="5" stroke="#f59e0b" strokeWidth="3"/><circle cx="62" cy="68" r="5" stroke="#f59e0b" strokeWidth="3"/><path d="M30 50 H70" stroke="#f59e0b" strokeWidth="3" strokeDasharray="3,3"/><circle cx="50" cy="50" r="4" fill="#ffffff"/></svg>`,
   sparkles: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="46" fill="rgba(24, 24, 27, 0.95)" stroke="#10b981" strokeWidth="3" /><path d="M50 20 L55 38 L73 43 L55 48 L50 66 L45 48 L27 43 L45 38 Z" fill="#10b981"/><circle cx="70" cy="30" r="4" fill="#60a5fa"/><circle cx="30" cy="65" r="3" fill="#60a5fa"/></svg>`
 };
@@ -41,7 +41,7 @@ export default function AdminBrandingPage() {
   const [logoName, setLogoName] = useState("Trimma");
   const [logoNameFontFamily, setLogoNameFontFamily] = useState("Outfit");
   const [logoNameFontSize, setLogoNameFontSize] = useState(22);
-  const [logoNameColor, setLogoNameColor] = useState("#D81E5B");
+  const [logoNameColor, setLogoNameColor] = useState("var(--color-brand)");
 
   // Tagline Typography State
   const [logoTagline, setLogoTagline] = useState("Sri Lanka's Premium Grooming Marketplace");
@@ -81,7 +81,7 @@ export default function AdminBrandingPage() {
           setLogoName(data.logo_name || "Trimma");
           setLogoNameFontFamily(data.logo_name_font_family || "Outfit");
           setLogoNameFontSize(data.logo_name_font_size || 22);
-          setLogoNameColor(data.logo_name_color || "#D81E5B");
+          setLogoNameColor(data.logo_name_color || "var(--color-brand)");
           
           setLogoTagline(data.logo_tagline || "");
           setLogoTaglineFontFamily(data.logo_tagline_font_family || "Inter");
@@ -294,7 +294,7 @@ export default function AdminBrandingPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D81E5B]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand"></div>
         <p className="text-sm text-zinc-500 font-bold">Synchronizing branding variables...</p>
       </div>
     );
@@ -307,7 +307,7 @@ export default function AdminBrandingPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2.5">
-            <Palette className="w-8 h-8 text-[#D81E5B]" />
+            <Palette className="w-8 h-8 text-brand" />
             Branding Settings Dashboard
           </h1>
           <p className="text-sm text-zinc-500 mt-1">Configure global application typography scale, logo vectoring, and custom images.</p>
@@ -321,7 +321,7 @@ export default function AdminBrandingPage() {
           
           {/* Playground Card */}
           <div className="bg-zinc-950 rounded-2xl p-6 text-white space-y-6 shadow-md border border-zinc-850 relative overflow-hidden flex flex-col items-center justify-center min-h-[220px]">
-            <div className="absolute right-0 top-0 w-36 h-36 bg-[#D81E5B]/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute right-0 top-0 w-36 h-36 bg-brand/10 rounded-full blur-2xl pointer-events-none"></div>
             <span className="absolute top-4 left-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">
               Live Header Preview
             </span>
@@ -447,7 +447,7 @@ export default function AdminBrandingPage() {
           {/* UPLOAD & IMAGE CROPPING PORTAL */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
             <h3 className="font-extrabold text-zinc-900 text-base flex items-center gap-2 border-b pb-2">
-              <Upload className="w-5 h-5 text-[#D81E5B]" />
+              <Upload className="w-5 h-5 text-brand" />
               Image Logo & Icon Studio
             </h3>
 
@@ -539,7 +539,7 @@ export default function AdminBrandingPage() {
               <div className="space-y-4">
                 {cropPreview ? (
                   <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-4">
-                    <span className="inline-flex bg-[#D81E5B]/15 text-[#D81E5B] text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest">
+                    <span className="inline-flex bg-brand/15 text-brand text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-widest">
                       Adjust Image Placement
                     </span>
 
@@ -556,7 +556,7 @@ export default function AdminBrandingPage() {
                         step="0.05"
                         value={cropZoom} 
                         onChange={(e) => setCropZoom(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#D81E5B]"
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand"
                       />
                     </div>
 
@@ -595,7 +595,7 @@ export default function AdminBrandingPage() {
                     <Button 
                       type="button" 
                       onClick={performCrop}
-                      className="w-full bg-[#D81E5B] hover:bg-[#c2144d] text-white rounded-xl font-bold h-10 flex items-center justify-center gap-2 shadow-sm text-xs"
+                      className="w-full bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-10 flex items-center justify-center gap-2 shadow-sm text-xs"
                     >
                       <Crop className="w-4 h-4" /> Apply & Lock Crop
                     </Button>
@@ -621,7 +621,7 @@ export default function AdminBrandingPage() {
             {/* 1. Title Typography */}
             <div className="space-y-4">
               <h3 className="font-extrabold text-zinc-900 text-base flex items-center gap-2 border-b pb-2">
-                <Type className="w-5 h-5 text-[#D81E5B]" />
+                <Type className="w-5 h-5 text-brand" />
                 1. Logo Title Typography (Text-Mode Fallback)
               </h3>
               
@@ -668,7 +668,7 @@ export default function AdminBrandingPage() {
                     />
                     <input 
                       type="color" 
-                      value={logoNameColor.length === 7 ? logoNameColor : "#D81E5B"} 
+                      value={logoNameColor.length === 7 ? logoNameColor : "var(--color-brand)"} 
                       onChange={(e) => setLogoNameColor(e.target.value)}
                       className="w-1/3 h-10 border border-slate-200 rounded-xl cursor-pointer p-0 bg-transparent"
                     />
@@ -680,7 +680,7 @@ export default function AdminBrandingPage() {
             {/* 2. Tagline Typography */}
             <div className="space-y-4 pt-2">
               <h3 className="font-extrabold text-zinc-900 text-base flex items-center gap-2 border-b pb-2">
-                <Sliders className="w-5 h-5 text-[#D81E5B]" />
+                <Sliders className="w-5 h-5 text-brand" />
                 2. Tagline Typography (Text-Mode Fallback)
               </h3>
               
@@ -738,7 +738,7 @@ export default function AdminBrandingPage() {
             {/* 3. Custom SVG Vector Upload & Editor */}
             <div className="space-y-4 pt-2">
               <h3 className="font-extrabold text-zinc-900 text-base flex items-center gap-2 border-b pb-2">
-                <Layers className="w-5 h-5 text-[#D81E5B]" />
+                <Layers className="w-5 h-5 text-brand" />
                 3. Custom Logo Icon Upload
               </h3>
               

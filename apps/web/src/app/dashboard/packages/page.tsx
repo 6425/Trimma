@@ -35,7 +35,7 @@ export default function PackagesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <Tag className="w-6 h-6 text-[#D81E5B]" />
+            <Tag className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Service Packages & Deals</h1>
@@ -43,14 +43,14 @@ export default function PackagesPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#D81E5B]/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Plus className="w-3.5 h-3.5" /> Create Package
         </Button>
       </div>
 
       {/* Package Quota Alert */}
       <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-[#D81E5B] shrink-0 mt-0.5" />
+        <AlertCircle className="w-5 h-5 text-brand shrink-0 mt-0.5" />
         <div>
           <h4 className="text-xs font-bold text-zinc-800">Subscription Package Limit</h4>
           <p className="text-[10px] text-zinc-500 mt-1">
@@ -82,7 +82,7 @@ export default function PackagesPage() {
                 <ul className="space-y-1.5">
                   {pkg.services.map((srv, sIdx) => (
                     <li key={sIdx} className="flex items-center gap-2 text-xs font-medium text-zinc-600">
-                      <CheckCircle className="w-3.5 h-3.5 text-[#D81E5B] shrink-0" />
+                      <CheckCircle className="w-3.5 h-3.5 text-brand shrink-0" />
                       {srv}
                     </li>
                   ))}
@@ -95,7 +95,7 @@ export default function PackagesPage() {
                 <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mb-1">
                   <Percent className="w-2.5 h-2.5 inline mr-0.5" /> {pkg.saving}
                 </span>
-                <div className="text-xl font-black text-[#D81E5B]">{pkg.price}</div>
+                <div className="text-xl font-black text-brand">{pkg.price}</div>
               </div>
               
               <Button variant="outline" className="rounded-xl border-zinc-200 hover:bg-zinc-50 font-bold text-xs">

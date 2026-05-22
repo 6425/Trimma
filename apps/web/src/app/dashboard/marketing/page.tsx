@@ -17,7 +17,7 @@ export default function MarketingPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-[#D81E5B]" />
+            <Sparkles className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Marketing Campaigns</h1>
@@ -25,7 +25,7 @@ export default function MarketingPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#D81E5B]/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Plus className="w-3.5 h-3.5" /> Launch Campaign
         </Button>
       </div>
@@ -45,11 +45,11 @@ export default function MarketingPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Promo Conversions</span>
           <h3 className="text-xl font-black text-[#1A1C29] mt-1">164 Bookings</h3>
-          <span className="text-[9px] font-semibold text-[#D81E5B] bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">3.8% Click-Through</span>
+          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">3.8% Click-Through</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Generated Revenue ROI</span>
-          <h3 className="text-xl font-black text-[#D81E5B] mt-1">LKR 288,000</h3>
+          <h3 className="text-xl font-black text-brand mt-1">LKR 288,000</h3>
           <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Direct attribution</span>
         </div>
       </div>
@@ -57,7 +57,7 @@ export default function MarketingPage() {
       {/* Campaigns list */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
         <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-[#D81E5B]" />
+          <BarChart3 className="w-4 h-4 text-brand" />
           Historical Campaigns & ROI Analytics
         </h3>
 
@@ -87,7 +87,7 @@ export default function MarketingPage() {
                   <td className="px-6 py-4">{c.sent} clients</td>
                   <td className="px-6 py-4 text-zinc-800 font-bold">{c.opened}</td>
                   <td className="px-6 py-4 text-zinc-800 font-bold">{c.conversions} bookings</td>
-                  <td className="px-6 py-4 text-right text-[#D81E5B] font-black">{c.roi}</td>
+                  <td className="px-6 py-4 text-right text-brand font-black">{c.roi}</td>
                 </tr>
               ))}
             </tbody>

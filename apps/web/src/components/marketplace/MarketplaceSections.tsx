@@ -23,6 +23,7 @@ interface Salon {
   nextAvailable: string;
   priceFrom: number;
   featured?: boolean;
+  isVerified?: boolean;
 }
 
 interface MarketplaceSectionsProps {
@@ -59,10 +60,12 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {featured.map(salon => {
           const linkTarget = `/salons/${salon.slug || salon.id}`;
+          const isVerified = salon.isVerified !== false;
+          
           return (
             <div 
               key={salon.id} 
-              className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group"
+              className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative"
             >
               <div className="h-52 relative overflow-hidden bg-slate-100">
                 <Image 
@@ -73,7 +76,16 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                   className="object-cover group-hover:scale-105 transition-transform duration-700" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent" />
-                <div className="absolute top-3 left-3 flex gap-2">
+                
+                {!isVerified && (
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+                    <Badge className="bg-rose-500/90 hover:bg-rose-500 text-white border-rose-400 font-black text-xs uppercase tracking-widest px-4 py-1.5 shadow-xl">
+                      Not Verified
+                    </Badge>
+                  </div>
+                )}
+                
+                <div className="absolute top-3 left-3 flex gap-2 z-20">
                   <Badge className="bg-amber-500 font-extrabold border-none shadow-sm text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
                     <Star className="w-3 h-3 mr-1 fill-white" /> Featured Elite
                   </Badge>
@@ -123,12 +135,18 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                     >
                       Details
                     </Link>
-                    <Link 
-                      href={`${linkTarget}?action=book`}
-                      className="inline-flex items-center justify-center rounded-xl px-4 bg-primary-gradient hover:opacity-95 text-white text-xs font-black shadow-md shadow-brand-pink/15 transition-all h-9 border-none"
-                    >
-                      Book Now
-                    </Link>
+                    {isVerified ? (
+                      <Link 
+                        href={`${linkTarget}?action=book`}
+                        className="inline-flex items-center justify-center rounded-xl px-4 bg-primary-gradient hover:opacity-95 text-white text-xs font-black shadow-md shadow-brand-pink/15 transition-all h-9 border-none"
+                      >
+                        Book Now
+                      </Link>
+                    ) : (
+                      <div className="inline-flex items-center justify-center rounded-xl px-4 bg-slate-100 text-slate-400 text-xs font-black h-9 border-none cursor-not-allowed">
+                        Book Now
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -244,7 +262,7 @@ export function DiscountsOffersSection() {
                 <div className="bg-slate-100 border border-dashed border-slate-300 px-3 py-1.5 rounded-xl font-mono text-xs font-black text-zinc-800 tracking-wider">
                   {offer.code}
                 </div>
-                <span className="text-[10px] font-extrabold text-[#D81E5B] uppercase tracking-wider">{offer.expiry}</span>
+                <span className="text-[10px] font-extrabold text-brand uppercase tracking-wider">{offer.expiry}</span>
               </div>
             </div>
           </div>
@@ -313,7 +331,7 @@ export function SalonOnboardingCTA() {
         <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_70%_120%,rgba(216,30,91,0.15),transparent_60%)]" />
         
         <div className="relative z-10 max-w-2xl">
-          <Badge className="bg-[#D81E5B]/15 text-[#D81E5B] border border-[#D81E5B]/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
             Trimma OS SaaS Multi-Tenancy
           </Badge>
           
@@ -327,7 +345,7 @@ export function SalonOnboardingCTA() {
           <div className="flex flex-wrap gap-4">
             <Link 
               href="/signup?role=salon_owner"
-              className="inline-flex items-center justify-center rounded-xl bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white font-extrabold text-sm h-11 px-6 shadow-lg shadow-brand-pink/20 transition-all border-none"
+              className="inline-flex items-center justify-center rounded-xl bg-brand hover:bg-brand/90 text-white font-extrabold text-sm h-11 px-6 shadow-lg shadow-brand-pink/20 transition-all border-none"
             >
               List Your Salon Now <ArrowRight className="w-4 h-4 ml-2" />
             </Link>

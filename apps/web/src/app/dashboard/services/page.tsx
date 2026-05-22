@@ -331,7 +331,7 @@ export default function DashboardServices() {
       {subscriptionPlan && (
         <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#D81E5B]/10 flex items-center justify-center text-[#D81E5B] font-bold">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand font-bold">
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
             <div>
@@ -361,12 +361,12 @@ export default function DashboardServices() {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 
             onClick={() => setShowImportModal(true)}
-            className="flex-1 md:flex-none border border-[#D81E5B] bg-white text-[#D81E5B] hover:bg-rose-50 rounded-xl font-bold px-6 h-11 transition-all"
+            className="flex-1 md:flex-none border border-brand bg-white text-brand hover:bg-rose-50 rounded-xl font-bold px-6 h-11 transition-all"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
           </Button>
-          <Button className="flex-1 md:flex-none bg-[#D81E5B] text-white hover:bg-[#BF1A50] rounded-xl font-bold px-6 h-11">
+          <Button className="flex-1 md:flex-none bg-brand text-white hover:bg-brand-hover rounded-xl font-bold px-6 h-11">
             <Plus className="w-4 h-4 mr-2" />
             Add Custom Service
           </Button>
@@ -386,7 +386,7 @@ export default function DashboardServices() {
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         {loading ? (
           <div className="py-24 flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B] mb-2" />
+            <Loader2 className="w-8 h-8 animate-spin text-brand mb-2" />
             <p className="text-zinc-400 font-medium font-sans">Syncing service database...</p>
           </div>
         ) : filteredServices.length === 0 ? (
@@ -400,7 +400,7 @@ export default function DashboardServices() {
             </p>
             <Button 
               onClick={() => setShowImportModal(true)}
-              className="bg-[#D81E5B] text-white hover:bg-[#BF1A50] rounded-xl font-bold"
+              className="bg-brand text-white hover:bg-brand-hover rounded-xl font-bold"
             >
               <Sparkles className="w-4 h-4 mr-2" /> Import from Master Catalog
             </Button>
@@ -431,7 +431,7 @@ export default function DashboardServices() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-500">{service.duration_min} mins</td>
-                    <td className="px-6 py-4 text-sm font-black text-[#D81E5B]">LKR {parseFloat(service.price).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-black text-brand">LKR {parseFloat(service.price).toLocaleString()}</td>
                     <td className="px-6 py-4">
                       <Badge className={service.status === 'active' ? "bg-emerald-50 text-emerald-600 border-none" : "bg-zinc-100 text-zinc-400 border-none"}>
                         {service.status === 'active' ? "Active" : "Inactive"}
@@ -443,7 +443,7 @@ export default function DashboardServices() {
                           onClick={() => openEditModal(service)}
                           variant="ghost" 
                           size="icon" 
-                          className="w-8 h-8 rounded-lg text-zinc-400 hover:bg-rose-50 hover:text-[#D81E5B]"
+                          className="w-8 h-8 rounded-lg text-zinc-400 hover:bg-rose-50 hover:text-brand"
                         >
                           <Edit2 className="w-3 h-3" />
                         </Button>
@@ -474,11 +474,11 @@ export default function DashboardServices() {
             <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
               <div>
                 <h3 className="text-xl font-extrabold text-[#1A1C29] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#D81E5B]" />
+                  <Sparkles className="w-5 h-5 text-brand" />
                   Import Master Catalog Services
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">
-                  Showing service categories permitted under your <span className="font-extrabold text-[#D81E5B]">{subscriptionPlan?.name || "Tier Limit"}</span>.
+                  Showing service categories permitted under your <span className="font-extrabold text-brand">{subscriptionPlan?.name || "Tier Limit"}</span>.
                 </p>
               </div>
               <Button 
@@ -498,7 +498,7 @@ export default function DashboardServices() {
                   onClick={() => setActiveCategoryTab(cat.id)}
                   className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap ${
                     activeCategoryTab === cat.id 
-                    ? "bg-[#D81E5B] text-white shadow-md shadow-[#D81E5B]/20" 
+                    ? "bg-brand text-white shadow-md shadow-brand/20" 
                     : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
                   }`}
                 >
@@ -529,7 +529,7 @@ export default function DashboardServices() {
                         key={s.id} 
                         className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 select-none ${
                           isChecked 
-                          ? "bg-rose-50/50 border-[#D81E5B] shadow-sm" 
+                          ? "bg-rose-50/50 border-brand shadow-sm" 
                           : "bg-white border-zinc-100 hover:border-zinc-200"
                         }`}
                       >
@@ -538,7 +538,7 @@ export default function DashboardServices() {
                             type="checkbox" 
                             checked={isChecked}
                             onChange={() => handleToggleSelect(s.id)}
-                            className="mt-1 w-4 h-4 rounded border-zinc-300 text-[#D81E5B] focus:ring-[#D81E5B] accent-[#D81E5B] cursor-pointer"
+                            className="mt-1 w-4 h-4 rounded border-zinc-300 text-brand focus:ring-brand accent-brand cursor-pointer"
                           />
                           <div className="min-w-0" onClick={() => handleToggleSelect(s.id)}>
                             <h4 className="font-bold text-sm text-zinc-800 flex items-center gap-1.5 cursor-pointer">
@@ -597,7 +597,7 @@ export default function DashboardServices() {
                 <Button 
                   onClick={handleImportAndPublish}
                   disabled={importing}
-                  className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl font-bold h-11 px-6 shadow-lg shadow-[#D81E5B]/20"
+                  className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
                 >
                   {importing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
                   Publish Selected Services
@@ -616,7 +616,7 @@ export default function DashboardServices() {
             {/* Modal Header */}
             <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-[#D81E5B]">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-brand">
                   <Scissors className="w-5 h-5" />
                 </div>
                 <div>
@@ -641,7 +641,7 @@ export default function DashboardServices() {
                   required
                   value={editForm.name}
                   onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="h-11 rounded-xl border-zinc-200 font-bold text-zinc-800 focus:ring-[#D81E5B]"
+                  className="h-11 rounded-xl border-zinc-200 font-bold text-zinc-800 focus:ring-brand"
                 />
               </div>
 
@@ -674,7 +674,7 @@ export default function DashboardServices() {
                   <select 
                     value={editForm.category}
                     onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full h-11 border border-zinc-200 bg-white px-4 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#D81E5B]"
+                    className="w-full h-11 border border-zinc-200 bg-white px-4 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand"
                   >
                     {allowedCategories.map(cat => (
                       <option key={cat.id} value={cat.name}>{cat.name}</option>
@@ -689,7 +689,7 @@ export default function DashboardServices() {
                   <select 
                     value={editForm.status}
                     onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value }))}
-                    className="w-full h-11 border border-zinc-200 bg-white px-4 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#D81E5B]"
+                    className="w-full h-11 border border-zinc-200 bg-white px-4 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand"
                   >
                     <option value="active">Active & Bookable</option>
                     <option value="inactive">Inactive / Paused</option>
@@ -700,7 +700,7 @@ export default function DashboardServices() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5 relative">
                   <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
-                    Discount % <Sparkles className="w-3 h-3 text-[#D81E5B]" />
+                    Discount % <Sparkles className="w-3 h-3 text-brand" />
                   </label>
                   {!hasDiscountFeature && (
                     <div className="absolute top-0 right-0 -mt-1">
@@ -714,7 +714,7 @@ export default function DashboardServices() {
                     disabled={!hasDiscountFeature}
                     value={editForm.discount_percentage}
                     onChange={(e) => setEditForm(prev => ({ ...prev, discount_percentage: e.target.value }))}
-                    className={`h-11 rounded-xl border-zinc-200 font-bold ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-emerald-600 focus:ring-[#D81E5B]'}`}
+                    className={`h-11 rounded-xl border-zinc-200 font-bold ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-emerald-600 focus:ring-brand'}`}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -724,7 +724,7 @@ export default function DashboardServices() {
                     disabled={!hasDiscountFeature}
                     value={editForm.discount_end_date}
                     onChange={(e) => setEditForm(prev => ({ ...prev, discount_end_date: e.target.value }))}
-                    className={`h-11 rounded-xl border-zinc-200 ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-zinc-800 focus:ring-[#D81E5B]'}`}
+                    className={`h-11 rounded-xl border-zinc-200 ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-zinc-800 focus:ring-brand'}`}
                   />
                 </div>
               </div>
@@ -736,7 +736,7 @@ export default function DashboardServices() {
                   value={editForm.description}
                   onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Tell clients about this service..."
-                  className="w-full border border-zinc-200 bg-white p-4 rounded-xl font-sans text-xs focus:outline-none focus:ring-1 focus:ring-[#D81E5B] leading-relaxed"
+                  className="w-full border border-zinc-200 bg-white p-4 rounded-xl font-sans text-xs focus:outline-none focus:ring-1 focus:ring-brand leading-relaxed"
                 />
               </div>
 
@@ -753,7 +753,7 @@ export default function DashboardServices() {
                 <Button 
                   type="submit"
                   disabled={updating}
-                  className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl font-bold h-11 px-6 shadow-lg shadow-[#D81E5B]/20"
+                  className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
                 >
                   {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Save & Publish Changes

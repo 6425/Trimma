@@ -19,7 +19,7 @@ export default function CalendarPage() {
   ];
 
   const mockBookings = [
-    { hour: "10:00 AM", day: "19", client: "Amara Perera", service: "Premium Haircut", color: "bg-rose-50 border-rose-200 text-[#D81E5B]" },
+    { hour: "10:00 AM", day: "19", client: "Amara Perera", service: "Premium Haircut", color: "bg-rose-50 border-rose-200 text-brand" },
     { hour: "01:00 PM", day: "19", client: "Kasun Silva", service: "Beard Grooming", color: "bg-amber-50 border-amber-200 text-amber-700" },
     { hour: "03:00 PM", day: "21", client: "Nisansala De Silva", service: "Nail Art Studio", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
     { hour: "05:00 PM", day: "19", client: "Dilan Fernando", service: "Hair Coloring", color: "bg-purple-50 border-purple-200 text-purple-700" }
@@ -31,7 +31,7 @@ export default function CalendarPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <CalendarIcon className="w-6 h-6 text-[#D81E5B]" />
+            <CalendarIcon className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Active Bookings Calendar</h1>
@@ -43,7 +43,7 @@ export default function CalendarPage() {
           <Button variant="outline" className="h-10 rounded-xl font-bold text-xs flex items-center gap-1.5 border-zinc-200">
             <Filter className="w-3.5 h-3.5" /> Filter Stylists
           </Button>
-          <Button className="h-10 rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#D81E5B]/20">
+          <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
             <Plus className="w-3.5 h-3.5" /> Book Appointment
           </Button>
         </div>
@@ -60,7 +60,7 @@ export default function CalendarPage() {
               <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200"><ChevronRight className="w-4 h-4" /></Button>
             </div>
           </div>
-          <span className="bg-rose-50 text-[#D81E5B] font-bold text-[10px] px-3.5 py-1 rounded-full uppercase tracking-wider">Weekly View</span>
+          <span className="bg-rose-50 text-brand font-bold text-[10px] px-3.5 py-1 rounded-full uppercase tracking-wider">Weekly View</span>
         </div>
 
         {/* Calendar Core */}
@@ -70,7 +70,7 @@ export default function CalendarPage() {
           {days.map((day, idx) => (
             <div key={idx} className={`p-4 ${day.isToday ? "bg-rose-50/20" : ""} flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{day.name}</span>
-              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-black mt-1 ${day.isToday ? "bg-[#D81E5B] text-white shadow-md shadow-[#D81E5B]/20" : "text-zinc-800"}`}>
+              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-black mt-1 ${day.isToday ? "bg-brand text-white shadow-md shadow-brand/20" : "text-zinc-800"}`}>
                 {day.date}
               </span>
             </div>

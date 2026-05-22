@@ -1,14 +1,29 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Search, MoreHorizontal, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { 
+  sendWhatsAppNotification, 
+  sendWhatsAppCancellationNotification, 
+  sendReviewRequestAlert 
+} from "@/app/actions/whatsapp";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 
-// Custom Dropdown Action Menu for Lifecycle Operations
+import { ChevronDown } from "lucide-react";
+
+// Context-Aware Action Menu — only shows valid actions based on current booking status
 const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onAction: (id: string, action: string) => void, processingId: string | null }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -29,41 +44,94 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   };
 
   const isProcessing = processingId === booking.id;
+  const status = (booking.status || 'pending').toLowerCase();
+  const paymentStatus = (booking.payment_status || 'unpaid').toLowerCase();
+
+  // Build context-aware lifecycle actions based on current status
+  const lifecycleActions: { key: string; label: string; color: string; hoverBg: string }[] = [];
+
+  if (status === 'pending') {
+    lifecycleActions.push({ key: 'confirm', label: 'Confirm Booking', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
+    lifecycleActions.push({ key: 'reschedule', label: 'Reschedule', color: 'text-blue-700', hoverBg: 'hover:bg-blue-50' });
+  }
+  if (status === 'confirmed') {
+    lifecycleActions.push({ key: 'in_progress', label: 'Start Service', color: 'text-indigo-700', hoverBg: 'hover:bg-indigo-50' });
+    lifecycleActions.push({ key: 'reschedule', label: 'Reschedule', color: 'text-blue-700', hoverBg: 'hover:bg-blue-50' });
+    lifecycleActions.push({ key: 'no_show', label: 'Mark No-Show', color: 'text-amber-700', hoverBg: 'hover:bg-amber-50' });
+    lifecycleActions.push({ key: 'cancel', label: 'Cancel Booking', color: 'text-rose-600', hoverBg: 'hover:bg-rose-50' });
+  }
+  if (status === 'in_progress') {
+    lifecycleActions.push({ key: 'complete', label: 'Complete Service', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
+  }
+
+  // Build context-aware payment actions
+  const paymentActions: { key: string; label: string; color: string; hoverBg: string }[] = [];
+
+  if (paymentStatus === 'unpaid') {
+    paymentActions.push({ key: 'reservation_paid', label: 'Mark Reserved Comm.', color: 'text-amber-700', hoverBg: 'hover:bg-amber-50' });
+  }
+  if (paymentStatus === 'unpaid' || paymentStatus === 'reservation_paid') {
+    paymentActions.push({ key: 'mark_paid', label: 'Mark Fully Paid', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
+  }
+
+  const isTerminal = ['completed', 'canceled', 'no_show'].includes(status);
 
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
-      <div className="flex items-center justify-end gap-1">
-        <Button variant="outline" size="sm" className="h-8 text-xs font-bold px-3 border-zinc-200">
-          <Eye className="w-3 h-3 mr-1.5" /> View
-        </Button>
+      <div className="flex items-center justify-end">
         <Button 
-          variant="ghost" 
-          size="icon" 
+          variant="outline" 
+          size="sm" 
           onClick={() => setOpen(!open)} 
-          className="h-8 w-8 text-zinc-500 hover:bg-slate-100 shrink-0"
+          className="h-8 text-xs font-bold px-3 border-zinc-200 text-zinc-700 hover:text-zinc-900 hover:bg-slate-50 shrink-0"
           disabled={isProcessing}
         >
-          {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoreHorizontal className="w-4 h-4" />}
+          {isProcessing ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
+          Action <ChevronDown className="w-3 h-3 ml-1.5 opacity-70" />
         </Button>
       </div>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200 origin-top-right">
+        <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200 origin-top-right">
           <div className="py-1 flex flex-col">
-            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Lifecycle Operations</div>
-            <button onClick={() => handleFire('confirm')} className="w-full text-left px-4 py-2 text-xs hover:bg-emerald-50 text-emerald-700 font-bold transition-colors">Confirm</button>
-            <button onClick={() => handleFire('check_in')} className="w-full text-left px-4 py-2 text-xs hover:bg-blue-50 text-blue-700 font-bold transition-colors">Check-In</button>
-            <button onClick={() => handleFire('start_service')} className="w-full text-left px-4 py-2 text-xs hover:bg-indigo-50 text-indigo-700 font-bold transition-colors">Start Service</button>
-            <button onClick={() => handleFire('complete')} className="w-full text-left px-4 py-2 text-xs hover:bg-slate-50 text-zinc-900 font-bold transition-colors">Complete Service</button>
-            
-            <div className="h-px bg-slate-100 my-1 mx-2" />
-            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Payment</div>
-            <button onClick={() => handleFire('mark_paid')} className="w-full text-left px-4 py-2 text-xs hover:bg-emerald-50 text-emerald-600 font-bold transition-colors">Mark as Paid</button>
-            
-            <div className="h-px bg-slate-100 my-1 mx-2" />
-            <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Exceptions</div>
-            <button onClick={() => handleFire('no_show')} className="w-full text-left px-4 py-2 text-xs hover:bg-amber-50 text-amber-700 font-bold transition-colors">Mark No Show</button>
-            <button onClick={() => handleFire('decline')} className="w-full text-left px-4 py-2 text-xs hover:bg-rose-50 text-rose-600 font-bold transition-colors">Decline / Cancel</button>
+            {/* Always available: View */}
+            <button onClick={() => handleFire('view')} className="w-full flex items-center px-4 py-2 text-xs hover:bg-slate-50 text-zinc-700 font-bold transition-colors">
+              <Eye className="w-3 h-3 mr-2" /> View Booking
+            </button>
+
+            {/* Lifecycle actions — only if not terminal */}
+            {lifecycleActions.length > 0 && (
+              <>
+                <div className="h-px bg-slate-100 my-1 mx-2" />
+                <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Booking Status</div>
+                {lifecycleActions.map((a) => (
+                  <button key={a.key} onClick={() => handleFire(a.key)} className={`w-full text-left px-4 py-2 text-xs ${a.hoverBg} ${a.color} font-bold transition-colors`}>
+                    {a.label}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Payment actions — show unless fully paid/refunded */}
+            {paymentActions.length > 0 && !['paid', 'refunded'].includes(paymentStatus) && (
+              <>
+                <div className="h-px bg-slate-100 my-1 mx-2" />
+                <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Payment</div>
+                {paymentActions.map((a) => (
+                  <button key={a.key} onClick={() => handleFire(a.key)} className={`w-full text-left px-4 py-2 text-xs ${a.hoverBg} ${a.color} font-bold transition-colors`}>
+                    {a.label}
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Terminal state indicator */}
+            {isTerminal && lifecycleActions.length === 0 && (
+              <>
+                <div className="h-px bg-slate-100 my-1 mx-2" />
+                <div className="px-3 py-2 text-[10px] font-bold text-zinc-400 italic">No further actions available</div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -73,6 +141,7 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
 
 
 export default function DashboardBookings() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -120,22 +189,50 @@ export default function DashboardBookings() {
   }, []);
 
   const handleBookingLifecycleAction = async (bookingId: string, action: string) => {
+    if (action === 'view') {
+      router.push(`/dashboard/bookings/${bookingId}`);
+      return;
+    }
+    if (action === 'reschedule') {
+      // TODO: Open reschedule modal/sheet — for now, show toast
+      toast.info("Reschedule feature coming soon. Use the reschedule request workflow.");
+      return;
+    }
     setProcessingId(bookingId);
     try {
       let updatePayload: any = {};
+      const booking = bookings.find(b => b.id === bookingId);
+      const bookingNo = booking?.booking_no;
       
       switch (action) {
-        case 'confirm': updatePayload.status = 'confirmed'; break;
-        case 'check_in': updatePayload.status = 'checked_in'; break;
-        case 'start_service': updatePayload.status = 'in_progress'; break;
-        case 'complete': updatePayload.status = 'completed'; break;
-        case 'mark_paid': updatePayload.payment_status = 'paid'; break;
-        case 'no_show': updatePayload.status = 'no_show'; break;
-        case 'decline': 
-        case 'cancel':
-          // In a real app, open a modal to capture reason
-          updatePayload.status = action === 'decline' ? 'declined' : 'cancelled'; 
+        case 'confirm': 
+          updatePayload.status = 'confirmed'; 
+          if (bookingNo) await sendWhatsAppNotification(bookingNo);
           break;
+        case 'in_progress': 
+          updatePayload.status = 'in_progress'; 
+          break;
+        case 'complete': 
+          updatePayload.status = 'completed'; 
+          if (bookingNo) await sendReviewRequestAlert(bookingNo);
+          break;
+        case 'no_show': 
+          updatePayload.status = 'no_show'; 
+          break;
+        case 'cancel': 
+          updatePayload.status = 'canceled'; 
+          if (bookingNo) await sendWhatsAppCancellationNotification(bookingNo);
+          break;
+        case 'reservation_paid': 
+          updatePayload.payment_status = 'reservation_paid'; 
+          break;
+        case 'mark_paid': 
+          updatePayload.payment_status = 'paid'; 
+          break;
+        default:
+          toast.error("Unknown action: " + action);
+          setProcessingId(null);
+          return;
       }
 
       const { error } = await supabase
@@ -186,11 +283,11 @@ export default function DashboardBookings() {
     const s = (status || 'pending').toLowerCase();
     if (s === 'pending') return <Badge className="bg-amber-50 text-amber-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Pending</Badge>;
     if (s === 'confirmed') return <Badge className="bg-emerald-50 text-emerald-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Confirmed</Badge>;
-    if (s === 'checked_in') return <Badge className="bg-blue-50 text-blue-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Checked-In</Badge>;
     if (s === 'in_progress') return <Badge className="bg-indigo-50 text-indigo-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">In Progress</Badge>;
     if (s === 'completed') return <Badge className="bg-zinc-100 text-zinc-700 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Completed</Badge>;
-    if (s === 'cancelled' || s === 'declined') return <Badge className="bg-rose-50 text-rose-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">{s}</Badge>;
+    if (s === 'canceled') return <Badge className="bg-rose-50 text-rose-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Cancelled</Badge>;
     if (s === 'no_show') return <Badge className="bg-orange-50 text-orange-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">No Show</Badge>;
+    if (s === 'rescheduled') return <Badge className="bg-blue-50 text-blue-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Rescheduled</Badge>;
     return <Badge className="bg-zinc-100 text-zinc-500 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">{s}</Badge>;
   }
 
@@ -325,9 +422,11 @@ export default function DashboardBookings() {
                           </div>
                         )}
                       </div>
-                      {(b.payment_status === 'paid' || b.payment_status === 'refunded') && (
+                      {(b.payment_status === 'reservation_paid' || b.payment_status === 'paid' || b.payment_status === 'refunded') && (
                         <div className="text-[10px] font-bold text-zinc-400 mt-1.5 capitalize border-t border-slate-100 pt-1">
-                          Balance: <span className={b.payment_status === 'paid' ? 'text-emerald-600' : 'text-rose-600'}>{b.payment_status}</span>
+                          Balance: <span className={b.payment_status === 'paid' ? 'text-emerald-600' : b.payment_status === 'reservation_paid' ? 'text-amber-600' : 'text-rose-600'}>
+                            {b.payment_status === 'reservation_paid' ? 'Reserved Comm. Paid' : b.payment_status}
+                          </span>
                         </div>
                       )}
                     </td>

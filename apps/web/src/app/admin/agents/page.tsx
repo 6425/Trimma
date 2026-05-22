@@ -400,7 +400,7 @@ export default function AdminAgents() {
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'dashboard' ? 'bg-white shadow-sm text-[#D81E5B]' : 'text-zinc-500 hover:text-zinc-900'
+              activeTab === 'dashboard' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Dashboard
@@ -408,7 +408,7 @@ export default function AdminAgents() {
           <button 
             onClick={() => setActiveTab('directory')}
             className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'directory' ? 'bg-white shadow-sm text-[#D81E5B]' : 'text-zinc-500 hover:text-zinc-900'
+              activeTab === 'directory' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             <Users className="w-3.5 h-3.5 inline mr-1" /> Directory
@@ -416,7 +416,7 @@ export default function AdminAgents() {
           <button 
             onClick={() => setActiveTab('territories')}
             className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'territories' ? 'bg-white shadow-sm text-[#D81E5B]' : 'text-zinc-500 hover:text-zinc-900'
+              activeTab === 'territories' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             <MapPin className="w-3.5 h-3.5 inline mr-1" /> Territories
@@ -424,7 +424,7 @@ export default function AdminAgents() {
           <button 
             onClick={() => setActiveTab('ledger')}
             className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'ledger' ? 'bg-white shadow-sm text-[#D81E5B]' : 'text-zinc-500 hover:text-zinc-900'
+              activeTab === 'ledger' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             <Landmark className="w-3.5 h-3.5 inline mr-1" /> Ledger
@@ -432,7 +432,7 @@ export default function AdminAgents() {
           <button 
             onClick={() => setActiveTab('logs')}
             className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'logs' ? 'bg-white shadow-sm text-[#D81E5B]' : 'text-zinc-500 hover:text-zinc-900'
+              activeTab === 'logs' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
             }`}
           >
             <History className="w-3.5 h-3.5 inline mr-1" /> Audit Trail
@@ -442,7 +442,7 @@ export default function AdminAgents() {
 
       {loading ? (
         <Card className="p-20 border-none shadow-sm rounded-3xl bg-white text-center border border-slate-100/50">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#D81E5B] mb-3" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-brand mb-3" />
           <p className="font-extrabold text-zinc-800 text-sm">Loading Agent CRM Database Modules...</p>
           <p className="text-xs text-zinc-400 mt-1">Retrieving territories, ledger payouts, and activity logs.</p>
         </Card>
@@ -463,7 +463,7 @@ export default function AdminAgents() {
                   </div>
                 </Card>
                 <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-[#D81E5B]/5 flex items-center justify-center text-[#D81E5B]">
+                  <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
                     <ClipboardList className="w-5 h-5" />
                   </div>
                   <div>
@@ -566,7 +566,7 @@ export default function AdminAgents() {
                         <span>{totalConvertedSalons} ({averageConversionRate}%)</span>
                       </div>
                       <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                        <div className="bg-[#D81E5B] h-full rounded-full" style={{ width: `${averageConversionRate}%` }}></div>
+                        <div className="bg-brand h-full rounded-full" style={{ width: `${averageConversionRate}%` }}></div>
                       </div>
                     </div>
                   </div>
@@ -591,7 +591,7 @@ export default function AdminAgents() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search agents by name, telephone, or email..." 
-                  className="w-full pl-12 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl focus:ring-2 focus:ring-[#D81E5B]/20 transition-all font-semibold"
+                  className="w-full pl-12 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl focus:ring-2 focus:ring-brand/20 transition-all font-semibold"
                 />
               </div>
 
@@ -665,7 +665,7 @@ export default function AdminAgents() {
                               </td>
 
                               {/* Conversions */}
-                              <td className="px-6 py-2 text-center font-extrabold text-[#D81E5B] text-sm">
+                              <td className="px-6 py-2 text-center font-extrabold text-brand text-sm">
                                 {agent.converted_leads}
                               </td>
 
@@ -673,7 +673,7 @@ export default function AdminAgents() {
                               <td className="px-6 py-2 text-center">
                                 <span className="font-bold text-zinc-900">{agent.conversion_rate}%</span>
                                 <div className="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden mx-auto mt-1">
-                                  <div className="bg-[#D81E5B] h-full rounded-full" style={{ width: `${agent.conversion_rate}%` }}></div>
+                                  <div className="bg-brand h-full rounded-full" style={{ width: `${agent.conversion_rate}%` }}></div>
                                 </div>
                               </td>
 
@@ -734,7 +734,7 @@ export default function AdminAgents() {
               <Card className="p-5 border border-slate-100 shadow-sm rounded-2xl bg-white h-fit">
                 <div className="pb-4 border-b border-slate-50 mb-4">
                   <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-[#D81E5B]" /> Map Coverage Allocation
+                    <MapPin className="w-4 h-4 text-brand" /> Map Coverage Allocation
                   </h3>
                   <p className="text-[11px] text-zinc-400">Assign physical boundaries and exclusivity parameters to prospected regions.</p>
                 </div>
@@ -746,7 +746,7 @@ export default function AdminAgents() {
                     <select
                       value={newTerritoryEmail}
                       onChange={(e) => setNewTerritoryEmail(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#D81E5B]/20"
+                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
                     >
                       {agents.map(a => (
                         <option key={a.email} value={a.email}>{a.full_name} ({a.email})</option>
@@ -763,7 +763,7 @@ export default function AdminAgents() {
                         setNewTerritoryProvince(e.target.value);
                         setNewTerritoryDistrict(DISTRICTS[e.target.value]?.[0] || "");
                       }}
-                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#D81E5B]/20"
+                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
                     >
                       {PROVINCES.map(p => (
                         <option key={p.value} value={p.value}>{p.label}</option>
@@ -777,7 +777,7 @@ export default function AdminAgents() {
                     <select
                       value={newTerritoryDistrict}
                       onChange={(e) => setNewTerritoryDistrict(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#D81E5B]/20"
+                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
                     >
                       {(DISTRICTS[newTerritoryProvince] || []).map(d => (
                         <option key={d} value={d}>{d}</option>
@@ -792,7 +792,7 @@ export default function AdminAgents() {
                       placeholder="e.g. Colombo 03, Negombo, Galle Fort"
                       value={newTerritoryCity}
                       onChange={(e) => setNewTerritoryCity(e.target.value)}
-                      className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-[#D81E5B]/20 rounded-xl"
+                      className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-brand/20 rounded-xl"
                     />
                   </div>
 
@@ -806,14 +806,14 @@ export default function AdminAgents() {
                       type="checkbox" 
                       checked={newTerritoryExclusive}
                       onChange={(e) => setNewTerritoryExclusive(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#D81E5B] focus:ring-[#D81E5B]/20 border-slate-200"
+                      className="w-4 h-4 rounded text-brand focus:ring-brand/20 border-slate-200"
                     />
                   </div>
 
                   <Button 
                     onClick={handleAssignTerritory}
                     disabled={updating}
-                    className="w-full bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white h-11 rounded-xl font-bold gap-2 text-xs"
+                    className="w-full bg-brand hover:bg-brand/90 text-white h-11 rounded-xl font-bold gap-2 text-xs"
                   >
                     {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Assign Coverage Zone</>}
                   </Button>
@@ -1129,7 +1129,7 @@ export default function AdminAgents() {
                     max="100"
                     value={editCommission}
                     onChange={(e) => setEditCommission(e.target.value)}
-                    className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-[#D81E5B]/20 rounded-xl"
+                    className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-brand/20 rounded-xl"
                   />
                   <Percent className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300" />
                 </div>
@@ -1141,7 +1141,7 @@ export default function AdminAgents() {
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#D81E5B]/20"
+                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
                 >
                   <option value="active">Active (Authorized to Prospect)</option>
                   <option value="inactive">Inactive (Suspended)</option>
@@ -1161,7 +1161,7 @@ export default function AdminAgents() {
               <Button 
                 onClick={handleSaveAgent}
                 disabled={updating}
-                className="bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white h-10 rounded-xl font-bold px-4"
+                className="bg-brand hover:bg-brand/90 text-white h-10 rounded-xl font-bold px-4"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
               </Button>

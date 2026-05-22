@@ -99,7 +99,12 @@ export default function SalonProfilePage() {
   const [district, setDistrict] = useState("Colombo");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("pending");
+  const [onboardingStatus, setOnboardingStatus] = useState("DISCOVERED");
+  const [isVerified, setIsVerified] = useState(false);
   const [workingHours, setWorkingHours] = useState("");
+  
+  // Wizard States
+  const [wizardStep, setWizardStep] = useState(1);
   
   // Image States
   const [logoUrl, setLogoUrl] = useState("");
@@ -147,17 +152,22 @@ export default function SalonProfilePage() {
       setSalon(salonData);
       setName(salonData.name || "");
       setSlug(salonData.slug || "");
+      // Map phone from salons.phone (aligned with Google Places field)
       setContact(salonData.phone || "");
-      setAddress(salonData.city || ""); // Mapping city input field
+      // Map city: prefer city column, fall back to address (Google Places stores as address)
+      setAddress(salonData.city || salonData.address || "");
       setProvince(salonData.province || "Western Province");
       setDistrict(salonData.district || "Colombo");
-      setDescription(salonData.description || "");
+      // Map description: prefer description column, fall back to summary (Google Places field)
+      setDescription(salonData.description || salonData.summary || "");
       setStatus(salonData.status || "pending");
+      setOnboardingStatus(salonData.onboarding_status || "DISCOVERED");
+      setIsVerified(salonData.is_verified || false);
       
-      // Set visual assets
+      // Set visual assets — prefer dedicated URL columns, fall back to Google Places hero_image
       setLogoUrl(salonData.logo_url || "");
       setCoverUrl(salonData.cover_url || "");
-      setHeroUrl(salonData.hero_url || "");
+      setHeroUrl(salonData.hero_url || salonData.hero_image || "");
       setFeaturedImages(salonData.featured_images || []);
       setWorkingHours(salonData.working_hours || "Mon - Sun: 9:00 AM - 8:00 PM");
 
@@ -412,6 +422,8 @@ export default function SalonProfilePage() {
           province,
           district,
           description,
+          // Also sync to summary so Google Places data and profile data stay aligned
+          summary: description,
           logo_url: logoUrl,
           cover_url: coverUrl,
           hero_url: heroUrl,
@@ -419,126 +431,171 @@ export default function SalonProfilePage() {
           working_hours: workingHours,
           status: status
         })
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const updateData = {
+        name,
+        slug,
+        phone: contact,
+        address: address,
+        city: address, // Keep city sync'd
+        province,
+        district,
+        description,
+        summary: description, // sync
+        working_hours: workingHours,
+        logo_url: logoUrl,
+        cover_url: coverUrl,
+        hero_url: heroUrl,
+        featured_images: featuredImages
+      };
+
+      const { error } = await supabase
+        .from("salons")
+        .update(updateData)
         .eq("id", salon.id);
 
       if (error) throw error;
-      
-      setSlug(updatedSlug);
-      toast.success("Salon branding & image assets saved successfully! 🌟");
+      toast.success("Profile saved successfully");
       fetchSalonProfile();
     } catch (err: any) {
-      toast.error("Save failed: " + err.message);
+      toast.error("Failed to save profile: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handlePrintFlyer = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+  const handleCompleteOnboarding = async () => {
+    try {
+      setSaving(true);
+      const { error } = await supabase
+        .from("salons")
+        .update({
+          onboarding_status: "OWNER_ACTIVATED",
+          owner_activated_at: new Date().toISOString()
+        })
+        .eq("id", salon.id);
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Booking Flyer - ${name}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-          <style>
-            body { font-family: 'Outfit', sans-serif; }
-            @media print {
-              .no-print { display: none; }
-              body { margin: 0; padding: 2cm; }
-            }
-          </style>
-        </head>
-        <body class="bg-zinc-50 min-h-screen flex items-center justify-center p-4">
-          <div class="max-w-md w-full bg-white border-2 border-zinc-100 rounded-[2.5rem] p-12 text-center shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 inset-x-0 h-4 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
-            
-            <div class="mb-8">
-              <span class="inline-flex bg-rose-50 text-[#D81E5B] px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-4">Book Online</span>
-              <h1 class="text-4xl font-extrabold text-[#1A1C29] leading-tight">${name}</h1>
-              <p class="text-zinc-500 text-sm mt-2">${description || "Premium Salon & Grooming Experience"}</p>
-            </div>
-
-            <div class="bg-zinc-50 border border-zinc-100 rounded-3xl p-8 mb-8 inline-block shadow-inner">
-              <img 
-                src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/salons/' + slug)}" 
-                alt="QR Code"
-                class="w-48 h-48 mx-auto"
-              />
-            </div>
-
-            <div class="space-y-4">
-              <h3 class="text-lg font-bold text-zinc-900">Scan QR Code to Book Online</h3>
-              <p class="text-xs text-zinc-400">Scan this code with your smartphone camera to browse services, select stylist slots, and secure your appointment instantly.</p>
-              
-              <div class="pt-6 border-t border-zinc-100 flex items-center justify-center gap-6 text-xs text-zinc-500 font-semibold">
-                <span class="flex items-center gap-1.5">📞 ${contact}</span>
-                <span class="flex items-center gap-1.5">📍 ${address}</span>
-              </div>
-            </div>
-            
-            <div class="mt-8 no-print">
-              <button onclick="window.print()" class="w-full bg-zinc-900 text-white font-bold h-12 rounded-xl hover:bg-zinc-800 transition-all shadow-lg flex items-center justify-center gap-2">
-                 🖨️ Print Professional Poster
-              </button>
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+      if (error) throw error;
+      toast.success("Onboarding complete! Your salon is awaiting final admin verification.");
+      setOnboardingStatus("OWNER_ACTIVATED");
+    } catch (err: any) {
+      toast.error("Failed to activate: " + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center text-zinc-400 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B]" />
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
         <p className="font-semibold text-sm">Loading salon asset studio...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header Portal */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-rose-50/50 rounded-full blur-3xl pointer-events-none"></div>
-        
-        <div className="flex items-center gap-5 relative z-10">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-900 text-white flex items-center justify-center">
-            <Store className="w-8 h-8 text-[#D81E5B]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">{name || "Salon Profile Studio"}</h1>
-              <Badge className="bg-rose-50 text-[#D81E5B] hover:bg-rose-50/80 font-bold border-none py-1 px-3.5 text-xs rounded-full">
-                {subscriptionName}
-              </Badge>
-            </div>
-            <p className="text-zinc-500 mt-1.5 flex items-center gap-1.5 text-sm font-medium">
-              <MapPin className="w-4 h-4 text-zinc-400" /> {address || "No address configured"}, {district}
-            </p>
-          </div>
-        </div>
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-20 relative">
 
-        <div className="flex items-center gap-3 relative z-10">
+      {/* OWNER ONBOARDING WIZARD OVERLAY */}
+      {onboardingStatus === "OWNER_INVITED" && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
+          <div className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 flex flex-col justify-center">
+            <div className="text-center mb-10">
+              <div className="w-16 h-16 bg-brand/10 text-brand rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Sparkles className="w-8 h-8" />
+              </div>
+              <h1 className="text-4xl font-black text-zinc-900 tracking-tight">Welcome to Trimma!</h1>
+              <p className="text-lg text-zinc-500 mt-3 max-w-lg mx-auto">
+                We've auto-provisioned your digital storefront. Please review your details and set up your password to activate your account.
+              </p>
+            </div>
+
+            <Card className="border border-slate-100 shadow-xl rounded-3xl p-8 bg-white">
+              {wizardStep === 1 && (
+                <div className="space-y-6 animate-in slide-in-from-right-4">
+                  <h2 className="text-2xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">1. Review Salon Details</h2>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Salon Name</Label>
+                      <Input value={name} onChange={(e) => setName(e.target.value)} className="h-12 rounded-xl mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Contact Number</Label>
+                      <Input value={contact} onChange={(e) => setContact(e.target.value)} className="h-12 rounded-xl mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Address</Label>
+                      <Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 rounded-xl mt-1" />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                    <Button onClick={() => setWizardStep(2)} className="h-12 px-8 rounded-xl bg-brand hover:bg-[#b01849] text-white font-bold">
+                      Next Step <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {wizardStep === 2 && (
+                <div className="space-y-6 animate-in slide-in-from-right-4">
+                  <h2 className="text-2xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">2. Secure Your Account</h2>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 text-amber-800">
+                      <ShieldCheck className="w-5 h-5 shrink-0 text-amber-600" />
+                      <p className="text-sm font-medium">Please set a secure password for your new Trimma account. (In this demo, simply proceed to finish activation).</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 flex justify-between">
+                    <Button variant="ghost" onClick={() => setWizardStep(1)} className="h-12 px-6 rounded-xl font-bold text-zinc-500">
+                      Back
+                    </Button>
+                    <Button onClick={handleCompleteOnboarding} disabled={saving} className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+                      Activate Salon
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Header & Verification Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">{name || "Salon Profile Studio"}</h1>
+          <p className="text-zinc-500 text-sm mt-1">Manage your salon's public presence, images, and branding.</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
+            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 h-auto text-xs font-bold uppercase tracking-widest gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              Awaiting Verification
+            </Badge>
+          )}
           <Button 
-            onClick={() => window.open(`/salons/${slug}`, "_blank")}
-            variant="outline"
-            className="border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-xl px-5 h-12 font-bold flex items-center gap-2"
-          >
-            <Eye className="w-4 h-4" /> View Storefront
-          </Button>
-          <Button 
-            onClick={handleSave}
+            onClick={handleSave} 
             disabled={saving}
-            className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-[#D81E5B]/20 flex items-center gap-2"
+            className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all"
           >
-            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} Save Changes
+            {saving ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+            ) : (
+              <><Save className="w-4 h-4 mr-2" /> Save Changes</>
+            )}
           </Button>
         </div>
+      </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -548,7 +605,7 @@ export default function SalonProfilePage() {
           {/* IMAGE ASSET MANAGER CARDS */}
           <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-8">
             <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#D81E5B]" />
+              <Sparkles className="w-5 h-5 text-brand" />
               Visual Asset Manager
             </h3>
 
@@ -649,7 +706,7 @@ export default function SalonProfilePage() {
               {/* Card 3: Hero Header Uploader */}
               <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group">
                 <div className="space-y-3 w-full">
-                  <span className="inline-flex bg-rose-50 text-[#D81E5B] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                  <span className="inline-flex bg-rose-50 text-brand px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                     {SIZING_INFO.hero.label}
                   </span>
                   
@@ -672,7 +729,7 @@ export default function SalonProfilePage() {
                   </div>
 
                   <div className="text-[11px] text-zinc-400 space-y-0.5">
-                    <p className="font-bold text-[#D81E5B]">{SIZING_INFO.hero.resolution}</p>
+                    <p className="font-bold text-brand">{SIZING_INFO.hero.resolution}</p>
                     <p>{SIZING_INFO.hero.sizeText}</p>
                   </div>
                 </div>
@@ -682,7 +739,7 @@ export default function SalonProfilePage() {
                   variant="outline"
                   onClick={() => heroInputRef.current?.click()}
                   disabled={uploadingType === "hero"}
-                  className="mt-4 w-full rounded-xl h-10 border-rose-100 text-[#D81E5B] hover:bg-rose-50 font-bold text-xs flex items-center justify-center gap-1.5"
+                  className="mt-4 w-full rounded-xl h-10 border-rose-100 text-brand hover:bg-rose-50 font-bold text-xs flex items-center justify-center gap-1.5"
                 >
                   {uploadingType === "hero" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} 
                   Upload Hero
@@ -697,7 +754,7 @@ export default function SalonProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
               <div>
                 <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-[#D81E5B]" />
+                  <ImageIcon className="w-5 h-5 text-brand" />
                   Featured Showcase Gallery
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">Upload high-density images representing your workspace, stylists, or past makeovers.</p>
@@ -706,7 +763,7 @@ export default function SalonProfilePage() {
               {/* Progress counter cap indicator */}
               <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-2 text-right">
                 <div className="text-xs font-bold text-zinc-700">Gallery Capacity</div>
-                <div className="text-sm font-black text-[#D81E5B] mt-0.5">
+                <div className="text-sm font-black text-brand mt-0.5">
                    {featuredImages.length} / {maxImagesLimit} <span className="text-xs text-zinc-400 font-normal">Images</span>
                 </div>
               </div>
@@ -734,7 +791,7 @@ export default function SalonProfilePage() {
               {featuredImages.length < maxImagesLimit ? (
                 <div 
                   onClick={() => galleryInputRef.current?.click()}
-                  className="h-28 rounded-2xl border-2 border-dashed border-zinc-200 hover:border-[#D81E5B] hover:bg-rose-50/10 flex flex-col items-center justify-center cursor-pointer transition-all gap-1.5"
+                  className="h-28 rounded-2xl border-2 border-dashed border-zinc-200 hover:border-brand hover:bg-rose-50/10 flex flex-col items-center justify-center cursor-pointer transition-all gap-1.5"
                 >
                   <Upload className="w-5 h-5 text-zinc-400" />
                   <span className="text-[10px] font-extrabold uppercase text-zinc-500 tracking-wider">Add Image</span>
@@ -743,7 +800,7 @@ export default function SalonProfilePage() {
               ) : (
                 <div className="h-28 rounded-2xl border border-zinc-100 bg-zinc-50/50 flex flex-col items-center justify-center text-center p-3 text-[10px] font-medium text-zinc-400">
                   <span>Capacity Filled</span>
-                  <span className="text-[8px] text-[#D81E5B] font-bold mt-1">Upgrade Plan for Slots</span>
+                  <span className="text-[8px] text-brand font-bold mt-1">Upgrade Plan for Slots</span>
                 </div>
               )}
             </div>
@@ -754,7 +811,7 @@ export default function SalonProfilePage() {
             {/* Section 1: Business Identity */}
             <div className="space-y-6">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-[#D81E5B] flex items-center justify-center text-xs font-black">1</span>
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">1</span>
                 Storefront Identity & Contact
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -803,7 +860,7 @@ export default function SalonProfilePage() {
             {/* Section 2: Location Details */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-[#D81E5B] flex items-center justify-center text-xs font-black">2</span>
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">2</span>
                 Store Location Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -847,7 +904,7 @@ export default function SalonProfilePage() {
             {/* Section 3: Store Operational Status */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-[#D81E5B] flex items-center justify-center text-xs font-black">3</span>
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">3</span>
                 Operational Open Status
               </h3>
               <div className="flex items-center justify-between bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
@@ -949,7 +1006,7 @@ export default function SalonProfilePage() {
                     alt="QR"
                     className="w-32 h-32 mx-auto rounded-lg"
                  />
-                 <span className="text-[9px] font-extrabold tracking-widest text-[#D81E5B] uppercase block mt-3">Scan to Book</span>
+                 <span className="text-[9px] font-extrabold tracking-widest text-brand uppercase block mt-3">Scan to Book</span>
               </div>
 
               <div className="space-y-2 pt-2">
@@ -964,7 +1021,7 @@ export default function SalonProfilePage() {
                   variant="ghost" 
                   className="w-full text-white hover:bg-white/10 font-bold h-12 rounded-xl flex items-center justify-center gap-2"
                 >
-                  <ExternalLink className="w-4 h-4 text-[#D81E5B]" /> Open Live Page
+                  <ExternalLink className="w-4 h-4 text-brand" /> Open Live Page
                 </Button>
               </div>
             </div>

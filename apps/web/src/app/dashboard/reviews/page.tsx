@@ -17,7 +17,7 @@ export default function ReviewsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <Star className="w-6 h-6 text-[#D81E5B]" />
+            <Star className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Customer Reviews</h1>
@@ -82,7 +82,7 @@ export default function ReviewsPage() {
             </p>
           </div>
           <Button className="w-full bg-white text-zinc-900 hover:bg-zinc-100 font-bold h-10 rounded-xl text-xs flex items-center justify-center gap-1.5 mt-6 relative z-10">
-            <Share2 className="w-3.5 h-3.5 text-[#D81E5B]" /> Pin Top Review
+            <Share2 className="w-3.5 h-3.5 text-brand" /> Pin Top Review
           </Button>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function ReviewsPage() {
       {/* Customer Reviews Feed */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
         <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-[#D81E5B]" />
+          <MessageSquare className="w-4 h-4 text-brand" />
           Recent Verified Customer Reviews
         </h3>
 
@@ -118,7 +118,7 @@ export default function ReviewsPage() {
                 <Button variant="outline" className="h-8 rounded-lg border-zinc-200 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 flex items-center gap-1">
                   <ThumbsUp className="w-3 h-3" /> Mark as Helpful
                 </Button>
-                <Button className="h-8 rounded-lg bg-[#D81E5B] hover:bg-[#BF1A50] text-white text-[10px] font-bold flex items-center gap-1">
+                <Button className="h-8 rounded-lg bg-brand hover:bg-brand-hover text-white text-[10px] font-bold flex items-center gap-1">
                   Reply to Feedback
                 </Button>
               </div>

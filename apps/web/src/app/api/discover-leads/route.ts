@@ -4,8 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase Client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(req: Request) {
   try {
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const enrichedPlaces = await Promise.all(detailPromises);
 
     // 3. Format and clean Places data into database schema records
-    const leadsToUpsert = enrichedPlaces.map((place: any) => {
+    const salonsToUpsert = enrichedPlaces.map((place: any) => {
       const details = place.details || {};
 
       // Map numeric price level to standard $ symbols
@@ -64,41 +64,38 @@ export async function POST(req: Request) {
         priceText = "$".repeat(details.price_level) || "$";
       }
 
-      // Calculate dynamic Lead Onboarding Score
-      let score = 0;
-      if (details.website) score += 20;
-      if (details.formatted_phone_number) score += 40;
-      if (details.opening_hours) score += 15;
-      const computedRating = details.rating || place.rating || 0;
-      if (computedRating >= 4.5) score += 25;
+      const name = details.name || place.name || "Unnamed Salon";
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
       return {
         place_id: place.place_id,
-        name: details.name || place.name || "Unnamed Salon",
+        name: name,
+        slug: slug,
+        owner_email: `draft-${slug}-${Date.now().toString().slice(-4)}@trimma.io`, // unique placeholder
+        province: province || "Western Province",
+        district: district || "Colombo",
+        city: city || "Colombo",
         address: details.formatted_address || place.formatted_address || null,
         rating: details.rating || place.rating || null,
         phone: details.formatted_phone_number || null,
         website: details.website || null,
         map_url: details.url || null,
-        category: category || "Barber Salon", // Exact app category selected in discovery form
-        opening_hours: details.opening_hours ? details.opening_hours.periods || [] : [],
+        category: category || "Barber Salon",
+        working_hours: details.opening_hours ? details.opening_hours.periods || [] : [],
         latitude: details.geometry?.location?.lat || place.geometry?.location?.lat || null,
         longitude: details.geometry?.location?.lng || place.geometry?.location?.lng || null,
         price_level: priceText,
         summary: details.editorial_summary?.overview || null,
-        role: "salon_owner",
-        status: "new", // legacy compatibility
-        lead_status: "NEW",
-        onboarding_stage: "NOT_STARTED",
-        lead_score: score
+        source_type: "GOOGLE_PLACES",
+        onboarding_status: "DISCOVERED",
+        activation_status: "INACTIVE"
       };
     });
 
     // 4. Perform Supabase upsert with conflict target 'place_id'
-    // This performs an incremental update for matching duplicates, otherwise inserts as new.
     const { data, error } = await supabase
-      .from("salon_leads")
-      .upsert(leadsToUpsert, { onConflict: "place_id" });
+      .from("salons")
+      .upsert(salonsToUpsert, { onConflict: "place_id" });
 
     if (error) {
       console.error("Supabase upsert execution failed:", error);
@@ -107,8 +104,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      count: leadsToUpsert.length,
-      message: `Discovered and incrementally updated ${leadsToUpsert.length} salons in ${city} (${district})!`
+      count: salonsToUpsert.length,
+      message: `Discovered and created ${salonsToUpsert.length} draft salons in ${city} (${district})!`
     });
   } catch (error: any) {
     console.error("Discover API route failure:", error);

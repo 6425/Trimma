@@ -417,8 +417,8 @@ export default function AgentCommissions() {
                         {/* Platform Cut */}
                         <div className="bg-[#FDF2F4]/50 dark:bg-[#FDF2F4]/5 p-4 rounded-xl border border-[#FDF2F4] dark:border-rose-500/10 flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] font-bold text-[#D81E5B] uppercase tracking-wider">💼 Platform Cut (10%)</span>
-                            <h5 className="text-lg font-black text-[#D81E5B] mt-1">{formatLKR(booking.amount * 0.1)}</h5>
+                            <span className="text-[10px] font-bold text-brand uppercase tracking-wider">💼 Platform Cut (10%)</span>
+                            <h5 className="text-lg font-black text-brand mt-1">{formatLKR(booking.amount * 0.1)}</h5>
                           </div>
                         </div>
 
@@ -440,7 +440,7 @@ export default function AgentCommissions() {
                         </div>
                         <div className="h-2.5 w-full flex rounded-full overflow-hidden bg-slate-100 dark:bg-zinc-800">
                           <div className="h-full bg-emerald-500 transition-all" style={{ width: "80%" }} />
-                          <div className="h-full bg-[#D81E5B] transition-all" style={{ width: "10%" }} />
+                          <div className="h-full bg-brand transition-all" style={{ width: "10%" }} />
                           <div className="h-full bg-indigo-500 transition-all" style={{ width: "10%" }} />
                         </div>
                       </div>

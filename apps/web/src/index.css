@@ -58,6 +58,35 @@
     --color-brand-text-light: #FFFFFF;
     --color-brand-text-dark: #FFFFFF;
     --color-brand-secondary-text: #B3B3B3;
+
+    /* Semantic Aliases for script replacements */
+    --color-brand: #F5B700;
+    --color-brand-hover: #FFC947;
+
+    /* Globally alias pink variations to yellow (amber) per user request */
+    --color-rose-50: var(--color-amber-50);
+    --color-rose-100: var(--color-amber-100);
+    --color-rose-200: var(--color-amber-200);
+    --color-rose-300: var(--color-amber-300);
+    --color-rose-400: var(--color-amber-400);
+    --color-rose-500: var(--color-amber-500);
+    --color-rose-600: var(--color-amber-600);
+    --color-rose-700: var(--color-amber-700);
+    --color-rose-800: var(--color-amber-800);
+    --color-rose-900: var(--color-amber-900);
+    --color-rose-950: var(--color-amber-950);
+
+    --color-pink-50: var(--color-amber-50);
+    --color-pink-100: var(--color-amber-100);
+    --color-pink-200: var(--color-amber-200);
+    --color-pink-300: var(--color-amber-300);
+    --color-pink-400: var(--color-amber-400);
+    --color-pink-500: var(--color-amber-500);
+    --color-pink-600: var(--color-amber-600);
+    --color-pink-700: var(--color-amber-700);
+    --color-pink-800: var(--color-amber-800);
+    --color-pink-900: var(--color-amber-900);
+    --color-pink-950: var(--color-amber-950);
 }
 
 :root {
@@ -148,6 +177,11 @@
   }
   html {
     @apply font-sans scroll-smooth;
+  }
+  
+  /* Global safeguard: Light backgrounds should default to dark text */
+  .bg-white, .bg-slate-50, .bg-zinc-50, .bg-gray-50, .bg-stone-50, .bg-neutral-50, .bg-red-50, .bg-orange-50, .bg-amber-50, .bg-yellow-50, .bg-lime-50, .bg-green-50, .bg-emerald-50, .bg-teal-50, .bg-cyan-50, .bg-sky-50, .bg-blue-50, .bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-fuchsia-50, .bg-pink-50, .bg-rose-50 {
+    @apply text-zinc-900;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading tracking-tight font-semibold;

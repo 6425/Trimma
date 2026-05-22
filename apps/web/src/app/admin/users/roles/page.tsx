@@ -18,11 +18,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const rolesList = [
-  { id: 'superadmin', name: "Super Admin", count: 2, color: "#D81E5B", desc: "Full system access. Can modify roles and global platform settings." },
+  { id: 'superadmin', name: "Super Admin", count: 2, color: "var(--color-brand)", desc: "Full system access. Can modify roles and global platform settings." },
   { id: 'admin', name: "Admin", count: 8, color: "#1A1C29", desc: "Access to all operational modules. Cannot modify global billing." },
   { id: 'regional_admin', name: "Regional Admin", count: 15, color: "#4A154B", desc: "Can manage leads and salons within assigned provinces." },
   { id: 'agent', name: "Agent", count: 42, color: "#FBBF24", desc: "Field staff. Can onboard salons and manage assigned leads." },
-  { id: 'salon_owner', name: "Salon Owner", count: 512, color: "#D81E5B", desc: "Business owners. Manage their own salon, staff, and earnings." },
+  { id: 'salon_owner', name: "Salon Owner", count: 512, color: "var(--color-brand)", desc: "Business owners. Manage their own salon, staff, and earnings." },
 ];
 
 const modules = [
@@ -160,16 +160,16 @@ export default function AdminUserRoles() {
                  onClick={() => setActiveRole(role.id)}
                  className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 group relative overflow-hidden ${
                    activeRole === role.id 
-                     ? 'bg-white border-[#D81E5B] shadow-lg ring-1 ring-[#D81E5B]/20' 
+                     ? 'bg-white border-brand shadow-lg ring-1 ring-brand/20' 
                      : 'bg-zinc-50 border-transparent hover:bg-white hover:border-zinc-200'
                  }`}
                >
                  {activeRole === role.id && (
-                   <div className="absolute right-0 top-0 bottom-0 w-1 bg-[#D81E5B]" />
+                   <div className="absolute right-0 top-0 bottom-0 w-1 bg-brand" />
                  )}
                  <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-3">
-                       <div className={`p-2 rounded-xl ${activeRole === role.id ? 'bg-[#D81E5B]/10 text-[#D81E5B]' : 'bg-white text-zinc-400 shadow-sm'}`}>
+                       <div className={`p-2 rounded-xl ${activeRole === role.id ? 'bg-brand/10 text-brand' : 'bg-white text-zinc-400 shadow-sm'}`}>
                           {role.id.includes('admin') ? <ShieldCheck className="w-5 h-5" /> : <UserCircle2 className="w-5 h-5" />}
                        </div>
                        <div>
@@ -177,7 +177,7 @@ export default function AdminUserRoles() {
                           <p className="text-[10px] font-bold text-zinc-400 uppercase">{role.count} Active Accounts</p>
                        </div>
                     </div>
-                    {activeRole === role.id && <div className="bg-[#D81E5B] text-white p-1 rounded-full"><Check className="w-3 h-3" /></div>}
+                    {activeRole === role.id && <div className="bg-brand text-white p-1 rounded-full"><Check className="w-3 h-3" /></div>}
                  </div>
                  <p className="text-xs text-zinc-400 leading-relaxed font-medium line-clamp-2">{role.desc}</p>
                </button>
@@ -214,7 +214,7 @@ export default function AdminUserRoles() {
                     <Button 
                       onClick={handleSaveChanges}
                       disabled={isSaving}
-                      className="bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white h-10 px-6 rounded-xl font-bold shadow-lg shadow-[#D81E5B]/20 transition-all min-w-[140px] flex justify-center items-center"
+                      className="bg-brand hover:bg-brand/90 text-white h-10 px-6 rounded-xl font-bold shadow-lg shadow-brand/20 transition-all min-w-[140px] flex justify-center items-center"
                     >
                        {isSaving ? (
                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -244,7 +244,7 @@ export default function AdminUserRoles() {
                                    <div className="bg-zinc-50 p-2 rounded-lg text-zinc-400 group-hover:bg-white group-hover:shadow-sm transition-all">
                                       <Lock className="w-4 h-4" />
                                    </div>
-                                   <div className="font-bold text-[#1A1C29] group-hover:text-[#D81E5B] transition-colors">{module.name}</div>
+                                   <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors">{module.name}</div>
                                 </div>
                              </td>
                              {actions.map(action => {
@@ -292,7 +292,7 @@ function PermissionToggle({ checked, onChange }: PermissionToggleProps) {
     <div 
       onClick={onChange}
       className={`w-10 h-5 rounded-full transition-all duration-300 relative cursor-pointer ${
-        checked ? 'bg-[#D81E5B]' : 'bg-zinc-200'
+        checked ? 'bg-brand' : 'bg-zinc-200'
       }`}
     >
       <div className={`absolute top-0.5 bottom-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 ${

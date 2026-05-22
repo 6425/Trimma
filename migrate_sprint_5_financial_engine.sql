@@ -84,4 +84,4 @@ ON CONFLICT (name) DO UPDATE SET
 
 -- 9. Seed Default Booking Commission Master
 INSERT INTO public.commission_master (commission_type, platform_percentage, salon_percentage, agent_percentage)
-VALUES ('booking', 10.0, 90.0, 0.0);
+VALUES ('booking', 20.0, 80.0, 0.0);

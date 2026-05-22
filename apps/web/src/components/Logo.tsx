@@ -17,7 +17,7 @@ const DEFAULT_BRANDING = {
   logo_name: "Trimma",
   logo_name_font_family: "Outfit",
   logo_name_font_size: 22,
-  logo_name_color: "#D81E5B",
+  logo_name_color: "var(--color-brand)",
   logo_tagline: "Sri Lanka's Premium Grooming Marketplace",
   logo_tagline_font_family: "Inter",
   logo_tagline_font_size: 9,

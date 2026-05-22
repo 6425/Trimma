@@ -11,6 +11,8 @@ const DEFAULT_TEMPLATE_CANCELLED = `Hello {customer_name},\n\nThis is to notify 
 
 const DEFAULT_TEMPLATE_REVIEW = `Hi {customer_name}! 🌟\n\nHow was your styling at *{salon_name}* today? We would love to hear your feedback!\n\nRate your stylist and share your experience here: {review_link}\n\nThank you for choosing Trimma! ✂️`;
 
+const DEFAULT_TEMPLATE_ONBOARDING = `Hi {salon_name} Owner! 🌟\n\nYour Trimma Salon Partner Profile is ready!\n\nPlease login using your registered Gmail: {owner_gmail}\n\nLogin securely here: {login_link}\n\nWelcome to Trimma! ✂️`;
+
 /**
  * Parses dynamic merge tags in templates (handles both {tag} and { tag } formats).
  */
@@ -52,10 +54,12 @@ export async function getWhatsAppConfig() {
         whatsapp_booking_rescheduled_enabled,
         whatsapp_booking_cancelled_enabled,
         whatsapp_booking_review_enabled,
+        whatsapp_onboarding_invite_enabled,
         whatsapp_template_confirmed,
         whatsapp_template_rescheduled,
         whatsapp_template_cancelled,
-        whatsapp_template_review
+        whatsapp_template_review,
+        whatsapp_template_onboarding_invite
       `)
       .single();
 
@@ -72,12 +76,14 @@ export async function getWhatsAppConfig() {
     const bookingRescheduledEnabled = dbSettings.whatsapp_booking_rescheduled_enabled !== false;
     const bookingCancelledEnabled = dbSettings.whatsapp_booking_cancelled_enabled !== false;
     const bookingReviewEnabled = dbSettings.whatsapp_booking_review_enabled !== false;
+    const onboardingInviteEnabled = dbSettings.whatsapp_onboarding_invite_enabled !== false;
 
     // Custom templates
     const templateConfirmed = dbSettings.whatsapp_template_confirmed || DEFAULT_TEMPLATE_CONFIRMED;
     const templateRescheduled = dbSettings.whatsapp_template_rescheduled || DEFAULT_TEMPLATE_RESCHEDULED;
     const templateCancelled = dbSettings.whatsapp_template_cancelled || DEFAULT_TEMPLATE_CANCELLED;
     const templateReview = dbSettings.whatsapp_template_review || DEFAULT_TEMPLATE_REVIEW;
+    const templateOnboardingInvite = dbSettings.whatsapp_template_onboarding_invite || DEFAULT_TEMPLATE_ONBOARDING;
 
     return { 
       enabled, 
@@ -87,10 +93,12 @@ export async function getWhatsAppConfig() {
       bookingRescheduledEnabled,
       bookingCancelledEnabled,
       bookingReviewEnabled,
+      onboardingInviteEnabled,
       templateConfirmed,
       templateRescheduled,
       templateCancelled,
       templateReview,
+      templateOnboardingInvite,
       source: "database" 
     };
   } catch (err) {
@@ -103,10 +111,12 @@ export async function getWhatsAppConfig() {
       bookingRescheduledEnabled: true,
       bookingCancelledEnabled: true,
       bookingReviewEnabled: true,
+      onboardingInviteEnabled: true,
       templateConfirmed: DEFAULT_TEMPLATE_CONFIRMED,
       templateRescheduled: DEFAULT_TEMPLATE_RESCHEDULED,
       templateCancelled: DEFAULT_TEMPLATE_CANCELLED,
       templateReview: DEFAULT_TEMPLATE_REVIEW,
+      templateOnboardingInvite: DEFAULT_TEMPLATE_ONBOARDING,
       source: "env"
     };
   }
@@ -123,10 +133,12 @@ export async function saveWhatsAppSettings(
   bookingRescheduledEnabled?: boolean,
   bookingCancelledEnabled?: boolean,
   bookingReviewEnabled?: boolean,
+  onboardingInviteEnabled?: boolean,
   templateConfirmed?: string,
   templateRescheduled?: string,
   templateCancelled?: string,
-  templateReview?: string
+  templateReview?: string,
+  templateOnboardingInvite?: string
 ) {
   try {
     const { error } = await supabase
@@ -140,10 +152,12 @@ export async function saveWhatsAppSettings(
         whatsapp_booking_rescheduled_enabled: bookingRescheduledEnabled !== false,
         whatsapp_booking_cancelled_enabled: bookingCancelledEnabled !== false,
         whatsapp_booking_review_enabled: bookingReviewEnabled !== false,
+        whatsapp_onboarding_invite_enabled: onboardingInviteEnabled !== false,
         whatsapp_template_confirmed: templateConfirmed || null,
         whatsapp_template_rescheduled: templateRescheduled || null,
         whatsapp_template_cancelled: templateCancelled || null,
-        whatsapp_template_review: templateReview || null
+        whatsapp_template_review: templateReview || null,
+        whatsapp_template_onboarding_invite: templateOnboardingInvite || null
       });
 
     if (error) throw error;
@@ -523,8 +537,174 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     if (!response.ok) return { success: false, error: result.error?.message };
 
     return { success: true, messageId: result.messages?.[0]?.id };
+  } catch (error: any) {
+    console.error("WhatsApp Reschedule Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Triggers an instant WhatsApp alert when a new booking is created (Pending state).
+ * Sends to BOTH customer and Salon Owner.
+ */
+export async function sendBookingCreatedAlert(bookingNo: string) {
+  const { enabled, phoneId, accessToken } = await getWhatsAppConfig();
+  if (!enabled || !phoneId || !accessToken) return { success: false };
+
+  try {
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("*, salons(name, contact_phone), services(name)")
+      .eq("booking_no", bookingNo)
+      .single();
+
+    if (!booking) return { success: false };
+
+    const { data: customer } = await supabase
+      .from("users")
+      .select("full_name, phone")
+      .eq("email", booking.customer_email)
+      .single();
+
+    if (!customer) return { success: false };
+
+    const customerPhone = cleanPhoneNumber(customer.phone);
+    const ownerPhone = booking.salons?.contact_phone ? cleanPhoneNumber(booking.salons.contact_phone) : null;
+
+    const customerMsg = `Hello ${customer.full_name || 'Customer'}! 🌟\n\nYour booking request at *${booking.salons?.name}* for *${booking.services?.name}* on ${booking.booking_date} at ${booking.booking_time} has been received and is currently *PENDING* confirmation from the salon.\n\nWe will notify you once they confirm! ✂️`;
+    const ownerMsg = `🔔 *NEW BOOKING REQUEST* 🔔\n\nYou have a new booking request from ${customer.full_name || 'a customer'}.\n\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${booking.services?.name}\n💳 Payment Status: ${booking.payment_status}\n\nPlease open your Trimma Dashboard to Confirm or Decline this request.`;
+
+    // Send to Customer
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: customerPhone, type: "text", text: { body: customerMsg } })
+    });
+
+    // Send to Owner
+    if (ownerPhone) {
+      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: ownerPhone, type: "text", text: { body: ownerMsg } })
+      });
+    }
+
+    return { success: true };
   } catch (err: any) {
-    console.error("❌ Unhandled reschedule WhatsApp error:", err);
+    console.error("WhatsApp booking created error:", err);
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Triggers a WhatsApp review request when an appointment is completed.
+ */
+export async function sendReviewRequestAlert(bookingNo: string) {
+  const { enabled, phoneId, accessToken, templateReview, bookingReviewEnabled } = await getWhatsAppConfig();
+  if (!enabled || !bookingReviewEnabled || !phoneId || !accessToken) return { success: false };
+
+  try {
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("*, salons(name, slug)")
+      .eq("booking_no", bookingNo)
+      .single();
+
+    if (!booking) return { success: false };
+
+    const { data: customer } = await supabase
+      .from("users")
+      .select("full_name, phone")
+      .eq("email", booking.customer_email)
+      .single();
+
+    if (!customer || !customer.phone) return { success: false };
+
+    const customerPhone = cleanPhoneNumber(customer.phone);
+    const reviewLink = `https://trimma-web.vercel.app/salons/${booking.salons?.slug}#reviews`;
+
+    const variables = {
+      customer_name: customer.full_name || "Valued Client",
+      salon_name: booking.salons?.name || "our salon",
+      review_link: reviewLink
+    };
+
+    const msg = parseTemplate(templateReview || DEFAULT_TEMPLATE_REVIEW, variables);
+
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: customerPhone, type: "text", text: { body: msg } })
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("WhatsApp review request error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Triggers an instant WhatsApp alert to invite a Salon Owner when onboarding is completed.
+ */
+export async function sendOnboardingInviteAlert(salonId: string, phone: string, ownerGmail: string, salonName: string) {
+  const { 
+    enabled, 
+    phoneId, 
+    accessToken, 
+    onboardingInviteEnabled,
+    templateOnboardingInvite 
+  } = await getWhatsAppConfig();
+
+  if (!enabled || !onboardingInviteEnabled || !phoneId || !accessToken) {
+    console.log("ℹ️ WhatsApp onboarding invite is disabled or missing credentials.");
+    return { success: false, error: "Disabled or missing credentials" };
+  }
+
+  if (!phone) {
+    console.error("❌ Phone number is required to send onboarding invite.");
+    return { success: false, error: "Phone number is missing." };
+  }
+
+  try {
+    const cleanPhone = cleanPhoneNumber(phone);
+    const loginLink = "https://trimma-web.vercel.app/login";
+
+    const variables = {
+      salon_name: salonName || "Partner",
+      owner_gmail: ownerGmail || "your verified email",
+      login_link: loginLink
+    };
+
+    const msg = parseTemplate(templateOnboardingInvite || DEFAULT_TEMPLATE_ONBOARDING, variables);
+
+    console.log(`🚀 Dispatching WhatsApp Onboarding Invite to ${cleanPhone}:`);
+
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { 
+        "Authorization": `Bearer ${accessToken}`, 
+        "Content-Type": "application/json" 
+      },
+      body: JSON.stringify({ 
+        messaging_product: "whatsapp", 
+        recipient_type: "individual", 
+        to: cleanPhone, 
+        type: "text", 
+        text: { body: msg } 
+      })
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("❌ Meta Graph API returned error response:", result);
+      return { success: false, error: result.error?.message || "Failed to send WhatsApp invite." };
+    }
+
+    return { success: true, messageId: result.messages?.[0]?.id };
+  } catch (err: any) {
+    console.error("❌ Unhandled WhatsApp onboarding invite error:", err);
+    return { success: false, error: err.message || "Internal server error" };
   }
 }

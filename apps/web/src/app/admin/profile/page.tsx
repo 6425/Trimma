@@ -31,7 +31,7 @@ const SVG_PRESETS = [
   { 
     id: "crown", 
     label: "Royal Crown (Luxury Lounge)", 
-    svg: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="46" fill="url(#logo-grad-bg)" stroke="#D81E5B" strokeWidth="3" /><circle cx="50" cy="50" r="38" fill="rgba(24, 24, 27, 0.95)" /><path d="M36 42 L42 48 L50 38 L58 48 L64 42 L60 62 L40 62 Z" fill="url(#logo-crown-grad)" opacity="0.9"/><path d="M44 52 L36 68 M56 52 L64 68" stroke="#D81E5B" strokeWidth="4.5" strokeLinecap="round" /><circle cx="36" cy="68" r="4.5" stroke="#D81E5B" strokeWidth="3" /><circle cx="64" cy="68" r="4.5" stroke="#D81E5B" strokeWidth="3" /><circle cx="50" cy="54" r="3" fill="#ffffff" /><defs><linearGradient id="logo-grad-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#D81E5B" /><stop offset="100%" stopColor="#18181b" /></linearGradient><linearGradient id="logo-crown-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>` 
+    svg: `<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="46" fill="url(#logo-grad-bg)" stroke="var(--color-brand)" strokeWidth="3" /><circle cx="50" cy="50" r="38" fill="rgba(24, 24, 27, 0.95)" /><path d="M36 42 L42 48 L50 38 L58 48 L64 42 L60 62 L40 62 Z" fill="url(#logo-crown-grad)" opacity="0.9"/><path d="M44 52 L36 68 M56 52 L64 68" stroke="var(--color-brand)" strokeWidth="4.5" strokeLinecap="round" /><circle cx="36" cy="68" r="4.5" stroke="var(--color-brand)" strokeWidth="3" /><circle cx="64" cy="68" r="4.5" stroke="var(--color-brand)" strokeWidth="3" /><circle cx="50" cy="54" r="3" fill="#ffffff" /><defs><linearGradient id="logo-grad-bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--color-brand)" /><stop offset="100%" stopColor="#18181b" /></linearGradient><linearGradient id="logo-crown-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#f59e0b" /><stop offset="100%" stopColor="#d97706" /></linearGradient></defs></svg>` 
   },
   { 
     id: "comb_scissors", 
@@ -63,7 +63,7 @@ export default function AdminProfilePage() {
   const [logoName, setLogoName] = useState("Trimma");
   const [logoNameFontFamily, setLogoNameFontFamily] = useState("Outfit");
   const [logoNameFontSize, setLogoNameFontSize] = useState(22);
-  const [logoNameColor, setLogoNameColor] = useState("#D81E5B");
+  const [logoNameColor, setLogoNameColor] = useState("var(--color-brand)");
 
   const [logoTagline, setLogoTagline] = useState("Sri Lanka's Premium Grooming Marketplace");
   const [logoTaglineFontFamily, setLogoTaglineFontFamily] = useState("Inter");
@@ -121,7 +121,7 @@ export default function AdminProfilePage() {
           setLogoName(brandingData.logo_name || "Trimma");
           setLogoNameFontFamily(brandingData.logo_name_font_family || "Outfit");
           setLogoNameFontSize(brandingData.logo_name_font_size || 22);
-          setLogoNameColor(brandingData.logo_name_color || "#D81E5B");
+          setLogoNameColor(brandingData.logo_name_color || "var(--color-brand)");
           
           setLogoTagline(brandingData.logo_tagline || "");
           setLogoTaglineFontFamily(brandingData.logo_tagline_font_family || "Inter");
@@ -303,7 +303,7 @@ export default function AdminProfilePage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D81E5B]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-brand"></div>
         <p className="text-sm text-zinc-500 font-bold">Synchronizing personal admin portals...</p>
       </div>
     );
@@ -316,7 +316,7 @@ export default function AdminProfilePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-200 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2.5">
-            <User className="w-8 h-8 text-[#D81E5B]" />
+            <User className="w-8 h-8 text-brand" />
             Admin Profile Studio
           </h1>
           <p className="text-sm text-zinc-500 mt-1">Manage credentials, security permissions, and brand customizations.</p>
@@ -358,7 +358,7 @@ export default function AdminProfilePage() {
                 <img 
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`}
                   alt="Admin Avatar"
-                  className="w-20 h-20 rounded-full bg-zinc-900 border-2 border-[#D81E5B] shadow-lg"
+                  className="w-20 h-20 rounded-full bg-zinc-900 border-2 border-brand shadow-lg"
                 />
                 <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 rounded-full border-2 border-zinc-950 flex items-center justify-center">
                   <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
@@ -366,7 +366,7 @@ export default function AdminProfilePage() {
               </div>
               <div>
                 <h3 className="font-extrabold text-lg text-zinc-50">{fullName || "Platform Admin"}</h3>
-                <span className="inline-flex bg-[#D81E5B]/15 text-[#D81E5B] border border-[#D81E5B]/20 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full mt-1.5 tracking-widest">
+                <span className="inline-flex bg-brand/15 text-brand border border-brand/20 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full mt-1.5 tracking-widest">
                   Master Admin
                 </span>
               </div>
@@ -396,7 +396,7 @@ export default function AdminProfilePage() {
           {activeTab === "profile" && (
             <form onSubmit={handleSaveProfile} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
               <div className="border-b border-slate-100 pb-4 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-[#D81E5B]" />
+                <ShieldCheck className="w-5 h-5 text-brand" />
                 <h3 className="font-extrabold text-zinc-900 text-base">Security & Authentication Details</h3>
               </div>
 
@@ -472,7 +472,7 @@ export default function AdminProfilePage() {
               {/* IMAGE UPLOAD & CANVAS CROPPING SECTION */}
               <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
                 <div className="border-b border-slate-100 pb-4 flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-[#D81E5B]" />
+                  <Upload className="w-5 h-5 text-brand" />
                   <h3 className="font-extrabold text-zinc-900 text-base">Custom Image Logo Upload (Overriding Fonts)</h3>
                 </div>
 
@@ -562,7 +562,7 @@ export default function AdminProfilePage() {
                             step="0.05"
                             value={cropZoom} 
                             onChange={(e) => setCropZoom(parseFloat(e.target.value))}
-                            className="w-full accent-[#D81E5B]"
+                            className="w-full accent-brand"
                           />
                         </div>
                         <div className="space-y-1">
@@ -590,7 +590,7 @@ export default function AdminProfilePage() {
                         <Button 
                           type="button" 
                           onClick={performCrop}
-                          className="w-full bg-[#D81E5B] hover:bg-[#c2144d] text-white rounded-xl font-bold h-9 text-xs"
+                          className="w-full bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-9 text-xs"
                         >
                           Crop & Apply Logo
                         </Button>
@@ -676,7 +676,7 @@ export default function AdminProfilePage() {
                   
                   {/* 1. LOGO NAME CONTROLS */}
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D81E5B] border-b pb-1">1. Logo Title Settings (Fallback)</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-brand border-b pb-1">1. Logo Title Settings (Fallback)</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-xs font-bold text-zinc-500">Logo Name Text</Label>
@@ -720,7 +720,7 @@ export default function AdminProfilePage() {
                           />
                           <input 
                             type="color" 
-                            value={logoNameColor.length === 7 ? logoNameColor : "#D81E5B"} 
+                            value={logoNameColor.length === 7 ? logoNameColor : "var(--color-brand)"} 
                             onChange={(e) => setLogoNameColor(e.target.value)}
                             className="w-1/3 h-10 border border-slate-200 rounded-xl cursor-pointer p-0 bg-transparent"
                           />
@@ -731,7 +731,7 @@ export default function AdminProfilePage() {
 
                   {/* 2. LOGO TAGLINE CONTROLS */}
                   <div className="space-y-4 pt-2">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D81E5B] border-b pb-1">2. Logo Tagline Settings (Fallback)</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-brand border-b pb-1">2. Logo Tagline Settings (Fallback)</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2 md:col-span-2">
                         <Label className="text-xs font-bold text-zinc-500">Logo Tagline Content</Label>
@@ -785,7 +785,7 @@ export default function AdminProfilePage() {
 
                   {/* 3. LOGO ICON / SVG SETTINGS */}
                   <div className="space-y-4 pt-2">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-[#D81E5B] border-b pb-1">3. Custom Logo Icon Upload</h4>
+                    <h4 className="text-xs font-black uppercase tracking-widest text-brand border-b pb-1">3. Custom Logo Icon Upload</h4>
                     
                     <div className="space-y-4">
                       
@@ -880,7 +880,7 @@ export default function AdminProfilePage() {
                   <Button 
                     type="submit"
                     disabled={savingBranding}
-                    className="bg-[#D81E5B] hover:bg-[#c2144d] text-white rounded-xl font-bold h-11 px-5 flex items-center gap-2 shadow-md shadow-[#D81E5B]/10 w-full sm:w-auto"
+                    className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-11 px-5 flex items-center gap-2 shadow-md shadow-brand/10 w-full sm:w-auto"
                   >
                     {savingBranding ? (
                       <>

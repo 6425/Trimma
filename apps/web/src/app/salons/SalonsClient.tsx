@@ -37,6 +37,7 @@ interface Salon {
   tags: string[];
   nextSlot: string;
   popularService: string;
+  isVerified?: boolean;
 }
 
 interface Category {
@@ -126,6 +127,7 @@ export default function SalonsClient({ salons, categories }: Props) {
     nextAvailable: s.nextSlot,
     priceFrom: s.startingPrice,
     featured: s.featured,
+    isVerified: s.isVerified,
   }));
 
   return (
@@ -142,8 +144,8 @@ export default function SalonsClient({ salons, categories }: Props) {
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-[#D81E5B]/15 text-[#D81E5B] border border-[#D81E5B]/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#D81E5B] mr-1.5 animate-pulse inline" />
+          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" />
             Discover Premium Grooming
           </Badge>
 
@@ -159,7 +161,7 @@ export default function SalonsClient({ salons, categories }: Props) {
           </p>
 
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-400 mb-6">
-            <span className="font-extrabold text-white bg-[#D81E5B]/20 text-[#D81E5B] px-3 py-1 rounded-full">
+            <span className="font-extrabold text-white bg-brand/20 text-brand px-3 py-1 rounded-full">
               {filteredSalons.length} Salons Found
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-zinc-700" />

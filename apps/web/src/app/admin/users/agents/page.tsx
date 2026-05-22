@@ -233,7 +233,7 @@ export default function AdminAgentManagement() {
           <Button 
             onClick={() => navigate.push("/admin/agents")}
             variant="ghost"
-            className="h-9 rounded-lg font-bold text-xs hover:bg-white text-zinc-600 hover:text-[#D81E5B]"
+            className="h-9 rounded-lg font-bold text-xs hover:bg-white text-zinc-600 hover:text-brand"
           >
             <TrendingUp className="w-3.5 h-3.5 mr-1" /> Main CRM Operating Cockpit
           </Button>
@@ -254,7 +254,7 @@ export default function AdminAgentManagement() {
            agents.slice(0, 3).map((agent, index) => {
              const trophyColors = ["text-amber-500", "text-slate-400", "text-amber-700"];
              return (
-               <div key={agent.id} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm relative overflow-hidden group hover:border-[#D81E5B]/20 transition-all flex flex-col justify-between h-44">
+               <div key={agent.id} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm relative overflow-hidden group hover:border-brand/20 transition-all flex flex-col justify-between h-44">
                   <div className="absolute top-4 right-4">
                     <Trophy className={`w-6 h-6 ${trophyColors[index]} opacity-30 group-hover:scale-110 transition-transform`} />
                   </div>
@@ -273,7 +273,7 @@ export default function AdminAgentManagement() {
                   <div className="space-y-2.5">
                      <div className="flex justify-between items-end text-xs">
                         <span className="font-bold text-zinc-400 uppercase text-[9px] tracking-wider">Commission Tier</span>
-                        <span className="font-black text-[#D81E5B]">{agent.commission_rate || 0}%</span>
+                        <span className="font-black text-brand">{agent.commission_rate || 0}%</span>
                      </div>
                      <Progress value={agent.commission_rate || 0} className="h-1.5 bg-slate-100" />
                      <div className="flex items-center justify-between text-[10px] font-bold text-zinc-500 pt-1">
@@ -301,7 +301,7 @@ export default function AdminAgentManagement() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search agents..." 
-                    className="pl-10 h-10 border-slate-200 bg-white rounded-xl text-xs font-semibold focus:ring-2 focus:ring-[#D81E5B]/20 w-[200px]" 
+                    className="pl-10 h-10 border-slate-200 bg-white rounded-xl text-xs font-semibold focus:ring-2 focus:ring-brand/20 w-[200px]" 
                   />
                </div>
             </div>
@@ -324,7 +324,7 @@ export default function AdminAgentManagement() {
                   {loading ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#D81E5B]" />
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand" />
                         Scanning agent directory...
                       </td>
                     </tr>
@@ -359,7 +359,7 @@ export default function AdminAgentManagement() {
                         <td className="px-6 py-2">
                            <div className="flex items-center gap-3">
                               <div className="flex-1 h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
-                                 <div className="h-full bg-[#D81E5B]" style={{ width: `${agent.commission_rate || 0}%` }} />
+                                 <div className="h-full bg-brand" style={{ width: `${agent.commission_rate || 0}%` }} />
                               </div>
                               <span className="text-[10px] font-black text-zinc-900">{agent.commission_rate || 0}%</span>
                            </div>
@@ -387,7 +387,7 @@ export default function AdminAgentManagement() {
                              <Button 
                                variant="outline" 
                                size="sm" 
-                               className="font-bold text-zinc-500 border-slate-200 hover:text-[#D81E5B] hover:bg-slate-50 h-8 px-2.5 rounded-lg text-[10px] gap-1"
+                               className="font-bold text-zinc-500 border-slate-200 hover:text-brand hover:bg-slate-50 h-8 px-2.5 rounded-lg text-[10px] gap-1"
                                onClick={() => handleOpenPasswordModal(agent)}
                              >
                                <KeyRound className="w-3.5 h-3.5" /> Reset Password
@@ -411,7 +411,7 @@ export default function AdminAgentManagement() {
             <div className="pb-4 border-b border-zinc-100 flex items-center justify-between">
               <div>
                 <h3 className="text-base font-black text-zinc-900 tracking-tight flex items-center gap-1.5">
-                  <KeyRound className="w-4 h-4 text-[#D81E5B]" /> Overwrite Agent Password
+                  <KeyRound className="w-4 h-4 text-brand" /> Overwrite Agent Password
                 </h3>
                 <p className="text-[11px] text-zinc-400 mt-0.5">Set a manual password for <span className="font-bold text-zinc-700">{passwordAgentName}</span></p>
               </div>
@@ -455,7 +455,7 @@ export default function AdminAgentManagement() {
                     placeholder="Enter at least 6 characters"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="h-10 text-zinc-800 font-extrabold focus:ring-2 focus:ring-[#D81E5B]/20 rounded-xl pr-10"
+                    className="h-10 text-zinc-800 font-extrabold focus:ring-2 focus:ring-brand/20 rounded-xl pr-10"
                   />
                   <button
                     onClick={() => setShowPassword(!showPassword)}
@@ -491,7 +491,7 @@ export default function AdminAgentManagement() {
               <Button 
                 onClick={handleUpdatePasswordManually}
                 disabled={isUpdatingPassword}
-                className="bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white h-10 rounded-xl font-bold px-4 text-xs"
+                className="bg-brand hover:bg-brand/90 text-white h-10 rounded-xl font-bold px-4 text-xs"
               >
                 {isUpdatingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : "Overwrite Password Now"}
               </Button>

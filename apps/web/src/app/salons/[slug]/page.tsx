@@ -613,8 +613,8 @@ export default function SalonPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4 font-sans text-center">
         <div className="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-xl max-w-md w-full flex flex-col items-center">
-          <div className="w-20 h-20 bg-[#D81E5B]/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
-            <Scissors className="w-10 h-10 text-[#D81E5B]" />
+          <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
+            <Scissors className="w-10 h-10 text-brand" />
           </div>
           <h2 className="text-2xl font-black text-zinc-900 mb-3 tracking-tight">Salon Not Found</h2>
           <p className="text-zinc-500 text-sm mb-8 leading-relaxed font-medium">
@@ -622,7 +622,7 @@ export default function SalonPage() {
           </p>
           <div className="w-full space-y-3">
             <Link href="/salons" className="block w-full">
-              <Button className="w-full rounded-2xl bg-[#D81E5B] hover:bg-[#c21b52] text-white font-bold h-12 transition-all active:scale-[0.98] border-none">
+              <Button className="w-full rounded-2xl bg-brand hover:bg-[#c21b52] text-white font-bold h-12 transition-all active:scale-[0.98] border-none">
                 Explore Active Salons
               </Button>
             </Link>
@@ -646,6 +646,11 @@ export default function SalonPage() {
     : services.filter(s => s.category === selectedCategory);
 
   const handleBookService = (serviceName?: string) => {
+    if (!salon.is_verified) {
+      toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
+      return;
+    }
+
     if (serviceName) {
       const match = services.find(s => s.name === serviceName);
       if (match) {
@@ -712,9 +717,15 @@ export default function SalonPage() {
                   <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
                     {salon.name}
                   </h1>
-                  <Badge className="bg-[#D81E5B]/20 text-[#D81E5B] border border-[#D81E5B]/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#D81E5B]" /> Verified Partner
-                  </Badge>
+                  {salon.is_verified ? (
+                    <Badge className="bg-brand/20 text-brand border border-brand/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-brand" /> Verified Partner
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" /> Not Verified
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-300">
@@ -723,7 +734,7 @@ export default function SalonPage() {
                     {mockExtraData.rating} <span className="font-normal text-zinc-400 ml-1">({mockExtraData.reviews} reviews)</span>
                   </div>
                   <div className="flex items-center hover:text-white transition-colors cursor-pointer" title={salon.address}>
-                    <MapPin className="w-4 h-4 mr-1.5 text-[#D81E5B]" />
+                    <MapPin className="w-4 h-4 mr-1.5 text-brand" />
                     <span>{salon.district || salon.city || salon.address || "Colombo District"}</span>
                   </div>
                   <div className="flex items-center text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
@@ -744,8 +755,13 @@ export default function SalonPage() {
 
             {/* Quick Actions Panel */}
             <div className="flex flex-wrap sm:flex-nowrap md:flex-col lg:flex-row gap-3 min-w-[280px]">
-              <Button size="lg" className="flex-1 md:flex-none hidden md:flex rounded-xl bg-[#D81E5B] hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25 font-bold transition-all active:scale-[0.98] text-xs h-12 px-6" onClick={() => handleBookService()}>
-                Book Appointment
+              <Button 
+                size="lg" 
+                disabled={!salon.is_verified}
+                className={`flex-1 md:flex-none hidden md:flex rounded-xl font-bold transition-all active:scale-[0.98] text-xs h-12 px-6 ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                onClick={() => handleBookService()}
+              >
+                {!salon.is_verified ? "Booking Unavailable" : "Book Appointment"}
               </Button>
               <Button size="lg" variant="outline" className="flex-1 md:flex-none rounded-xl gap-2 font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white text-xs h-12 px-5">
                 <Phone className="w-4 h-4" /> Call

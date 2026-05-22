@@ -65,7 +65,7 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center text-zinc-400 gap-2">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B]" />
+        <Loader2 className="w-8 h-8 animate-spin text-brand" />
         <p className="font-semibold text-xs">Syncing billing configurations...</p>
       </div>
     );
@@ -77,7 +77,7 @@ export default function BillingPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <CreditCard className="w-6 h-6 text-[#D81E5B]" />
+            <CreditCard className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Subscription & Billing</h1>
@@ -88,7 +88,7 @@ export default function BillingPage() {
 
       {/* Active Membership Details */}
       {activePlan && (
-        <div className="bg-[#D81E5B] text-white p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="bg-brand text-white p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
           
           <div className="relative z-10 space-y-2">
@@ -112,7 +112,7 @@ export default function BillingPage() {
       {/* Pricing Upgrade Grid */}
       <div className="space-y-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
         <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#D81E5B]" />
+          <Sparkles className="w-4 h-4 text-brand" />
           Available Subscription Packages
         </h3>
 
@@ -124,12 +124,12 @@ export default function BillingPage() {
                 key={idx} 
                 className={`rounded-3xl p-5 border flex flex-col justify-between space-y-6 relative ${
                   isActive 
-                  ? "border-[#D81E5B] bg-rose-50/10 shadow-sm" 
+                  ? "border-brand bg-rose-50/10 shadow-sm" 
                   : "border-zinc-100 bg-white hover:border-zinc-200"
                 }`}
               >
                 {isActive && (
-                  <span className="absolute top-4 right-4 bg-rose-50 text-[#D81E5B] font-extrabold text-[8px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-rose-100">
+                  <span className="absolute top-4 right-4 bg-rose-50 text-brand font-extrabold text-[8px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-rose-100">
                     Active Tier
                   </span>
                 )}
@@ -144,8 +144,8 @@ export default function BillingPage() {
                   </div>
 
                   <ul className="space-y-2 text-[11px] font-semibold text-zinc-500">
-                    <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#D81E5B] shrink-0" /> {p.staff}</li>
-                    <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-[#D81E5B] shrink-0" /> {p.images}</li>
+                    <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand shrink-0" /> {p.staff}</li>
+                    <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand shrink-0" /> {p.images}</li>
                     {p.features.map((feat, fIdx) => (
                       <li key={fIdx} className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" /> {feat}</li>
                     ))}
@@ -169,7 +169,7 @@ export default function BillingPage() {
       {/* Invoice History */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
         <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-[#D81E5B]" />
+          <FileText className="w-4 h-4 text-brand" />
           Invoice & Payment Receipt History
         </h3>
 

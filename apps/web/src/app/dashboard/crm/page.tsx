@@ -23,7 +23,7 @@ export default function CRMPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <MessageSquare className="w-6 h-6 text-[#D81E5B]" />
+            <MessageSquare className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">CRM & Relationship Center</h1>
@@ -31,7 +31,7 @@ export default function CRMPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#D81E5B]/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Award className="w-3.5 h-3.5" /> Setup Loyalty Rule
         </Button>
       </div>
@@ -41,7 +41,7 @@ export default function CRMPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
             <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-              <Star className="w-4 h-4 text-[#D81E5B]" />
+              <Star className="w-4 h-4 text-brand" />
               Automated Retention & Loyalty Rules
             </h3>
 
@@ -49,7 +49,7 @@ export default function CRMPage() {
               {loyaltyPrograms.map((prog, idx) => (
                 <div key={idx} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#D81E5B]/10 text-[#D81E5B] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
                       {idx === 0 ? <Cake className="w-5 h-5" /> : idx === 1 ? <BellRing className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
                     </div>
                     <div>
@@ -69,7 +69,7 @@ export default function CRMPage() {
           {/* CRM Stylist Notes */}
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
             <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#D81E5B]" />
+              <Sparkles className="w-4 h-4 text-brand" />
               Stylist Care & Service Notes
             </h3>
 
@@ -106,7 +106,7 @@ export default function CRMPage() {
               <div className="space-y-3.5 pt-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-white/70 font-medium">👑 Royal Diamond (10+ visits)</span>
-                  <span className="font-black text-[#D81E5B]">14 clients</span>
+                  <span className="font-black text-brand">14 clients</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-white/70 font-medium">⭐ Elite Platinum (5+ visits)</span>
@@ -119,7 +119,7 @@ export default function CRMPage() {
               </div>
 
               <Button className="w-full bg-white text-zinc-900 hover:bg-zinc-100 font-bold h-11 rounded-xl text-xs flex items-center justify-center gap-1.5">
-                View Member Rules <ArrowRight className="w-4 h-4 text-[#D81E5B]" />
+                View Member Rules <ArrowRight className="w-4 h-4 text-brand" />
               </Button>
             </div>
           </div>

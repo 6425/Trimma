@@ -173,7 +173,7 @@ export default function AdminBookings() {
   const totalGtv = bookings.reduce((sum, b) => sum + parseFloat(b.amount || 0), 0);
   const platformRevenue = bookings
     .filter(b => b.reservation_fee_paid)
-    .reduce((sum, b) => sum + parseFloat(b.amount || 0) * 0.10, 0); // 10% Platform share of the 20% Reservation Fee
+    .reduce((sum, b) => sum + parseFloat(b.amount || 0) * 0.10, 0); // 10% Platform share of the 23% Reservation Fee
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", minimumFractionDigits: 0 }).format(price);
@@ -220,9 +220,9 @@ export default function AdminBookings() {
         <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Total Platform GTV</p>
-            <p className="text-xl font-black text-[#D81E5B]">{formatPrice(totalGtv)}</p>
+            <p className="text-xl font-black text-brand">{formatPrice(totalGtv)}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-rose-50/50 flex items-center justify-center text-[#D81E5B]">
+          <div className="w-10 h-10 rounded-xl bg-rose-50/50 flex items-center justify-center text-brand">
             <DollarSign className="w-5 h-5" />
           </div>
         </div>
@@ -308,7 +308,7 @@ export default function AdminBookings() {
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-8 py-24 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#D81E5B] mx-auto mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
                     <p className="text-zinc-400 font-medium">Accessing global transaction directory...</p>
                   </td>
                 </tr>
@@ -347,19 +347,23 @@ export default function AdminBookings() {
                     <td className="px-8 py-6">
                       <div className="text-sm font-black text-zinc-900">{formatPrice(b.amount)}</div>
                       <div className="text-[10px] text-zinc-400 font-bold mt-0.5">
-                        Fee: {formatPrice(b.amount * 0.20)} (Split: {formatPrice(b.amount * 0.10)} / {formatPrice(b.amount * 0.10)})
+                        Fee: {formatPrice(b.amount * 0.23)} (10% Plat / 10% Salon / 3% PayHere)
                       </div>
                     </td>
                     
                     <td className="px-8 py-6">
                       <div className="flex flex-col gap-1.5">
-                        <Badge className={`w-fit text-[9px] font-extrabold px-2 py-0.5 border-none uppercase tracking-wider ${
-                          b.status === 'confirmed' ? "bg-emerald-50 text-emerald-600" : 
-                          b.status === 'pending' ? "bg-amber-50 text-amber-600" : 
-                          "bg-zinc-100 text-zinc-500"
-                        }`}>
-                          {b.status || 'pending'}
-                        </Badge>
+                        {(() => {
+                          const s = (b.status || 'pending').toLowerCase();
+                          if (s === 'pending') return <Badge className="bg-amber-50 text-amber-600 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">Pending</Badge>;
+                          if (s === 'confirmed') return <Badge className="bg-emerald-50 text-emerald-600 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">Confirmed</Badge>;
+                          if (s === 'in_progress') return <Badge className="bg-indigo-50 text-indigo-600 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">In Progress</Badge>;
+                          if (s === 'completed') return <Badge className="bg-zinc-100 text-zinc-700 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">Completed</Badge>;
+                          if (s === 'canceled') return <Badge className="bg-rose-50 text-rose-600 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">Cancelled</Badge>;
+                          if (s === 'no_show') return <Badge className="bg-orange-50 text-orange-600 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">No Show</Badge>;
+                          if (s === 'rescheduled') return <Badge className="bg-blue-50 text-blue-600 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">Rescheduled</Badge>;
+                          return <Badge className="bg-zinc-100 text-zinc-500 border-none px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider w-fit">{s}</Badge>;
+                        })()}
                         
                         {b.reschedule_requested && (
                           <Badge className="bg-rose-50 text-rose-600 border-none animate-pulse w-fit text-[8px] font-black uppercase tracking-widest px-2 py-0.5">
@@ -439,7 +443,7 @@ export default function AdminBookings() {
             </div>
          </div>
          <div className="bg-gradient-to-br from-rose-50 to-white rounded-3xl p-8 border border-rose-100 flex flex-col justify-center text-center">
-            <div className="w-12 h-12 bg-rose-100 text-[#D81E5B] rounded-2xl flex items-center justify-center mx-auto mb-4 font-black">
+            <div className="w-12 h-12 bg-rose-100 text-brand rounded-2xl flex items-center justify-center mx-auto mb-4 font-black">
               %
             </div>
             <p className="text-sm font-bold text-zinc-900 mb-2">Commissions Contract</p>

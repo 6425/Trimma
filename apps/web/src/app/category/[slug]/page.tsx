@@ -153,6 +153,7 @@ export default function CategoryPage() {
           tags: tags.slice(0, 3),
           nextSlot: "Today 4:00 PM",
           popularService,
+          isVerified: s.is_verified,
         };
       });
 
@@ -202,8 +203,8 @@ export default function CategoryPage() {
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-[#D81E5B]/15 text-[#D81E5B] border border-[#D81E5B]/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#D81E5B] mr-1.5 animate-pulse inline" /> {categoryName} Specialists
+          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> {categoryName} Specialists
           </Badge>
           
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">
@@ -216,7 +217,7 @@ export default function CategoryPage() {
           </p>
           
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-400 mb-6">
-             <span className="font-extrabold text-white bg-[#D81E5B]/20 text-[#D81E5B] px-3 py-1 rounded-full">{filteredSalons.length} Salons Available</span>
+             <span className="font-extrabold text-white bg-brand/20 text-brand px-3 py-1 rounded-full">{filteredSalons.length} Salons Available</span>
              <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
           </div>
@@ -345,6 +346,7 @@ export default function CategoryPage() {
                 nextAvailable: s.nextSlot,
                 priceFrom: s.startingPrice,
                 featured: s.featured,
+                isVerified: s.isVerified,
               }));
 
               return (

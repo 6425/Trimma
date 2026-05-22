@@ -307,7 +307,7 @@ export default function AdminDashboard() {
   if (loading || !authorized) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
-         <Loader2 className="w-10 h-10 animate-spin text-[#D81E5B] mb-4" />
+         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
          <p className="text-zinc-500 font-medium">Verifying administrator credentials...</p>
       </div>
     );

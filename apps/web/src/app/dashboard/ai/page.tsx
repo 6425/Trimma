@@ -18,7 +18,7 @@ export default function AIAssistantPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <Bot className="w-6 h-6 text-[#D81E5B]" />
+            <Bot className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">AI Grooming Assistant</h1>
@@ -26,7 +26,7 @@ export default function AIAssistantPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#D81E5B]/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Sparkles className="w-3.5 h-3.5 animate-pulse" /> Launch AI Agent
         </Button>
       </div>
@@ -46,7 +46,7 @@ export default function AIAssistantPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Reception Hours Saved</span>
           <h3 className="text-xl font-black text-[#1A1C29] mt-1">32 Hours</h3>
-          <span className="text-[9px] font-semibold text-[#D81E5B] bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Auto slot management</span>
+          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Auto slot management</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">AI Success Rate</span>
@@ -60,7 +60,7 @@ export default function AIAssistantPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
             <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-              <Settings className="w-4 h-4 text-[#D81E5B]" />
+              <Settings className="w-4 h-4 text-brand" />
               Agent Configuration & Instructions
             </h3>
 
@@ -95,7 +95,7 @@ export default function AIAssistantPage() {
               <div className="flex items-center gap-2 text-zinc-500 text-xs font-semibold">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" /> Active RLS-Secured Integration
               </div>
-              <Button className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl font-bold text-xs h-10 px-5">
+              <Button className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold text-xs h-10 px-5">
                 Save Instructions
               </Button>
             </div>
@@ -106,7 +106,7 @@ export default function AIAssistantPage() {
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6 flex flex-col justify-between h-full">
             <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-[#D81E5B]" />
+              <MessageSquare className="w-4 h-4 text-brand" />
               Real-Time AI Conversation Logs
             </h3>
 
@@ -116,7 +116,7 @@ export default function AIAssistantPage() {
                   <span className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-widest">{chat.sender}</span>
                   <div className={`p-3 rounded-2xl text-xs max-w-[85%] font-sans leading-relaxed ${
                     chat.isAI 
-                    ? "bg-rose-50/50 border border-rose-100 text-[#D81E5B] rounded-tl-none" 
+                    ? "bg-rose-50/50 border border-rose-100 text-brand rounded-tl-none" 
                     : "bg-zinc-100 text-zinc-800 rounded-tr-none"
                   }`}>
                     {chat.text}

@@ -23,6 +23,7 @@ export default function AgentDashboard() {
     assignedCount: 0,
     convertedCount: 0,
     commissionRate: 10,
+    bookingCommissions: 0,
     hotLeads: [] as any[]
   });
 
@@ -104,10 +105,24 @@ export default function AgentDashboard() {
 
       if (leadsErr) throw leadsErr;
 
+      // 6. Fetch Total Booking Commissions
+      let totalBookingCommissions = 0;
+      if (email) {
+        const { data: commData } = await supabase
+          .from("bookings")
+          .select("agent_commission_amount")
+          .eq("agent_email", email);
+          
+        if (commData) {
+          totalBookingCommissions = commData.reduce((sum, b) => sum + (parseFloat(b.agent_commission_amount as any) || 0), 0);
+        }
+      }
+
       setStats({
         assignedCount: assignedCount || 0,
         convertedCount: convertedCount || 0,
         commissionRate: commRate,
+        bookingCommissions: totalBookingCommissions,
         hotLeads: hotLeads || []
       });
 
@@ -129,7 +144,7 @@ export default function AgentDashboard() {
   if (loading || !authorized) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-[#D81E5B] mb-4" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
         <p className="text-zinc-500 font-medium">Verifying agent credentials...</p>
       </div>
     );
@@ -142,7 +157,7 @@ export default function AgentDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-zinc-900 mb-1">Agent Cockpit</h1>
-          <p className="text-zinc-500 font-semibold text-sm">Welcome back, <span className="text-[#D81E5B]">{agentName}</span>! Convert your assigned leads into active subscriptions.</p>
+          <p className="text-zinc-500 font-semibold text-sm">Welcome back, <span className="text-brand">{agentName}</span>! Convert your assigned leads into active subscriptions.</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button 
@@ -154,7 +169,7 @@ export default function AgentDashboard() {
           </Button>
           <Button 
             onClick={() => router.push("/agent/leads")}
-            className="flex-1 sm:flex-none h-10 rounded-lg bg-[#D81E5B] hover:bg-[#D81E5B]/90 text-white font-semibold"
+            className="flex-1 sm:flex-none h-10 rounded-lg bg-brand hover:bg-brand/90 text-white font-semibold"
           >
             <PhoneCall className="w-4 h-4 mr-2" /> Start Calls
           </Button>
@@ -164,7 +179,7 @@ export default function AgentDashboard() {
       {/* LOADING SPINNER */}
       {loading ? (
         <div className="py-20 text-center text-zinc-400">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#D81E5B] mb-2" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-brand mb-2" />
           <span>Synchronizing your agent metrics...</span>
         </div>
       ) : (
@@ -175,7 +190,7 @@ export default function AgentDashboard() {
               { title: "Assigned Leads", value: stats.assignedCount, trend: "In your pipeline", icon: <Users className="w-5 h-5 text-indigo-500" /> },
               { title: "Active Pipeline", value: stats.assignedCount - stats.convertedCount, trend: "Leads to contact", icon: <Rocket className="w-5 h-5 text-amber-500" /> },
               { title: "Converted Salons", value: stats.convertedCount, trend: "Subscribed live", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> },
-              { title: "Total Earnings", value: `Rs ${(stats.convertedCount * 5000).toLocaleString()}`, trend: `Estimated referral earnings`, icon: <Target className="w-5 h-5 text-sky-500" /> },
+              { title: "Total Earnings", value: `Rs ${((stats.convertedCount * 5000) + stats.bookingCommissions).toLocaleString()}`, trend: `Sub + Booking fees`, icon: <Target className="w-5 h-5 text-sky-500" /> },
             ].map((kpi, i) => (
               <div key={i} className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
                 <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10 ${
@@ -238,7 +253,7 @@ export default function AgentDashboard() {
                     <h2 className="text-lg font-bold text-zinc-900">Assigned Leads Queue</h2>
                     <p className="text-sm text-zinc-500 mt-0.5">Quick lookup of your newly assigned salons</p>
                   </div>
-                  <Link href="/agent/leads" className="text-sm font-semibold text-[#D81E5B] flex items-center gap-1 hover:underline">
+                  <Link href="/agent/leads" className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline">
                     Spreadsheet View &rarr;
                   </Link>
                 </div>
@@ -333,7 +348,7 @@ export default function AgentDashboard() {
                  <div className="space-y-4 relative z-10">
                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Total Estimated Payout</p>
-                     <p className="text-2xl font-black text-emerald-700">Rs {(stats.convertedCount * 5000).toLocaleString()}</p>
+                     <p className="text-2xl font-black text-emerald-700">Rs {((stats.convertedCount * 5000) + stats.bookingCommissions).toLocaleString()}</p>
                    </div>
                    
                    <div className="flex items-center justify-between py-2 border-b border-slate-100">
@@ -341,8 +356,8 @@ export default function AgentDashboard() {
                      <span className="text-sm font-bold text-zinc-900">Rs {(stats.convertedCount * 5000).toLocaleString()}</span>
                    </div>
                    <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                     <span className="text-xs font-semibold text-zinc-500">Booking Splits</span>
-                     <span className="text-sm font-bold text-[#D81E5B]">10% per Referral</span>
+                     <span className="text-xs font-semibold text-zinc-500">Booking Commissions</span>
+                     <span className="text-sm font-bold text-brand">Rs {stats.bookingCommissions.toLocaleString()}</span>
                    </div>
                    
                    <Button 

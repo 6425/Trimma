@@ -138,7 +138,7 @@ export default function CategoryManagement() {
         {!editId && (
           <Button 
             onClick={() => { setEditId(null); setFormData({ name: "", slug: "", icon: "" }); }}
-            className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-[#D81E5B]/20 flex items-center gap-2"
+            className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
           >
             <Plus className="w-5 h-5" /> Add New Category
           </Button>
@@ -205,7 +205,7 @@ export default function CategoryManagement() {
                                 setLoading(false);
                               }
                             }}
-                            className="bg-[#D81E5B] hover:bg-[#BF1A50] w-full"
+                            className="bg-brand hover:bg-brand-hover w-full"
                           >
                             Initialize Marketplace
                           </Button>
@@ -219,7 +219,7 @@ export default function CategoryManagement() {
                         <tr key={cat.id} className="hover:bg-zinc-50/50 transition-colors">
                           <td className="px-8 py-6">
                             <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-[#D81E5B]">
+                               <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-brand">
                                   <IconComponent className="w-5 h-5" />
                                </div>
                                <span className="font-bold text-[#1A1C29]">{cat.name}</span>
@@ -227,7 +227,7 @@ export default function CategoryManagement() {
                           </td>
                           <td className="px-8 py-6 text-zinc-500 font-mono text-xs">{cat.slug}</td>
                           <td className="px-8 py-6 text-center">
-                            <Badge variant="outline" className="rounded-full px-3 text-[#D81E5B] border-rose-100">
+                            <Badge variant="outline" className="rounded-full px-3 text-brand border-rose-100">
                               {cat.global_services?.[0]?.count || 0}
                             </Badge>
                           </td>
@@ -267,7 +267,7 @@ export default function CategoryManagement() {
         </div>
 
         <div className="space-y-6">
-          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-[#D81E5B]' : 'bg-zinc-900'}`}>
+          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-zinc-900'}`}>
             <LayoutGrid className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update Category' : 'Create Category'}</h3>
             <p className="text-white/60 text-sm mb-6">Add or manage a primary category for Trimma.</p>
@@ -303,7 +303,7 @@ export default function CategoryManagement() {
                         type="button"
                         onClick={() => setFormData({ ...formData, icon: iconName })}
                         className={`p-2 rounded-lg flex items-center justify-center border transition-all ${
-                          formData.icon === iconName ? 'bg-white text-[#D81E5B] border-white' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                          formData.icon === iconName ? 'bg-white text-brand border-white' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -332,7 +332,7 @@ export default function CategoryManagement() {
                 <Button 
                   disabled={saving}
                   type="submit" 
-                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-[#D81E5B] hover:bg-zinc-100' : 'bg-[#D81E5B] hover:bg-[#BF1A50] text-white'}`}
+                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-white'}`}
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : editId ? 'Update Category' : 'Save Category'}
                 </Button>

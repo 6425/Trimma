@@ -32,7 +32,7 @@ export default function HelpCenterPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <HelpCircle className="w-6 h-6 text-[#D81E5B]" />
+            <HelpCircle className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Help Center & Guides</h1>
@@ -46,7 +46,7 @@ export default function HelpCenterPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
             <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-[#D81E5B]" />
+              <BookOpen className="w-4 h-4 text-brand" />
               Frequently Asked Questions
             </h3>
 
@@ -96,7 +96,7 @@ export default function HelpCenterPage() {
 
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-3 text-xs font-semibold text-white/80">
-                  <Mail className="w-4 h-4 text-[#D81E5B]" /> support@trimma.com
+                  <Mail className="w-4 h-4 text-brand" /> support@trimma.com
                 </div>
                 <div className="flex items-center gap-3 text-xs font-semibold text-white/80">
                   <MessageCircle className="w-4 h-4 text-emerald-400" /> WhatsApp Live Chat

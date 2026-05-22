@@ -96,6 +96,7 @@ export default async function SalonsDirectoryPage() {
       tags: tags.slice(0, 3),
       nextSlot: "Today 4:00 PM",
       popularService,
+      isVerified: s.is_verified,
     };
   });
 

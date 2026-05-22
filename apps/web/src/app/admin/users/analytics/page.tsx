@@ -45,7 +45,7 @@ const signupData = [
 ];
 
 const roleData = [
-  { name: 'Customers', value: 4500, color: '#D81E5B' },
+  { name: 'Customers', value: 4500, color: 'var(--color-brand)' },
   { name: 'Salon Owners', value: 800, color: '#4A154B' },
   { name: 'Staff', value: 1200, color: '#1A1C29' },
   { name: 'Agents', value: 300, color: '#FBBF24' },
@@ -99,8 +99,8 @@ export default function AdminUserDashboard() {
               <AreaChart data={signupData}>
                 <defs>
                   <linearGradient id="colorSignups" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#D81E5B" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#D81E5B" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--color-brand)" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="var(--color-brand)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
@@ -122,7 +122,7 @@ export default function AdminUserDashboard() {
                 <Area 
                   type="monotone" 
                   dataKey="signups" 
-                  stroke="#D81E5B" 
+                  stroke="var(--color-brand)" 
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorSignups)" 
@@ -338,7 +338,7 @@ function GeoRow({ label, value, percent }: any) {
       </div>
       <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
         <div 
-          className="h-full bg-gradient-to-r from-[#1A1C29] to-[#D81E5B] rounded-full transition-all duration-1000" 
+          className="h-full bg-gradient-to-r from-[#1A1C29] to-brand rounded-full transition-all duration-1000" 
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -374,7 +374,7 @@ function ActivityRow({ name, role, action, context, ip, time, status }: any) {
             <AvatarFallback>{name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-bold text-[#1A1C29] group-hover:text-[#D81E5B] transition-colors">{name}</div>
+            <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors">{name}</div>
             <div className="text-[10px] font-bold text-zinc-400 uppercase">{role}</div>
           </div>
         </div>

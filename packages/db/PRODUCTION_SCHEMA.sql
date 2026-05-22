@@ -66,6 +66,33 @@ CREATE TABLE IF NOT EXISTS salons (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Migrations for Automated Onboarding Engine & Discovery
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS booking_enabled boolean DEFAULT false;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS public_visibility text DEFAULT 'hidden';
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS owner_invited_at timestamptz;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS owner_activated_at timestamptz;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS verification_completed_at timestamptz;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS onboarding_completion_score int DEFAULT 0;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS verification_notes text;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS draft_created_at timestamptz DEFAULT now();
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS amenities jsonb DEFAULT '{"chairs": 0, "waiting_capacity": 0, "ac": false, "wifi": false, "parking": false, "parking_capacity": 0, "refreshment": false}'::jsonb;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS place_id TEXT UNIQUE;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS map_url TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS source_type TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS onboarding_status TEXT DEFAULT 'DISCOVERED';
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS activation_status TEXT DEFAULT 'INACTIVE';
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS price_level TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS summary TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS latitude NUMERIC;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS longitude NUMERIC;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS website TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS rating NUMERIC;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS assign_to TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS admin_notes TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS agent_notes TEXT;
+ALTER TABLE salons ADD COLUMN IF NOT EXISTS owner_gmail TEXT;
+
 CREATE TABLE IF NOT EXISTS salon_staff (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   salon_id UUID REFERENCES salons(id) ON DELETE CASCADE,

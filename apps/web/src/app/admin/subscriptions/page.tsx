@@ -313,7 +313,7 @@ export default function SubscriptionPlanManagement() {
                   features: "" 
                 }); 
               }}
-              className="bg-[#D81E5B] hover:bg-[#BF1A50] text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-[#D81E5B]/20 flex items-center gap-2"
+              className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" /> Create Custom Plan
             </Button>
@@ -363,14 +363,14 @@ export default function SubscriptionPlanManagement() {
                         </div>
                     </div>
                     
-                    <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-[#D81E5B] mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-brand mb-6">
                         <Zap className="w-6 h-6 animate-pulse" />
                     </div>
                     
                     <div className="mb-6">
                       <h3 className="text-xl font-bold text-[#1A1C29]">{plan.name}</h3>
                       <div className="flex items-baseline gap-1 mt-1">
-                          <span className="text-2xl font-bold text-[#D81E5B]">
+                          <span className="text-2xl font-bold text-brand">
                             {plan.monthly_price === 0 ? "FREE" : `LKR ${plan.monthly_price.toLocaleString()}`}
                           </span>
                           {plan.monthly_price > 0 && <span className="text-zinc-400 text-xs font-medium">/ month</span>}
@@ -399,7 +399,7 @@ export default function SubscriptionPlanManagement() {
 
                     <div className="space-y-2.5 mb-8 min-h-[140px]">
                         <div className="flex items-center gap-2 text-sm text-zinc-700 font-bold">
-                          <ShieldCheck className="w-4 h-4 text-[#D81E5B]" />
+                          <ShieldCheck className="w-4 h-4 text-brand" />
                           Categories: {catLimit >= 999 ? "All Categories" : `${catLimit} Allowed`}
                         </div>
                         {featuresList.slice(0, 5).map((feature: string, idx: number) => (
@@ -430,7 +430,7 @@ export default function SubscriptionPlanManagement() {
         </div>
 
         <div className="space-y-6">
-          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-[#D81E5B]' : 'bg-zinc-900'}`}>
+          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-zinc-900'}`}>
             <Package className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update Specifications' : 'Create Tier'}</h3>
             <p className="text-white/60 text-sm mb-6">Modify platform package restrictions.</p>
@@ -550,7 +550,7 @@ export default function SubscriptionPlanManagement() {
                 <Button 
                   disabled={saving}
                   type="submit" 
-                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-[#D81E5B] hover:bg-zinc-100' : 'bg-[#D81E5B] hover:bg-[#BF1A50] text-white'}`}
+                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-white'}`}
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : editId ? 'Update Tier' : 'Deploy Subscription Tier'}
                 </Button>

@@ -27,7 +27,7 @@ export default function CommissionManagement() {
   const [editTiers, setEditTiers] = useState(false);
 
   // Edit form state
-  const [bookingForm, setBookingForm] = useState({ platform: 0, salon: 0 });
+  const [bookingForm, setBookingForm] = useState({ platform: 0, salon: 0, payhere: 0 });
   const [subscriptionForm, setSubscriptionForm] = useState({ platform: 0, agent: 0 });
   const [tiersForm, setTiersForm] = useState<any[]>([]);
 
@@ -50,9 +50,9 @@ export default function CommissionManagement() {
 
       if (bookingData) {
         setBookingConfig(bookingData);
-        setBookingForm({ platform: bookingData.platform_percentage, salon: bookingData.salon_percentage });
+        setBookingForm({ platform: bookingData.platform_percentage, salon: bookingData.salon_percentage, payhere: bookingData.payhere_percentage || 3 });
       } else {
-        setBookingForm({ platform: 10, salon: 90 });
+        setBookingForm({ platform: 10, salon: 10, payhere: 3 });
       }
 
       // Fetch active subscription commission
@@ -92,8 +92,8 @@ export default function CommissionManagement() {
 
   // Save Booking Commission (creates new immutable version)
   async function saveBookingCommission() {
-    if (bookingForm.platform + bookingForm.salon !== 100) {
-      toast.error("Platform + Salon must equal 100%");
+    if (bookingForm.platform + bookingForm.salon + bookingForm.payhere !== 23) {
+      toast.error("Platform + Salon + PayHere must equal 23% (The Reservation Fee)");
       return;
     }
     setSaving(true);
@@ -107,6 +107,7 @@ export default function CommissionManagement() {
         commission_type: "booking",
         platform_percentage: bookingForm.platform,
         salon_percentage: bookingForm.salon,
+        payhere_percentage: bookingForm.payhere,
         agent_percentage: 0,
         active: true,
         effective_from: new Date().toISOString(),
@@ -176,11 +177,12 @@ export default function CommissionManagement() {
   // Derived simulator values
   const simPlatform = simAmount * (bookingForm.platform / 100);
   const simSalon = simAmount * (bookingForm.salon / 100);
+  const simPayhere = simAmount * (bookingForm.payhere / 100);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 text-zinc-400">
-        <Loader2 className="w-10 h-10 animate-spin text-[#D81E5B] mb-4" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
         <p className="text-sm font-bold">Loading Commission Engine...</p>
       </div>
     );
@@ -229,7 +231,7 @@ export default function CommissionManagement() {
                      <Button size="sm" onClick={saveBookingCommission} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                      </Button>
-                     <Button variant="outline" size="sm" onClick={() => { setEditBooking(false); if(bookingConfig) setBookingForm({ platform: bookingConfig.platform_percentage, salon: bookingConfig.salon_percentage }); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
+                     <Button variant="outline" size="sm" onClick={() => { setEditBooking(false); if(bookingConfig) setBookingForm({ platform: bookingConfig.platform_percentage, salon: bookingConfig.salon_percentage, payhere: bookingConfig.payhere_percentage || 3 }); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
                        <X className="w-3.5 h-3.5" /> Cancel
                      </Button>
                    </div>
@@ -243,13 +245,13 @@ export default function CommissionManagement() {
                  {editBooking ? (
                    <div className="flex items-baseline gap-1">
                      <input 
-                       type="number" step="0.1" min="0" max="100"
+                       type="number" step="0.1" min="0" max="23"
                        value={bookingForm.platform}
                        onChange={(e) => {
                          const v = Number(e.target.value);
-                         setBookingForm({ platform: v, salon: Math.round((100 - v) * 10) / 10 });
+                         setBookingForm(prev => ({ ...prev, platform: v }));
                        }}
-                       className="w-24 h-12 text-3xl font-black text-zinc-900 bg-white border border-indigo-200 rounded-xl px-3 focus:outline-none focus:border-indigo-500 transition-colors"
+                       className="w-full text-2xl font-black text-zinc-900 bg-transparent border-none p-0 focus:ring-0" 
                      />
                      <span className="text-xl font-black text-zinc-400">%</span>
                    </div>
@@ -263,13 +265,13 @@ export default function CommissionManagement() {
                  {editBooking ? (
                    <div className="flex items-baseline gap-1">
                      <input 
-                       type="number" step="0.1" min="0" max="100"
+                       type="number" step="0.1" min="0" max="23"
                        value={bookingForm.salon}
                        onChange={(e) => {
                          const v = Number(e.target.value);
-                         setBookingForm({ salon: v, platform: Math.round((100 - v) * 10) / 10 });
+                         setBookingForm(prev => ({ ...prev, salon: v }));
                        }}
-                       className="w-24 h-12 text-3xl font-black text-zinc-900 bg-white border border-indigo-200 rounded-xl px-3 focus:outline-none focus:border-indigo-500 transition-colors"
+                       className="w-full text-2xl font-black text-emerald-600 bg-transparent border-none p-0 focus:ring-0" 
                      />
                      <span className="text-xl font-black text-zinc-400">%</span>
                    </div>
@@ -278,12 +280,36 @@ export default function CommissionManagement() {
                  )}
                  <ShieldCheck className="absolute right-4 bottom-4 w-12 h-12 text-zinc-200/50" />
                </div>
+               {editBooking && (
+                <div className="bg-zinc-50 rounded-2xl p-4 border border-slate-100 relative overflow-hidden mt-4 col-span-2">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">PayHere Fee</p>
+                  <div className="flex items-baseline gap-1">
+                     <input 
+                       type="number" step="0.1" min="0" max="23"
+                       value={bookingForm.payhere}
+                       onChange={(e) => {
+                         const v = Number(e.target.value);
+                         setBookingForm(prev => ({ ...prev, payhere: v }));
+                       }}
+                       className="w-full text-2xl font-black text-amber-600 bg-transparent border-none p-0 focus:ring-0" 
+                     />
+                     <span className="text-sm font-bold text-zinc-400">%</span>
+                  </div>
+                </div>
+              )}
+              
+              {!editBooking && (
+                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-zinc-500 font-medium col-span-2">
+                  <span>PayHere Fee Tracked: <span className="font-bold text-amber-600">{bookingConfig?.payhere_percentage || 3}%</span></span>
+                  <span>Total Reservation: <span className="font-bold text-zinc-900">23%</span></span>
+                </div>
+              )}
              </div>
-             {editBooking && (bookingForm.platform + bookingForm.salon !== 100) && (
-               <p className="text-xs font-bold text-rose-500 mt-3">⚠ Platform + Salon must equal 100% (Currently {bookingForm.platform + bookingForm.salon}%)</p>
+             {editBooking && (bookingForm.platform + bookingForm.salon + bookingForm.payhere !== 23) && (
+               <p className="text-xs font-bold text-rose-500 mt-3">⚠ Total must equal 23% (Currently {bookingForm.platform + bookingForm.salon + bookingForm.payhere}%)</p>
              )}
-             {editBooking && (bookingForm.platform + bookingForm.salon === 100) && (
-               <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Validated: Total is 100%</p>
+             {editBooking && (bookingForm.platform + bookingForm.salon + bookingForm.payhere === 23) && (
+               <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Validated: Total is 23%</p>
              )}
              <div className="mt-4 text-xs font-semibold text-zinc-400 flex items-center justify-between">
                 <span>Effective: {bookingConfig?.effective_from ? new Date(bookingConfig.effective_from).toLocaleDateString() : "Pending"}</span>

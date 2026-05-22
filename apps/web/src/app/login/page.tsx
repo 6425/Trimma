@@ -65,7 +65,7 @@ export default function LoginPage() {
         </div>
       </div>
       
-      <div className="flex items-center justify-center p-8 bg-white">
+      <div className="flex items-center justify-center p-8 bg-white text-zinc-900">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center md:text-left">
             <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Welcome back</h2>
@@ -75,15 +75,15 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <Input id="email" type="email" placeholder="owner@salon.com" required className="h-11" />
+                <Label htmlFor="email" className="text-zinc-900">Email address</Label>
+                <Input id="email" type="email" placeholder="owner@salon.com" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-zinc-900">Password</Label>
                   <a href="#" className="text-xs text-zinc-500 hover:text-zinc-900">Forgot password?</a>
                 </div>
-                <Input id="password" type="password" required className="h-11" />
+                <Input id="password" type="password" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
               </div>
             </div>
             

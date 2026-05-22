@@ -43,8 +43,8 @@ BEGIN
         ORDER BY created_at DESC LIMIT 1;
 
         IF NOT FOUND THEN
-            v_platform_rate := 4.0;
-            v_salon_rate := 96.0;
+            v_platform_rate := 20.0;
+            v_salon_rate := 80.0;
         END IF;
 
         -- 2. Check for Salon Override

@@ -22,7 +22,7 @@ export default function CustomersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
-            <Users className="w-6 h-6 text-[#D81E5B]" />
+            <Users className="w-6 h-6 text-brand" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Customer Database</h1>
@@ -30,7 +30,7 @@ export default function CustomersPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-[#D81E5B] hover:bg-[#BF1A50] text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-[#D81E5B]/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Plus className="w-3.5 h-3.5" /> Add Customer
         </Button>
       </div>
@@ -50,7 +50,7 @@ export default function CustomersPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">VIP Clients</span>
           <h3 className="text-xl font-black text-[#1A1C29] mt-1">74 Clients</h3>
-          <span className="text-[9px] font-semibold text-[#D81E5B] bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Spent &gt; LKR 15k</span>
+          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Spent &gt; LKR 15k</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Average Rating</span>
@@ -97,7 +97,7 @@ export default function CustomersPage() {
                     <div className="text-[10px] text-zinc-400 mt-0.5">{c.email} • {c.phone}</div>
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-zinc-700">{c.bookings} visits</td>
-                  <td className="px-6 py-4 text-sm font-black text-[#D81E5B]">{c.spent}</td>
+                  <td className="px-6 py-4 text-sm font-black text-brand">{c.spent}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-0.5 text-amber-500">
                       {Array.from({ length: 5 }).map((_, rIdx) => (
@@ -108,8 +108,8 @@ export default function CustomersPage() {
                   <td className="px-6 py-4 text-xs font-semibold text-zinc-500">{c.lastVisit}</td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-zinc-400 hover:text-[#D81E5B]"><MessageSquare className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-zinc-400 hover:text-[#D81E5B]"><Mail className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-zinc-400 hover:text-brand"><MessageSquare className="w-3.5 h-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg text-zinc-400 hover:text-brand"><Mail className="w-3.5 h-3.5" /></Button>
                     </div>
                   </td>
                 </tr>

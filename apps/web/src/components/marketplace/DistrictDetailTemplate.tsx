@@ -99,8 +99,8 @@ export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
           </div>
           
           <div className="max-w-3xl">
-             <Badge className="bg-[#D81E5B]/15 text-[#D81E5B] border border-[#D81E5B]/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-               <Sparkles className="w-3.5 h-3.5 text-[#D81E5B] mr-1.5 animate-pulse inline" /> {data.province} • District Center
+             <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+               <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> {data.province} • District Center
              </Badge>
              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">{data.name}</h1>
              <p className="text-base md:text-lg text-zinc-300 mb-6 font-medium leading-relaxed">
@@ -109,7 +109,7 @@ export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
              
              <div className="flex flex-wrap items-center gap-3 text-xs font-bold mb-6">
                <div className="bg-white/5 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-2">
-                 <Store className="w-4 h-4 text-[#D81E5B]" />
+                 <Store className="w-4 h-4 text-brand" />
                  <span className="text-white">{data.salonCount} Active Salons</span>
                </div>
                <div className="bg-white/5 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-2">

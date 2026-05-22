@@ -26,6 +26,7 @@ function SettingsPanelContent() {
   const [bookingRescheduledEnabled, setBookingRescheduledEnabled] = useState(true);
   const [bookingCancelledEnabled, setBookingCancelledEnabled] = useState(true);
   const [bookingReviewEnabled, setBookingReviewEnabled] = useState(true);
+  const [onboardingInviteEnabled, setOnboardingInviteEnabled] = useState(true);
   const [configSource, setConfigSource] = useState("database");
 
   // Dynamic template states
@@ -33,6 +34,7 @@ function SettingsPanelContent() {
   const [templateRescheduled, setTemplateRescheduled] = useState("");
   const [templateCancelled, setTemplateCancelled] = useState("");
   const [templateReview, setTemplateReview] = useState("");
+  const [templateOnboardingInvite, setTemplateOnboardingInvite] = useState("");
 
   // Show/Hide Access Token
   const [showToken, setShowToken] = useState(false);
@@ -50,10 +52,12 @@ function SettingsPanelContent() {
       setBookingRescheduledEnabled(config.bookingRescheduledEnabled !== false);
       setBookingCancelledEnabled(config.bookingCancelledEnabled !== false);
       setBookingReviewEnabled(config.bookingReviewEnabled !== false);
+      setOnboardingInviteEnabled(config.onboardingInviteEnabled !== false);
       setTemplateConfirmed(config.templateConfirmed || "");
       setTemplateRescheduled(config.templateRescheduled || "");
       setTemplateCancelled(config.templateCancelled || "");
       setTemplateReview(config.templateReview || "");
+      setTemplateOnboardingInvite(config.templateOnboardingInvite || "");
       setConfigSource(config.source);
       setLoading(false);
     }
@@ -73,10 +77,12 @@ function SettingsPanelContent() {
         bookingRescheduledEnabled,
         bookingCancelledEnabled,
         bookingReviewEnabled,
+        onboardingInviteEnabled,
         templateConfirmed,
         templateRescheduled,
         templateCancelled,
-        templateReview
+        templateReview,
+        templateOnboardingInvite
       );
       if (res.success) {
         toast.success("WhatsApp configuration updated successfully!", {
@@ -156,7 +162,7 @@ function SettingsPanelContent() {
           {/* MAIN SETTINGS PANEL */}
           <div className="lg:col-span-2 space-y-6">
             
-            <form onSubmit={handleSave} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
+            <form onSubmit={handleSave} className="bg-white text-zinc-900 rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
               <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
                 <h3 className="font-extrabold text-zinc-900 text-base flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-zinc-500" />
@@ -199,7 +205,7 @@ function SettingsPanelContent() {
                     onChange={(e) => setPhoneId(e.target.value)}
                     required
                     placeholder="Enter 15-digit Phone ID"
-                    className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm"
+                    className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
                   />
                   <p className="text-[10px] text-zinc-400">
                     Your official Meta WhatsApp Developer Sandbox or Business Phone Number ID.
@@ -219,7 +225,7 @@ function SettingsPanelContent() {
                       onChange={(e) => setAccessToken(e.target.value)}
                       required
                       placeholder="Paste EAASjC... Access Token"
-                      className="h-11 border-slate-200 focus:border-zinc-950 pr-12 rounded-xl text-sm font-mono"
+                      className="h-11 border-slate-200 focus:border-zinc-950 pr-12 rounded-xl text-sm font-mono text-zinc-900"
                     />
                     <button
                       type="button"
@@ -272,7 +278,7 @@ function SettingsPanelContent() {
                             value={templateConfirmed}
                             onChange={(e) => setTemplateConfirmed(e.target.value)}
                             rows={6}
-                            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
+                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
                           <div className="text-[9px] text-zinc-400 leading-relaxed">
@@ -307,7 +313,7 @@ function SettingsPanelContent() {
                             value={templateRescheduled}
                             onChange={(e) => setTemplateRescheduled(e.target.value)}
                             rows={6}
-                            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
+                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
                           <div className="text-[9px] text-zinc-400 leading-relaxed">
@@ -342,7 +348,7 @@ function SettingsPanelContent() {
                             value={templateCancelled}
                             onChange={(e) => setTemplateCancelled(e.target.value)}
                             rows={6}
-                            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
+                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
                           <div className="text-[9px] text-zinc-400 leading-relaxed">
@@ -377,11 +383,46 @@ function SettingsPanelContent() {
                             value={templateReview}
                             onChange={(e) => setTemplateReview(e.target.value)}
                             rows={5}
-                            className="w-full p-3 bg-white border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
+                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
                           <div className="text-[9px] text-zinc-400 leading-relaxed">
                             💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{review_link}"}</code>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* ONBOARDING INVITE */}
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-extrabold text-zinc-800">5. Salon Onboarding Invitation</div>
+                          <div className="text-[10px] text-zinc-400">Send Google login link to successfully verified salons.</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={onboardingInviteEnabled} 
+                            onChange={(e) => setOnboardingInviteEnabled(e.target.checked)} 
+                            className="sr-only peer" 
+                          />
+                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+                      
+                      {onboardingInviteEnabled && (
+                        <div className="space-y-2 pt-2 border-t border-slate-200/50">
+                          <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
+                          <textarea
+                            value={templateOnboardingInvite}
+                            onChange={(e) => setTemplateOnboardingInvite(e.target.value)}
+                            rows={5}
+                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
+                            placeholder="Enter template content..."
+                          />
+                          <div className="text-[9px] text-zinc-400 leading-relaxed">
+                            💡 <strong>Merge Tags:</strong> <code>{"{salon_name}"}</code>, <code>{"{owner_gmail}"}</code>, <code>{"{login_link}"}</code>
                           </div>
                         </div>
                       )}

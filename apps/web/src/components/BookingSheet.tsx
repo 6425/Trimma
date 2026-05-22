@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../config/supabase";
 import { generatePayhereHash } from "@/app/actions/payhere";
+import { sendBookingCreatedAlert } from "@/app/actions/whatsapp";
 
 export function BookingSheet({ 
   isOpen, 
@@ -42,6 +43,30 @@ export function BookingSheet({
   const [payhereMerchantId, setPayhereMerchantId] = useState("1211149");
   const [payhereMerchantSecret, setPayhereMerchantSecret] = useState("");
   const [activeEnvironment, setActiveEnvironment] = useState<'sandbox' | 'live'>('sandbox');
+
+  // Dynamic Commission Rates
+  const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, payhere: 3, agent: 20 });
+
+  // Fetch global commission rates
+  useEffect(() => {
+    async function loadRates() {
+      const { data } = await supabase
+        .from('commission_master')
+        .select('*')
+        .eq('commission_type', 'booking')
+        .eq('active', true)
+        .maybeSingle();
+      if (data) {
+        setGlobalRates({
+          platform: data.platform_percentage,
+          salon: data.salon_percentage,
+          payhere: data.payhere_percentage,
+          agent: data.agent_percentage || 20
+        });
+      }
+    }
+    loadRates();
+  }, []);
 
   // Customer search & details
   const [searchPhone, setSearchPhone] = useState("");
@@ -234,7 +259,8 @@ export function BookingSheet({
   const serviceCharge = priceAfterDiscount * 0.10; // 10% Taxes & Service Charge
   const totalPrice = priceAfterDiscount + serviceCharge;
 
-  const reservationFee = totalPrice * 0.20;
+  const totalReservationPct = globalRates.platform + globalRates.salon + globalRates.payhere;
+  const reservationFee = totalPrice * (totalReservationPct / 100);
   const remainingBalance = totalPrice - reservationFee;
   const selectedStaffObj = activeStaff.find(s => s.id === selectedStaffId);
 
@@ -347,7 +373,14 @@ export function BookingSheet({
                       status: "confirmed",
                       payment_status: "partially_paid",
                       reservation_fee_paid: true,
-                      reservation_fee_refundable: false
+                      reservation_fee_refundable: false,
+                      total_reservation_fee: reservationFee,
+                      salon_upfront_amount: totalPrice * 0.10,
+                      platform_commission_amount: totalPrice * 0.10,
+                      payhere_fee_amount: totalPrice * 0.03,
+                      agent_email: agentEmail,
+                      agent_commission_percent: agentCommissionPct,
+                      agent_commission_amount: agentCommissionAmount
                     })
                     .select()
                     .single();
@@ -405,6 +438,9 @@ export function BookingSheet({
                     status: 'completed',
                     raw_response: details
                   });
+
+                  // 6. Trigger WhatsApp Alerts
+                  await sendBookingCreatedAlert(bookingNo);
 
                   setConfirmedBookingId(bookingNo);
                   setStep(6);
@@ -722,6 +758,19 @@ export function BookingSheet({
           .eq("email", customerEmail);
       }
 
+      // 0.1 Fetch Salon's assigned agent for commission routing
+      let agentEmail = null;
+      let agentCommissionPct = 0;
+      let agentCommissionAmount = 0;
+
+      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email').eq('id', salonId).single();
+      if (salonData?.onboarding_agent_email) {
+        agentEmail = salonData.onboarding_agent_email;
+        agentCommissionPct = globalRates.agent;
+        const platformCommission = totalPrice * (globalRates.platform / 100);
+        agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
+      }
+
       // 1. Write master booking row directly into Supabase database (with backward compatibility fallback)
       const { data: newBooking, error: bookingErr } = await supabase
         .from("bookings")
@@ -737,7 +786,14 @@ export function BookingSheet({
           status: paymentMethod === 'payhere' ? "pending" : "confirmed",
           payment_status: paymentMethod === 'payhere' ? "unpaid" : "partially_paid",
           reservation_fee_paid: paymentMethod !== 'payhere',
-          reservation_fee_refundable: false
+          reservation_fee_refundable: false,
+          total_reservation_fee: reservationFee,
+          salon_upfront_amount: totalPrice * (globalRates.salon / 100),
+          platform_commission_amount: totalPrice * (globalRates.platform / 100),
+          payhere_fee_amount: totalPrice * (globalRates.payhere / 100),
+          agent_email: agentEmail,
+          agent_commission_percent: agentCommissionPct,
+          agent_commission_amount: agentCommissionAmount
         })
         .select()
         .single();
@@ -856,6 +912,11 @@ export function BookingSheet({
         document.body.appendChild(form);
         form.submit();
         return;
+      }
+
+      // Trigger WhatsApp Alert for direct confirmation
+      if (paymentMethod !== 'payhere') {
+        await sendBookingCreatedAlert(bookingNo);
       }
 
       setConfirmedBookingId(bookingNo);
