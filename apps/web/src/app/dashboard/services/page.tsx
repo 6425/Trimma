@@ -54,7 +54,7 @@ export default function DashboardServices() {
       const { data: salonData } = await supabase
         .from("salons")
         .select("*")
-        .eq("owner_email", session.user.email)
+        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
         .maybeSingle();
 
       if (!salonData) {
@@ -339,15 +339,30 @@ export default function DashboardServices() {
               <h3 className="font-extrabold text-[#1A1C29] text-base">{subscriptionPlan.name}</h3>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-zinc-500">Allowed Categories:</span>
-            <div className="flex flex-wrap gap-1.5">
-              {allowedCategories.map(cat => (
-                <Badge key={cat.id} variant="outline" className="bg-white border-zinc-200 text-zinc-700 font-bold px-2 py-0.5 text-[10px]">
-                  {cat.name}
-                </Badge>
-              ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-zinc-500">Allowed Services:</span>
+              <Badge variant="outline" className="bg-white border-zinc-200 text-brand font-black px-2 py-0.5 text-[10px]">
+                {services.length} / {subscriptionPlan.max_services || 6}
+              </Badge>
             </div>
+            <div className="hidden sm:block w-px h-6 bg-zinc-200"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-zinc-500">Allowed Categories:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {allowedCategories.map(cat => (
+                  <Badge key={cat.id} variant="outline" className="bg-white border-zinc-200 text-zinc-700 font-bold px-2 py-0.5 text-[10px]">
+                    {cat.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <Button 
+              onClick={() => window.location.href = '/dashboard/billing'}
+              className="ml-0 sm:ml-2 h-8 text-[10px] bg-zinc-900 hover:bg-black text-white rounded-lg font-bold uppercase tracking-wider"
+            >
+              Upgrade Plan
+            </Button>
           </div>
         </div>
       )}
@@ -479,6 +494,7 @@ export default function DashboardServices() {
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">
                   Showing service categories permitted under your <span className="font-extrabold text-brand">{subscriptionPlan?.name || "Tier Limit"}</span>.
+                  <a href="/dashboard/billing" className="ml-2 text-brand hover:underline font-bold">Upgrade to unlock more &rarr;</a>
                 </p>
               </div>
               <Button 

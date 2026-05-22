@@ -233,11 +233,14 @@ export default function Salons() {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (s.city || "").toLowerCase().includes(searchTerm.toLowerCase());
     
+    const isPendingVerification = s.onboarding_status === 'OWNER_ACTIVATED' && !s.is_verified;
+    const isPendingApproval = (s.status === 'pending' || s.status === 'pending_approval' || !s.status) && !isPendingVerification;
+
     if (filterMode === "pending") {
-       return matchesSearch && (s.status === 'pending' || s.status === 'pending_approval' || !s.status);
+       return matchesSearch && isPendingApproval;
     }
     if (filterMode === "verification") {
-       return matchesSearch && (s.status === 'pending_verification');
+       return matchesSearch && isPendingVerification;
     }
     return matchesSearch; // for "all"
   });
@@ -355,10 +358,10 @@ export default function Salons() {
                         {salon.status === 'active' && !salon.is_verified && (
                           <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 shadow-none font-bold">Setup In Progress</Badge>
                         )}
-                        {salon.status === 'pending_verification' && (
+                        {salon.onboarding_status === 'OWNER_ACTIVATED' && !salon.is_verified && (
                           <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 shadow-none font-bold">Awaiting Verification</Badge>
                         )}
-                        {(salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) && (
+                        {(salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) && salon.onboarding_status !== 'OWNER_ACTIVATED' && (
                           <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 shadow-none font-bold">Pending Lead</Badge>
                         )}
                         {salon.status === 'rejected' && (
@@ -368,7 +371,7 @@ export default function Salons() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {(salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) && (
+                        {(salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) && salon.onboarding_status !== 'OWNER_ACTIVATED' && (
                           <Button 
                             onClick={() => handleApprove(salon.id)}
                             variant="outline" 
@@ -378,7 +381,7 @@ export default function Salons() {
                             <CheckCircle className="w-4 h-4 mr-1" /> Approve Entry
                           </Button>
                         )}
-                        {salon.status === 'pending_verification' && (
+                        {salon.onboarding_status === 'OWNER_ACTIVATED' && !salon.is_verified && (
                           <Button 
                             onClick={() => handleVerify(salon.id)}
                             variant="outline" 
@@ -389,7 +392,7 @@ export default function Salons() {
                           </Button>
                         )}
                         
-                        {((salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) || salon.status === 'pending_verification') && (
+                        {((salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) || (salon.onboarding_status === 'OWNER_ACTIVATED' && !salon.is_verified)) && (
                           <Button 
                             onClick={() => openRejectModal(salon)}
                             variant="outline" 
@@ -446,24 +449,24 @@ export default function Salons() {
                   <div className="flex items-center gap-2">
                     {selectedSalon.status === 'active' && selectedSalon.is_verified && <Badge className="bg-emerald-100 text-emerald-700 shadow-none">Fully Verified Partner</Badge>}
                     {selectedSalon.status === 'active' && !selectedSalon.is_verified && <Badge className="bg-blue-100 text-blue-700 shadow-none">Setup In Progress</Badge>}
-                    {selectedSalon.status === 'pending_verification' && <Badge className="bg-indigo-100 text-indigo-700 shadow-none animate-pulse">Awaiting Verification Review</Badge>}
-                    {(selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) && <Badge className="bg-amber-100 text-amber-700 shadow-none">Pending Approval</Badge>}
+                    {selectedSalon.onboarding_status === 'OWNER_ACTIVATED' && !selectedSalon.is_verified && <Badge className="bg-indigo-100 text-indigo-700 shadow-none animate-pulse">Awaiting Verification Review</Badge>}
+                    {(selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) && selectedSalon.onboarding_status !== 'OWNER_ACTIVATED' && <Badge className="bg-amber-100 text-amber-700 shadow-none">Pending Approval</Badge>}
                     {selectedSalon.status === 'rejected' && <Badge className="bg-rose-100 text-rose-700 shadow-none">Rejected</Badge>}
                   </div>
                </div>
                
                <div className="flex items-center gap-2">
-                 {(selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) && (
+                 {(selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) && selectedSalon.onboarding_status !== 'OWNER_ACTIVATED' && (
                     <Button onClick={() => handleApprove(selectedSalon.id)} variant="outline" size="sm" className="text-amber-600 border-amber-200 hover:bg-amber-50 h-9">
                        <CheckCircle className="w-4 h-4 mr-1" /> Approve Access
                     </Button>
                  )}
-                 {selectedSalon.status === 'pending_verification' && (
+                 {selectedSalon.onboarding_status === 'OWNER_ACTIVATED' && !selectedSalon.is_verified && (
                     <Button onClick={() => handleVerify(selectedSalon.id)} variant="outline" size="sm" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-9 bg-indigo-50">
                        <ShieldCheck className="w-4 h-4 mr-1" /> Verify Profile
                     </Button>
                  )}
-                 {((selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) || selectedSalon.status === 'pending_verification') && (
+                 {((selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) || (selectedSalon.onboarding_status === 'OWNER_ACTIVATED' && !selectedSalon.is_verified)) && (
                     <Button onClick={() => { setViewModalOpen(false); openRejectModal(selectedSalon); }} variant="outline" size="sm" className="text-rose-600 border-rose-200 hover:bg-rose-50 h-9">
                        <XCircle className="w-4 h-4 mr-1" /> Reject
                     </Button>

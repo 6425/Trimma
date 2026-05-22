@@ -20,11 +20,14 @@ import {
   Eye,
   Upload,
   X,
-  Trash2
+  Trash2,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import Card from "../../../components/ui/Card";
 import { supabase } from "../../../config/supabase";
 import { toast } from "sonner";
 
@@ -101,7 +104,16 @@ export default function SalonProfilePage() {
   const [status, setStatus] = useState("pending");
   const [onboardingStatus, setOnboardingStatus] = useState("DISCOVERED");
   const [isVerified, setIsVerified] = useState(false);
-  const [workingHours, setWorkingHours] = useState("");
+  const defaultSchedule = {
+    monday: { isWorking: true, start: "09:00", end: "18:00" },
+    tuesday: { isWorking: true, start: "09:00", end: "18:00" },
+    wednesday: { isWorking: true, start: "09:00", end: "18:00" },
+    thursday: { isWorking: true, start: "09:00", end: "18:00" },
+    friday: { isWorking: true, start: "09:00", end: "18:00" },
+    saturday: { isWorking: true, start: "09:00", end: "18:00" },
+    sunday: { isWorking: false, start: "09:00", end: "18:00" },
+  };
+  const [salonSchedule, setSalonSchedule] = useState(defaultSchedule);
   
   // Wizard States
   const [wizardStep, setWizardStep] = useState(1);
@@ -139,7 +151,7 @@ export default function SalonProfilePage() {
       const { data: salonData, error: salonError } = await supabase
         .from("salons")
         .select("*")
-        .eq("owner_email", session.user.email)
+        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
         .maybeSingle();
 
       if (salonError) throw salonError;
@@ -169,7 +181,33 @@ export default function SalonProfilePage() {
       setCoverUrl(salonData.cover_url || "");
       setHeroUrl(salonData.hero_url || salonData.hero_image || "");
       setFeaturedImages(salonData.featured_images || []);
-      setWorkingHours(salonData.working_hours || "Mon - Sun: 9:00 AM - 8:00 PM");
+      if (salonData.working_hours) {
+        try {
+          const parsedHours = typeof salonData.working_hours === 'string' ? JSON.parse(salonData.working_hours) : salonData.working_hours;
+          if (!Array.isArray(parsedHours) && parsedHours.monday) {
+            setSalonSchedule(parsedHours);
+          } else if (Array.isArray(parsedHours) && parsedHours.length > 0 && parsedHours[0].open) {
+            const mapped = { ...defaultSchedule };
+            const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+            parsedHours.forEach((slot: any) => {
+              if (slot.open && slot.close) {
+                const dayName = days[slot.open.day];
+                if (dayName) {
+                  const formatTime = (t: string) => t.length === 4 ? `${t.substring(0, 2)}:${t.substring(2, 4)}` : t;
+                  mapped[dayName as keyof typeof defaultSchedule] = {
+                    isWorking: true,
+                    start: formatTime(slot.open.time),
+                    end: formatTime(slot.close.time)
+                  };
+                }
+              }
+            });
+            setSalonSchedule(mapped);
+          }
+        } catch (e) {
+          console.warn("Could not parse working hours", e);
+        }
+      }
 
       // 2. Fetch Subscription Plan Details & Limits
       if (salonData.subscription_plan_id) {
@@ -224,12 +262,12 @@ export default function SalonProfilePage() {
 
       setUploadingType(type);
 
-      // 1. Try uploading to Supabase Storage bucket 'salon-assets'
+      // 1. Try uploading to Supabase Storage bucket 'salon-images'
       const fileExt = file.name.split('.').pop();
       const fileName = `${salon.id}/${type}_${Date.now()}.${fileExt}`;
       
       const { data, error } = await supabase.storage
-        .from('salon-assets')
+        .from('salon-images')
         .upload(fileName, file, { cacheControl: '3600', upsert: true });
 
       if (error) {
@@ -244,7 +282,7 @@ export default function SalonProfilePage() {
 
       // 2. Get Public Url from bucket
       const { data: { publicUrl } } = supabase.storage
-        .from('salon-assets')
+        .from('salon-images')
         .getPublicUrl(fileName);
 
       return publicUrl;
@@ -402,8 +440,9 @@ export default function SalonProfilePage() {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
     if (!name || !contact || !address) {
       return toast.error("Name, contact number, and city address are required.");
     }
@@ -412,31 +451,9 @@ export default function SalonProfilePage() {
       setSaving(true);
       const updatedSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
-      const { error } = await supabase
-        .from("salons")
-        .update({
-          name,
-          slug: updatedSlug,
-          phone: contact,
-          city: address,
-          province,
-          district,
-          description,
-          // Also sync to summary so Google Places data and profile data stay aligned
-          summary: description,
-          logo_url: logoUrl,
-          cover_url: coverUrl,
-          hero_url: heroUrl,
-          featured_images: featuredImages,
-          working_hours: workingHours,
-          status: status
-        })
-  const handleSave = async () => {
-    try {
-      setSaving(true);
       const updateData = {
         name,
-        slug,
+        slug: updatedSlug,
         phone: contact,
         address: address,
         city: address, // Keep city sync'd
@@ -444,11 +461,12 @@ export default function SalonProfilePage() {
         district,
         description,
         summary: description, // sync
-        working_hours: workingHours,
+        working_hours: JSON.stringify(salonSchedule),
         logo_url: logoUrl,
         cover_url: coverUrl,
         hero_url: heroUrl,
-        featured_images: featuredImages
+        featured_images: featuredImages,
+        status: status
       };
 
       const { error } = await supabase
@@ -457,6 +475,50 @@ export default function SalonProfilePage() {
         .eq("id", salon.id);
 
       if (error) throw error;
+      
+      // Ensure staff schedules don't exceed salon schedule
+      try {
+        const { data: staffList } = await supabase.from("salon_staff").select("id, working_hours").eq("salon_id", salon.id);
+        if (staffList && staffList.length > 0) {
+          for (const staff of staffList) {
+            let staffModified = false;
+            let currentStaffSchedule = staff.working_hours?.schedule || {};
+            
+            Object.keys(salonSchedule).forEach((day) => {
+              const salonDay = salonSchedule[day as keyof typeof salonSchedule];
+              let staffDay = currentStaffSchedule[day];
+              
+              if (!staffDay) return;
+              
+              // If salon is out, staff must be out
+              if (!salonDay.isWorking && staffDay.isWorking) {
+                staffDay.isWorking = false;
+                staffModified = true;
+              }
+              
+              if (salonDay.isWorking && staffDay.isWorking) {
+                // Check bounds
+                if (staffDay.start < salonDay.start) {
+                  staffDay.start = salonDay.start;
+                  staffModified = true;
+                }
+                if (staffDay.end > salonDay.end) {
+                  staffDay.end = salonDay.end;
+                  staffModified = true;
+                }
+              }
+            });
+            
+            if (staffModified) {
+              const updatedStaffWorkingHours = { ...staff.working_hours, schedule: currentStaffSchedule };
+              await supabase.from("salon_staff").update({ working_hours: updatedStaffWorkingHours }).eq("id", staff.id);
+            }
+          }
+        }
+      } catch (staffErr) {
+        console.error("Failed to enforce schedule bounds on staff:", staffErr);
+      }
+
       toast.success("Profile saved successfully");
       fetchSalonProfile();
     } catch (err: any) {
@@ -466,6 +528,11 @@ export default function SalonProfilePage() {
     }
   };
 
+  const handlePrintFlyer = () => {
+    toast.info("QR Flyer generation is coming soon!");
+    // window.print();
+  };
+
   const handleCompleteOnboarding = async () => {
     try {
       setSaving(true);
@@ -473,6 +540,7 @@ export default function SalonProfilePage() {
         .from("salons")
         .update({
           onboarding_status: "OWNER_ACTIVATED",
+          status: "pending_verification",
           owner_activated_at: new Date().toISOString()
         })
         .eq("id", salon.id);
@@ -500,7 +568,7 @@ export default function SalonProfilePage() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-20 relative">
 
       {/* OWNER ONBOARDING WIZARD OVERLAY */}
-      {onboardingStatus === "OWNER_INVITED" && (
+      {onboardingStatus === "AGENT_VERIFIED" && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
           <div className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 flex flex-col justify-center">
             <div className="text-center mb-10">
@@ -513,7 +581,7 @@ export default function SalonProfilePage() {
               </p>
             </div>
 
-            <Card className="border border-slate-100 shadow-xl rounded-3xl p-8 bg-white">
+            <div className="border border-slate-100 shadow-xl rounded-3xl p-8 bg-white">
               {wizardStep === 1 && (
                 <div className="space-y-6 animate-in slide-in-from-right-4">
                   <h2 className="text-2xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">1. Review Salon Details</h2>
@@ -563,7 +631,7 @@ export default function SalonProfilePage() {
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
           </div>
         </div>
       )}
@@ -835,14 +903,46 @@ export default function SalonProfilePage() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Opening Hours Description</Label>
-                  <Input 
-                    value={workingHours}
-                    onChange={(e) => setWorkingHours(e.target.value)}
-                    className="rounded-xl h-11"
-                    placeholder="Mon - Sun: 9:00 AM - 8:00 PM"
-                  />
+                <div className="space-y-4 md:col-span-2 bg-zinc-50/50 p-6 rounded-2xl border border-zinc-100">
+                  <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                     <Clock className="w-4 h-4 text-brand" /> Operational Scheduling
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-2">7-Day Schedule</label>
+                    {Object.entries(salonSchedule).map(([day, scheduleObj]: [string, any]) => (
+                      <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-slate-100 rounded-xl p-3">
+                        <div className="w-full sm:w-24">
+                          <span className="text-xs font-bold text-zinc-800 capitalize">{day}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], isWorking: !prev[day as keyof typeof defaultSchedule].isWorking } }))}
+                          className={`h-9 w-16 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
+                        >
+                          {scheduleObj.isWorking ? 'OPEN' : 'CLOSED'}
+                        </Button>
+                        <div className="flex flex-1 items-center gap-2">
+                          <input 
+                            type="time" 
+                            disabled={!scheduleObj.isWorking}
+                            value={scheduleObj.start}
+                            onChange={(e) => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], start: e.target.value } }))}
+                            className="h-9 w-full px-3 rounded-lg border border-slate-200 text-xs font-medium focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
+                          />
+                          <span className="text-zinc-300 text-xs font-bold">-</span>
+                          <input 
+                            type="time" 
+                            disabled={!scheduleObj.isWorking}
+                            value={scheduleObj.end}
+                            onChange={(e) => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], end: e.target.value } }))}
+                            className="h-9 w-full px-3 rounded-lg border border-slate-200 text-xs font-medium focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label className="font-bold text-xs text-zinc-500">Business Bio / Tagline</Label>
@@ -976,7 +1076,7 @@ export default function SalonProfilePage() {
 
                 <div className="border-t border-zinc-50 pt-4 flex items-center justify-between text-[11px] font-bold text-zinc-500">
                   <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {contact || "No Contact"}</span>
-                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {workingHours.split(":")[0] || "9 AM - 8 PM"}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {salonSchedule.monday?.isWorking ? `${salonSchedule.monday.start} - ${salonSchedule.monday.end}` : "Closed"}</span>
                 </div>
               </div>
             </div>
@@ -1030,14 +1130,5 @@ export default function SalonProfilePage() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Simple local Badge replacement if UI doesn't resolve standard badges
-function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${className}`}>
-      {children}
-    </span>
   );
 }

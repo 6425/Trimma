@@ -54,6 +54,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [role, setRole] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [salonName, setSalonName] = useState<string>("My Salon");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const fetchRoleAndProfile = async () => {
@@ -81,11 +86,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }
           } else {
             // Fetch salon profile
-            const { data: salonData } = await supabase
-              .from('salons')
-              .select('name, logo_url')
-              .eq('owner_email', session.user.email)
-              .maybeSingle();
+              const { data: salonData } = await supabase
+                .from('salons')
+                .select('name, logo_url')
+                .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
+                .maybeSingle();
             if (salonData) {
               setSalonName(salonData.name || "My Salon");
               setAvatarUrl(salonData.logo_url || null);
@@ -204,8 +209,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-slate-900/50 md:hidden backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex shrink-0">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 md:w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 md:relative md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
         <div className="h-16 flex items-center px-6 border-b border-slate-100">
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Logo 
@@ -295,7 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="md:hidden">
-             <Button variant="ghost" size="icon">
+             <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)}>
                <Menu className="w-5 h-5" />
              </Button>
           </div>

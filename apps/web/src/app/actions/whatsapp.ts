@@ -1,6 +1,10 @@
 "use server";
 
-import { supabase } from "../../config/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // 📝 Beautiful default templates for database fallback
 const DEFAULT_TEMPLATE_CONFIRMED = `Hi {customer_name}! 🌟\n\nYour appointment at *{salon_name}* has been successfully secured!\n\n📅 *Date:* {booking_date}\n⏰ *Time:* {booking_time}\n💇 *Service:* {service_name}\n💰 *Total Price:* LKR {total_price}\n✅ *20% Deposit Paid:* LKR {deposit_paid}\n💵 *Balance to pay at salon:* LKR {balance_to_pay}\n\n📍 *Salon Location:* {salon_address}\n🗺️ *Navigate on Google Maps:* {maps_link}\n\nThank you for choosing Trimma! See you soon! ✂️`;

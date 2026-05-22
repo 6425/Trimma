@@ -47,13 +47,19 @@ export default function Dashboard() {
       const { data: salonData } = await supabase
         .from("salons")
         .select("*")
-        .eq("owner_email", session.user.email)
+        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
         .maybeSingle();
 
       if (!salonData) {
         setStats({ totalBookings: 0, activeServices: 0, totalStaff: 0, revenue: 0 });
         setLoading(false);
         setIsRefreshing(false);
+        return;
+      }
+
+      // If the salon hasn't been verified by the owner yet, force them to the profile wizard!
+      if (salonData.onboarding_status === "AGENT_VERIFIED") {
+        router.replace("/dashboard/profile");
         return;
       }
 

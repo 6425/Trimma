@@ -49,7 +49,7 @@ export default function OnboardingPage() {
             return;
           }
 
-          // Double check: if they already have an onboarded salon record
+          // Double check: if they already have an onboarded salon record using the foreign key
           const { data: existingSalon } = await supabase
             .from('salons')
             .select('id')
@@ -58,6 +58,27 @@ export default function OnboardingPage() {
             .maybeSingle();
 
           if (existingSalon) {
+            document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
+            router.push("/dashboard");
+            return;
+          }
+
+          // MAGIC LINK FIX: Check if the agent verified them using owner_gmail
+          const { data: preVerifiedSalon } = await supabase
+            .from('salons')
+            .select('id')
+            .eq('owner_gmail', activeSession.user.email)
+            .limit(1)
+            .maybeSingle();
+
+          if (preVerifiedSalon) {
+            // Auto-onboard the user to this pre-verified salon
+            await supabase.from('salons').update({ owner_email: activeSession.user.email }).eq('id', preVerifiedSalon.id);
+            await supabase.from('user_roles').upsert({ user_id: activeSession.user.id, role: 'salon_owner' });
+            await supabase.from('users').update({ global_role: 'salon_owner' }).eq('email', activeSession.user.email);
+            
+            document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
+            toast.success("Welcome! Your salon profile has been linked successfully.");
             router.push("/dashboard");
             return;
           }

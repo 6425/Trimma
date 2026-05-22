@@ -51,7 +51,7 @@ export default function FinanceDashboard() {
         }
 
         // 1. Fetch Salon Data
-        const { data: salonData } = await supabase.from("salons").select("id").eq("owner_email", session.user.email).maybeSingle();
+        const { data: salonData } = await supabase.from("salons").select("id").or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`).maybeSingle();
         
         let salonId = null;
         if (salonData) salonId = salonData.id;

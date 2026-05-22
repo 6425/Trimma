@@ -156,7 +156,7 @@ export default function DashboardBookings() {
       const { data: salonData } = await supabase
         .from("salons")
         .select("*")
-        .eq("owner_email", session.user.email)
+        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
         .maybeSingle();
 
       if (!salonData) {

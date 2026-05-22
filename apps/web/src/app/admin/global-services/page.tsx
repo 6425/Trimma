@@ -359,7 +359,13 @@ export default function GlobalServiceManagement() {
                   onValueChange={(val) => setEditingService({ ...editingService, category_id: val })}
                 >
                   <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
-                    <SelectValue placeholder="Select classification" />
+                    <SelectValue placeholder="Select classification">
+                      {editingService?.category_id && categories.find(c => c.id === editingService.category_id) 
+                        ? categories.find(c => c.id === editingService.category_id)?.name 
+                        : editingService?.category_id 
+                          ? <span className="text-red-500 font-semibold flex items-center gap-1">Invalid Category <Trash2 className="w-3 h-3"/></span>
+                          : "Select classification"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {categories.map(c => (
@@ -376,12 +382,30 @@ export default function GlobalServiceManagement() {
                   onValueChange={(val) => setEditingService({ ...editingService, icon: val })}
                 >
                   <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
-                    <SelectValue placeholder="Select icon" />
+                    <SelectValue placeholder="Select icon">
+                      {editingService?.icon && iconMap[editingService.icon] ? (
+                        <div className="flex items-center gap-2 text-zinc-700">
+                          {(() => {
+                            const IconComp = iconMap[editingService.icon];
+                            return <IconComp className="w-4 h-4 text-brand" />;
+                          })()}
+                          <span>{editingService.icon}</span>
+                        </div>
+                      ) : "Select icon"}
+                    </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {Object.keys(iconMap).map(icon => (
-                      <SelectItem key={icon} value={icon}>{icon}</SelectItem>
-                    ))}
+                  <SelectContent className="rounded-xl max-h-64">
+                    {Object.keys(iconMap).map(icon => {
+                      const IconComp = iconMap[icon];
+                      return (
+                        <SelectItem key={icon} value={icon}>
+                          <div className="flex items-center gap-2">
+                            <IconComp className="w-4 h-4 text-zinc-500" />
+                            <span>{icon}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
