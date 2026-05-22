@@ -303,26 +303,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="md:hidden">
-             <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)}>
-               <Menu className="w-5 h-5" />
-             </Button>
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between md:justify-end px-4 sm:px-6 lg:px-8">
+          <div className="relative max-w-md hidden sm:block mr-auto">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="search"
+              placeholder="Search..."
+              className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
+            />
           </div>
-          <div className="flex-1 flex items-center justify-between md:justify-end gap-4">
-            <div className="relative max-w-md hidden sm:block">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="search"
-                placeholder="Search..."
-                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all"
-              />
+          <div className="flex items-center gap-4 ml-auto">
+            <div className="md:hidden">
+               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)}>
+                 <Menu className="w-5 h-5 text-slate-700" />
+               </Button>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="relative text-slate-500">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-              </Button>
+            <Button variant="ghost" size="icon" className="relative text-slate-500">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+            </Button>
               <div className="h-8 w-px bg-slate-200" />
               <div className="flex items-center gap-3">
                 <Link 
