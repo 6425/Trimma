@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { 
   Home, CalendarDays, Heart, Sparkles, 
   Wallet, Gift, User, Settings, LifeBuoy,
-  LogOut, Scissors
+  LogOut, Scissors, Menu, X, Bell
 } from "lucide-react";
 import { supabase } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +15,11 @@ import { Button } from "@/components/ui/button";
 export default function CustomerDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -40,15 +46,31 @@ export default function CustomerDashboardLayout({ children }: { children: React.
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
-      
-      {/* DESKTOP SIDEBAR */}
-      <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 bg-white border-r border-slate-200 z-50">
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR (Desktop fixed + Mobile sliding drawer) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+        mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      }`}>
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold tracking-tighter text-zinc-900">
             Trimma.
           </Link>
+          <button
+            className="lg:hidden text-zinc-400 hover:text-zinc-700 transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
           <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2 px-3">Menu</div>
           {navItems.map((item) => (
@@ -78,7 +100,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </div>
 
         <div className="p-4 border-t border-slate-100">
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
             <LogOut className="w-5 h-5" /> Log out
@@ -87,18 +109,42 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 lg:pl-64 min-h-screen pb-20 lg:pb-0">
-        {children}
+      <main className="flex-1 lg:pl-64 min-h-screen pb-20 lg:pb-0 flex flex-col">
+        {/* Mobile Top Header */}
+        <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
+          <Link href="/" className="text-xl font-bold tracking-tighter text-zinc-900">
+            Trimma.
+          </Link>
+          <div className="flex items-center gap-2">
+            {/* Hamburger before bell */}
+            <button
+              className="p-2 rounded-lg text-zinc-600 hover:bg-slate-100 hover:text-zinc-900 transition-colors"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            {/* Notification Bell */}
+            <button className="relative p-2 rounded-lg text-zinc-500 hover:bg-slate-100 transition-colors">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand-pink" />
+            </button>
+          </div>
+        </header>
+
+        <div className="flex-1">
+          {children}
+        </div>
       </main>
 
       {/* MOBILE BOTTOM NAVIGATION */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 pb-safe z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 pb-safe z-30">
         {bottomNavItems.map((item) => (
           <Link key={item.name}
             href={item.path}
             className={`flex flex-col items-center gap-1 p-2 ${
               pathname === item.path || (item.path !== '/customer' && pathname.startsWith(item.path))
-                ? "text-zinc-900" 
+                ? "text-zinc-900"
                 : "text-zinc-400"
             }`}
           >

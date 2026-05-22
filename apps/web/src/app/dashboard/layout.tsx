@@ -11,6 +11,7 @@ import {
   Bell, 
   Search,
   Menu,
+  X,
   LogOut,
   LayoutDashboard,
   Store,
@@ -208,15 +209,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-900/50 md:hidden backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 md:w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 md:relative md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
-        <div className="h-16 flex items-center px-6 border-b border-slate-100">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Logo 
               iconSize={48} 
@@ -224,6 +225,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               tagline={isAd ? "Admin Engine" : "Workspace Engine"} 
             />
           </Link>
+          <button
+            className="lg:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         
         <div className="p-4 flex-1 overflow-y-auto">
@@ -303,8 +311,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between md:justify-end px-4 sm:px-6 lg:px-8">
-          <div className="relative max-w-md hidden sm:block mr-auto">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between lg:justify-end px-4 sm:px-6 lg:px-8">
+          <div className="relative max-w-md hidden lg:block mr-auto">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="search"
@@ -313,7 +321,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             />
           </div>
           <div className="flex items-center gap-4 ml-auto">
-            <div className="md:hidden">
+            <div className="lg:hidden">
                <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(true)}>
                  <Menu className="w-5 h-5 text-slate-700" />
                </Button>
@@ -322,25 +330,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
             </Button>
-              <div className="h-8 w-px bg-slate-200" />
-              <div className="flex items-center gap-3">
-                <Link 
-                  href={role === 'admin' ? '/admin/profile' : '/dashboard/profile'}
-                  className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-                >
-                  <div className="hidden md:block text-right">
-                    <div className="text-sm font-medium text-slate-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
-                    <div className="text-xs text-slate-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
-                  </div>
-                  <Avatar className="h-8 w-8 border border-slate-200">
-                    <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'admin' ? 'Admin' : 'Salon'}`} />
-                    <AvatarFallback>{role === 'admin' ? 'AD' : 'SA'}</AvatarFallback>
-                  </Avatar>
-                </Link>
-                <Button variant="ghost" size="icon" className="text-slate-500" onClick={handleLogout}>
-                   <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
+            <div className="h-8 w-px bg-slate-200" />
+            <div className="flex items-center gap-3">
+              <Link 
+                href={role === 'admin' ? '/admin/profile' : '/dashboard/profile'}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              >
+                <div className="hidden md:block text-right">
+                  <div className="text-sm font-medium text-slate-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
+                  <div className="text-xs text-slate-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
+                </div>
+                <Avatar className="h-8 w-8 border border-slate-200">
+                  <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'admin' ? 'Admin' : 'Salon'}`} />
+                  <AvatarFallback>{role === 'admin' ? 'AD' : 'SA'}</AvatarFallback>
+                </Avatar>
+              </Link>
+              <Button variant="ghost" size="icon" className="text-slate-500" onClick={handleLogout}>
+                 <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </header>
