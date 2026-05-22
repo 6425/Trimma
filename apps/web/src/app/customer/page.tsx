@@ -112,9 +112,9 @@ function DashboardContent() {
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 md:space-y-12">
       
       {/* 1. WELCOME HERO & QUICK ACTIONS */}
-      <section className="bg-zinc-900 rounded-3xl p-6 md:p-10 text-white relative overflow-hidden shadow-xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 to-zinc-800 z-0"></div>
-        <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/20 blur-3xl rounded-full z-0"></div>
+      <section className="bg-zinc-900 rounded-3xl p-6 md:p-10 text-white relative overflow-hidden shadow-xl border border-white/10">
+        <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 to-[#1A1608] z-0"></div>
+        <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#F5B700]/10 blur-3xl rounded-full z-0"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
@@ -125,58 +125,58 @@ function DashboardContent() {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">{getGreeting()}, {userName} 👋</h1>
               <div className="flex items-center gap-3 text-sm text-zinc-300">
-                <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400 border-none font-medium text-xs px-2 py-0.5">{userRole}</Badge>
+                <Badge variant="secondary" className="bg-[#F5B700]/10 text-[#F5B700] border border-[#F5B700]/20 font-semibold text-xs px-2.5 py-0.5">{userRole}</Badge>
               </div>
             </div>
           </div>
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-           <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-12 rounded-xl">Book Now</Button>
-           <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-12 rounded-xl">Find Salons</Button>
-           <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-12 rounded-xl">Saved Styles</Button>
-           <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 h-12 rounded-xl">History</Button>
+           <Link href="/salons"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">Book Now</Button></Link>
+           <Link href="/salons"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">Find Salons</Button></Link>
+           <Link href="/customer/styles"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">Saved Styles</Button></Link>
+           <Link href="/customer/bookings"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">History</Button></Link>
         </div>
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="bg-white rounded-2xl p-6 border border-slate-200">
-          <h2 className="text-xl font-bold mb-4">Your Bookings</h2>
+        <section className="bg-zinc-900/50 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+          <h2 className="text-xl font-bold mb-4 text-white">Your Bookings</h2>
           {loading ? (
-            <div className="flex justify-center py-8"><span className="animate-pulse">Loading...</span></div>
+            <div className="flex justify-center py-8"><span className="animate-pulse text-zinc-400">Loading...</span></div>
           ) : upcomingBookings.length === 0 ? (
             <div className="text-center py-12 text-zinc-500">
-              <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20" />
+              <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
               <p>You have no bookings yet.</p>
               <Link href="/salons">
-                <Button variant="link" className="mt-2 text-emerald-600">Browse salons to book</Button>
+                <Button variant="link" className="mt-2 text-[#F5B700] hover:text-[#F5B700]/80">Browse salons to book</Button>
               </Link>
             </div>
           ) : (
             <div className="space-y-4">
               {upcomingBookings.map((booking) => (
-                <div key={booking.id} className="p-4 rounded-xl border border-slate-100 hover:border-emerald-100 hover:bg-emerald-50/30 transition-all flex justify-between items-center">
+                <div key={booking.id} className="p-4 rounded-xl border border-white/10 bg-zinc-900 hover:border-[#F5B700]/30 hover:bg-[#F5B700]/5 transition-all flex justify-between items-center">
                   <div>
-                    <h3 className="font-semibold text-slate-800">{booking.salons?.name || 'Trimma Partner Salon'}</h3>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                      <CalendarDays className="w-4 h-4" />
+                    <h3 className="font-semibold text-zinc-100">{booking.salons?.name || 'Trimma Partner Salon'}</h3>
+                    <div className="flex items-center gap-2 mt-1 text-sm text-zinc-400">
+                      <CalendarDays className="w-4 h-4 text-[#F5B700]/80" />
                       <span>{booking.booking_date} at {booking.booking_time}</span>
                     </div>
                   </div>
                   <div className="text-right flex flex-col items-end gap-1.5 max-w-[240px]">
-                    <span className="font-bold text-slate-900">Total: Rs. {booking.amount}</span>
+                    <span className="font-bold text-white">Total: Rs. {booking.amount}</span>
                     
                     {booking.status === 'confirmed' || booking.status === 'pending' ? (
                       <>
-                        <Badge className="bg-emerald-50 hover:bg-emerald-50 text-emerald-600 border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
+                        <Badge className="bg-[#F5B700]/10 hover:bg-[#F5B700]/20 text-[#F5B700] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
                           20% Deposit Paid (Rs. {Math.round(booking.amount * 0.2)})
                         </Badge>
-                        <span className="text-[9px] text-zinc-400 font-medium text-right">
+                        <span className="text-[9px] text-zinc-500 font-medium text-right">
                           Balance 80% (Rs. {Math.round(booking.amount * 0.8)}) paid at salon
                         </span>
                       </>
                     ) : (
-                      <Badge variant="outline" className="text-[9px] uppercase">
+                      <Badge variant="outline" className="text-[9px] uppercase border-white/20 text-zinc-300">
                         {booking.status}
                       </Badge>
                     )}
@@ -187,10 +187,10 @@ function DashboardContent() {
           )}
         </section>
 
-        <section className="bg-white rounded-2xl p-6 border border-slate-200">
-          <h2 className="text-xl font-bold mb-4">Quick Recommendations</h2>
+        <section className="bg-zinc-900/50 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+          <h2 className="text-xl font-bold mb-4 text-white">Quick Recommendations</h2>
           <div className="text-center py-12 text-zinc-500">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20 text-[#F5B700]" />
             <p>Style recommendations will appear here.</p>
           </div>
         </section>

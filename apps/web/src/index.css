@@ -227,4 +227,57 @@
   .glassmorphism {
     @apply bg-black/60 dark:bg-black/60 backdrop-blur-sm border border-white/10 dark:border-white/5;
   }
+  /* Scrollbar utility */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GLOBAL BUTTON & CARD CONTAINMENT — Single source of truth
+   Buttons never bleed outside their parent card/container.
+   ───────────────────────────────────────────────────────────── */
+@layer base {
+  /* Every native button and [data-slot="button"] is contained */
+  button,
+  [data-slot="button"],
+  [role="button"] {
+    max-width: 100%;
+    /* Prevent text overflow inside buttons */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Card containers clip overflow so nothing bleeds out */
+  .card,
+  [data-slot="card"],
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl {
+    overflow: hidden;
+  }
+
+  /* Flex/Grid rows containing buttons: wrap and gap instead of overflow */
+  .flex > button,
+  .flex > [data-slot="button"],
+  .inline-flex > button,
+  .grid > button {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  /* ── Replace ALL remaining pink/rose Tailwind classes with brand yellow ──
+     This is a CSS-level safeguard for any inline classes not yet converted. */
+  .text-pink-500, .text-rose-500 { color: #F5B700 !important; }
+  .text-pink-600, .text-rose-600 { color: #E6AC00 !important; }
+  .text-pink-400, .text-rose-400 { color: #FFC947 !important; }
+  .bg-pink-500,   .bg-rose-500   { background-color: #F5B700 !important; }
+  .bg-pink-600,   .bg-rose-600   { background-color: #E6AC00 !important; }
+  .bg-pink-100,   .bg-rose-100   { background-color: rgba(245,183,0,0.12) !important; }
+  .border-pink-500, .border-rose-500 { border-color: #F5B700 !important; }
+  .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #F5B700 !important; }
 }

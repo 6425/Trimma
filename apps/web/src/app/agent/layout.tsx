@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
-  Home, CheckSquare, Map, UserPlus, Target, 
+  Home, Map, UserPlus,
   Wallet, MapPin, PhoneCall, User, LogOut, Search,
   KanbanSquare, Menu, X, Bell
 } from "lucide-react";
@@ -61,39 +61,46 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex font-sans text-slate-900">
+    <div className="min-h-screen bg-[#0B0B0B] flex font-sans text-white">
 
-      {/* Mobile Overlay */}
+      {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-zinc-900/60 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 z-40 bg-black/70 lg:hidden backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* SIDEBAR (Desktop fixed + Mobile sliding drawer) */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-zinc-900 text-white flex flex-col transition-transform duration-300 lg:translate-x-0 ${
-        mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      {/* ── SIDEBAR (Desktop fixed | Mobile sliding drawer) ── */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+        mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'
       }`}>
-        <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-800 shrink-0">
-          <Link href="/agent" className="text-xl font-black tracking-tighter text-white flex items-center gap-2">
-            <div className="w-6 h-6 bg-emerald-500 rounded-md flex items-center justify-center">
-              <span className="text-zinc-900 text-xs font-black">A</span>
+        
+        {/* Sidebar Header */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
+          <Link href="/agent" className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-[#F5B700] rounded-lg flex items-center justify-center shrink-0">
+              <span className="text-black text-xs font-black">A</span>
             </div>
-            Trimma Sales
+            <div>
+              <div className="text-sm font-bold text-white leading-tight">Trimma Sales</div>
+              <div className="text-[10px] text-zinc-500 leading-tight">Agent Portal</div>
+            </div>
           </Link>
           <button
-            className="lg:hidden text-zinc-400 hover:text-white transition-colors"
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
             onClick={() => setMobileMenuOpen(false)}
+            aria-label="Close menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6 hide-scrollbar">
+        {/* Nav Items */}
+        <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">
           {menuSections.map((section, idx) => (
-            <div key={idx} className="space-y-1">
-              <div className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider px-3 mb-2">
+            <div key={idx} className="space-y-0.5">
+              <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-1.5">
                 {section.title}
               </div>
               {section.items.map((item) => {
@@ -102,13 +109,13 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.name}
                     href={item.path}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                        ? "bg-[#F5B700] text-black font-semibold"
+                        : "text-zinc-400 hover:bg-white/6 hover:text-white"
                     }`}
                   >
-                    <span className={isActive ? "text-emerald-400" : "text-zinc-500"}>{item.icon}</span>
+                    <span className={isActive ? "text-black" : "text-zinc-500"}>{item.icon}</span>
                     {item.name}
                   </Link>
                 );
@@ -117,85 +124,97 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           ))}
         </div>
 
-        <div className="p-4 border-t border-zinc-800 shrink-0">
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-white/8 shrink-0">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 p-2 w-full rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer border border-transparent"
+            className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >
-            <Avatar className="w-9 h-9 border border-zinc-700">
-              <AvatarFallback className="bg-zinc-800 text-emerald-400 text-xs font-bold">AG</AvatarFallback>
+            <Avatar className="w-8 h-8 border border-[#F5B700]/30">
+              <AvatarFallback className="bg-[#F5B700]/10 text-[#F5B700] text-xs font-bold">AG</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <div className="text-sm font-bold text-white truncate">Agent Dashboard</div>
+              <div className="text-sm font-semibold text-white truncate">Agent Dashboard</div>
               <div className="text-xs text-zinc-500 truncate">Sales Team</div>
             </div>
-            <LogOut className="w-4 h-4 text-zinc-500" />
+            <LogOut className="w-4 h-4 text-zinc-500 shrink-0" />
           </button>
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
+      {/* ── MAIN CONTENT AREA ── */}
       <main className="flex-1 lg:ml-64 min-h-screen flex flex-col pb-20 lg:pb-0">
+
         {/* Top Header */}
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-8">
-          <div className="text-sm font-bold text-zinc-900 hidden lg:block">
-            Sales Operating System
+        <header className="h-16 bg-[#0B0B0B] border-b border-white/8 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-6">
+          
+          {/* Left: Title on desktop / Logo badge on mobile */}
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:block text-sm font-bold text-zinc-400">Sales Operating System</div>
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="w-6 h-6 bg-[#F5B700] rounded-md flex items-center justify-center">
+                <span className="text-black text-[10px] font-black">A</span>
+              </div>
+              <span className="text-sm font-bold text-white">Trimma Sales</span>
+            </div>
           </div>
 
-          {/* Search bar - visible on sm+ */}
-          <div className="flex items-center px-3 py-1.5 bg-slate-100 rounded-full w-full max-w-xs border border-slate-200 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all lg:ml-0 ml-0">
-            <Search className="w-4 h-4 text-zinc-400 mr-2 shrink-0" />
+          {/* Center: Search (desktop only) */}
+          <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#F5B700]/50 focus-within:ring-1 focus-within:ring-[#F5B700]/30 transition-all">
+            <Search className="w-4 h-4 text-zinc-600 mr-2 shrink-0" />
             <input
               type="text"
               placeholder="Search leads, salons..."
-              className="bg-transparent border-none outline-none text-sm w-full"
+              className="bg-transparent border-none outline-none text-sm text-white placeholder:text-zinc-600 w-full"
             />
           </div>
 
-          {/* Right-side actions */}
-          <div className="flex items-center gap-2 ml-3">
-            {/* Hamburger - mobile only, before bell */}
+          {/* Right: Hamburger + Bell */}
+          <div className="flex items-center gap-1.5">
+            {/* Hamburger — mobile only, before bell */}
             <button
-              className="lg:hidden p-2 rounded-lg text-zinc-600 hover:bg-slate-100 hover:text-zinc-900 transition-colors"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-            {/* Notification Bell */}
-            <button className="relative p-2 rounded-lg text-zinc-500 hover:bg-slate-100 transition-colors">
+            {/* Bell */}
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-8 flex-1">
+        <div className="p-4 lg:p-6 flex-1">
           {children}
         </div>
       </main>
 
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center px-2 py-3 pb-safe z-30 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      {/* ── MOBILE BOTTOM NAVIGATION ── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-2 py-2 z-30">
         {[
-          { name: "Home", path: "/agent", icon: <Home className="w-6 h-6" /> },
-          { name: "My Salons", path: "/agent/leads", icon: <KanbanSquare className="w-6 h-6" /> },
-          { name: "Discover", path: "/agent/discover", icon: <Map className="w-6 h-6" /> },
-          { name: "Tasks", path: "/agent/tasks", icon: <PhoneCall className="w-6 h-6" /> },
-          { name: "Profile", path: "/agent/profile", icon: <User className="w-6 h-6" /> },
+          { name: "Home", path: "/agent", icon: <Home className="w-5 h-5" /> },
+          { name: "My Salons", path: "/agent/leads", icon: <KanbanSquare className="w-5 h-5" /> },
+          { name: "Discover", path: "/agent/discover", icon: <Map className="w-5 h-5" /> },
+          { name: "Tasks", path: "/agent/tasks", icon: <PhoneCall className="w-5 h-5" /> },
+          { name: "Profile", path: "/agent/profile", icon: <User className="w-5 h-5" /> },
         ].map((item) => {
           const isActive = pathname === item.path || (item.path !== '/agent' && pathname.startsWith(item.path));
           return (
             <Link
               key={item.name}
               href={item.path}
-              className={`flex flex-col items-center gap-1 p-2 ${
-                isActive ? "text-emerald-600" : "text-zinc-400"
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
+                isActive
+                  ? "text-[#F5B700]"
+                  : "text-zinc-600 hover:text-zinc-400"
               }`}
             >
               {item.icon}
-              <span className="text-[10px] font-semibold">{item.name}</span>
+              <span className={`text-[10px] font-semibold ${isActive ? "text-[#F5B700]" : "text-zinc-600"}`}>{item.name}</span>
             </Link>
           );
         })}

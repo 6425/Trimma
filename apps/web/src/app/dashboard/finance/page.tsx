@@ -41,6 +41,12 @@ export default function FinanceDashboard() {
     completedCount: 0
   });
 
+  const globalRates = {
+    platform: 15,
+    salon: 85,
+    payhere: 2.9
+  };
+
   useEffect(() => {
     async function loadFinanceData() {
       try {
@@ -55,6 +61,9 @@ export default function FinanceDashboard() {
         
         let salonId = null;
         if (salonData) salonId = salonData.id;
+
+        // 2. Fetch User Role
+        const { data: roleData } = await supabase.from("users").select("global_role").eq("email", session.user.email).maybeSingle();
 
         // 3. Fetch Bookings (Only theirs)
         let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });

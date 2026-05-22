@@ -25,7 +25,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { sendOnboardingInviteAlert } from "../../actions/whatsapp";
-import { useAuth } from "@/context/AuthContext";
+
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },

@@ -16,6 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { BookingSheet } from "../../../components/BookingSheet";
 import { supabase } from "../../../config/supabase";
 import { generatePayhereHash } from "@/app/actions/payhere";
+import { toast } from "sonner";
 
 // --- MOCK UI FLAIR DATA ---
 // Data not yet supported by DB but required for premium UI look

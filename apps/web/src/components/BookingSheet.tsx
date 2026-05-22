@@ -358,6 +358,19 @@ export function BookingSheet({
                       });
                   }
 
+                  // Fetch Salon's assigned agent for commission routing
+                  let agentEmail = null;
+                  let agentCommissionPct = 0;
+                  let agentCommissionAmount = 0;
+
+                  const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email').eq('id', salonId).single();
+                  if (salonData?.onboarding_agent_email) {
+                    agentEmail = salonData.onboarding_agent_email;
+                    agentCommissionPct = globalRates.agent;
+                    const platformCommission = totalPrice * (globalRates.platform / 100);
+                    agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
+                  }
+
                   // 1. Create Confirmed Booking row
                   const { data: newBooking, error: bookingErr } = await supabase
                     .from("bookings")
@@ -915,9 +928,7 @@ export function BookingSheet({
       }
 
       // Trigger WhatsApp Alert for direct confirmation
-      if (paymentMethod !== 'payhere') {
-        await sendBookingCreatedAlert(bookingNo);
-      }
+      await sendBookingCreatedAlert(bookingNo);
 
       setConfirmedBookingId(bookingNo);
       setStep(6); // Advance to ticket screen!

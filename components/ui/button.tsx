@@ -3,34 +3,67 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Trimma Global Button Component
+ * 
+ * Brand colors: Yellow (#F5B700) on Black, never pink.
+ * All buttons are constrained to their container — they will never overflow a card.
+ * 
+ * Variants:
+ *   default   – Solid yellow (#F5B700) fill, black text. Primary CTA.
+ *   secondary – Dark surface (#1A1A1A) with yellow text. Secondary action.
+ *   outline   – Transparent with yellow border + yellow text. Tertiary action.
+ *   ghost     – No border, subtle hover. Icon buttons or low-emphasis actions.
+ *   destructive – Red tint. Delete / danger actions.
+ *   link      – Underline text link style.
+ */
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  // ─── Base: constrained to container, never overflows ───
+  "group/button inline-flex shrink-0 items-center justify-center max-w-full " +
+  "rounded-lg border border-transparent bg-clip-padding text-sm font-semibold whitespace-nowrap " +
+  "transition-all duration-200 outline-none select-none cursor-pointer " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B700]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " +
+  "active:not-aria-[haspopup]:scale-[0.98] " +
+  "disabled:pointer-events-none disabled:opacity-40 " +
+  "aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/30 " +
+  "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
-        outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        // ── Primary: Yellow fill, black text ──
+        default:
+          "bg-[#F5B700] text-black border-[#F5B700] hover:bg-[#FFC947] hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
+
+        // ── Secondary: Dark surface, yellow text ──
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-white/8 text-white border-white/10 hover:bg-white/12 hover:border-white/20",
+
+        // ── Outline: Transparent, yellow border + text ──
+        outline:
+          "bg-transparent text-[#F5B700] border-[#F5B700]/50 hover:bg-[#F5B700]/10 hover:border-[#F5B700]",
+
+        // ── Ghost: No border, subtle hover ──
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "bg-transparent text-zinc-400 border-transparent hover:bg-white/8 hover:text-white",
+
+        // ── Destructive: Red danger actions ──
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline-offset-4 hover:underline",
+          "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300",
+
+        // ── Link: Underline only ──
+        link:
+          "bg-transparent text-[#F5B700] border-transparent underline-offset-4 hover:underline hover:text-[#FFC947]",
       },
       size: {
-        default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-8",
-        "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
-        "icon-lg": "size-9",
+        default: "h-9 gap-2 px-4",
+        xs:      "h-6 gap-1 rounded-md px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3",
+        sm:      "h-8 gap-1.5 px-3 text-[0.8125rem] [&_svg:not([class*='size-'])]:size-3.5",
+        lg:      "h-11 gap-2 px-5 text-base",
+        xl:      "h-12 gap-2 px-6 text-base font-bold",
+        icon:    "size-9 p-0",
+        "icon-xs": "size-6 p-0 rounded-md [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-8 p-0 [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-lg": "size-11 p-0",
       },
     },
     defaultVariants: {

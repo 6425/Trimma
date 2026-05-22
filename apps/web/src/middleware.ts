@@ -15,7 +15,7 @@ const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> =
     canAccess: (route: string) => route.startsWith('/agent') || route.startsWith('/leads') || route.startsWith('/dashboard'),
   },
   customer: {
-    canAccess: (route: string) => route.startsWith('/profile') || route.startsWith('/bookings'),
+    canAccess: (route: string) => route.startsWith('/profile') || route.startsWith('/bookings') || route.startsWith('/customer'),
   }
 };
 
