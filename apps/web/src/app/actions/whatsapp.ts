@@ -673,7 +673,9 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
 
   try {
     const cleanPhone = cleanPhoneNumber(phone);
-    const loginLink = "https://trimma-web.vercel.app/login";
+    const loginLink = ownerGmail 
+      ? `https://trimma-web.vercel.app/login?email=${encodeURIComponent(ownerGmail)}` 
+      : "https://trimma-web.vercel.app/login";
 
     const variables = {
       salon_name: salonName || "Partner",

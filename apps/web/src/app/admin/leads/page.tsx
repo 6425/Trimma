@@ -2118,11 +2118,16 @@ export default function Leads() {
                       </div>
                       <div className="space-y-1">
                         <label className="font-bold text-zinc-500 uppercase text-[10px] tracking-wide">Category</label>
-                        <Input 
-                          value={formData.category}
+                        <select
+                          value={formData.category || ""}
                           onChange={(e) => setFormData({...formData, category: e.target.value})}
-                          className="h-12 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-brand/20 text-sm font-medium"
-                        />
+                          className="w-full h-12 px-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand/20 text-sm font-medium text-zinc-800 shadow-sm"
+                        >
+                          <option value="">Select Category...</option>
+                          {DISCOVERY_CATEGORIES.map((cat) => (
+                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                          ))}
+                        </select>
                       </div>
                       <div className="space-y-1">
                         <label className="font-bold text-zinc-500 uppercase text-[10px] tracking-wide">Owner Gmail</label>

@@ -45,11 +45,9 @@ function BookingsListContent() {
           <p className="text-sm text-zinc-400 mt-1">View, track, and manage all your salon appointments.</p>
         </div>
         
-        <Link href="/salons">
-          <Button className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold text-xs h-10 px-4">
-            <Scissors className="w-4 h-4 mr-2" />
-            Book New Appointment
-          </Button>
+        <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all">
+          <Scissors className="w-4 h-4 mr-2" />
+          Book New Appointment
         </Link>
       </div>
 
@@ -66,10 +64,8 @@ function BookingsListContent() {
           <p className="text-sm text-zinc-400 mt-2 max-w-sm mx-auto leading-relaxed">
             You don't have any bookings yet. Let's find a professional salon nearby and book your first experience!
           </p>
-          <Link href="/salons">
-            <Button className="mt-6 bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold px-6 py-2.5">
-              Explore Salons
-            </Button>
+          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full mt-6 bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all">
+            Explore Salons
           </Link>
         </div>
       ) : (

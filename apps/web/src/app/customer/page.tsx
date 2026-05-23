@@ -132,10 +132,10 @@ function DashboardContent() {
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-           <Link href="/salons"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">Book Now</Button></Link>
-           <Link href="/salons"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">Find Salons</Button></Link>
-           <Link href="/customer/styles"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">Saved Styles</Button></Link>
-           <Link href="/customer/bookings"><Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full">History</Button></Link>
+           <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">Book Now</Link>
+           <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">Find Salons</Link>
+           <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">Saved Styles</Link>
+           <Link href="/customer/bookings" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">History</Link>
         </div>
       </section>
 
@@ -148,8 +148,8 @@ function DashboardContent() {
             <div className="text-center py-12 text-zinc-500">
               <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
               <p>You have no bookings yet.</p>
-              <Link href="/salons">
-                <Button variant="link" className="mt-2 text-[#F5B700] hover:text-[#F5B700]/80">Browse salons to book</Button>
+              <Link href="/salons" className="inline-flex mt-2 text-[#F5B700] hover:text-[#F5B700]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
+                Browse salons to book
               </Link>
             </div>
           ) : (

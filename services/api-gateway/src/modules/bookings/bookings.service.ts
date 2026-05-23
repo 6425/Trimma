@@ -52,6 +52,7 @@ export class BookingsService {
       booking_time: data.time,
       amount: service.price,
       status: 'confirmed',
+      payment_status: 'unpaid',
       booking_no: 'BK-' + Math.random().toString(36).substr(2, 6).toUpperCase()
     }]).select().single();
 

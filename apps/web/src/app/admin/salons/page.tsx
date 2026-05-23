@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -173,6 +174,19 @@ export default function Salons() {
         .eq('id', salonId);
       
       if (error) throw error;
+      
+      // Automatically send WhatsApp Invite
+      const salon = salons.find(s => s.id === salonId);
+      if (salon && salon.phone && salon.email) {
+        toast.loading("Sending WhatsApp Invitation...");
+        const result = await sendOnboardingInviteAlert(salon.id, salon.phone, salon.email, salon.name);
+        if (!result.success) {
+          toast.error("Verified, but WhatsApp invite failed: " + result.error);
+        }
+      } else {
+        toast.warning("Verified, but WhatsApp invite skipped (missing phone or email).");
+      }
+
       toast.dismiss();
       toast.success("Salon is now fully verified!");
       fetchSalons();
@@ -183,6 +197,46 @@ export default function Salons() {
     } catch (error: any) {
       toast.dismiss();
       toast.error("Failed to verify: " + error.message);
+    }
+  };
+
+  const handleResendInvite = async () => {
+    if (!selectedSalon || !editForm.phone || !editForm.email) {
+      toast.error("Phone and Email are required to send an invite.");
+      return;
+    }
+    try {
+      toast.loading("Resending WhatsApp Invitation...");
+      const result = await sendOnboardingInviteAlert(selectedSalon.id, editForm.phone, editForm.email, editForm.name);
+      toast.dismiss();
+      if (result.success) {
+        toast.success("WhatsApp invitation sent successfully!");
+      } else {
+        toast.error("Failed to send WhatsApp invite: " + result.error);
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error("Error sending invite: " + error.message);
+    }
+  };
+
+  const handleResendInviteFromTable = async (salon: any) => {
+    if (!salon.phone || !salon.email) {
+      toast.error("Phone and Email are required to send an invite.");
+      return;
+    }
+    try {
+      toast.loading("Resending WhatsApp Invitation...");
+      const result = await sendOnboardingInviteAlert(salon.id, salon.phone, salon.email, salon.name);
+      toast.dismiss();
+      if (result.success) {
+        toast.success("WhatsApp invitation sent successfully!");
+      } else {
+        toast.error("Failed to send WhatsApp invite: " + result.error);
+      }
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error("Error sending invite: " + error.message);
     }
   };
 
@@ -403,6 +457,17 @@ export default function Salons() {
                           </Button>
                         )}
 
+                        {salon.is_verified && (
+                          <Button 
+                            onClick={() => handleResendInviteFromTable(salon)}
+                            variant="outline" 
+                            size="sm" 
+                            className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-xl"
+                          >
+                            Resend Invite
+                          </Button>
+                        )}
+
                         <Button 
                           onClick={() => openViewModal(salon)}
                           variant="ghost" 
@@ -469,6 +534,11 @@ export default function Salons() {
                  {((selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) || (selectedSalon.onboarding_status === 'OWNER_ACTIVATED' && !selectedSalon.is_verified)) && (
                     <Button onClick={() => { setViewModalOpen(false); openRejectModal(selectedSalon); }} variant="outline" size="sm" className="text-rose-600 border-rose-200 hover:bg-rose-50 h-9">
                        <XCircle className="w-4 h-4 mr-1" /> Reject
+                    </Button>
+                 )}
+                 {selectedSalon.is_verified && (
+                    <Button onClick={handleResendInvite} variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 h-9">
+                       Resend WhatsApp Invite
                     </Button>
                  )}
                </div>
