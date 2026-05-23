@@ -4,12 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
-import { 
-  MapPin, Star, Clock, CalendarDays, ArrowRight,
-  Phone, MessageCircle, Navigation2, CheckCircle2,
-  ShieldCheck, Wifi, Coffee, Car, CreditCard,
-  Scissors, Search, Flame, ChevronLeft, Loader2, User, ChevronRight
-} from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";

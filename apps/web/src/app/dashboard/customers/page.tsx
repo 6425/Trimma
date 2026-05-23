@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, Search, Plus, Filter, Mail, Phone, MessageSquare, Star, ArrowUpRight } from "lucide-react";
+import { Users, Search, Plus, Filter, Mail, MessageSquare, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 

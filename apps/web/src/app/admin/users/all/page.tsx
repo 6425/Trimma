@@ -2,29 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Download, 
-  UserPlus, 
-  Shield, 
-  Mail, 
-  Phone,
-  MapPin,
-  Clock,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Edit2,
-  Key,
-  LogOut,
-  Ban,
-  Sparkles,
-  Loader2,
-  X
-} from "lucide-react";
+import { Search, Filter, MoreVertical, Download, UserPlus, Shield, Mail, Phone, MapPin, Clock, ArrowUpDown, Edit2, Key, Ban, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import * as Icons from "lucide-react";
-import { 
-  MapPin, Star, Scissors, Filter, Map, Clock, 
-  ChevronRight, Search, Store, TrendingUp, Sparkles 
-} from "lucide-react";
+import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Store, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonCard } from "./SalonCard";

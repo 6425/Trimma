@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Star, MessageSquare, Sparkles, AlertCircle, Heart, Share2, ThumbsUp } from "lucide-react";
+import { Star, MessageSquare, Heart, Share2, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ReviewsPage() {

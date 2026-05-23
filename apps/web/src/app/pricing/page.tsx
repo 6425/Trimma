@@ -2,18 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Check, 
-  Scissors, 
-  Users, 
-  Scissors as ScissorsIcon, 
-  Image as ImageIcon, 
-  GitBranch, 
-  ShieldCheck, 
-  Zap, 
-  HelpCircle,
-  Loader2
-} from "lucide-react";
+import { Check, Scissors, Users, GitBranch, ShieldCheck, HelpCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";

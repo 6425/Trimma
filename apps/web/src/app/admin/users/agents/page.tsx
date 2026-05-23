@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Trophy, Target, MapPin, TrendingUp, Zap, 
-  Users, Store, ChevronRight, Search, Filter, 
-  BarChart3, Lock, Loader2, Mail, UserPlus, 
-  Phone, Percent, ShieldCheck, KeyRound, Eye, EyeOff,
-  AlertCircle, X
-} from "lucide-react";
+import { Trophy, Target, MapPin, TrendingUp, Search, Lock, Loader2, Mail, KeyRound, Eye, EyeOff, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";

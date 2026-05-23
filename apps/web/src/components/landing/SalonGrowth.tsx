@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { TrendingUp, Users, Calendar, Clock, CheckCircle2 } from "lucide-react";
+import { TrendingUp, Users, Calendar, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

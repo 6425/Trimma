@@ -1,22 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  CreditCard, 
-  Save, 
-  Settings, 
-  ShieldCheck, 
-  Zap, 
-  Loader2, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  AlertTriangle,
-  Play,
-  CheckCircle2,
-  Database,
-  RefreshCw
-} from "lucide-react";
+import { CreditCard, Save, Settings, Zap, Loader2, Lock, Eye, EyeOff, AlertTriangle, Play, Database, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

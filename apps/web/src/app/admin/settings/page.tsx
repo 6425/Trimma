@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { 
-  MessageSquare, Key, ShieldCheck, PlayCircle, 
-  Settings2, Eye, EyeOff, Save, RefreshCw, Send, CheckCircle2, AlertTriangle
-} from "lucide-react";
+import { MessageSquare, PlayCircle, Settings2, Eye, EyeOff, Save, RefreshCw, Send, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

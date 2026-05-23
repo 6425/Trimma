@@ -3,11 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { 
-  CalendarDays, MapPin, Star, Scissors, 
-  Sparkles, CheckCircle2, Navigation2, ChevronRight,
-  TrendingUp, Award, Clock, Loader2
-} from "lucide-react";
+import { CalendarDays, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

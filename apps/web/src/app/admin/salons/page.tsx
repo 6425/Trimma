@@ -1,21 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Store, 
-  Search, 
-  MapPin, 
-  MoreVertical, 
-  Loader2,
-  ShieldCheck,
-  CheckCircle,
-  XCircle,
-  Eye,
-  Save,
-  Target,
-  X,
-  BadgeAlert
-} from "lucide-react";
+import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

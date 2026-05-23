@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Plus, MoreHorizontal, Users, Loader2, Star, X, Check, ShieldAlert, Clock, ShieldCheck, Tag, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
+import { Plus, Users, Loader2, X, Clock, Tag, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from "@/components/ui/button";

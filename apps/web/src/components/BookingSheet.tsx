@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
-import { 
-  Clock, User, Scissors, CheckCircle2, ChevronLeft, 
-  CreditCard, Loader2, Star, Sparkles, Tag, AlertCircle, CalendarRange
-} from "lucide-react";
+import { Clock, User, Scissors, CheckCircle2, ChevronLeft, CreditCard, Loader2, Sparkles, Tag, AlertCircle, CalendarRange } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

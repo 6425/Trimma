@@ -4,11 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import * as Icons from "lucide-react";
-import { 
-  MapPin, Star, Scissors, Filter, Map, Clock, 
-  ChevronRight, CalendarDays, Search, Heart, Sparkles,
-  Smile, User
-} from "lucide-react";
+import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Heart, Sparkles, Smile, User } from "lucide-react";
 
 const IconMap: Record<string, any> = {
   Scissors,

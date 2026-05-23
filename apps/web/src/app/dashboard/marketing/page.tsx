@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sparkles, Plus, BarChart3, Mail, MessageSquare, Percent, DollarSign, ArrowUpRight } from "lucide-react";
+import { Sparkles, Plus, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function MarketingPage() {

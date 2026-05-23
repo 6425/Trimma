@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import * as Icons from "lucide-react";
-import { Search, MapPin, ChevronRight, ChevronLeft, Scissors, Sparkles, Navigation2, Star } from "lucide-react";
+import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";

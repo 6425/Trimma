@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AdminCard from "../../components/ui/AdminCard";
 import { supabase } from "@/config/supabase";
-import { Loader2, RefreshCw, CheckCircle2, AlertCircle, Play, ShieldAlert, ShieldCheck, Globe, Users, Activity, BarChart3, Database, Lock, Server, Zap, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
+import { Loader2, RefreshCw, Play, ShieldAlert, ShieldCheck, Globe, Activity, Database, Lock, Server, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { seedMarketplaceData } from "@/services/seedService";

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Share2, Facebook, MessageCircle, Instagram, Globe, Sparkles, Check, Play, Settings } from "lucide-react";
+import { Share2, Facebook, MessageCircle, Instagram, Globe, Check, Play, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SocialMediaPage() {

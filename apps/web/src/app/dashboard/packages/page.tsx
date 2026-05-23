@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Tag, Plus, CheckCircle, Percent, Scissors, Sparkles, AlertCircle } from "lucide-react";
+import { Tag, Plus, CheckCircle, Percent, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PackagesPage() {

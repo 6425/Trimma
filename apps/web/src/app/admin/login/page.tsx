@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from 'react';
-import { Shield, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "../../../components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

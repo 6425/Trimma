@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CreditCard, Sparkles, ShieldCheck, Check, DollarSign, Calendar, FileText, ArrowRight, Loader2 } from "lucide-react";
+import { CreditCard, Sparkles, Check, FileText, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, MoreHorizontal, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
+import { Plus, Search, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

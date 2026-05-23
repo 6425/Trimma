@@ -1,19 +1,7 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
-import { 
-  UserPlus, 
-  Mail, 
-  User, 
-  Shield, 
-  ArrowLeft,
-  Check,
-  ClipboardList,
-  Fingerprint,
-  Lock,
-  Globe,
-  Loader2
-} from "lucide-react";
+import { UserPlus, User, Shield, ArrowLeft, Check, ClipboardList, Fingerprint, Lock, Globe, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

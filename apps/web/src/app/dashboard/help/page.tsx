@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { HelpCircle, ChevronDown, ChevronRight, BookOpen, Printer, Sparkles, MessageCircle, Mail } from "lucide-react";
+import { HelpCircle, ChevronDown, ChevronRight, BookOpen, Sparkles, MessageCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function HelpCenterPage() {

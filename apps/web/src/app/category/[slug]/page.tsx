@@ -3,12 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { 
-  Search, MapPin, Star, Filter, ArrowRight,
-  ShieldCheck, Map as MapIcon, Grid,
-  SlidersHorizontal, ChevronDown, CheckCircle2,
-  Clock, Scissors, Loader2, Sparkles, Heart, Smile, User
-} from "lucide-react";
+import { Search, MapPin, Star, Filter, ShieldCheck, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User } from "lucide-react";
 
 const IconMap: Record<string, any> = {
   Scissors,

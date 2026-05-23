@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Building2, UserCheck, ShieldCheck, Activity, 
-  Calculator, FileText, Plus, RefreshCw, Layers, 
-  Pencil, Save, X, Loader2, Check
-} from "lucide-react";
+import { Building2, UserCheck, ShieldCheck, Activity, Calculator, FileText, RefreshCw, Layers, Pencil, Save, X, Loader2, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";

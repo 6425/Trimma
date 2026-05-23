@@ -1,23 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Search, 
-  Phone,
-  MapPin,
-  Loader2,
-  Zap,
-  Target,
-  Globe,
-  Star,
-  X,
-  Trash2,
-  CheckCircle2,
-  Mail,
-  ClipboardList,
-  Send,
-  Building2
-} from "lucide-react";
+import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

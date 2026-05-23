@@ -2,10 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { 
-  CalendarDays, MapPin, Scissors, Clock, 
-  Sparkles, CheckCircle2, ChevronRight, AlertCircle, ShoppingBag
-} from "lucide-react";
+import { CalendarDays, MapPin, Scissors, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../../../config/supabase";

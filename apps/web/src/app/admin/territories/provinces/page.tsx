@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Map, 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  ChevronRight,
-  Globe,
-  Loader2
-} from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";

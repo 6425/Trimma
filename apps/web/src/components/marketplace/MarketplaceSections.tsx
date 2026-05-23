@@ -1,9 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  Sparkles, Star, MapPin, CheckCircle2, ChevronRight, 
-  ArrowRight, ShieldCheck, Clock, Award, Landmark, Gift, Tag, Percent
-} from "lucide-react";
+import { Sparkles, Star, MapPin, CheckCircle2, ArrowRight, ShieldCheck, Clock, Award, Landmark, Gift, Percent } from "lucide-react";
 import * as Icons from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

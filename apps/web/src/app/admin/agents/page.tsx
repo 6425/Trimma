@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Users, Search, Percent, ShieldAlert, 
-  Trash2, Mail, Phone, Loader2, ArrowUpRight, 
-  Edit, Sparkles, CheckCircle2, UserCheck, ShieldCheck, 
-  Download, MapPin, TrendingUp, Plus, Award, 
-  DollarSign, ClipboardList, Check, X, Lock, 
-  AlertTriangle, History, Landmark
-} from "lucide-react";
+import { Users, Search, Percent, Trash2, Phone, Loader2, Edit, CheckCircle2, UserCheck, MapPin, TrendingUp, Plus, Award, DollarSign, ClipboardList, Check, X, Lock, AlertTriangle, History, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

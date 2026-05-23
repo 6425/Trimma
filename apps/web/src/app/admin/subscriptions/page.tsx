@@ -1,22 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  Zap,
-  CheckCircle2,
-  Package,
-  Loader2,
-  Users,
-  Scissors,
-  Image,
-  GitBranch,
-  ShieldCheck,
-  RotateCcw
-} from "lucide-react";
+import { Plus, Edit2, Trash2, Zap, CheckCircle2, Package, Loader2, Users, Scissors, Image, GitBranch, ShieldCheck, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";

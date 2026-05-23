@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BarChart3, TrendingUp, Sparkles, DollarSign, Calendar, Users, Award, ChevronRight } from "lucide-react";
+import { BarChart3, TrendingUp, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AnalyticsPage() {

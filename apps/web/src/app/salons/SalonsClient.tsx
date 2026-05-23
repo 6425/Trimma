@@ -4,10 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Icons from "lucide-react";
-import {
-  Search, MapPin, Star, Grid, Map as MapIcon,
-  SlidersHorizontal, Scissors, Sparkles, Loader2
-} from "lucide-react";
+import { Search, MapPin, Star, Grid, SlidersHorizontal, Scissors, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

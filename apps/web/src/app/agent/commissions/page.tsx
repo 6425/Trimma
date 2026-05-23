@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { DollarSign, History, Calendar, FileText, ArrowRight, TrendingUp, Sparkles, Loader2, Activity, Building2, Users, CheckCircle2 } from "lucide-react";
+import { History, Calendar, FileText, ArrowRight, TrendingUp, Sparkles, Loader2, Activity, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";

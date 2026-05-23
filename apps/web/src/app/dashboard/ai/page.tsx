@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bot, Sparkles, Settings, MessageSquare, ShieldCheck, Check, AlertCircle, Play, Mic } from "lucide-react";
+import { Bot, Sparkles, Settings, MessageSquare, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AIAssistantPage() {

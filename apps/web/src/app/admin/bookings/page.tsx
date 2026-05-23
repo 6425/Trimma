@@ -1,19 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Calendar, 
-  Search, 
-  Filter, 
-  AlertCircle, 
-  Loader2,
-  DollarSign,
-  TrendingUp,
-  Percent,
-  CheckCircle2,
-  MoreVertical,
-  Activity
-} from "lucide-react";
+import { Calendar, Search, Filter, AlertCircle, Loader2, DollarSign, Percent, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

@@ -1,22 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Users, 
-  UserCheck, 
-  UserPlus, 
-  ShieldCheck, 
-  UserMinus, 
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
-  Map,
-  Search,
-  Bell,
-  ChevronDown,
-  Sparkles
-} from "lucide-react";
+import { Users, UserPlus, ShieldCheck, UserMinus, Activity, ArrowUpRight, ArrowDownRight, TrendingUp, Map, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { 
   AreaChart, 

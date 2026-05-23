@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Smartphone, Zap, Gift, Bell, Star, ChevronRight } from "lucide-react";
+import { Smartphone, Zap, Gift, Bell, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function MobileAppShowcase() {

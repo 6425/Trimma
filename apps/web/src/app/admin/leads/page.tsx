@@ -1,44 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Plus,
-  Mail,
-  Phone,
-  MapPin,
-  Clock,
-  ChevronRight,
-  Loader2,
-  ScanSearch,
-  Zap,
-  Target,
-  Globe,
-  Star,
-  DollarSign,
-  X,
-  Table,
-  Trash2,
-  Compass,
-  UserCheck,
-  Hash,
-  CheckCircle2,
-  AlertCircle,
-  Send,
-  Shield,
-  Store,
-  Sparkles,
-  Save,
-  Image as ImageIcon,
-  RefreshCw,
-  UploadCloud,
-  Scissors,
-  User,
-  Pencil,
-  Check
-} from "lucide-react";
+import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

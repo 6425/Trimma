@@ -6,28 +6,7 @@ import { supabase } from "@/config/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  Loader2,
-  Calendar,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  DollarSign,
-  Scissors,
-  MapPin,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  RefreshCw,
-  CreditCard,
-  Hash,
-  UserCheck,
-  PlayCircle,
-  Ban,
-  EyeOff,
-} from "lucide-react";
+import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
 
 // Timeline step definition
 interface TimelineStep {

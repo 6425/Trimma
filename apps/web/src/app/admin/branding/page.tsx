@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  Sparkles, Save, RefreshCw, Palette, Layers, 
-  HelpCircle, Eye, EyeOff, Sliders, Type, CheckCircle2,
-  Upload, Trash2, Crop, ZoomIn, Move, FileImage, Code
-} from "lucide-react";
+import { Sparkles, Save, RefreshCw, Palette, Layers, Sliders, Type, Upload, Trash2, Crop, ZoomIn, Move, FileImage, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

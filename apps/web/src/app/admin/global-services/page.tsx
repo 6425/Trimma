@@ -1,29 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit2, 
-  Trash2, 
-  MoreVertical, 
-  Loader2, 
-  LayoutGrid,
-  Scissors,
-  Sparkles,
-  Heart,
-  Droplet,
-  Flower2,
-  Activity,
-  User,
-  Users,
-  PenTool,
-  Paintbrush,
-  Clock,
-  Tag,
-  ChevronRight
-} from "lucide-react";
+import { Plus, Search, Filter, Edit2, Trash2, Loader2, LayoutGrid, Scissors, Sparkles, Heart, Droplet, Flower2, Activity, User, Users, PenTool, Paintbrush, Clock, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
