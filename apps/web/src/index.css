@@ -181,7 +181,22 @@
   
   /* Global safeguard: Light backgrounds should default to dark text */
   .bg-white, .bg-slate-50, .bg-zinc-50, .bg-gray-50, .bg-stone-50, .bg-neutral-50, .bg-red-50, .bg-orange-50, .bg-amber-50, .bg-yellow-50, .bg-lime-50, .bg-green-50, .bg-emerald-50, .bg-teal-50, .bg-cyan-50, .bg-sky-50, .bg-blue-50, .bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-fuchsia-50, .bg-pink-50, .bg-rose-50 {
-    @apply text-zinc-900;
+    color: #000000 !important;
+  }
+
+  /* Prevent white text on white backgrounds */
+  .bg-white .text-white, .bg-white .text-zinc-50, .bg-white .text-gray-50 {
+    color: #000000 !important;
+  }
+
+  /* Yellow/Brand backgrounds must have dark text */
+  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600 {
+    color: #000000 !important;
+  }
+
+  /* Prevent white text on yellow backgrounds */
+  .bg-brand .text-white, .bg-primary .text-white, .bg-brand-hover .text-white, .bg-yellow-400 .text-white, .bg-yellow-500 .text-white, .bg-amber-400 .text-white, .bg-amber-500 .text-white {
+    color: #000000 !important;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading tracking-tight font-semibold;
@@ -275,9 +290,9 @@
   .text-pink-500, .text-rose-500 { color: #F5B700 !important; }
   .text-pink-600, .text-rose-600 { color: #E6AC00 !important; }
   .text-pink-400, .text-rose-400 { color: #FFC947 !important; }
-  .bg-pink-500,   .bg-rose-500   { background-color: #F5B700 !important; }
-  .bg-pink-600,   .bg-rose-600   { background-color: #E6AC00 !important; }
-  .bg-pink-100,   .bg-rose-100   { background-color: rgba(245,183,0,0.12) !important; }
+  .bg-pink-500,   .bg-rose-500   { background-color: #F5B700 !important; color: #000000 !important; }
+  .bg-pink-600,   .bg-rose-600   { background-color: #E6AC00 !important; color: #000000 !important; }
+  .bg-pink-100,   .bg-rose-100   { background-color: rgba(245,183,0,0.12) !important; color: #000000 !important; }
   .border-pink-500, .border-rose-500 { border-color: #F5B700 !important; }
   .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #F5B700 !important; }
 }
