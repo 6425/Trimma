@@ -90,7 +90,7 @@ function AdminUserCreateInner() {
         </div>
         <h2 className="text-2xl font-bold text-[#1A1C29]">User Created Successfully!</h2>
         <p className="text-zinc-500">The account has been provisioned and identity verified.</p>
-        <p className="text-sm text-zinc-400 italic">Redirecting to directory...</p>
+        <p className="text-sm text-zinc-500 italic">Redirecting to directory...</p>
       </div>
     );
   }
@@ -128,7 +128,7 @@ function AdminUserCreateInner() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Full Name</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Full Name</label>
                   <Input 
                     value={formData.fullName}
                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
@@ -138,7 +138,7 @@ function AdminUserCreateInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Email Address</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Email Address</label>
                   <Input 
                     type="email" 
                     value={formData.email}
@@ -157,7 +157,7 @@ function AdminUserCreateInner() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Account Role</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Account Role</label>
                   <Select 
                     value={formData.role}
                     onValueChange={(val) => setFormData({ ...formData, role: val })}
@@ -176,7 +176,7 @@ function AdminUserCreateInner() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Primary Territory</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Primary Territory</label>
                   <Select 
                     value={formData.territory}
                     onValueChange={(val) => setFormData({ ...formData, territory: val })}
@@ -202,7 +202,7 @@ function AdminUserCreateInner() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Initial Password</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Initial Password</label>
                   <Input 
                     type="password" 
                     value={formData.password}
@@ -213,7 +213,7 @@ function AdminUserCreateInner() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Confirm Password</label>
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Confirm Password</label>
                   <Input 
                     type="password" 
                     value={formData.confirmPassword}
@@ -229,10 +229,10 @@ function AdminUserCreateInner() {
                   <span className="text-sm font-medium text-zinc-600">Admin Managed Identity</span>
                   <Badge className="bg-zinc-200 text-zinc-600 border-none">Internal Control</Badge>
                 </div>
-                <p className="text-xs text-zinc-400 mb-4">Passwords are 100% managed by administrators. The agent will use these credentials to access the field applications.</p>
+                <p className="text-xs text-zinc-500 mb-4">Passwords are 100% managed by administrators. The agent will use these credentials to access the field applications.</p>
                 <div className="flex items-center gap-2">
                    <div className="w-4 h-4 bg-brand rounded flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
+                      <Check className="w-3 h-3 text-zinc-900" />
                    </div>
                    <span className="text-xs font-bold text-zinc-700">Confirm security policy and provisioning</span>
                 </div>
@@ -243,7 +243,7 @@ function AdminUserCreateInner() {
               <Button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full bg-[#1A1C29] hover:bg-[#1A1C29]/90 text-white h-14 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#1A1C29]/20"
+                className="w-full bg-white hover:bg-white/90 text-zinc-900 h-14 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-xl shadow-[#1A1C29]/20"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -259,24 +259,24 @@ function AdminUserCreateInner() {
 
         {/* Sidebar Context */}
         <div className="space-y-6">
-          <div className="bg-[#1A1C29] p-6 rounded-3xl text-white relative overflow-hidden shadow-2xl">
+          <div className="bg-white p-6 rounded-3xl text-zinc-900 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 p-4 opacity-5">
               <Fingerprint className="w-32 h-32" />
             </div>
             <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5 text-pink-400" /> Security Note
             </h4>
-            <p className="text-white/60 text-sm leading-relaxed mb-6 font-medium">
+            <p className="text-zinc-500 text-sm leading-relaxed mb-6 font-medium">
               Provisioning "Admin" or "Super Admin" roles grants full access to marketplace data, financials, and system settings. Ensure you follow the <strong>Identity Verification Protocol</strong> before creating these accounts.
             </p>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 text-xs font-bold text-white/80">
+              <div className="flex items-center gap-3 text-xs font-bold text-zinc-900/80">
                 <div className="w-1.5 h-1.5 rounded-full bg-pink-400" /> All passwords managed by Admin
               </div>
-              <div className="flex items-center gap-3 text-xs font-bold text-white/80">
+              <div className="flex items-center gap-3 text-xs font-bold text-zinc-900/80">
                 <div className="w-1.5 h-1.5 rounded-full bg-pink-400" /> Action logged in Audit Trail
               </div>
-              <div className="flex items-center gap-3 text-xs font-bold text-white/80">
+              <div className="flex items-center gap-3 text-xs font-bold text-zinc-900/80">
                 <div className="w-1.5 h-1.5 rounded-full bg-pink-400" /> Agent record created automatically
               </div>
             </div>
@@ -284,7 +284,7 @@ function AdminUserCreateInner() {
 
           <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm space-y-4">
              <h4 className="font-bold text-[#1A1C29] flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-zinc-400" /> Identity Strategy
+                <ClipboardList className="w-4 h-4 text-zinc-500" /> Identity Strategy
              </h4>
              <div className="space-y-4">
                 <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
@@ -296,8 +296,8 @@ function AdminUserCreateInner() {
           </div>
 
           <div className="p-6 bg-gradient-to-br from-zinc-50 to-white rounded-3xl border border-zinc-100 border-dashed flex flex-col items-center text-center">
-             <Globe className="w-10 h-10 text-zinc-200 mb-2" />
-             <p className="text-xs font-medium text-zinc-400">Identity accounts are globally unique and synced across all Trimma nodes.</p>
+             <Globe className="w-10 h-10 text-zinc-800 mb-2" />
+             <p className="text-xs font-medium text-zinc-500">Identity accounts are globally unique and synced across all Trimma nodes.</p>
           </div>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../config/supabase";
 import { generatePayhereHash } from "@/app/actions/payhere";
-import { sendBookingCreatedAlert } from "@/app/actions/whatsapp";
+import { sendBookingCreatedAlert, sendWhatsAppNotification } from "@/app/actions/whatsapp";
 
 export function BookingSheet({ 
   isOpen, 
@@ -385,9 +385,9 @@ export function BookingSheet({
                       reservation_fee_paid: true,
                       reservation_fee_refundable: false,
                       total_reservation_fee: reservationFee,
-                      salon_upfront_amount: totalPrice * 0.10,
-                      platform_commission_amount: totalPrice * 0.10,
-                      payhere_fee_amount: totalPrice * 0.03,
+                      salon_upfront_amount: totalPrice * (globalRates.salon / 100),
+                      platform_commission_amount: totalPrice * (globalRates.platform / 100),
+                      payhere_fee_amount: totalPrice * (globalRates.payhere / 100),
                       agent_email: agentEmail,
                       agent_commission_percent: agentCommissionPct,
                       agent_commission_amount: agentCommissionAmount
@@ -449,8 +449,8 @@ export function BookingSheet({
                     raw_response: details
                   });
 
-                  // 6. Trigger WhatsApp Alerts
-                  await sendBookingCreatedAlert(bookingNo);
+                  // 6. Trigger WhatsApp Alerts (Since PayPal is instantly confirmed)
+                  await sendWhatsAppNotification(bookingNo);
 
                   setConfirmedBookingId(bookingNo);
                   setStep(6);

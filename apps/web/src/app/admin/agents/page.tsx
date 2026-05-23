@@ -437,7 +437,7 @@ export default function AdminAgents() {
         <Card className="p-20 border-none shadow-sm rounded-3xl bg-white text-center border border-slate-100/50">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-brand mb-3" />
           <p className="font-extrabold text-zinc-800 text-sm">Loading Agent CRM Database Modules...</p>
-          <p className="text-xs text-zinc-400 mt-1">Retrieving territories, ledger payouts, and activity logs.</p>
+          <p className="text-xs text-zinc-500 mt-1">Retrieving territories, ledger payouts, and activity logs.</p>
         </Card>
       ) : (
         <>
@@ -451,7 +451,7 @@ export default function AdminAgents() {
                     <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Active Agents</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Active Agents</p>
                     <p className="text-xl font-black text-zinc-900">{activeCount}</p>
                   </div>
                 </Card>
@@ -460,7 +460,7 @@ export default function AdminAgents() {
                     <ClipboardList className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Leads Generated</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Leads Generated</p>
                     <p className="text-xl font-black text-zinc-900">{totalLeadsGenerated}</p>
                   </div>
                 </Card>
@@ -469,7 +469,7 @@ export default function AdminAgents() {
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Converted Salons</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Converted Salons</p>
                     <p className="text-xl font-black text-zinc-900">{totalConvertedSalons}</p>
                   </div>
                 </Card>
@@ -478,7 +478,7 @@ export default function AdminAgents() {
                     <DollarSign className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Pending Payouts</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Pending Payouts</p>
                     <p className="text-xl font-black text-zinc-900">LKR {pendingPayouts.toLocaleString()}</p>
                   </div>
                 </Card>
@@ -493,36 +493,36 @@ export default function AdminAgents() {
                     <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
                       <Award className="w-4 h-4 text-amber-500" /> Agent Conversion Leaderboard
                     </h3>
-                    <p className="text-[11px] text-zinc-400">Ranked by overall successful salon conversions and closing velocity.</p>
+                    <p className="text-[11px] text-zinc-500">Ranked by overall successful salon conversions and closing velocity.</p>
                   </div>
                   
                   <div className="space-y-3.5 flex-1">
                     {agents.length === 0 ? (
-                      <p className="text-xs text-zinc-300 py-10 text-center">No agent closing data logged.</p>
+                      <p className="text-xs text-zinc-700 py-10 text-center">No agent closing data logged.</p>
                     ) : (
                       agents
                         .sort((a, b) => b.converted_leads - a.converted_leads)
                         .slice(0, 5)
                         .map((agent, index) => {
-                          const trophyColors = ["text-amber-500", "text-slate-400", "text-amber-700", "text-zinc-300", "text-zinc-300"];
+                          const trophyColors = ["text-amber-500", "text-slate-400", "text-amber-700", "text-zinc-700", "text-zinc-700"];
                           return (
                             <div key={agent.email} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
                               <div className="flex items-center gap-3">
-                                <div className="font-black text-sm text-zinc-400 w-5">#{index + 1}</div>
+                                <div className="font-black text-sm text-zinc-500 w-5">#{index + 1}</div>
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 bg-indigo-50 text-indigo-600`}>
                                   {getInitials(agent.full_name)}
                                 </div>
                                 <div>
                                   <div className="font-extrabold text-zinc-800 text-xs tracking-tight">{agent.full_name}</div>
-                                  <div className="text-[10px] text-zinc-400">{agent.email}</div>
+                                  <div className="text-[10px] text-zinc-500">{agent.email}</div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-4 text-right">
                                 <div>
                                   <span className="font-black text-zinc-900 text-xs">{agent.converted_leads} Conversions</span>
-                                  <div className="text-[9px] font-bold text-zinc-400">{agent.conversion_rate}% Ratio</div>
+                                  <div className="text-[9px] font-bold text-zinc-500">{agent.conversion_rate}% Ratio</div>
                                 </div>
-                                <Award className={`w-5 h-5 shrink-0 ${trophyColors[index] || "text-zinc-200"}`} />
+                                <Award className={`w-5 h-5 shrink-0 ${trophyColors[index] || "text-zinc-800"}`} />
                               </div>
                             </div>
                           );
@@ -537,7 +537,7 @@ export default function AdminAgents() {
                     <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
                       <TrendingUp className="w-4 h-4 text-emerald-500" /> Platform-Wide CRM Funnel
                     </h3>
-                    <p className="text-[11px] text-zinc-400">Prospect acquisition rates across the sales pipeline.</p>
+                    <p className="text-[11px] text-zinc-500">Prospect acquisition rates across the sales pipeline.</p>
                   </div>
                   
                   <div className="space-y-4 py-4">
@@ -579,7 +579,7 @@ export default function AdminAgents() {
               
               {/* Search Bar */}
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                 <Input 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -593,14 +593,14 @@ export default function AdminAgents() {
                 <div className="p-5 border-b border-zinc-50 flex items-center justify-between bg-slate-50/50">
                   <div>
                     <h3 className="font-extrabold text-zinc-900 text-base">Authorized Platform Discoverers</h3>
-                    <p className="text-zinc-400 text-xs mt-0.5">Manage credentials, modify commission rates, and review performance dashboards.</p>
+                    <p className="text-zinc-500 text-xs mt-0.5">Manage credentials, modify commission rates, and review performance dashboards.</p>
                   </div>
                 </div>
 
                 <div className="overflow-x-auto w-full">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-zinc-50 text-zinc-400 font-extrabold uppercase tracking-wider text-[9px] h-10 border-b border-zinc-100">
+                      <tr className="bg-zinc-50 text-zinc-500 font-extrabold uppercase tracking-wider text-[9px] h-10 border-b border-zinc-100">
                         <th className="px-6 py-2">Discoverer Details</th>
                         <th className="px-6 py-2">Coverage Territories</th>
                         <th className="px-6 py-2 text-center">Prospect Leads</th>
@@ -614,7 +614,7 @@ export default function AdminAgents() {
                     <tbody className="divide-y divide-zinc-50 font-medium text-zinc-700">
                       {filteredAgents.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="text-center py-20 text-zinc-300">
+                          <td colSpan={8} className="text-center py-20 text-zinc-700">
                             No matching platform agents discovered.
                           </td>
                         </tr>
@@ -632,7 +632,7 @@ export default function AdminAgents() {
                                   </div>
                                   <div>
                                     <div className="font-extrabold text-zinc-900 text-sm tracking-tight">{agent.full_name}</div>
-                                    <div className="text-[10px] text-zinc-400">{agent.email}</div>
+                                    <div className="text-[10px] text-zinc-500">{agent.email}</div>
                                   </div>
                                 </div>
                               </td>
@@ -641,11 +641,11 @@ export default function AdminAgents() {
                               <td className="px-6 py-2">
                                 <div className="flex flex-wrap gap-1 max-w-[200px]">
                                   {matchingTerritories.length === 0 ? (
-                                    <span className="text-[10px] text-zinc-400 italic">No assigned zones</span>
+                                    <span className="text-[10px] text-zinc-500 italic">No assigned zones</span>
                                   ) : (
                                     matchingTerritories.map(t => (
                                       <Badge key={t.id} variant="secondary" className="px-1.5 py-0 border-none bg-slate-100 text-zinc-600 font-semibold text-[9px]">
-                                        {t.city} {t.is_exclusive && <Lock className="w-2.5 h-2.5 inline ml-0.5 text-zinc-400" />}
+                                        {t.city} {t.is_exclusive && <Lock className="w-2.5 h-2.5 inline ml-0.5 text-zinc-500" />}
                                       </Badge>
                                     ))
                                   )}
@@ -678,7 +678,7 @@ export default function AdminAgents() {
                               {/* Status */}
                               <td className="px-6 py-2 text-center">
                                 <Badge className={`shadow-none font-bold uppercase text-[9px] px-2.5 py-0.5 border-none ${
-                                  agent.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-zinc-100 text-zinc-400"
+                                  agent.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-zinc-100 text-zinc-500"
                                 }`}>
                                   {agent.status}
                                 </Badge>
@@ -691,7 +691,7 @@ export default function AdminAgents() {
                                     onClick={() => handleOpenEditModal(agent)}
                                     variant="ghost" 
                                     size="icon" 
-                                    className="w-7 h-7 rounded-lg text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50"
+                                    className="w-7 h-7 rounded-lg text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50"
                                     title="Edit Credentials"
                                   >
                                     <Edit className="w-3.5 h-3.5" />
@@ -700,7 +700,7 @@ export default function AdminAgents() {
                                     onClick={() => handleDeleteAgent(agent)}
                                     variant="ghost" 
                                     size="icon" 
-                                    className="w-7 h-7 rounded-lg text-zinc-300 hover:text-rose-600 hover:bg-rose-50"
+                                    className="w-7 h-7 rounded-lg text-zinc-700 hover:text-rose-600 hover:bg-rose-50"
                                     title="Demote User"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -729,13 +729,13 @@ export default function AdminAgents() {
                   <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-brand" /> Map Coverage Allocation
                   </h3>
-                  <p className="text-[11px] text-zinc-400">Assign physical boundaries and exclusivity parameters to prospected regions.</p>
+                  <p className="text-[11px] text-zinc-500">Assign physical boundaries and exclusivity parameters to prospected regions.</p>
                 </div>
 
                 <div className="space-y-4 text-xs font-semibold text-zinc-500">
                   {/* Select Agent */}
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Select Sales Agent</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Sales Agent</label>
                     <select
                       value={newTerritoryEmail}
                       onChange={(e) => setNewTerritoryEmail(e.target.value)}
@@ -749,7 +749,7 @@ export default function AdminAgents() {
 
                   {/* Province Selector */}
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Select Province</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Province</label>
                     <select
                       value={newTerritoryProvince}
                       onChange={(e) => {
@@ -766,7 +766,7 @@ export default function AdminAgents() {
 
                   {/* District Selector */}
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Select District</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select District</label>
                     <select
                       value={newTerritoryDistrict}
                       onChange={(e) => setNewTerritoryDistrict(e.target.value)}
@@ -780,7 +780,7 @@ export default function AdminAgents() {
 
                   {/* Target City */}
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Target City / Zone Name</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Target City / Zone Name</label>
                     <Input 
                       placeholder="e.g. Colombo 03, Negombo, Galle Fort"
                       value={newTerritoryCity}
@@ -793,7 +793,7 @@ export default function AdminAgents() {
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div>
                       <span className="font-extrabold text-zinc-800 text-xs">Lock Exclusive Rights</span>
-                      <p className="text-[10px] text-zinc-400 font-semibold mt-0.5">Prevents other agents from claiming prospects in this city.</p>
+                      <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">Prevents other agents from claiming prospects in this city.</p>
                     </div>
                     <input 
                       type="checkbox" 
@@ -806,7 +806,7 @@ export default function AdminAgents() {
                   <Button 
                     onClick={handleAssignTerritory}
                     disabled={updating}
-                    className="w-full bg-brand hover:bg-brand/90 text-white h-11 rounded-xl font-bold gap-2 text-xs"
+                    className="w-full bg-brand hover:bg-brand/90 text-zinc-900 h-11 rounded-xl font-bold gap-2 text-xs"
                   >
                     {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Assign Coverage Zone</>}
                   </Button>
@@ -818,7 +818,7 @@ export default function AdminAgents() {
                 <div className="pb-4 border-b border-slate-50 mb-4 flex items-center justify-between">
                   <div>
                     <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight">Active Map Territory Coverage</h3>
-                    <p className="text-[11px] text-zinc-400">List of geographic zones currently allocated to discoverers.</p>
+                    <p className="text-[11px] text-zinc-500">List of geographic zones currently allocated to discoverers.</p>
                   </div>
                   
                   {/* Conflict model alert callout */}
@@ -830,7 +830,7 @@ export default function AdminAgents() {
                 <div className="overflow-x-auto w-full flex-1">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-zinc-50 text-zinc-400 font-bold uppercase text-[9px] h-9 border-b border-zinc-100">
+                      <tr className="bg-zinc-50 text-zinc-500 font-bold uppercase text-[9px] h-9 border-b border-zinc-100">
                         <th className="px-4 py-1.5">Assigned Agent</th>
                         <th className="px-4 py-1.5">Province</th>
                         <th className="px-4 py-1.5">District</th>
@@ -842,7 +842,7 @@ export default function AdminAgents() {
                     <tbody className="divide-y divide-zinc-50 font-semibold text-zinc-600">
                       {territories.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-14 text-zinc-300 italic">
+                          <td colSpan={6} className="text-center py-14 text-zinc-700 italic">
                             No boundaries assigned yet.
                           </td>
                         </tr>
@@ -853,14 +853,14 @@ export default function AdminAgents() {
                             <tr key={t.id} className="hover:bg-slate-50/50 transition-colors h-11">
                               <td className="px-4 py-1.5">
                                 <span className="font-bold text-zinc-900">{ag?.full_name || "Unknown Agent"}</span>
-                                <div className="text-[10px] text-zinc-400 font-normal">{t.agent_email}</div>
+                                <div className="text-[10px] text-zinc-500 font-normal">{t.agent_email}</div>
                               </td>
                               <td className="px-4 py-1.5">{t.province}</td>
                               <td className="px-4 py-1.5">{t.district}</td>
                               <td className="px-4 py-1.5 font-bold text-zinc-800">{t.city}</td>
                               <td className="px-4 py-1.5 text-center">
                                 <Badge className={`shadow-none font-bold uppercase text-[8px] px-1.5 py-0 border-none ${
-                                  t.is_exclusive ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-zinc-400"
+                                  t.is_exclusive ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-zinc-500"
                                 }`}>
                                   {t.is_exclusive ? "EXCLUSIVE" : "SHARED"}
                                 </Badge>
@@ -870,7 +870,7 @@ export default function AdminAgents() {
                                   onClick={() => handleDeleteTerritory(t.id, t.agent_email, t.city)}
                                   variant="ghost" 
                                   size="icon" 
-                                  className="w-7 h-7 rounded-lg text-zinc-300 hover:text-rose-600 hover:bg-rose-50"
+                                  className="w-7 h-7 rounded-lg text-zinc-700 hover:text-rose-600 hover:bg-rose-50"
                                   title="Revoke Territory"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -899,7 +899,7 @@ export default function AdminAgents() {
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Pending Approvals</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Pending Approvals</p>
                     <p className="text-xl font-black text-zinc-900">LKR {pendingPayouts.toLocaleString()}</p>
                   </div>
                 </Card>
@@ -908,7 +908,7 @@ export default function AdminAgents() {
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Approved Balance</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Approved Balance</p>
                     <p className="text-xl font-black text-zinc-900">LKR {approvedPayouts.toLocaleString()}</p>
                   </div>
                 </Card>
@@ -917,7 +917,7 @@ export default function AdminAgents() {
                     <Landmark className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Paid Commission</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Paid Commission</p>
                     <p className="text-xl font-black text-zinc-900">LKR {paidPayouts.toLocaleString()}</p>
                   </div>
                 </Card>
@@ -928,14 +928,14 @@ export default function AdminAgents() {
                 <div className="p-5 border-b border-zinc-50 flex items-center justify-between bg-slate-50/50">
                   <div>
                     <h3 className="font-extrabold text-zinc-900 text-base">Commission Balance Sheet</h3>
-                    <p className="text-zinc-400 text-xs mt-0.5">Approve, pay, or dispute calculated agent signup commissions and rewards.</p>
+                    <p className="text-zinc-500 text-xs mt-0.5">Approve, pay, or dispute calculated agent signup commissions and rewards.</p>
                   </div>
                 </div>
 
                 <div className="overflow-x-auto w-full">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-zinc-50 text-zinc-400 font-extrabold uppercase tracking-wider text-[9px] h-10 border-b border-zinc-100">
+                      <tr className="bg-zinc-50 text-zinc-500 font-extrabold uppercase tracking-wider text-[9px] h-10 border-b border-zinc-100">
                         <th className="px-6 py-2">Salon Onboarded</th>
                         <th className="px-6 py-2">Earning Agent</th>
                         <th className="px-6 py-2">Payout Amount</th>
@@ -948,7 +948,7 @@ export default function AdminAgents() {
                     <tbody className="divide-y divide-zinc-50 font-medium text-zinc-700">
                       {ledger.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="text-center py-20 text-zinc-300 italic">
+                          <td colSpan={7} className="text-center py-20 text-zinc-700 italic">
                             No ledger records or payouts calculated.
                           </td>
                         </tr>
@@ -966,7 +966,7 @@ export default function AdminAgents() {
                               {/* Agent */}
                               <td className="px-6 py-2">
                                 <span className="font-bold text-zinc-800">{ag?.full_name || "Unknown Agent"}</span>
-                                <div className="text-[10px] text-zinc-400 font-normal">{row.agent_email}</div>
+                                <div className="text-[10px] text-zinc-500 font-normal">{row.agent_email}</div>
                               </td>
 
                               {/* Amount */}
@@ -987,12 +987,12 @@ export default function AdminAgents() {
                               </td>
 
                               {/* Notes */}
-                              <td className="px-6 py-2 text-zinc-400 font-normal max-w-[220px] truncate" title={row.notes}>
+                              <td className="px-6 py-2 text-zinc-500 font-normal max-w-[220px] truncate" title={row.notes}>
                                 {row.notes || "No transaction details logged."}
                               </td>
 
                               {/* Timestamps */}
-                              <td className="px-6 py-2 text-zinc-400 font-mono text-[10px]">
+                              <td className="px-6 py-2 text-zinc-500 font-mono text-[10px]">
                                 {new Date(row.created_at).toLocaleDateString()}
                               </td>
 
@@ -1027,7 +1027,7 @@ export default function AdminAgents() {
                                     </Button>
                                   )}
                                   {row.status === 'PAID' && (
-                                    <span className="text-[10px] text-zinc-400 font-semibold italic">Settled Payout</span>
+                                    <span className="text-[10px] text-zinc-500 font-semibold italic">Settled Payout</span>
                                   )}
                                   {row.status === 'DISPUTED' && (
                                     <Button 
@@ -1061,12 +1061,12 @@ export default function AdminAgents() {
                   <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
                     <History className="w-4 h-4 text-indigo-600" /> Immutable Agent Activity Logs
                   </h3>
-                  <p className="text-[11px] text-zinc-400">Chronological history of overrides, commission resets, and territory assignments.</p>
+                  <p className="text-[11px] text-zinc-500">Chronological history of overrides, commission resets, and territory assignments.</p>
                 </div>
 
                 <div className="relative border-l border-zinc-100 pl-6 ml-4 space-y-6">
                   {activityLogs.length === 0 ? (
-                    <p className="text-xs text-zinc-300 italic">No agent log files written yet.</p>
+                    <p className="text-xs text-zinc-700 italic">No agent log files written yet.</p>
                   ) : (
                     activityLogs.map(log => (
                       <div key={log.id} className="relative">
@@ -1078,12 +1078,12 @@ export default function AdminAgents() {
                             <span className="text-xs font-bold text-zinc-800 uppercase tracking-wider bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded border-none w-fit text-[9px]">
                               {log.action}
                             </span>
-                            <span className="text-[10px] text-zinc-400 font-mono">
+                            <span className="text-[10px] text-zinc-500 font-mono">
                               {new Date(log.created_at).toLocaleString()}
                             </span>
                           </div>
                           <p className="text-xs text-zinc-600 font-semibold mt-1.5">{log.notes}</p>
-                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-400 uppercase tracking-wider mt-1">
+                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-500 uppercase tracking-wider mt-1">
                             <span>Actor: {log.actor_email}</span>
                             <span>•</span>
                             <span>Target Agent: {log.agent_email}</span>
@@ -1107,14 +1107,14 @@ export default function AdminAgents() {
             {/* Header */}
             <div className="pb-4 border-b border-zinc-100">
               <h3 className="text-lg font-black text-zinc-900 tracking-tight">Modify Agent Credentials</h3>
-              <p className="text-xs text-zinc-400 mt-0.5">Updating agent credentials for <span className="font-semibold text-zinc-700">{selectedAgent.full_name}</span></p>
+              <p className="text-xs text-zinc-500 mt-0.5">Updating agent credentials for <span className="font-semibold text-zinc-700">{selectedAgent.full_name}</span></p>
             </div>
 
             {/* Inputs */}
             <div className="py-5 space-y-4 text-xs font-semibold text-zinc-500">
               {/* Commission Rate */}
               <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Sales Commission Rate (%)</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Sales Commission Rate (%)</label>
                 <div className="relative">
                   <Input 
                     type="number"
@@ -1124,13 +1124,13 @@ export default function AdminAgents() {
                     onChange={(e) => setEditCommission(e.target.value)}
                     className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-brand/20 rounded-xl"
                   />
-                  <Percent className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300" />
+                  <Percent className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700" />
                 </div>
               </div>
 
               {/* Status */}
               <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Agent Authorization Status</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Agent Authorization Status</label>
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
@@ -1154,7 +1154,7 @@ export default function AdminAgents() {
               <Button 
                 onClick={handleSaveAgent}
                 disabled={updating}
-                className="bg-brand hover:bg-brand/90 text-white h-10 rounded-xl font-bold px-4"
+                className="bg-brand hover:bg-brand/90 text-zinc-900 h-10 rounded-xl font-bold px-4"
               >
                 {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
               </Button>

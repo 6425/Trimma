@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as Icons from "lucide-react";
-import { Search, MapPin, Star, Grid, SlidersHorizontal, Scissors, Sparkles, Loader2 } from "lucide-react";
+import { Search, MapPin, Star, Grid, SlidersHorizontal, Scissors, Sparkles, Loader2, Map as MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -56,6 +56,16 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
   const [searchQuery, setSearchQuery] = useState(qParam);
   const [selectedLocation, setSelectedLocation] = useState(lParam);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = direction === 'left' ? -current.offsetWidth / 2 : current.offsetWidth / 2;
+      current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // Lazy loading state
   const [searchResults, setSearchResults] = useState<Salon[]>([]);
@@ -211,7 +221,14 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
       {/* Categories Bar */}
       <section className="py-6 bg-white border-b border-slate-200">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex overflow-x-auto gap-4 pb-2 hide-scrollbar snap-x justify-start md:justify-center">
+          <div className="relative group">
+            <button 
+              onClick={() => scroll('left')} 
+              className="absolute -left-4 top-[calc(50%-0.5rem)] -translate-y-1/2 z-10 bg-white shadow-md p-2 rounded-full hidden md:group-hover:flex items-center justify-center hover:bg-zinc-50 transition-colors border border-zinc-100 text-zinc-700"
+            >
+              <Icons.ChevronLeft className="w-4 h-4" />
+            </button>
+            <div ref={scrollRef} className="flex overflow-x-auto gap-4 pb-2 scrollbar-none snap-x justify-start md:justify-center scroll-smooth">
             <Link
               href="/salons"
               className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
@@ -224,7 +241,7 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
-                href={`/salons?category=${cat.slug}`}
+                href={`/category/${cat.slug}`}
                 className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
               >
                 <div className="mb-1">{renderIcon(cat.icon)}</div>
@@ -233,6 +250,13 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
                 </span>
               </Link>
             ))}
+            </div>
+            <button 
+              onClick={() => scroll('right')} 
+              className="absolute -right-4 top-[calc(50%-0.5rem)] -translate-y-1/2 z-10 bg-white shadow-md p-2 rounded-full hidden md:group-hover:flex items-center justify-center hover:bg-zinc-50 transition-colors border border-zinc-100 text-zinc-700"
+            >
+              <Icons.ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </section>

@@ -366,7 +366,7 @@ export default function AdminDashboard() {
           <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.bookings.toLocaleString()}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden group">
+        <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-zinc-900 shadow-2xl relative overflow-hidden group">
           <div className="absolute -right-6 -top-6 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-700 ease-out z-0"></div>
           <div className="relative z-10 flex justify-between items-start mb-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
@@ -376,8 +376,8 @@ export default function AdminDashboard() {
               Action Req
             </Badge>
           </div>
-          <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
-          <p className="text-3xl font-black text-white relative z-10">{loading ? "..." : stats.leads.toLocaleString()}</p>
+          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.leads.toLocaleString()}</p>
         </div>
       </div>
 
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
                 <Button 
                   disabled={syncing}
                   onClick={handleSyncData}
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl h-10 text-xs font-bold"
+                  className="w-full bg-slate-50 hover:bg-zinc-800 text-zinc-900 rounded-xl h-10 text-xs font-bold"
                 >
                   {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                   {syncing ? 'Synchronizing...' : 'Sync Fleet Database'}
@@ -439,7 +439,7 @@ export default function AdminDashboard() {
             {/* Diagnostic Results */}
             {diagResults.length > 0 && (
               <div className="mt-6 border-t border-zinc-100 pt-6">
-                <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4">Audit Output Log</h4>
+                <h4 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-4">Audit Output Log</h4>
                 <div className="space-y-3">
                   {diagResults.map((result, idx) => (
                     <div key={idx} className="flex items-center justify-between bg-zinc-50 px-4 py-3 rounded-xl">
@@ -462,7 +462,7 @@ export default function AdminDashboard() {
                         <ShieldAlert className="w-4 h-4" /> Policy Action Required
                       </div>
                       <p className="text-xs text-amber-900 mb-2">Supabase is blocking guest writes. Run this in your SQL editor to bypass:</p>
-                      <pre className="p-3 bg-zinc-900 text-amber-400 font-mono text-[10px] rounded-lg overflow-x-auto">
+                      <pre className="p-3 bg-slate-50 text-amber-400 font-mono text-[10px] rounded-lg overflow-x-auto">
 {`ALTER TABLE public.bookings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
@@ -477,7 +477,7 @@ ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
 
         {/* Audit Log / Activity Stream */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#1A1C29] rounded-3xl p-6 border border-[#2D3042] shadow-xl text-white h-full relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-6 border border-[#2D3042] shadow-xl text-zinc-900 h-full relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/4 blur-3xl z-0"></div>
             
             <div className="relative z-10 flex items-center justify-between mb-6">
@@ -491,7 +491,7 @@ ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
                   <Building2 className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">New Salon Registration</p>
+                  <p className="text-sm font-medium text-zinc-800">New Salon Registration</p>
                   <p className="text-xs text-zinc-500 mt-1"><span className="text-amber-400 font-medium">Glam Studio Colombo</span> passed verification and is now live on the marketplace.</p>
                   <p className="text-[10px] text-zinc-600 mt-2 font-mono">14 mins ago</p>
                 </div>
@@ -502,7 +502,7 @@ ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
                   <CreditCard className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">Commission Disbursed</p>
+                  <p className="text-sm font-medium text-zinc-800">Commission Disbursed</p>
                   <p className="text-xs text-zinc-500 mt-1">Platform automatically routed <span className="text-emerald-400">LKR 124,000</span> to 45 partner salons.</p>
                   <p className="text-[10px] text-zinc-600 mt-2 font-mono">2 hours ago</p>
                 </div>
@@ -513,7 +513,7 @@ ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
                   <Settings className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">Global Service Added</p>
+                  <p className="text-sm font-medium text-zinc-800">Global Service Added</p>
                   <p className="text-xs text-zinc-500 mt-1">Master template "Keratin Treatment Level 3" published to network.</p>
                   <p className="text-[10px] text-zinc-600 mt-2 font-mono">5 hours ago</p>
                 </div>

@@ -153,6 +153,19 @@
     --color-rose-800: var(--color-yellow-800) !important;
     --color-rose-900: var(--color-yellow-900) !important;
     --color-rose-950: var(--color-yellow-950) !important;
+
+    /* Override the Booking.com blue theme to Brand Yellow globally */
+    --color-blue-50: var(--color-yellow-50) !important;
+    --color-blue-100: var(--color-yellow-100) !important;
+    --color-blue-200: var(--color-yellow-200) !important;
+    --color-blue-300: var(--color-yellow-300) !important;
+    --color-blue-400: var(--color-yellow-400) !important;
+    --color-blue-500: #F5B700 !important;
+    --color-blue-600: #F5B700 !important;
+    --color-blue-700: #E6AC00 !important;
+    --color-blue-800: var(--color-yellow-800) !important;
+    --color-blue-900: var(--color-yellow-900) !important;
+    --color-blue-950: var(--color-yellow-950) !important;
 }
 
 .dark {
@@ -216,6 +229,19 @@
     --color-rose-800: var(--color-yellow-800) !important;
     --color-rose-900: var(--color-yellow-900) !important;
     --color-rose-950: var(--color-yellow-950) !important;
+
+    /* Override the Booking.com blue theme to Brand Yellow globally */
+    --color-blue-50: var(--color-yellow-50) !important;
+    --color-blue-100: var(--color-yellow-100) !important;
+    --color-blue-200: var(--color-yellow-200) !important;
+    --color-blue-300: var(--color-yellow-300) !important;
+    --color-blue-400: var(--color-yellow-400) !important;
+    --color-blue-500: #F5B700 !important;
+    --color-blue-600: #F5B700 !important;
+    --color-blue-700: #E6AC00 !important;
+    --color-blue-800: var(--color-yellow-800) !important;
+    --color-blue-900: var(--color-yellow-900) !important;
+    --color-blue-950: var(--color-yellow-950) !important;
 }
 
 @layer base {
@@ -231,21 +257,21 @@
   
   /* Global safeguard: Light backgrounds should default to dark text */
   .bg-white, .bg-slate-50, .bg-zinc-50, .bg-gray-50, .bg-stone-50, .bg-neutral-50, .bg-red-50, .bg-orange-50, .bg-amber-50, .bg-yellow-50, .bg-lime-50, .bg-green-50, .bg-emerald-50, .bg-teal-50, .bg-cyan-50, .bg-sky-50, .bg-blue-50, .bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-fuchsia-50, .bg-pink-50, .bg-rose-50 {
-    color: #000000 !important;
+    color: #000000;
   }
 
-  /* Prevent white text on white backgrounds */
-  .bg-white .text-white, .bg-white .text-zinc-50, .bg-white .text-gray-50 {
-    color: #000000 !important;
+  /* Global safeguard: Dark backgrounds should default to white text */
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-neutral-950, .bg-stone-900, .bg-stone-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\] {
+    color: #FFFFFF;
+  }
+
+  /* Dark backgrounds text hover effect -> yellow for links only */
+  .bg-black a:hover, .bg-zinc-900 a:hover, .bg-zinc-950 a:hover, .bg-slate-900 a:hover, .bg-slate-950 a:hover, .bg-\[\#0B0B0B\] a:hover, .bg-\[\#151515\] a:hover {
+    color: var(--color-brand);
   }
 
   /* Yellow/Brand backgrounds must have dark text */
-  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600 {
-    color: #000000 !important;
-  }
-
-  /* Prevent white text on yellow backgrounds */
-  .bg-brand .text-white, .bg-primary .text-white, .bg-brand-hover .text-white, .bg-yellow-400 .text-white, .bg-yellow-500 .text-white, .bg-amber-400 .text-white, .bg-amber-500 .text-white {
+  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\] {
     color: #000000 !important;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -292,14 +318,15 @@
   .glassmorphism {
     @apply bg-black/60 dark:bg-black/60 backdrop-blur-sm border border-white/10 dark:border-white/5;
   }
-  /* Scrollbar utility */
-  .scrollbar-none {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
+}
+
+/* Scrollbar utility forced globally */
+.scrollbar-none, .hide-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.scrollbar-none::-webkit-scrollbar, .hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -345,4 +372,25 @@
   .bg-pink-100,   .bg-rose-100   { background-color: rgba(245,183,0,0.12) !important; color: #000000 !important; }
   .border-pink-500, .border-rose-500 { border-color: #F5B700 !important; }
   .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #F5B700 !important; }
+
+  /* Override hardcoded Booking.com blues to Yellow */
+  .bg-\[\#003B95\] { background-color: #F5B700 !important; color: #000000 !important; }
+  .text-\[\#003B95\] { color: #F5B700 !important; }
+  
+  .bg-\[\#006CE4\] { background-color: #F5B700 !important; color: #000000 !important; }
+  .text-\[\#006CE4\] { color: #000000 !important; } /* In footer, links are this color, dark text */
+  
+  .hover\:bg-\[\#0057b8\]:hover { background-color: #E6AC00 !important; }
+  
+  .bg-\[\#00224F\] { background-color: #E6AC00 !important; color: #000000 !important; }
+  
+  /* The CTA section */
+  .bg-\[\#001D40\] { background-color: #0B0B0B !important; color: #FFFFFF !important; }
+  .text-\[\#001D40\] { color: #0B0B0B !important; }
+  
+  /* Gradients that use the blue */
+  .from-\[\#003B95\] { --tw-gradient-from: #F5B700 var(--tw-gradient-from-position); }
+  .via-\[\#003B95\]\/80 { --tw-gradient-to: rgba(245, 183, 0, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgba(245, 183, 0, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+  
+  .from-\[\#001D40\] { --tw-gradient-from: #0B0B0B var(--tw-gradient-from-position); }
 }

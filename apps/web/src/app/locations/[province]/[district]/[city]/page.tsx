@@ -102,16 +102,7 @@ export default function CityDetailPage() {
         setLoading(true);
         const { data: dbSalons, error } = await supabase
           .from("salons")
-          .select(`
-            *,
-            services (
-              id,
-              name,
-              price,
-              category
-            )
-          `)
-          .or("status.eq.verified,status.eq.active,status.eq.pending,is_verified.eq.true")
+          .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
         .limit(10);
 
         if (error) throw error;

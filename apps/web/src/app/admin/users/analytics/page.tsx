@@ -48,7 +48,7 @@ export default function AdminUserDashboard() {
         <div className="flex items-center gap-3">
           <Button variant="outline" className="border-zinc-200 h-10 px-4 text-sm font-medium">Export Report</Button>
           <Link href="/admin/users/create"
-            className="inline-flex items-center justify-center rounded-xl px-4 h-10 bg-[#1A1C29] hover:bg-[#1A1C29]/90 text-white text-sm font-medium gap-2 transition-colors"
+            className="inline-flex items-center justify-center rounded-xl px-4 h-10 bg-white hover:bg-white/90 text-zinc-900 text-sm font-medium gap-2 transition-colors"
           >
             <UserPlus className="w-4 h-4" /> Add User
           </Link>
@@ -72,7 +72,7 @@ export default function AdminUserDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-[#1A1C29]">Signup Growth</h3>
-              <p className="text-xs text-zinc-400">Weekly user acquisition trend</p>
+              <p className="text-xs text-zinc-500">Weekly user acquisition trend</p>
             </div>
             <select className="bg-zinc-50 border-none rounded-lg text-xs font-medium px-3 py-1.5 outline-none">
               <option>Last 7 Days</option>
@@ -120,7 +120,7 @@ export default function AdminUserDashboard() {
         {/* Role Distribution */}
         <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-6">
           <h3 className="font-bold text-[#1A1C29] mb-1">User Distribution</h3>
-          <p className="text-xs text-zinc-400 mb-6">Breakdown by account type</p>
+          <p className="text-xs text-zinc-500 mb-6">Breakdown by account type</p>
           <div className="h-[250px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -142,7 +142,7 @@ export default function AdminUserDashboard() {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-2xl font-bold text-[#1A1C29]">6.8k</span>
-              <span className="text-[10px] text-zinc-400 font-medium uppercase">Total</span>
+              <span className="text-[10px] text-zinc-500 font-medium uppercase">Total</span>
             </div>
           </div>
           <div className="mt-4 space-y-2">
@@ -165,7 +165,7 @@ export default function AdminUserDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-bold text-[#1A1C29]">Geo Distribution</h3>
-              <p className="text-xs text-zinc-400">User density by Province/District</p>
+              <p className="text-xs text-zinc-500">User density by Province/District</p>
             </div>
             <Button variant="ghost" size="sm" className="text-zinc-500 font-medium gap-1">
               View Map <ArrowUpRight className="w-3 h-3" />
@@ -173,7 +173,7 @@ export default function AdminUserDashboard() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <div className="font-semibold text-xs text-zinc-400 uppercase tracking-wider">Top Provinces</div>
+              <div className="font-semibold text-xs text-zinc-500 uppercase tracking-wider">Top Provinces</div>
               <GeoRow label="Western Province" value="2,450" percent={65} />
               <GeoRow label="Central Province" value="1,120" percent={45} />
               <GeoRow label="Southern Province" value="890" percent={35} />
@@ -181,21 +181,21 @@ export default function AdminUserDashboard() {
             </div>
             <div className="bg-zinc-50 rounded-xl flex items-center justify-center p-8 border border-dashed border-zinc-200">
                <div className="text-center">
-                  <Map className="w-12 h-12 text-zinc-300 mx-auto mb-2" />
-                  <p className="text-zinc-400 text-sm font-medium">Interactive Map Data</p>
+                  <Map className="w-12 h-12 text-zinc-700 mx-auto mb-2" />
+                  <p className="text-zinc-500 text-sm font-medium">Interactive Map Data</p>
                </div>
             </div>
           </div>
         </div>
 
         {/* AI Insights Sidebar */}
-        <div className="bg-gradient-to-br from-[#1A1C29] to-[#2D3047] rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#1A1C29] to-[#2D3047] rounded-3xl p-6 text-zinc-900 shadow-xl relative overflow-hidden">
            <div className="absolute top-0 right-0 p-4 opacity-10">
               <Sparkles className="w-24 h-24 rotate-12" />
            </div>
            <div className="relative z-10">
               <div className="flex items-center gap-2 mb-6">
-                <div className="bg-white/10 p-1.5 rounded-lg">
+                <div className="bg-slate-100 p-1.5 rounded-lg">
                   <Sparkles className="w-4 h-4 text-pink-400" />
                 </div>
                 <h3 className="font-bold text-lg">AI Insights</h3>
@@ -217,7 +217,7 @@ export default function AdminUserDashboard() {
                   variant="info" 
                 />
               </div>
-              <Button className="w-full mt-6 bg-white/10 hover:bg-white/20 border border-white/10 text-white font-medium rounded-xl h-11">
+              <Button className="w-full mt-6 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-zinc-900 font-medium rounded-xl h-11">
                 Explore All Insights
               </Button>
            </div>
@@ -294,7 +294,7 @@ function KPICard({ title, value, change, trend, icon, isWarning }: any) {
         {icon}
       </div>
       <div className="relative z-10">
-        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{title}</p>
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{title}</p>
         <div className="flex items-end gap-2 mt-2">
           <h2 className="text-2xl font-bold text-[#1A1C29]">{value}</h2>
           {change && (
@@ -339,12 +339,12 @@ function AIInsightCard({ title, desc, variant }: any) {
     warning: "bg-amber-400"
   };
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-colors cursor-help">
+    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 hover:bg-slate-100 transition-colors cursor-help">
       <div className="flex items-center gap-2 mb-1.5">
         <div className={`w-1.5 h-1.5 rounded-full ${colors[variant as keyof typeof colors]}`} />
-        <span className="text-xs font-bold text-white/90 uppercase tracking-widest">{title}</span>
+        <span className="text-xs font-bold text-zinc-900/90 uppercase tracking-widest">{title}</span>
       </div>
-      <p className="text-sm text-white/60 leading-relaxed font-medium">{desc}</p>
+      <p className="text-sm text-zinc-500 leading-relaxed font-medium">{desc}</p>
     </div>
   );
 }
@@ -360,13 +360,13 @@ function ActivityRow({ name, role, action, context, ip, time, status }: any) {
           </Avatar>
           <div>
             <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors">{name}</div>
-            <div className="text-[10px] font-bold text-zinc-400 uppercase">{role}</div>
+            <div className="text-[10px] font-bold text-zinc-500 uppercase">{role}</div>
           </div>
         </div>
       </td>
       <td className="px-6 py-4 font-medium text-zinc-600">{action}</td>
       <td className="px-6 py-4 text-zinc-500 max-w-xs truncate italic">"{context}"</td>
-      <td className="px-6 py-4 font-mono text-xs text-zinc-400">{ip}</td>
+      <td className="px-6 py-4 font-mono text-xs text-zinc-500">{ip}</td>
       <td className="px-6 py-4 text-zinc-500 text-xs">{time}</td>
       <td className="px-6 py-4 text-right">
         <Badge variant={status === 'Success' ? 'secondary' : 'outline'} className={

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Filter } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Filter, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function CalendarPage() {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check } from "lucide-react";
+import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -133,7 +133,7 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
             <button 
               type="button"
               onClick={() => handleUpdate(d.value, openTime, closeTime, isOpen)}
-              className={`text-[10px] font-extrabold px-4 py-1.5 rounded-full border transition-all ${isOpen ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200' : 'bg-white text-zinc-400 border-zinc-200 hover:bg-zinc-100'}`}
+              className={`text-[10px] font-extrabold px-4 py-1.5 rounded-full border transition-all ${isOpen ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200' : 'bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-100'}`}
             >
               {isOpen ? 'OPEN' : 'CLOSED'}
             </button>
@@ -146,7 +146,7 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
                   onChange={(e) => handleUpdate(d.value, parseTimeFromInput(e.target.value), closeTime, false)}
                   className="text-xs font-semibold bg-white border border-zinc-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-brand/20 outline-none text-zinc-700"
                 />
-                <span className="text-zinc-400 text-xs font-medium">to</span>
+                <span className="text-zinc-500 text-xs font-medium">to</span>
                 <input 
                   type="time" 
                   value={formatTimeForInput(closeTime)}
@@ -1182,7 +1182,7 @@ export default function Leads() {
             <Target className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Total Leads</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Total Leads</p>
             <p className="text-xl font-black text-[#1A1C29]">{leads.length}</p>
           </div>
         </Card>
@@ -1191,14 +1191,14 @@ export default function Leads() {
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest pl-0.5">Conversion</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Conversion</p>
             <p className="text-xl font-black text-[#1A1C29]">
                {leads.length > 0 ? Math.round((leads.filter(l => l.status === 'converted').length / leads.length) * 100) : 0}%
             </p>
           </div>
         </Card>
         <div className="md:col-span-2 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <Input 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -1214,14 +1214,14 @@ export default function Leads() {
           <h3 className="font-bold text-[#1A1C29] text-base flex items-center gap-2">
             <ScanSearch className="w-5 h-5 text-brand" /> Google Places Lead Discovery
           </h3>
-          <p className="text-zinc-400 text-xs mt-0.5">Select a destination in Sri Lanka to query Google Maps and perform intelligent incremental updates on duplicates.</p>
+          <p className="text-zinc-500 text-xs mt-0.5">Select a destination in Sri Lanka to query Google Maps and perform intelligent incremental updates on duplicates.</p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
           {/* Province Dropdown */}
           <div className="space-y-1.5">
             <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1">
-              <Compass className="w-3.5 h-3.5 text-zinc-400" /> 1. Province
+              <Compass className="w-3.5 h-3.5 text-zinc-500" /> 1. Province
             </label>
             <select
               value={selectedProvince}
@@ -1238,7 +1238,7 @@ export default function Leads() {
           {/* District Dropdown */}
           <div className="space-y-1.5">
             <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-zinc-400" /> 2. District
+              <MapPin className="w-3.5 h-3.5 text-zinc-500" /> 2. District
             </label>
             <select
               value={selectedDistrict}
@@ -1256,7 +1256,7 @@ export default function Leads() {
           {/* City Dropdown */}
           <div className="space-y-1.5">
             <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-zinc-400" /> 3. City
+              <MapPin className="w-3.5 h-3.5 text-zinc-500" /> 3. City
             </label>
             <select
               value={selectedCity}
@@ -1274,7 +1274,7 @@ export default function Leads() {
           {/* Search Category */}
           <div className="space-y-1.5">
             <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5 text-zinc-400" /> 4. Category
+              <Filter className="w-3.5 h-3.5 text-zinc-500" /> 4. Category
             </label>
             <select
               value={selectedCategory}
@@ -1290,7 +1290,7 @@ export default function Leads() {
           {/* Fetch Limit Selector */}
           <div className="space-y-1.5">
             <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1">
-              <Hash className="w-3.5 h-3.5 text-zinc-400" /> 5. Fetch Limit
+              <Hash className="w-3.5 h-3.5 text-zinc-500" /> 5. Fetch Limit
             </label>
             <Input 
               type="number"
@@ -1306,7 +1306,7 @@ export default function Leads() {
           <Button
             onClick={handleDiscoverLeads}
             disabled={discovering || !selectedCity}
-            className="w-full bg-black hover:bg-zinc-900 text-white rounded-xl font-light h-11 shadow-md flex items-center justify-center gap-2 text-xs disabled:opacity-50"
+            className="w-full bg-black hover:bg-slate-50 text-zinc-900 rounded-xl font-light h-11 shadow-md flex items-center justify-center gap-2 text-xs disabled:opacity-50"
           >
             {discovering ? (
               <>
@@ -1325,7 +1325,7 @@ export default function Leads() {
         <div className="p-5 border-b border-zinc-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div>
             <h3 className="font-bold text-[#1A1C29] text-base">Interactive Lead Sheet</h3>
-            <p className="text-zinc-400 text-xs mt-0.5">Exactly aligned with your DB schema columns. Automatically populated by Google Places searches and fully editable by the admin.</p>
+            <p className="text-zinc-500 text-xs mt-0.5">Exactly aligned with your DB schema columns. Automatically populated by Google Places searches and fully editable by the admin.</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl shrink-0 self-start xl:self-auto">
@@ -1410,7 +1410,7 @@ export default function Leads() {
                 </tr>
               ) : filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={21} className="text-center py-20 text-zinc-300">
+                  <td colSpan={21} className="text-center py-20 text-zinc-700">
                     No leads found matching your search.
                   </td>
                 </tr>
@@ -1432,7 +1432,7 @@ export default function Leads() {
                   return (
                   <tr key={lead.id} className="hover:bg-zinc-50/50 transition-colors h-12">
                     {/* ID (Read-only) */}
-                    <td className="px-4 py-2 pl-6 font-mono text-[10px] text-zinc-400 select-all">
+                    <td className="px-4 py-2 pl-6 font-mono text-[10px] text-zinc-500 select-all">
                       {lead.id}
                     </td>
 
@@ -1456,7 +1456,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "place_id", lead.place_id)}
                           className="cursor-pointer hover:bg-zinc-50 p-1 rounded block truncate"
                         >
-                          {lead.place_id || <em className="text-zinc-200">empty</em>}
+                          {lead.place_id || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1519,7 +1519,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "category", lead.category)}
                           className="cursor-pointer hover:bg-zinc-50 p-1.5 rounded block truncate text-zinc-500 font-semibold"
                         >
-                          {lead.category || <em className="text-zinc-200">empty</em>}
+                          {lead.category || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1544,7 +1544,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "address", lead.address)}
                           className="cursor-pointer hover:bg-zinc-50 p-1.5 rounded block truncate text-zinc-500"
                         >
-                          {lead.address || <em className="text-zinc-200">empty</em>}
+                          {lead.address || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1569,7 +1569,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "phone", lead.phone)}
                           className="cursor-pointer hover:bg-zinc-50 p-1.5 rounded block text-zinc-600 font-semibold truncate"
                         >
-                          {lead.phone || <em className="text-zinc-200">empty</em>}
+                          {lead.phone || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1594,7 +1594,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "website", lead.website)}
                           className="cursor-pointer hover:bg-zinc-50 p-1.5 rounded block truncate text-blue-600 hover:underline"
                         >
-                          {lead.website || <em className="text-zinc-200">empty</em>}
+                          {lead.website || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1619,7 +1619,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "map_url", lead.map_url)}
                           className="cursor-pointer hover:bg-zinc-50 p-1.5 rounded block truncate text-zinc-500 hover:underline font-mono text-[10px]"
                         >
-                          {lead.map_url || <em className="text-zinc-200">empty</em>}
+                          {lead.map_url || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1674,7 +1674,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "latitude", lead.latitude)}
                           className="cursor-pointer hover:bg-zinc-50 p-1 rounded block"
                         >
-                          {lead.latitude || <em className="text-zinc-200">empty</em>}
+                          {lead.latitude || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1700,7 +1700,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "longitude", lead.longitude)}
                           className="cursor-pointer hover:bg-zinc-50 p-1 rounded block"
                         >
-                          {lead.longitude || <em className="text-zinc-200">empty</em>}
+                          {lead.longitude || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1725,7 +1725,7 @@ export default function Leads() {
                           onDoubleClick={() => handleStartEdit(lead.id, "price_level", lead.price_level)}
                           className="cursor-pointer hover:bg-zinc-50 p-1 rounded block"
                         >
-                          {lead.price_level || <em className="text-zinc-200">empty</em>}
+                          {lead.price_level || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1751,7 +1751,7 @@ export default function Leads() {
                           className="cursor-pointer hover:bg-zinc-50 p-1 rounded block truncate"
                           title={lead.summary}
                         >
-                          {lead.summary || <em className="text-zinc-200">empty</em>}
+                          {lead.summary || <em className="text-zinc-800">empty</em>}
                         </span>
                       )}
                     </td>
@@ -1765,7 +1765,7 @@ export default function Leads() {
                           </a>
                         ) : (
                           <div className="w-8 h-8 rounded bg-zinc-100 border border-zinc-200 border-dashed flex items-center justify-center shrink-0">
-                            <span className="text-[8px] text-zinc-400 font-bold">NONE</span>
+                            <span className="text-[8px] text-zinc-500 font-bold">NONE</span>
                           </div>
                         )}
                         <div className="relative overflow-hidden shrink-0">
@@ -1808,7 +1808,7 @@ export default function Leads() {
                           onClick={() => handleStartEdit(lead.id, "assign_to", lead.assign_to)}
                           className="cursor-pointer hover:bg-zinc-100 hover:text-zinc-950 p-1.5 rounded block text-zinc-500 font-bold border border-zinc-100 truncate"
                         >
-                          {lead.assigned_user?.full_name || lead.assign_to || <em className="text-zinc-300 font-normal">Unassigned</em>}
+                          {lead.assigned_user?.full_name || lead.assign_to || <em className="text-zinc-700 font-normal">Unassigned</em>}
                         </span>
                       )}
                     </td>
@@ -1859,12 +1859,12 @@ export default function Leads() {
                     </td>
 
                     {/* Created At */}
-                    <td className="px-4 py-2 text-zinc-400 font-mono text-[10px]">
+                    <td className="px-4 py-2 text-zinc-500 font-mono text-[10px]">
                       {new Date(lead.created_at).toLocaleString()}
                     </td>
 
                     {/* Updated At */}
-                    <td className="px-4 py-2 text-zinc-400 font-mono text-[10px]">
+                    <td className="px-4 py-2 text-zinc-500 font-mono text-[10px]">
                       {new Date(lead.updated_at).toLocaleString()}
                     </td>
 
@@ -1876,7 +1876,7 @@ export default function Leads() {
                             <Button
                               onClick={() => handleCreateSalon(lead)}
                               size="sm"
-                              className="bg-[#1A1C29] hover:bg-zinc-800 text-white font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
+                              className="bg-white hover:bg-zinc-800 text-zinc-900 font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
                             >
                               <Zap className="w-3 h-3" /> Create Salon
                             </Button>
@@ -1884,7 +1884,7 @@ export default function Leads() {
                               onClick={() => handleDeleteLead(lead.id)}
                               variant="ghost" 
                               size="icon" 
-                              className="w-7 h-7 rounded-lg text-zinc-300 hover:text-rose-600 hover:bg-rose-50"
+                              className="w-7 h-7 rounded-lg text-zinc-700 hover:text-rose-600 hover:bg-rose-50"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -1895,14 +1895,14 @@ export default function Leads() {
                             <Button
                               onClick={() => handleOpenAssignModal(lead)}
                               size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-zinc-900 font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
                             >
                               Edit
                             </Button>
                             <Button
                               onClick={() => handleSendToAgent(lead)}
                               size="sm"
-                              className="bg-[#1A1C29] hover:bg-zinc-800 text-white font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
+                              className="bg-white hover:bg-zinc-800 text-zinc-900 font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
                             >
                               <Send className="w-3 h-3" /> Send to Agent
                             </Button>
@@ -1914,7 +1914,7 @@ export default function Leads() {
                               onClick={() => handleVerifySalon(lead)}
                               disabled={verifying}
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold h-7 px-3 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 border-none shadow-md"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-zinc-900 font-extrabold h-7 px-3 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 border-none shadow-md"
                             >
                               <CheckCircle2 className="w-3 h-3" /> Verify
                             </Button>
@@ -1958,7 +1958,7 @@ export default function Leads() {
             <div className="flex items-center justify-between px-8 py-5 border-b border-zinc-200 bg-white z-10 shadow-sm">
               <div>
                 <h3 className="text-2xl font-black text-[#1A1C29] tracking-tight">Salon Profile Studio — Admin</h3>
-                <p className="text-sm text-zinc-500 mt-1 font-medium">Lead ID: {formData.id} <span className="text-zinc-300 mx-2">|</span> Created: {new Date(selectedLead.created_at).toLocaleString()}</p>
+                <p className="text-sm text-zinc-500 mt-1 font-medium">Lead ID: {formData.id} <span className="text-zinc-700 mx-2">|</span> Created: {new Date(selectedLead.created_at).toLocaleString()}</p>
               </div>
               <div className="flex items-center gap-3">
                 <Button 
@@ -1971,7 +1971,7 @@ export default function Leads() {
                 <Button 
                   onClick={handleSaveChanges}
                   disabled={updating}
-                  className="bg-brand hover:bg-[#b01849] text-white rounded-xl font-bold h-11 px-8 shadow-md shadow-brand/20 flex items-center gap-2 text-sm transition-all"
+                  className="bg-brand hover:bg-[#b01849] text-zinc-900 rounded-xl font-bold h-11 px-8 shadow-md shadow-brand/20 flex items-center gap-2 text-sm transition-all"
                 >
                   {updating ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
@@ -2009,7 +2009,7 @@ export default function Leads() {
                           {formData.hero_url ? (
                             <img src={formData.hero_url} alt="Hero" className="w-full h-full object-cover" />
                           ) : (
-                            <ImageIcon className="w-8 h-8 text-zinc-300" />
+                            <ImageIcon className="w-8 h-8 text-zinc-700" />
                           )}
                         </div>
                         <div className="flex gap-2 mt-2">
@@ -2038,7 +2038,7 @@ export default function Leads() {
                           {formData.logo_url ? (
                             <img src={formData.logo_url} alt="Logo" className="w-full h-full object-cover" />
                           ) : (
-                            <Store className="w-8 h-8 text-zinc-300" />
+                            <Store className="w-8 h-8 text-zinc-700" />
                           )}
                         </div>
                         <div className="flex gap-2 mt-2">
@@ -2210,7 +2210,7 @@ export default function Leads() {
                         <tbody className="divide-y divide-zinc-50 text-zinc-700 font-medium">
                           {modalServices.length === 0 ? (
                             <tr>
-                              <td colSpan={5} className="px-6 py-8 text-center text-zinc-400 font-normal">
+                              <td colSpan={5} className="px-6 py-8 text-center text-zinc-500 font-normal">
                                 No services provisioned yet.
                               </td>
                             </tr>
@@ -2224,7 +2224,7 @@ export default function Leads() {
                                 <td className="px-6 py-4">LKR {service.price}</td>
                                 <td className="px-6 py-4 text-zinc-500">{service.duration_min} min</td>
                                 <td className="px-6 py-4 text-right">
-                                  <button onClick={() => handleDeleteModalService(service.id)} className="text-zinc-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors">
+                                  <button onClick={() => handleDeleteModalService(service.id)} className="text-zinc-500 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors">
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 </td>
@@ -2255,7 +2255,7 @@ export default function Leads() {
                         <tbody className="divide-y divide-zinc-50 text-zinc-700 font-medium">
                           {modalStaff.length === 0 ? (
                             <tr>
-                              <td colSpan={4} className="px-6 py-8 text-center text-zinc-400 font-normal">
+                              <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 font-normal">
                                 No staff members provisioned yet.
                               </td>
                             </tr>
@@ -2302,7 +2302,7 @@ export default function Leads() {
                                       <button onClick={handleSaveModalStaff} className="text-brand hover:text-brand-hover p-2 rounded-xl hover:bg-brand/10 transition-colors">
                                         <Check className="w-4 h-4" />
                                       </button>
-                                      <button onClick={() => setEditingStaffId(null)} className="text-zinc-400 hover:text-zinc-600 p-2 rounded-xl hover:bg-zinc-100 transition-colors">
+                                      <button onClick={() => setEditingStaffId(null)} className="text-zinc-500 hover:text-zinc-600 p-2 rounded-xl hover:bg-zinc-100 transition-colors">
                                         <X className="w-4 h-4" />
                                       </button>
                                     </td>
@@ -2315,10 +2315,10 @@ export default function Leads() {
                                       <Badge variant="outline" className="text-zinc-500 border-zinc-200">{staff.skill_level}</Badge>
                                     </td>
                                     <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
-                                      <button onClick={() => handleEditModalStaff(staff)} className="text-zinc-400 hover:text-brand p-2 rounded-xl hover:bg-brand/10 transition-colors">
+                                      <button onClick={() => handleEditModalStaff(staff)} className="text-zinc-500 hover:text-brand p-2 rounded-xl hover:bg-brand/10 transition-colors">
                                         <Pencil className="w-4 h-4" />
                                       </button>
-                                      <button onClick={() => handleDeleteModalStaff(staff.id)} className="text-zinc-400 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors">
+                                      <button onClick={() => handleDeleteModalStaff(staff.id)} className="text-zinc-500 hover:text-red-500 p-2 rounded-xl hover:bg-red-50 transition-colors">
                                         <Trash2 className="w-4 h-4" />
                                       </button>
                                     </td>
@@ -2434,7 +2434,7 @@ export default function Leads() {
               </div>
               <div>
                 <h3 className="text-base font-black text-zinc-900">Reject Salon</h3>
-                <p className="text-xs text-zinc-400 mt-0.5">{rejectTarget.name}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{rejectTarget.name}</p>
               </div>
             </div>
             <div className="space-y-3">
@@ -2458,7 +2458,7 @@ export default function Leads() {
               <Button
                 onClick={handleRejectSalon}
                 disabled={!rejectReason.trim()}
-                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold h-10 px-5 text-xs flex items-center gap-2"
+                className="bg-rose-600 hover:bg-rose-700 text-zinc-900 rounded-xl font-bold h-10 px-5 text-xs flex items-center gap-2"
               >
                 <AlertCircle className="w-4 h-4" /> Confirm Rejection
               </Button>

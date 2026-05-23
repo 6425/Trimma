@@ -302,7 +302,7 @@ export default function Salons() {
       {/* Filter Bar */}
       <div className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <Input 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -314,21 +314,21 @@ export default function Salons() {
           <Badge 
             variant="outline" 
             onClick={() => setFilterMode("all")}
-            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'all' ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}
+            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'all' ? 'bg-slate-50 text-zinc-900' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}
           >
             All Salons
           </Badge>
           <Badge 
             variant="outline" 
             onClick={() => setFilterMode("pending")}
-            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'pending' ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-amber-600 hover:bg-amber-50'}`}
+            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'pending' ? 'bg-amber-500 text-zinc-900 border-amber-500' : 'bg-white text-amber-600 hover:bg-amber-50'}`}
           >
             Pending Approval (New Leads)
           </Badge>
           <Badge 
             variant="outline" 
             onClick={() => setFilterMode("verification")}
-            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'verification' ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-indigo-600 hover:bg-indigo-50'}`}
+            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'verification' ? 'bg-indigo-500 text-zinc-900 border-indigo-500' : 'bg-white text-indigo-600 hover:bg-indigo-50'}`}
           >
             Pending Verification (Agent Approved)
           </Badge>
@@ -340,7 +340,7 @@ export default function Salons() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">
+              <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
                 <th className="px-8 py-5">Salon Profile</th>
                 <th className="px-8 py-5">Location</th>
                 <th className="px-8 py-5">Platform Status</th>
@@ -352,12 +352,12 @@ export default function Salons() {
                 <tr>
                   <td colSpan={4} className="px-8 py-24 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
-                    <p className="text-zinc-400 font-medium font-sans">Accessing salon directory...</p>
+                    <p className="text-zinc-500 font-medium font-sans">Accessing salon directory...</p>
                   </td>
                 </tr>
               ) : filteredSalons.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-8 py-24 text-center text-zinc-400">
+                  <td colSpan={4} className="px-8 py-24 text-center text-zinc-500">
                     <Store className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p className="font-medium font-sans">No matching salons found.</p>
                   </td>
@@ -367,18 +367,18 @@ export default function Salons() {
                   <tr key={salon.id} className="hover:bg-zinc-50/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-brand flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                        <div className="w-12 h-12 rounded-2xl bg-brand flex items-center justify-center text-zinc-900 font-bold text-lg shadow-inner">
                           {salon.name[0]}
                         </div>
                         <div className="min-w-0">
                           <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors truncate max-w-[250px]">
                             {salon.name}
                           </div>
-                          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter flex items-center gap-1">
+                          <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter flex items-center gap-1">
                             {salon.is_verified ? (
                                <><ShieldCheck className="w-3 h-3 text-emerald-500" /> Verified Partner</>
                             ) : (
-                               <><BadgeAlert className="w-3 h-3 text-zinc-400" /> Unverified</>
+                               <><BadgeAlert className="w-3 h-3 text-zinc-500" /> Unverified</>
                             )}
                           </div>
                         </div>
@@ -386,7 +386,7 @@ export default function Salons() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2 text-sm text-zinc-500 font-medium">
-                        <MapPin className="w-4 h-4 text-zinc-300" /> {salon.city || salon.district || "Not Set"}
+                        <MapPin className="w-4 h-4 text-zinc-700" /> {salon.city || salon.district || "Not Set"}
                       </div>
                     </td>
                     <td className="px-8 py-6">
@@ -480,13 +480,13 @@ export default function Salons() {
             <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
               <div>
                 <h3 className="text-lg font-black text-zinc-900 tracking-tight">Salon Full Profile Editor</h3>
-                <p className="text-xs text-zinc-400 mt-0.5 font-mono">Salon ID: {selectedSalon.id}</p>
+                <p className="text-xs text-zinc-500 mt-0.5 font-mono">Salon ID: {selectedSalon.id}</p>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => { setViewModalOpen(false); setSelectedSalon(null); }}
-                className="rounded-full w-8 h-8 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100"
+                className="rounded-full w-8 h-8 text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -495,7 +495,7 @@ export default function Salons() {
             {/* Current Status Indicator */}
             <div className="mt-4 p-3 rounded-xl border border-zinc-100 bg-zinc-50 flex items-center justify-between">
                <div>
-                  <p className="text-xs font-bold text-zinc-400 uppercase mb-1">Current Platform Status</p>
+                  <p className="text-xs font-bold text-zinc-500 uppercase mb-1">Current Platform Status</p>
                   <div className="flex items-center gap-2">
                     {selectedSalon.status === 'active' && selectedSalon.is_verified && <Badge className="bg-emerald-100 text-emerald-700 shadow-none">Fully Verified Partner</Badge>}
                     {selectedSalon.status === 'active' && !selectedSalon.is_verified && <Badge className="bg-blue-100 text-blue-700 shadow-none">Setup In Progress</Badge>}
@@ -679,7 +679,7 @@ export default function Salons() {
               <Button 
                 onClick={handleSaveEdit}
                 disabled={isSavingEdit}
-                className="rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold px-6 h-11 shadow-lg shadow-zinc-900/20"
+                className="rounded-xl bg-slate-50 hover:bg-zinc-800 text-zinc-900 font-bold px-6 h-11 shadow-lg shadow-zinc-900/20"
               >
                 {isSavingEdit ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -713,7 +713,7 @@ export default function Salons() {
           </div>
           <DialogFooter>
             <Button variant="outline" className="rounded-xl font-bold" onClick={() => setRejectModalOpen(false)}>Cancel</Button>
-            <Button disabled={isProcessing} onClick={handleReject} className="bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold shadow-lg shadow-rose-500/20">
+            <Button disabled={isProcessing} onClick={handleReject} className="bg-rose-500 hover:bg-rose-600 text-zinc-900 rounded-xl font-bold shadow-lg shadow-rose-500/20">
               {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Rejection"}
             </Button>
           </DialogFooter>

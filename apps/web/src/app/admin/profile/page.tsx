@@ -323,7 +323,7 @@ export default function AdminProfilePage() {
             onClick={() => setActiveTab("profile")}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-1.5 ${
               activeTab === "profile" 
-                ? 'bg-zinc-950 text-white shadow-sm' 
+                ? 'bg-white text-zinc-900 shadow-sm' 
                 : 'text-zinc-600 hover:bg-slate-100'
             }`}
           >
@@ -333,7 +333,7 @@ export default function AdminProfilePage() {
             onClick={() => setActiveTab("branding")}
             className={`px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-1.5 ${
               activeTab === "branding" 
-                ? 'bg-zinc-950 text-white shadow-sm' 
+                ? 'bg-white text-zinc-900 shadow-sm' 
                 : 'text-zinc-600 hover:bg-slate-100'
             }`}
           >
@@ -346,7 +346,7 @@ export default function AdminProfilePage() {
         
         {/* LEFT CARD: STATS & OVERVIEWS */}
         <div className="space-y-6">
-          <div className="bg-zinc-950 rounded-2xl p-6 text-white space-y-6 shadow-md border border-zinc-850 relative overflow-hidden">
+          <div className="bg-white rounded-2xl p-6 text-zinc-900 space-y-6 shadow-md border border-slate-200 relative overflow-hidden">
             <div className="absolute right-0 top-0 w-36 h-36 bg-rose-500/10 rounded-full blur-2xl"></div>
             
             <div className="flex flex-col items-center text-center space-y-3 relative z-10">
@@ -354,7 +354,7 @@ export default function AdminProfilePage() {
                 <img 
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(avatarSeed)}`}
                   alt="Admin Avatar"
-                  className="w-20 h-20 rounded-full bg-zinc-900 border-2 border-brand shadow-lg"
+                  className="w-20 h-20 rounded-full bg-slate-50 border-2 border-brand shadow-lg"
                 />
                 <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 rounded-full border-2 border-zinc-950 flex items-center justify-center">
                   <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
@@ -369,17 +369,17 @@ export default function AdminProfilePage() {
             </div>
 
             <div className="border-t border-zinc-800 pt-4 space-y-3 relative z-10 text-xs">
-              <div className="flex items-center justify-between text-zinc-400">
+              <div className="flex items-center justify-between text-zinc-500">
                 <span>Account Status:</span>
                 <span className="text-emerald-400 font-extrabold flex items-center gap-1">🟢 Active Sandbox</span>
               </div>
-              <div className="flex items-center justify-between text-zinc-400">
+              <div className="flex items-center justify-between text-zinc-500">
                 <span>Contact Email:</span>
-                <span className="text-white font-mono">{email}</span>
+                <span className="text-zinc-900 font-mono">{email}</span>
               </div>
-              <div className="flex items-center justify-between text-zinc-400">
+              <div className="flex items-center justify-between text-zinc-500">
                 <span>System Role:</span>
-                <span className="text-zinc-200 font-bold uppercase tracking-wider">Super Administrator</span>
+                <span className="text-zinc-800 font-bold uppercase tracking-wider">Super Administrator</span>
               </div>
             </div>
           </div>
@@ -426,16 +426,16 @@ export default function AdminProfilePage() {
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <Label htmlFor="admin_email" className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                  <Label htmlFor="admin_email" className="text-xs font-black uppercase tracking-wider text-zinc-500">
                     Registered Admin Email (Immutable)
                   </Label>
                   <Input 
                     id="admin_email"
                     value={email}
                     disabled
-                    className="h-11 bg-slate-50 border-slate-200 text-zinc-400 rounded-xl text-sm font-mono cursor-not-allowed"
+                    className="h-11 bg-slate-50 border-slate-200 text-zinc-500 rounded-xl text-sm font-mono cursor-not-allowed"
                   />
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[10px] text-zinc-500">
                     Emails are securely bound to Supabase GoTrue authentication logs and cannot be updated in sandbox mode.
                   </p>
                 </div>
@@ -445,7 +445,7 @@ export default function AdminProfilePage() {
                 <Button 
                   type="submit"
                   disabled={savingProfile}
-                  className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-bold h-11 px-5 flex items-center gap-2"
+                  className="bg-slate-50 hover:bg-zinc-800 text-zinc-900 rounded-xl font-bold h-11 px-5 flex items-center gap-2"
                 >
                   {savingProfile ? (
                     <>
@@ -476,7 +476,7 @@ export default function AdminProfilePage() {
                   
                   {/* Cropper box frame */}
                   <div className="flex flex-col items-center">
-                    <Label className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3">
+                    <Label className="text-xs font-black uppercase tracking-wider text-zinc-500 mb-3">
                       Crop Preview (250px × 250px)
                     </Label>
                     
@@ -586,7 +586,7 @@ export default function AdminProfilePage() {
                         <Button 
                           type="button" 
                           onClick={performCrop}
-                          className="w-full bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-9 text-xs"
+                          className="w-full bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl font-bold h-9 text-xs"
                         >
                           Crop & Apply Logo
                         </Button>
@@ -609,7 +609,7 @@ export default function AdminProfilePage() {
                 
                 {/* Real-time Playground Logo container */}
                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center space-y-3 relative group">
-                  <span className="absolute top-3 left-3 text-[9px] font-black text-zinc-400 uppercase tracking-widest">
+                  <span className="absolute top-3 left-3 text-[9px] font-black text-zinc-500 uppercase tracking-widest">
                     Live Dynamic Logo Preview
                   </span>
                   
@@ -832,7 +832,7 @@ export default function AdminProfilePage() {
 
                       {/* Presets and Collapsible drawer */}
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-zinc-400 font-bold">Standard Vectors:</span>
+                        <span className="text-[10px] text-zinc-500 font-bold">Standard Vectors:</span>
                         {SVG_PRESETS.map(preset => (
                           <button
                             key={preset.id}
@@ -849,7 +849,7 @@ export default function AdminProfilePage() {
                         <button
                           type="button"
                           onClick={() => setShowCodeEditor(!showCodeEditor)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:bg-slate-100 border-b border-slate-100"
+                          className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500 hover:bg-slate-100 border-b border-slate-100"
                         >
                           <span className="flex items-center gap-1"><Code className="w-3 h-3" /> Raw SVG Code Editor</span>
                           <span>{showCodeEditor ? "Hide" : "Show"}</span>
@@ -859,7 +859,7 @@ export default function AdminProfilePage() {
                             <textarea 
                               value={logoSvgRaw}
                               onChange={(e) => setLogoSvgRaw(e.target.value)}
-                              className="w-full border border-slate-200 bg-zinc-900 text-zinc-100 p-3 rounded-lg font-mono text-[9px] focus:outline-none"
+                              className="w-full border border-slate-200 bg-slate-50 text-zinc-100 p-3 rounded-lg font-mono text-[9px] focus:outline-none"
                               placeholder="e.g. <svg viewBox='0 0 100 100'>...</svg>"
                               rows={4}
                             />
@@ -876,7 +876,7 @@ export default function AdminProfilePage() {
                   <Button 
                     type="submit"
                     disabled={savingBranding}
-                    className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-11 px-5 flex items-center gap-2 shadow-md shadow-brand/10 w-full sm:w-auto"
+                    className="bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl font-bold h-11 px-5 flex items-center gap-2 shadow-md shadow-brand/10 w-full sm:w-auto"
                   >
                     {savingBranding ? (
                       <>

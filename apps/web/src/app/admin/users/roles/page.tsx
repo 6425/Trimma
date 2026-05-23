@@ -144,7 +144,7 @@ export default function AdminUserRoles() {
           <h1 className="text-2xl font-bold text-[#1A1C29] tracking-tight">Roles & Permissions</h1>
           <p className="text-zinc-500 text-sm mt-1">Define granular access control for the Trimma operational ecosystem.</p>
         </div>
-        <Button className="bg-[#1A1C29] hover:bg-[#1A1C29]/90 text-white h-10 px-4 text-sm font-medium flex items-center gap-2 rounded-xl">
+        <Button className="bg-white hover:bg-white/90 text-zinc-900 h-10 px-4 text-sm font-medium flex items-center gap-2 rounded-xl">
           <Plus className="w-4 h-4" /> Create New Role
         </Button>
       </div>
@@ -152,7 +152,7 @@ export default function AdminUserRoles() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         {/* Roles List */}
         <div className="xl:col-span-4 space-y-4">
-           <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest px-2">Account Types</div>
+           <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2">Account Types</div>
            <div className="space-y-2">
              {rolesList.map((role) => (
                <button
@@ -169,17 +169,17 @@ export default function AdminUserRoles() {
                  )}
                  <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-3">
-                       <div className={`p-2 rounded-xl ${activeRole === role.id ? 'bg-brand/10 text-brand' : 'bg-white text-zinc-400 shadow-sm'}`}>
+                       <div className={`p-2 rounded-xl ${activeRole === role.id ? 'bg-brand/10 text-brand' : 'bg-white text-zinc-500 shadow-sm'}`}>
                           {role.id.includes('admin') ? <ShieldCheck className="w-5 h-5" /> : <UserCircle2 className="w-5 h-5" />}
                        </div>
                        <div>
                           <p className={`font-bold transition-colors ${activeRole === role.id ? 'text-[#1A1C29]' : 'text-zinc-500'}`}>{role.name}</p>
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase">{role.count} Active Accounts</p>
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase">{role.count} Active Accounts</p>
                        </div>
                     </div>
-                    {activeRole === role.id && <div className="bg-brand text-white p-1 rounded-full"><Check className="w-3 h-3" /></div>}
+                    {activeRole === role.id && <div className="bg-brand text-zinc-900 p-1 rounded-full"><Check className="w-3 h-3" /></div>}
                  </div>
-                 <p className="text-xs text-zinc-400 leading-relaxed font-medium line-clamp-2">{role.desc}</p>
+                 <p className="text-xs text-zinc-500 leading-relaxed font-medium line-clamp-2">{role.desc}</p>
                </button>
              ))}
            </div>
@@ -197,24 +197,24 @@ export default function AdminUserRoles() {
            <div className="bg-white rounded-3xl border border-zinc-100 shadow-xl overflow-hidden flex flex-col h-full">
               <div className="p-6 border-b border-zinc-50 flex items-center justify-between">
                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-zinc-950 text-white rounded-xl">
+                    <div className="p-2.5 bg-white text-zinc-900 rounded-xl">
                        {activeRole === 'superadmin' ? <ShieldCheck className="w-5 h-5" /> : <Settings2 className="w-5 h-5" />}
                     </div>
                     <div>
                        <h3 className="font-bold text-[#1A1C29] text-xl">
-                         {rolesList.find(r => r.id === activeRole)?.name} <span className="font-medium text-zinc-400">Permissions</span>
+                         {rolesList.find(r => r.id === activeRole)?.name} <span className="font-medium text-zinc-500">Permissions</span>
                        </h3>
-                       <p className="text-xs text-zinc-400 font-medium">Define module access for this account type</p>
+                       <p className="text-xs text-zinc-500 font-medium">Define module access for this account type</p>
                     </div>
                  </div>
                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-10 text-zinc-400 hover:text-red-600 rounded-xl px-4 font-bold border border-transparent hover:border-red-100 transition-all">
+                    <Button variant="ghost" size="sm" className="h-10 text-zinc-500 hover:text-red-600 rounded-xl px-4 font-bold border border-transparent hover:border-red-100 transition-all">
                        <Trash2 className="w-4 h-4 mr-2" /> Delete Role
                     </Button>
                     <Button 
                       onClick={handleSaveChanges}
                       disabled={isSaving}
-                      className="bg-brand hover:bg-brand/90 text-white h-10 px-6 rounded-xl font-bold shadow-lg shadow-brand/20 transition-all min-w-[140px] flex justify-center items-center"
+                      className="bg-brand hover:bg-brand/90 text-zinc-900 h-10 px-6 rounded-xl font-bold shadow-lg shadow-brand/20 transition-all min-w-[140px] flex justify-center items-center"
                     >
                        {isSaving ? (
                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -230,9 +230,9 @@ export default function AdminUserRoles() {
                  <table className="w-full text-left">
                     <thead>
                        <tr className="bg-zinc-50/50">
-                          <th className="px-8 py-5 text-xs font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">Module Package</th>
+                          <th className="px-8 py-5 text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">Module Package</th>
                           {actions.map(action => (
-                             <th key={action.id} className="px-4 py-5 text-center text-xs font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">{action.name}</th>
+                             <th key={action.id} className="px-4 py-5 text-center text-xs font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">{action.name}</th>
                           ))}
                         </tr>
                     </thead>
@@ -241,7 +241,7 @@ export default function AdminUserRoles() {
                           <tr key={module.id} className="hover:bg-zinc-50/10 transition-colors group">
                              <td className="px-8 py-6">
                                 <div className="flex items-center gap-3">
-                                   <div className="bg-zinc-50 p-2 rounded-lg text-zinc-400 group-hover:bg-white group-hover:shadow-sm transition-all">
+                                   <div className="bg-zinc-50 p-2 rounded-lg text-zinc-500 group-hover:bg-white group-hover:shadow-sm transition-all">
                                       <Lock className="w-4 h-4" />
                                    </div>
                                    <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors">{module.name}</div>
@@ -270,7 +270,7 @@ export default function AdminUserRoles() {
               </div>
 
               <div className="p-6 bg-zinc-50 font-bold border-t border-zinc-100">
-                 <div className="flex items-center gap-2 text-zinc-400 text-xs">
+                 <div className="flex items-center gap-2 text-zinc-500 text-xs">
                     <Info className="w-4 h-4" />
                     Some permissions are system-enforced and cannot be overridden for this role type.
                  </div>

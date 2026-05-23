@@ -117,7 +117,8 @@ export default function ProvinceDetailPage() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
 
-  const data = provinceData; 
+  const [provinceDataState, setProvinceDataState] = useState<any>(provinceData);
+  const data = provinceDataState; 
   const [salons, setSalons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -147,16 +148,7 @@ export default function ProvinceDetailPage() {
         setLoading(true);
         const { data: dbSalons, error } = await supabase
           .from("salons")
-          .select(`
-            *,
-            services (
-              id,
-              name,
-              price,
-              category
-            )
-          `)
-          .or("status.eq.verified,status.eq.active,status.eq.pending,is_verified.eq.true")
+          .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
         .limit(10);
 
         if (error) throw error;
@@ -192,7 +184,7 @@ export default function ProvinceDetailPage() {
 
         setSalons(formatted);
       } catch (err) {
-        console.error("Failed to load live salons for province page:", err);
+        console.error("Failed to load live salons for province page:", err.message || err);
       } finally {
         setLoading(false);
       }
@@ -213,12 +205,35 @@ export default function ProvinceDetailPage() {
       }
     }
 
+    async function fetchProvinceDetails() {
+      try {
+        const { data: provData, error } = await supabase
+          .from("provinces")
+          .select("*")
+          .eq("slug", province)
+          .single();
+        
+        if (provData && !error) {
+          setProvinceDataState((prev: any) => ({
+             ...prev,
+             name: provData.name,
+             description: provData.description || prev.description,
+             salonCount: provData.salon_count || prev.salonCount,
+             image: provData.image_url || prev.image
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load province:", err);
+      }
+    }
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 300);
     };
 
     fetchLiveSalons();
     fetchCategories();
+    fetchProvinceDetails();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [province]);
@@ -234,7 +249,7 @@ export default function ProvinceDetailPage() {
       {/* 1. PROVINCE HERO SECTION */}
       <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-14 md:py-20">
         <div className="absolute inset-0 z-0">
-           <img src={data.image} alt={data.name} className="w-full h-full object-cover opacity-15 grayscale" />
+           <img src={data.image} alt={data.name} className="w-full h-full object-cover opacity-25 grayscale" />
            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent"></div>
         </div>
         

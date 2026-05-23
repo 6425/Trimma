@@ -1,196 +1,76 @@
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, Linkedin, MessageCircle, Send } from "lucide-react";
 import Logo from "./Logo";
 
 export default function GlobalFooter() {
   return (
-    <footer className="border-t border-slate-100 dark:border-white/5 bg-white dark:bg-brand-surface-dark py-16 transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-10 md:gap-12 mb-16">
+    <footer className="bg-zinc-50 dark:bg-brand-surface-dark transition-colors duration-300">
+
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10">
           
-          {/* Brand Section */}
-          <div className="col-span-2 flex flex-col justify-between">
-            <div className="space-y-4">
-              <Link href="/" className="inline-flex items-center gap-3 group hover:opacity-90 transition-opacity">
-                <Logo showTagline={false} />
-              </Link>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed max-w-sm">
-                Smart Salon Booking & Management Platform. Powering the next generation of beauty-tech operations and discovery.
-              </p>
+          {/* Support */}
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Support</h4>
+            <ul className="space-y-3 text-sm text-[#006CE4]">
+              <li><Link href="/help" className="hover:underline">Help Center</Link></li>
+              <li><Link href="/help" className="hover:underline">Cancellation options</Link></li>
+              <li><Link href="/safety" className="hover:underline">Safety Resource Center</Link></li>
+              <li><Link href="/contact" className="hover:underline">Contact us</Link></li>
+            </ul>
+          </div>
+
+          {/* Discover */}
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Discover</h4>
+            <ul className="space-y-3 text-sm text-[#006CE4]">
+              <li><Link href="/salons" className="hover:underline">All Salons</Link></li>
+              <li><Link href="/services" className="hover:underline">All Services</Link></li>
+              <li><Link href="/gift-cards" className="hover:underline">Gift Cards</Link></li>
+              <li><Link href="/blog" className="hover:underline">Trimma Blog</Link></li>
+            </ul>
+          </div>
+
+          {/* Partner with us */}
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Partner with us</h4>
+            <ul className="space-y-3 text-sm text-[#006CE4]">
+              <li><Link href="/login" className="hover:underline">Partner portal login</Link></li>
+              <li><Link href="/onboarding" className="hover:underline">Add your salon</Link></li>
+              <li><Link href="/affiliates" className="hover:underline">Affiliate program</Link></li>
+            </ul>
+          </div>
+
+          {/* About */}
+          <div className="col-span-1 space-y-4">
+            <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">About</h4>
+            <ul className="space-y-3 text-sm text-[#006CE4]">
+              <li><Link href="/about" className="hover:underline">About Trimma</Link></li>
+              <li><Link href="/careers" className="hover:underline">Careers</Link></li>
+              <li><Link href="/terms" className="hover:underline">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:underline">Privacy Policy</Link></li>
+            </ul>
+          </div>
+
+          {/* Branding & Socials */}
+          <div className="col-span-2 md:col-span-1 flex flex-col items-start space-y-6">
+            <Link href="/" className="inline-flex items-center gap-3 group hover:opacity-90 transition-opacity">
+              <span className="text-2xl font-bold text-[#003B95] tracking-tight">Trimma.</span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Facebook className="w-5 h-5" /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Linkedin className="w-5 h-5" /></a>
             </div>
-            
-            <div className="flex items-center gap-4 mt-6">
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-brand-dark/40 border border-slate-100 dark:border-white/5 flex items-center justify-center text-zinc-400 hover:text-brand-pink hover:bg-brand-pink/5 hover:border-brand-pink/15 transition-all duration-300 cursor-pointer"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-brand-dark/40 border border-slate-100 dark:border-white/5 flex items-center justify-center text-zinc-400 hover:text-brand-pink hover:bg-brand-pink/5 hover:border-brand-pink/15 transition-all duration-300 cursor-pointer"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://whatsapp.com" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-brand-dark/40 border border-slate-100 dark:border-white/5 flex items-center justify-center text-zinc-400 hover:text-brand-pink hover:bg-brand-pink/5 hover:border-brand-pink/15 transition-all duration-300 cursor-pointer"
-                aria-label="WhatsApp"
-              >
-                <MessageCircle className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://linkedin.com" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-brand-dark/40 border border-slate-100 dark:border-white/5 flex items-center justify-center text-zinc-400 hover:text-brand-pink hover:bg-brand-pink/5 hover:border-brand-pink/15 transition-all duration-300 cursor-pointer"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Product Links */}
-          <div className="col-span-1 space-y-4">
-            <h4 className="text-zinc-950 dark:text-zinc-100 text-xs font-bold uppercase tracking-wider">Product</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/features" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/salons" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Bookings
-                </Link>
-              </li>
-              <li>
-                <Link href="/signup" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Staff Manager
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Analytics
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* For Salons Links */}
-          <div className="col-span-1 space-y-4">
-            <h4 className="text-zinc-950 dark:text-zinc-100 text-xs font-bold uppercase tracking-wider">For Salons</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/onboarding" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Claim Your Salon
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Revenue Tools
-                </Link>
-              </li>
-              <li>
-                <Link href="/locations" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Business Insights
-                </Link>
-              </li>
-              <li>
-                <Link href="/onboarding" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Onboarding Guide
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company Links */}
-          <div className="col-span-1 space-y-4">
-            <h4 className="text-zinc-950 dark:text-zinc-100 text-xs font-bold uppercase tracking-wider">Company</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/about" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  About Trimma
-                </Link>
-              </li>
-              <li>
-                <Link href="/careers" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support Links */}
-          <div className="col-span-1 space-y-4">
-            <h4 className="text-zinc-950 dark:text-zinc-100 text-xs font-bold uppercase tracking-wider">Support</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/help" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link href="/help" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  FAQs
-                </Link>
-              </li>
-              <li>
-                <Link href="/status" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                  System Status
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-zinc-500 dark:text-zinc-400 hover:text-brand-pink transition-colors font-medium">
-                  Contact Support
-                </Link>
-              </li>
-            </ul>
           </div>
 
         </div>
 
-        {/* Bottom Trust Row */}
-        <div className="pt-8 border-t border-slate-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500 dark:text-zinc-400">
-          <p>© {new Date().getFullYear()} Trimma Technologies, Inc. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <span className="font-semibold text-zinc-400 uppercase tracking-widest text-[9px] flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-brand-pink"></span>
-              Secure 256-Bit SSL Booking
-            </span>
-          </div>
+        {/* Bottom Bar */}
+        <div className="mt-16 pt-8 border-t border-zinc-200 text-center text-xs text-zinc-500">
+          <p>© {new Date().getFullYear()} Trimma - The Salon Engine. All rights reserved.</p>
         </div>
-
       </div>
     </footer>
   );

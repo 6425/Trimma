@@ -316,7 +316,7 @@ export default function AdminBrandingPage() {
         <div className="space-y-6">
           
           {/* Playground Card */}
-          <div className="bg-zinc-950 rounded-2xl p-6 text-white space-y-6 shadow-md border border-zinc-850 relative overflow-hidden flex flex-col items-center justify-center min-h-[220px]">
+          <div className="bg-white rounded-2xl p-6 text-zinc-900 space-y-6 shadow-md border border-slate-200 relative overflow-hidden flex flex-col items-center justify-center min-h-[220px]">
             <div className="absolute right-0 top-0 w-36 h-36 bg-brand/10 rounded-full blur-2xl pointer-events-none"></div>
             <span className="absolute top-4 left-4 text-[9px] font-black text-zinc-500 uppercase tracking-widest">
               Live Header Preview
@@ -387,7 +387,7 @@ export default function AdminBrandingPage() {
               </span>
             )}
             
-            <p className="text-[10px] text-zinc-400 text-center relative z-10 leading-normal max-w-[220px]">
+            <p className="text-[10px] text-zinc-500 text-center relative z-10 leading-normal max-w-[220px]">
               Tweak values in the workspace. Once saved, changes apply hot-loaded across signup, login, dashboard sidebars, and marketplace headers instantly!
             </p>
           </div>
@@ -406,7 +406,7 @@ export default function AdminBrandingPage() {
                 className="p-3 rounded-xl border border-amber-100 hover:border-amber-400 bg-amber-50/20 hover:bg-amber-50 text-left transition-all"
               >
                 <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider">Luxe Gold</div>
-                <p className="text-[9px] text-zinc-400 mt-0.5 leading-normal">Cinzel serif, gold gradients, elegant crown icon.</p>
+                <p className="text-[9px] text-zinc-500 mt-0.5 leading-normal">Cinzel serif, gold gradients, elegant crown icon.</p>
               </button>
               <button 
                 type="button" 
@@ -414,7 +414,7 @@ export default function AdminBrandingPage() {
                 className="p-3 rounded-xl border border-amber-100 hover:border-amber-400 bg-amber-50/20 hover:bg-amber-50 text-left transition-all"
               >
                 <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider">Cyberpunk</div>
-                <p className="text-[9px] text-zinc-400 mt-0.5 leading-normal">Space Grotesk, bright neon hot-pink & cyan stars.</p>
+                <p className="text-[9px] text-zinc-500 mt-0.5 leading-normal">Space Grotesk, bright neon hot-pink & cyan stars.</p>
               </button>
               <button 
                 type="button" 
@@ -422,7 +422,7 @@ export default function AdminBrandingPage() {
                 className="p-3 rounded-xl border border-slate-200 hover:border-zinc-950 bg-slate-50/20 hover:bg-slate-100 text-left transition-all"
               >
                 <div className="text-[10px] font-black uppercase text-zinc-700 tracking-wider">Minimalist</div>
-                <p className="text-[9px] text-zinc-400 mt-0.5 leading-normal">Outfit font, pure clean slate spacing layout.</p>
+                <p className="text-[9px] text-zinc-500 mt-0.5 leading-normal">Outfit font, pure clean slate spacing layout.</p>
               </button>
               <button 
                 type="button" 
@@ -430,7 +430,7 @@ export default function AdminBrandingPage() {
                 className="p-3 rounded-xl border border-red-100 hover:border-red-400 bg-red-50/20 hover:bg-red-50 text-left transition-all"
               >
                 <div className="text-[10px] font-black uppercase text-red-700 tracking-wider">Classic Barber</div>
-                <p className="text-[9px] text-zinc-400 mt-0.5 leading-normal">Playfair vintage serif, crimson comb/scissors.</p>
+                <p className="text-[9px] text-zinc-500 mt-0.5 leading-normal">Playfair vintage serif, crimson comb/scissors.</p>
               </button>
             </div>
           </div>
@@ -451,7 +451,7 @@ export default function AdminBrandingPage() {
               
               {/* 250px by 250px cropping box frame placeholder */}
               <div className="flex flex-col items-center">
-                <Label className="text-xs font-black uppercase tracking-wider text-zinc-400 mb-3 text-center block">
+                <Label className="text-xs font-black uppercase tracking-wider text-zinc-500 mb-3 text-center block">
                   Interactive Crop Box (250px × 250px)
                 </Label>
                 
@@ -469,7 +469,7 @@ export default function AdminBrandingPage() {
                         className="max-w-none max-h-none pointer-events-none"
                       />
                       {/* Grid helper overlay */}
-                      <div className="absolute inset-4 border border-white/50 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-60">
+                      <div className="absolute inset-4 border border-slate-1000 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-60">
                         <div className="border-r border-b border-white/30"></div>
                         <div className="border-r border-b border-white/30"></div>
                         <div className="border-b border-white/30"></div>
@@ -591,7 +591,7 @@ export default function AdminBrandingPage() {
                     <Button 
                       type="button" 
                       onClick={performCrop}
-                      className="w-full bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-10 flex items-center justify-center gap-2 shadow-sm text-xs"
+                      className="w-full bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl font-bold h-10 flex items-center justify-center gap-2 shadow-sm text-xs"
                     >
                       <Crop className="w-4 h-4" /> Apply & Lock Crop
                     </Button>
@@ -756,7 +756,7 @@ export default function AdminBrandingPage() {
                     <div className="text-xs font-black uppercase text-zinc-800 tracking-wide">
                       Upload Custom Icon (SVG, PNG, JPG, WEBP)
                     </div>
-                    <p className="text-[10px] text-zinc-400 leading-normal max-w-sm">
+                    <p className="text-[10px] text-zinc-500 leading-normal max-w-sm">
                       Select any logo icon file. SVG will retain native vector scaling, while standard image files are beautifully formatted and shrunk to exactly 250px by 250px!
                     </p>
                     
@@ -796,7 +796,7 @@ export default function AdminBrandingPage() {
 
                 {/* SUGGESTED ICON PALETTE TRIGGERS */}
                 <div className="flex items-center gap-2.5 pt-1">
-                  <span className="text-[10px] text-zinc-400 font-bold">Vector Presets:</span>
+                  <span className="text-[10px] text-zinc-500 font-bold">Vector Presets:</span>
                   <button
                     type="button"
                     onClick={() => { setLogoSvgRaw(SVG_PRESETS.crown); toast.success("Crown icon preset applied! 👑"); }}
@@ -833,11 +833,11 @@ export default function AdminBrandingPage() {
                   
                   {showCodeEditor && (
                     <div className="p-4 space-y-2">
-                      <Label className="text-[10px] font-bold text-zinc-400 block">Edit raw XML markup directly:</Label>
+                      <Label className="text-[10px] font-bold text-zinc-500 block">Edit raw XML markup directly:</Label>
                       <textarea 
                         value={logoSvgRaw}
                         onChange={(e) => setLogoSvgRaw(e.target.value)}
-                        className="w-full border border-slate-200 bg-zinc-900 text-zinc-100 p-4 rounded-xl font-mono text-[10px] focus:outline-none leading-relaxed"
+                        className="w-full border border-slate-200 bg-slate-50 text-zinc-100 p-4 rounded-xl font-mono text-[10px] focus:outline-none leading-relaxed"
                         placeholder="e.g. <svg viewBox='0 0 100 100'>...</svg>"
                         rows={5}
                       />
@@ -853,7 +853,7 @@ export default function AdminBrandingPage() {
               <Button 
                 type="submit"
                 disabled={saving}
-                className="bg-zinc-950 hover:bg-zinc-900 text-white rounded-xl font-bold h-11 px-5 flex items-center gap-2 shadow-md w-full sm:w-auto"
+                className="bg-white hover:bg-slate-50 text-zinc-900 rounded-xl font-bold h-11 px-5 flex items-center gap-2 shadow-md w-full sm:w-auto"
               >
                 {saving ? (
                   <>

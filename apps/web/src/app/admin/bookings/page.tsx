@@ -187,7 +187,7 @@ export default function AdminBookings() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Total Bookings</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Bookings</p>
             <p className="text-2xl font-black text-zinc-900">{totalBookingsCount.toLocaleString()}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-600">
@@ -197,7 +197,7 @@ export default function AdminBookings() {
 
         <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Reschedule Requests</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Reschedule Requests</p>
             <p className="text-2xl font-black text-rose-600">{activeReschedules.toLocaleString()}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
@@ -207,7 +207,7 @@ export default function AdminBookings() {
 
         <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Total Platform GTV</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Total Platform GTV</p>
             <p className="text-xl font-black text-brand">{formatPrice(totalGtv)}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-50/50 flex items-center justify-center text-brand">
@@ -217,7 +217,7 @@ export default function AdminBookings() {
 
         <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Platform Share (10%)</p>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Platform Share (10%)</p>
             <p className="text-xl font-black text-emerald-600">{formatPrice(platformRevenue)}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -229,7 +229,7 @@ export default function AdminBookings() {
       {/* Filter Bar */}
       <div className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <Input 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -242,7 +242,7 @@ export default function AdminBookings() {
             variant="outline" 
             onClick={() => setStatusFilter("all")}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
-              statusFilter === "all" ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
+              statusFilter === "all" ? "bg-white text-zinc-900 border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
           >
             All Bookings
@@ -251,7 +251,7 @@ export default function AdminBookings() {
             variant="outline" 
             onClick={() => setStatusFilter("confirmed")}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
-              statusFilter === "confirmed" ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
+              statusFilter === "confirmed" ? "bg-white text-zinc-900 border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
           >
             Confirmed
@@ -260,7 +260,7 @@ export default function AdminBookings() {
             variant="outline" 
             onClick={() => setStatusFilter("pending")}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
-              statusFilter === "pending" ? "bg-zinc-950 text-white border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
+              statusFilter === "pending" ? "bg-white text-zinc-900 border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
           >
             Pending
@@ -269,7 +269,7 @@ export default function AdminBookings() {
             variant="outline" 
             onClick={() => setStatusFilter("reschedule")}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
-              statusFilter === "reschedule" ? "bg-rose-600 text-white border-rose-600" : "bg-white text-zinc-600 hover:bg-zinc-50"
+              statusFilter === "reschedule" ? "bg-rose-600 text-zinc-900 border-rose-600" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
           >
             Rescheduling Requests
@@ -282,7 +282,7 @@ export default function AdminBookings() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">
+              <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
                 <th className="px-8 py-5">Booking ID</th>
                 <th className="px-8 py-5">Establishment</th>
                 <th className="px-8 py-5">Customer Account</th>
@@ -297,12 +297,12 @@ export default function AdminBookings() {
                 <tr>
                   <td colSpan={7} className="px-8 py-24 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
-                    <p className="text-zinc-400 font-medium">Accessing global transaction directory...</p>
+                    <p className="text-zinc-500 font-medium">Accessing global transaction directory...</p>
                   </td>
                 </tr>
               ) : filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-8 py-24 text-center text-zinc-400">
+                  <td colSpan={7} className="px-8 py-24 text-center text-zinc-500">
                     <Calendar className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p className="font-medium">No platform bookings found in current viewport.</p>
                   </td>
@@ -318,7 +318,7 @@ export default function AdminBookings() {
                       <div className="font-bold text-[#1A1C29] truncate max-w-[160px]">
                         {b.salons?.name || "Independent Provider"}
                       </div>
-                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter bg-zinc-100 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-tighter bg-zinc-100 px-1.5 py-0.5 rounded">
                         Salon ID: {b.salon_id?.substring(0, 8)}
                       </span>
                     </td>
@@ -329,12 +329,12 @@ export default function AdminBookings() {
                     
                     <td className="px-8 py-6">
                       <div className="font-extrabold text-zinc-800 text-sm">{b.booking_date}</div>
-                      <div className="text-xs text-zinc-400 mt-0.5 font-semibold">{b.booking_time}</div>
+                      <div className="text-xs text-zinc-500 mt-0.5 font-semibold">{b.booking_time}</div>
                     </td>
                     
                     <td className="px-8 py-6">
                       <div className="text-sm font-black text-zinc-900">{formatPrice(b.amount)}</div>
-                      <div className="text-[10px] text-zinc-400 font-bold mt-0.5">
+                      <div className="text-[10px] text-zinc-500 font-bold mt-0.5">
                         Fee: {formatPrice(b.amount * 0.23)} (10% Plat / 10% Salon / 3% PayHere)
                       </div>
                     </td>
@@ -389,7 +389,7 @@ export default function AdminBookings() {
                             size="sm" 
                             disabled={actioningId === b.id}
                             onClick={() => handleOverrideStatus(b.id, 'confirmed')}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-bold h-7 px-2.5 rounded-lg"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-zinc-900 text-[9px] font-bold h-7 px-2.5 rounded-lg"
                           >
                             Confirm
                           </Button>
@@ -406,26 +406,26 @@ export default function AdminBookings() {
 
       {/* Intelligence Dashboard Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div className="md:col-span-2 bg-[#1A1C29] rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-            <Activity className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12" />
+         <div className="md:col-span-2 bg-white rounded-3xl p-8 text-zinc-900 relative overflow-hidden shadow-2xl">
+            <Activity className="absolute -right-8 -bottom-8 w-48 h-48 text-zinc-900/5 rotate-12" />
             <div className="flex justify-between items-start mb-8 relative z-10">
                <div>
                   <h3 className="text-xl font-black mb-1">Financial Clearing & Settlement</h3>
-                  <p className="text-white/40 text-xs font-bold uppercase tracking-widest font-mono">Platform Clearing System v1.0</p>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest font-mono">Platform Clearing System v1.0</p>
                </div>
-               <Badge className="bg-white/10 text-white border-none font-bold">Standard 10% commission active</Badge>
+               <Badge className="bg-slate-100 text-zinc-900 border-none font-bold">Standard 10% commission active</Badge>
             </div>
             <div className="grid grid-cols-3 gap-8 relative z-10 text-left">
                <div>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Gross Billing</p>
+                  <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mb-1">Gross Billing</p>
                   <p className="text-2xl font-black text-rose-500">{formatPrice(totalGtv)}</p>
                </div>
                <div>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Settled Platform commission</p>
+                  <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mb-1">Settled Platform commission</p>
                   <p className="text-2xl font-black text-emerald-500">{formatPrice(platformRevenue)}</p>
                </div>
                <div>
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">Total Cleared</p>
+                  <p className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest mb-1">Total Cleared</p>
                   <p className="text-2xl font-black text-blue-500">{formatPrice(totalGtv - platformRevenue)}</p>
                </div>
             </div>
@@ -448,7 +448,7 @@ export default function AdminBookings() {
                 <Calendar className="w-5 h-5 text-emerald-600 animate-bounce" />
                 Reschedule Appointment
               </h3>
-              <p className="text-xs text-zinc-400 mt-1 font-medium">
+              <p className="text-xs text-zinc-500 mt-1 font-medium">
                 Updating schedule for booking reference <strong>{reschedulingBooking.booking_no}</strong>.
               </p>
             </div>
@@ -497,7 +497,7 @@ export default function AdminBookings() {
                 size="sm"
                 onClick={handleRescheduleSave}
                 disabled={actioningId === reschedulingBooking.id || !newDate || !newTime}
-                className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
+                className="bg-white hover:bg-zinc-800 text-zinc-900 font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
               >
                 {actioningId === reschedulingBooking.id ? (
                   <>

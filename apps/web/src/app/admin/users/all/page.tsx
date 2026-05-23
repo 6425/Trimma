@@ -153,7 +153,7 @@ function AdminUserList() {
             <Download className="w-4 h-4" /> Export CSV
           </Button>
           <Button 
-            className="bg-brand hover:bg-brand/90 text-white h-10 px-4 text-sm font-medium flex items-center gap-2"
+            className="bg-brand hover:bg-brand/90 text-zinc-900 h-10 px-4 text-sm font-medium flex items-center gap-2"
             onClick={() => navigate.push("/admin/users/create")}
           >
             <UserPlus className="w-4 h-4" /> Create User
@@ -165,7 +165,7 @@ function AdminUserList() {
       <div className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex-1 flex items-center gap-3 max-w-2xl">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <Input 
               placeholder="Search by name, email, or mobile..." 
               className="pl-10 h-11 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 transition-all rounded-xl"
@@ -179,8 +179,8 @@ function AdminUserList() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="h-8 px-3 rounded-full border-zinc-200 bg-white text-zinc-600 font-medium cursor-pointer hover:bg-zinc-50">All Users ({users.length})</Badge>
-          <Badge variant="outline" className="h-8 px-3 rounded-full border-zinc-200 bg-white text-zinc-400 font-medium cursor-pointer hover:bg-zinc-50">Verified Only</Badge>
-          <Badge variant="outline" className="h-8 px-3 rounded-full border-zinc-200 bg-white text-zinc-400 font-medium cursor-pointer hover:bg-zinc-50">Suspended</Badge>
+          <Badge variant="outline" className="h-8 px-3 rounded-full border-zinc-200 bg-white text-zinc-500 font-medium cursor-pointer hover:bg-zinc-50">Verified Only</Badge>
+          <Badge variant="outline" className="h-8 px-3 rounded-full border-zinc-200 bg-white text-zinc-500 font-medium cursor-pointer hover:bg-zinc-50">Suspended</Badge>
         </div>
       </div>
 
@@ -189,7 +189,7 @@ function AdminUserList() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-zinc-50/30 text-zinc-400 font-bold text-[11px] uppercase tracking-wider">
+              <tr className="bg-zinc-50/30 text-zinc-500 font-bold text-[11px] uppercase tracking-wider">
                 <th className="px-6 py-4 w-10"></th>
                 <th className="px-6 py-4">User Identity <ArrowUpDown className="w-3 h-3 inline ml-1 opacity-50" /></th>
                 <th className="px-6 py-4">Contact Detail</th>
@@ -202,14 +202,14 @@ function AdminUserList() {
             <tbody className="divide-y divide-zinc-50">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                     Scanning identity nodes...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
                     No users found matching your criteria.
                   </td>
                 </tr>
@@ -225,7 +225,7 @@ function AdminUserList() {
                         </Avatar>
                         <div className="min-w-0">
                           <div className="font-bold text-[#1A1C29] group-hover:text-brand transition-colors truncate">{user.full_name || "New Identity"}</div>
-                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
                             ID: {user.email.substring(0, 8).toUpperCase()}
                           </div>
                         </div>
@@ -234,16 +234,16 @@ function AdminUserList() {
                     <td className="px-6 py-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 text-zinc-600 text-sm font-medium">
-                          <Mail className="w-3.5 h-3.5 text-zinc-300" /> {user.email}
+                          <Mail className="w-3.5 h-3.5 text-zinc-700" /> {user.email}
                         </div>
                         <div className="flex items-center gap-2 text-zinc-500 text-xs">
-                          <Phone className="w-3.5 h-3.5 text-zinc-300" /> {user.phone || "No phone"}
+                          <Phone className="w-3.5 h-3.5 text-zinc-700" /> {user.phone || "No phone"}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <Badge className={`rounded-lg px-2.5 py-0.5 text-[11px] font-bold shadow-none border-none capitalize ${
-                         (user.global_role || "").includes('admin') ? 'bg-[#1A1C29] text-white' : 
+                         (user.global_role || "").includes('admin') ? 'bg-white text-zinc-900' : 
                          user.global_role === 'salon_owner' ? 'bg-brand/10 text-brand' :
                          user.global_role === 'customer' ? 'bg-zinc-100 text-zinc-600' :
                          'bg-purple-100 text-purple-600'
@@ -257,36 +257,36 @@ function AdminUserList() {
                           <div className="w-2 h-2 rounded-full bg-emerald-500" />
                           <span className="text-sm font-bold text-zinc-700">Active</span>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-zinc-400 font-medium italic">
+                        <div className="flex items-center gap-1 text-xs text-zinc-500 font-medium italic">
                           <MapPin className="w-3 h-3" /> Western Province
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        <div className="text-xs text-zinc-400 font-medium truncate max-w-[120px]">
+                        <div className="text-xs text-zinc-500 font-medium truncate max-w-[120px]">
                            Created: {new Date(user.created_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-zinc-500">
-                          <Clock className="w-3 h-3 text-zinc-300" /> Recently active
+                          <Clock className="w-3 h-3 text-zinc-700" /> Recently active
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="h-8 w-8 text-zinc-400 hover:text-zinc-600 rounded-lg flex items-center justify-center transition-colors hover:bg-zinc-100">
+                        <DropdownMenuTrigger className="h-8 w-8 text-zinc-500 hover:text-zinc-600 rounded-lg flex items-center justify-center transition-colors hover:bg-zinc-100">
                           <MoreVertical className="w-4 h-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-2xl border-zinc-100 p-1.5">
-                          <DropdownMenuLabel className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest px-2 py-1 my-1">Take Action</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest px-2 py-1 my-1">Take Action</DropdownMenuLabel>
                           <DropdownMenuItem 
                             onClick={() => handleEditClick(user)}
                             className="rounded-lg gap-2 font-medium cursor-pointer py-2 px-3"
                           >
-                             <Edit2 className="w-4 h-4 text-zinc-400" /> Edit Metadata
+                             <Edit2 className="w-4 h-4 text-zinc-500" /> Edit Metadata
                           </DropdownMenuItem>
                           <DropdownMenuItem className="rounded-lg gap-2 font-medium cursor-pointer py-2 px-3">
-                             <Key className="w-4 h-4 text-zinc-400" /> Reset Password
+                             <Key className="w-4 h-4 text-zinc-500" /> Reset Password
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-zinc-100 my-1.5" />
                           <DropdownMenuItem className="rounded-lg gap-2 font-medium cursor-pointer py-2 px-3 text-amber-600 hover:text-amber-700 hover:bg-amber-50">
@@ -306,11 +306,11 @@ function AdminUserList() {
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px] rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-[#1A1C29] p-8 text-white relative">
+          <div className="bg-white p-8 text-zinc-900 relative">
             <Shield className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12" />
             <DialogHeader className="relative z-10">
               <DialogTitle className="text-2xl font-bold tracking-tight">Edit Identity</DialogTitle>
-              <DialogDescription className="text-white/50 font-medium">
+              <DialogDescription className="text-zinc-500 font-medium">
                 Update account metadata and platform permissions.
               </DialogDescription>
             </DialogHeader>
@@ -319,7 +319,7 @@ function AdminUserList() {
           <div className="p-8 space-y-6 bg-white">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Full Name</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Full Name</label>
                 <Input 
                   value={editingUser?.full_name || ""}
                   onChange={(e) => setEditingUser({ ...editingUser, full_name: e.target.value })}
@@ -329,7 +329,7 @@ function AdminUserList() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address (Read Only)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Email Address (Read Only)</label>
                 <Input 
                   value={editingUser?.email || ""}
                   readOnly
@@ -338,7 +338,7 @@ function AdminUserList() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">WhatsApp No.</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">WhatsApp No.</label>
                 <Input 
                   value={editingUser?.phone || ""}
                   onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
@@ -348,7 +348,7 @@ function AdminUserList() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Platform Role</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Platform Role</label>
                 <Select 
                   value={editingUser?.global_role || "user"}
                   onValueChange={(val) => setEditingUser({ ...editingUser, global_role: val })}
@@ -371,14 +371,14 @@ function AdminUserList() {
               <Button 
                 variant="ghost" 
                 onClick={() => setIsEditDialogOpen(false)}
-                className="flex-1 h-12 rounded-xl font-bold text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50"
+                className="flex-1 h-12 rounded-xl font-bold text-zinc-500 hover:text-zinc-600 hover:bg-zinc-50"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleUpdateUser}
                 disabled={isUpdating}
-                className="flex-[2] bg-brand hover:bg-brand-hover text-white h-12 rounded-xl font-bold shadow-lg shadow-brand/20"
+                className="flex-[2] bg-brand hover:bg-brand-hover text-zinc-900 h-12 rounded-xl font-bold shadow-lg shadow-brand/20"
               >
                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
               </Button>

@@ -119,7 +119,7 @@ export default function CityManagement() {
         {!editId && (
           <Button 
             onClick={() => { setEditId(null); setFormData({ name: "", slug: "", district_id: "" }); }}
-            className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
+            className="bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
           >
             <Plus className="w-5 h-5" /> Add New City
           </Button>
@@ -131,7 +131,7 @@ export default function CityManagement() {
           <Card className="border-none shadow-sm overflow-hidden rounded-3xl">
             <div className="p-6 bg-white border-b border-zinc-100 flex flex-wrap items-center justify-between gap-4">
                <div className="relative flex-1 min-w-[200px]">
-                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                  <Input 
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
@@ -156,7 +156,7 @@ export default function CityManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-50 text-[11px] uppercase tracking-widest text-zinc-400 font-bold">
+                  <tr className="border-b border-zinc-50 text-[11px] uppercase tracking-widest text-zinc-500 font-bold">
                     <th className="px-8 py-5">City Name</th>
                     <th className="px-8 py-5">District</th>
                     <th className="px-8 py-5">Slug</th>
@@ -167,14 +167,14 @@ export default function CityManagement() {
                 <tbody className="divide-y divide-zinc-50 text-sm">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-8 py-12 text-center text-zinc-400">
+                      <td colSpan={5} className="px-8 py-12 text-center text-zinc-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                         Loading cities...
                       </td>
                     </tr>
                   ) : filteredCities.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-8 py-12 text-center text-zinc-400">
+                      <td colSpan={5} className="px-8 py-12 text-center text-zinc-500">
                         No cities found.
                       </td>
                     </tr>
@@ -194,7 +194,7 @@ export default function CityManagement() {
                           </span>
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end gap-2 text-zinc-400">
+                          <div className="flex items-center justify-end gap-2 text-zinc-500">
                             <Button 
                               onClick={() => handleEdit(city)}
                               variant="ghost" 
@@ -223,19 +223,19 @@ export default function CityManagement() {
         </div>
 
         <div className="space-y-6">
-          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-zinc-900'}`}>
-            <Navigation className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 rotate-12" />
+          <Card className={`border-none shadow-sm p-8 rounded-3xl text-zinc-900 relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-slate-50'}`}>
+            <Navigation className="absolute -right-8 -bottom-8 w-40 h-40 text-zinc-900/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update City' : 'Create City'}</h3>
-            <p className="text-white/60 text-sm mb-6">Add a specific city location to the platform.</p>
+            <p className="text-zinc-500 text-sm mb-6">Add a specific city location to the platform.</p>
             
             <form onSubmit={handleSave} className="space-y-4 relative z-10">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Parent District</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Parent District</label>
                 <Select 
                    value={formData.district_id} 
                    onValueChange={(val) => setFormData({ ...formData, district_id: val })}
                 >
-                  <SelectTrigger className="bg-white/10 border-white/10 text-white h-12 rounded-xl text-left">
+                  <SelectTrigger className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl text-left">
                     <SelectValue placeholder="Select District" />
                   </SelectTrigger>
                   <SelectContent>
@@ -246,21 +246,21 @@ export default function CityManagement() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">City Name</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">City Name</label>
                 <Input 
                    value={formData.name}
                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                   className="bg-white/10 border-white/10 text-white h-12 rounded-xl focus:ring-white/20" 
+                   className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
                    placeholder="e.g. Colombo 05" 
                    required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Slug (SEO)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Slug (SEO)</label>
                 <Input 
                    value={formData.slug}
                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                   className="bg-white/10 border-white/10 text-white h-12 rounded-xl font-mono text-xs" 
+                   className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl font-mono text-xs" 
                    placeholder="e.g. colombo-05" 
                 />
               </div>
@@ -270,7 +270,7 @@ export default function CityManagement() {
                     type="button" 
                     onClick={() => { setEditId(null); setFormData({ name: "", slug: "", district_id: "" }); }}
                     variant="ghost" 
-                    className="flex-1 text-white hover:bg-white/10 h-12 rounded-xl font-bold"
+                    className="flex-1 text-zinc-900 hover:bg-slate-100 h-12 rounded-xl font-bold"
                   >
                     Cancel
                   </Button>
@@ -278,7 +278,7 @@ export default function CityManagement() {
                 <Button 
                   disabled={saving}
                   type="submit" 
-                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-white'}`}
+                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-zinc-900'}`}
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : editId ? 'Update City' : 'Save City'}
                 </Button>

@@ -149,8 +149,8 @@ export default function Dashboard() {
       
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Salon Performance</h1>
-          <p className="text-sm text-zinc-500">Welcome back. Here is what is happening at Crown & Comb today.</p>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Salon Performance</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Welcome back. Here is what is happening at Crown & Comb today.</p>
         </div>
         <button 
           onClick={() => fetchDashboardStats(true)} 

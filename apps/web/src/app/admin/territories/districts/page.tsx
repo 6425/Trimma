@@ -120,7 +120,7 @@ export default function DistrictManagement() {
         {!editId && (
           <Button 
             onClick={() => { setEditId(null); setFormData({ name: "", slug: "", province_id: "" }); }}
-            className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
+            className="bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
           >
             <Plus className="w-5 h-5" /> Add New District
           </Button>
@@ -132,7 +132,7 @@ export default function DistrictManagement() {
           <Card className="border-none shadow-sm overflow-hidden rounded-3xl">
             <div className="p-6 bg-white border-b border-zinc-100 flex items-center justify-between gap-4">
                <div className="relative flex-1">
-                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                  <Input 
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
@@ -155,7 +155,7 @@ export default function DistrictManagement() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-50 text-[11px] uppercase tracking-widest text-zinc-400 font-bold">
+                  <tr className="border-b border-zinc-50 text-[11px] uppercase tracking-widest text-zinc-500 font-bold">
                     <th className="px-8 py-5">District Name</th>
                     <th className="px-8 py-5">Province</th>
                     <th className="px-8 py-5">Slug</th>
@@ -166,7 +166,7 @@ export default function DistrictManagement() {
                 <tbody className="divide-y divide-zinc-50 text-sm">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-8 py-12 text-center text-zinc-400">
+                      <td colSpan={5} className="px-8 py-12 text-center text-zinc-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                         Loading districts...
                       </td>
@@ -175,10 +175,10 @@ export default function DistrictManagement() {
                     <tr>
                       <td colSpan={5} className="px-8 py-24 text-center">
                         <div className="max-w-xs mx-auto space-y-4">
-                          <MapPin className="w-12 h-12 text-zinc-200 mx-auto" />
+                          <MapPin className="w-12 h-12 text-zinc-800 mx-auto" />
                           <div>
-                            <p className="text-zinc-400 font-bold">No districts found</p>
-                            <p className="text-zinc-400 text-xs mt-1">Populate your districts mapped to provinces.</p>
+                            <p className="text-zinc-500 font-bold">No districts found</p>
+                            <p className="text-zinc-500 text-xs mt-1">Populate your districts mapped to provinces.</p>
                           </div>
                           <Button 
                             onClick={async () => {
@@ -221,7 +221,7 @@ export default function DistrictManagement() {
                           </span>
                         </td>
                         <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end gap-2 text-zinc-400">
+                          <div className="flex items-center justify-end gap-2 text-zinc-500">
                             <Button 
                               onClick={() => handleEdit(district)}
                               variant="ghost" 
@@ -250,19 +250,19 @@ export default function DistrictManagement() {
         </div>
 
         <div className="space-y-6">
-          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-zinc-900'}`}>
-            <Layers className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 rotate-12" />
+          <Card className={`border-none shadow-sm p-8 rounded-3xl text-zinc-900 relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-slate-50'}`}>
+            <Layers className="absolute -right-8 -bottom-8 w-40 h-40 text-zinc-900/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update District' : 'Create District'}</h3>
-            <p className="text-white/60 text-sm mb-6">Link a district to a parent province.</p>
+            <p className="text-zinc-500 text-sm mb-6">Link a district to a parent province.</p>
             
             <form onSubmit={handleSave} className="space-y-4 relative z-10">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Parent Province</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Parent Province</label>
                 <Select 
                   value={formData.province_id} 
                   onValueChange={(val) => setFormData({ ...formData, province_id: val })}
                 >
-                  <SelectTrigger className="bg-white/10 border-white/10 text-white h-12 rounded-xl">
+                  <SelectTrigger className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl">
                     <SelectValue placeholder="Select Province" />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,21 +273,21 @@ export default function DistrictManagement() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">District Name</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">District Name</label>
                 <Input 
                    value={formData.name}
                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                   className="bg-white/10 border-white/10 text-white h-12 rounded-xl focus:ring-white/20" 
+                   className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
                    placeholder="e.g. Colombo District" 
                    required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Slug (SEO)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Slug (SEO)</label>
                 <Input 
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  className="bg-white/10 border-white/10 text-white h-12 rounded-xl font-mono text-xs" 
+                  className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl font-mono text-xs" 
                   placeholder="e.g. colombo-district" 
                 />
               </div>
@@ -297,7 +297,7 @@ export default function DistrictManagement() {
                     type="button" 
                     onClick={() => { setEditId(null); setFormData({ name: "", slug: "", province_id: "" }); }}
                     variant="ghost" 
-                    className="flex-1 text-white hover:bg-white/10 h-12 rounded-xl font-bold"
+                    className="flex-1 text-zinc-900 hover:bg-slate-100 h-12 rounded-xl font-bold"
                   >
                     Cancel
                   </Button>
@@ -305,7 +305,7 @@ export default function DistrictManagement() {
                 <Button 
                   disabled={saving}
                   type="submit" 
-                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-white'}`}
+                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-zinc-900'}`}
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : editId ? 'Update District' : 'Save District'}
                 </Button>

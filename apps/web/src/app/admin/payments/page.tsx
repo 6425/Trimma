@@ -193,7 +193,7 @@ export default function AdminPayments() {
         </div>
         <div className="flex items-center gap-3">
           <Badge className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border-none shadow-sm ${
-            environment === 'sandbox' ? 'bg-amber-500 text-white animate-pulse' : 'bg-emerald-600 text-white'
+            environment === 'sandbox' ? 'bg-amber-500 text-zinc-900 animate-pulse' : 'bg-emerald-600 text-zinc-900'
           }`}>
             {environment === 'sandbox' ? 'Active: Sandbox Mode' : 'Active: Live Production'}
           </Badge>
@@ -207,7 +207,7 @@ export default function AdminPayments() {
           className={`pb-4 px-6 font-bold text-sm border-b-2 transition-all ${
             activeTab === "keys" 
               ? "border-brand text-brand" 
-              : "border-transparent text-zinc-400 hover:text-zinc-600"
+              : "border-transparent text-zinc-500 hover:text-zinc-600"
           }`}
         >
           <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export default function AdminPayments() {
           className={`pb-4 px-6 font-bold text-sm border-b-2 transition-all ${
             activeTab === "transactions" 
               ? "border-brand text-brand" 
-              : "border-transparent text-zinc-400 hover:text-zinc-600"
+              : "border-transparent text-zinc-500 hover:text-zinc-600"
           }`}
         >
           <div className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export default function AdminPayments() {
                 <Settings className="w-5 h-5 text-brand" />
                 <span>Environment Configuration</span>
               </div>
-              <p className="text-xs text-zinc-400 font-medium">
+              <p className="text-xs text-zinc-500 font-medium">
                 Switching environments affects both customer-facing Booking Sheets and merchant clearing settlement models.
               </p>
               
@@ -257,7 +257,7 @@ export default function AdminPayments() {
                   className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
                     environment === "sandbox"
                       ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-600"
+                      : "text-zinc-500 hover:text-zinc-600"
                   }`}
                 >
                   Sandbox Mode
@@ -268,7 +268,7 @@ export default function AdminPayments() {
                   className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
                     environment === "live"
                       ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-400 hover:text-zinc-600"
+                      : "text-zinc-500 hover:text-zinc-600"
                   }`}
                 >
                   Live Production
@@ -298,7 +298,7 @@ export default function AdminPayments() {
                 <CreditCard className="w-5 h-5 text-brand" />
                 <span>Active Gateways Selector</span>
               </div>
-              <p className="text-xs text-zinc-400 font-medium">
+              <p className="text-xs text-zinc-500 font-medium">
                 Choose which payment options are displayed to customers during the checkout booking flow.
               </p>
 
@@ -314,7 +314,7 @@ export default function AdminPayments() {
                   />
                   <div>
                     <div className="text-xs font-black text-zinc-800 uppercase tracking-wider">Enable PayHere Gateway</div>
-                    <p className="text-[10px] text-zinc-400 font-bold mt-1">Accept local Credit Cards, Debit Cards, and direct LKR transfers.</p>
+                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Accept local Credit Cards, Debit Cards, and direct LKR transfers.</p>
                   </div>
                 </label>
 
@@ -329,7 +329,7 @@ export default function AdminPayments() {
                   />
                   <div>
                     <div className="text-xs font-black text-zinc-800 uppercase tracking-wider">Enable PayPal Smart Buttons</div>
-                    <p className="text-[10px] text-zinc-400 font-bold mt-1">Accept global credit cards, PayPal balances, and USD settlements.</p>
+                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Accept global credit cards, PayPal balances, and USD settlements.</p>
                   </div>
                 </label>
               </div>
@@ -346,7 +346,7 @@ export default function AdminPayments() {
               
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Sandbox Client ID</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Sandbox Client ID</label>
                   <Input 
                     value={paypalClientSandbox}
                     onChange={(e) => setPaypalClientSandbox(e.target.value)}
@@ -355,7 +355,7 @@ export default function AdminPayments() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Live Client ID</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Live Client ID</label>
                   <Input 
                     value={paypalClientLive}
                     onChange={(e) => setPaypalClientLive(e.target.value)}
@@ -377,7 +377,7 @@ export default function AdminPayments() {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">PayHere Merchant ID</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">PayHere Merchant ID</label>
                   <Input 
                     value={payhereMerchantId}
                     onChange={(e) => setPayhereMerchantId(e.target.value)}
@@ -387,11 +387,11 @@ export default function AdminPayments() {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">PayHere Merchant Secret</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">PayHere Merchant Secret</label>
                     <button 
                       type="button" 
                       onClick={() => setShowSecret(!showSecret)}
-                      className="text-[10px] text-zinc-400 font-extrabold hover:text-zinc-600 flex items-center gap-1 uppercase"
+                      className="text-[10px] text-zinc-500 font-extrabold hover:text-zinc-600 flex items-center gap-1 uppercase"
                     >
                       {showSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       {showSecret ? "Hide" : "Show"}
@@ -406,7 +406,7 @@ export default function AdminPayments() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">App ID</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">App ID</label>
                   <Input 
                     value={payhereAppId}
                     onChange={(e) => setPayhereAppId(e.target.value)}
@@ -416,11 +416,11 @@ export default function AdminPayments() {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">App Secret</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">App Secret</label>
                     <button 
                       type="button" 
                       onClick={() => setShowAppSecret(!showAppSecret)}
-                      className="text-[10px] text-zinc-400 font-extrabold hover:text-zinc-600 flex items-center gap-1 uppercase"
+                      className="text-[10px] text-zinc-500 font-extrabold hover:text-zinc-600 flex items-center gap-1 uppercase"
                     >
                       {showAppSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       {showAppSecret ? "Hide" : "Show"}
@@ -443,7 +443,7 @@ export default function AdminPayments() {
                 type="button"
                 disabled={saving}
                 onClick={handleSaveSettings}
-                className="bg-zinc-950 text-white font-bold h-12 rounded-2xl px-8 hover:bg-zinc-800 shadow-md flex items-center gap-2"
+                className="bg-white text-zinc-900 font-bold h-12 rounded-2xl px-8 hover:bg-zinc-800 shadow-md flex items-center gap-2"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Configuration
@@ -456,23 +456,23 @@ export default function AdminPayments() {
           <div className="space-y-6">
             
             {/* Quick Sandbox Simulator */}
-            <div className="bg-[#1A1C29] text-white p-6 rounded-3xl relative overflow-hidden shadow-xl">
+            <div className="bg-white text-zinc-900 p-6 rounded-3xl relative overflow-hidden shadow-xl">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="font-extrabold text-sm uppercase tracking-widest text-white/40">Checkout Simulator</h3>
+                  <h3 className="font-extrabold text-sm uppercase tracking-widest text-zinc-500">Checkout Simulator</h3>
                   <p className="text-lg font-black mt-1">Virtual Gateway</p>
                 </div>
-                <Badge className="bg-white/10 text-white border-none font-bold uppercase tracking-wider text-[8px]">Developer Kit</Badge>
+                <Badge className="bg-slate-100 text-zinc-900 border-none font-bold uppercase tracking-wider text-[8px]">Developer Kit</Badge>
               </div>
               
-              <p className="text-xs text-white/50 leading-relaxed mb-6">
+              <p className="text-xs text-zinc-500 leading-relaxed mb-6">
                 Simulate a checkout response or standard capture to verify that webhooks, notification alerts, and database logs trigger correctly.
               </p>
 
               <Button
                 type="button"
                 onClick={simulateTestTransaction}
-                className="w-full bg-brand hover:bg-brand-hover text-white font-bold h-11 rounded-xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 text-xs"
+                className="w-full bg-brand hover:bg-brand-hover text-zinc-900 font-bold h-11 rounded-xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 text-xs"
               >
                 <Play className="w-4 h-4 fill-white" />
                 Trigger Sandbox Capture
@@ -492,9 +492,9 @@ export default function AdminPayments() {
                     <div>
                       <div className="text-xs font-bold text-zinc-800 capitalize flex items-center gap-1.5">
                         {log.gateway === 'paypal' ? 'PayPal' : 'PayHere'} 
-                        <span className="text-[9px] text-zinc-400 font-medium">({log.type})</span>
+                        <span className="text-[9px] text-zinc-500 font-medium">({log.type})</span>
                       </div>
-                      <div className="text-[10px] text-zinc-400 mt-0.5">{log.time}</div>
+                      <div className="text-[10px] text-zinc-500 mt-0.5">{log.time}</div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-extrabold text-zinc-800">{log.amount}</div>
@@ -516,7 +516,7 @@ export default function AdminPayments() {
           <div className="p-6 border-b border-zinc-100 flex justify-between items-center">
             <div>
               <h3 className="font-extrabold text-[#1A1C29] text-base">Recorded Transactions</h3>
-              <p className="text-xs text-zinc-400 mt-0.5">Live database clearing records logged directly from PayPal and PayHere webhooks.</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Live database clearing records logged directly from PayPal and PayHere webhooks.</p>
             </div>
             <Button variant="outline" size="sm" onClick={fetchRealPayments} disabled={loadingRealPayments} className="h-9 rounded-xl font-bold">
               {loadingRealPayments ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
@@ -527,7 +527,7 @@ export default function AdminPayments() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100">
+                <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
                   <th className="px-8 py-5">Clearing ID</th>
                   <th className="px-8 py-5">Partner Establishment</th>
                   <th className="px-8 py-5">Payment Gateway</th>
@@ -541,15 +541,15 @@ export default function AdminPayments() {
                   <tr>
                     <td colSpan={6} className="px-8 py-20 text-center">
                       <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
-                      <p className="text-zinc-400 text-xs font-semibold">Accessing live ledger...</p>
+                      <p className="text-zinc-500 text-xs font-semibold">Accessing live ledger...</p>
                     </td>
                   </tr>
                 ) : realPayments.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-8 py-20 text-center text-zinc-400">
+                    <td colSpan={6} className="px-8 py-20 text-center text-zinc-500">
                       <Database className="w-12 h-12 mx-auto mb-4 opacity-20" />
                       <p className="font-medium text-sm">No live payment rows recorded in database yet.</p>
-                      <p className="text-xs text-zinc-400 mt-1">Simulate checkouts using the Developer Kit in the Credentials tab.</p>
+                      <p className="text-xs text-zinc-500 mt-1">Simulate checkouts using the Developer Kit in the Credentials tab.</p>
                     </td>
                   </tr>
                 ) : (
@@ -583,7 +583,7 @@ export default function AdminPayments() {
                         </span>
                       </td>
                       
-                      <td className="px-8 py-5 text-right text-xs text-zinc-400 font-semibold">
+                      <td className="px-8 py-5 text-right text-xs text-zinc-500 font-semibold">
                         {new Date(p.created_at).toLocaleString()}
                       </td>
                     </tr>

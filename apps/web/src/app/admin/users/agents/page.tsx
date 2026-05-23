@@ -241,7 +241,7 @@ export default function AdminAgentManagement() {
              <div key={i} className="h-44 bg-zinc-100 animate-pulse rounded-2xl border border-zinc-200/50" />
            ))
          ) : agents.length === 0 ? (
-           <div className="col-span-3 py-12 text-center text-zinc-400 bg-white rounded-2xl border border-dashed border-zinc-200">
+           <div className="col-span-3 py-12 text-center text-zinc-500 bg-white rounded-2xl border border-dashed border-zinc-200">
              No active discovery agents mapped.
            </div>
          ) : (
@@ -258,7 +258,7 @@ export default function AdminAgentManagement() {
                      </div>
                      <div>
                         <h3 className="font-extrabold text-zinc-800 text-sm truncate max-w-[150px]">{agent.users?.full_name || "New Agent"}</h3>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">
+                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">
                           {agent.agent_territories?.length > 0 ? agent.agent_territories.map((at: any) => at.territories?.name).filter(Boolean).join(", ") : "Unassigned"}
                         </p>
                      </div>
@@ -266,7 +266,7 @@ export default function AdminAgentManagement() {
                   
                   <div className="space-y-2.5">
                      <div className="flex justify-between items-end text-xs">
-                        <span className="font-bold text-zinc-400 uppercase text-[9px] tracking-wider">Commission Tier</span>
+                        <span className="font-bold text-zinc-500 uppercase text-[9px] tracking-wider">Commission Tier</span>
                         <span className="font-black text-brand">{agent.commission_rate || 0}%</span>
                      </div>
                      <Progress value={agent.commission_rate || 0} className="h-1.5 bg-slate-100" />
@@ -286,11 +286,11 @@ export default function AdminAgentManagement() {
          <div className="p-5 border-b border-zinc-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
             <div>
               <h3 className="font-extrabold text-zinc-900 text-base">Full Field Force Discovery</h3>
-              <p className="text-zinc-400 text-xs mt-0.5">Complete account lists with secure manual password reset overrides.</p>
+              <p className="text-zinc-500 text-xs mt-0.5">Complete account lists with secure manual password reset overrides.</p>
             </div>
             <div className="flex items-center gap-2">
                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -304,7 +304,7 @@ export default function AdminAgentManagement() {
          <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse text-xs">
                <thead>
-                  <tr className="bg-zinc-50 text-[9px] font-bold text-zinc-400 uppercase tracking-widest h-10 border-b border-zinc-100">
+                  <tr className="bg-zinc-50 text-[9px] font-bold text-zinc-500 uppercase tracking-widest h-10 border-b border-zinc-100">
                      <th className="px-6 py-2">Agent Identity</th>
                      <th className="px-6 py-2">Core Territory</th>
                      <th className="px-6 py-2">Performance Ratio</th>
@@ -317,14 +317,14 @@ export default function AdminAgentManagement() {
                <tbody className="divide-y divide-zinc-50 font-semibold text-zinc-600">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-400">
+                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-brand" />
                         Scanning agent directory...
                       </td>
                     </tr>
                   ) : filteredAgents.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-300">
+                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-700">
                         No agents matching search criteria.
                       </td>
                     </tr>
@@ -338,13 +338,13 @@ export default function AdminAgentManagement() {
                               </div>
                               <div>
                                 <div className="font-extrabold text-zinc-900 text-sm tracking-tight">{agent.users?.full_name || "New Agent"}</div>
-                                <div className="text-[10px] text-zinc-400 font-normal">{agent.user_email}</div>
+                                <div className="text-[10px] text-zinc-500 font-normal">{agent.user_email}</div>
                               </div>
                            </div>
                         </td>
                         <td className="px-6 py-2 text-zinc-500 font-medium">
                            <div className="flex items-center gap-1.5">
-                              <MapPin className="w-3.5 h-3.5 text-zinc-300 shrink-0" /> 
+                              <MapPin className="w-3.5 h-3.5 text-zinc-700 shrink-0" /> 
                               <span className="truncate max-w-[150px] font-bold text-zinc-700">
                                 {agent.agent_territories?.length > 0 ? agent.agent_territories.map((at: any) => at.territories?.name).filter(Boolean).join(", ") : "Unassigned"}
                               </span>
@@ -358,9 +358,9 @@ export default function AdminAgentManagement() {
                               <span className="text-[10px] font-black text-zinc-900">{agent.commission_rate || 0}%</span>
                            </div>
                         </td>
-                        <td className="px-6 py-2 text-zinc-400 font-normal">
+                        <td className="px-6 py-2 text-zinc-500 font-normal">
                            <div className="flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-zinc-300" />
+                              <Mail className="w-3.5 h-3.5 text-zinc-700" />
                               <span className="text-[10px] truncate max-w-[120px]">{agent.user_email}</span>
                            </div>
                         </td>
@@ -370,10 +370,10 @@ export default function AdminAgentManagement() {
                         <td className="px-6 py-2">
                            <div className="flex flex-col gap-0.5">
                               <div className="flex items-center gap-1">
-                                 <Lock className="w-3 h-3 text-zinc-400" />
-                                 <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider">Admin Managed</span>
+                                 <Lock className="w-3 h-3 text-zinc-500" />
+                                 <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Admin Managed</span>
                               </div>
-                              <span className="text-[9px] text-zinc-400 font-normal italic">Verified Identity</span>
+                              <span className="text-[9px] text-zinc-500 font-normal italic">Verified Identity</span>
                            </div>
                         </td>
                         <td className="px-6 py-2 text-center pr-6">
@@ -407,13 +407,13 @@ export default function AdminAgentManagement() {
                 <h3 className="text-base font-black text-zinc-900 tracking-tight flex items-center gap-1.5">
                   <KeyRound className="w-4 h-4 text-brand" /> Overwrite Agent Password
                 </h3>
-                <p className="text-[11px] text-zinc-400 mt-0.5">Set a manual password for <span className="font-bold text-zinc-700">{passwordAgentName}</span></p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">Set a manual password for <span className="font-bold text-zinc-700">{passwordAgentName}</span></p>
               </div>
               <Button 
                 onClick={() => setIsPasswordModalOpen(false)} 
                 variant="ghost" 
                 size="icon" 
-                className="w-8 h-8 rounded-lg text-zinc-400"
+                className="w-8 h-8 rounded-lg text-zinc-500"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -424,7 +424,7 @@ export default function AdminAgentManagement() {
               
               {/* Target Email (Read Only) */}
               <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Account Email Address</label>
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Account Email Address</label>
                 <Input 
                   value={passwordEmail}
                   readOnly
@@ -435,7 +435,7 @@ export default function AdminAgentManagement() {
               {/* Password Input */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Manually Set Password</label>
+                  <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Manually Set Password</label>
                   <button 
                     onClick={generateRandomPassword}
                     className="text-[9px] font-black text-indigo-600 hover:text-indigo-800 uppercase tracking-wider"
@@ -453,7 +453,7 @@ export default function AdminAgentManagement() {
                   />
                   <button
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-zinc-500"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-700 hover:text-zinc-500"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -485,7 +485,7 @@ export default function AdminAgentManagement() {
               <Button 
                 onClick={handleUpdatePasswordManually}
                 disabled={isUpdatingPassword}
-                className="bg-brand hover:bg-brand/90 text-white h-10 rounded-xl font-bold px-4 text-xs"
+                className="bg-brand hover:bg-brand/90 text-zinc-900 h-10 rounded-xl font-bold px-4 text-xs"
               >
                 {isUpdatingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : "Overwrite Password Now"}
               </Button>

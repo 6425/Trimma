@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { Search, MapPin, Star, Filter, ArrowRight, Grid, SlidersHorizontal, CheckCircle2, Clock, Scissors, Loader2, Sparkles } from "lucide-react";
+import { Search, MapPin, Star, Filter, ArrowRight, Grid, SlidersHorizontal, CheckCircle2, Clock, Scissors, Loader2, Sparkles, MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

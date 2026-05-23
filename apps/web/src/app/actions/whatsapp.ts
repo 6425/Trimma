@@ -253,7 +253,7 @@ export async function sendWhatsAppNotification(bookingNo: string) {
     // 1. Fetch full booking details (including service details and salon location details)
     const { data: booking, error: bookingErr } = await supabase
       .from("bookings")
-      .select("*, salons(name, phone, address, location), services(name)")
+      .select("*, salons(name, phone, contact_phone, address, location), services(name)")
       .eq("booking_no", bookingNo)
       .single();
 
@@ -318,7 +318,7 @@ export async function sendWhatsAppNotification(bookingNo: string) {
 
     console.log(`🚀 Dispatching WhatsApp Booking Confirmation to ${customerPhone}:`);
 
-    // 4. Send WhatsApp request directly to Meta API
+    // 4. Send WhatsApp request directly to Meta API for CUSTOMER
     const response = await fetch(
       `https://graph.facebook.com/v18.0/${phoneId}/messages`,
       {
@@ -343,8 +343,36 @@ export async function sendWhatsAppNotification(bookingNo: string) {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("❌ Meta Graph API returned error response:", result);
+      console.error("❌ Meta Graph API returned error response for customer:", result);
       return { success: false, error: result.error?.message || "Failed to send WhatsApp." };
+    }
+
+    // 5. Send Notification to SALON OWNER
+    const ownerRawPhone = booking.salons?.contact_phone || booking.salons?.phone;
+    if (ownerRawPhone) {
+      const ownerPhone = cleanPhoneNumber(ownerRawPhone);
+      const ownerMessage = `🔔 *NEW CONFIRMED BOOKING* 🔔\n\nYou have a new confirmed booking from ${customerName}!\n\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${serviceName}\n💳 Deposit Paid: LKR ${depositAmount.toLocaleString()}\n\nPlease prepare for their arrival! ✂️`;
+
+      await fetch(
+        `https://graph.facebook.com/v18.0/${phoneId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: ownerPhone,
+            type: "text",
+            text: {
+              preview_url: false,
+              body: ownerMessage,
+            },
+          }),
+        }
+      );
     }
 
     return { success: true, messageId: result.messages?.[0]?.id };

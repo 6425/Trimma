@@ -298,7 +298,7 @@ export default function SubscriptionPlanManagement() {
                   features: "" 
                 }); 
               }}
-              className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
+              className="bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" /> Create Custom Plan
             </Button>
@@ -309,12 +309,12 @@ export default function SubscriptionPlanManagement() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 text-zinc-400">
+            <div className="flex flex-col items-center justify-center py-24 text-zinc-500">
                <Loader2 className="w-8 h-8 animate-spin mb-4" />
                <p>Loading pricing tiers...</p>
             </div>
           ) : plans.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-zinc-400 bg-white rounded-3xl border-2 border-dashed border-zinc-100">
+            <div className="flex flex-col items-center justify-center py-24 text-zinc-500 bg-white rounded-3xl border-2 border-dashed border-zinc-100">
                <Package className="w-12 h-12 mb-4 opacity-20" />
                <p>No pricing tiers found.</p>
             </div>
@@ -358,26 +358,26 @@ export default function SubscriptionPlanManagement() {
                           <span className="text-2xl font-bold text-brand">
                             {plan.monthly_price === 0 ? "FREE" : `LKR ${plan.monthly_price.toLocaleString()}`}
                           </span>
-                          {plan.monthly_price > 0 && <span className="text-zinc-400 text-xs font-medium">/ month</span>}
+                          {plan.monthly_price > 0 && <span className="text-zinc-500 text-xs font-medium">/ month</span>}
                       </div>
                     </div>
 
                     {/* Numeric Specifications & Limits */}
                     <div className="grid grid-cols-2 gap-3 mb-6 bg-zinc-50 p-4 rounded-2xl text-xs font-semibold text-zinc-600">
                       <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-zinc-400" />
+                        <Users className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Staff: {plan.max_staff}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Scissors className="w-3.5 h-3.5 text-zinc-400" />
+                        <Scissors className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Services: {plan.max_services >= 9999 ? "Unlimited" : plan.max_services}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Image className="w-3.5 h-3.5 text-zinc-400" />
+                        <Image className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Images: {plan.max_images}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <GitBranch className="w-3.5 h-3.5 text-zinc-400" />
+                        <GitBranch className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Branches: {plan.max_branches === 0 ? "No" : plan.max_branches}</span>
                       </div>
                     </div>
@@ -394,7 +394,7 @@ export default function SubscriptionPlanManagement() {
                           </div>
                         ))}
                         {featuresList.length > 5 && (
-                          <div className="text-[10px] text-zinc-400 font-semibold pl-6">
+                          <div className="text-[10px] text-zinc-500 font-semibold pl-6">
                             + {featuresList.length - 5} more standard features
                           </div>
                         )}
@@ -415,29 +415,29 @@ export default function SubscriptionPlanManagement() {
         </div>
 
         <div className="space-y-6">
-          <Card className={`border-none shadow-sm p-8 rounded-3xl text-white relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-zinc-900'}`}>
-            <Package className="absolute -right-8 -bottom-8 w-40 h-40 text-white/5 rotate-12" />
+          <Card className={`border-none shadow-sm p-8 rounded-3xl text-zinc-900 relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-slate-50'}`}>
+            <Package className="absolute -right-8 -bottom-8 w-40 h-40 text-zinc-900/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update Specifications' : 'Create Tier'}</h3>
-            <p className="text-white/60 text-sm mb-6">Modify platform package restrictions.</p>
+            <p className="text-zinc-500 text-sm mb-6">Modify platform package restrictions.</p>
             
             <form onSubmit={handleSave} className="space-y-4 relative z-10">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Tier Name</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Tier Name</label>
                 <Input 
                    value={formData.name}
                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                   className="bg-white/10 border-white/10 text-white h-12 rounded-xl focus:ring-white/20" 
+                   className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
                    placeholder="e.g. Starter" 
                    required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Monthly Cost (LKR)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Monthly Cost (LKR)</label>
                 <Input 
                   type="number" 
                   value={formData.monthly_price}
                   onChange={(e) => setFormData({ ...formData, monthly_price: e.target.value })}
-                  className="bg-white/10 border-white/10 text-white h-12 rounded-xl focus:ring-white/20" 
+                  className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
                   placeholder="3500" 
                   required
                 />
@@ -445,64 +445,64 @@ export default function SubscriptionPlanManagement() {
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Staff Slots</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Staff Slots</label>
                   <Input 
                     type="number" 
                     value={formData.max_staff}
                     onChange={(e) => setFormData({ ...formData, max_staff: e.target.value })}
-                    className="bg-white/10 border-white/10 text-white h-11 rounded-xl" 
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
                     placeholder="5" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Max Services</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Max Services</label>
                   <Input 
                     type="number" 
                     value={formData.max_services}
                     onChange={(e) => setFormData({ ...formData, max_services: e.target.value })}
-                    className="bg-white/10 border-white/10 text-white h-11 rounded-xl" 
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
                     placeholder="12" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Max Images</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Max Images</label>
                   <Input 
                     type="number" 
                     value={formData.max_images}
                     onChange={(e) => setFormData({ ...formData, max_images: e.target.value })}
-                    className="bg-white/10 border-white/10 text-white h-11 rounded-xl" 
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
                     placeholder="6" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Branch Limit</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Branch Limit</label>
                   <Input 
                     type="number" 
                     value={formData.max_branches}
                     onChange={(e) => setFormData({ ...formData, max_branches: e.target.value })}
-                    className="bg-white/10 border-white/10 text-white h-11 rounded-xl" 
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
                     placeholder="2" 
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Service Categories Allowed (Count or 999 for All)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Service Categories Allowed (Count or 999 for All)</label>
                 <Input 
                   type="number" 
                   value={formData.allowed_categories_limit}
                   onChange={(e) => setFormData({ ...formData, allowed_categories_limit: e.target.value })}
-                  className="bg-white/10 border-white/10 text-white h-11 rounded-xl" 
+                  className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
                   placeholder="5 or 999" 
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest pl-1">Included Features (Comma Separated)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Included Features (Comma Separated)</label>
                 <textarea 
                   value={formData.features}
                   onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                  className="w-full bg-white/10 border-white/10 text-white p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-white/20" 
+                  className="w-full bg-slate-100 border-slate-200 text-zinc-900 p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-white/20" 
                   placeholder="Staff Management, FB/WA Integration, Free Gmail..."
                   rows={4}
                 />
@@ -527,7 +527,7 @@ export default function SubscriptionPlanManagement() {
                       fetchPlans(); 
                     }}
                     variant="ghost" 
-                    className="flex-1 text-white hover:bg-white/10 h-12 rounded-xl font-bold"
+                    className="flex-1 text-zinc-900 hover:bg-slate-100 h-12 rounded-xl font-bold"
                   >
                     Cancel
                   </Button>
@@ -535,7 +535,7 @@ export default function SubscriptionPlanManagement() {
                 <Button 
                   disabled={saving}
                   type="submit" 
-                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-white'}`}
+                  className={`flex-[2] h-12 rounded-xl font-bold transition-all ${editId ? 'bg-white text-brand hover:bg-zinc-100' : 'bg-brand hover:bg-brand-hover text-zinc-900'}`}
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : editId ? 'Update Tier' : 'Deploy Subscription Tier'}
                 </Button>

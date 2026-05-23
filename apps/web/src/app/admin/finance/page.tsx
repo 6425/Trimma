@@ -216,7 +216,7 @@ export default function FinanceDashboard() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider bg-brand/10 text-brand uppercase rounded-full">Sprint 5 Ledger</span>
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400">
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-500">
               <Sparkles className="w-3 h-3 text-amber-500 animate-pulse" /> Direct Database Reads Enabled
             </span>
           </div>
@@ -235,7 +235,7 @@ export default function FinanceDashboard() {
         {/* Gross Revenue */}
         <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Gross Bookings</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Gross Bookings</span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
               <TrendingUp className="w-4 h-4" />
             </div>
@@ -247,23 +247,23 @@ export default function FinanceDashboard() {
         </div>
 
         {/* Platform Share */}
-        <div className="bg-[#1A1C29] border border-[#1A1C29] rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all text-white">
+        <div className="bg-white border border-[#1A1C29] rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all text-zinc-900">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Platform Fee ({globalRates.platform}%)</span>
-            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white">
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Platform Fee ({globalRates.platform}%)</span>
+            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-zinc-900">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-black text-white">{formatLKR(stats.platformComm)}</h3>
-            <p className="text-[10px] text-white/50">Base engine fee applied</p>
+            <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.platformComm)}</h3>
+            <p className="text-[10px] text-zinc-500">Base engine fee applied</p>
           </div>
         </div>
 
         {/* Salon Upfront Reservation */}
         <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Salon Res. ({globalRates.salon}%)</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Salon Res. ({globalRates.salon}%)</span>
             <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
               <Store className="w-4 h-4" />
             </div>
@@ -277,7 +277,7 @@ export default function FinanceDashboard() {
         {/* PayHere Fee */}
         <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">PayHere ({globalRates.payhere}%)</span>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">PayHere ({globalRates.payhere}%)</span>
             <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
               <CreditCard className="w-4 h-4" />
             </div>
@@ -308,7 +308,7 @@ export default function FinanceDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div>
             <h2 className="font-bold text-lg text-zinc-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-zinc-400" /> Bookings Ledger &amp; Breakdown
+              <Activity className="w-5 h-5 text-zinc-500" /> Bookings Ledger &amp; Breakdown
             </h2>
             <p className="text-xs text-zinc-500 mt-0.5">Click any booking row to review the platform, salon, payhere, and agent split breakdowns.</p>
           </div>
@@ -330,8 +330,8 @@ export default function FinanceDashboard() {
 
         <div className="space-y-3">
           {filteredBookings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
-              <Calendar className="w-8 h-8 text-zinc-300" />
+            <div className="flex flex-col items-center justify-center py-12 text-zinc-500 space-y-2">
+              <Calendar className="w-8 h-8 text-zinc-700" />
               <p className="text-sm font-medium">No bookings found matching the filter.</p>
             </div>
           ) : (
@@ -350,16 +350,16 @@ export default function FinanceDashboard() {
                           <span className="font-bold text-zinc-900 text-sm">{booking.booking_no || "TRM-000000"}</span>
                           <span className={`px-2 py-0.5 border text-[10px] font-bold rounded-full ${getStatusStyle(booking.status)}`}>{booking.status}</span>
                         </div>
-                        <p className="text-xs text-zinc-400 mt-0.5">{booking.customer_email} • {formatDate(booking.booking_date)}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">{booking.customer_email} • {formatDate(booking.booking_date)}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-none pt-3 md:pt-0">
                       <div className="text-left md:text-right">
                         <span className="text-sm font-black text-zinc-900">{formatLKR(booking.amount)}</span>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">Gross Amount</p>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">Gross Amount</p>
                       </div>
-                      <div className="text-zinc-400">
+                      <div className="text-zinc-500">
                         <ArrowRight className={`w-4 h-4 transform transition-transform ${isExpanded ? "rotate-90 text-brand" : ""}`} />
                       </div>
                     </div>
@@ -412,7 +412,7 @@ export default function FinanceDashboard() {
               </h2>
               <p className="text-xs text-zinc-500 mt-0.5">Admin centrally manage standard rates applied to all new bookings.</p>
             </div>
-            <Button onClick={handleUpdateRates} disabled={savingRates} className="bg-brand hover:bg-brand/90 text-white font-bold rounded-xl shadow-sm h-10 px-5 flex items-center gap-2 text-xs">
+            <Button onClick={handleUpdateRates} disabled={savingRates} className="bg-brand hover:bg-brand/90 text-zinc-900 font-bold rounded-xl shadow-sm h-10 px-5 flex items-center gap-2 text-xs">
               {savingRates ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save Rates
             </Button>
           </div>

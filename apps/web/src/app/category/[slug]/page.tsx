@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Search, MapPin, Star, Filter, ShieldCheck, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User } from "lucide-react";
+import { Search, MapPin, Star, Filter, ShieldCheck, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User, Map as MapIcon } from "lucide-react";
 
 const IconMap: Record<string, any> = {
   Scissors,
@@ -69,16 +69,7 @@ export default function CategoryPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("salons")
-        .select(`
-          *,
-          services (
-            id,
-            name,
-            price,
-            category
-          )
-        `)
-        .or("status.eq.verified,status.eq.active,status.eq.pending,is_verified.eq.true")
+        .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
         .limit(10);
 
       if (error) throw error;
@@ -154,7 +145,7 @@ export default function CategoryPage() {
 
       setSalons(formatted);
     } catch (err) {
-      console.error("Failed to load category page salons:", err);
+      console.error("Failed to load category page salons:", err.message || err);
     } finally {
       setLoading(false);
     }
@@ -164,7 +155,9 @@ export default function CategoryPage() {
     return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(price);
   };
 
-  const categoryName = slug ? (slug as string).split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Salons & Spas";
+  const currentCategory = categories.find(c => c.slug === slug);
+  const heroImage = currentCategory?.image_url || "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
+  const categoryName = currentCategory?.name || (slug ? (slug as string).split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Salons & Spas");
 
   // Filter salons based on category slug matching tags/category & live search query
   const filteredSalons = salons.filter(salon => {
@@ -188,13 +181,14 @@ export default function CategoryPage() {
       
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-14 md:py-20 flex items-center justify-center">
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 bg-zinc-950">
           <img 
-            src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop" 
+            src={heroImage} 
             alt="Category Hero" 
-            className="w-full h-full object-cover opacity-15 grayscale"
+            className="w-full h-full object-cover opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-[#F5B700]/30 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-950" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">

@@ -123,7 +123,7 @@ export default function SalonPage() {
         // 1. Fetch Salon by Slug directly from Supabase
         let { data: salonData, error: salonError } = await supabase
           .from("salons")
-          .select("*")
+          .select("id, slug, name, city, district, address, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
           .eq("slug", slug)
           .maybeSingle();
 
@@ -133,7 +133,7 @@ export default function SalonPage() {
           if (isUuid) {
             const { data: fallbackData } = await supabase
               .from("salons")
-              .select("*")
+              .select("id, slug, name, city, district, address, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
               .eq("id", slug)
               .maybeSingle();
             if (fallbackData) {
@@ -438,6 +438,28 @@ export default function SalonPage() {
       const selectedService = services.find(s => s.id === selectedServiceId);
       const totalPrice = parseFloat(selectedService?.price || 0);
 
+      // Fetch dynamic commissions
+      const { data: ratesData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
+      const platformRate = ratesData?.platform_percentage || 10;
+      const salonRate = ratesData?.salon_percentage || 10;
+      const payhereRate = ratesData?.payhere_percentage || 3;
+      const agentRate = ratesData?.agent_percentage || 20;
+
+      const totalReservationPct = platformRate + salonRate + payhereRate;
+      const reservationFee = totalPrice * (totalReservationPct / 100);
+
+      let agentEmail = null;
+      let agentCommissionPct = 0;
+      let agentCommissionAmount = 0;
+
+      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email').eq('id', salon.id).single();
+      if (salonData?.onboarding_agent_email) {
+        agentEmail = salonData.onboarding_agent_email;
+        agentCommissionPct = agentRate;
+        const platformCommission = totalPrice * (platformRate / 100);
+        agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
+      }
+
       // Check if PayHere is active globally
       const { data: paymentSettings } = await supabase
         .from("global_payment_settings")
@@ -460,7 +482,16 @@ export default function SalonPage() {
           booking_time: formattedTime,
           amount: totalPrice,
           status: payhereEnabled ? "pending" : "confirmed",
-          payment_status: "unpaid"
+          payment_status: "unpaid",
+          reservation_fee_paid: !payhereEnabled,
+          reservation_fee_refundable: false,
+          total_reservation_fee: reservationFee,
+          salon_upfront_amount: totalPrice * (salonRate / 100),
+          platform_commission_amount: totalPrice * (platformRate / 100),
+          payhere_fee_amount: totalPrice * (payhereRate / 100),
+          agent_email: agentEmail,
+          agent_commission_percent: agentCommissionPct,
+          agent_commission_amount: agentCommissionAmount
         })
         .select()
         .single();
@@ -513,11 +544,6 @@ export default function SalonPage() {
       }
 
       if (payhereEnabled) {
-        const servicePrice = parseFloat(selectedService?.price || 0);
-        const serviceCharge = servicePrice * 0.10;
-        const totalPriceWithTax = servicePrice + serviceCharge;
-        const reservationFee = totalPriceWithTax * 0.20;
-
         await supabase.from("payments").insert({
           booking_id: newBooking.id,
           salon_id: salon.id,

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, Scissors, Users, GitBranch, ShieldCheck, HelpCircle, Loader2 } from "lucide-react";
+import { Check, Scissors, Users, GitBranch, ShieldCheck, HelpCircle, Loader2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
@@ -244,7 +244,7 @@ export default function PricingPage() {
                       <span>Staff: {plan.max_staff}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <ScissorsIcon className={`w-3.5 h-3.5 ${isPro ? "text-rose-400" : "text-zinc-400"}`} />
+                      <Scissors className={`w-3.5 h-3.5 ${isPro ? "text-rose-400" : "text-zinc-400"}`} />
                       <span>Services: {plan.max_services >= 9999 ? "Unlimited" : plan.max_services}</span>
                     </div>
                     <div className="flex items-center gap-2">

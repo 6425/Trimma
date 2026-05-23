@@ -204,7 +204,7 @@ function SettingsPanelContent() {
                     placeholder="Enter 15-digit Phone ID"
                     className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
                   />
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[10px] text-zinc-500">
                     Your official Meta WhatsApp Developer Sandbox or Business Phone Number ID.
                   </p>
                 </div>
@@ -227,12 +227,12 @@ function SettingsPanelContent() {
                     <button
                       type="button"
                       onClick={() => setShowToken(!showToken)}
-                      className="absolute right-3 text-zinc-400 hover:text-zinc-700"
+                      className="absolute right-3 text-zinc-500 hover:text-zinc-700"
                     >
                       {showToken ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[10px] text-zinc-500">
                     Ensure this matches your Meta dashboard access token (temporary Sandbox tokens last for 23 hours).
                   </p>
                 </div>
@@ -243,7 +243,7 @@ function SettingsPanelContent() {
                     <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800">
                       Automated Notification Trigger Events & Templates
                     </h4>
-                    <p className="text-[10px] text-zinc-400 mt-0.5">
+                    <p className="text-[10px] text-zinc-500 mt-0.5">
                       Configure active dispatches and customize message copy using dynamic placeholders.
                     </p>
                   </div>
@@ -255,7 +255,7 @@ function SettingsPanelContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs font-extrabold text-zinc-800">1. Booking Confirmed Receipt</div>
-                          <div className="text-[10px] text-zinc-400">Send deposit receipt + salon location details on success.</div>
+                          <div className="text-[10px] text-zinc-500">Send deposit receipt + salon location details on success.</div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 
@@ -278,7 +278,7 @@ function SettingsPanelContent() {
                             className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
-                          <div className="text-[9px] text-zinc-400 leading-relaxed">
+                          <div className="text-[9px] text-zinc-500 leading-relaxed">
                             💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{booking_date}"}</code>, <code>{"{booking_time}"}</code>, <code>{"{service_name}"}</code>, <code>{"{total_price}"}</code>, <code>{"{deposit_paid}"}</code>, <code>{"{balance_to_pay}"}</code>, <code>{"{salon_address}"}</code>, <code>{"{maps_link}"}</code>
                           </div>
                         </div>
@@ -290,7 +290,7 @@ function SettingsPanelContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs font-extrabold text-zinc-800">2. Booking Rescheduled Alert</div>
-                          <div className="text-[10px] text-zinc-400">Send automated date/time shift notifications.</div>
+                          <div className="text-[10px] text-zinc-500">Send automated date/time shift notifications.</div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 
@@ -313,7 +313,7 @@ function SettingsPanelContent() {
                             className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
-                          <div className="text-[9px] text-zinc-400 leading-relaxed">
+                          <div className="text-[9px] text-zinc-500 leading-relaxed">
                             💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{booking_date}"}</code>, <code>{"{booking_time}"}</code>, <code>{"{service_name}"}</code>, <code>{"{salon_address}"}</code>, <code>{"{maps_link}"}</code>
                           </div>
                         </div>
@@ -325,7 +325,7 @@ function SettingsPanelContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs font-extrabold text-zinc-800">3. Booking Cancelled Alert</div>
-                          <div className="text-[10px] text-zinc-400">Send cancellation confirmation + refund trace link.</div>
+                          <div className="text-[10px] text-zinc-500">Send cancellation confirmation + refund trace link.</div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 
@@ -348,7 +348,7 @@ function SettingsPanelContent() {
                             className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
-                          <div className="text-[9px] text-zinc-400 leading-relaxed">
+                          <div className="text-[9px] text-zinc-500 leading-relaxed">
                             💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{booking_date}"}</code>, <code>{"{booking_time}"}</code>, <code>{"{service_name}"}</code>
                           </div>
                         </div>
@@ -360,7 +360,7 @@ function SettingsPanelContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs font-extrabold text-zinc-800">4. Feedback Review Prompt</div>
-                          <div className="text-[10px] text-zinc-400">Request review + rating link 2 hours post-completion.</div>
+                          <div className="text-[10px] text-zinc-500">Request review + rating link 2 hours post-completion.</div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 
@@ -383,7 +383,7 @@ function SettingsPanelContent() {
                             className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
-                          <div className="text-[9px] text-zinc-400 leading-relaxed">
+                          <div className="text-[9px] text-zinc-500 leading-relaxed">
                             💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{review_link}"}</code>
                           </div>
                         </div>
@@ -395,7 +395,7 @@ function SettingsPanelContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-xs font-extrabold text-zinc-800">5. Salon Onboarding Invitation</div>
-                          <div className="text-[10px] text-zinc-400">Send Google login link to successfully verified salons.</div>
+                          <div className="text-[10px] text-zinc-500">Send Google login link to successfully verified salons.</div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input 
@@ -418,7 +418,7 @@ function SettingsPanelContent() {
                             className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             placeholder="Enter template content..."
                           />
-                          <div className="text-[9px] text-zinc-400 leading-relaxed">
+                          <div className="text-[9px] text-zinc-500 leading-relaxed">
                             💡 <strong>Merge Tags:</strong> <code>{"{salon_name}"}</code>, <code>{"{owner_gmail}"}</code>, <code>{"{login_link}"}</code>
                           </div>
                         </div>
@@ -435,7 +435,7 @@ function SettingsPanelContent() {
                 <Button 
                   type="submit"
                   disabled={saving}
-                  className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-bold h-11 px-5 flex items-center gap-2"
+                  className="bg-slate-50 hover:bg-zinc-800 text-zinc-900 rounded-xl font-bold h-11 px-5 flex items-center gap-2"
                 >
                   {saving ? (
                     <>
@@ -456,14 +456,14 @@ function SettingsPanelContent() {
           {/* SANDBOX TEST UTILITY PANEL */}
           <div className="space-y-6">
             
-            <div className="bg-zinc-950 rounded-2xl p-6 text-white space-y-6 shadow-md border border-zinc-850">
+            <div className="bg-white rounded-2xl p-6 text-zinc-900 space-y-6 shadow-md border border-slate-200">
               
               <div className="space-y-2">
                 <h3 className="font-extrabold text-base flex items-center gap-2">
                   <PlayCircle className="w-5 h-5 text-emerald-500" />
                   Live Sandbox Tester
                 </h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">
+                <p className="text-xs text-zinc-500 leading-relaxed">
                   Fire a test alert directly through the Cloud API to verify connection status and recipient whitelisting.
                 </p>
               </div>
@@ -472,7 +472,7 @@ function SettingsPanelContent() {
               <div className="space-y-4 pt-2">
                 
                 <div className="space-y-2">
-                  <Label htmlFor="test_phone" className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                  <Label htmlFor="test_phone" className="text-[10px] font-black uppercase tracking-wider text-zinc-500">
                     Recipient Phone Number
                   </Label>
                   <Input 
@@ -481,7 +481,7 @@ function SettingsPanelContent() {
                     onChange={(e) => setTestPhone(e.target.value)}
                     required
                     placeholder="+94 77 123 4567"
-                    className="h-10 bg-zinc-900 border-zinc-800 focus:border-emerald-500 rounded-xl text-white placeholder-zinc-600 text-xs"
+                    className="h-10 bg-slate-50 border-zinc-800 focus:border-emerald-500 rounded-xl text-zinc-900 placeholder-zinc-600 text-xs"
                   />
                   <p className="text-[9px] text-zinc-500 leading-normal">
                     This phone number **must** be verified in your Meta Sandbox whitelist list!
@@ -492,7 +492,7 @@ function SettingsPanelContent() {
                   type="button"
                   onClick={handleTestSend}
                   disabled={testing || !enabled}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs h-10 flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-zinc-900 rounded-xl font-bold text-xs h-10 flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
                 >
                   {testing ? (
                     <>
@@ -510,7 +510,7 @@ function SettingsPanelContent() {
               {/* WHATEVER TIPS */}
               <div className="border-t border-zinc-800 pt-4 space-y-2">
                 <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block">Sandbox Setup Guides</span>
-                <p className="text-[10px] text-zinc-400 leading-relaxed">
+                <p className="text-[10px] text-zinc-500 leading-relaxed">
                   Sandbox accounts only allow sending to verified test phones. In production, this system will automatically message any salon partner or client worldwide!
                 </p>
               </div>

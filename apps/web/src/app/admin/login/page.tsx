@@ -45,9 +45,9 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800 via-zinc-950 to-zinc-950">
+    <div className="min-h-screen bg-white flex items-center justify-center p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800 via-zinc-950 to-zinc-950">
       <div className="w-full max-w-md">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl space-y-8 relative overflow-hidden">
+        <div className="bg-slate-50 border border-zinc-800 rounded-2xl p-8 shadow-2xl space-y-8 relative overflow-hidden">
           {/* Decorative background element */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-zinc-100/5 rounded-full blur-3xl pointer-events-none"></div>
           
@@ -70,21 +70,21 @@ export default function AdminLogin() {
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-zinc-400">Admin Email</Label>
+                <Label htmlFor="email" className="text-zinc-500">Admin Email</Label>
                 <div className="relative">
                   <Input 
                     id="email" 
                     type="email" 
                     placeholder="admin@trimma.io" 
                     required 
-                    className="h-12 bg-zinc-950 border-zinc-800 focus:border-zinc-700 text-white pl-4" 
+                    className="h-12 bg-white border-zinc-800 focus:border-zinc-700 text-zinc-900 pl-4" 
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label htmlFor="password" className="text-zinc-400">Authorization Key</Label>
-                  <a href="#" className="text-xs text-zinc-500 hover:text-zinc-300">Reset Key</a>
+                  <Label htmlFor="password" className="text-zinc-500">Authorization Key</Label>
+                  <a href="#" className="text-xs text-zinc-500 hover:text-zinc-700">Reset Key</a>
                 </div>
                 <div className="relative">
                   <Input 
@@ -92,7 +92,7 @@ export default function AdminLogin() {
                     type="password" 
                     placeholder="••••••••"
                     required 
-                    className="h-12 bg-zinc-950 border-zinc-800 focus:border-zinc-700 text-white pl-4" 
+                    className="h-12 bg-white border-zinc-800 focus:border-zinc-700 text-zinc-900 pl-4" 
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-700">
                     <Lock className="w-4 h-4" />
@@ -118,7 +118,7 @@ export default function AdminLogin() {
           </form>
 
           <div className="pt-4 border-t border-zinc-800 flex justify-between items-center relative z-10">
-            <Link href="/login" className="text-xs text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
+            <Link href="/login" className="text-xs text-zinc-500 hover:text-zinc-700 flex items-center gap-1">
               User Login
             </Link>
             <p className="text-[10px] text-zinc-700 font-mono uppercase tracking-widest">Trimma OS v1.0</p>

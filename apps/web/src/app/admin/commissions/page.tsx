@@ -177,7 +177,7 @@ export default function CommissionManagement() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-zinc-400">
+      <div className="flex flex-col items-center justify-center py-32 text-zinc-500">
         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
         <p className="text-sm font-bold">Loading Commission Engine...</p>
       </div>
@@ -193,7 +193,7 @@ export default function CommissionManagement() {
           <p className="text-zinc-500 text-sm mt-1">Manage global financial ledger rules, agent tiers, and settlement logic.</p>
         </div>
         <div className="flex gap-2">
-           <Button className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold rounded-xl shadow-md h-10 px-4 flex items-center gap-2">
+           <Button className="bg-white hover:bg-zinc-800 text-zinc-900 font-bold rounded-xl shadow-md h-10 px-4 flex items-center gap-2">
              <FileText className="w-4 h-4" /> Audit Logs
            </Button>
         </div>
@@ -224,7 +224,7 @@ export default function CommissionManagement() {
                    </Button>
                  ) : (
                    <div className="flex gap-1.5">
-                     <Button size="sm" onClick={saveBookingCommission} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
+                     <Button size="sm" onClick={saveBookingCommission} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-zinc-900 font-bold text-xs gap-1.5">
                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                      </Button>
                      <Button variant="outline" size="sm" onClick={() => { setEditBooking(false); if(bookingConfig) setBookingForm({ platform: bookingConfig.platform_percentage, salon: bookingConfig.salon_percentage, payhere: bookingConfig.payhere_percentage || 3 }); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
@@ -237,7 +237,7 @@ export default function CommissionManagement() {
              
              <div className="grid grid-cols-2 gap-4">
                <div className="bg-zinc-50 rounded-2xl p-4 border border-slate-100 relative overflow-hidden">
-                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Platform Share</p>
+                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Platform Share</p>
                  {editBooking ? (
                    <div className="flex items-baseline gap-1">
                      <input 
@@ -249,15 +249,15 @@ export default function CommissionManagement() {
                        }}
                        className="w-full text-2xl font-black text-zinc-900 bg-transparent border-none p-0 focus:ring-0" 
                      />
-                     <span className="text-xl font-black text-zinc-400">%</span>
+                     <span className="text-xl font-black text-zinc-500">%</span>
                    </div>
                  ) : (
                    <p className="text-3xl font-black text-zinc-900">{bookingForm.platform}%</p>
                  )}
-                 <Building2 className="absolute right-4 bottom-4 w-12 h-12 text-zinc-200/50" />
+                 <Building2 className="absolute right-4 bottom-4 w-12 h-12 text-zinc-800/50" />
                </div>
                <div className="bg-zinc-50 rounded-2xl p-4 border border-slate-100 relative overflow-hidden">
-                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Salon Share</p>
+                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Salon Share</p>
                  {editBooking ? (
                    <div className="flex items-baseline gap-1">
                      <input 
@@ -269,16 +269,16 @@ export default function CommissionManagement() {
                        }}
                        className="w-full text-2xl font-black text-emerald-600 bg-transparent border-none p-0 focus:ring-0" 
                      />
-                     <span className="text-xl font-black text-zinc-400">%</span>
+                     <span className="text-xl font-black text-zinc-500">%</span>
                    </div>
                  ) : (
                    <p className="text-3xl font-black text-zinc-900">{bookingForm.salon}%</p>
                  )}
-                 <ShieldCheck className="absolute right-4 bottom-4 w-12 h-12 text-zinc-200/50" />
+                 <ShieldCheck className="absolute right-4 bottom-4 w-12 h-12 text-zinc-800/50" />
                </div>
                {editBooking && (
                 <div className="bg-zinc-50 rounded-2xl p-4 border border-slate-100 relative overflow-hidden mt-4 col-span-2">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">PayHere Fee</p>
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">PayHere Fee</p>
                   <div className="flex items-baseline gap-1">
                      <input 
                        type="number" step="0.1" min="0" max="23"
@@ -289,7 +289,7 @@ export default function CommissionManagement() {
                        }}
                        className="w-full text-2xl font-black text-amber-600 bg-transparent border-none p-0 focus:ring-0" 
                      />
-                     <span className="text-sm font-bold text-zinc-400">%</span>
+                     <span className="text-sm font-bold text-zinc-500">%</span>
                   </div>
                 </div>
               )}
@@ -307,7 +307,7 @@ export default function CommissionManagement() {
              {editBooking && (bookingForm.platform + bookingForm.salon + bookingForm.payhere === 23) && (
                <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Validated: Total is 23%</p>
              )}
-             <div className="mt-4 text-xs font-semibold text-zinc-400 flex items-center justify-between">
+             <div className="mt-4 text-xs font-semibold text-zinc-500 flex items-center justify-between">
                 <span>Effective: {bookingConfig?.effective_from ? new Date(bookingConfig.effective_from).toLocaleDateString() : "Pending"}</span>
                 <span className="text-indigo-600 cursor-pointer hover:underline">View History</span>
              </div>
@@ -332,7 +332,7 @@ export default function CommissionManagement() {
                    </Button>
                  ) : (
                    <div className="flex gap-1.5">
-                     <Button size="sm" onClick={saveSubscriptionCommission} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
+                     <Button size="sm" onClick={saveSubscriptionCommission} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-zinc-900 font-bold text-xs gap-1.5">
                        {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                      </Button>
                      <Button variant="outline" size="sm" onClick={() => { setEditSubscription(false); if(subscriptionConfig) setSubscriptionForm({ platform: subscriptionConfig.platform_percentage, agent: subscriptionConfig.agent_percentage }); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
@@ -345,7 +345,7 @@ export default function CommissionManagement() {
              
              <div className="grid grid-cols-2 gap-4">
                <div className="bg-zinc-50 rounded-2xl p-4 border border-slate-100">
-                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Platform Retains</p>
+                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Platform Retains</p>
                  {editSubscription ? (
                    <div className="flex items-baseline gap-1">
                      <input 
@@ -357,14 +357,14 @@ export default function CommissionManagement() {
                        }}
                        className="w-24 h-12 text-2xl font-black text-zinc-900 bg-white border border-amber-200 rounded-xl px-3 focus:outline-none focus:border-amber-500 transition-colors"
                      />
-                     <span className="text-xl font-black text-zinc-400">%</span>
+                     <span className="text-xl font-black text-zinc-500">%</span>
                    </div>
                  ) : (
                    <p className="text-2xl font-black text-zinc-900">{subscriptionForm.platform}%</p>
                  )}
                </div>
                <div className="bg-zinc-50 rounded-2xl p-4 border border-slate-100">
-                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Agent (Default)</p>
+                 <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Agent (Default)</p>
                  {editSubscription ? (
                    <div className="flex items-baseline gap-1">
                      <input 
@@ -376,7 +376,7 @@ export default function CommissionManagement() {
                        }}
                        className="w-24 h-12 text-2xl font-black text-zinc-900 bg-white border border-amber-200 rounded-xl px-3 focus:outline-none focus:border-amber-500 transition-colors"
                      />
-                     <span className="text-xl font-black text-zinc-400">%</span>
+                     <span className="text-xl font-black text-zinc-500">%</span>
                    </div>
                  ) : (
                    <p className="text-2xl font-black text-zinc-900">{subscriptionForm.agent}%</p>
@@ -409,7 +409,7 @@ export default function CommissionManagement() {
                  </Button>
                ) : (
                  <div className="flex gap-1.5">
-                   <Button size="sm" onClick={saveAgentTiers} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5">
+                   <Button size="sm" onClick={saveAgentTiers} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-zinc-900 font-bold text-xs gap-1.5">
                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                    </Button>
                    <Button variant="outline" size="sm" onClick={() => { setEditTiers(false); setTiersForm(agentTiers.map(t => ({ ...t }))); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
@@ -423,9 +423,9 @@ export default function CommissionManagement() {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100">
-                      <th className="pb-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Tier Name</th>
-                      <th className="pb-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">SaaS Comm %</th>
-                      <th className="pb-3 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Booking % (Ref)</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tier Name</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">SaaS Comm %</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Booking % (Ref)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -484,29 +484,29 @@ export default function CommissionManagement() {
 
         {/* Right Col: Simulator */}
         <div className="lg:col-span-1">
-           <div className="bg-[#1A1C29] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden sticky top-24">
-              <Calculator className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12 pointer-events-none" />
+           <div className="bg-white rounded-3xl p-6 text-zinc-900 shadow-2xl relative overflow-hidden sticky top-24">
+              <Calculator className="absolute -right-8 -bottom-8 w-48 h-48 text-zinc-900/5 rotate-12 pointer-events-none" />
               
               <div className="flex items-center gap-3 mb-6 relative z-10">
-                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md">
+                 <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center backdrop-blur-md">
                    <Activity className="w-5 h-5 text-rose-400" />
                  </div>
                  <div>
-                   <h2 className="font-bold text-white text-lg">Commission Simulator</h2>
-                   <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Ledger Sandbox</p>
+                   <h2 className="font-bold text-zinc-900 text-lg">Commission Simulator</h2>
+                   <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Ledger Sandbox</p>
                  </div>
               </div>
 
               <div className="space-y-6 relative z-10">
                 <div>
-                  <label className="text-xs font-bold text-white/60 mb-2 block">Customer Paid (LKR)</label>
+                  <label className="text-xs font-bold text-zinc-500 mb-2 block">Customer Paid (LKR)</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-bold">LKR</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">LKR</span>
                     <input 
                       type="number" 
                       value={simAmount}
                       onChange={(e) => setSimAmount(Number(e.target.value))}
-                      className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 text-xl font-black text-white focus:outline-none focus:border-rose-500/50 transition-colors"
+                      className="w-full h-14 bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 text-xl font-black text-zinc-900 focus:outline-none focus:border-rose-500/50 transition-colors"
                     />
                   </div>
                 </div>
@@ -515,28 +515,28 @@ export default function CommissionManagement() {
 
                 <div className="space-y-4">
                    <div className="flex items-center justify-between">
-                     <span className="text-sm font-semibold text-white/60 flex items-center gap-2"><Building2 className="w-4 h-4" /> Platform Wallet ({bookingForm.platform}%)</span>
+                     <span className="text-sm font-semibold text-zinc-500 flex items-center gap-2"><Building2 className="w-4 h-4" /> Platform Wallet ({bookingForm.platform}%)</span>
                      <span className="text-lg font-black text-emerald-400">+{simPlatform.toLocaleString()}</span>
                    </div>
                    <div className="flex items-center justify-between">
-                     <span className="text-sm font-semibold text-white/60 flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Salon Wallet ({bookingForm.salon}%)</span>
-                     <span className="text-lg font-black text-white">+{simSalon.toLocaleString()}</span>
+                     <span className="text-sm font-semibold text-zinc-500 flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Salon Wallet ({bookingForm.salon}%)</span>
+                     <span className="text-lg font-black text-zinc-900">+{simSalon.toLocaleString()}</span>
                    </div>
                    <div className="flex items-center justify-between opacity-50">
-                     <span className="text-sm font-semibold text-white/60 flex items-center gap-2"><UserCheck className="w-4 h-4" /> Agent Wallet (0%)</span>
-                     <span className="text-lg font-black text-white">+0</span>
+                     <span className="text-sm font-semibold text-zinc-500 flex items-center gap-2"><UserCheck className="w-4 h-4" /> Agent Wallet (0%)</span>
+                     <span className="text-lg font-black text-zinc-900">+0</span>
                    </div>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-4 border border-white/10 mt-6">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 mt-6">
                    <div className="flex justify-between items-center mb-1">
-                     <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Net Settlement</span>
+                     <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Net Settlement</span>
                      <span className="text-xs font-black text-rose-400">Total Validated</span>
                    </div>
-                   <div className="text-2xl font-black text-white">LKR {simAmount.toLocaleString()}</div>
+                   <div className="text-2xl font-black text-zinc-900">LKR {simAmount.toLocaleString()}</div>
                 </div>
 
-                <Button className="w-full h-12 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold border border-white/5 mt-4">
+                <Button className="w-full h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-zinc-900 font-bold border border-slate-100 mt-4">
                   Run Full Reconciliation Test
                 </Button>
               </div>

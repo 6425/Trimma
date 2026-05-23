@@ -166,7 +166,7 @@ export default function GlobalServiceManagement() {
         </div>
         <Button 
           onClick={() => handleOpenDialog()}
-          className="bg-brand hover:bg-brand-hover text-white rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20"
+          className="bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20"
         >
           <Plus className="w-5 h-5 mr-2" />
           New Global Service
@@ -176,7 +176,7 @@ export default function GlobalServiceManagement() {
       <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden p-2">
         <div className="p-4 border-b border-zinc-50 flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <Input 
               placeholder="Search master services..." 
               value={searchTerm}
@@ -193,10 +193,10 @@ export default function GlobalServiceManagement() {
           <table className="w-full">
             <thead>
               <tr className="text-left border-b border-zinc-50">
-                <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Master Service</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Classification</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Suggested Pricing</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-zinc-400 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Master Service</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Classification</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Suggested Pricing</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-zinc-500 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50">
@@ -204,17 +204,17 @@ export default function GlobalServiceManagement() {
                 <tr>
                   <td colSpan={4} className="px-6 py-24 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
-                    <p className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Synchronizing Catalog...</p>
+                    <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Synchronizing Catalog...</p>
                   </td>
                 </tr>
               ) : filteredServices.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-6 py-24 text-center">
                     <div className="max-w-xs mx-auto space-y-4">
-                      <LayoutGrid className="w-12 h-12 text-zinc-200 mx-auto" />
+                      <LayoutGrid className="w-12 h-12 text-zinc-800 mx-auto" />
                       <div>
-                        <p className="text-zinc-400 font-bold">No global templates found</p>
-                        <p className="text-zinc-400 text-xs mt-1">Initialize the master service catalog with default templates.</p>
+                        <p className="text-zinc-500 font-bold">No global templates found</p>
+                        <p className="text-zinc-500 text-xs mt-1">Initialize the master service catalog with default templates.</p>
                       </div>
                       <Button 
                         onClick={async () => {
@@ -248,12 +248,12 @@ export default function GlobalServiceManagement() {
                     <tr key={service.id} className="hover:bg-zinc-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
+                          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-500 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
                             <IconComp className="w-6 h-6" />
                           </div>
                           <div>
                             <div className="font-bold text-[#1A1C29]">{service.name}</div>
-                            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">slug: {service.slug}</div>
+                            <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">slug: {service.slug}</div>
                           </div>
                         </div>
                       </td>
@@ -265,11 +265,11 @@ export default function GlobalServiceManagement() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-1.5 font-bold text-[#1A1C29]">
-                            <Tag className="w-3.5 h-3.5 text-zinc-300" />
+                            <Tag className="w-3.5 h-3.5 text-zinc-700" />
                             Rs. {service.suggested_price || '0.00'}
                           </div>
-                          <div className="flex items-center gap-1.5 font-bold text-zinc-400">
-                            <Clock className="w-3.5 h-3.5 text-zinc-300" />
+                          <div className="flex items-center gap-1.5 font-bold text-zinc-500">
+                            <Clock className="w-3.5 h-3.5 text-zinc-700" />
                             {service.suggested_duration_minutes}m
                           </div>
                         </div>
@@ -280,7 +280,7 @@ export default function GlobalServiceManagement() {
                              variant="ghost" 
                              size="icon" 
                              onClick={() => handleOpenDialog(service)}
-                             className="h-9 w-9 rounded-xl hover:bg-white hover:shadow-sm text-zinc-400 hover:text-emerald-600"
+                             className="h-9 w-9 rounded-xl hover:bg-white hover:shadow-sm text-zinc-500 hover:text-emerald-600"
                            >
                             <Edit2 className="w-4 h-4" />
                           </Button>
@@ -288,7 +288,7 @@ export default function GlobalServiceManagement() {
                              variant="ghost" 
                              size="icon" 
                              onClick={() => handleDelete(service.id)}
-                             className="h-9 w-9 rounded-xl hover:bg-white hover:shadow-sm text-zinc-400 hover:text-red-500"
+                             className="h-9 w-9 rounded-xl hover:bg-white hover:shadow-sm text-zinc-500 hover:text-red-500"
                            >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -306,13 +306,13 @@ export default function GlobalServiceManagement() {
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-[#1A1C29] p-8 text-white relative">
+          <div className="bg-white p-8 text-zinc-900 relative">
             <LayoutGrid className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12" />
             <DialogHeader className="relative z-10">
               <DialogTitle className="text-2xl font-bold tracking-tight">
                 {editingService?.id ? "Edit Global Template" : "Define Global Service"}
               </DialogTitle>
-              <DialogDescription className="text-white/50 font-medium">
+              <DialogDescription className="text-zinc-500 font-medium">
                 Standardize this service for all registered salons in the marketplace.
               </DialogDescription>
             </DialogHeader>
@@ -321,7 +321,7 @@ export default function GlobalServiceManagement() {
           <div className="p-8 space-y-6 bg-white max-h-[70vh] overflow-y-auto custom-scrollbar">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Service Name *</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Service Name *</label>
                 <Input 
                   value={editingService?.name}
                   onChange={(e) => setEditingService({ ...editingService, name: e.target.value })}
@@ -331,7 +331,7 @@ export default function GlobalServiceManagement() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Category *</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Category *</label>
                 <Select 
                   value={editingService?.category_id}
                   onValueChange={(val) => setEditingService({ ...editingService, category_id: val })}
@@ -354,7 +354,7 @@ export default function GlobalServiceManagement() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Icon Styling</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Icon Styling</label>
                 <Select 
                   value={editingService?.icon}
                   onValueChange={(val) => setEditingService({ ...editingService, icon: val })}
@@ -389,7 +389,7 @@ export default function GlobalServiceManagement() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Suggested Price (Rs.)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Suggested Price (Rs.)</label>
                 <Input 
                   type="number"
                   value={editingService?.suggested_price}
@@ -400,7 +400,7 @@ export default function GlobalServiceManagement() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Base Duration (Mins)</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Base Duration (Mins)</label>
                 <Input 
                   type="number"
                   value={editingService?.suggested_duration_minutes}
@@ -411,7 +411,7 @@ export default function GlobalServiceManagement() {
               </div>
 
               <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Brief Description</label>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Brief Description</label>
                 <Textarea 
                   value={editingService?.description}
                   onChange={(e) => setEditingService({ ...editingService, description: e.target.value })}
@@ -425,14 +425,14 @@ export default function GlobalServiceManagement() {
               <Button 
                 variant="ghost" 
                 onClick={() => setIsDialogOpen(false)}
-                className="flex-1 h-12 rounded-xl font-bold text-zinc-400 hover:text-zinc-600"
+                className="flex-1 h-12 rounded-xl font-bold text-zinc-500 hover:text-zinc-600"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex-[2] bg-brand hover:bg-brand-hover text-white h-12 rounded-xl font-bold shadow-lg"
+                className="flex-[2] bg-brand hover:bg-brand-hover text-zinc-900 h-12 rounded-xl font-bold shadow-lg"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Master Template"}
               </Button>

@@ -2,15 +2,29 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, LogOut, Menu, X, Scissors, MapPin, Tag } from "lucide-react";
+import { User, LogOut, Menu, X, Scissors, MapPin, Tag, Globe, HelpCircle, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/config/supabase";
-import Logo from "./Logo";
+
+// A simpler logo component for the dark header
+const HeaderLogo = () => (
+  <div className="flex items-center gap-2">
+    <div className="w-8 h-8 rounded-lg bg-[#F5B700] flex items-center justify-center">
+      <Scissors className="w-5 h-5 text-black" />
+    </div>
+    <span className="text-xl font-bold text-black tracking-tight">Trimma.</span>
+  </div>
+);
+
+const IconMap: Record<string, any> = {
+  Scissors, Sparkles, Heart, Droplet, Flower2, Activity, User, Users, PenTool, Paintbrush, LayoutGrid, Tag
+};
 
 export default function GlobalHeader() {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("customer");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navCategories, setNavCategories] = useState<any[]>([]);
   const router = useRouter();
 
   const fetchUserRole = async (userId: string) => {
@@ -28,6 +42,13 @@ export default function GlobalHeader() {
       setUser(session?.user ?? null);
       if (session?.user) fetchUserRole(session.user.id);
     });
+    
+    // Fetch dynamic categories
+    const fetchCategories = async () => {
+      const { data } = await supabase.from('categories').select('id, name, slug, icon').limit(10);
+      if (data) setNavCategories(data);
+    };
+    fetchCategories();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -40,98 +61,125 @@ export default function GlobalHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur-md shadow-sm">
-      <div className="mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-
-        {/* LOGO */}
+    <header className="sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200">
+      {/* Top Bar */}
+      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white">
+        <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+        
+        {/* LEFT: LOGO */}
         <Link href="/" className="hover:opacity-90 transition-opacity shrink-0">
-          <Logo showTagline={false} />
+          <HeaderLogo />
         </Link>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden md:flex gap-5 text-sm font-medium text-zinc-500">
-          <Link href="/salons" className="hover:text-zinc-900 transition-colors">Salons</Link>
-          <Link href="/locations" className="hover:text-zinc-900 transition-colors">Location</Link>
-          <Link href="/pricing" className="hover:text-zinc-900 transition-colors">Pricing</Link>
-        </nav>
+        {/* RIGHT: Secondary Nav & Auth Buttons */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="hidden md:flex items-center gap-4">
+             <button className="flex items-center justify-center font-semibold text-zinc-700 hover:bg-zinc-100 rounded-full p-2 transition-colors" title="Language and Currency">
+                <Globe className="w-5 h-5" />
+             </button>
+             <button className="flex items-center justify-center font-semibold text-zinc-700 hover:bg-zinc-100 rounded-full p-2 transition-colors" title="Support">
+                <HelpCircle className="w-5 h-5" />
+             </button>
+             <Link href="/onboarding" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors hidden lg:block">
+                List your salon
+             </Link>
+          </div>
 
-        {/* RIGHT: Auth Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          {user ? (
-            <div className="flex items-center gap-1.5 sm:gap-3">
-              <Link
-                href={getDashboardLink()}
-                className="text-xs sm:text-sm font-semibold flex items-center gap-1.5 text-brand-pink hover:text-brand-pink/90 bg-brand-pink/10 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full transition-colors"
-              >
-                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                <span className="max-w-[80px] sm:max-w-none truncate">
-                  {user.user_metadata?.first_name || user.email?.split('@')[0]}
-                </span>
-              </Link>
-              <button
-                onClick={() => { supabase.auth.signOut().then(() => window.location.href = '/'); }}
-                className="flex items-center justify-center text-zinc-400 hover:text-red-600 transition-colors p-1.5 rounded-full hover:bg-red-50"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="text-xs sm:text-sm font-semibold text-zinc-700 hover:text-zinc-900 transition-colors px-2 sm:px-3 py-1.5"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="text-xs sm:text-sm font-semibold bg-primary-gradient text-white px-3 sm:px-5 py-1.5 sm:py-2 rounded-full hover:opacity-95 shadow-sm transition-all border-none whitespace-nowrap"
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  href={getDashboardLink()}
+                  className="text-xs sm:text-sm font-semibold flex items-center gap-2 text-black bg-zinc-100 hover:bg-zinc-200 px-3 py-1.5 sm:py-2 rounded-lg transition-colors shadow-sm border border-zinc-200"
+                >
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+                <button
+                  onClick={() => { supabase.auth.signOut().then(() => window.location.href = '/'); }}
+                  className="flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/signup"
+                  className="text-sm font-bold text-black bg-[#F5B700] hover:bg-[#E6AC00] transition-colors px-4 py-2 rounded-sm shadow-sm"
+                >
+                  Register
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-sm font-bold text-black bg-zinc-100 hover:bg-zinc-200 transition-colors px-4 py-2 rounded-sm shadow-sm border border-zinc-200"
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
 
-          {/* MOBILE HAMBURGER */}
-          <button
-            className="md:hidden flex items-center justify-center p-1.5 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-slate-100 transition-colors ml-0.5"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+            {/* MOBILE HAMBURGER */}
+            <button
+              className="md:hidden flex items-center justify-center p-2 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
+        </div>
+      </div>
+
+      {/* Bottom Bar: Primary Categories */}
+      <div className="hidden md:flex mx-auto max-w-7xl px-4 py-2 relative z-0 bg-white">
+         <nav className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
+           {navCategories.map((cat, i) => {
+             const Icon = IconMap[cat.icon] || Tag;
+             return (
+               <Link 
+                  key={i} 
+                  href={`/category/${cat.slug}`}
+                  className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 px-4 py-2.5 rounded-full transition-colors border border-transparent hover:border-zinc-200 whitespace-nowrap"
+               >
+                  <Icon className="w-4 h-4" />
+                  <span>{cat.name}</span>
+               </Link>
+             );
+           })}
+         </nav>
       </div>
 
       {/* MOBILE DROPDOWN MENU */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-100 bg-white shadow-lg">
-          <div className="px-4 py-3 flex flex-col gap-1">
-            <Link
-              href="/salons"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-slate-50 hover:text-zinc-900 transition-colors"
-            >
-              <Scissors className="w-4 h-4 text-brand-pink" />
-              Salons
-            </Link>
-            <Link
-              href="/locations"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-slate-50 hover:text-zinc-900 transition-colors"
-            >
-              <MapPin className="w-4 h-4 text-brand-pink" />
-              Location
-            </Link>
-            <Link
-              href="/pricing"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-slate-50 hover:text-zinc-900 transition-colors"
-            >
-              <Tag className="w-4 h-4 text-brand-pink" />
-              Pricing
-            </Link>
+        <div className="md:hidden border-t border-zinc-100 bg-white pb-4">
+          <div className="px-4 pt-2 pb-4 flex flex-col gap-1">
+             <div className="font-bold text-xs uppercase tracking-wider text-zinc-500 px-3 pt-3 pb-1">Categories</div>
+             {navCategories.map((cat, i) => {
+               const Icon = IconMap[cat.icon] || Tag;
+               return (
+                 <Link
+                   key={i}
+                   href={`/category/${cat.slug}`}
+                   onClick={() => setMobileMenuOpen(false)}
+                   className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                 >
+                   <Icon className="w-4 h-4" />
+                   {cat.name}
+                 </Link>
+               );
+             })}
+             <div className="h-px bg-zinc-100 my-2"></div>
+             <Link
+               href="/onboarding"
+               onClick={() => setMobileMenuOpen(false)}
+               className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+             >
+               <Building2 className="w-4 h-4" />
+               List your salon
+             </Link>
           </div>
         </div>
       )}

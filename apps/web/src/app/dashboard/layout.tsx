@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
 import { supabase } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -134,11 +134,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       href: "/admin/marketplace", 
       icon: <Tag className="w-4 h-4" />,
       children: [
-        { name: 'Service Categories', href: '/admin/categories' },
         { name: 'Subscription Plans', href: '/admin/subscriptions' },
       ]
     },
-    { name: "Service Mgmt", href: "/admin/global-services", icon: <Scissors className="w-4 h-4" /> },
+    { 
+      name: "Service Mgmt", 
+      href: "/admin/services", 
+      icon: <Scissors className="w-4 h-4" />,
+      children: [
+        { name: 'All Services', href: '/admin/global-services' },
+        { name: 'Service Categories', href: '/admin/categories' },
+      ]
+    },
     { 
       name: "Geography Mgmt", 
       href: "/admin/territories", 

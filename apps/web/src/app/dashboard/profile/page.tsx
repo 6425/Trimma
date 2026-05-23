@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Store, MapPin, Phone, Clock, Sparkles, Loader2, Check, Save, QrCode, ExternalLink, Printer, Star, ShieldCheck, Upload, X, Trash2, ChevronRight } from "lucide-react";
+import { Store, MapPin, Phone, Clock, Sparkles, Loader2, Check, Save, QrCode, ExternalLink, Printer, Star, ShieldCheck, Upload, X, Trash2, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
