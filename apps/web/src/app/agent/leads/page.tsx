@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { sendOnboardingInviteAlert } from "../../actions/whatsapp";
+import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 
 
 const DAYS_OF_WEEK = [
@@ -346,6 +346,47 @@ export default function AgentLeads() {
     }
   };
 
+  const handleAgentApproval = async () => {
+    if (!selectedLead) return;
+    try {
+      setUpdating(true);
+      
+      const updatePayload: any = {
+        onboarding_status: "AGENT_APPROVED",
+        booking_enabled: true
+      };
+
+      const { error } = await supabase
+        .from("salons")
+        .update(updatePayload)
+        .eq("id", selectedLead.id);
+
+      if (error) throw error;
+      
+      await logActivity(selectedLead.id, "AGENT_APPROVED", "Agent approved the salon and enabled bookings.");
+
+      if (formData.phone) {
+        const waRes = await sendAgentApprovalAlerts(
+          selectedLead.id,
+          formData.phone,
+          formData.name || selectedLead.name
+        );
+        if (!waRes.success) {
+          console.warn("WhatsApp agent approval alert failed:", waRes.error);
+        }
+      }
+      
+      toast.success("Salon approved and is now live!");
+      setIsModalOpen(false);
+      setSelectedLead(null);
+      fetchLeads();
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleDeleteLead = async (leadId: string) => {
     if (!confirm("Are you sure you want to remove this salon from your list?")) return;
     try {
@@ -366,7 +407,7 @@ export default function AgentLeads() {
     const status = l.onboarding_status || "ASSIGNED_TO_AGENT";
     if (activeTab === "assigned") return status === "ASSIGNED_TO_AGENT";
     if (activeTab === "field_verified") return status === "AGENT_VERIFIED";
-    if (activeTab === "completed") return ["OWNER_INVITED", "OWNER_ACTIVATED", "VERIFIED"].includes(status);
+    if (activeTab === "completed") return ["OWNER_INVITED", "OWNER_ACTIVATED", "AGENT_APPROVED", "VERIFIED"].includes(status);
     return true;
   });
 
@@ -383,6 +424,7 @@ export default function AgentLeads() {
       AGENT_VERIFIED: "bg-indigo-100 text-indigo-700",
       OWNER_INVITED: "bg-emerald-100 text-emerald-700",
       OWNER_ACTIVATED: "bg-amber-100 text-amber-700",
+      AGENT_APPROVED: "bg-indigo-100 text-indigo-700",
       VERIFIED: "bg-green-100 text-green-700"
     };
     return map[status] || "bg-zinc-100 text-zinc-600";
@@ -427,7 +469,7 @@ export default function AgentLeads() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Verified</p>
-            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["AGENT_VERIFIED","OWNER_INVITED","OWNER_ACTIVATED","VERIFIED"].includes(l.onboarding_status)).length}</p>
+            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["AGENT_VERIFIED","OWNER_INVITED","OWNER_ACTIVATED","AGENT_APPROVED","VERIFIED"].includes(l.onboarding_status)).length}</p>
           </div>
         </Card>
         <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl">
@@ -436,7 +478,7 @@ export default function AgentLeads() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Owner Invited</p>
-            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED"].includes(l.onboarding_status)).length}</p>
+            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","AGENT_APPROVED","VERIFIED"].includes(l.onboarding_status)).length}</p>
           </div>
         </Card>
         <div className="relative">
@@ -481,7 +523,7 @@ export default function AgentLeads() {
                 activeTab === "completed" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
               }`}
             >
-              Invited/Activated ({leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","VERIFIED"].includes(l.onboarding_status)).length})
+              Invited/Activated ({leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","AGENT_APPROVED","VERIFIED"].includes(l.onboarding_status)).length})
             </button>
           </div>
         </div>
@@ -803,10 +845,27 @@ export default function AgentLeads() {
                     </Button>
                   )}
 
+                  {/* Agent Approval Button — only if OWNER_ACTIVATED */}
+                  {formData.onboarding_status === "OWNER_ACTIVATED" && (
+                    <Button
+                      onClick={handleAgentApproval}
+                      disabled={updating}
+                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Approve & Go Live
+                    </Button>
+                  )}
+
                   {/* Pending status display */}
-                  {["OWNER_INVITED", "OWNER_ACTIVATED"].includes(formData.onboarding_status) && (
+                  {["OWNER_INVITED"].includes(formData.onboarding_status) && (
                     <Badge className="bg-amber-50 text-amber-600 border border-amber-200 font-bold text-[10px] px-3 py-2">
-                      ⏳ Owner Invited / Activated
+                      ⏳ Owner Invited
+                    </Badge>
+                  )}
+
+                  {["AGENT_APPROVED", "VERIFIED"].includes(formData.onboarding_status) && (
+                    <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-[10px] px-3 py-2">
+                      ✅ Salon Live
                     </Badge>
                   )}
                 </div>

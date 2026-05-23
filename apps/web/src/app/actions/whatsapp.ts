@@ -714,3 +714,78 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
     return { success: false, error: err.message || "Internal server error" };
   }
 }
+
+/**
+ * Triggers WhatsApp alerts when an Agent approves a salon to go Live.
+ */
+export async function sendAgentApprovalAlerts(salonId: string, ownerPhone: string, salonName: string) {
+  const { enabled, phoneId, accessToken } = await getWhatsAppConfig();
+  if (!enabled || !phoneId || !accessToken) return { success: false };
+
+  try {
+    const cleanOwnerPhone = cleanPhoneNumber(ownerPhone);
+    // TODO: Update this to the actual Admin phone number from settings
+    const adminPhone = cleanPhoneNumber("+15556625396"); // Fallback to user's test number
+
+    const ownerMsg = `🎉 *Congratulations from Trimma!* 🎉\n\nYour salon, *${salonName}*, has been approved by your assigned agent and is now *LIVE* for bookings on the marketplace! 🚀\n\nThe platform admin will now review your profile to grant you the official *'Approved'* badge.`;
+    const adminMsg = `🔔 *AGENT APPROVAL ALERT* 🔔\n\nSalon *${salonName}* has just been approved by their agent and is now live.\n\nPlease review their profile in the Admin Dashboard to grant them the *Approved Badge*.`;
+
+    // Send to Owner
+    if (cleanOwnerPhone) {
+      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: cleanOwnerPhone, type: "text", text: { body: ownerMsg } })
+      });
+    }
+
+    // Send to Admin
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: adminPhone, type: "text", text: { body: adminMsg } })
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("WhatsApp agent approval alert error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Triggers WhatsApp alerts when an Admin grants the Approved Badge.
+ */
+export async function sendAdminApprovalAlerts(salonId: string, ownerPhone: string, salonName: string) {
+  const { enabled, phoneId, accessToken } = await getWhatsAppConfig();
+  if (!enabled || !phoneId || !accessToken) return { success: false };
+
+  try {
+    const cleanOwnerPhone = cleanPhoneNumber(ownerPhone);
+    const adminPhone = cleanPhoneNumber("+15556625396");
+
+    const ownerMsg = `🌟 *TRIMMA VERIFIED STATUS ACHIEVED!* 🌟\n\nCongratulations! The Trimma Admin Team has reviewed your profile and officially granted *${salonName}* the *Approved Badge*! ✅\n\nThis badge builds trust with customers and boosts your visibility.`;
+    const adminMsg = `✅ *BADGE GRANTED* ✅\n\nYou have successfully verified and granted the Approved Badge to *${salonName}*.`;
+
+    // Send to Owner
+    if (cleanOwnerPhone) {
+      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: cleanOwnerPhone, type: "text", text: { body: ownerMsg } })
+      });
+    }
+
+    // Send to Admin
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: adminPhone, type: "text", text: { body: adminMsg } })
+    });
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("WhatsApp admin approval alert error:", err);
+    return { success: false, error: err.message };
+  }
+}
