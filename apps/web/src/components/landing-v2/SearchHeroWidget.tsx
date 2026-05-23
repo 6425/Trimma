@@ -71,23 +71,13 @@ export function SearchHeroWidget() {
             />
           </div>
 
-          {/* Date & Time */}
-          <div className="flex-[0.8] bg-white flex items-center px-4 h-14 rounded-md border-2 border-transparent focus-within:border-blue-500 transition-colors">
+          {/* Date */}
+          <div className="flex-1 bg-white flex items-center px-4 h-14 rounded-md border-2 border-transparent focus-within:border-blue-500 transition-colors">
             <Calendar className="w-5 h-5 text-zinc-400 mr-3 shrink-0" />
             <input 
               type="date" 
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full h-full outline-none text-zinc-900 font-medium text-sm cursor-pointer"
-            />
-          </div>
-
-          <div className="flex-[0.5] bg-white flex items-center px-4 h-14 rounded-md border-2 border-transparent focus-within:border-blue-500 transition-colors">
-            <Clock className="w-5 h-5 text-zinc-400 mr-2 shrink-0 hidden sm:block" />
-            <input 
-              type="time" 
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
               className="w-full h-full outline-none text-zinc-900 font-medium text-sm cursor-pointer"
             />
           </div>
