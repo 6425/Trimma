@@ -128,6 +128,31 @@
     --sidebar-accent-foreground: #F5B700;
     --sidebar-border: rgba(255, 255, 255, 0.08);
     --sidebar-ring: #F5B700;
+
+    /* Completely Banish Pink & Rose via CSS Variables Override */
+    --color-pink-50: var(--color-yellow-50) !important;
+    --color-pink-100: var(--color-yellow-100) !important;
+    --color-pink-200: var(--color-yellow-200) !important;
+    --color-pink-300: var(--color-yellow-300) !important;
+    --color-pink-400: var(--color-yellow-400) !important;
+    --color-pink-500: #F5B700 !important;
+    --color-pink-600: #E6AC00 !important;
+    --color-pink-700: var(--color-yellow-700) !important;
+    --color-pink-800: var(--color-yellow-800) !important;
+    --color-pink-900: var(--color-yellow-900) !important;
+    --color-pink-950: var(--color-yellow-950) !important;
+
+    --color-rose-50: var(--color-yellow-50) !important;
+    --color-rose-100: var(--color-yellow-100) !important;
+    --color-rose-200: var(--color-yellow-200) !important;
+    --color-rose-300: var(--color-yellow-300) !important;
+    --color-rose-400: var(--color-yellow-400) !important;
+    --color-rose-500: #F5B700 !important;
+    --color-rose-600: #E6AC00 !important;
+    --color-rose-700: var(--color-yellow-700) !important;
+    --color-rose-800: var(--color-yellow-800) !important;
+    --color-rose-900: var(--color-yellow-900) !important;
+    --color-rose-950: var(--color-yellow-950) !important;
 }
 
 .dark {
@@ -166,6 +191,31 @@
     --sidebar-accent-foreground: #F5B700;
     --sidebar-border: rgba(255, 255, 255, 0.08);
     --sidebar-ring: #F5B700;
+
+    /* Completely Banish Pink & Rose via CSS Variables Override */
+    --color-pink-50: var(--color-yellow-50) !important;
+    --color-pink-100: var(--color-yellow-100) !important;
+    --color-pink-200: var(--color-yellow-200) !important;
+    --color-pink-300: var(--color-yellow-300) !important;
+    --color-pink-400: var(--color-yellow-400) !important;
+    --color-pink-500: #F5B700 !important;
+    --color-pink-600: #E6AC00 !important;
+    --color-pink-700: var(--color-yellow-700) !important;
+    --color-pink-800: var(--color-yellow-800) !important;
+    --color-pink-900: var(--color-yellow-900) !important;
+    --color-pink-950: var(--color-yellow-950) !important;
+
+    --color-rose-50: var(--color-yellow-50) !important;
+    --color-rose-100: var(--color-yellow-100) !important;
+    --color-rose-200: var(--color-yellow-200) !important;
+    --color-rose-300: var(--color-yellow-300) !important;
+    --color-rose-400: var(--color-yellow-400) !important;
+    --color-rose-500: #F5B700 !important;
+    --color-rose-600: #E6AC00 !important;
+    --color-rose-700: var(--color-yellow-700) !important;
+    --color-rose-800: var(--color-yellow-800) !important;
+    --color-rose-900: var(--color-yellow-900) !important;
+    --color-rose-950: var(--color-yellow-950) !important;
 }
 
 @layer base {
