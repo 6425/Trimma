@@ -43,19 +43,23 @@ export function LocationHierarchySelect({
   const cities = useMemo(() => getCitiesForDistrict(province, district), [province, district]);
 
   useEffect(() => {
-    if (!province) return;
-    const validDistricts = getDistrictsForProvinceName(province);
-    if (validDistricts.length > 0 && !validDistricts.some((d) => d.name === district)) {
+    void Promise.resolve().then(() => {
+      if (!province) return;
+      const validDistricts = getDistrictsForProvinceName(province);
+      if (validDistricts.length > 0 && !validDistricts.some((d) => d.name === district)) {
       onDistrictChange(validDistricts[0].name);
-    }
+      }
+    });
   }, [province, district, onDistrictChange]);
 
   useEffect(() => {
-    if (!showCity || !onCityChange || !province || !district) return;
-    const validCities = getCitiesForDistrict(province, district);
-    if (validCities.length > 0 && !validCities.includes(city)) {
+    void Promise.resolve().then(() => {
+      if (!showCity || !onCityChange || !province || !district) return;
+      const validCities = getCitiesForDistrict(province, district);
+      if (validCities.length > 0 && !validCities.includes(city)) {
       onCityChange(validCities[0]);
-    }
+      }
+    });
   }, [province, district, city, showCity, onCityChange]);
 
   return (

@@ -81,58 +81,60 @@ export default function AdminProfilePage() {
   const iconInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    async function loadData() {
+    void Promise.resolve().then(() => {
+      async function loadData() {
       try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Access Denied. Please log in.");
-          return;
-        }
-
-        // 1. Load User Profile details
-        const { data: userProfile, error: profileErr } = await supabase
-          .from("users")
-          .select("*")
-          .eq("email", session.user.email)
-          .maybeSingle();
-
-        if (profileErr) throw profileErr;
-        if (userProfile) {
-          setEmail(userProfile.email || "");
-          setFullName(userProfile.full_name || "");
-          setPhone(userProfile.phone || "");
-          setAvatarSeed(userProfile.full_name || "Admin");
-        }
-
-        // 2. Load Branding Config details
-        const { data: brandingData, error: brandingErr } = await supabase
-          .from("global_branding_settings")
-          .select("*")
-          .limit(1)
-          .maybeSingle();
-
-        if (brandingErr) throw brandingErr;
-        if (brandingData) {
-          setLogoName(brandingData.logo_name || "Trimma");
-          setLogoNameFontFamily(brandingData.logo_name_font_family || "Outfit");
-          setLogoNameFontSize(brandingData.logo_name_font_size || 22);
-          setLogoNameColor(brandingData.logo_name_color || "var(--color-brand)");
-          
-          setLogoTagline(brandingData.logo_tagline || "");
-          setLogoTaglineFontFamily(brandingData.logo_tagline_font_family || "Inter");
-          setLogoTaglineFontSize(brandingData.logo_tagline_font_size || 9);
-          setLogoTaglineColor(brandingData.logo_tagline_color || "#64748b");
-          setLogoSvgRaw(brandingData.logo_svg_raw || "");
-          setLogoImageUrl(brandingData.logo_image_url || "");
-        }
-      } catch (err: any) {
-        console.error("Failed loading settings details:", err);
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+      toast.error("Access Denied. Please log in.");
+      return;
       }
-    }
-    loadData();
+      
+      // 1. Load User Profile details
+      const { data: userProfile, error: profileErr } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", session.user.email)
+      .maybeSingle();
+      
+      if (profileErr) throw profileErr;
+      if (userProfile) {
+      setEmail(userProfile.email || "");
+      setFullName(userProfile.full_name || "");
+      setPhone(userProfile.phone || "");
+      setAvatarSeed(userProfile.full_name || "Admin");
+      }
+      
+      // 2. Load Branding Config details
+      const { data: brandingData, error: brandingErr } = await supabase
+      .from("global_branding_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+      
+      if (brandingErr) throw brandingErr;
+      if (brandingData) {
+      setLogoName(brandingData.logo_name || "Trimma");
+      setLogoNameFontFamily(brandingData.logo_name_font_family || "Outfit");
+      setLogoNameFontSize(brandingData.logo_name_font_size || 22);
+      setLogoNameColor(brandingData.logo_name_color || "var(--color-brand)");
+      
+      setLogoTagline(brandingData.logo_tagline || "");
+      setLogoTaglineFontFamily(brandingData.logo_tagline_font_family || "Inter");
+      setLogoTaglineFontSize(brandingData.logo_tagline_font_size || 9);
+      setLogoTaglineColor(brandingData.logo_tagline_color || "#64748b");
+      setLogoSvgRaw(brandingData.logo_svg_raw || "");
+      setLogoImageUrl(brandingData.logo_image_url || "");
+      }
+      } catch (err: any) {
+      console.error("Failed loading settings details:", err);
+      } finally {
+      setLoading(false);
+      }
+      }
+      loadData();
+    });
   }, []);
 
   // Save personal profile details

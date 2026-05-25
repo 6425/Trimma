@@ -48,6 +48,13 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
+    --spacing-trimma-xs: var(--space-xs);
+    --spacing-trimma-sm: var(--space-sm);
+    --spacing-trimma-md: var(--space-md);
+    --spacing-trimma-lg: var(--space-lg);
+    --spacing-trimma-xl: var(--space-xl);
+    --spacing-trimma-2xl: var(--space-2xl);
     
     /* Official Trimma Branding Colors */
     --color-brand-pink: #F5B700;
@@ -107,8 +114,8 @@
     
     --muted: #151515;
     --muted-foreground: #B3B3B3;
-    --accent: #151515;
-    --accent-foreground: #F5B700;
+    --accent: #1F1F1F;
+    --accent-foreground: #FFFFFF;
     --destructive: #EF4444;
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
@@ -119,6 +126,31 @@
     --chart-4: #F59E0B;
     --chart-5: #10B981;
     --radius: 0.75rem; /* Rounded-xl by default */
+
+    /* ── Trimma Design System Tokens ── */
+    --font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.25rem;
+    --space-xl: 1.5rem;
+    --space-2xl: 2rem;
+    --text-light: #FFFFFF;
+    --text-dark: #0B0B0B;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    --trimma-container-max-width: 1400px;
+    --trimma-container-padding-x: 3%;
+    --trimma-page-padding-y: var(--space-md);
+    --trimma-card-padding: 0.875rem;
+    --trimma-input-padding-y: 0.75rem;
+    --trimma-input-padding-x: 1rem;
+    --trimma-dropdown-menu-padding: 0.5rem;
+    --trimma-dropdown-item-padding-y: 0.625rem;
+    --trimma-dropdown-item-padding-x: 0.875rem;
+    --trimma-field-gap: var(--space-sm);
+    --trimma-error-gap: var(--space-xs);
     
     --sidebar: #151515;
     --sidebar-foreground: #FFFFFF;
@@ -184,8 +216,8 @@
     
     --muted: #1A1A1A;
     --muted-foreground: #B3B3B3;
-    --accent: #1A1A1A;
-    --accent-foreground: #F5B700;
+    --accent: #262626;
+    --accent-foreground: #FFFFFF;
     --destructive: #EF4444;
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
@@ -256,13 +288,79 @@
   }
   
   /* Global safeguard: Light backgrounds should default to dark text */
-  .bg-white, .bg-slate-50, .bg-zinc-50, .bg-gray-50, .bg-stone-50, .bg-neutral-50, .bg-red-50, .bg-orange-50, .bg-amber-50, .bg-yellow-50, .bg-lime-50, .bg-green-50, .bg-emerald-50, .bg-teal-50, .bg-cyan-50, .bg-sky-50, .bg-blue-50, .bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-fuchsia-50, .bg-pink-50, .bg-rose-50 {
-    color: #000000;
+  .bg-white, .bg-slate-50, .bg-zinc-50, .bg-gray-50, .bg-stone-50, .bg-neutral-50, .bg-red-50, .bg-orange-50, .bg-amber-50, .bg-yellow-50, .bg-lime-50, .bg-green-50, .bg-emerald-50, .bg-teal-50, .bg-cyan-50, .bg-sky-50, .bg-blue-50, .bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-fuchsia-50, .bg-pink-50, .bg-rose-50,
+  .bg-slate-100, .bg-zinc-100, .bg-gray-100, .bg-neutral-100, .bg-stone-100 {
+    color: var(--text-dark);
   }
 
   /* Global safeguard: Dark backgrounds should default to white text */
-  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-neutral-950, .bg-stone-900, .bg-stone-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\] {
-    color: #FFFFFF;
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-neutral-950, .bg-stone-900, .bg-stone-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\] {
+    color: var(--text-light);
+  }
+
+  /* Light surfaces — keep dark text on hover/focus/active */
+  :is(
+    .bg-white, .bg-slate-50, .bg-slate-100, .bg-zinc-50, .bg-zinc-100,
+    .bg-gray-50, .bg-gray-100, .bg-neutral-50, .bg-neutral-100, .bg-stone-50, .bg-stone-100
+  ):is(:hover, :focus, :focus-within, :active),
+  :is(
+    .hover\:bg-white:hover, .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover,
+    .hover\:bg-zinc-50:hover, .hover\:bg-zinc-100:hover, .hover\:bg-gray-50:hover,
+    .hover\:bg-gray-100:hover, .hover\:bg-neutral-50:hover, .hover\:bg-neutral-100:hover,
+    .hover\:bg-stone-50:hover, .hover\:bg-stone-100:hover
+  ) {
+    color: var(--text-dark);
+  }
+
+  /* Dark surfaces — keep light text on hover/focus/active */
+  :is(
+    .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950,
+    .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-neutral-950,
+    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\]
+  ):is(:hover, :focus, :focus-within, :active),
+  :is(
+    .hover\:bg-black:hover, .hover\:bg-zinc-900:hover, .hover\:bg-zinc-950:hover,
+    .hover\:bg-slate-900:hover, .hover\:bg-slate-950:hover,
+    .hover\:bg-\[\#0B0B0B\]:hover, .hover\:bg-\[\#151515\]:hover
+  ) {
+    color: var(--text-light);
+  }
+
+  /* Prevent white/light text on light hover backgrounds inside light pages */
+  .trimma-light-context :is(
+    [class*="hover:bg-white"]:hover,
+    [class*="hover:bg-slate-"]:hover,
+    [class*="hover:bg-zinc-50"]:hover,
+    [class*="hover:bg-zinc-100"]:hover,
+    [class*="hover:bg-gray-"]:hover,
+    [class*="hover:bg-neutral-"]:hover,
+    [class*="hover:bg-stone-"]:hover,
+    [class*="hover:bg-accent"]:hover,
+    [class*="focus:bg-accent"]:focus,
+    [class*="focus:bg-accent"]:focus-visible
+  ):not([class*="bg-[#F5B700]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
+    color: var(--text-dark) !important;
+  }
+
+  /* Prevent dark text on dark hover backgrounds */
+  .trimma-dark-context :is(
+    [class*="hover:bg-black"]:hover,
+    [class*="hover:bg-zinc-9"]:hover,
+    [class*="hover:bg-slate-9"]:hover,
+    [class*="hover:bg-[#0B0B0B]"]:hover,
+    [class*="hover:bg-[#151515]"]:hover,
+    [class*="hover:bg-white/"]:hover,
+    [class*="focus:bg-accent"]:focus,
+    [class*="focus:bg-accent"]:focus-visible
+  ):not([class*="bg-[#F5B700]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
+    color: var(--text-light) !important;
+  }
+
+  /* Interactive list/table rows on light admin surfaces */
+  .trimma-light-context tr:hover,
+  .trimma-light-context tr:hover td,
+  .trimma-light-context tr:hover th {
+    color: var(--text-dark);
   }
 
   /* Dark backgrounds text hover effect -> yellow for links only */
@@ -270,8 +368,9 @@
     color: var(--color-brand);
   }
 
-  /* Yellow/Brand backgrounds must have dark text */
-  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\] {
+  /* Yellow/Brand backgrounds must have dark text (default + hover) */
+  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#F5B700\],
+  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#F5B700\]:hover, .hover\:bg-\[\#FFC947\]:hover {
     color: #000000 !important;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -393,4 +492,183 @@
   .via-\[\#003B95\]\/80 { --tw-gradient-to: rgba(245, 183, 0, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgba(245, 183, 0, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to); }
   
   .from-\[\#001D40\] { --tw-gradient-from: #0B0B0B var(--tw-gradient-from-position); }
+
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TRIMMA DESIGN SYSTEM — Layout, Cards, Forms, Dropdowns
+   Cosmetic-only global standards (no logic changes)
+   ───────────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  :root {
+    --trimma-container-padding-x: 4%;
+    --trimma-card-padding: 1rem;
+    --trimma-page-padding-y: var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --trimma-container-padding-x: 5%;
+    --trimma-card-padding: 1.25rem;
+    --trimma-page-padding-y: var(--space-xl);
+  }
+}
+
+@layer components {
+  .trimma-container {
+    width: 100%;
+    max-width: var(--trimma-container-max-width);
+    margin-inline: auto;
+    padding-inline: var(--trimma-container-padding-x);
+  }
+
+  .container {
+    width: 100%;
+    max-width: var(--trimma-container-max-width);
+    padding-inline: var(--trimma-container-padding-x);
+  }
+
+  .trimma-page-shell {
+    width: 100%;
+    max-width: var(--trimma-container-max-width);
+    margin-inline: auto;
+    padding-inline: var(--trimma-container-padding-x);
+    padding-block: var(--trimma-page-padding-y);
+  }
+
+  .trimma-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--trimma-field-gap);
+  }
+
+  .trimma-field-error {
+    margin-top: var(--trimma-error-gap);
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: var(--destructive);
+  }
+
+  .trimma-surface-light {
+    color: var(--text-dark);
+  }
+
+  .trimma-surface-dark {
+    color: var(--text-light);
+  }
+
+  /* Admin / light dashboard shells — remap semantic tokens for readable hover states */
+  .trimma-light-context {
+    --background: #f8fafc;
+    --foreground: #18181b;
+    --card: #ffffff;
+    --card-foreground: #18181b;
+    --popover: #ffffff;
+    --popover-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #e4e4e7;
+    --accent-foreground: #18181b;
+    --border: rgba(0, 0, 0, 0.08);
+    --input: rgba(0, 0, 0, 0.06);
+    color: var(--text-dark);
+  }
+
+  .trimma-dark-context {
+    --background: #0b0b0b;
+    --foreground: #ffffff;
+    --card: #151515;
+    --card-foreground: #ffffff;
+    --popover: #151515;
+    --popover-foreground: #ffffff;
+    --muted: #1a1a1a;
+    --muted-foreground: #b3b3b3;
+    --accent: #262626;
+    --accent-foreground: #ffffff;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.08);
+    color: var(--text-light);
+  }
+
+  .trimma-card-standard {
+    padding: var(--trimma-card-padding);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+@layer base {
+  [data-slot="card"] {
+    box-shadow: var(--shadow-sm);
+  }
+
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    height: auto;
+    min-height: 2.75rem;
+    padding: var(--trimma-input-padding-y) var(--trimma-input-padding-x);
+  }
+
+  [data-slot="textarea"] {
+    min-height: 5rem;
+  }
+
+  [data-slot="select-trigger"][data-size="default"] {
+    min-height: 2.75rem;
+    height: auto;
+    padding: var(--trimma-input-padding-y) var(--trimma-input-padding-x);
+  }
+
+  [data-slot="select-trigger"][data-size="sm"] {
+    min-height: 2.25rem;
+    padding: calc(var(--trimma-input-padding-y) * 0.75) var(--trimma-input-padding-x);
+  }
+
+  [data-slot="select-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"] {
+    padding: var(--trimma-dropdown-menu-padding);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-md);
+  }
+
+  [data-slot="select-item"],
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="dropdown-menu-sub-trigger"] {
+    padding: var(--trimma-dropdown-item-padding-y) var(--trimma-dropdown-item-padding-x);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    border-radius: calc(var(--radius-md) * 0.85);
+  }
+
+  [data-slot="select-item"]:is(:hover, :focus, :focus-visible, [data-highlighted]),
+  [data-slot="dropdown-menu-item"]:is(:hover, :focus, :focus-visible, [data-highlighted]),
+  [data-slot="dropdown-menu-checkbox-item"]:is(:hover, :focus, :focus-visible, [data-highlighted]),
+  [data-slot="dropdown-menu-radio-item"]:is(:hover, :focus, :focus-visible, [data-highlighted]),
+  [data-slot="dropdown-menu-sub-trigger"]:is(:hover, :focus, :focus-visible, [data-highlighted], [data-popup-open]) {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  [data-slot="select-value"] {
+    text-align: left;
+  }
+
+  [data-slot="label"] + [data-slot="input"],
+  [data-slot="label"] + [data-slot="textarea"],
+  [data-slot="label"] + [data-slot="select-trigger"],
+  [data-slot="label"] + * [data-slot="input"],
+  [data-slot="label"] + * [data-slot="textarea"],
+  [data-slot="label"] + * [data-slot="select-trigger"] {
+    margin-top: var(--trimma-field-gap);
+  }
 }

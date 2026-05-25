@@ -99,14 +99,16 @@ export default function AdminUserRoles() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem("trimma_role_permissions");
-    if (saved) {
+    void Promise.resolve().then(() => {
+      const saved = localStorage.getItem("trimma_role_permissions");
+      if (saved) {
       try {
-        setPermissions(JSON.parse(saved));
+      setPermissions(JSON.parse(saved));
       } catch (e) {
-        console.error("Failed to parse saved permissions", e);
+      console.error("Failed to parse saved permissions", e);
       }
-    }
+      }
+    });
   }, []);
 
   const togglePermission = (moduleId: string, actionId: string) => {

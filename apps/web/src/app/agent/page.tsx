@@ -24,10 +24,6 @@ export default function AgentDashboard() {
     hotLeads: [] as any[]
   });
 
-  useEffect(() => {
-    loadAgentData();
-  }, []);
-
   const loadAgentData = async () => {
     try {
       setLoading(true);
@@ -129,6 +125,10 @@ export default function AgentDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => loadAgentData());
+  }, []);
 
   // WhatsApp quick link trigger
   const handleWhatsAppClick = (phone: string, salonName: string) => {

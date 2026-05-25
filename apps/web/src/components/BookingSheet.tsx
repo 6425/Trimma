@@ -50,23 +50,25 @@ export function BookingSheet({
 
   // Fetch global commission rates
   useEffect(() => {
-    async function loadRates() {
+    void Promise.resolve().then(() => {
+      async function loadRates() {
       const { data } = await supabase
-        .from('commission_master')
-        .select('*')
-        .eq('commission_type', 'booking')
-        .eq('active', true)
-        .maybeSingle();
+      .from('commission_master')
+      .select('*')
+      .eq('commission_type', 'booking')
+      .eq('active', true)
+      .maybeSingle();
       if (data) {
-        setGlobalRates({
-          platform: data.platform_percentage,
-          salon: data.salon_percentage,
-          payhere: data.payhere_percentage,
-          agent: data.agent_percentage || 20
-        });
+      setGlobalRates({
+      platform: data.platform_percentage,
+      salon: data.salon_percentage,
+      payhere: data.payhere_percentage,
+      agent: data.agent_percentage || 20
+      });
       }
-    }
-    loadRates();
+      }
+      loadRates();
+    });
   }, []);
 
   // Customer search & details
@@ -80,23 +82,25 @@ export function BookingSheet({
 
   // Pre-fill logged-in customer info automatically
   useEffect(() => {
-    async function loadActiveUser() {
+    void Promise.resolve().then(() => {
+      async function loadActiveUser() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const user = session.user;
-        const firstName = user.user_metadata?.first_name || "";
-        const lastName = user.user_metadata?.last_name || "";
-        const fullName = `${firstName} ${lastName}`.trim() || user.email?.split("@")[0] || "";
-        const phone = user.phone || user.user_metadata?.phone || "";
-
-        setCustomerDetails({
-          fullName,
-          email: user.email || "",
-          phone
-        });
+      const user = session.user;
+      const firstName = user.user_metadata?.first_name || "";
+      const lastName = user.user_metadata?.last_name || "";
+      const fullName = `${firstName} ${lastName}`.trim() || user.email?.split("@")[0] || "";
+      const phone = user.phone || user.user_metadata?.phone || "";
+      
+      setCustomerDetails({
+      fullName,
+      email: user.email || "",
+      phone
+      });
       }
-    }
-    loadActiveUser();
+      }
+      loadActiveUser();
+    });
   }, []);
 
   const [gender, setGender] = useState("Unspecified");
@@ -131,105 +135,113 @@ export function BookingSheet({
 
   // Load active payment gateways and environments
   useEffect(() => {
-    if (isOpen) {
+    void Promise.resolve().then(() => {
+      if (isOpen) {
       async function fetchGateways() {
-        try {
-          const { data } = await supabase
-            .from("global_payment_settings")
-            .select("*")
-            .eq("id", "00000000-0000-0000-0000-000000000001")
-            .maybeSingle();
-
-          if (data) {
-            setPaypalEnabled(data.paypal_enabled !== false);
-            setPayhereEnabled(data.payhere_enabled !== false);
-            setActiveEnvironment(data.environment || 'sandbox');
-            if (data.payhere_merchant_id) {
-              setPayhereMerchantId(data.payhere_merchant_id);
-            }
-            if (data.payhere_merchant_secret) {
-              setPayhereMerchantSecret(data.payhere_merchant_secret);
-            }
-            
-            // Automatically set default selected payment method based on what is active
-            if (data.payhere_enabled !== false) {
-              setPaymentMethod('payhere');
-            } else if (data.paypal_enabled !== false) {
-              setPaymentMethod('paypal');
-            }
-          } else {
-            // LocalStorage fallback
-            const localPaypal = localStorage.getItem("trimma_paypal_enabled");
-            if (localPaypal) setPaypalEnabled(localPaypal === "true");
-            
-            const localPayhere = localStorage.getItem("trimma_payhere_enabled");
-            if (localPayhere) setPayhereEnabled(localPayhere === "true");
-
-            const localEnv = localStorage.getItem("trimma_payment_env");
-            if (localEnv) setActiveEnvironment(localEnv as 'sandbox' | 'live');
-
-            if (localPayhere === "false" && localPaypal === "true") {
-              setPaymentMethod('paypal');
-            } else {
-              setPaymentMethod('payhere');
-            }
-          }
-        } catch (e) {
-          console.warn("Failed to fetch gateways settings:", e);
-        }
+      try {
+      const { data } = await supabase
+      .from("global_payment_settings")
+      .select("*")
+      .eq("id", "00000000-0000-0000-0000-000000000001")
+      .maybeSingle();
+      
+      if (data) {
+      setPaypalEnabled(data.paypal_enabled !== false);
+      setPayhereEnabled(data.payhere_enabled !== false);
+      setActiveEnvironment(data.environment || 'sandbox');
+      if (data.payhere_merchant_id) {
+      setPayhereMerchantId(data.payhere_merchant_id);
+      }
+      if (data.payhere_merchant_secret) {
+      setPayhereMerchantSecret(data.payhere_merchant_secret);
+      }
+      
+      // Automatically set default selected payment method based on what is active
+      if (data.payhere_enabled !== false) {
+      setPaymentMethod('payhere');
+      } else if (data.paypal_enabled !== false) {
+      setPaymentMethod('paypal');
+      }
+      } else {
+      // LocalStorage fallback
+      const localPaypal = localStorage.getItem("trimma_paypal_enabled");
+      if (localPaypal) setPaypalEnabled(localPaypal === "true");
+      
+      const localPayhere = localStorage.getItem("trimma_payhere_enabled");
+      if (localPayhere) setPayhereEnabled(localPayhere === "true");
+      
+      const localEnv = localStorage.getItem("trimma_payment_env");
+      if (localEnv) setActiveEnvironment(localEnv as 'sandbox' | 'live');
+      
+      if (localPayhere === "false" && localPaypal === "true") {
+      setPaymentMethod('paypal');
+      } else {
+      setPaymentMethod('payhere');
+      }
+      }
+      } catch (e) {
+      console.warn("Failed to fetch gateways settings:", e);
+      }
       }
       fetchGateways();
-    }
+      }
+    });
   }, [isOpen]);
 
   // Initialize with the clicked service if provided
   useEffect(() => {
-    if (isOpen && initialServiceName) {
+    void Promise.resolve().then(() => {
+      if (isOpen && initialServiceName) {
       const match = services.find(s => s.name === initialServiceName);
       if (match) {
-        setSelectedServiceIds([match.id]);
-        setStep(2); // Auto advance to staff selection if a service is pre-selected
+      setSelectedServiceIds([match.id]);
+      setStep(2); // Auto advance to staff selection if a service is pre-selected
       } else {
-        setSelectedServiceIds([]);
-        setStep(1);
-      }
-    } else if (isOpen && !initialServiceName) {
       setSelectedServiceIds([]);
       setStep(1);
-    }
+      }
+      } else if (isOpen && !initialServiceName) {
+      setSelectedServiceIds([]);
+      setStep(1);
+      }
+    });
   }, [isOpen, initialServiceName, services]);
 
   // Load custom service rates / durations for the selected stylist
   useEffect(() => {
-    if (selectedStaffId && selectedStaffId !== 'any') {
+    void Promise.resolve().then(() => {
+      if (selectedStaffId && selectedStaffId !== 'any') {
       async function fetchCustomRates() {
-        const { data } = await supabase
-          .from("service_durations")
-          .select("*")
-          .eq("staff_id", selectedStaffId);
-        if (data) setCustomRates(data);
+      const { data } = await supabase
+      .from("service_durations")
+      .select("*")
+      .eq("staff_id", selectedStaffId);
+      if (data) setCustomRates(data);
       }
       fetchCustomRates();
-    } else {
+      } else {
       setCustomRates([]);
-    }
+      }
+    });
   }, [selectedStaffId]);
 
   // Fetch closed days for the calendar
   useEffect(() => {
-    if (salonId) {
+    void Promise.resolve().then(() => {
+      if (salonId) {
       async function loadClosedDays() {
-        const { data } = await supabase
-          .from("salon_operating_hours")
-          .select("day_of_week")
-          .eq("salon_id", salonId)
-          .eq("is_closed", true);
-        if (data) {
-          setClosedDays(data.map(d => d.day_of_week));
-        }
+      const { data } = await supabase
+      .from("salon_operating_hours")
+      .select("day_of_week")
+      .eq("salon_id", salonId)
+      .eq("is_closed", true);
+      if (data) {
+      setClosedDays(data.map(d => d.day_of_week));
+      }
       }
       loadClosedDays();
-    }
+      }
+    });
   }, [salonId]);
 
   const getServicePriceAndDuration = (service: any) => {
@@ -496,194 +508,196 @@ export function BookingSheet({
 
   // Fetch Availability using advanced scheduling formula
   useEffect(() => {
-    if (step === 3 && salonId && selectedServiceIds.length > 0) {
+    void Promise.resolve().then(() => {
+      if (step === 3 && salonId && selectedServiceIds.length > 0) {
       async function fetchSlots() {
-        setLoadingSlots(true);
-        try {
-          const formattedDate = format(selectedDate, "yyyy-MM-dd");
-          const dayOfWeek = selectedDate.getDay();
-
-          // 1. Fetch Salon Operating Hours
-          const { data: operatingHours } = await supabase
-            .from("salon_operating_hours")
-            .select("*")
-            .eq("salon_id", salonId)
-            .eq("day_of_week", dayOfWeek)
-            .maybeSingle();
-
-          if (operatingHours?.is_closed) {
-            setTimeSlots([]);
-            setLoadingSlots(false);
-            return;
-          }
-
-          // Define slot base hours based on operating hours or fallback
-          let startHour = 9;
-          let endHour = 19;
-          if (operatingHours?.opening_time && operatingHours?.closing_time) {
-            startHour = parseInt(operatingHours.opening_time.split(":")[0]);
-            endHour = parseInt(operatingHours.closing_time.split(":")[0]);
-          }
-
-          // Generate slot array base (every 30 minutes)
-          const baseSlots: string[] = [];
-          for (let h = startHour; h < endHour; h++) {
-            const displayH = h % 12 === 0 ? 12 : h % 12;
-            const period = h >= 12 ? "PM" : "AM";
-            baseSlots.push(`${displayH.toString().padStart(2, '0')}:00 ${period}`);
-            baseSlots.push(`${displayH.toString().padStart(2, '0')}:30 ${period}`);
-          }
-
-          // 2. Fetch Staff schedule and break periods
-          let staffWorking = true;
-          let breaks: any[] = [];
-          let schedule: any = null;
-
-          if (selectedStaffId && selectedStaffId !== 'any') {
-            const { data: sData } = await supabase
-              .from("staff_schedules")
-              .select("*")
-              .eq("staff_id", selectedStaffId)
-              .eq("day_of_week", dayOfWeek)
-              .maybeSingle();
-
-            schedule = sData;
-            if (schedule && !schedule.is_working) {
-              staffWorking = false;
-            }
-
-            const { data: staffBreaks } = await supabase
-              .from("staff_breaks")
-              .select("*")
-              .eq("staff_id", selectedStaffId)
-              .eq("day_of_week", dayOfWeek);
-            
-            if (staffBreaks) {
-              breaks = staffBreaks;
-            }
-          }
-
-          if (!staffWorking) {
-            setTimeSlots([]);
-            setLoadingSlots(false);
-            return;
-          }
-
-          // 3. Fetch Booked Events for Salon
-          const { data: bookedEvents } = await supabase
-            .from("bookings")
-            .select("booking_time, staff_id, status, created_at")
-            .eq("salon_id", salonId)
-            .eq("booking_date", formattedDate);
-
-          const bookedTimes = bookedEvents ? bookedEvents.filter(b => {
-            // Hardening: Auto-release pending bookings older than 10 minutes (Checklist #1 & #7)
-            if (b.status === 'pending' && b.created_at) {
-              const createdAt = new Date(b.created_at).getTime();
-              const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-              if (createdAt < tenMinutesAgo) {
-                return false; // Abandoned checkout, release timeslot!
-              }
-            }
-            if (selectedStaffId && selectedStaffId !== 'any') {
-              return b.staff_id === selectedStaffId;
-            }
-            return true;
-          }).map(b => {
-            const parts = b.booking_time.split(":");
-            const hh = parseInt(parts[0]);
-            const mm = parts[1];
-            const period = hh >= 12 ? "PM" : "AM";
-            const displayHh = hh % 12 === 0 ? 12 : hh % 12;
-            return `${displayHh.toString().padStart(2, '0')}:${mm} ${period}`;
-          }) : [];
-
-          // 4. Fetch Resources and Resource Bookings to avoid conflicts
-          const { data: salonResources } = await supabase
-            .from("resources")
-            .select("*")
-            .eq("salon_id", salonId);
-
-          const { data: activeResourceBookings } = await supabase
-            .from("resource_bookings")
-            .select("*")
-            .eq("booking_date", formattedDate);
-
-          // Filter base slots with all schedules, breaks, booked events, and resources
-          const finalSlots = baseSlots.filter(slot => {
-            // Check standard booking overlap
-            if (bookedTimes.includes(slot)) return false;
-
-            // Final Booking Availability Formula:
-            // Slot Start Time + Service Duration + Buffer Time <= MIN(Salon Closing Time, Staff Shift End Time)
-            const [timeStr, period] = slot.split(" ");
-            let [hh, mm] = timeStr.split(":").map(Number);
-            if (period === "PM" && hh < 12) hh += 12;
-            if (period === "AM" && hh === 12) hh = 0;
-            const slotMinutes = hh * 60 + mm;
-            const bufferTime = 15; // 15 mins default cleanup buffer
-            const totalRequiredMinutes = slotMinutes + totalDuration + bufferTime;
-
-            // Check Salon Closing limit
-            const [cEndH, cEndM] = operatingHours?.closing_time ? operatingHours.closing_time.split(":").map(Number) : [19, 0];
-            const closingMinutes = cEndH * 60 + cEndM;
-
-            if (totalRequiredMinutes > closingMinutes) {
-              return false; // Exceeds Salon operating hours!
-            }
-
-            // Check Staff Shift End limit
-            if (selectedStaffId && selectedStaffId !== 'any' && schedule?.end_time) {
-              const [sEndH, sEndM] = schedule.end_time.split(":").map(Number);
-              const shiftEndMinutes = sEndH * 60 + sEndM;
-              if (totalRequiredMinutes > shiftEndMinutes) {
-                return false; // Exceeds stylist shift!
-              }
-            }
-
-            // Check Staff Breaks
-            if (breaks.length > 0) {
-              for (const brk of breaks) {
-                const [bStartH, bStartM] = brk.break_start.split(":").map(Number);
-                const [bEndH, bEndM] = brk.break_end.split(":").map(Number);
-                const brkStartMin = bStartH * 60 + bStartM;
-                const brkEndMin = bEndH * 60 + bEndM;
-
-                if (slotMinutes >= brkStartMin && slotMinutes < brkEndMin) {
-                  return false; // Falls within stylist break period
-                }
-              }
-            }
-
-            // Check Shared Resource capacity limits
-            if (salonResources && salonResources.length > 0 && activeResourceBookings) {
-              const slotTimeStr = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:00`;
-
-              for (const res of salonResources) {
-                const currentBookings = activeResourceBookings.filter(rb => 
-                  rb.resource_id === res.id &&
-                  rb.start_time <= slotTimeStr &&
-                  rb.end_time > slotTimeStr
-                );
-                if (currentBookings.length >= res.quantity) {
-                  return false; // All shared chairs/basins are occupied
-                }
-              }
-            }
-
-            return true;
-          });
-
-          setTimeSlots(finalSlots);
-        } catch(e) {
-          console.error(e);
-          setTimeSlots(["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]);
-        } finally {
-          setLoadingSlots(false);
-        }
+      setLoadingSlots(true);
+      try {
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      const dayOfWeek = selectedDate.getDay();
+      
+      // 1. Fetch Salon Operating Hours
+      const { data: operatingHours } = await supabase
+      .from("salon_operating_hours")
+      .select("*")
+      .eq("salon_id", salonId)
+      .eq("day_of_week", dayOfWeek)
+      .maybeSingle();
+      
+      if (operatingHours?.is_closed) {
+      setTimeSlots([]);
+      setLoadingSlots(false);
+      return;
+      }
+      
+      // Define slot base hours based on operating hours or fallback
+      let startHour = 9;
+      let endHour = 19;
+      if (operatingHours?.opening_time && operatingHours?.closing_time) {
+      startHour = parseInt(operatingHours.opening_time.split(":")[0]);
+      endHour = parseInt(operatingHours.closing_time.split(":")[0]);
+      }
+      
+      // Generate slot array base (every 30 minutes)
+      const baseSlots: string[] = [];
+      for (let h = startHour; h < endHour; h++) {
+      const displayH = h % 12 === 0 ? 12 : h % 12;
+      const period = h >= 12 ? "PM" : "AM";
+      baseSlots.push(`${displayH.toString().padStart(2, '0')}:00 ${period}`);
+      baseSlots.push(`${displayH.toString().padStart(2, '0')}:30 ${period}`);
+      }
+      
+      // 2. Fetch Staff schedule and break periods
+      let staffWorking = true;
+      let breaks: any[] = [];
+      let schedule: any = null;
+      
+      if (selectedStaffId && selectedStaffId !== 'any') {
+      const { data: sData } = await supabase
+      .from("staff_schedules")
+      .select("*")
+      .eq("staff_id", selectedStaffId)
+      .eq("day_of_week", dayOfWeek)
+      .maybeSingle();
+      
+      schedule = sData;
+      if (schedule && !schedule.is_working) {
+      staffWorking = false;
+      }
+      
+      const { data: staffBreaks } = await supabase
+      .from("staff_breaks")
+      .select("*")
+      .eq("staff_id", selectedStaffId)
+      .eq("day_of_week", dayOfWeek);
+      
+      if (staffBreaks) {
+      breaks = staffBreaks;
+      }
+      }
+      
+      if (!staffWorking) {
+      setTimeSlots([]);
+      setLoadingSlots(false);
+      return;
+      }
+      
+      // 3. Fetch Booked Events for Salon
+      const { data: bookedEvents } = await supabase
+      .from("bookings")
+      .select("booking_time, staff_id, status, created_at")
+      .eq("salon_id", salonId)
+      .eq("booking_date", formattedDate);
+      
+      const bookedTimes = bookedEvents ? bookedEvents.filter(b => {
+      // Hardening: Auto-release pending bookings older than 10 minutes (Checklist #1 & #7)
+      if (b.status === 'pending' && b.created_at) {
+      const createdAt = new Date(b.created_at).getTime();
+      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+      if (createdAt < tenMinutesAgo) {
+      return false; // Abandoned checkout, release timeslot!
+      }
+      }
+      if (selectedStaffId && selectedStaffId !== 'any') {
+      return b.staff_id === selectedStaffId;
+      }
+      return true;
+      }).map(b => {
+      const parts = b.booking_time.split(":");
+      const hh = parseInt(parts[0]);
+      const mm = parts[1];
+      const period = hh >= 12 ? "PM" : "AM";
+      const displayHh = hh % 12 === 0 ? 12 : hh % 12;
+      return `${displayHh.toString().padStart(2, '0')}:${mm} ${period}`;
+      }) : [];
+      
+      // 4. Fetch Resources and Resource Bookings to avoid conflicts
+      const { data: salonResources } = await supabase
+      .from("resources")
+      .select("*")
+      .eq("salon_id", salonId);
+      
+      const { data: activeResourceBookings } = await supabase
+      .from("resource_bookings")
+      .select("*")
+      .eq("booking_date", formattedDate);
+      
+      // Filter base slots with all schedules, breaks, booked events, and resources
+      const finalSlots = baseSlots.filter(slot => {
+      // Check standard booking overlap
+      if (bookedTimes.includes(slot)) return false;
+      
+      // Final Booking Availability Formula:
+      // Slot Start Time + Service Duration + Buffer Time <= MIN(Salon Closing Time, Staff Shift End Time)
+      const [timeStr, period] = slot.split(" ");
+      let [hh, mm] = timeStr.split(":").map(Number);
+      if (period === "PM" && hh < 12) hh += 12;
+      if (period === "AM" && hh === 12) hh = 0;
+      const slotMinutes = hh * 60 + mm;
+      const bufferTime = 15; // 15 mins default cleanup buffer
+      const totalRequiredMinutes = slotMinutes + totalDuration + bufferTime;
+      
+      // Check Salon Closing limit
+      const [cEndH, cEndM] = operatingHours?.closing_time ? operatingHours.closing_time.split(":").map(Number) : [19, 0];
+      const closingMinutes = cEndH * 60 + cEndM;
+      
+      if (totalRequiredMinutes > closingMinutes) {
+      return false; // Exceeds Salon operating hours!
+      }
+      
+      // Check Staff Shift End limit
+      if (selectedStaffId && selectedStaffId !== 'any' && schedule?.end_time) {
+      const [sEndH, sEndM] = schedule.end_time.split(":").map(Number);
+      const shiftEndMinutes = sEndH * 60 + sEndM;
+      if (totalRequiredMinutes > shiftEndMinutes) {
+      return false; // Exceeds stylist shift!
+      }
+      }
+      
+      // Check Staff Breaks
+      if (breaks.length > 0) {
+      for (const brk of breaks) {
+      const [bStartH, bStartM] = brk.break_start.split(":").map(Number);
+      const [bEndH, bEndM] = brk.break_end.split(":").map(Number);
+      const brkStartMin = bStartH * 60 + bStartM;
+      const brkEndMin = bEndH * 60 + bEndM;
+      
+      if (slotMinutes >= brkStartMin && slotMinutes < brkEndMin) {
+      return false; // Falls within stylist break period
+      }
+      }
+      }
+      
+      // Check Shared Resource capacity limits
+      if (salonResources && salonResources.length > 0 && activeResourceBookings) {
+      const slotTimeStr = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:00`;
+      
+      for (const res of salonResources) {
+      const currentBookings = activeResourceBookings.filter(rb => 
+      rb.resource_id === res.id &&
+      rb.start_time <= slotTimeStr &&
+      rb.end_time > slotTimeStr
+      );
+      if (currentBookings.length >= res.quantity) {
+      return false; // All shared chairs/basins are occupied
+      }
+      }
+      }
+      
+      return true;
+      });
+      
+      setTimeSlots(finalSlots);
+      } catch(e) {
+      console.error(e);
+      setTimeSlots(["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]);
+      } finally {
+      setLoadingSlots(false);
+      }
       }
       fetchSlots();
-    }
+      }
+    });
   }, [step, selectedDate, selectedStaffId, selectedServiceIds, salonId]);
 
   // Autofill search by phone

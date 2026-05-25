@@ -76,7 +76,9 @@ export default function BookingDetailPage() {
   }
 
   useEffect(() => {
-    if (bookingId) fetchBooking();
+    void Promise.resolve().then(() => {
+      if (bookingId) fetchBooking();
+    });
   }, [bookingId]);
 
   const handleAction = async (action: string) => {

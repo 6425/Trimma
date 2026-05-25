@@ -56,10 +56,6 @@ export default function GlobalServiceManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -79,6 +75,10 @@ export default function GlobalServiceManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchData());
+  }, []);
 
   const handleOpenDialog = (service: any = null) => {
     if (service) {

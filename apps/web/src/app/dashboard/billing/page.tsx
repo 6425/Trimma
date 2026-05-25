@@ -11,6 +11,7 @@ import {
   GitBranch,
   Image as ImageIcon,
   Scissors,
+  Tag,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { supabase } from "@/config/supabase";
 import {
   DEFAULT_SUBSCRIPTION_PLANS,
   formatLkr,
+  formatPromotionPackageLimit,
   getCheckoutAmount,
   getDisplayMonthlyPrice,
   getIntroMonthlyPrice,
@@ -53,10 +55,6 @@ export default function BillingPage() {
     { invoiceNo: "TRM-INV-003", date: "Mar 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
   ];
 
-  useEffect(() => {
-    fetchActivePlan();
-  }, []);
-
   const fetchActivePlan = async () => {
     try {
       setLoading(true);
@@ -88,6 +86,10 @@ export default function BillingPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchActivePlan());
+  }, []);
 
   const activeTierRank = getTierRank(activePlan?.name);
 
@@ -153,7 +155,8 @@ export default function BillingPage() {
             <p className="text-white/70 text-xs">
               Supports up to {activePlan.max_staff} staff,{" "}
               {activePlan.max_services >= 9999 ? "unlimited" : activePlan.max_services} services,{" "}
-              {activePlan.max_images} images, and {activePlan.max_branches || 0} branches.
+              {activePlan.max_images} images, {activePlan.max_branches || 0} branches, and{" "}
+              {formatPromotionPackageLimit(activePlan.max_promotion_packages)} discounts & promotions.
             </p>
           </div>
 
@@ -173,7 +176,7 @@ export default function BillingPage() {
           Available Subscription Packages
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
           {plans.map((plan) => {
             const planRank = getTierRank(plan.name);
             const isActive = activePlan && activePlan.name.toLowerCase() === plan.name.toLowerCase();
@@ -188,20 +191,20 @@ export default function BillingPage() {
             return (
               <div
                 key={plan.name}
-                className={`rounded-3xl p-5 border flex flex-col justify-between space-y-6 relative ${
+                className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between gap-6 relative min-h-[420px] ${
                   isActive
                     ? "border-brand bg-rose-50/10 shadow-sm"
                     : "border-zinc-100 bg-white hover:border-zinc-200"
                 }`}
               >
                 {isActive && (
-                  <span className="absolute top-4 right-4 bg-rose-50 text-brand font-extrabold text-[8px] tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-rose-100">
+                  <span className="absolute top-5 right-5 bg-rose-50 text-brand font-extrabold text-[8px] tracking-wider uppercase px-2.5 py-1 rounded-full border border-rose-100">
                     Active Tier
                   </span>
                 )}
 
-                <div className="space-y-4 pt-4">
-                  <div>
+                <div className="space-y-5 pt-2">
+                  <div className="pr-14">
                     <h4 className="font-extrabold text-sm text-zinc-800">{plan.name}</h4>
                     <div className="flex items-baseline gap-1 mt-2">
                       <span className="text-xl font-black text-zinc-900">
@@ -221,27 +224,36 @@ export default function BillingPage() {
                     )}
                   </div>
 
-                  <div className="space-y-2 p-3 rounded-2xl bg-zinc-50 border border-zinc-100 text-[11px] font-bold text-zinc-700">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                      <span>Staff: {plan.max_staff}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Scissors className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                      <span>
-                        Services: {plan.max_services >= 9999 ? "Unlimited" : plan.max_services}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                      <span>Images: {plan.max_images}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                      <span>
-                        Branches: {plan.max_branches === 0 ? "None" : plan.max_branches}
-                      </span>
-                    </div>
+                  <div className="rounded-2xl bg-zinc-50 border border-zinc-100 px-3.5 py-3 space-y-2.5">
+                    {[
+                      { icon: Users, label: "Staff", value: plan.max_staff },
+                      {
+                        icon: Scissors,
+                        label: "Services",
+                        value: plan.max_services >= 9999 ? "Unlimited" : plan.max_services,
+                      },
+                      { icon: ImageIcon, label: "Images", value: plan.max_images },
+                      {
+                        icon: GitBranch,
+                        label: "Branches",
+                        value: plan.max_branches === 0 ? "None" : plan.max_branches,
+                      },
+                      {
+                        icon: Tag,
+                        label: "Discounts & Promotions",
+                        value: formatPromotionPackageLimit(plan.max_promotion_packages),
+                      },
+                    ].map(({ icon: Icon, label, value }) => (
+                      <div
+                        key={label}
+                        className="flex items-center gap-2 text-[11px] font-normal leading-none"
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
+                        <span className="whitespace-nowrap text-zinc-600">
+                          {label}: <span className="text-zinc-800">{value}</span>
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

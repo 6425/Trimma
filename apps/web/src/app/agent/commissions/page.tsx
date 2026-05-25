@@ -38,119 +38,121 @@ export default function AgentCommissions() {
   });
 
   useEffect(() => {
-    async function loadCommissionData() {
+    void Promise.resolve().then(() => {
+      async function loadCommissionData() {
       try {
-        setLoading(true);
-
-        // 1. Get currently authenticated Agent session
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-          router.replace("/login?redirectTo=/agent/commissions");
-          return;
-        }
-
-        const email = user.email || "";
-        setAgentEmail(email);
-
-        // 2. Fetch converted leads assigned to this agent (which represent onboarded salons)
-        const { data: convertedLeads, error: leadsErr } = await supabase
-          .from("salon_leads")
-          .select("*")
-          .eq("assign_to", email)
-          .eq("status", "converted");
-
-        if (leadsErr) throw leadsErr;
-
-        const salonsList = convertedLeads || [];
-        setReferredSalons(salonsList);
-
-        if (salonsList.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        // 3. Resolve the matching salon records in public.salons table
-        const salonNames = salonsList.map((l) => l.name);
-        const { data: salonsData, error: salonsErr } = await supabase
-          .from("salons")
-          .select("id, name")
-          .in("name", salonNames);
-
-        if (salonsErr) throw salonsErr;
-
-        if (!salonsData || salonsData.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        const salonIds = salonsData.map((s) => s.id);
-        const salonIdToNameMap = salonsData.reduce((acc: any, s: any) => {
-          acc[s.id] = s.name;
-          return acc;
-        }, {});
-
-        // 4. Fetch bookings for these salons
-        const { data: bookingsData, error: bookingsErr } = await supabase
-          .from("bookings")
-          .select(`
-            id,
-            salon_id,
-            booking_date,
-            status,
-            amount,
-            customer_email
-          `)
-          .in("salon_id", salonIds)
-          .order("booking_date", { ascending: false });
-
-        if (bookingsErr) throw bookingsErr;
-
-        // Map database bookings to ReferredBooking structure
-        const mappedBookings: ReferredBooking[] = (bookingsData || []).map((b: any) => {
-          const amount = parseFloat(b.amount || 0);
-          return {
-            id: b.id,
-            salon_id: b.salon_id,
-            salon_name: salonIdToNameMap[b.salon_id] || "Referred Salon",
-            booking_date: b.booking_date,
-            status: b.status,
-            amount: amount,
-            customer_email: b.customer_email || "customer@trimma.io",
-            agent_cut: amount * 0.1,
-            platform_cut: amount * 0.1,
-            salon_cut: amount * 0.8
-          };
-        });
-
-        setBookings(mappedBookings);
-
-        // 5. Calculate stats aggregates based on confirmed/completed bookings
-        let gross = 0;
-        let earned = 0;
-        let settledCount = 0;
-
-        mappedBookings.forEach((b) => {
-          if (b.status === "completed" || b.status === "confirmed") {
-            gross += b.amount;
-            earned += b.agent_cut;
-            settledCount += 1;
-          }
-        });
-
-        setStats({
-          totalReferredGross: gross,
-          totalAgentEarned: earned,
-          salonsCount: salonsList.length,
-          bookingsCount: mappedBookings.length
-        });
-
-      } catch (err) {
-        console.error("Failed to load agent commission data", err);
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      
+      // 1. Get currently authenticated Agent session
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+      router.replace("/login?redirectTo=/agent/commissions");
+      return;
       }
-    }
-    loadCommissionData();
+      
+      const email = user.email || "";
+      setAgentEmail(email);
+      
+      // 2. Fetch converted leads assigned to this agent (which represent onboarded salons)
+      const { data: convertedLeads, error: leadsErr } = await supabase
+      .from("salon_leads")
+      .select("*")
+      .eq("assign_to", email)
+      .eq("status", "converted");
+      
+      if (leadsErr) throw leadsErr;
+      
+      const salonsList = convertedLeads || [];
+      setReferredSalons(salonsList);
+      
+      if (salonsList.length === 0) {
+      setLoading(false);
+      return;
+      }
+      
+      // 3. Resolve the matching salon records in public.salons table
+      const salonNames = salonsList.map((l) => l.name);
+      const { data: salonsData, error: salonsErr } = await supabase
+      .from("salons")
+      .select("id, name")
+      .in("name", salonNames);
+      
+      if (salonsErr) throw salonsErr;
+      
+      if (!salonsData || salonsData.length === 0) {
+      setLoading(false);
+      return;
+      }
+      
+      const salonIds = salonsData.map((s) => s.id);
+      const salonIdToNameMap = salonsData.reduce((acc: any, s: any) => {
+      acc[s.id] = s.name;
+      return acc;
+      }, {});
+      
+      // 4. Fetch bookings for these salons
+      const { data: bookingsData, error: bookingsErr } = await supabase
+      .from("bookings")
+      .select(`
+      id,
+      salon_id,
+      booking_date,
+      status,
+      amount,
+      customer_email
+      `)
+      .in("salon_id", salonIds)
+      .order("booking_date", { ascending: false });
+      
+      if (bookingsErr) throw bookingsErr;
+      
+      // Map database bookings to ReferredBooking structure
+      const mappedBookings: ReferredBooking[] = (bookingsData || []).map((b: any) => {
+      const amount = parseFloat(b.amount || 0);
+      return {
+      id: b.id,
+      salon_id: b.salon_id,
+      salon_name: salonIdToNameMap[b.salon_id] || "Referred Salon",
+      booking_date: b.booking_date,
+      status: b.status,
+      amount: amount,
+      customer_email: b.customer_email || "customer@trimma.io",
+      agent_cut: amount * 0.1,
+      platform_cut: amount * 0.1,
+      salon_cut: amount * 0.8
+      };
+      });
+      
+      setBookings(mappedBookings);
+      
+      // 5. Calculate stats aggregates based on confirmed/completed bookings
+      let gross = 0;
+      let earned = 0;
+      let settledCount = 0;
+      
+      mappedBookings.forEach((b) => {
+      if (b.status === "completed" || b.status === "confirmed") {
+      gross += b.amount;
+      earned += b.agent_cut;
+      settledCount += 1;
+      }
+      });
+      
+      setStats({
+      totalReferredGross: gross,
+      totalAgentEarned: earned,
+      salonsCount: salonsList.length,
+      bookingsCount: mappedBookings.length
+      });
+      
+      } catch (err) {
+      console.error("Failed to load agent commission data", err);
+      } finally {
+      setLoading(false);
+      }
+      }
+      loadCommissionData();
+    });
   }, [router]);
 
   const formatLKR = (amount: number) => {

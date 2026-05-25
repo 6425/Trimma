@@ -301,7 +301,7 @@ export function WhyTrimmaSection() {
       <div className="relative z-10 text-center max-w-2xl mx-auto mb-12">
         <h2 className="text-3xl font-black tracking-tight text-zinc-900 mb-2">Why Book with Trimma?</h2>
         <p className="text-zinc-500 text-sm font-medium">
-          Sri Lanka's leading digital directory and instant booking engine built for luxury wellness and grooming.
+          Sri Lanka&apos;s leading digital directory and instant booking engine built for luxury wellness and grooming.
         </p>
       </div>
 
@@ -336,7 +336,7 @@ export function SalonOnboardingCTA() {
             List Your Salon & Scale Bookings
           </h2>
           <p className="text-zinc-300 text-sm md:text-base leading-relaxed mb-6 font-medium">
-            Coordinate calendar bookings, shifts, dynamic digital receipts, and reach thousands of local customers. Power up your wellness business with Sri Lanka's premium salon SaaS suite.
+            Coordinate calendar bookings, shifts, dynamic digital receipts, and reach thousands of local customers. Power up your wellness business with Sri Lanka&apos;s premium salon SaaS suite.
           </p>
           
           <div className="flex flex-wrap gap-4">

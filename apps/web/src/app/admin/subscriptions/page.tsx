@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Zap, CheckCircle2, Package, Loader2, Users, Scissors, Image, GitBranch, ShieldCheck, RotateCcw } from "lucide-react";
+import { Plus, Edit2, Trash2, Zap, CheckCircle2, Package, Loader2, Users, Scissors, Image, GitBranch, ShieldCheck, RotateCcw, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { DEFAULT_SUBSCRIPTION_PLANS, formatPromotionPackageLimit } from "@/lib/subscription-pricing";
 
 export default function SubscriptionPlanManagement() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -23,13 +24,48 @@ export default function SubscriptionPlanManagement() {
     max_services: "",
     max_images: "",
     max_branches: "",
+    max_promotion_packages: "",
     allowed_categories_limit: "",
     features: ""
   });
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+  const emptyFormData = {
+    name: "",
+    monthly_price: "",
+    max_staff: "",
+    max_services: "",
+    max_images: "",
+    max_branches: "",
+    max_promotion_packages: "",
+    allowed_categories_limit: "",
+    features: "",
+  };
+
+  const seedDefaultPlans = async () => {
+    try {
+      const defaultPlans = DEFAULT_SUBSCRIPTION_PLANS.map((plan) => ({
+        id: plan.id,
+        name: plan.name,
+        list_monthly_price: plan.list_monthly_price,
+        intro_monthly_price: plan.intro_monthly_price,
+        monthly_price: plan.intro_monthly_price ?? plan.monthly_price,
+        annual_price: plan.annual_price,
+        max_staff: plan.max_staff,
+        max_services: plan.max_services,
+        max_images: plan.max_images,
+        max_branches: plan.max_branches,
+        max_promotion_packages: plan.max_promotion_packages,
+        feature_flags: plan.feature_flags,
+      }));
+
+      const { error } = await supabase.from("subscription_plans").upsert(defaultPlans, { onConflict: 'id' });
+      if (error) throw error;
+      toast.success("Default subscription plans successfully seeded!");
+    } catch (error: any) {
+      console.error("Auto seeding failed:", error?.message || error?.details || JSON.stringify(error));
+      toast.error("Auto seeding failed: " + (error?.message || "Check console"));
+    }
+  };
 
   const fetchPlans = async () => {
     try {
@@ -60,110 +96,9 @@ export default function SubscriptionPlanManagement() {
     }
   };
 
-  const seedDefaultPlans = async () => {
-    try {
-      const defaultPlans = [
-        {
-          id: "f0000000-0000-0000-0000-000000000001",
-          name: "Free",
-          monthly_price: 0,
-          annual_price: 0,
-          max_staff: 2,
-          max_services: 6,
-          max_images: 3,
-          max_branches: 0,
-          feature_flags: {
-            allowed_categories_limit: 2,
-            features: [
-              "Staff Management", 
-              "FB/WA Integration", 
-              "Free Gmail", 
-              "Free Google Business Page", 
-              "Performance Insights", 
-              "Salon Dashboard", 
-              "Salon Profile Page with QR"
-            ]
-          }
-        },
-        {
-          id: "f0000000-0000-0000-0000-000000000002",
-          name: "Starter",
-          monthly_price: 3500,
-          annual_price: 35000,
-          max_staff: 5,
-          max_services: 12,
-          max_images: 6,
-          max_branches: 2,
-          feature_flags: {
-            allowed_categories_limit: 5,
-            features: [
-              "Staff Management", 
-              "FB/WA Integration", 
-              "Free Gmail", 
-              "Free Google Business Page", 
-              "Performance Insights", 
-              "Salon Dashboard", 
-              "Salon Profile Page with QR",
-              "Discounts & Promotions"
-            ]
-          }
-        },
-        {
-          id: "f0000000-0000-0000-0000-000000000003",
-          name: "Pro",
-          monthly_price: 7500,
-          annual_price: 75000,
-          max_staff: 10,
-          max_services: 20,
-          max_images: 12,
-          max_branches: 3,
-          feature_flags: {
-            allowed_categories_limit: 999, // All
-            features: [
-              "Staff Management", 
-              "FB/WA Integration", 
-              "Free Gmail", 
-              "Free Google Business Page", 
-              "Performance Insights", 
-              "Salon Dashboard", 
-              "Salon Profile Page with QR",
-              "Discounts & Promotions"
-            ]
-          }
-        },
-        {
-          id: "f0000000-0000-0000-0000-000000000004",
-          name: "Elite",
-          monthly_price: 15000,
-          annual_price: 150000,
-          max_staff: 30,
-          max_services: 9999, // Any
-          max_images: 30,
-          max_branches: 15,
-          feature_flags: {
-            allowed_categories_limit: 999, // All
-            features: [
-              "Staff Management", 
-              "FB/WA Integration", 
-              "Free Gmail", 
-              "Free Google Business Page", 
-              "Performance Insights", 
-              "Salon Dashboard", 
-              "Salon Profile Page with QR",
-              "Discounts & Promotions"
-            ]
-          }
-        }
-      ];
-
-      const { error } = await supabase.from("subscription_plans").upsert(defaultPlans, { onConflict: 'id' });
-      if (error) throw error;
-      toast.success("Default subscription plans successfully seeded!");
-    } catch (error: any) {
-      console.error("Auto seeding failed:", error?.message || error?.details || JSON.stringify(error));
-      toast.error("Auto seeding failed: " + (error?.message || "Check console"));
-    }
-  };
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchPlans());
+  }, []);
 
   const handleResetDefaults = async () => {
     if (!confirm("Are you sure you want to reset all tiers to the standard defaults? This will delete current customized plans.")) return;
@@ -198,6 +133,9 @@ export default function SubscriptionPlanManagement() {
       max_services: formData.max_services ? parseInt(formData.max_services) : 6,
       max_images: formData.max_images ? parseInt(formData.max_images) : 4,
       max_branches: formData.max_branches ? parseInt(formData.max_branches) : 0,
+      max_promotion_packages: formData.max_promotion_packages
+        ? parseInt(formData.max_promotion_packages)
+        : 2,
       feature_flags: {
         allowed_categories_limit: formData.allowed_categories_limit ? parseInt(formData.allowed_categories_limit) : 2,
         features: featuresArray
@@ -220,16 +158,7 @@ export default function SubscriptionPlanManagement() {
         if (error) throw error;
         toast.success("Plan created successfully");
       }
-      setFormData({ 
-        name: "", 
-        monthly_price: "", 
-        max_staff: "", 
-        max_services: "", 
-        max_images: "", 
-        max_branches: "", 
-        allowed_categories_limit: "", 
-        features: "" 
-      });
+      setFormData(emptyFormData);
       setEditId(null);
       fetchPlans();
     } catch (error: any) {
@@ -262,6 +191,7 @@ export default function SubscriptionPlanManagement() {
       max_services: plan.max_services?.toString() || "6",
       max_images: plan.max_images?.toString() || "4",
       max_branches: plan.max_branches?.toString() || "0",
+      max_promotion_packages: plan.max_promotion_packages?.toString() || "2",
       allowed_categories_limit: flags.allowed_categories_limit?.toString() || "2",
       features: Array.isArray(flags.features) ? flags.features.join(", ") : ""
     });
@@ -287,16 +217,7 @@ export default function SubscriptionPlanManagement() {
             <Button 
               onClick={() => { 
                 setEditId(null); 
-                setFormData({ 
-                  name: "", 
-                  monthly_price: "", 
-                  max_staff: "", 
-                  max_services: "", 
-                  max_images: "", 
-                  max_branches: "", 
-                  allowed_categories_limit: "", 
-                  features: "" 
-                }); 
+                setFormData(emptyFormData); 
               }}
               className="bg-brand hover:bg-brand-hover text-zinc-900 rounded-xl px-6 h-12 font-bold shadow-lg shadow-brand/20 flex items-center gap-2"
             >
@@ -379,6 +300,12 @@ export default function SubscriptionPlanManagement() {
                       <div className="flex items-center gap-1.5">
                         <GitBranch className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Branches: {plan.max_branches === 0 ? "No" : plan.max_branches}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 col-span-2">
+                        <Tag className="w-3.5 h-3.5 text-zinc-500" />
+                        <span>
+                          Discounts & Promotions: {formatPromotionPackageLimit(plan.max_promotion_packages)}
+                        </span>
                       </div>
                     </div>
 
@@ -484,6 +411,18 @@ export default function SubscriptionPlanManagement() {
                     placeholder="2" 
                   />
                 </div>
+                <div className="space-y-2 col-span-2">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
+                    Discounts & Promotions
+                  </label>
+                  <Input
+                    type="number"
+                    value={formData.max_promotion_packages}
+                    onChange={(e) => setFormData({ ...formData, max_promotion_packages: e.target.value })}
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl"
+                    placeholder="4"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -514,16 +453,7 @@ export default function SubscriptionPlanManagement() {
                     type="button" 
                     onClick={() => { 
                       setEditId(null); 
-                      setFormData({ 
-                        name: "", 
-                        monthly_price: "", 
-                        max_staff: "", 
-                        max_services: "", 
-                        max_images: "", 
-                        max_branches: "", 
-                        allowed_categories_limit: "", 
-                        features: "" 
-                      }); 
+                      setFormData(emptyFormData); 
                       fetchPlans(); 
                     }}
                     variant="ghost" 

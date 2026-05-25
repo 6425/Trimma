@@ -63,36 +63,38 @@ export default function AdminBrandingPage() {
   const iconInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    async function loadConfig() {
+    void Promise.resolve().then(() => {
+      async function loadConfig() {
       try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("global_branding_settings")
-          .select("*")
-          .limit(1)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (data) {
-          setLogoName(data.logo_name || "Trimma");
-          setLogoNameFontFamily(data.logo_name_font_family || "Outfit");
-          setLogoNameFontSize(data.logo_name_font_size || 22);
-          setLogoNameColor(data.logo_name_color || "var(--color-brand)");
-          
-          setLogoTagline(data.logo_tagline || "");
-          setLogoTaglineFontFamily(data.logo_tagline_font_family || "Inter");
-          setLogoTaglineFontSize(data.logo_tagline_font_size || 9);
-          setLogoTaglineColor(data.logo_tagline_color || "#64748b");
-          setLogoSvgRaw(data.logo_svg_raw || "");
-          setLogoImageUrl(data.logo_image_url || "");
-        }
-      } catch (err) {
-        console.warn("Table lookup skipped or schema is being compiled by user.");
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      const { data, error } = await supabase
+      .from("global_branding_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+      
+      if (error) throw error;
+      if (data) {
+      setLogoName(data.logo_name || "Trimma");
+      setLogoNameFontFamily(data.logo_name_font_family || "Outfit");
+      setLogoNameFontSize(data.logo_name_font_size || 22);
+      setLogoNameColor(data.logo_name_color || "var(--color-brand)");
+      
+      setLogoTagline(data.logo_tagline || "");
+      setLogoTaglineFontFamily(data.logo_tagline_font_family || "Inter");
+      setLogoTaglineFontSize(data.logo_tagline_font_size || 9);
+      setLogoTaglineColor(data.logo_tagline_color || "#64748b");
+      setLogoSvgRaw(data.logo_svg_raw || "");
+      setLogoImageUrl(data.logo_image_url || "");
       }
-    }
-    loadConfig();
+      } catch (err) {
+      console.warn("Table lookup skipped or schema is being compiled by user.");
+      } finally {
+      setLoading(false);
+      }
+      }
+      loadConfig();
+    });
   }, []);
 
   // Premium Quick Templates Hot-Applier

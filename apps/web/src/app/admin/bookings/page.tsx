@@ -21,10 +21,6 @@ export default function AdminBookings() {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("12:00");
 
-  useEffect(() => {
-    fetchGlobalBookings();
-  }, []);
-
   const fetchGlobalBookings = async () => {
     try {
       setLoading(true);
@@ -49,6 +45,10 @@ export default function AdminBookings() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchGlobalBookings());
+  }, []);
 
   const handleOverrideStatus = async (bookingId: string, newStatus: 'confirmed' | 'cancelled') => {
     setActioningId(bookingId);

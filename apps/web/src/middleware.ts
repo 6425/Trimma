@@ -25,7 +25,7 @@ const hasPermission = (userRole: UserRole | null | undefined, route: string): bo
 };
 
 // Define public routes that do not require authentication
-const publicRoutes = ['/', '/login', '/signup', '/register', '/about', '/contact', '/pricing', '/unauthorized', '/onboarding'];
+const publicRoutes = ['/', '/login', '/signup', '/register', '/about', '/contact', '/pricing', '/categories', '/unauthorized', '/onboarding'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -49,6 +49,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/salons') ||
     pathname.startsWith('/locations') ||
     pathname.startsWith('/category') ||
+    pathname.startsWith('/categories') ||
     pathname.startsWith('/checkout')
   ) {
     return NextResponse.next();

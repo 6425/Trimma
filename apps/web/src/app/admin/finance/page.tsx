@@ -47,95 +47,97 @@ export default function FinanceDashboard() {
   const [savingRates, setSavingRates] = useState(false);
 
   useEffect(() => {
-    async function loadFinanceData() {
+    void Promise.resolve().then(() => {
+      async function loadFinanceData() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          router.replace("/login?redirectTo=/dashboard/finance");
-          return;
-        }
-
-        // 1. Check if user is Admin
-        const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle();
-        if (roleData?.role === 'admin') {
-          setIsAdmin(true);
-          // Fetch current active commission rule
-          const { data: commData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
-          if (commData) {
-            setGlobalRates({
-              platform: commData.platform_percentage,
-              salon: commData.salon_percentage,
-              payhere: commData.payhere_percentage,
-              agent: commData.agent_percentage || 0
-            });
-          }
-        }
-
-        // 2. Fetch Salon Data
-        let salonId = null;
-        if (roleData?.role === 'salon_owner') {
-          const { data: salonData } = await supabase.from("salons").select("id").eq("owner_email", session.user.email).maybeSingle();
-          if (salonData) salonId = salonData.id;
-        }
-
-        // 3. Fetch Bookings (If Admin, fetch all platform bookings. If Salon, fetch only theirs)
-        let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
-        if (salonId) {
-          query = query.eq("salon_id", salonId);
-        } else if (roleData?.role !== 'admin') {
-          setLoading(false);
-          return; // Neither admin nor salon owner
-        }
-
-        const { data: bookingsData, error } = await query;
-        if (!error && bookingsData) {
-          
-          const resolvedBookings = bookingsData.map((b: any) => ({
-            ...b,
-            amount: parseFloat(b.total_price || 0),
-            platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
-            salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
-            payhere_fee_amount: parseFloat(b.payhere_fee_amount || 0),
-            agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
-          }));
-
-          setBookings(resolvedBookings);
-
-          // 4. Calculate aggregates
-          let gross = 0;
-          let platform = 0;
-          let salonUpfront = 0;
-          let agent = 0;
-          let payhere = 0;
-          let completed = 0;
-
-          resolvedBookings.forEach((b: BookingWithSplits) => {
-            if (b.status === "completed" || b.status === "confirmed") {
-              gross += b.amount;
-              platform += b.platform_commission_amount;
-              salonUpfront += b.salon_upfront_amount;
-              agent += b.agent_commission_amount;
-              payhere += b.payhere_fee_amount;
-              completed += 1;
-            }
-          });
-
-          setStats({
-            grossRevenue: gross,
-            platformComm: platform,
-            salonComm: salonUpfront,
-            agentComm: agent,
-            payhereComm: payhere,
-            completedCount: completed
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load finance data", err);
-      } finally {
-        setLoading(false);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+      router.replace("/login?redirectTo=/dashboard/finance");
+      return;
       }
-    }
-    loadFinanceData();
+      
+      // 1. Check if user is Admin
+      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle();
+      if (roleData?.role === 'admin') {
+      setIsAdmin(true);
+      // Fetch current active commission rule
+      const { data: commData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
+      if (commData) {
+      setGlobalRates({
+      platform: commData.platform_percentage,
+      salon: commData.salon_percentage,
+      payhere: commData.payhere_percentage,
+      agent: commData.agent_percentage || 0
+      });
+      }
+      }
+      
+      // 2. Fetch Salon Data
+      let salonId = null;
+      if (roleData?.role === 'salon_owner') {
+      const { data: salonData } = await supabase.from("salons").select("id").eq("owner_email", session.user.email).maybeSingle();
+      if (salonData) salonId = salonData.id;
+      }
+      
+      // 3. Fetch Bookings (If Admin, fetch all platform bookings. If Salon, fetch only theirs)
+      let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
+      if (salonId) {
+      query = query.eq("salon_id", salonId);
+      } else if (roleData?.role !== 'admin') {
+      setLoading(false);
+      return; // Neither admin nor salon owner
+      }
+      
+      const { data: bookingsData, error } = await query;
+      if (!error && bookingsData) {
+      
+      const resolvedBookings = bookingsData.map((b: any) => ({
+      ...b,
+      amount: parseFloat(b.total_price || 0),
+      platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
+      salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
+      payhere_fee_amount: parseFloat(b.payhere_fee_amount || 0),
+      agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
+      }));
+      
+      setBookings(resolvedBookings);
+      
+      // 4. Calculate aggregates
+      let gross = 0;
+      let platform = 0;
+      let salonUpfront = 0;
+      let agent = 0;
+      let payhere = 0;
+      let completed = 0;
+      
+      resolvedBookings.forEach((b: BookingWithSplits) => {
+      if (b.status === "completed" || b.status === "confirmed") {
+      gross += b.amount;
+      platform += b.platform_commission_amount;
+      salonUpfront += b.salon_upfront_amount;
+      agent += b.agent_commission_amount;
+      payhere += b.payhere_fee_amount;
+      completed += 1;
+      }
+      });
+      
+      setStats({
+      grossRevenue: gross,
+      platformComm: platform,
+      salonComm: salonUpfront,
+      agentComm: agent,
+      payhereComm: payhere,
+      completedCount: completed
+      });
+      }
+      } catch (err) {
+      console.error("Failed to load finance data", err);
+      } finally {
+      setLoading(false);
+      }
+      }
+      loadFinanceData();
+    });
   }, [router]);
 
   const handleUpdateRates = async () => {

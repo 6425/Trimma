@@ -132,7 +132,9 @@ export default function Dashboard() {
   }, [router]);
 
   useEffect(() => {
-    fetchDashboardStats(false);
+    void Promise.resolve().then(() => {
+      fetchDashboardStats(false);
+    });
   }, [fetchDashboardStats]);
 
   if (loading) {

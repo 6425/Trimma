@@ -50,7 +50,7 @@ export function SalonCard(props: SalonCardInternalProps) {
           </div>
         )}
       </div>
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-[var(--trimma-card-padding)] flex flex-col flex-1 trimma-surface-light">
         <div className="flex justify-between items-start mb-2">
            <h3 className="font-bold text-xl text-zinc-900 line-clamp-1 group-hover:text-brand-pink transition-colors">
              <Link href={linkTarget}>{salon.name}</Link>

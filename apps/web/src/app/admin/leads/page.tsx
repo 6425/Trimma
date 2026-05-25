@@ -83,16 +83,18 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
   const [periods, setPeriods] = useState<any[]>([]);
 
   useEffect(() => {
-    try {
-      const parsed = JSON.parse(value || "[]");
-      if (Array.isArray(parsed)) {
-        setPeriods(parsed);
-      } else {
+    void Promise.resolve().then(() => {
+      try {
+        const parsed = JSON.parse(value || "[]");
+        if (Array.isArray(parsed)) {
+          setPeriods(parsed);
+        } else {
+          setPeriods([]);
+        }
+      } catch {
         setPeriods([]);
       }
-    } catch {
-      setPeriods([]);
-    }
+    });
   }, [value]);
 
   const handleUpdate = (day: number, openTime: string, closeTime: string, isClosed: boolean) => {
@@ -240,119 +242,6 @@ export default function Leads() {
     } catch (e) {}
   };
 
-  useEffect(() => {
-    const cachedLeads = localStorage.getItem('trimma_admin_leads_cache');
-    let initialDiscovered = [];
-    if (cachedLeads) {
-      try {
-        initialDiscovered = JSON.parse(cachedLeads);
-      } catch(e) {}
-    }
-    
-    if (initialDiscovered.length > 0) {
-      setLeads(initialDiscovered);
-    }
-
-    fetchLeads();
-    fetchAgents();
-    fetchGlobalRoles();
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      const discoveredOnly = leads.filter(l => l.onboarding_status === 'DISCOVERED');
-      if (discoveredOnly.length > 0) {
-        localStorage.setItem('trimma_admin_leads_cache', JSON.stringify(discoveredOnly));
-      } else {
-        localStorage.removeItem('trimma_admin_leads_cache');
-      }
-    }
-  }, [leads, loading]);
-
-  // Reset dependent geography dropdowns when parent changes
-  useEffect(() => {
-    setSelectedDistrict("");
-    setSelectedCity("");
-  }, [selectedProvince]);
-
-  useEffect(() => {
-    setSelectedCity("");
-  }, [selectedDistrict]);
-
-  useEffect(() => {
-    if (isAssignModalOpen && formData.id) {
-      fetchModalExtras(formData.id);
-    }
-  }, [isAssignModalOpen, formData.id]);
-
-  const fetchModalExtras = async (id: string) => {
-    try {
-      const [servicesRes, staffRes] = await Promise.all([
-        supabase.from('services').select('*').eq('salon_id', id).order('created_at', { ascending: false }),
-        supabase.from('salon_staff').select('*').eq('salon_id', id).order('created_at', { ascending: false })
-      ]);
-      if (!servicesRes.error) setModalServices(servicesRes.data || []);
-      if (!staffRes.error) setModalStaff(staffRes.data || []);
-    } catch (err) {
-      console.error("Failed to fetch modal extras", err);
-    }
-  };
-
-  const handleDeleteModalService = async (serviceId: string) => {
-    try {
-      const { error } = await supabase.from('services').delete().eq('id', serviceId);
-      if (error) throw error;
-      setModalServices(prev => prev.filter(s => s.id !== serviceId));
-      toast.success("Service deleted.");
-    } catch (err: any) {
-      toast.error("Failed to delete service: " + err.message);
-    }
-  };
-
-  const handleDeleteModalStaff = async (staffId: string) => {
-    try {
-      const { error } = await supabase.from('salon_staff').delete().eq('id', staffId);
-      if (error) throw error;
-      setModalStaff(prev => prev.filter(s => s.id !== staffId));
-      toast.success("Staff member deleted.");
-    } catch (err: any) {
-      toast.error("Failed to delete staff: " + err.message);
-    }
-  };
-
-  const handleEditModalStaff = (staff: any) => {
-    setEditingStaffId(staff.id);
-    setStaffEditData({
-      name: staff.name || '',
-      role: staff.role || '',
-      skill_level: staff.skill_level || ''
-    });
-  };
-
-  const handleSaveModalStaff = async () => {
-    if (!editingStaffId) return;
-    try {
-      const { error } = await supabase
-        .from('salon_staff')
-        .update({
-          name: staffEditData.name,
-          role: staffEditData.role,
-          skill_level: staffEditData.skill_level
-        })
-        .eq('id', editingStaffId);
-        
-      if (error) throw error;
-      
-      setModalStaff(prev => prev.map(s => 
-        s.id === editingStaffId ? { ...s, ...staffEditData } : s
-      ));
-      toast.success("Staff member updated.");
-      setEditingStaffId(null);
-    } catch (err: any) {
-      toast.error("Failed to update staff: " + err.message);
-    }
-  };
-
   const fetchLeads = async (limit?: number) => {
     try {
       setLoading(true);
@@ -407,6 +296,125 @@ export default function Leads() {
       setAgents(data || []);
     } catch (error: any) {
       console.error("Failed to load agents", error);
+    }
+  };
+
+  const fetchModalExtras = async (id: string) => {
+    try {
+      const [servicesRes, staffRes] = await Promise.all([
+        supabase.from('services').select('*').eq('salon_id', id).order('created_at', { ascending: false }),
+        supabase.from('salon_staff').select('*').eq('salon_id', id).order('created_at', { ascending: false })
+      ]);
+      if (!servicesRes.error) setModalServices(servicesRes.data || []);
+      if (!staffRes.error) setModalStaff(staffRes.data || []);
+    } catch (err) {
+      console.error("Failed to fetch modal extras", err);
+    }
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      const cachedLeads = localStorage.getItem('trimma_admin_leads_cache');
+      let initialDiscovered = [];
+      if (cachedLeads) {
+        try {
+          initialDiscovered = JSON.parse(cachedLeads);
+        } catch(e) {}
+      }
+      
+      if (initialDiscovered.length > 0) {
+        setLeads(initialDiscovered);
+      }
+
+      fetchLeads();
+      fetchAgents();
+      fetchGlobalRoles();
+    });
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      if (!loading) {
+      const discoveredOnly = leads.filter(l => l.onboarding_status === 'DISCOVERED');
+      if (discoveredOnly.length > 0) {
+      localStorage.setItem('trimma_admin_leads_cache', JSON.stringify(discoveredOnly));
+      } else {
+      localStorage.removeItem('trimma_admin_leads_cache');
+      }
+      }
+    });
+  }, [leads, loading]);
+
+  // Reset dependent geography dropdowns when parent changes
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      setSelectedDistrict("");
+      setSelectedCity("");
+    });
+  }, [selectedProvince]);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => setSelectedCity(""));
+  }, [selectedDistrict]);
+
+  useEffect(() => {
+    if (isAssignModalOpen && formData.id) {
+      void Promise.resolve().then(() => fetchModalExtras(formData.id));
+    }
+  }, [isAssignModalOpen, formData.id]);
+
+  const handleDeleteModalService = async (serviceId: string) => {
+    try {
+      const { error } = await supabase.from('services').delete().eq('id', serviceId);
+      if (error) throw error;
+      setModalServices(prev => prev.filter(s => s.id !== serviceId));
+      toast.success("Service deleted.");
+    } catch (err: any) {
+      toast.error("Failed to delete service: " + err.message);
+    }
+  };
+
+  const handleDeleteModalStaff = async (staffId: string) => {
+    try {
+      const { error } = await supabase.from('salon_staff').delete().eq('id', staffId);
+      if (error) throw error;
+      setModalStaff(prev => prev.filter(s => s.id !== staffId));
+      toast.success("Staff member deleted.");
+    } catch (err: any) {
+      toast.error("Failed to delete staff: " + err.message);
+    }
+  };
+
+  const handleEditModalStaff = (staff: any) => {
+    setEditingStaffId(staff.id);
+    setStaffEditData({
+      name: staff.name || '',
+      role: staff.role || '',
+      skill_level: staff.skill_level || ''
+    });
+  };
+
+  const handleSaveModalStaff = async () => {
+    if (!editingStaffId) return;
+    try {
+      const { error } = await supabase
+        .from('salon_staff')
+        .update({
+          name: staffEditData.name,
+          role: staffEditData.role,
+          skill_level: staffEditData.skill_level
+        })
+        .eq('id', editingStaffId);
+        
+      if (error) throw error;
+      
+      setModalStaff(prev => prev.map(s => 
+        s.id === editingStaffId ? { ...s, ...staffEditData } : s
+      ));
+      toast.success("Staff member updated.");
+      setEditingStaffId(null);
+    } catch (err: any) {
+      toast.error("Failed to update staff: " + err.message);
     }
   };
 

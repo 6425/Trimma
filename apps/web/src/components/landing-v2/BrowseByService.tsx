@@ -42,51 +42,53 @@ export function BrowseByService() {
   };
 
   useEffect(() => {
-    async function fetchCategories() {
+    void Promise.resolve().then(() => {
+      async function fetchCategories() {
       try {
-        // Fetch categories
-        const { data: catData, error: catError } = await supabase
-          .from('categories')
-          .select('id, name, slug, image_url');
-
-        if (catError) throw catError;
-
-        // Fetch salon counts per category to show true dynamic counts
-        const { data: salonData, error: salonError } = await supabase
-          .from('salons')
-          .select('category');
-
-        if (salonError) throw salonError;
-
-        // Count salons manually by category name
-        const counts: Record<string, number> = {};
-        if (salonData) {
-          salonData.forEach(salon => {
-            if (salon.category) {
-              counts[salon.category] = (counts[salon.category] || 0) + 1;
-            }
-          });
-        }
-
-        if (catData) {
-          const enriched = catData.map(c => ({
-            ...c,
-            img: c.image_url || CATEGORY_IMAGES[c.slug] || DEFAULT_IMG,
-            count: counts[c.name] || 0
-          }));
-          
-          // Sort by count descending so most popular categories appear first
-          enriched.sort((a, b) => b.count - a.count);
-          setCategories(enriched);
-        }
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-      } finally {
-        setLoading(false);
+      // Fetch categories
+      const { data: catData, error: catError } = await supabase
+      .from('categories')
+      .select('id, name, slug, image_url');
+      
+      if (catError) throw catError;
+      
+      // Fetch salon counts per category to show true dynamic counts
+      const { data: salonData, error: salonError } = await supabase
+      .from('salons')
+      .select('category');
+      
+      if (salonError) throw salonError;
+      
+      // Count salons manually by category name
+      const counts: Record<string, number> = {};
+      if (salonData) {
+      salonData.forEach(salon => {
+      if (salon.category) {
+      counts[salon.category] = (counts[salon.category] || 0) + 1;
       }
-    }
-
-    fetchCategories();
+      });
+      }
+      
+      if (catData) {
+      const enriched = catData.map(c => ({
+      ...c,
+      img: c.image_url || CATEGORY_IMAGES[c.slug] || DEFAULT_IMG,
+      count: counts[c.name] || 0
+      }));
+      
+      // Sort by count descending so most popular categories appear first
+      enriched.sort((a, b) => b.count - a.count);
+      setCategories(enriched);
+      }
+      } catch (err) {
+      console.error("Error fetching categories:", err);
+      } finally {
+      setLoading(false);
+      }
+      }
+      
+      fetchCategories();
+    });
   }, []);
 
   return (

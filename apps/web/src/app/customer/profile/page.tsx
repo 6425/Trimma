@@ -17,18 +17,20 @@ function ProfileFormContent() {
   const [phone, setPhone] = useState("");
 
   useEffect(() => {
-    async function loadProfile() {
+    void Promise.resolve().then(() => {
+      async function loadProfile() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const user = session.user;
-        setFirstName(user.user_metadata?.first_name || "");
-        setLastName(user.user_metadata?.last_name || "");
-        setEmail(user.email || "");
-        setPhone(user.phone || user.user_metadata?.phone || "");
+      const user = session.user;
+      setFirstName(user.user_metadata?.first_name || "");
+      setLastName(user.user_metadata?.last_name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || user.user_metadata?.phone || "");
       }
       setLoading(false);
-    }
-    loadProfile();
+      }
+      loadProfile();
+    });
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {

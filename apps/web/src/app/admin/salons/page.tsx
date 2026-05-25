@@ -31,10 +31,6 @@ export default function Salons() {
   const [editForm, setEditForm] = useState<any>({});
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  useEffect(() => {
-    fetchSalons();
-  }, []);
-
   const fetchSalons = async () => {
     try {
       setLoading(true);
@@ -51,6 +47,10 @@ export default function Salons() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchSalons());
+  }, []);
 
   const openViewModal = (salon: any) => {
     setSelectedSalon(salon);

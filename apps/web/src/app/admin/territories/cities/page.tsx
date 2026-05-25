@@ -29,10 +29,6 @@ export default function CityManagement() {
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", slug: "", district_id: "" });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -52,6 +48,10 @@ export default function CityManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchData());
+  }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

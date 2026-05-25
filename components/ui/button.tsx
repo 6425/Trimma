@@ -34,17 +34,17 @@ const buttonVariants = cva(
         default:
           "bg-[#F5B700] text-black border-[#F5B700] hover:bg-[#FFC947] hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
 
-        // ── Secondary: Dark surface, yellow text ──
+        // ── Secondary: Surface-aware secondary action ──
         secondary:
-          "bg-white/8 text-white border-white/10 hover:bg-white/12 hover:border-white/20",
+          "bg-muted text-foreground border-border hover:bg-accent hover:text-accent-foreground",
 
         // ── Outline: Transparent, yellow border + text ──
         outline:
-          "bg-transparent text-[#F5B700] border-[#F5B700]/50 hover:bg-[#F5B700]/10 hover:border-[#F5B700]",
+          "bg-transparent text-[#F5B700] border-[#F5B700]/50 hover:bg-[#F5B700]/10 hover:border-[#F5B700] hover:text-[#E6AC00]",
 
-        // ── Ghost: No border, subtle hover ──
+        // ── Ghost: Surface-aware subtle hover ──
         ghost:
-          "bg-transparent text-zinc-400 border-transparent hover:bg-white/8 hover:text-white",
+          "bg-transparent text-muted-foreground border-transparent hover:bg-accent hover:text-accent-foreground",
 
         // ── Destructive: Red danger actions ──
         destructive:

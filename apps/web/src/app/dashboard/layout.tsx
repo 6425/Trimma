@@ -23,8 +23,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setMobileMenuOpen(false);
+    void Promise.resolve().then(() => {
+      setMobileMenuOpen(false);
+    });
   }, [pathname]);
+
+  useEffect(() => {
+    const closeDashboardMenu = () => setMobileMenuOpen(false);
+    window.addEventListener("trimma:close-dashboard-menu", closeDashboardMenu);
+    return () => window.removeEventListener("trimma:close-dashboard-menu", closeDashboardMenu);
+  }, []);
 
   useEffect(() => {
     const fetchRoleAndProfile = async () => {
@@ -63,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     };
 
-    fetchRoleAndProfile();
+    void Promise.resolve().then(() => fetchRoleAndProfile());
 
     const handleBrandingUpdate = (e: any) => {
       if (e.detail?.logo_image_url !== undefined) {
@@ -144,6 +152,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       children: [
         { name: 'All Services', href: '/admin/global-services' },
         { name: 'Service Categories', href: '/admin/categories' },
+        { name: 'Promotion Types', href: '/admin/promotion-types' },
+        { name: 'Promotion Packages', href: '/admin/promotion-packages' },
+        { name: 'Amenities', href: '/admin/amenities' },
       ]
     },
     { 
@@ -176,7 +187,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#0B0B0B] flex flex-col lg:flex-row trimma-dark-context">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -307,11 +318,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Right: Hamburger + Bell + Avatar */}
           <div className="flex items-center gap-2">
-            {/* Mobile Hamburger — before bell */}
+            {/* Dashboard navigation — mobile & tablet */}
             <button
               className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open menu"
+              onClick={() => {
+                window.dispatchEvent(new Event("trimma:close-site-menu"));
+                setMobileMenuOpen(true);
+              }}
+              aria-label="Open dashboard menu"
+              aria-expanded={mobileMenuOpen}
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -351,7 +366,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-[#0B0B0B] p-4 lg:p-6">
+        <main className="flex-1 overflow-auto bg-[#0B0B0B] trimma-page-shell">
           {children}
         </main>
       </div>

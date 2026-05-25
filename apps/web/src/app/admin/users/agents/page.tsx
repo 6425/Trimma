@@ -36,24 +36,6 @@ export default function AdminAgentManagement() {
   const [selectedTerritories, setSelectedTerritories] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  const fetchInitialData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([
-        fetchAgents(),
-        fetchTerritories()
-      ]);
-    } catch (err) {
-      console.error("Initial load failed", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchTerritories = async () => {
     try {
       const { data, error } = await supabase.from("agent_territories").select("*");
@@ -121,6 +103,24 @@ export default function AdminAgentManagement() {
       toast.error("Failed to load agents directory.");
     }
   };
+
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchAgents(),
+        fetchTerritories()
+      ]);
+    } catch (err) {
+      console.error("Initial load failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchInitialData());
+  }, []);
 
   // Triggers manual password modal
   const handleOpenPasswordModal = (agent: any) => {

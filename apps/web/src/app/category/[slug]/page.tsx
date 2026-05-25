@@ -39,11 +39,6 @@ export default function CategoryPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchLiveSalons();
-  }, [slug]);
-
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -57,11 +52,6 @@ export default function CategoryPage() {
     } catch (err) {
       console.error("Failed to fetch categories:", err);
     }
-  };
-
-  const renderIcon = (iconName: string) => {
-    const IconComponent = IconMap[iconName] || Sparkles;
-    return <IconComponent className="w-5 h-5 text-brand-pink" />;
   };
 
   const fetchLiveSalons = async () => {
@@ -149,6 +139,18 @@ export default function CategoryPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      fetchCategories();
+      fetchLiveSalons();
+    });
+  }, [slug]);
+
+  const renderIcon = (iconName: string) => {
+    const IconComponent = IconMap[iconName] || Sparkles;
+    return <IconComponent className="w-5 h-5 text-brand-pink" />;
   };
 
   const formatPrice = (price: number) => {

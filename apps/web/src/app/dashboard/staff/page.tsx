@@ -70,7 +70,9 @@ export default function DashboardStaff() {
   const [salonWorkingHours, setSalonWorkingHours] = useState(defaultSchedule);
 
   useEffect(() => {
-    fetchStaff();
+    void Promise.resolve().then(() => {
+      fetchStaff();
+    });
   }, []);
 
   async function fetchStaff() {

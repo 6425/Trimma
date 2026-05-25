@@ -28,7 +28,11 @@ export default function CommissionManagement() {
   const [tiersForm, setTiersForm] = useState<any[]>([]);
 
   // Load data from Supabase
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+ void Promise.resolve().then(() => {
+   loadData();
+ });
+  }, []);
 
   async function loadData() {
     try {

@@ -21,10 +21,6 @@ function SearchPageInner() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  useEffect(() => {
-    fetchLiveSalons();
-  }, []);
-
   const fetchLiveSalons = async () => {
     try {
       setLoading(true);
@@ -119,6 +115,10 @@ function SearchPageInner() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchLiveSalons());
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(price);

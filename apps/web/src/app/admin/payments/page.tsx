@@ -36,11 +36,6 @@ export default function AdminPayments() {
     { id: 2, gateway: "payhere", type: "Sandbox Checkout Form", amount: "LKR 1,800", status: "success", time: "30 mins ago" },
   ]);
 
-  useEffect(() => {
-    fetchPaymentSettings();
-    fetchRealPayments();
-  }, []);
-
   const fetchPaymentSettings = async () => {
     try {
       setLoading(true);
@@ -102,6 +97,13 @@ export default function AdminPayments() {
       setLoadingRealPayments(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      fetchPaymentSettings();
+      fetchRealPayments();
+    });
+  }, []);
 
   const handleSaveSettings = async () => {
     try {

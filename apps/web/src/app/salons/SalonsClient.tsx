@@ -110,14 +110,18 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
 
   // Sync params when they change in URL
   useEffect(() => {
-    setSearchQuery(qParam);
-    setSelectedLocation(lParam);
-    setPage(0);
+    void Promise.resolve().then(() => {
+      setSearchQuery(qParam);
+      setSelectedLocation(lParam);
+      setPage(0);
+    });
   }, [qParam, lParam, categoryParam]);
 
   // Trigger search on mount if params exist, or when page changes
   useEffect(() => {
-    fetchResults(page === 0);
+    void Promise.resolve().then(() => {
+      fetchResults(page === 0);
+    });
   }, [fetchResults, page]);
 
   const handleSearch = () => {

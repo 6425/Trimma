@@ -12,24 +12,26 @@ function BookingsListContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchBookings() {
+    void Promise.resolve().then(() => {
+      async function fetchBookings() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // Fetch User's Bookings
-        const { data: bookingsData } = await supabase
-          .from('bookings')
-          .select('*, salons(name, city)')
-          .ilike('customer_email', session.user.email)
-          .order('booking_date', { ascending: false })
-          .order('booking_time', { ascending: false });
-
-        if (bookingsData) {
-          setBookings(bookingsData);
-        }
+      // Fetch User's Bookings
+      const { data: bookingsData } = await supabase
+      .from('bookings')
+      .select('*, salons(name, city)')
+      .ilike('customer_email', session.user.email)
+      .order('booking_date', { ascending: false })
+      .order('booking_time', { ascending: false });
+      
+      if (bookingsData) {
+      setBookings(bookingsData);
+      }
       }
       setLoading(false);
-    }
-    fetchBookings();
+      }
+      fetchBookings();
+    });
   }, []);
 
   return (

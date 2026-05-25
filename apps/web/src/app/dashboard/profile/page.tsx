@@ -118,10 +118,6 @@ export default function SalonProfilePage() {
   const heroInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    fetchSalonProfile();
-  }, []);
-
   const fetchSalonProfile = async () => {
     try {
       setLoading(true);
@@ -247,6 +243,10 @@ export default function SalonProfilePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchSalonProfile());
+  }, []);
 
   // Helper function to upload image file to Supabase storage bucket
   const processImageFile = async (file: File, type: "logo" | "cover" | "hero" | "gallery"): Promise<string | null> => {

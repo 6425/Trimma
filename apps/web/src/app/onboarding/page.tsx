@@ -26,71 +26,73 @@ export default function OnboardingPage() {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    const checkRole = async () => {
+    void Promise.resolve().then(() => {
+      const checkRole = async () => {
       try {
-        const { data: { session: activeSession } } = await supabase.auth.getSession();
-        if (activeSession) {
-          setSession(activeSession);
-          setEmail(activeSession.user.email || "");
-          
-          // Check if already registered
-          const { data: existingRoles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', activeSession.user.id)
-            .maybeSingle();
-          
-          if (existingRoles?.role === 'admin' || activeSession.user.email === 'thusitha.jayalath@gmail.com') {
-            router.push("/admin");
-            return;
-          }
-
-          if (existingRoles?.role === 'salon_owner') {
-            router.push("/dashboard");
-            return;
-          }
-
-          // Double check: if they already have an onboarded salon record using the foreign key
-          const { data: existingSalon } = await supabase
-            .from('salons')
-            .select('id')
-            .eq('owner_email', activeSession.user.email)
-            .limit(1)
-            .maybeSingle();
-
-          if (existingSalon) {
-            document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
-            router.push("/dashboard");
-            return;
-          }
-
-          // MAGIC LINK FIX: Check if the agent verified them using owner_gmail
-          const { data: preVerifiedSalon } = await supabase
-            .from('salons')
-            .select('id')
-            .eq('owner_gmail', activeSession.user.email)
-            .limit(1)
-            .maybeSingle();
-
-          if (preVerifiedSalon) {
-            // Auto-onboard the user to this pre-verified salon
-            await supabase.from('salons').update({ owner_email: activeSession.user.email }).eq('id', preVerifiedSalon.id);
-            await supabase.from('user_roles').upsert({ user_id: activeSession.user.id, role: 'salon_owner' });
-            await supabase.from('users').update({ global_role: 'salon_owner' }).eq('email', activeSession.user.email);
-            
-            document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
-            toast.success("Welcome! Your salon profile has been linked successfully.");
-            router.push("/dashboard");
-            return;
-          }
-        }
-      } catch (err) {
-        console.error("Session check failed:", err);
-      } finally {
-        setLoading(false);
+      const { data: { session: activeSession } } = await supabase.auth.getSession();
+      if (activeSession) {
+      setSession(activeSession);
+      setEmail(activeSession.user.email || "");
+      
+      // Check if already registered
+      const { data: existingRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', activeSession.user.id)
+      .maybeSingle();
+      
+      if (existingRoles?.role === 'admin' || activeSession.user.email === 'thusitha.jayalath@gmail.com') {
+      router.push("/admin");
+      return;
       }
-    };
-    checkRole();
+      
+      if (existingRoles?.role === 'salon_owner') {
+      router.push("/dashboard");
+      return;
+      }
+      
+      // Double check: if they already have an onboarded salon record using the foreign key
+      const { data: existingSalon } = await supabase
+      .from('salons')
+      .select('id')
+      .eq('owner_email', activeSession.user.email)
+      .limit(1)
+      .maybeSingle();
+      
+      if (existingSalon) {
+      document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
+      router.push("/dashboard");
+      return;
+      }
+      
+      // MAGIC LINK FIX: Check if the agent verified them using owner_gmail
+      const { data: preVerifiedSalon } = await supabase
+      .from('salons')
+      .select('id')
+      .eq('owner_gmail', activeSession.user.email)
+      .limit(1)
+      .maybeSingle();
+      
+      if (preVerifiedSalon) {
+      // Auto-onboard the user to this pre-verified salon
+      await supabase.from('salons').update({ owner_email: activeSession.user.email }).eq('id', preVerifiedSalon.id);
+      await supabase.from('user_roles').upsert({ user_id: activeSession.user.id, role: 'salon_owner' });
+      await supabase.from('users').update({ global_role: 'salon_owner' }).eq('email', activeSession.user.email);
+      
+      document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
+      toast.success("Welcome! Your salon profile has been linked successfully.");
+      router.push("/dashboard");
+      return;
+      }
+      }
+      } catch (err) {
+      console.error("Session check failed:", err);
+      } finally {
+      setLoading(false);
+      }
+      };
+      checkRole();
+    });
   }, [router]);
 
   const handleRegister = async (e: React.FormEvent) => {

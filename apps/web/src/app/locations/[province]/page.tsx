@@ -91,8 +91,10 @@ export default function ProvinceDetailPage() {
   const filteredSalons = salons.filter((s) => salonMatchesProvince(s, provinceSlug));
 
   useEffect(() => {
-    setProvinceDataState(buildInitialProvinceState(provinceSlug));
-    setSelectedLocation("");
+    void Promise.resolve().then(() => {
+      setProvinceDataState(buildInitialProvinceState(provinceSlug));
+      setSelectedLocation("");
+    });
   }, [provinceSlug]);
 
   useEffect(() => {

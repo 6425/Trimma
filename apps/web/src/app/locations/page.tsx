@@ -25,21 +25,23 @@ export default function LocationsHubPage() {
   const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchCategories() {
+    void Promise.resolve().then(() => {
+      async function fetchCategories() {
       try {
-        const { data, error } = await supabase
-          .from("categories")
-          .select("*")
-          .order("name");
-        if (error) throw error;
-        if (data) {
-          setCategories(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
+      const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("name");
+      if (error) throw error;
+      if (data) {
+      setCategories(data);
       }
-    }
-    fetchCategories();
+      } catch (err) {
+      console.error("Failed to fetch categories:", err);
+      }
+      }
+      fetchCategories();
+    });
   }, []);
 
   const renderIcon = (iconName: string) => {

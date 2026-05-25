@@ -40,7 +40,8 @@ function SettingsPanelContent() {
   const [testPhone, setTestPhone] = useState("+94 71 113 0179");
 
   useEffect(() => {
-    async function loadConfig() {
+    void Promise.resolve().then(() => {
+      async function loadConfig() {
       const config = await getWhatsAppConfig();
       setPhoneId(config.phoneId);
       setAccessToken(config.accessToken);
@@ -57,8 +58,9 @@ function SettingsPanelContent() {
       setTemplateOnboardingInvite(config.templateOnboardingInvite || "");
       setConfigSource(config.source);
       setLoading(false);
-    }
-    loadConfig();
+      }
+      loadConfig();
+    });
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {

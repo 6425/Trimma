@@ -44,10 +44,6 @@ function AdminUserList() {
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -64,6 +60,10 @@ function AdminUserList() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchUsers());
+  }, []);
 
   const handleEditClick = (user: any) => {
     setEditingUser({ ...user });

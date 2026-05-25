@@ -25,16 +25,18 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
   const [periods, setPeriods] = useState<any[]>([]);
 
   useEffect(() => {
-    try {
-      const parsed = JSON.parse(value || "[]");
-      if (Array.isArray(parsed)) {
-        setPeriods(parsed);
-      } else {
+    void Promise.resolve().then(() => {
+      try {
+        const parsed = JSON.parse(value || "[]");
+        if (Array.isArray(parsed)) {
+          setPeriods(parsed);
+        } else {
+          setPeriods([]);
+        }
+      } catch {
         setPeriods([]);
       }
-    } catch {
-      setPeriods([]);
-    }
+    });
   }, [value]);
 
   const handleUpdate = (day: number, openTime: string, closeTime: string, isClosed: boolean) => {
@@ -138,10 +140,6 @@ export default function AgentLeads() {
     admin_notes: ""
   });
 
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
   const fetchLeads = async () => {
     try {
       setLoading(true);
@@ -172,6 +170,10 @@ export default function AgentLeads() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchLeads());
+  }, []);
 
   const logActivity = async (salonId: string, action: string, notes: string) => {
     try {

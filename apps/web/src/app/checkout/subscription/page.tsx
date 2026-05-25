@@ -18,6 +18,7 @@ import {
   getIntroMonthlyPrice,
   getListMonthlyPrice,
   formatLkr,
+  formatPromotionPackageLimit,
 } from "@/lib/subscription-pricing";
 import {
   ArrowLeft,
@@ -25,6 +26,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Scissors,
+  Tag,
   Users,
 } from "lucide-react";
 
@@ -54,48 +56,50 @@ function SubscriptionCheckoutForm() {
   });
 
   useEffect(() => {
-    async function loadData() {
+    void Promise.resolve().then(() => {
+      async function loadData() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const user = session.user;
-          setCustomerDetails((prev) => ({
-            ...prev,
-            firstName: user.user_metadata?.first_name || prev.firstName,
-            lastName: user.user_metadata?.last_name || prev.lastName,
-            email: user.email || prev.email,
-            phone: user.phone || user.user_metadata?.phone || prev.phone,
-          }));
-        }
-
-        const { data: paymentSettings } = await supabase
-          .from("global_payment_settings")
-          .select("payhere_enabled, environment")
-          .eq("id", "00000000-0000-0000-0000-000000000001")
-          .maybeSingle();
-
-        setPayhereEnabled(paymentSettings?.payhere_enabled !== false);
-        setPayhereEnvironment(paymentSettings?.environment || "sandbox");
-
-        const { data: planData } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .ilike("name", planParam)
-          .maybeSingle();
-
-        if (planData) {
-          setPlanDetails(planData);
-        } else {
-          setPlanDetails(DEFAULT_PLANS[planParam] || DEFAULT_PLANS.pro);
-        }
-      } catch (err) {
-        console.error("Error loading checkout data:", err);
-        setPlanDetails(DEFAULT_PLANS[planParam] || DEFAULT_PLANS.pro);
-      } finally {
-        setLoading(false);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+      const user = session.user;
+      setCustomerDetails((prev) => ({
+      ...prev,
+      firstName: user.user_metadata?.first_name || prev.firstName,
+      lastName: user.user_metadata?.last_name || prev.lastName,
+      email: user.email || prev.email,
+      phone: user.phone || user.user_metadata?.phone || prev.phone,
+      }));
       }
-    }
-    loadData();
+      
+      const { data: paymentSettings } = await supabase
+      .from("global_payment_settings")
+      .select("payhere_enabled, environment")
+      .eq("id", "00000000-0000-0000-0000-000000000001")
+      .maybeSingle();
+      
+      setPayhereEnabled(paymentSettings?.payhere_enabled !== false);
+      setPayhereEnvironment(paymentSettings?.environment || "sandbox");
+      
+      const { data: planData } = await supabase
+      .from("subscription_plans")
+      .select("*")
+      .ilike("name", planParam)
+      .maybeSingle();
+      
+      if (planData) {
+      setPlanDetails(planData);
+      } else {
+      setPlanDetails(DEFAULT_PLANS[planParam] || DEFAULT_PLANS.pro);
+      }
+      } catch (err) {
+      console.error("Error loading checkout data:", err);
+      setPlanDetails(DEFAULT_PLANS[planParam] || DEFAULT_PLANS.pro);
+      } finally {
+      setLoading(false);
+      }
+      }
+      loadData();
+    });
   }, [planParam]);
 
   const chargeAmount = planDetails ? getCheckoutAmount(planDetails, billingCycle) : 0;
@@ -273,29 +277,34 @@ function SubscriptionCheckoutForm() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-white border border-zinc-900/10 shadow-sm text-[11px] font-bold text-zinc-900">
-                <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-zinc-900 shrink-0" />
-                  <span>Staff: {planDetails.max_staff}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Scissors className="w-3.5 h-3.5 text-zinc-900 shrink-0" />
-                  <span>
-                    Services:{" "}
-                    {planDetails.max_services >= 9999 ? "Unlimited" : planDetails.max_services}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="w-3.5 h-3.5 text-zinc-900 shrink-0" />
-                  <span>Images: {planDetails.max_images}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <GitBranch className="w-3.5 h-3.5 text-zinc-900 shrink-0" />
-                  <span>
-                    Branches:{" "}
-                    {planDetails.max_branches === 0 ? "None" : planDetails.max_branches}
-                  </span>
-                </div>
+              <div className="rounded-2xl border border-zinc-900/10 bg-white px-3.5 py-3 shadow-sm space-y-2.5 text-[11px] font-normal text-zinc-900">
+                {[
+                  { icon: Users, label: "Staff", value: planDetails.max_staff },
+                  {
+                    icon: Scissors,
+                    label: "Services",
+                    value:
+                      planDetails.max_services >= 9999 ? "Unlimited" : planDetails.max_services,
+                  },
+                  { icon: ImageIcon, label: "Images", value: planDetails.max_images },
+                  {
+                    icon: GitBranch,
+                    label: "Branches",
+                    value: planDetails.max_branches === 0 ? "None" : planDetails.max_branches,
+                  },
+                  {
+                    icon: Tag,
+                    label: "Discounts & Promotions",
+                    value: formatPromotionPackageLimit(planDetails.max_promotion_packages),
+                  },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-2 leading-none">
+                    <Icon className="w-3.5 h-3.5 shrink-0 text-zinc-500" />
+                    <span className="whitespace-nowrap text-zinc-600">
+                      {label}: <span className="text-zinc-900">{value}</span>
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="border-t border-zinc-900/20 pt-4 flex justify-between text-sm">

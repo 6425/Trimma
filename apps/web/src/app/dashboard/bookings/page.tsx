@@ -185,7 +185,9 @@ export default function DashboardBookings() {
   }
 
   useEffect(() => {
-    fetchBookings();
+    void Promise.resolve().then(() => {
+      fetchBookings();
+    });
   }, []);
 
   const handleBookingLifecycleAction = async (bookingId: string, action: string) => {

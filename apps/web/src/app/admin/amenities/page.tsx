@@ -54,10 +54,6 @@ export default function GlobalAmenitiesManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingAmenity, setEditingAmenity] = useState<any>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -74,6 +70,10 @@ export default function GlobalAmenitiesManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchData());
+  }, []);
 
   const handleOpenDialog = (amenity: any = null) => {
     if (amenity) {

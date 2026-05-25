@@ -16,7 +16,9 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setMobileMenuOpen(false);
+    void Promise.resolve().then(() => {
+      setMobileMenuOpen(false);
+    });
   }, [pathname]);
 
   const handleLogout = async () => {

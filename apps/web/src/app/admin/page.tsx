@@ -50,46 +50,48 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    async function checkAdminAuth() {
+    void Promise.resolve().then(() => {
+      async function checkAdminAuth() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          router.replace("/login?redirectTo=/admin");
-          return;
-        }
-
-        // Verify admin role
-        const { data: userData } = await supabase
-          .from('users')
-          .select('global_role')
-          .eq('email', session.user.email)
-          .single();
-
-        const role = userData?.global_role;
-        const isAllowedAdmin = role === 'admin' || session.user.email === 'thusitha.jayalath@gmail.com';
-
-        if (!isAllowedAdmin) {
-          // If not admin, redirect to correct cockpit
-          if (role === 'salon_owner') {
-            router.replace("/dashboard");
-          } else if (role === 'agent') {
-            router.replace("/agent");
-          } else if (role === 'customer') {
-            router.replace("/customer");
-          } else {
-            router.replace("/onboarding");
-          }
-          return;
-        }
-
-        setAuthorized(true);
-        fetchStats();
-      } catch (err) {
-        console.error("Auth check failed", err);
-        router.replace("/login");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+      router.replace("/login?redirectTo=/admin");
+      return;
       }
-    }
-    checkAdminAuth();
+      
+      // Verify admin role
+      const { data: userData } = await supabase
+      .from('users')
+      .select('global_role')
+      .eq('email', session.user.email)
+      .single();
+      
+      const role = userData?.global_role;
+      const isAllowedAdmin = role === 'admin' || session.user.email === 'thusitha.jayalath@gmail.com';
+      
+      if (!isAllowedAdmin) {
+      // If not admin, redirect to correct cockpit
+      if (role === 'salon_owner') {
+      router.replace("/dashboard");
+      } else if (role === 'agent') {
+      router.replace("/agent");
+      } else if (role === 'customer') {
+      router.replace("/customer");
+      } else {
+      router.replace("/onboarding");
+      }
+      return;
+      }
+      
+      setAuthorized(true);
+      fetchStats();
+      } catch (err) {
+      console.error("Auth check failed", err);
+      router.replace("/login");
+      }
+      }
+      checkAdminAuth();
+    });
   }, [router]);
 
   const handleSyncData = async () => {

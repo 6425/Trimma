@@ -83,6 +83,12 @@ export function formatLkr(amount: number, fractionDigits = 0): string {
   }).format(amount);
 }
 
+export function formatPromotionPackageLimit(value: number | string | null | undefined): string {
+  const n = toNumber(value);
+  if (n >= 9999) return "Unlimited";
+  return String(n);
+}
+
 /** Canonical defaults when Supabase is offline or rows are missing. */
 export const DEFAULT_SUBSCRIPTION_PLANS = [
   {
@@ -96,8 +102,10 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_services: 6,
     max_images: 3,
     max_branches: 0,
+    max_promotion_packages: 2,
     feature_flags: {
       allowed_categories_limit: 2,
+      allowed_promotion_types_limit: 2,
       features: [
         "Staff Management",
         "FB/WA Integration",
@@ -105,6 +113,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
         "Free Google Business Page",
         "Performance Insights",
         "Salon Dashboard with QR",
+        "Discounts & Promotions",
       ],
     },
   },
@@ -119,8 +128,10 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_services: 12,
     max_images: 6,
     max_branches: 2,
+    max_promotion_packages: 4,
     feature_flags: {
       allowed_categories_limit: 5,
+      allowed_promotion_types_limit: 4,
       features: [
         "Staff Management",
         "FB/WA Integration",
@@ -129,6 +140,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
         "Performance Insights",
         "Salon Dashboard with QR",
         "Advanced SEO Optimization",
+        "Discounts & Promotions",
       ],
     },
   },
@@ -143,8 +155,10 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_services: 20,
     max_images: 12,
     max_branches: 3,
+    max_promotion_packages: 6,
     feature_flags: {
       allowed_categories_limit: 999,
+      allowed_promotion_types_limit: 6,
       features: [
         "Staff Management",
         "FB/WA Integration",
@@ -155,6 +169,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
         "Advanced SEO Optimization",
         "Dedicated Priority Support",
         "Multi-location Syncing",
+        "Discounts & Promotions",
       ],
     },
   },
@@ -169,8 +184,10 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_services: 9999,
     max_images: 30,
     max_branches: 15,
+    max_promotion_packages: 12,
     feature_flags: {
       allowed_categories_limit: 999,
+      allowed_promotion_types_limit: 12,
       features: [
         "Staff Management",
         "FB/WA Integration",
@@ -183,6 +200,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
         "Multi-location Syncing",
         "White-label Client Apps",
         "24/7 Phone Concierge",
+        "Discounts & Promotions",
       ],
     },
   },

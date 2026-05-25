@@ -23,53 +23,55 @@ export function TrendingLocations() {
   };
 
   useEffect(() => {
-    async function fetchTrendingProvinces() {
+    void Promise.resolve().then(() => {
+      async function fetchTrendingProvinces() {
       try {
-        // Fetch all provinces
-        const { data: provData, error: provError } = await supabase
-          .from('provinces')
-          .select('id, name, slug, image_url');
-
-        if (provError) throw provError;
-
-        // Fetch salons and their associated provinces
-        const { data: salonData, error: salonError } = await supabase
-          .from('salons')
-          .select('province');
-
-        if (salonError) throw salonError;
-
-        // Count salons per province name
-        const counts: Record<string, number> = {};
-        if (salonData) {
-          salonData.forEach(salon => {
-            if (salon.province) {
-              counts[salon.province] = (counts[salon.province] || 0) + 1;
-            }
-          });
-        }
-
-        if (provData) {
-          const enriched = provData.map(p => ({
-            ...p,
-            img: p.image_url || DEFAULT_IMG,
-            count: counts[p.name] || 0
-          }));
-          
-          // Sort by salon count descending
-          enriched.sort((a, b) => b.count - a.count);
-          
-          // Take all provinces instead of Top 3
-          setLocations(enriched);
-        }
-      } catch (err) {
-        console.error("Error fetching trending locations:", err);
-      } finally {
-        setLoading(false);
+      // Fetch all provinces
+      const { data: provData, error: provError } = await supabase
+      .from('provinces')
+      .select('id, name, slug, image_url');
+      
+      if (provError) throw provError;
+      
+      // Fetch salons and their associated provinces
+      const { data: salonData, error: salonError } = await supabase
+      .from('salons')
+      .select('province');
+      
+      if (salonError) throw salonError;
+      
+      // Count salons per province name
+      const counts: Record<string, number> = {};
+      if (salonData) {
+      salonData.forEach(salon => {
+      if (salon.province) {
+      counts[salon.province] = (counts[salon.province] || 0) + 1;
       }
-    }
-
-    fetchTrendingProvinces();
+      });
+      }
+      
+      if (provData) {
+      const enriched = provData.map(p => ({
+      ...p,
+      img: p.image_url || DEFAULT_IMG,
+      count: counts[p.name] || 0
+      }));
+      
+      // Sort by salon count descending
+      enriched.sort((a, b) => b.count - a.count);
+      
+      // Take all provinces instead of Top 3
+      setLocations(enriched);
+      }
+      } catch (err) {
+      console.error("Error fetching trending locations:", err);
+      } finally {
+      setLoading(false);
+      }
+      }
+      
+      fetchTrendingProvinces();
+    });
   }, []);
 
   return (

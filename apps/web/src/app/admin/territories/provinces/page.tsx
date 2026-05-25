@@ -51,10 +51,6 @@ export default function ProvinceManagement() {
   const [isCropping, setIsCropping] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  useEffect(() => {
-    fetchProvinces();
-  }, []);
-
   const fetchProvinces = async () => {
     try {
       setLoading(true);
@@ -71,6 +67,10 @@ export default function ProvinceManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchProvinces());
+  }, []);
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

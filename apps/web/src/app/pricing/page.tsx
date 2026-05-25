@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Check, Scissors, Users, GitBranch, ShieldCheck, HelpCircle, Loader2, Image as ImageIcon } from "lucide-react";
+import { Check, Scissors, Users, GitBranch, ShieldCheck, HelpCircle, Loader2, Image as ImageIcon, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
@@ -14,6 +14,7 @@ import {
   getIntroMonthlyPrice,
   getListMonthlyPrice,
   formatLkr,
+  formatPromotionPackageLimit,
   INTRO_DISCOUNT_PERCENT,
 } from "@/lib/subscription-pricing";
 
@@ -23,24 +24,26 @@ export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
 
   useEffect(() => {
-    async function loadPlans() {
+    void Promise.resolve().then(() => {
+      async function loadPlans() {
       try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .order("monthly_price");
-
-        if (error) throw error;
-        setPlans(data && data.length > 0 ? data : DEFAULT_SUBSCRIPTION_PLANS);
+      setLoading(true);
+      const { data, error } = await supabase
+      .from("subscription_plans")
+      .select("*")
+      .order("monthly_price");
+      
+      if (error) throw error;
+      setPlans(data && data.length > 0 ? data : DEFAULT_SUBSCRIPTION_PLANS);
       } catch (err) {
-        console.error("Failed to fetch pricing tiers, using defaults:", err);
-        setPlans(DEFAULT_SUBSCRIPTION_PLANS);
+      console.error("Failed to fetch pricing tiers, using defaults:", err);
+      setPlans(DEFAULT_SUBSCRIPTION_PLANS);
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
-    }
-    loadPlans();
+      }
+      loadPlans();
+    });
   }, []);
 
   const maxAnnualSavings = useMemo(() => {
@@ -123,7 +126,7 @@ export default function PricingPage() {
               return (
                 <div
                   key={plan.id}
-                  className={`bg-white rounded-3xl p-8 shadow-xl border flex flex-col relative transition-all duration-300 hover:scale-[1.02] ${
+                  className={`bg-white rounded-3xl p-7 sm:p-8 shadow-xl border flex flex-col relative transition-all duration-300 hover:scale-[1.02] min-h-[520px] ${
                     isPro
                       ? "border-zinc-900 bg-zinc-950 text-white shadow-rose-950/20"
                       : "border-slate-100 hover:border-rose-100 bg-white text-zinc-900"
@@ -177,29 +180,44 @@ export default function PricingPage() {
                   </div>
 
                   <div
-                    className={`grid grid-cols-2 gap-3 mb-6 p-4 rounded-2xl text-[11px] font-bold ${
-                      isPro ? "bg-white/5 text-zinc-300" : "bg-slate-50 text-zinc-600"
+                    className={`mb-6 rounded-2xl px-3.5 py-3 space-y-2.5 text-[11px] font-normal ${
+                      isPro ? "bg-white/5" : "bg-slate-50"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Users className={`w-3.5 h-3.5 ${isPro ? "text-rose-400" : "text-zinc-400"}`} />
-                      <span>Staff: {plan.max_staff}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Scissors className={`w-3.5 h-3.5 ${isPro ? "text-rose-400" : "text-zinc-400"}`} />
-                      <span>Services: {plan.max_services >= 9999 ? "Unlimited" : plan.max_services}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className={`w-3.5 h-3.5 ${isPro ? "text-rose-400" : "text-zinc-400"}`} />
-                      <span>Images: {plan.max_images}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <GitBranch className={`w-3.5 h-3.5 ${isPro ? "text-rose-400" : "text-zinc-400"}`} />
-                      <span>Branches: {plan.max_branches === 0 ? "None" : plan.max_branches}</span>
-                    </div>
+                    {[
+                      { icon: Users, label: "Staff", value: plan.max_staff },
+                      {
+                        icon: Scissors,
+                        label: "Services",
+                        value: plan.max_services >= 9999 ? "Unlimited" : plan.max_services,
+                      },
+                      { icon: ImageIcon, label: "Images", value: plan.max_images },
+                      {
+                        icon: GitBranch,
+                        label: "Branches",
+                        value: plan.max_branches === 0 ? "None" : plan.max_branches,
+                      },
+                      {
+                        icon: Tag,
+                        label: "Discounts & Promotions",
+                        value: formatPromotionPackageLimit(plan.max_promotion_packages),
+                      },
+                    ].map(({ icon: Icon, label, value }) => (
+                      <div key={label} className="flex items-center gap-2 leading-none">
+                        <Icon
+                          className={`w-3.5 h-3.5 shrink-0 ${isPro ? "text-rose-400" : "text-zinc-400"}`}
+                        />
+                        <span
+                          className={`whitespace-nowrap ${isPro ? "text-zinc-400" : "text-zinc-600"}`}
+                        >
+                          {label}:{" "}
+                          <span className={isPro ? "text-zinc-200" : "text-zinc-800"}>{value}</span>
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
-                  <div className="space-y-3 flex-1 mb-8">
+                  <div className="space-y-3.5 flex-1 mb-8 px-1">
                     <div className={`flex items-center gap-2 text-xs font-extrabold ${isPro ? "text-zinc-300" : "text-zinc-700"}`}>
                       <ShieldCheck className="w-4 h-4 text-rose-500" />
                       <span>Categories: {catLimit >= 999 ? "All Categories" : `${catLimit} Allowed`}</span>

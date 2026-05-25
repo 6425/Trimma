@@ -20,72 +20,76 @@ function DashboardContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Handle PayHere Success Redirect
-    if (searchParams.get("payment_success") === "true") {
+    void Promise.resolve().then(() => {
+      // Handle PayHere Success Redirect
+      if (searchParams.get("payment_success") === "true") {
       const bookingNo = searchParams.get("booking_no");
       
       if (bookingNo) {
-        // Trigger WhatsApp Notification Server Action
-        sendWhatsAppNotification(bookingNo).then((res) => {
-          if (res?.success) {
-            toast.success("Receipt sent to your WhatsApp! 📱", {
-              position: "top-center"
-            });
-          } else {
-            console.error("WhatsApp dispatch failure:", res?.error);
-          }
-        });
+      // Trigger WhatsApp Notification Server Action
+      sendWhatsAppNotification(bookingNo).then((res) => {
+      if (res?.success) {
+      toast.success("Receipt sent to your WhatsApp! 📱", {
+      position: "top-center"
+      });
+      } else {
+      console.error("WhatsApp dispatch failure:", res?.error);
       }
-
+      });
+      }
+      
       toast.success(`Payment successful! Booking ${bookingNo} is confirmed.`, {
-        duration: 5000,
-        position: "top-center"
+      duration: 5000,
+      position: "top-center"
       });
       // Clean up URL parameter
       window.history.replaceState(null, '', '/customer');
-    }
+      }
+    });
   }, [searchParams]);
 
   useEffect(() => {
-    async function fetchUser() {
+    void Promise.resolve().then(() => {
+      async function fetchUser() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.replace("/login?redirectTo=/customer");
-        return;
+      router.replace("/login?redirectTo=/customer");
+      return;
       }
       if (session.user) {
-        const name = session.user.user_metadata?.first_name || session.user.email?.split('@')[0] || "Guest";
-        setUserName(name);
-
-        const { data } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (data) {
-          if (data.role === 'admin') setUserRole('Admin');
-          else if (data.role === 'agent') setUserRole('Agent');
-          else if (data.role === 'salon_owner') setUserRole('Salon Partner');
-          else setUserRole(data.role); 
-        } else {
-          setUserRole('Member');
-        }
-
-        // Fetch User's Bookings
-        const { data: bookingsData } = await supabase
-          .from('bookings')
-          .select('*, salons(name, city)')
-          .ilike('customer_email', session.user.email)
-          .order('created_at', { ascending: false });
-
-        if (bookingsData) {
-          setUpcomingBookings(bookingsData);
-        }
+      const name = session.user.user_metadata?.first_name || session.user.email?.split('@')[0] || "Guest";
+      setUserName(name);
+      
+      const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .single();
+      
+      if (data) {
+      if (data.role === 'admin') setUserRole('Admin');
+      else if (data.role === 'agent') setUserRole('Agent');
+      else if (data.role === 'salon_owner') setUserRole('Salon Partner');
+      else setUserRole(data.role); 
+      } else {
+      setUserRole('Member');
+      }
+      
+      // Fetch User's Bookings
+      const { data: bookingsData } = await supabase
+      .from('bookings')
+      .select('*, salons(name, city)')
+      .ilike('customer_email', session.user.email)
+      .order('created_at', { ascending: false });
+      
+      if (bookingsData) {
+      setUpcomingBookings(bookingsData);
+      }
       }
       setLoading(false);
-    }
-    fetchUser();
+      }
+      fetchUser();
+    });
   }, []);
 
   const getGreeting = () => {

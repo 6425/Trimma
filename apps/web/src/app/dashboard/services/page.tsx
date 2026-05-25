@@ -40,10 +40,6 @@ export default function DashboardServices() {
   });
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    fetchSalonAndPlan();
-  }, []);
-
   const fetchSalonAndPlan = async () => {
     try {
       setLoading(true);
@@ -140,6 +136,10 @@ export default function DashboardServices() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchSalonAndPlan());
+  }, []);
 
   const handleToggleSelect = (id: string) => {
     const isCurrentlyChecked = selectedServices[id]?.checked || false;

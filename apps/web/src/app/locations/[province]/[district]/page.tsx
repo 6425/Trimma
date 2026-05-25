@@ -50,48 +50,50 @@ export default function DistrictDetailPage() {
   const filteredSalons = salons.filter((s) => salonMatchesDistrict(s, districtMeta.slug));
 
   useEffect(() => {
-    async function fetchLiveSalons() {
+    void Promise.resolve().then(() => {
+      async function fetchLiveSalons() {
       try {
-        setLoading(true);
-        const { data: dbSalons, error } = await supabase
-          .from("salons")
-          .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
-          .limit(50);
-
-        if (error) throw error;
-
-        const formatted = (dbSalons || []).map((s: any) => ({
-          id: s.id,
-          slug: s.slug,
-          name: s.name,
-          rating: s.rating || 4.9,
-          reviews: s.reviews_count || 142,
-          location: `${s.city || districtMeta.name}, ${s.district || provinceMeta.name}`,
-          city: s.city || districtMeta.name,
-          district: s.district || districtMeta.name,
-          tags: [s.category || "Salon", "Grooming"],
-          categories: [s.category || "Salon", "Grooming"],
-          category: s.category || "Beauty Lounge",
-          logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
-          image:
-            s.cover_url ||
-            "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80",
-          featured: s.is_featured === true,
-          openNow: true,
-          startingPrice: 1500,
-          nextSlot: "Today 4:00 PM",
-          popularService: "Premium Cut & Style",
-        }));
-
-        setSalons(formatted);
+      setLoading(true);
+      const { data: dbSalons, error } = await supabase
+      .from("salons")
+      .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
+      .limit(50);
+      
+      if (error) throw error;
+      
+      const formatted = (dbSalons || []).map((s: any) => ({
+      id: s.id,
+      slug: s.slug,
+      name: s.name,
+      rating: s.rating || 4.9,
+      reviews: s.reviews_count || 142,
+      location: `${s.city || districtMeta.name}, ${s.district || provinceMeta.name}`,
+      city: s.city || districtMeta.name,
+      district: s.district || districtMeta.name,
+      tags: [s.category || "Salon", "Grooming"],
+      categories: [s.category || "Salon", "Grooming"],
+      category: s.category || "Beauty Lounge",
+      logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
+      image:
+      s.cover_url ||
+      "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80",
+      featured: s.is_featured === true,
+      openNow: true,
+      startingPrice: 1500,
+      nextSlot: "Today 4:00 PM",
+      popularService: "Premium Cut & Style",
+      }));
+      
+      setSalons(formatted);
       } catch (err) {
-        console.error("Failed to load live salons for district page:", err);
+      console.error("Failed to load live salons for district page:", err);
       } finally {
-        setLoading(false);
+      setLoading(false);
       }
-    }
-
-    fetchLiveSalons();
+      }
+      
+      fetchLiveSalons();
+    });
   }, [districtMeta.name, districtMeta.slug, provinceMeta.name]);
 
   return <DistrictDetailTemplate data={{ ...districtData, salons: filteredSalons }} loading={loading} />;

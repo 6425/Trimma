@@ -49,26 +49,6 @@ export default function AdminAgents() {
   const [newTerritoryCity, setNewTerritoryCity] = useState("");
   const [newTerritoryExclusive, setNewTerritoryExclusive] = useState(false);
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  const fetchInitialData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([
-        fetchAgentsData(),
-        fetchTerritoriesData(),
-        fetchLedgerData(),
-        fetchLogsData()
-      ]);
-    } catch (error) {
-      console.error("Failed to load dashboard data context", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchAgentsData = async () => {
     try {
       // 1. Fetch all users who are platform agents
@@ -162,6 +142,26 @@ export default function AdminAgents() {
       console.error("Logs fetch failed:", e.message || e);
     }
   };
+
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchAgentsData(),
+        fetchTerritoriesData(),
+        fetchLedgerData(),
+        fetchLogsData(),
+      ]);
+    } catch (error) {
+      console.error("Failed to load dashboard data context", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchInitialData());
+  }, []);
 
   const handleOpenEditModal = (agent: any) => {
     setSelectedAgent(agent);
