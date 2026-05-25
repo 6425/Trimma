@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonCard } from "./SalonCard";
 import { supabase } from "@/config/supabase";
+import { ProvinceNavLinks } from "../locations/ProvinceNavLinks";
+import { slugifyLocation } from "@/lib/sri-lanka-locations";
 import { 
   FeaturedSalonsSection, 
   PopularSalonsSection, 
@@ -18,12 +20,13 @@ export interface DistrictData {
   id: string;
   name: string;
   province: string;
+  provinceSlug?: string;
   description: string;
   salonCount: number;
   avgRating: number;
   image: string;
   popularCategories: string[];
-  cities: { name: string; count: number; top: string }[];
+  cities: { name: string; slug?: string; count: number; top: string }[];
   trendingServices: string[];
   insights: {
     avgPrice: string;
@@ -36,9 +39,10 @@ export interface DistrictData {
 
 interface DistrictDetailTemplateProps {
   data: DistrictData;
+  loading?: boolean;
 }
 
-export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
+export function DistrictDetailTemplate({ data, loading = false }: DistrictDetailTemplateProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,7 +94,7 @@ export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
             <ChevronRight className="w-3.5 h-3.5" />
             <Link href="/locations" className="hover:text-white transition-colors">Locations</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href={`/locations/${data.province.toLowerCase().replace(' province', '').replace(' ', '-')}`} className="hover:text-white transition-colors">{data.province}</Link>
+            <Link href={`/locations/${data.provinceSlug || data.province.toLowerCase().replace(" province", "").replace(/\s+/g, "-")}`} className="hover:text-white transition-colors">{data.province}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-zinc-200">{data.name}</span>
           </div>
@@ -139,10 +143,12 @@ export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
                   >
-                    <option value="" className="text-zinc-900">Any Location</option>
-                    <option value="colombo" className="text-zinc-900">Colombo</option>
-                    <option value="negombo" className="text-zinc-900">Negombo</option>
-                    <option value="kandy" className="text-zinc-900">Kandy</option>
+                    <option value="" className="text-zinc-900">Any City</option>
+                    {data.cities.map((city) => (
+                      <option key={city.slug || city.name} value={city.slug || slugifyLocation(city.name)} className="text-zinc-900">
+                        {city.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 
@@ -162,26 +168,7 @@ export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
         <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar">
             <span className="text-xs font-extrabold text-zinc-400 uppercase tracking-wider mr-2 shrink-0">Provinces:</span>
-            <div className="flex gap-2 shrink-0">
-              <Link href="/locations" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                All Regions
-              </Link>
-              <Link href="/locations/western" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${data.province?.toLowerCase().includes("western") ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Western
-              </Link>
-              <Link href="/locations/central" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${data.province?.toLowerCase().includes("central") ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Central
-              </Link>
-              <Link href="/locations/southern" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${data.province?.toLowerCase().includes("southern") ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Southern
-              </Link>
-              <Link href="/locations/eastern" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${data.province?.toLowerCase().includes("eastern") ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Eastern
-              </Link>
-              <Link href="/locations/northern" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${data.province?.toLowerCase().includes("northern") ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Northern
-              </Link>
-            </div>
+            <ProvinceNavLinks activeProvinceSlug={data.provinceSlug} />
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs font-bold text-brand-pink bg-brand-pink/5 border border-brand-pink/10 px-3.5 py-1.5 rounded-full">
             <Icons.Navigation2 className="w-3.5 h-3.5 animate-pulse text-brand-pink" />
@@ -268,7 +255,7 @@ export function DistrictDetailTemplate({ data }: DistrictDetailTemplateProps) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {data.cities.map((city, i) => (
-              <Link href={`/locations/${data.province.toLowerCase().replace(' province', '').replace(' ', '-')}/${data.id.toLowerCase().replace(' district', '').replace(' ', '-')}/${city.name.toLowerCase().replace(' ', '-')}`} key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-emerald-200 group flex items-start gap-4 block">
+              <Link href={`/locations/${data.provinceSlug || "western"}/${data.id}/${city.slug || slugifyLocation(city.name)}`} key={i} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-emerald-200 group flex items-start gap-4 block">
                 <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-emerald-100 transition-colors">
                   <MapPin className="w-6 h-6 text-emerald-600" />
                 </div>

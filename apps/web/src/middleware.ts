@@ -48,7 +48,8 @@ export async function middleware(req: NextRequest) {
     pathname.endsWith('/signup') ||
     pathname.startsWith('/salons') ||
     pathname.startsWith('/locations') ||
-    pathname.startsWith('/category')
+    pathname.startsWith('/category') ||
+    pathname.startsWith('/checkout')
   ) {
     return NextResponse.next();
   }

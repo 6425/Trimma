@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, LogOut, Menu, X, Scissors, MapPin, Tag, Globe, HelpCircle, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid } from "lucide-react";
+import { User, LogOut, Menu, X, Scissors, MapPin, Tag, Globe, HelpCircle, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/config/supabase";
 
@@ -74,6 +74,12 @@ export default function GlobalHeader() {
         {/* RIGHT: Secondary Nav & Auth Buttons */}
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="hidden md:flex items-center gap-4">
+             <Link href="/locations" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors hidden lg:block">
+                Locations
+             </Link>
+             <Link href="/pricing" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors hidden lg:block">
+                Pricing
+             </Link>
              <button className="flex items-center justify-center font-semibold text-zinc-700 hover:bg-zinc-100 rounded-full p-2 transition-colors" title="Language and Currency">
                 <Globe className="w-5 h-5" />
              </button>
@@ -136,6 +142,23 @@ export default function GlobalHeader() {
       {/* Bottom Bar: Primary Categories */}
       <div className="hidden md:flex mx-auto max-w-7xl px-4 py-2 relative z-0 bg-white">
          <nav className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
+           <Link
+             href="/locations"
+             className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 px-4 py-2.5 rounded-full transition-colors border border-transparent hover:border-zinc-200 whitespace-nowrap"
+           >
+             <MapPin className="w-4 h-4" />
+             <span>Locations</span>
+           </Link>
+           <Link
+             href="/pricing"
+             className="flex items-center gap-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 px-4 py-2.5 rounded-full transition-colors border border-transparent hover:border-zinc-200 whitespace-nowrap"
+           >
+             <CreditCard className="w-4 h-4" />
+             <span>Pricing</span>
+           </Link>
+           {navCategories.length > 0 && (
+             <span className="w-px h-6 bg-zinc-200 shrink-0" aria-hidden="true" />
+           )}
            {navCategories.map((cat, i) => {
              const Icon = IconMap[cat.icon] || Tag;
              return (
@@ -156,6 +179,24 @@ export default function GlobalHeader() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-zinc-100 bg-white pb-4">
           <div className="px-4 pt-2 pb-4 flex flex-col gap-1">
+             <div className="font-bold text-xs uppercase tracking-wider text-zinc-500 px-3 pt-3 pb-1">Explore</div>
+             <Link
+               href="/locations"
+               onClick={() => setMobileMenuOpen(false)}
+               className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+             >
+               <MapPin className="w-4 h-4" />
+               Locations
+             </Link>
+             <Link
+               href="/pricing"
+               onClick={() => setMobileMenuOpen(false)}
+               className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+             >
+               <CreditCard className="w-4 h-4" />
+               Pricing
+             </Link>
+             <div className="h-px bg-zinc-100 my-2"></div>
              <div className="font-bold text-xs uppercase tracking-wider text-zinc-500 px-3 pt-3 pb-1">Categories</div>
              {navCategories.map((cat, i) => {
                const Icon = IconMap[cat.icon] || Tag;

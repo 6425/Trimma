@@ -7,30 +7,16 @@ import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
+import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { ProvinceNavLinks } from "../../components/locations/ProvinceNavLinks";
 
-const provinces = [
-  {
-    id: "western",
-    name: "Western Province",
-    salonCount: 1240,
-    categories: ["Luxury Barbering", "Ayurvedic Spas", "Bridal Artistry"],
-    image: "https://images.unsplash.com/photo-1574227492706-f65b24c3688a?q=80&w=2940&auto=format&fit=crop"
-  },
-  {
-    id: "central",
-    name: "Central Province",
-    salonCount: 840,
-    categories: ["Hill Spas", "Boutique Grooming", "Nail Lounges"],
-    image: "https://images.unsplash.com/photo-1546708973-b339540b5162?q=80&w=2836&auto=format&fit=crop"
-  },
-  {
-    id: "southern",
-    name: "Southern Province",
-    salonCount: 620,
-    categories: ["Coastal Retreats", "Modern Styling", "Aromatherapy"],
-    image: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=2836&auto=format&fit=crop"
-  }
-];
+const provinces = SRI_LANKA_PROVINCES.map((province) => ({
+  id: province.slug,
+  name: province.name,
+  salonCount: 0,
+  categories: province.districts.map((d) => d.name).slice(0, 3),
+  image: province.image,
+}));
 
 export default function LocationsHubPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -117,10 +103,16 @@ export default function LocationsHubPage() {
                  onChange={(e) => setSelectedLocation(e.target.value)}
                  className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
                >
-                 <option value="" className="text-zinc-900">Any Location</option>
-                 <option value="colombo" className="text-zinc-900">Colombo</option>
-                 <option value="negombo" className="text-zinc-900">Negombo</option>
-                 <option value="kandy" className="text-zinc-900">Kandy</option>
+                 <option value="" className="text-zinc-900">Any District</option>
+                 {SRI_LANKA_PROVINCES.map((province) => (
+                   <optgroup key={province.slug} label={province.name}>
+                     {province.districts.map((district) => (
+                       <option key={district.slug} value={district.slug} className="text-zinc-900">
+                         {district.name}
+                       </option>
+                     ))}
+                   </optgroup>
+                 ))}
                </select>
              </div>
              
@@ -139,26 +131,7 @@ export default function LocationsHubPage() {
         <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar">
             <span className="text-xs font-extrabold text-zinc-400 uppercase tracking-wider mr-2 shrink-0">Provinces:</span>
-            <div className="flex gap-2 shrink-0">
-              <Link href="/locations" className="px-4 py-1.5 bg-zinc-950 text-white text-xs font-black rounded-full shadow-sm shadow-zinc-950/10">
-                All Regions
-              </Link>
-              <Link href="/locations/western" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                Western
-              </Link>
-              <Link href="/locations/central" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                Central
-              </Link>
-              <Link href="/locations/southern" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                Southern
-              </Link>
-              <Link href="/locations/eastern" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                Eastern
-              </Link>
-              <Link href="/locations/northern" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                Northern
-              </Link>
-            </div>
+            <ProvinceNavLinks />
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs font-bold text-brand-pink bg-brand-pink/5 border border-brand-pink/10 px-3.5 py-1.5 rounded-full">
             <Icons.Navigation2 className="w-3.5 h-3.5 animate-pulse text-brand-pink" />

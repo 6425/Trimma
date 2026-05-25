@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { findProvinceSlugForDistrict } from "@/lib/sri-lanka-locations";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -7,6 +8,6 @@ interface Props {
 export default async function DistrictDetailRedirectPage({ params }: Props) {
   const resolvedParams = await params;
   const slug = resolvedParams?.slug || "colombo";
-  // All active districts belong to Western Province in trimma core showcase
-  redirect(`/locations/western/${slug}`);
+  const provinceSlug = findProvinceSlugForDistrict(slug) || "western";
+  redirect(`/locations/${provinceSlug}/${slug}`);
 }

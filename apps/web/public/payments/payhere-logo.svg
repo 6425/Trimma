@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none" role="img" aria-label="PayHere">
+  <text x="0" y="34" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="32" font-weight="700" fill="#E91E8C">Pay</text>
+  <text x="72" y="34" font-family="Segoe UI, Arial, Helvetica, sans-serif" font-size="32" font-weight="700" fill="#1A1F36">Here</text>
+  <circle cx="182" cy="24" r="9" fill="#E91E8C"/>
+</svg>

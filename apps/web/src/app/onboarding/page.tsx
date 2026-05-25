@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "../../config/supabase";
 import { toast } from "sonner";
+import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -245,30 +246,12 @@ export default function OnboardingPage() {
                     className="rounded-xl h-11"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Province</Label>
-                  <select 
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 font-medium"
-                  >
-                    <option>Western Province</option>
-                    <option>Central Province</option>
-                    <option>Southern Province</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">District</Label>
-                  <select 
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 font-medium"
-                  >
-                    <option>Colombo</option>
-                    <option>Gampaha</option>
-                    <option>Kalutara</option>
-                  </select>
-                </div>
+                <LocationHierarchySelect
+                  province={province}
+                  district={district}
+                  onProvinceChange={setProvince}
+                  onDistrictChange={setDistrict}
+                />
               </div>
             </div>
 

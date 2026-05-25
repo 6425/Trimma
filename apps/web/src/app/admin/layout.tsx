@@ -144,6 +144,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       children: [
         { name: 'All Services', href: '/admin/global-services' },
         { name: 'Service Categories', href: '/admin/categories' },
+        { name: 'Amenities', href: '/admin/amenities' },
       ]
     },
     { 

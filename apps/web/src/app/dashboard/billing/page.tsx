@@ -1,27 +1,56 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CreditCard, Sparkles, Check, FileText, ArrowRight, Loader2 } from "lucide-react";
+import Link from "next/link";
+import {
+  CreditCard,
+  Sparkles,
+  FileText,
+  ArrowRight,
+  Loader2,
+  GitBranch,
+  Image as ImageIcon,
+  Scissors,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";
-import { toast } from "sonner";
+import {
+  DEFAULT_SUBSCRIPTION_PLANS,
+  formatLkr,
+  getCheckoutAmount,
+  getDisplayMonthlyPrice,
+  getIntroMonthlyPrice,
+  getListMonthlyPrice,
+} from "@/lib/subscription-pricing";
+
+const TIER_ORDER: Record<string, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  elite: 3,
+};
+
+function getTierRank(name?: string | null): number {
+  if (!name) return 0;
+  return TIER_ORDER[name.toLowerCase()] ?? 0;
+}
+
+function buildCheckoutHref(planName: string, cycle: "monthly" | "annual"): string {
+  return `/checkout/subscription?plan=${encodeURIComponent(planName.toLowerCase())}&cycle=${cycle}`;
+}
 
 export default function BillingPage() {
-  const [salon, setSalon] = useState<any>(null);
   const [activePlan, setActivePlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
 
-  const plans = [
-    { name: "Free", price: "LKR 0", period: "/mo", staff: "2 Staff Slots", images: "3 Images Gallery", features: ["Barber Salon allowed", "Basic Booking", "Dashboard View"] },
-    { name: "Starter", price: "LKR 3,500", period: "/mo", staff: "5 Staff Slots", images: "6 Images Gallery", features: ["5 Categories allowed", "FB/WA Integration", "Free Gmail Support"] },
-    { name: "Pro", price: "LKR 7,500", period: "/mo", staff: "10 Staff Slots", images: "12 Images Gallery", features: ["All Categories", "20 Service Packages", "Google Business Page"] },
-    { name: "Elite", price: "LKR 15,000", period: "/mo", staff: "30 Staff Slots", images: "30 Images Gallery", features: ["Any Service Packages", "15 Branches Limit", "Priority AI Coordinator"] }
-  ];
+  const plans = DEFAULT_SUBSCRIPTION_PLANS;
 
   const mockInvoices = [
-    { invoiceNo: "TRM-INV-001", date: "May 01, 2026", planName: "Starter Monthly", amount: "LKR 3,500", status: "Paid" },
-    { invoiceNo: "TRM-INV-002", date: "Apr 01, 2026", planName: "Starter Monthly", amount: "LKR 3,500", status: "Paid" },
-    { invoiceNo: "TRM-INV-003", date: "Mar 01, 2026", planName: "Starter Monthly", amount: "LKR 3,500", status: "Paid" }
+    { invoiceNo: "TRM-INV-001", date: "May 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
+    { invoiceNo: "TRM-INV-002", date: "Apr 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
+    { invoiceNo: "TRM-INV-003", date: "Mar 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
   ];
 
   useEffect(() => {
@@ -31,24 +60,26 @@ export default function BillingPage() {
   const fetchActivePlan = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
 
       const { data: salonData } = await supabase
         .from("salons")
-        .select("*")
+        .select("subscription_plan_id")
         .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
         .maybeSingle();
 
-      if (!salonData) return;
-      setSalon(salonData);
+      if (!salonData?.subscription_plan_id) return;
 
-      if (salonData.subscription_plan_id) {
-        const { data: planData } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .eq("id", salonData.subscription_plan_id)
-          .maybeSingle();
+      const { data: planData } = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .eq("id", salonData.subscription_plan_id)
+        .maybeSingle();
+
+      if (planData) {
         setActivePlan(planData);
       }
     } catch (err: any) {
@@ -58,9 +89,7 @@ export default function BillingPage() {
     }
   };
 
-  const handleUpgradePlan = (planName: string) => {
-    toast.success(`Redirecting to secure gateway to subscribe to ${planName} Plan! ⚡`);
-  };
+  const activeTierRank = getTierRank(activePlan?.name);
 
   if (loading) {
     return (
@@ -73,7 +102,6 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
@@ -81,35 +109,64 @@ export default function BillingPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Subscription & Billing</h1>
-            <p className="text-xs text-zinc-500">Manage memberships, download payment receipts, and upgrade plan quotas.</p>
+            <p className="text-xs text-zinc-500">
+              Manage memberships, download payment receipts, and upgrade plan quotas.
+            </p>
           </div>
+        </div>
+
+        <div className="inline-flex rounded-lg border border-zinc-200 bg-zinc-50 p-1">
+          <button
+            type="button"
+            onClick={() => setBillingCycle("monthly")}
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-colors ${
+              billingCycle === "monthly"
+                ? "bg-zinc-900 text-white"
+                : "text-zinc-600 hover:text-zinc-900"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingCycle("annual")}
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-colors ${
+              billingCycle === "annual"
+                ? "bg-zinc-900 text-white"
+                : "text-zinc-600 hover:text-zinc-900"
+            }`}
+          >
+            Annual
+          </button>
         </div>
       </div>
 
-      {/* Active Membership Details */}
       {activePlan && (
         <div className="bg-brand text-white p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-          
+
           <div className="relative z-10 space-y-2">
             <span className="inline-flex bg-white/10 text-white px-3.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-1">
-               Active Membership Tier
+              Active Membership Tier
             </span>
             <h2 className="text-2xl font-black">{activePlan.name} Plan</h2>
             <p className="text-white/70 text-xs">
-              Supports up to {activePlan.max_staff} stylists, {activePlan.max_images} gallery images, and full branch support.
+              Supports up to {activePlan.max_staff} staff,{" "}
+              {activePlan.max_services >= 9999 ? "unlimited" : activePlan.max_services} services,{" "}
+              {activePlan.max_images} images, and {activePlan.max_branches || 0} branches.
             </p>
           </div>
 
           <div className="relative z-10 bg-white/10 rounded-2xl p-4 border border-white/10 text-right min-w-[200px]">
             <span className="text-[10px] font-bold text-white/60 uppercase block">Next Invoice Date</span>
             <div className="text-base font-extrabold mt-0.5">June 01, 2026</div>
-            <div className="text-xs text-white/80 mt-1">LKR {parseFloat(activePlan.monthly_price).toLocaleString()} / month</div>
+            <div className="text-xs text-white/80 mt-1">
+              {formatLkr(getDisplayMonthlyPrice(activePlan, billingCycle))} / month
+            </div>
           </div>
         </div>
       )}
 
-      {/* Pricing Upgrade Grid */}
       <div className="space-y-6 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
         <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-brand" />
@@ -117,15 +174,24 @@ export default function BillingPage() {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {plans.map((p, idx) => {
-            const isActive = activePlan && activePlan.name.toLowerCase() === p.name.toLowerCase();
+          {plans.map((plan) => {
+            const planRank = getTierRank(plan.name);
+            const isActive = activePlan && activePlan.name.toLowerCase() === plan.name.toLowerCase();
+            const isFree = plan.name.toLowerCase() === "free";
+            const canUpgrade = !isActive && !isFree && planRank > activeTierRank;
+            const displayMonthly = getDisplayMonthlyPrice(plan, billingCycle);
+            const checkoutAmount = getCheckoutAmount(plan, billingCycle);
+            const listMonthly = getListMonthlyPrice(plan);
+            const introMonthly = getIntroMonthlyPrice(plan);
+            const checkoutHref = buildCheckoutHref(plan.name, billingCycle);
+
             return (
-              <div 
-                key={idx} 
+              <div
+                key={plan.name}
                 className={`rounded-3xl p-5 border flex flex-col justify-between space-y-6 relative ${
-                  isActive 
-                  ? "border-brand bg-rose-50/10 shadow-sm" 
-                  : "border-zinc-100 bg-white hover:border-zinc-200"
+                  isActive
+                    ? "border-brand bg-rose-50/10 shadow-sm"
+                    : "border-zinc-100 bg-white hover:border-zinc-200"
                 }`}
               >
                 {isActive && (
@@ -136,28 +202,70 @@ export default function BillingPage() {
 
                 <div className="space-y-4 pt-4">
                   <div>
-                    <h4 className="font-extrabold text-sm text-zinc-800">{p.name}</h4>
+                    <h4 className="font-extrabold text-sm text-zinc-800">{plan.name}</h4>
                     <div className="flex items-baseline gap-1 mt-2">
-                      <span className="text-xl font-black text-zinc-900">{p.price}</span>
-                      <span className="text-zinc-400 text-xs font-semibold">{p.period}</span>
+                      <span className="text-xl font-black text-zinc-900">
+                        {isFree ? "Free" : formatLkr(displayMonthly)}
+                      </span>
+                      {!isFree && <span className="text-zinc-400 text-xs font-semibold">/month</span>}
                     </div>
+                    {!isFree && billingCycle === "monthly" && listMonthly > introMonthly && (
+                      <p className="text-[10px] text-zinc-400 line-through mt-1">
+                        {formatLkr(listMonthly)}/mo standard
+                      </p>
+                    )}
+                    {!isFree && billingCycle === "annual" && (
+                      <p className="text-[10px] text-zinc-500 mt-1 font-semibold">
+                        {formatLkr(checkoutAmount, 2)} billed annually
+                      </p>
+                    )}
                   </div>
 
-                  <ul className="space-y-2 text-[11px] font-semibold text-zinc-500">
-                    <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand shrink-0" /> {p.staff}</li>
-                    <li className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-brand shrink-0" /> {p.images}</li>
-                    {p.features.map((feat, fIdx) => (
-                      <li key={fIdx} className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-zinc-400 shrink-0" /> {feat}</li>
-                    ))}
-                  </ul>
+                  <div className="space-y-2 p-3 rounded-2xl bg-zinc-50 border border-zinc-100 text-[11px] font-bold text-zinc-700">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                      <span>Staff: {plan.max_staff}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Scissors className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                      <span>
+                        Services: {plan.max_services >= 9999 ? "Unlimited" : plan.max_services}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ImageIcon className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                      <span>Images: {plan.max_images}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <GitBranch className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                      <span>
+                        Branches: {plan.max_branches === 0 ? "None" : plan.max_branches}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {!isActive && (
-                  <Button 
-                    onClick={() => handleUpgradePlan(p.name)}
-                    className="w-full rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs h-10 flex items-center justify-center gap-1"
+                {isActive ? (
+                  <Button
+                    disabled
+                    className="w-full rounded-xl bg-zinc-100 text-zinc-500 font-bold text-xs h-10"
+                  >
+                    Current Plan
+                  </Button>
+                ) : canUpgrade ? (
+                  <Link
+                    href={checkoutHref}
+                    className="group/button inline-flex w-full shrink-0 items-center justify-center gap-1 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs h-10 transition-colors"
                   >
                     Upgrade Tier <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                ) : (
+                  <Button
+                    disabled
+                    variant="outline"
+                    className="w-full rounded-xl font-bold text-xs h-10 text-zinc-400"
+                  >
+                    {isFree ? "Free Tier" : "Included in Current Plan"}
                   </Button>
                 )}
               </div>
@@ -166,7 +274,6 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Invoice History */}
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-6">
         <h3 className="text-sm font-bold text-zinc-900 border-b pb-3 flex items-center gap-2">
           <FileText className="w-4 h-4 text-brand" />
@@ -185,8 +292,11 @@ export default function BillingPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {mockInvoices.map((inv, idx) => (
-                <tr key={idx} className="hover:bg-zinc-50/50 transition-colors text-xs font-semibold text-zinc-600">
+              {mockInvoices.map((inv) => (
+                <tr
+                  key={inv.invoiceNo}
+                  className="hover:bg-zinc-50/50 transition-colors text-xs font-semibold text-zinc-600"
+                >
                   <td className="px-6 py-4 font-bold text-zinc-800">{inv.invoiceNo}</td>
                   <td className="px-6 py-4">{inv.date}</td>
                   <td className="px-6 py-4">{inv.planName}</td>

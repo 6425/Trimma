@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import Card from "../../../components/ui/Card";
 import { supabase } from "../../../config/supabase";
 import { toast } from "sonner";
+import { LocationHierarchySelect } from "../../../components/locations/LocationHierarchySelect";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -106,6 +107,10 @@ export default function SalonProfilePage() {
   // Subscription limit states
   const [subscriptionName, setSubscriptionName] = useState("Free Plan");
   const [maxImagesLimit, setMaxImagesLimit] = useState(3); // Default Free Plan Limit
+
+  // Amenities States
+  const [globalAmenities, setGlobalAmenities] = useState<any[]>([]);
+  const [salonAmenities, setSalonAmenities] = useState<Record<string, { has_amenity: boolean, quantity: number | null }>>({});
 
   // Hidden File Inputs Refs
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -220,6 +225,21 @@ export default function SalonProfilePage() {
           setSubscriptionName("Free Plan");
           setMaxImagesLimit(3);
         }
+      }
+
+      // 3. Fetch Amenities Data
+      const { data: amenitiesList } = await supabase.from("global_amenities").select("*").order("name");
+      if (amenitiesList) {
+        setGlobalAmenities(amenitiesList);
+      }
+      
+      const { data: salonAmenitiesData } = await supabase.from("salon_amenities").select("*").eq("salon_id", salonData.id);
+      if (salonAmenitiesData) {
+        const amenitiesMap: Record<string, any> = {};
+        salonAmenitiesData.forEach(sa => {
+          amenitiesMap[sa.amenity_id] = { has_amenity: sa.has_amenity, quantity: sa.quantity };
+        });
+        setSalonAmenities(amenitiesMap);
       }
     } catch (err: any) {
       toast.error("Failed to load salon settings: " + err.message);
@@ -496,6 +516,21 @@ export default function SalonProfilePage() {
         }
       } catch (staffErr) {
         console.error("Failed to enforce schedule bounds on staff:", staffErr);
+      }
+
+      // Update Salon Amenities
+      const amenityInserts = Object.keys(salonAmenities)
+        .filter(amenityId => salonAmenities[amenityId].has_amenity || salonAmenities[amenityId].quantity !== null)
+        .map(amenityId => ({
+          salon_id: salon.id,
+          amenity_id: amenityId,
+          has_amenity: salonAmenities[amenityId].has_amenity,
+          quantity: salonAmenities[amenityId].quantity
+        }));
+      
+      await supabase.from("salon_amenities").delete().eq("salon_id", salon.id);
+      if (amenityInserts.length > 0) {
+        await supabase.from("salon_amenities").insert(amenityInserts);
       }
 
       toast.success("Profile saved successfully");
@@ -953,37 +988,81 @@ export default function SalonProfilePage() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Province</Label>
-                  <select 
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 font-medium"
-                  >
-                    <option>Western Province</option>
-                    <option>Central Province</option>
-                    <option>Southern Province</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">District</Label>
-                  <select 
-                    value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
-                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 font-medium"
-                  >
-                    <option>Colombo</option>
-                    <option>Gampaha</option>
-                    <option>Kalutara</option>
-                  </select>
+                <LocationHierarchySelect
+                  province={province}
+                  district={district}
+                  onProvinceChange={setProvince}
+                  onDistrictChange={setDistrict}
+                />
+              </div>
+            </div>
+
+            {/* Section 3: Salon Amenities */}
+            <div className="space-y-6 pt-4">
+              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">3</span>
+                Available Amenities
+              </h3>
+              <div className="bg-zinc-50/50 border border-slate-100 rounded-2xl p-6">
+                <p className="text-xs text-zinc-500 mb-6 font-medium">Select the amenities and facilities available at your salon to attract more customers.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {globalAmenities.map((amenity) => {
+                    const isChecked = salonAmenities[amenity.id]?.has_amenity || false;
+                    const qty = salonAmenities[amenity.id]?.quantity || "";
+                    
+                    return (
+                      <div key={amenity.id} className={`flex flex-col gap-2 p-4 rounded-xl border transition-all ${isChecked ? 'border-brand bg-rose-50/30' : 'border-zinc-200 bg-white'}`}>
+                        <div className="flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            id={`amenity-${amenity.id}`}
+                            checked={isChecked}
+                            onChange={(e) => {
+                              setSalonAmenities(prev => ({
+                                ...prev,
+                                [amenity.id]: {
+                                  has_amenity: e.target.checked,
+                                  quantity: e.target.checked ? (amenity.type === 'number' ? 1 : null) : null
+                                }
+                              }));
+                            }}
+                            className="w-5 h-5 rounded border-zinc-300 text-brand focus:ring-brand"
+                          />
+                          <label htmlFor={`amenity-${amenity.id}`} className="text-sm font-bold text-zinc-900 cursor-pointer flex-1">
+                            {amenity.name}
+                          </label>
+                        </div>
+                        {isChecked && amenity.type === "number" && (
+                          <div className="pl-8 flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Quantity:</span>
+                            <Input 
+                              type="number" 
+                              min="1"
+                              value={qty}
+                              onChange={(e) => {
+                                setSalonAmenities(prev => ({
+                                  ...prev,
+                                  [amenity.id]: {
+                                    has_amenity: true,
+                                    quantity: parseInt(e.target.value) || 1
+                                  }
+                                }));
+                              }}
+                              className="h-8 w-20 px-2 rounded-lg bg-white border-zinc-200 text-xs font-bold"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
-            {/* Section 3: Store Operational Status */}
+            {/* Section 4: Store Operational Status */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">3</span>
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">4</span>
                 Operational Open Status
               </h3>
               <div className="flex items-center justify-between bg-zinc-50 p-6 rounded-2xl border border-zinc-100">

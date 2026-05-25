@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/config/supabase";
+import { normalizeProvinceSlug } from "@/lib/sri-lanka-locations";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const DEFAULT_IMG = "https://images.unsplash.com/photo-1625723041935-7c01b1fcb4e7?q=80&w=600&fm=webp&fit=crop";
@@ -97,7 +98,7 @@ export function TrendingLocations() {
             {locations.map((loc, i) => (
               <Link 
                 key={i}
-                href={`/locations/${loc.slug}`}
+                href={`/locations/${normalizeProvinceSlug(loc.slug)}`}
                 className="snap-start shrink-0 group relative h-64 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-sm !text-white block"
               >
                 <Image 

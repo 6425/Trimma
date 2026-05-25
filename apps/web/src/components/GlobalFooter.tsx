@@ -26,6 +26,8 @@ export default function GlobalFooter() {
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Discover</h4>
             <ul className="space-y-3 text-sm text-[#006CE4]">
               <li><Link href="/salons" className="hover:underline">All Salons</Link></li>
+              <li><Link href="/locations" className="hover:underline">Locations</Link></li>
+              <li><Link href="/pricing" className="hover:underline">Pricing Plans</Link></li>
               <li><Link href="/services" className="hover:underline">All Services</Link></li>
               <li><Link href="/gift-cards" className="hover:underline">Gift Cards</Link></li>
               <li><Link href="/blog" className="hover:underline">Trimma Blog</Link></li>

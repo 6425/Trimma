@@ -8,8 +8,7 @@ export const metadata = {
   }
 }
 
-import GlobalHeader from '../components/GlobalHeader';
-import GlobalFooter from '../components/GlobalFooter';
+import SiteChrome from '../components/SiteChrome';
 
 import { Toaster } from 'sonner';
 
@@ -24,11 +23,7 @@ export default function RootLayout({
         <link rel="icon" href="/logo.svg" type="image/svg+xml" sizes="any" />
       </head>
       <body className="antialiased flex flex-col min-h-screen" suppressHydrationWarning>
-        <GlobalHeader />
-        <main className="flex-1">
-          {children}
-        </main>
-        <GlobalFooter />
+        <SiteChrome>{children}</SiteChrome>
         <Toaster position="top-center" richColors />
       </body>
     </html>

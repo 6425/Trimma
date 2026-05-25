@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format, addDays } from "date-fns";
 import { Clock, User, Scissors, CheckCircle2, ChevronLeft, CreditCard, Loader2, Sparkles, Tag, AlertCircle, CalendarRange } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../config/supabase";
-import { generatePayhereHash } from "@/app/actions/payhere";
+import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { sendBookingCreatedAlert, sendWhatsAppNotification } from "@/app/actions/whatsapp";
 
 export function BookingSheet({ 
@@ -14,6 +15,7 @@ export function BookingSheet({
   onOpenChange, 
   initialServiceName,
   salonId,
+  salonSlug,
   services = [],
   staff = []
 }: { 
@@ -21,9 +23,11 @@ export function BookingSheet({
   onOpenChange: (open: boolean) => void;
   initialServiceName?: string;
   salonId?: string;
+  salonSlug?: string;
   services?: any[];
   staff?: any[];
 }) {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
@@ -731,6 +735,21 @@ export function BookingSheet({
   const handleConfirm = async () => {
     setIsProcessing(true);
     try {
+      if (paymentMethod === "payhere" && payhereEnabled) {
+        saveBookingCheckoutDraft({
+          salonId: salonId!,
+          salonSlug,
+          serviceIds: selectedServiceIds,
+          staffId: selectedStaffId || "any",
+          bookingDate: format(selectedDate, "yyyy-MM-dd"),
+          timeSlot: selectedTimeSlot!,
+          customerDetails,
+        });
+        onOpenChange(false);
+        router.push("/checkout/booking");
+        return;
+      }
+
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       
       const [timeStr, period] = selectedTimeSlot!.split(" ");
@@ -860,68 +879,6 @@ export function BookingSheet({
           .from("resource_bookings")
           .insert(resourceInserts);
         if (resErr) console.error("Failed to insert resource_bookings", resErr);
-      }
-
-      // Payments Audit Log for PayHere
-      if (paymentMethod === 'payhere') {
-        await supabase.from("payments").insert({
-          booking_id: newBooking.id,
-          salon_id: salonId,
-          provider: 'payhere',
-          amount: reservationFee,
-          currency: 'LKR',
-          status: 'pending'
-        });
-
-        // Submit the checkout form dynamically to PayHere Portal
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'https://sandbox.payhere.lk/pay/checkout';
-
-        // Generate the mandatory security hash via Server Action
-        const secureHash = await generatePayhereHash(
-          payhereMerchantId,
-          bookingNo,
-          reservationFee.toFixed(2),
-          'LKR',
-          payhereMerchantSecret
-        );
-
-        const params = {
-          merchant_id: payhereMerchantId, // Dynamic from Global Settings
-          return_url: `${window.location.origin}/customer?payment_success=true&booking_no=${bookingNo}`,
-          cancel_url: window.location.href,
-          notify_url: 'https://whxmyfjlrvyjqbmqhnzd.supabase.co/functions/v1/payhere-webhook',
-          order_id: bookingNo,
-          items: `Reservation Fee for ${selectedServicesWithRates.map(s => s.name).join(', ')}`,
-          currency: 'LKR',
-          amount: reservationFee.toFixed(2),
-          first_name: customerDetails.fullName.split(' ')[0] || 'Guest',
-          last_name: customerDetails.fullName.split(' ').slice(1).join(' ') || 'Client',
-          email: customerDetails.email,
-          phone: customerDetails.phone,
-          address: 'Trimma Online Booking',
-          city: 'Colombo',
-          country: 'Sri Lanka',
-          hash: secureHash
-        };
-
-        console.log("🚀 PAYHERE CHECKOUT PAYLOAD:");
-        console.table(params);
-
-        for (const key in params) {
-          if (params.hasOwnProperty(key)) {
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = key;
-            hiddenField.value = (params as any)[key];
-            form.appendChild(hiddenField);
-          }
-        }
-
-        document.body.appendChild(form);
-        form.submit();
-        return;
       }
 
       // Trigger WhatsApp Alert for direct confirmation

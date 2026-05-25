@@ -353,15 +353,18 @@ function AdminUserList() {
                   value={editingUser?.global_role || "user"}
                   onValueChange={(val) => setEditingUser({ ...editingUser, global_role: val })}
                 >
-                  <SelectTrigger className="w-full h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-brand/20">
+                  <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-2 focus:ring-brand/20 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    <SelectItem value="superadmin">Super Admin</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="regional_admin">Regional Admin</SelectItem>
-                    <SelectItem value="agent">Agent</SelectItem>
-                    <SelectItem value="salon_owner">Salon Owner</SelectItem>
+                  <SelectContent
+                    alignItemWithTrigger={false}
+                    className="rounded-xl border-0 ring-0 shadow-2xl p-1.5 w-auto min-w-[11rem]"
+                  >
+                    <SelectItem value="superadmin" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Super Admin</SelectItem>
+                    <SelectItem value="admin" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Admin</SelectItem>
+                    <SelectItem value="regional_admin" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Regional Admin</SelectItem>
+                    <SelectItem value="agent" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Agent</SelectItem>
+                    <SelectItem value="salon_owner" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Salon Owner</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

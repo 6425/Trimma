@@ -19,74 +19,36 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
+import {
+  buildDistrictCards,
+  getProvinceByRouteSlug,
+  normalizeProvinceSlug,
+  salonMatchesProvince,
+  slugifyLocation,
+  toDbProvinceSlug,
+  SRI_LANKA_PROVINCES,
+} from "@/lib/sri-lanka-locations";
+import { ProvinceNavLinks } from "../../../components/locations/ProvinceNavLinks";
 import { 
   FeaturedSalonsSection, 
-  PopularSalonsSection, 
+  PopularSalonsSection,
   DiscountsOffersSection, 
   WhyTrimmaSection, 
   SalonOnboardingCTA 
 } from "../../../components/marketplace/MarketplaceSections";
 
-const provinceData = {
-  id: "western",
-  name: "Western Province",
-  description: "Discover 1200+ salons, spas, barber shops, and beauty centers across Western Province. The beauty capital of Sri Lanka.",
-  salonCount: 1240,
-  image: "https://images.unsplash.com/photo-1574227492706-f65b24c3688a?q=80&w=2940&auto=format&fit=crop",
-  districts: [
-    { name: "Colombo", count: 850, top: "Barber • Spa" },
-    { name: "Gampaha", count: 240, top: "Hair • Bridal" },
-    { name: "Kalutara", count: 150, top: "Beauty • Nails" }
-  ],
-  popularCities: ["Colombo 07", "Nugegoda", "Negombo", "Gampaha", "Mount Lavinia", "Panadura"],
-  trendingServices: ["Skin Fade", "Bridal Makeup", "Hot Stone Massage", "Keratin Treatment"],
-  salons: [
-    {
-      id: "salon-1",
-      name: "The Gentlemen's Lounge",
-      city: "Colombo 07",
-      rating: 4.8,
-      reviews: 320,
-      categories: ["Barber", "Beard", "Facial"],
-      priceFrom: 2000,
-      nextAvailable: "Today 5:00 PM",
-      image: "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?q=80&w=2940&auto=format&fit=crop"
-    },
-    {
-      id: "salon-2",
-      name: "Glow & Go Studio",
-      city: "Nugegoda",
-      rating: 4.7,
-      reviews: 185,
-      categories: ["Hair", "Nails", "Makeup"],
-      priceFrom: 3500,
-      nextAvailable: "Tomorrow 10:00 AM",
-      image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop"
-    },
-    {
-      id: "salon-3",
-      name: "Serenity Spa Retreat",
-      city: "Mount Lavinia",
-      rating: 4.9,
-      reviews: 412,
-      categories: ["Spa", "Massage", "Wellness"],
-      priceFrom: 5000,
-      nextAvailable: "Today 7:00 PM",
-      image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2940&auto=format&fit=crop"
-    },
-    {
-      id: "salon-4",
-      name: "Urban Cuts",
-      city: "Gampaha",
-      rating: 4.5,
-      reviews: 98,
-      categories: ["Barber", "Hair Color"],
-      priceFrom: 1500,
-      nextAvailable: "Today 2:30 PM",
-      image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=2844&auto=format&fit=crop"
-    }
-  ]
-};
+function buildInitialProvinceState(routeSlug: string) {
+  const meta = getProvinceByRouteSlug(routeSlug) || SRI_LANKA_PROVINCES[0];
+  return {
+    id: meta.slug,
+    name: meta.name,
+    description: meta.description,
+    salonCount: 0,
+    image: meta.image,
+    districts: buildDistrictCards(meta),
+    popularCities: meta.districts.flatMap((d) => d.cities).slice(0, 6),
+  };
+}
 
 const Store = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -111,36 +73,27 @@ const Store = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function ProvinceDetailPage() {
   const { province } = useParams();
+  const provinceSlug = normalizeProvinceSlug(String(province || "western"));
+  const provinceMeta = getProvinceByRouteSlug(provinceSlug) || SRI_LANKA_PROVINCES[0];
   const [isScrolled, setIsScrolled] = useState(false);
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
 
-  const [provinceDataState, setProvinceDataState] = useState<any>(provinceData);
+  const [provinceDataState, setProvinceDataState] = useState<any>(() => buildInitialProvinceState(provinceSlug));
   const data = provinceDataState; 
   const [salons, setSalons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filter salons belonging to this province
-  const filteredSalons = salons.filter(s => {
-    const districtName = s.district?.toLowerCase() || "";
-    const provinceSlug = String(province).toLowerCase();
-    const locLower = s.location?.toLowerCase() || "";
-    
-    if (provinceSlug === "western") {
-      return ["colombo", "gampaha", "kalutara", "western province"].some(d => districtName.includes(d) || locLower.includes(d));
-    } else if (provinceSlug === "central") {
-      return ["kandy", "matale", "nuwara eliya", "central province"].some(d => districtName.includes(d) || locLower.includes(d));
-    } else if (provinceSlug === "southern") {
-      return ["galle", "matara", "hambantota", "southern province"].some(d => districtName.includes(d) || locLower.includes(d));
-    } else if (provinceSlug === "eastern") {
-      return ["trincomalee", "batticaloa", "ampara", "eastern province"].some(d => districtName.includes(d) || locLower.includes(d));
-    } else if (provinceSlug === "northern") {
-      return ["jaffna", "kilinochchi", "mannar", "vavuniya", "mullaittivu", "northern province"].some(d => districtName.includes(d) || locLower.includes(d));
-    }
-    return true;
-  });
+  const cityOptions = provinceMeta.districts.flatMap((district) => district.cities);
+
+  const filteredSalons = salons.filter((s) => salonMatchesProvince(s, provinceSlug));
+
+  useEffect(() => {
+    setProvinceDataState(buildInitialProvinceState(provinceSlug));
+    setSelectedLocation("");
+  }, [provinceSlug]);
 
   useEffect(() => {
     async function fetchLiveSalons() {
@@ -207,21 +160,46 @@ export default function ProvinceDetailPage() {
 
     async function fetchProvinceDetails() {
       try {
+        const meta = getProvinceByRouteSlug(provinceSlug);
+        if (!meta) return;
+
         const { data: provData, error } = await supabase
           .from("provinces")
           .select("*")
-          .eq("slug", province)
-          .single();
-        
+          .eq("slug", toDbProvinceSlug(provinceSlug))
+          .maybeSingle();
+
+        let districts = buildDistrictCards(meta);
+
         if (provData && !error) {
-          setProvinceDataState((prev: any) => ({
-             ...prev,
-             name: provData.name,
-             description: provData.description || prev.description,
-             salonCount: provData.salon_count || prev.salonCount,
-             image: provData.image_url || prev.image
-          }));
+          const { data: dbDistricts } = await supabase
+            .from("districts")
+            .select("*")
+            .eq("province_id", provData.id)
+            .order("name");
+
+          if (dbDistricts?.length) {
+            districts = dbDistricts.map((row) => {
+              const staticDistrict = meta.districts.find((d) => d.slug === row.slug);
+              return {
+                name: row.name,
+                slug: row.slug,
+                count: row.salon_count || 0,
+                top: staticDistrict?.cities.slice(0, 3).join(" • ") || "Salon • Spa",
+              };
+            });
+          }
         }
+
+        setProvinceDataState({
+          id: meta.slug,
+          name: provData?.name || meta.name,
+          description: provData?.description || meta.description,
+          salonCount: provData?.salon_count || 0,
+          image: provData?.image_url || meta.image,
+          districts,
+          popularCities: meta.districts.flatMap((d) => d.cities).slice(0, 6),
+        });
       } catch (err) {
         console.error("Failed to load province:", err);
       }
@@ -236,7 +214,7 @@ export default function ProvinceDetailPage() {
     fetchProvinceDetails();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [province]);
+  }, [provinceSlug]);
 
   const renderIcon = (iconName: string) => {
     const IconComponent = IconMap[iconName] || Sparkles;
@@ -302,10 +280,12 @@ export default function ProvinceDetailPage() {
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
                   >
-                    <option value="" className="text-zinc-900">Any Location</option>
-                    <option value="colombo" className="text-zinc-900">Colombo</option>
-                    <option value="negombo" className="text-zinc-900">Negombo</option>
-                    <option value="kandy" className="text-zinc-900">Kandy</option>
+                    <option value="" className="text-zinc-900">Any City</option>
+                    {cityOptions.map((city) => (
+                      <option key={city} value={slugifyLocation(city)} className="text-zinc-900">
+                        {city}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 
@@ -325,26 +305,7 @@ export default function ProvinceDetailPage() {
         <div className="container mx-auto px-4 max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar">
             <span className="text-xs font-extrabold text-zinc-400 uppercase tracking-wider mr-2 shrink-0">Provinces:</span>
-            <div className="flex gap-2 shrink-0">
-              <Link href="/locations" className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-zinc-700 text-xs font-bold rounded-full transition-all">
-                All Regions
-              </Link>
-              <Link href="/locations/western" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${province === "western" ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Western
-              </Link>
-              <Link href="/locations/central" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${province === "central" ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Central
-              </Link>
-              <Link href="/locations/southern" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${province === "southern" ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Southern
-              </Link>
-              <Link href="/locations/eastern" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${province === "eastern" ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Eastern
-              </Link>
-              <Link href="/locations/northern" className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${province === "northern" ? "bg-zinc-950 text-white shadow-sm" : "bg-slate-100 hover:bg-slate-200 text-zinc-700"}`}>
-                Northern
-              </Link>
-            </div>
+            <ProvinceNavLinks activeProvinceSlug={provinceSlug} />
           </div>
           <div className="hidden md:flex items-center gap-2 text-xs font-bold text-brand-pink bg-brand-pink/5 border border-brand-pink/10 px-3.5 py-1.5 rounded-full">
             <Icons.Navigation2 className="w-3.5 h-3.5 animate-pulse text-brand-pink" />
@@ -425,8 +386,8 @@ export default function ProvinceDetailPage() {
         <section className="mb-16">
           <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Explore by District</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {data.districts.map((dist, i) => (
-              <Link key={i} href={`/locations/${province || data.id}/${dist.name.toLowerCase().replace(" ", "-")}`} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-emerald-200 group block">
+            {data.districts.map((dist: { name: string; slug: string; count: number; top: string }, i: number) => (
+              <Link key={i} href={`/locations/${provinceSlug}/${dist.slug}`} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:border-emerald-200 group block">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-lg text-zinc-900 group-hover:text-emerald-700 transition-colors">{dist.name}</h3>
                   <Badge variant="secondary" className="bg-slate-100 text-zinc-600 font-bold border-none">{dist.count}</Badge>

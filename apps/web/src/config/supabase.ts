@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type AuthError } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -9,75 +9,107 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+const FORCE_CLEAR_KEY = 'sb-force-clear';
+
+function isInvalidRefreshTokenError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const authError = error as AuthError;
+  const message = authError.message ?? String(error);
+  return (
+    authError.name === 'AuthApiError' &&
+    (message.includes('Refresh Token Not Found') ||
+      message.includes('Invalid Refresh Token') ||
+      (authError.status === 400 && message.toLowerCase().includes('refresh')))
+  );
+}
+
+/** Remove all Supabase auth keys from localStorage and cookies. */
+function clearSupabaseAuthStorage() {
+  if (typeof window === 'undefined') return;
+
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith('sb-')) keysToRemove.push(key);
+  }
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+  document.cookie.split(';').forEach((cookie) => {
+    const name = cookie.trim().split('=')[0];
+    if (name.startsWith('sb-')) {
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+    }
+  });
+}
+
+// Clear storage before the client boots so it never attempts a doomed refresh.
+if (typeof window !== 'undefined' && sessionStorage.getItem(FORCE_CLEAR_KEY)) {
+  clearSupabaseAuthStorage();
+  sessionStorage.removeItem(FORCE_CLEAR_KEY);
+}
+
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-anon-key'
+  supabaseAnonKey || 'placeholder-anon-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
 );
 
-// Self-healing for stale or invalid session (e.g. after DB re-seeding)
+// Self-healing for stale or invalid session (e.g. after DB re-seeding or project change)
 if (typeof window !== 'undefined') {
-  const clearStaleSession = () => {
-    console.warn('Stale Supabase session detected. Self-healing by clearing auth storage...');
-    
-    // Safe collection and deletion of stale supabase localStorage tokens
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+  let clearingStaleSession = false;
 
-    // Clear supabase cookies to prevent backend/next.js session restoring
-    document.cookie.split(";").forEach((c) => {
-      const name = c.trim().split("=")[0];
-      if (name.startsWith("sb-")) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-      }
-    });
-    
-    // Clean internal memory and reset auth state
-    supabase.auth.signOut().catch(() => {});
-    
-    // Prevent infinite reload loops: reload at most once
+  const clearStaleSession = async () => {
+    if (clearingStaleSession) return;
+    clearingStaleSession = true;
+
+    clearSupabaseAuthStorage();
+    sessionStorage.setItem(FORCE_CLEAR_KEY, '1');
+
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // Local sign-out only; ignore server errors for revoked tokens.
+    }
+
     const hasReloaded = sessionStorage.getItem('sb-auth-reloaded');
     if (!hasReloaded) {
       sessionStorage.setItem('sb-auth-reloaded', 'true');
-      console.log('Reloading page to refresh guest state...');
       window.location.reload();
-    } else {
-      console.warn('Session clearing did not resolve stale session; skipping reload to prevent infinite loop.');
-      sessionStorage.removeItem('sb-auth-reloaded');
+      return;
     }
+
+    sessionStorage.removeItem('sb-auth-reloaded');
+    clearingStaleSession = false;
   };
 
-  // Intercept and silence noisy refresh token warnings from Supabase Client in the browser console
+  const handleAuthError = (error: unknown) => {
+    if (!isInvalidRefreshTokenError(error)) return;
+    void clearStaleSession();
+  };
+
   window.addEventListener('unhandledrejection', (event) => {
-    const reasonMsg = event.reason ? String(event.reason.message || event.reason) : '';
-    if (
-      reasonMsg.includes('Refresh Token Not Found') || 
-      reasonMsg.includes('Invalid Refresh Token') ||
-      reasonMsg.includes('refresh_token')
-    ) {
-      event.preventDefault(); // Prevents console error logging completely
-      clearStaleSession();
+    if (!isInvalidRefreshTokenError(event.reason)) return;
+    event.preventDefault();
+    handleAuthError(event.reason);
+  });
+
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') {
+      sessionStorage.removeItem('sb-auth-reloaded');
     }
   });
 
   supabase.auth.getSession().then(({ error }) => {
-    if (error && (
-      error.message.includes('Refresh Token Not Found') || 
-      error.message.includes('Invalid Refresh Token') ||
-      (error.status === 400 && error.message.includes('refresh_token'))
-    )) {
-      clearStaleSession();
-    } else {
-      // Clear reload flag on successful session retrieval
-      sessionStorage.removeItem('sb-auth-reloaded');
+    if (error) {
+      handleAuthError(error);
+      return;
     }
-  }).catch(() => {
-    // Silent catch
+    sessionStorage.removeItem('sb-auth-reloaded');
   });
 }
-

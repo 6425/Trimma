@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2 } from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { BookingSheet } from "../../../components/BookingSheet";
+import { SalonLocationMap } from "../../../components/SalonLocationMap";
 import { supabase } from "../../../config/supabase";
-import { generatePayhereHash } from "@/app/actions/payhere";
+import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
+import { getSalonDirectionsUrl } from "@/lib/salon-map";
 import { toast } from "sonner";
+
+const iconMap: Record<string, any> = {
+  Wind, Wifi, Car, Armchair, Sofa, Coffee, Star, Shield, Sun, CheckCircle, Smartphone, LayoutGrid
+};
 
 // --- MOCK UI FLAIR DATA ---
 // Data not yet supported by DB but required for premium UI look
@@ -64,12 +70,14 @@ const reviewsData = [
 
 export default function SalonPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
   
   // LIVE DATA STATES
   const [salon, setSalon] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
+  const [amenities, setAmenities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // UI STATES
@@ -123,7 +131,7 @@ export default function SalonPage() {
         // 1. Fetch Salon by Slug directly from Supabase
         let { data: salonData, error: salonError } = await supabase
           .from("salons")
-          .select("id, slug, name, city, district, address, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
+          .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
           .eq("slug", slug)
           .maybeSingle();
 
@@ -133,7 +141,7 @@ export default function SalonPage() {
           if (isUuid) {
             const { data: fallbackData } = await supabase
               .from("salons")
-              .select("id, slug, name, city, district, address, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
+              .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
               .eq("id", slug)
               .maybeSingle();
             if (fallbackData) {
@@ -151,8 +159,8 @@ export default function SalonPage() {
         }
         setSalon(salonData);
 
-        // 2 & 3. Fetch Services and Staff in parallel directly from Supabase
-        const [servicesRes, staffRes] = await Promise.all([
+        // 2 & 3. Fetch Services, Staff, and Amenities in parallel directly from Supabase
+        const [servicesRes, staffRes, amenitiesRes, globalRes] = await Promise.all([
           supabase
             .from("services")
             .select("*")
@@ -162,7 +170,15 @@ export default function SalonPage() {
             .from("salon_staff")
             .select("*")
             .eq("salon_id", salonData.id)
-            .eq("status", "active")
+            .eq("status", "active"),
+          supabase
+            .from("salon_amenities")
+            .select("*")
+            .eq("salon_id", salonData.id)
+            .or("has_amenity.eq.true,quantity.gt.0"),
+          supabase
+            .from("global_amenities")
+            .select("*")
         ]);
 
         const servicesData = servicesRes.data;
@@ -191,6 +207,21 @@ export default function SalonPage() {
              availableToday: true,
              working_hours: member.working_hours
           })));
+        }
+
+        if (amenitiesRes.data && globalRes.data) {
+          const globalMap = Object.fromEntries(globalRes.data.map((g: any) => [g.id, g]));
+          const formatted = amenitiesRes.data.map((am: any) => {
+            const ga = globalMap[am.amenity_id];
+            if (!ga) return null;
+            return {
+              name: ga.name,
+              icon_name: ga.icon_name,
+              quantity: am.quantity,
+              type: ga.type
+            };
+          }).filter(Boolean);
+          setAmenities(formatted);
         }
       } catch (err) {
         console.error("Failed to load salon data via Supabase direct query", err);
@@ -397,8 +428,34 @@ export default function SalonPage() {
   }, [selectedServiceId, selectedStaffId, selectedDate, salon, services]);
 
   const handleInlineBookSubmit = async () => {
+    if (!selectedServiceId || !selectedTimeSlot || !customerDetails.fullName || !customerDetails.phone) {
+      return;
+    }
+
     setIsProcessing(true);
     try {
+      const { data: paymentSettings } = await supabase
+        .from("global_payment_settings")
+        .select("payhere_enabled")
+        .eq("id", "00000000-0000-0000-0000-000000000001")
+        .maybeSingle();
+
+      const payhereEnabled = paymentSettings?.payhere_enabled !== false;
+
+      if (payhereEnabled) {
+        saveBookingCheckoutDraft({
+          salonId: salon.id,
+          salonSlug: slug,
+          serviceIds: [selectedServiceId],
+          staffId: selectedStaffId || "any",
+          bookingDate: format(selectedDate, "yyyy-MM-dd"),
+          timeSlot: selectedTimeSlot,
+          customerDetails,
+        });
+        router.push("/checkout/booking");
+        return;
+      }
+
       const formattedDate = format(selectedDate, "yyyy-MM-dd");
       
       const [timeStr, period] = selectedTimeSlot!.split(" ");
@@ -460,15 +517,6 @@ export default function SalonPage() {
         agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
       }
 
-      // Check if PayHere is active globally
-      const { data: paymentSettings } = await supabase
-        .from("global_payment_settings")
-        .select("*")
-        .eq("id", "00000000-0000-0000-0000-000000000001")
-        .maybeSingle();
-
-      const payhereEnabled = !paymentSettings || paymentSettings.payhere_enabled !== false;
-
       // 2. Insert master booking row directly into Supabase database (with backward compatibility fallback)
       const { data: newBooking, error: bookingErr } = await supabase
         .from("bookings")
@@ -481,9 +529,9 @@ export default function SalonPage() {
           booking_date: formattedDate,
           booking_time: formattedTime,
           amount: totalPrice,
-          status: payhereEnabled ? "pending" : "confirmed",
+          status: "confirmed",
           payment_status: "unpaid",
-          reservation_fee_paid: !payhereEnabled,
+          reservation_fee_paid: false,
           reservation_fee_refundable: false,
           total_reservation_fee: reservationFee,
           salon_upfront_amount: totalPrice * (salonRate / 100),
@@ -541,67 +589,6 @@ export default function SalonPage() {
         await supabase
           .from("resource_bookings")
           .insert(resourceInserts);
-      }
-
-      if (payhereEnabled) {
-        await supabase.from("payments").insert({
-          booking_id: newBooking.id,
-          salon_id: salon.id,
-          provider: 'payhere',
-          amount: reservationFee,
-          currency: 'LKR',
-          status: 'pending'
-        });
-
-        // Submit the checkout form dynamically to PayHere Portal
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'https://sandbox.payhere.lk/pay/checkout';
-
-        // Generate the mandatory security hash via Server Action
-        const secureHash = await generatePayhereHash(
-          paymentSettings?.payhere_merchant_id || '1211149',
-          bookingNo,
-          reservationFee.toFixed(2),
-          'LKR',
-          paymentSettings?.payhere_merchant_secret || ''
-        );
-
-        const params = {
-          merchant_id: paymentSettings?.payhere_merchant_id || '1211149', // Dynamic from Global Settings
-          return_url: `${window.location.origin}/customer?payment_success=true&booking_no=${bookingNo}`,
-          cancel_url: window.location.href,
-          notify_url: 'https://whxmyfjlrvyjqbmqhnzd.supabase.co/functions/v1/payhere-webhook',
-          order_id: bookingNo,
-          items: `Reservation Fee for ${selectedService?.name || 'Hair Treatment'}`,
-          currency: 'LKR',
-          amount: reservationFee.toFixed(2),
-          first_name: customerDetails.fullName.split(' ')[0] || 'Guest',
-          last_name: customerDetails.fullName.split(' ').slice(1).join(' ') || 'Client',
-          email: customerEmail,
-          phone: customerDetails.phone,
-          address: 'Trimma Online Booking',
-          city: 'Colombo',
-          country: 'Sri Lanka',
-          hash: secureHash
-        };
-
-        console.log("🚀 PAYHERE CHECKOUT PAYLOAD:");
-        console.table(params);
-
-        for (const key in params) {
-          if (params.hasOwnProperty(key)) {
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = key;
-            hiddenField.value = (params as any)[key];
-            form.appendChild(hiddenField);
-          }
-        }
-
-        document.body.appendChild(form);
-        form.submit();
-        return;
       }
 
       // Save details for success ticket modal
@@ -791,7 +778,16 @@ export default function SalonPage() {
               <Button size="lg" variant="outline" className="flex-1 md:flex-none rounded-xl gap-2 font-bold border-[#25D366]/40 text-[#25D366] bg-[#25D366]/5 hover:bg-[#25D366]/10 hover:text-[#25D366] text-xs h-12 px-5">
                 <MessageCircle className="w-4 h-4" /> WhatsApp
               </Button>
-              <Button size="lg" variant="outline" className="flex-1 md:flex-none rounded-xl gap-2 font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white hidden md:flex text-xs h-12 px-5">
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 md:flex-none rounded-xl gap-2 font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white hidden md:flex text-xs h-12 px-5"
+                onClick={() => {
+                  const url = getSalonDirectionsUrl(salon);
+                  if (url) window.open(url, "_blank", "noopener,noreferrer");
+                  else toast.message("Directions are not available for this salon yet.");
+                }}
+              >
                 <Navigation2 className="w-4 h-4" /> Directions
               </Button>
             </div>
@@ -934,16 +930,31 @@ export default function SalonPage() {
                <div>
                   <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-4">Amenities</h2>
                   <div className="grid grid-cols-2 gap-3">
-                    {mockExtraData.amenities.map((am, i) => (
-                      <div key={i} className="flex items-center gap-2 text-zinc-600 text-sm">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-zinc-700 shrink-0">
-                          {am.icon}
+                    {amenities.map((am, i) => {
+                      const IconComp = iconMap[am.icon_name] || CheckCircle;
+                      return (
+                        <div key={i} className="flex items-center gap-2 text-zinc-600 text-sm">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-zinc-700 shrink-0">
+                            <IconComp className="w-4 h-4" />
+                          </div>
+                          {am.name}
+                          {am.type === 'number' && am.quantity ? <span className="text-[10px] font-bold bg-brand/10 text-brand px-1.5 py-0.5 rounded">x{am.quantity}</span> : null}
                         </div>
-                        {am.name}
-                      </div>
-                    ))}
+                      );
+                    })}
+                    {amenities.length === 0 && (
+                      <div className="col-span-2 text-zinc-400 text-sm italic">No amenities listed yet.</div>
+                    )}
                   </div>
                </div>
+            </section>
+
+            {/* Mobile / tablet: map in main column */}
+            <section className="lg:hidden">
+              <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">Find us</h2>
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <SalonLocationMap salon={salon} />
+              </div>
             </section>
           </div>
 
@@ -1075,6 +1086,10 @@ export default function SalonPage() {
                     {isProcessing ? "Processing..." : "Book Now"}
                   </Button>
                 </div>
+
+               <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5">
+                 <SalonLocationMap salon={salon} />
+               </div>
             </div>
           </div>
         </div>
@@ -1091,8 +1106,8 @@ export default function SalonPage() {
         isOpen={isBookingOpen} 
         onOpenChange={setIsBookingOpen} 
         initialServiceName={initialBookingService} 
-        // IMPORTANT: We pass live data down to the Booking engine!
         salonId={salon.id}
+        salonSlug={slug}
         services={services}
         staff={staff}
       />

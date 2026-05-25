@@ -42,35 +42,29 @@ function AdminUserCreateInner() {
 
     setIsLoading(true);
     try {
-      // 1. Create Auth User
-      // Note: In typical admin flows, this might be handled via a secure edge function
-      // to prevent the admin from being signed out. Here we use signUp.
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-            role: formData.role
-          }
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("You must be signed in as a platform admin.");
+      }
+
+      const response = await fetch("/api/admin/provision-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          role: formData.role,
+          territory: formData.territory,
+        }),
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("User creation failed");
-
-      // 2. Replicate to agents table if it's an agent or admin (per user request)
-      const rolesToReplicate = ["agent", "admin", "superadmin", "regional_admin"];
-      if (rolesToReplicate.includes(formData.role)) {
-        const { error: agentError } = await supabase
-          .from("agents")
-          .insert([{
-            user_email: formData.email,
-            status: 'active',
-            commission_rate: 0
-          }]);
-        
-        if (agentError) throw agentError;
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "User creation failed");
       }
 
       setSuccess(true);
@@ -163,15 +157,15 @@ function AdminUserCreateInner() {
                     onValueChange={(val) => setFormData({ ...formData, role: val })}
                     required
                   >
-                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 rounded-xl">
+                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="superadmin">Super Admin</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="regional_admin">Regional Admin</SelectItem>
-                      <SelectItem value="agent">Agent</SelectItem>
-                      <SelectItem value="salon_owner">Salon Owner</SelectItem>
+                    <SelectContent className="rounded-xl border-none shadow-2xl p-1">
+                      <SelectItem value="superadmin" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Super Admin</SelectItem>
+                      <SelectItem value="admin" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Admin</SelectItem>
+                      <SelectItem value="regional_admin" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Regional Admin</SelectItem>
+                      <SelectItem value="agent" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Agent</SelectItem>
+                      <SelectItem value="salon_owner" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Salon Owner</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -182,14 +176,14 @@ function AdminUserCreateInner() {
                     onValueChange={(val) => setFormData({ ...formData, territory: val })}
                     defaultValue="Colombo"
                   >
-                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-none focus:ring-2 focus:ring-brand/20 rounded-xl">
+                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      <SelectItem value="Colombo">Colombo</SelectItem>
-                      <SelectItem value="Kandy">Kandy</SelectItem>
-                      <SelectItem value="Galle">Galle</SelectItem>
-                      <SelectItem value="Remote">Remote (Global)</SelectItem>
+                    <SelectContent className="rounded-xl border-none shadow-2xl p-1">
+                      <SelectItem value="Colombo" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Colombo</SelectItem>
+                      <SelectItem value="Kandy" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Kandy</SelectItem>
+                      <SelectItem value="Galle" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Galle</SelectItem>
+                      <SelectItem value="Remote" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Remote (Global)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
