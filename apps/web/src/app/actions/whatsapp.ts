@@ -866,7 +866,7 @@ export async function sendReviewRequestAlert(bookingNo: string) {
     if (!customer || !customer.phone) return { success: false };
 
     const customerPhone = cleanPhoneNumber(customer.phone);
-    const reviewLink = `https://trimma-web.vercel.app/salons/${booking.salons?.slug}#reviews`;
+    const reviewLink = `https://trimma-web.vercel.app/customer/bookings?review=${booking.id}`;
 
     const variables = {
       customer_name: customer.full_name || "Valued Client",

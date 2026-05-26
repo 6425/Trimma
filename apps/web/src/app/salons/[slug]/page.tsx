@@ -27,6 +27,9 @@ import {
 } from "@/lib/promotion-booking";
 import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
 import { toast } from "sonner";
+import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
+import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
+import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 
 const iconMap: Record<string, any> = {
@@ -77,10 +80,6 @@ const mockExtraData = {
   ]
 };
 
-const reviewsData = [
-  { id: 1, author: "Dinuka R.", rating: 5, date: "2 days ago", content: "Best fade I've ever had in Colombo. Highly recommend!", verified: true },
-  { id: 2, author: "Amal P.", rating: 5, date: "1 week ago", content: "Great ambiance and excellent service. The hot towel shave was incredibly relaxing.", verified: true },
-];
 
 export default function SalonPage() {
   const params = useParams();
@@ -94,6 +93,8 @@ export default function SalonPage() {
   const [selectedPromotionPackage, setSelectedPromotionPackage] = useState<SalonPromotionPackage | null>(null);
   const [staff, setStaff] = useState<any[]>([]);
   const [amenities, setAmenities] = useState<any[]>([]);
+  const [salonReviews, setSalonReviews] = useState<PublicSalonReview[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(buildReviewSummary([]));
   const [loading, setLoading] = useState(true);
   
   // UI STATES
@@ -150,7 +151,7 @@ export default function SalonPage() {
       // 1. Fetch Salon by Slug directly from Supabase
       let { data: salonData, error: salonError } = await supabase
       .from("salons")
-      .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
+      .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured")
       .eq("slug", slug)
       .maybeSingle();
       
@@ -160,7 +161,7 @@ export default function SalonPage() {
       if (isUuid) {
       const { data: fallbackData } = await supabase
       .from("salons")
-      .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, is_featured")
+      .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured")
       .eq("id", slug)
       .maybeSingle();
       if (fallbackData) {
@@ -248,6 +249,13 @@ export default function SalonPage() {
       .filter(Boolean);
       setAmenities(formatted);
       }
+
+      const [summary, reviews] = await Promise.all([
+        getSalonReviewSummary(salonData.id),
+        getSalonReviews(salonData.id),
+      ]);
+      setReviewSummary(summary);
+      setSalonReviews(reviews);
       } catch (err) {
       console.error("Failed to load salon data via Supabase direct query", err);
       } finally {
@@ -759,6 +767,8 @@ export default function SalonPage() {
     ? salon.featured_images[0]
     : mockExtraData.gallery[1];
   const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=18181b`;
+  const displayRating = reviewSummary.totalReviews > 0 ? reviewSummary.averageRating : (salon.rating || 0);
+  const displayReviewCount = reviewSummary.totalReviews > 0 ? reviewSummary.totalReviews : (salon.review_count || 0);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans">
@@ -804,7 +814,10 @@ export default function SalonPage() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-300">
                   <div className="flex items-center text-white bg-white/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/5">
                     <Star className="w-4 h-4 mr-1.5 fill-amber-500 text-amber-500" />
-                    {mockExtraData.rating} <span className="font-normal text-zinc-400 ml-1">({mockExtraData.reviews} reviews)</span>
+                    {displayRating > 0 ? displayRating.toFixed(1) : "New"}{" "}
+                    <span className="font-normal text-zinc-400 ml-1">
+                      ({displayReviewCount} review{displayReviewCount === 1 ? "" : "s"})
+                    </span>
                   </div>
                   <div className="flex items-center hover:text-white transition-colors cursor-pointer" title={salon.address}>
                     <MapPin className="w-4 h-4 mr-1.5 text-brand" />
@@ -1096,6 +1109,8 @@ export default function SalonPage() {
                   </div>
                </div>
             </section>
+
+            <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
 
             {/* Mobile / tablet: map in main column */}
             <section className="lg:hidden">
