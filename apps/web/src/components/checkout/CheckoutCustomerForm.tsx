@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { Loader2, Lock, ShieldCheck, Smartphone } from "lucide-react";
 import { PayHerePaymentSelector } from "../PayHerePaymentSelector";
+import { CheckoutCardPaymentSection } from "./CheckoutCardPaymentSection";
+import type { CardPaymentDetails, CardType } from "@/lib/card-payment";
 
 export type CheckoutCustomerDetails = {
   firstName: string;
@@ -22,6 +24,11 @@ type CheckoutCustomerFormProps = {
   payhereEnvironment: string;
   submitLabel: string;
   onSubmit: (e: React.FormEvent) => void;
+  paymentMode?: "hosted" | "inline";
+  cardType?: CardType;
+  setCardType?: (value: CardType) => void;
+  cardDetails?: CardPaymentDetails;
+  setCardDetails?: React.Dispatch<React.SetStateAction<CardPaymentDetails>>;
 };
 
 export function CheckoutCustomerForm({
@@ -32,6 +39,11 @@ export function CheckoutCustomerForm({
   payhereEnvironment,
   submitLabel,
   onSubmit,
+  paymentMode = "hosted",
+  cardType = "visa",
+  setCardType,
+  cardDetails,
+  setCardDetails,
 }: CheckoutCustomerFormProps) {
   if (!payhereEnabled) {
     return (
@@ -41,9 +53,23 @@ export function CheckoutCustomerForm({
     );
   }
 
+  const isInlineCardCheckout =
+    paymentMode === "inline" && cardDetails && setCardDetails && setCardType;
+
   return (
     <form onSubmit={onSubmit}>
-      <PayHerePaymentSelector className="mb-8" />
+      {isInlineCardCheckout ? (
+        <CheckoutCardPaymentSection
+          className="mb-8"
+          cardType={cardType}
+          setCardType={setCardType}
+          cardDetails={cardDetails}
+          setCardDetails={setCardDetails}
+          payhereEnvironment={payhereEnvironment}
+        />
+      ) : (
+        <PayHerePaymentSelector className="mb-8" />
+      )}
 
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="checkout-email">
@@ -123,7 +149,7 @@ export function CheckoutCustomerForm({
         {processing ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Redirecting to PayHere…
+            {isInlineCardCheckout ? "Processing payment…" : "Redirecting to PayHere…"}
           </>
         ) : (
           submitLabel

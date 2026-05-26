@@ -3,6 +3,8 @@
 import { usePathname } from "next/navigation";
 import GlobalHeader from "./GlobalHeader";
 import GlobalFooter from "./GlobalFooter";
+import { SalonFavoritesProvider } from "@/hooks/useSalonFavorites";
+import { SavedStylesProvider } from "@/hooks/useSavedStyles";
 
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -13,10 +15,12 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <>
-      <GlobalHeader />
-      <main className="flex-1">{children}</main>
-      <GlobalFooter />
-    </>
+    <SalonFavoritesProvider>
+      <SavedStylesProvider>
+        <GlobalHeader />
+        <main className="flex-1">{children}</main>
+        <GlobalFooter />
+      </SavedStylesProvider>
+    </SalonFavoritesProvider>
   );
 }

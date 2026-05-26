@@ -10,7 +10,7 @@ export function FAQAccordion() {
   const faqs = [
     { q: "How do I book an appointment?", a: "Simply search for a salon, select your desired service and professional, pick a time slot, and confirm your booking instantly. You'll receive a digital ticket right away." },
     { q: "How do payments work?", a: "Depending on the salon's policy, you can either pay a reservation fee upfront securely via our app, or pay the full amount at the salon after your service." },
-    { q: "Can I cancel or reschedule my booking?", a: "Yes, you can manage your bookings directly from your profile. Cancellations made 24 hours prior are usually fully refundable, depending on the salon's specific policy." },
+    { q: "Can I cancel or reschedule my booking?", a: "Rescheduling may be available from your booking details where the salon allows it. Cancellations are handled by the salon — contact them directly if you need to change plans. The 20% online reservation deposit is non-refundable and no refunds are processed through Trimma." },
     { q: "How do I register my salon on Trimma?", a: "Click the 'Register Your Salon' button, fill in your business details, and our onboarding team will verify your account. Once verified, you can set up your services and staff." },
     { q: "Does Trimma support multi-branch salons?", a: "Absolutely. Our platform is built to scale. You can manage multiple locations, staff rosters, and view consolidated analytics from a single owner dashboard." },
   ];

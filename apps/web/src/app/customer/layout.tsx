@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
-  Home, CalendarDays, Heart, Sparkles, 
-  Wallet, Gift, User, Settings, LifeBuoy,
+  Home, CalendarDays, Heart, 
+  User, LifeBuoy,
   LogOut, Scissors, Menu, X, Bell
 } from "lucide-react";
 import { supabase } from "@/config/supabase";
+import Logo from "../../components/Logo";
 
 export default function CustomerDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -31,9 +32,6 @@ export default function CustomerDashboardLayout({ children }: { children: React.
     { name: "My Bookings", path: "/customer/bookings", icon: <CalendarDays className="w-5 h-5" /> },
     { name: "Favorite Salons", path: "/customer/favorites", icon: <Heart className="w-5 h-5" /> },
     { name: "Saved Styles", path: "/customer/styles", icon: <Scissors className="w-5 h-5" /> },
-    { name: "Recommendations", path: "/customer/recommendations", icon: <Sparkles className="w-5 h-5" /> },
-    { name: "Rewards", path: "/customer/rewards", icon: <Gift className="w-5 h-5" /> },
-    { name: "Wallet & Payments", path: "/customer/wallet", icon: <Wallet className="w-5 h-5" /> },
   ];
 
   const bottomNavItems = [
@@ -55,15 +53,15 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         />
       )}
 
-      {/* ── SIDEBAR (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
-        mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'
+      {/* ── SIDEBAR (Desktop in-flow | Mobile sliding drawer) ── */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
+        mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full lg:translate-x-0'
       }`}>
 
         {/* Sidebar Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
-          <Link href="/" className="text-xl font-black tracking-tighter text-white">
-            Trimma<span className="text-[#F5B700]">.</span>
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            <Logo iconSize={32} inverse />
           </Link>
           <button
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
@@ -75,8 +73,8 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </div>
 
         {/* Nav Items */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 scrollbar-none">
-          <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-3">Menu</div>
+        <div className="trimma-dashboard-sidebar-nav flex-1 overflow-y-auto pt-4 pb-4 px-3 space-y-0.5 scrollbar-none lg:pt-6">
+          <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-3 pt-1">Menu</div>
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/customer' && pathname.startsWith(item.path));
             return (
@@ -98,7 +96,6 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-2">Account</div>
             {[
               { name: "Profile", path: "/customer/profile", icon: <User className="w-5 h-5" /> },
-              { name: "Settings", path: "/customer/settings", icon: <Settings className="w-5 h-5" /> },
               { name: "Support", path: "/customer/support", icon: <LifeBuoy className="w-5 h-5" /> },
             ].map((item) => {
               const isActive = pathname === item.path;
@@ -132,12 +129,12 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       </aside>
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="flex-1 lg:pl-64 min-h-screen pb-20 lg:pb-0 flex flex-col">
+      <main className="flex-1 min-h-screen pb-20 lg:pb-0 flex flex-col min-w-0">
 
         {/* Mobile Top Header */}
         <header className="h-16 bg-[#0B0B0B] border-b border-white/8 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
-          <Link href="/" className="text-xl font-black tracking-tighter text-white">
-            Trimma<span className="text-[#F5B700]">.</span>
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            <Logo iconSize={32} inverse />
           </Link>
           <div className="flex items-center gap-1.5">
             {/* Hamburger before bell */}

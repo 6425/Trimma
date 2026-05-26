@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=react-example",
+    "dev:restart": "npm run dev:restart --workspace=react-example",
     "dev:all": "turbo run dev",
     "build": "turbo run build",
     "start": "node -e \"const cp = require('child_process'); cp.spawn('npm', ['run', 'start', '--workspace=react-example'], { stdio: 'inherit', shell: true }); cp.spawn('npm', ['run', 'start:prod', '--workspace=@trimma/api-gateway'], { stdio: 'inherit', shell: true });\"",

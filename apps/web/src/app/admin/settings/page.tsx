@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { 
-  getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection 
+  getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection, validateWhatsAppCredentials
 } from "../../actions/whatsapp";
+import { WHATSAPP_TRIGGER_CATALOG } from "@/lib/whatsapp-templates";
 
 function SettingsPanelContent() {
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,10 @@ function SettingsPanelContent() {
   const [bookingCancelledEnabled, setBookingCancelledEnabled] = useState(true);
   const [bookingReviewEnabled, setBookingReviewEnabled] = useState(true);
   const [onboardingInviteEnabled, setOnboardingInviteEnabled] = useState(true);
+  const [bookingCreatedEnabled, setBookingCreatedEnabled] = useState(true);
+  const [agentApprovalEnabled, setAgentApprovalEnabled] = useState(true);
+  const [adminApprovalEnabled, setAdminApprovalEnabled] = useState(true);
+  const [adminAlertPhone, setAdminAlertPhone] = useState("");
   const [configSource, setConfigSource] = useState("database");
 
   // Dynamic template states
@@ -32,12 +37,19 @@ function SettingsPanelContent() {
   const [templateCancelled, setTemplateCancelled] = useState("");
   const [templateReview, setTemplateReview] = useState("");
   const [templateOnboardingInvite, setTemplateOnboardingInvite] = useState("");
+  const [templateBookingCreatedCustomer, setTemplateBookingCreatedCustomer] = useState("");
+  const [templateBookingCreatedOwner, setTemplateBookingCreatedOwner] = useState("");
+  const [templateAgentApprovalOwner, setTemplateAgentApprovalOwner] = useState("");
+  const [templateAgentApprovalAdmin, setTemplateAgentApprovalAdmin] = useState("");
+  const [templateAdminApprovalOwner, setTemplateAdminApprovalOwner] = useState("");
+  const [templateAdminApprovalAdmin, setTemplateAdminApprovalAdmin] = useState("");
 
   // Show/Hide Access Token
   const [showToken, setShowToken] = useState(false);
 
   // Test message state
   const [testPhone, setTestPhone] = useState("+94 71 113 0179");
+  const [tokenStatus, setTokenStatus] = useState<{ valid: boolean; error?: string } | null>(null);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -51,12 +63,26 @@ function SettingsPanelContent() {
       setBookingCancelledEnabled(config.bookingCancelledEnabled !== false);
       setBookingReviewEnabled(config.bookingReviewEnabled !== false);
       setOnboardingInviteEnabled(config.onboardingInviteEnabled !== false);
+      setBookingCreatedEnabled(config.bookingCreatedEnabled !== false);
+      setAgentApprovalEnabled(config.agentApprovalEnabled !== false);
+      setAdminApprovalEnabled(config.adminApprovalEnabled !== false);
+      setAdminAlertPhone(config.adminAlertPhone || "");
       setTemplateConfirmed(config.templateConfirmed || "");
       setTemplateRescheduled(config.templateRescheduled || "");
       setTemplateCancelled(config.templateCancelled || "");
       setTemplateReview(config.templateReview || "");
       setTemplateOnboardingInvite(config.templateOnboardingInvite || "");
+      setTemplateBookingCreatedCustomer(config.templateBookingCreatedCustomer || "");
+      setTemplateBookingCreatedOwner(config.templateBookingCreatedOwner || "");
+      setTemplateAgentApprovalOwner(config.templateAgentApprovalOwner || "");
+      setTemplateAgentApprovalAdmin(config.templateAgentApprovalAdmin || "");
+      setTemplateAdminApprovalOwner(config.templateAdminApprovalOwner || "");
+      setTemplateAdminApprovalAdmin(config.templateAdminApprovalAdmin || "");
       setConfigSource(config.source);
+
+      const validation = await validateWhatsAppCredentials(config.phoneId, config.accessToken);
+      setTokenStatus(validation.valid ? { valid: true } : { valid: false, error: validation.error });
+
       setLoading(false);
       }
       loadConfig();
@@ -81,7 +107,17 @@ function SettingsPanelContent() {
         templateRescheduled,
         templateCancelled,
         templateReview,
-        templateOnboardingInvite
+        templateOnboardingInvite,
+        bookingCreatedEnabled,
+        agentApprovalEnabled,
+        adminApprovalEnabled,
+        adminAlertPhone,
+        templateBookingCreatedCustomer,
+        templateBookingCreatedOwner,
+        templateAgentApprovalOwner,
+        templateAgentApprovalAdmin,
+        templateAdminApprovalOwner,
+        templateAdminApprovalAdmin
       );
       if (res.success) {
         toast.success("WhatsApp configuration updated successfully!", {
@@ -126,6 +162,64 @@ function SettingsPanelContent() {
       setTesting(false);
     }
   };
+
+  const toggleValues: Record<string, boolean> = {
+    bookingConfirmedEnabled,
+    bookingRescheduledEnabled,
+    bookingCancelledEnabled,
+    bookingReviewEnabled,
+    onboardingInviteEnabled,
+    bookingCreatedEnabled,
+    agentApprovalEnabled,
+    adminApprovalEnabled,
+  };
+
+  const setToggleValue = (key: string, value: boolean) => {
+    const setters: Record<string, (value: boolean) => void> = {
+      bookingConfirmedEnabled: setBookingConfirmedEnabled,
+      bookingRescheduledEnabled: setBookingRescheduledEnabled,
+      bookingCancelledEnabled: setBookingCancelledEnabled,
+      bookingReviewEnabled: setBookingReviewEnabled,
+      onboardingInviteEnabled: setOnboardingInviteEnabled,
+      bookingCreatedEnabled: setBookingCreatedEnabled,
+      agentApprovalEnabled: setAgentApprovalEnabled,
+      adminApprovalEnabled: setAdminApprovalEnabled,
+    };
+    setters[key]?.(value);
+  };
+
+  const templateValues: Record<string, string> = {
+    templateConfirmed,
+    templateRescheduled,
+    templateCancelled,
+    templateReview,
+    templateOnboardingInvite,
+    templateBookingCreatedCustomer,
+    templateBookingCreatedOwner,
+    templateAgentApprovalOwner,
+    templateAgentApprovalAdmin,
+    templateAdminApprovalOwner,
+    templateAdminApprovalAdmin,
+  };
+
+  const setTemplateValue = (key: string, value: string) => {
+    const setters: Record<string, (value: string) => void> = {
+      templateConfirmed: setTemplateConfirmed,
+      templateRescheduled: setTemplateRescheduled,
+      templateCancelled: setTemplateCancelled,
+      templateReview: setTemplateReview,
+      templateOnboardingInvite: setTemplateOnboardingInvite,
+      templateBookingCreatedCustomer: setTemplateBookingCreatedCustomer,
+      templateBookingCreatedOwner: setTemplateBookingCreatedOwner,
+      templateAgentApprovalOwner: setTemplateAgentApprovalOwner,
+      templateAgentApprovalAdmin: setTemplateAgentApprovalAdmin,
+      templateAdminApprovalOwner: setTemplateAdminApprovalOwner,
+      templateAdminApprovalAdmin: setTemplateAdminApprovalAdmin,
+    };
+    setters[key]?.(value);
+  };
+
+  const shownToggleKeys = new Set<string>();
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
@@ -190,6 +284,15 @@ function SettingsPanelContent() {
                 </div>
               )}
 
+              {tokenStatus && !tokenStatus.valid && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
+                  <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-red-700 font-medium leading-relaxed">
+                    <strong>Token expired or invalid.</strong> {tokenStatus.error}
+                  </p>
+                </div>
+              )}
+
               {/* INPUT FIELDS */}
               <div className="space-y-4">
                 
@@ -239,6 +342,23 @@ function SettingsPanelContent() {
                   </p>
                 </div>
 
+                {/* ADMIN ALERT PHONE */}
+                <div className="space-y-2">
+                  <Label htmlFor="admin_alert_phone" className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                    Platform Admin Alert Phone
+                  </Label>
+                  <Input
+                    id="admin_alert_phone"
+                    value={adminAlertPhone}
+                    onChange={(e) => setAdminAlertPhone(e.target.value)}
+                    placeholder="+94 77 123 4567"
+                    className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
+                  />
+                  <p className="text-[10px] text-zinc-500">
+                    Receives internal WhatsApp alerts when agents approve salons or when you grant the Verified badge.
+                  </p>
+                </div>
+
                 {/* AUTOMATED TRIGGERS CONTAINER */}
                 <div className="pt-6 border-t border-slate-100 space-y-6">
                   <div>
@@ -246,187 +366,66 @@ function SettingsPanelContent() {
                       Automated Notification Trigger Events & Templates
                     </h4>
                     <p className="text-[10px] text-zinc-500 mt-0.5">
-                      Configure active dispatches and customize message copy using dynamic placeholders.
+                      All 11 message templates used by Trimma. Toggle each trigger and edit copy with merge tags below.
                     </p>
                   </div>
                   
                   <div className="space-y-6">
-                    
-                    {/* CONFIRMED */}
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs font-extrabold text-zinc-800">1. Booking Confirmed Receipt</div>
-                          <div className="text-[10px] text-zinc-500">Send deposit receipt + salon location details on success.</div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={bookingConfirmedEnabled} 
-                            onChange={(e) => setBookingConfirmedEnabled(e.target.checked)} 
-                            className="sr-only peer" 
-                          />
-                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                      
-                      {bookingConfirmedEnabled && (
-                        <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                          <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
-                          <textarea
-                            value={templateConfirmed}
-                            onChange={(e) => setTemplateConfirmed(e.target.value)}
-                            rows={6}
-                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
-                            placeholder="Enter template content..."
-                          />
-                          <div className="text-[9px] text-zinc-500 leading-relaxed">
-                            💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{booking_date}"}</code>, <code>{"{booking_time}"}</code>, <code>{"{service_name}"}</code>, <code>{"{total_price}"}</code>, <code>{"{deposit_paid}"}</code>, <code>{"{balance_to_pay}"}</code>, <code>{"{salon_address}"}</code>, <code>{"{maps_link}"}</code>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {WHATSAPP_TRIGGER_CATALOG.map((trigger) => {
+                      const toggleKey = trigger.toggleKey;
+                      const templateKey = trigger.templateKey;
+                      const isEnabled = toggleValues[toggleKey] !== false;
+                      const showToggle = !("sharesToggleWith" in trigger && trigger.sharesToggleWith) || !shownToggleKeys.has(toggleKey);
+                      if (showToggle) shownToggleKeys.add(toggleKey);
 
-                    {/* RESCHEDULED */}
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs font-extrabold text-zinc-800">2. Booking Rescheduled Alert</div>
-                          <div className="text-[10px] text-zinc-500">Send automated date/time shift notifications.</div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={bookingRescheduledEnabled} 
-                            onChange={(e) => setBookingRescheduledEnabled(e.target.checked)} 
-                            className="sr-only peer" 
-                          />
-                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                      
-                      {bookingRescheduledEnabled && (
-                        <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                          <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
-                          <textarea
-                            value={templateRescheduled}
-                            onChange={(e) => setTemplateRescheduled(e.target.value)}
-                            rows={6}
-                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
-                            placeholder="Enter template content..."
-                          />
-                          <div className="text-[9px] text-zinc-500 leading-relaxed">
-                            💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{booking_date}"}</code>, <code>{"{booking_time}"}</code>, <code>{"{service_name}"}</code>, <code>{"{salon_address}"}</code>, <code>{"{maps_link}"}</code>
+                      return (
+                        <div key={trigger.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <div className="text-xs font-extrabold text-zinc-800">
+                                {trigger.order}. {trigger.title}
+                              </div>
+                              <div className="text-[10px] text-zinc-500 mt-0.5">{trigger.whenFired}</div>
+                              {"sharesToggleWith" in trigger && trigger.sharesToggleWith && (
+                                <div className="text-[9px] text-zinc-400 mt-1">
+                                  Uses the same on/off switch as trigger #{WHATSAPP_TRIGGER_CATALOG.find((t) => t.id === trigger.sharesToggleWith)?.order}.
+                                </div>
+                              )}
+                            </div>
+                            {showToggle ? (
+                              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isEnabled}
+                                  onChange={(e) => setToggleValue(toggleKey, e.target.checked)}
+                                  className="sr-only peer"
+                                />
+                                <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                              </label>
+                            ) : null}
                           </div>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* CANCELLED */}
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs font-extrabold text-zinc-800">3. Booking Cancelled Alert</div>
-                          <div className="text-[10px] text-zinc-500">Send cancellation confirmation + refund trace link.</div>
+                          {isEnabled && (
+                            <div className="space-y-2 pt-2 border-t border-slate-200/50">
+                              <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
+                              <textarea
+                                value={templateValues[templateKey] || ""}
+                                onChange={(e) => setTemplateValue(templateKey, e.target.value)}
+                                rows={trigger.mergeTags.length > 5 ? 6 : 5}
+                                className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
+                                placeholder="Enter template content..."
+                              />
+                              <div className="text-[9px] text-zinc-500 leading-relaxed">
+                                💡 <strong>Merge Tags:</strong>{" "}
+                                {trigger.mergeTags.map((tag) => (
+                                  <code key={tag} className="mr-1">{tag}</code>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={bookingCancelledEnabled} 
-                            onChange={(e) => setBookingCancelledEnabled(e.target.checked)} 
-                            className="sr-only peer" 
-                          />
-                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                      
-                      {bookingCancelledEnabled && (
-                        <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                          <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
-                          <textarea
-                            value={templateCancelled}
-                            onChange={(e) => setTemplateCancelled(e.target.value)}
-                            rows={6}
-                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
-                            placeholder="Enter template content..."
-                          />
-                          <div className="text-[9px] text-zinc-500 leading-relaxed">
-                            💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{booking_date}"}</code>, <code>{"{booking_time}"}</code>, <code>{"{service_name}"}</code>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* REVIEW PROMPT */}
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs font-extrabold text-zinc-800">4. Feedback Review Prompt</div>
-                          <div className="text-[10px] text-zinc-500">Request review + rating link 2 hours post-completion.</div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={bookingReviewEnabled} 
-                            onChange={(e) => setBookingReviewEnabled(e.target.checked)} 
-                            className="sr-only peer" 
-                          />
-                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                      
-                      {bookingReviewEnabled && (
-                        <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                          <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
-                          <textarea
-                            value={templateReview}
-                            onChange={(e) => setTemplateReview(e.target.value)}
-                            rows={5}
-                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
-                            placeholder="Enter template content..."
-                          />
-                          <div className="text-[9px] text-zinc-500 leading-relaxed">
-                            💡 <strong>Merge Tags:</strong> <code>{"{customer_name}"}</code>, <code>{"{salon_name}"}</code>, <code>{"{review_link}"}</code>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* ONBOARDING INVITE */}
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xs font-extrabold text-zinc-800">5. Salon Onboarding Invitation</div>
-                          <div className="text-[10px] text-zinc-500">Send Google login link to successfully verified salons.</div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={onboardingInviteEnabled} 
-                            onChange={(e) => setOnboardingInviteEnabled(e.target.checked)} 
-                            className="sr-only peer" 
-                          />
-                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-                      
-                      {onboardingInviteEnabled && (
-                        <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                          <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
-                          <textarea
-                            value={templateOnboardingInvite}
-                            onChange={(e) => setTemplateOnboardingInvite(e.target.value)}
-                            rows={5}
-                            className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
-                            placeholder="Enter template content..."
-                          />
-                          <div className="text-[9px] text-zinc-500 leading-relaxed">
-                            💡 <strong>Merge Tags:</strong> <code>{"{salon_name}"}</code>, <code>{"{owner_gmail}"}</code>, <code>{"{login_link}"}</code>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
+                      );
+                    })}
                   </div>
                 </div>
 

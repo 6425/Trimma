@@ -29,8 +29,6 @@ export default function GlobalFooter() {
               <li><Link href="/locations" className="hover:underline">Locations</Link></li>
               <li><Link href="/pricing" className="hover:underline">Pricing Plans</Link></li>
               <li><Link href="/services" className="hover:underline">All Services</Link></li>
-              <li><Link href="/gift-cards" className="hover:underline">Gift Cards</Link></li>
-              <li><Link href="/blog" className="hover:underline">Trimma Blog</Link></li>
             </ul>
           </div>
 
@@ -58,7 +56,7 @@ export default function GlobalFooter() {
           {/* Branding & Socials */}
           <div className="col-span-2 md:col-span-1 flex flex-col items-start space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group hover:opacity-90 transition-opacity">
-              <span className="text-2xl font-bold text-[#003B95] tracking-tight">Trimma.</span>
+              <Logo iconSize={36} />
             </Link>
             <div className="flex items-center gap-4">
               <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Facebook className="w-5 h-5" /></a>

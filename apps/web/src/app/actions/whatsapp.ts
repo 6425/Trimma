@@ -1,25 +1,87 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
+const D = WHATSAPP_TEMPLATE_DEFAULTS;
 
-// 📝 Beautiful default templates for database fallback
-const DEFAULT_TEMPLATE_CONFIRMED = `Hi {customer_name}! 🌟\n\nYour appointment at *{salon_name}* has been successfully secured!\n\n📅 *Date:* {booking_date}\n⏰ *Time:* {booking_time}\n💇 *Service:* {service_name}\n💰 *Total Price:* LKR {total_price}\n✅ *20% Deposit Paid:* LKR {deposit_paid}\n💵 *Balance to pay at salon:* LKR {balance_to_pay}\n\n📍 *Salon Location:* {salon_address}\n🗺️ *Navigate on Google Maps:* {maps_link}\n\nThank you for choosing Trimma! See you soon! ✂️`;
+type BookingSalonJoin = {
+  name?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  location?: string | null;
+  slug?: string | null;
+};
 
-const DEFAULT_TEMPLATE_RESCHEDULED = `Hi {customer_name}! 🌟\n\nYour appointment at *${"{salon_name}"}* has been successfully *RESCHEDULED* to a new date and time!\n\n📅 *New Date:* {booking_date}\n⏰ *New Time:* {booking_time}\n💇 *Service:* {service_name}\n\n📍 *Salon Location:* {salon_address}\n🗺️ *Navigate on Google Maps:* {maps_link}\n\nThank you for choosing Trimma! See you soon! ✂️`;
+type BookingWhatsAppRow = {
+  id: string;
+  customer_email: string;
+  booking_date?: string | null;
+  booking_time?: string | null;
+  amount?: string | number | null;
+  payment_status?: string | null;
+  services?: { name?: string | null } | null;
+  salons?: BookingSalonJoin | null;
+};
 
-const DEFAULT_TEMPLATE_CANCELLED = `Hello {customer_name},\n\nThis is to notify you that your appointment at *{salon_name}* has been successfully *CANCELLED*.\n\n📅 *Original Date:* {booking_date}\n⏰ *Original Time:* {booking_time}\n💇 *Service:* {service_name}\n\nRefund of your 20% online deposit has been initiated to your original payment method. 💳\n\nIf you believe this was an error, please contact the salon immediately.\n\nTrimma Notification Services ✂️`;
+function getSupabaseAdmin() {
+  return createSupabaseAdminClient();
+}
 
-const DEFAULT_TEMPLATE_REVIEW = `Hi {customer_name}! 🌟\n\nHow was your styling at *{salon_name}* today? We would love to hear your feedback!\n\nRate your stylist and share your experience here: {review_link}\n\nThank you for choosing Trimma! ✂️`;
+async function resolveServiceName(bookingId: string, fallback?: string | null) {
+  if (fallback) return fallback;
 
-const DEFAULT_TEMPLATE_ONBOARDING = `Hi {salon_name} Owner! 🌟\n\nYour Trimma Salon Partner Profile is ready!\n\nPlease login using your registered Gmail: {owner_gmail}\n\nLogin securely here: {login_link}\n\nWelcome to Trimma! ✂️`;
+  const supabase = getSupabaseAdmin();
+  const { data: rows } = await supabase
+    .from("booking_services")
+    .select("services(name)")
+    .eq("booking_id", bookingId)
+    .limit(1);
 
-/**
- * Parses dynamic merge tags in templates (handles both {tag} and { tag } formats).
- */
+  const first = rows?.[0] as
+    | { services?: { name?: string } | { name?: string }[] | null }
+    | undefined;
+  const services = first?.services;
+  if (Array.isArray(services)) {
+    return services[0]?.name || "Premium Styling Service";
+  }
+  return services?.name || "Premium Styling Service";
+}
+
+async function fetchBookingByNumber(
+  bookingNo: string,
+  salonSelect: string
+): Promise<BookingWhatsAppRow | null> {
+  const supabase = getSupabaseAdmin();
+  const { data: booking, error } = await supabase
+    .from("bookings")
+    .select(`*, ${salonSelect}, services(name)`)
+    .eq("booking_no", bookingNo)
+    .maybeSingle();
+
+  if (error || !booking) {
+    console.error("Failed to fetch booking for WhatsApp:", error);
+    return null;
+  }
+
+  return booking as unknown as BookingWhatsAppRow;
+}
+
+async function fetchCustomerContact(email: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: customer, error } = await supabase
+    .from("users")
+    .select("full_name, phone")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to fetch customer contact for WhatsApp:", error);
+  }
+
+  return customer;
+}
+
 function parseTemplate(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
@@ -43,27 +105,93 @@ function cleanPhoneNumber(phone: string): string {
   return digits;
 }
 
+function formatWhatsAppApiError(result: {
+  error?: { message?: string; code?: number; type?: string };
+}): string {
+  const message = result.error?.message || "Failed to send WhatsApp.";
+  const code = result.error?.code;
+  const lower = message.toLowerCase();
+
+  if (
+    code === 190 ||
+    lower.includes("expired") ||
+    lower.includes("authentication error") ||
+    lower.includes("error validating access token")
+  ) {
+    return "Your Meta WhatsApp access token has expired. Open Meta Developer Console → WhatsApp → API Setup, generate a new token, paste it in Admin → Global Settings and apps/web/.env, then restart the dev server.";
+  }
+
+  return message;
+}
+
+export async function validateWhatsAppCredentials(
+  phoneIdOverride?: string,
+  accessTokenOverride?: string
+) {
+  const config = await getWhatsAppConfig();
+  const phoneId = phoneIdOverride?.trim() || config.phoneId;
+  const accessToken = accessTokenOverride?.trim() || config.accessToken;
+
+  if (!phoneId || !accessToken) {
+    return { valid: false as const, error: "WhatsApp credentials are not configured." };
+  }
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${phoneId}?fields=verified_name`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    const result = await response.json();
+
+    if (!response.ok) {
+      return { valid: false as const, error: formatWhatsAppApiError(result) };
+    }
+
+    return {
+      valid: true as const,
+      verifiedName: result.verified_name as string | undefined,
+    };
+  } catch (error) {
+    return {
+      valid: false as const,
+      error: error instanceof Error ? error.message : "Unable to validate WhatsApp credentials.",
+    };
+  }
+}
+
 /**
  * Dynamic helper to fetch active WhatsApp configuration and custom templates from the database.
  */
 export async function getWhatsAppConfig() {
   try {
-    const { data: dbSettings, error } = await supabase
+    const { data: dbSettings, error } = await getSupabaseAdmin()
       .from("global_payment_settings")
       .select(`
         whatsapp_phone_number_id, 
         whatsapp_access_token, 
         whatsapp_enabled,
+        whatsapp_admin_alert_phone,
         whatsapp_booking_confirmed_enabled,
         whatsapp_booking_rescheduled_enabled,
         whatsapp_booking_cancelled_enabled,
         whatsapp_booking_review_enabled,
         whatsapp_onboarding_invite_enabled,
+        whatsapp_booking_created_enabled,
+        whatsapp_agent_approval_enabled,
+        whatsapp_admin_approval_enabled,
         whatsapp_template_confirmed,
         whatsapp_template_rescheduled,
         whatsapp_template_cancelled,
         whatsapp_template_review,
-        whatsapp_template_onboarding_invite
+        whatsapp_template_onboarding_invite,
+        whatsapp_template_booking_created_customer,
+        whatsapp_template_booking_created_owner,
+        whatsapp_template_agent_approval_owner,
+        whatsapp_template_agent_approval_admin,
+        whatsapp_template_admin_approval_owner,
+        whatsapp_template_admin_approval_admin
       `)
       .single();
 
@@ -72,8 +200,14 @@ export async function getWhatsAppConfig() {
     }
 
     const enabled = dbSettings.whatsapp_enabled !== false;
-    const phoneId = dbSettings.whatsapp_phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || "";
-    const accessToken = dbSettings.whatsapp_access_token || process.env.WHATSAPP_ACCESS_TOKEN || "";
+    const phoneId =
+      dbSettings.whatsapp_phone_number_id?.trim() ||
+      process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() ||
+      "";
+    const accessToken =
+      dbSettings.whatsapp_access_token?.trim() ||
+      process.env.WHATSAPP_ACCESS_TOKEN?.trim() ||
+      "";
     
     // Trigger toggles
     const bookingConfirmedEnabled = dbSettings.whatsapp_booking_confirmed_enabled !== false;
@@ -81,28 +215,53 @@ export async function getWhatsAppConfig() {
     const bookingCancelledEnabled = dbSettings.whatsapp_booking_cancelled_enabled !== false;
     const bookingReviewEnabled = dbSettings.whatsapp_booking_review_enabled !== false;
     const onboardingInviteEnabled = dbSettings.whatsapp_onboarding_invite_enabled !== false;
+    const bookingCreatedEnabled = dbSettings.whatsapp_booking_created_enabled !== false;
+    const agentApprovalEnabled = dbSettings.whatsapp_agent_approval_enabled !== false;
+    const adminApprovalEnabled = dbSettings.whatsapp_admin_approval_enabled !== false;
+    const adminAlertPhone = dbSettings.whatsapp_admin_alert_phone?.trim() || "";
 
-    // Custom templates
-    const templateConfirmed = dbSettings.whatsapp_template_confirmed || DEFAULT_TEMPLATE_CONFIRMED;
-    const templateRescheduled = dbSettings.whatsapp_template_rescheduled || DEFAULT_TEMPLATE_RESCHEDULED;
-    const templateCancelled = dbSettings.whatsapp_template_cancelled || DEFAULT_TEMPLATE_CANCELLED;
-    const templateReview = dbSettings.whatsapp_template_review || DEFAULT_TEMPLATE_REVIEW;
-    const templateOnboardingInvite = dbSettings.whatsapp_template_onboarding_invite || DEFAULT_TEMPLATE_ONBOARDING;
+    const templateConfirmed = dbSettings.whatsapp_template_confirmed || D.confirmed;
+    const templateRescheduled = dbSettings.whatsapp_template_rescheduled || D.rescheduled;
+    const templateCancelled = dbSettings.whatsapp_template_cancelled || D.cancelled;
+    const templateReview = dbSettings.whatsapp_template_review || D.review;
+    const templateOnboardingInvite = dbSettings.whatsapp_template_onboarding_invite || D.onboardingInvite;
+    const templateBookingCreatedCustomer =
+      dbSettings.whatsapp_template_booking_created_customer || D.bookingCreatedCustomer;
+    const templateBookingCreatedOwner =
+      dbSettings.whatsapp_template_booking_created_owner || D.bookingCreatedOwner;
+    const templateAgentApprovalOwner =
+      dbSettings.whatsapp_template_agent_approval_owner || D.agentApprovalOwner;
+    const templateAgentApprovalAdmin =
+      dbSettings.whatsapp_template_agent_approval_admin || D.agentApprovalAdmin;
+    const templateAdminApprovalOwner =
+      dbSettings.whatsapp_template_admin_approval_owner || D.adminApprovalOwner;
+    const templateAdminApprovalAdmin =
+      dbSettings.whatsapp_template_admin_approval_admin || D.adminApprovalAdmin;
 
     return { 
       enabled, 
       phoneId, 
-      accessToken, 
+      accessToken,
+      adminAlertPhone,
       bookingConfirmedEnabled,
       bookingRescheduledEnabled,
       bookingCancelledEnabled,
       bookingReviewEnabled,
       onboardingInviteEnabled,
+      bookingCreatedEnabled,
+      agentApprovalEnabled,
+      adminApprovalEnabled,
       templateConfirmed,
       templateRescheduled,
       templateCancelled,
       templateReview,
       templateOnboardingInvite,
+      templateBookingCreatedCustomer,
+      templateBookingCreatedOwner,
+      templateAgentApprovalOwner,
+      templateAgentApprovalAdmin,
+      templateAdminApprovalOwner,
+      templateAdminApprovalAdmin,
       source: "database" 
     };
   } catch (err) {
@@ -116,11 +275,21 @@ export async function getWhatsAppConfig() {
       bookingCancelledEnabled: true,
       bookingReviewEnabled: true,
       onboardingInviteEnabled: true,
-      templateConfirmed: DEFAULT_TEMPLATE_CONFIRMED,
-      templateRescheduled: DEFAULT_TEMPLATE_RESCHEDULED,
-      templateCancelled: DEFAULT_TEMPLATE_CANCELLED,
-      templateReview: DEFAULT_TEMPLATE_REVIEW,
-      templateOnboardingInvite: DEFAULT_TEMPLATE_ONBOARDING,
+      bookingCreatedEnabled: true,
+      agentApprovalEnabled: true,
+      adminApprovalEnabled: true,
+      adminAlertPhone: "",
+      templateConfirmed: D.confirmed,
+      templateRescheduled: D.rescheduled,
+      templateCancelled: D.cancelled,
+      templateReview: D.review,
+      templateOnboardingInvite: D.onboardingInvite,
+      templateBookingCreatedCustomer: D.bookingCreatedCustomer,
+      templateBookingCreatedOwner: D.bookingCreatedOwner,
+      templateAgentApprovalOwner: D.agentApprovalOwner,
+      templateAgentApprovalAdmin: D.agentApprovalAdmin,
+      templateAdminApprovalOwner: D.adminApprovalOwner,
+      templateAdminApprovalAdmin: D.adminApprovalAdmin,
       source: "env"
     };
   }
@@ -130,8 +299,8 @@ export async function getWhatsAppConfig() {
  * Securely saves WhatsApp configurations and custom templates directly to the database.
  */
 export async function saveWhatsAppSettings(
-  phoneId: string, 
-  accessToken: string, 
+  phoneId: string,
+  accessToken: string,
   enabled: boolean,
   bookingConfirmedEnabled?: boolean,
   bookingRescheduledEnabled?: boolean,
@@ -142,26 +311,46 @@ export async function saveWhatsAppSettings(
   templateRescheduled?: string,
   templateCancelled?: string,
   templateReview?: string,
-  templateOnboardingInvite?: string
+  templateOnboardingInvite?: string,
+  bookingCreatedEnabled?: boolean,
+  agentApprovalEnabled?: boolean,
+  adminApprovalEnabled?: boolean,
+  adminAlertPhone?: string,
+  templateBookingCreatedCustomer?: string,
+  templateBookingCreatedOwner?: string,
+  templateAgentApprovalOwner?: string,
+  templateAgentApprovalAdmin?: string,
+  templateAdminApprovalOwner?: string,
+  templateAdminApprovalAdmin?: string
 ) {
   try {
-    const { error } = await supabase
+    const { error } = await getSupabaseAdmin()
       .from("global_payment_settings")
       .upsert({
         id: "00000000-0000-0000-0000-000000000001",
         whatsapp_phone_number_id: phoneId,
         whatsapp_access_token: accessToken,
         whatsapp_enabled: enabled,
+        whatsapp_admin_alert_phone: adminAlertPhone?.trim() || null,
         whatsapp_booking_confirmed_enabled: bookingConfirmedEnabled !== false,
         whatsapp_booking_rescheduled_enabled: bookingRescheduledEnabled !== false,
         whatsapp_booking_cancelled_enabled: bookingCancelledEnabled !== false,
         whatsapp_booking_review_enabled: bookingReviewEnabled !== false,
         whatsapp_onboarding_invite_enabled: onboardingInviteEnabled !== false,
+        whatsapp_booking_created_enabled: bookingCreatedEnabled !== false,
+        whatsapp_agent_approval_enabled: agentApprovalEnabled !== false,
+        whatsapp_admin_approval_enabled: adminApprovalEnabled !== false,
         whatsapp_template_confirmed: templateConfirmed || null,
         whatsapp_template_rescheduled: templateRescheduled || null,
         whatsapp_template_cancelled: templateCancelled || null,
         whatsapp_template_review: templateReview || null,
-        whatsapp_template_onboarding_invite: templateOnboardingInvite || null
+        whatsapp_template_onboarding_invite: templateOnboardingInvite || null,
+        whatsapp_template_booking_created_customer: templateBookingCreatedCustomer || null,
+        whatsapp_template_booking_created_owner: templateBookingCreatedOwner || null,
+        whatsapp_template_agent_approval_owner: templateAgentApprovalOwner || null,
+        whatsapp_template_agent_approval_admin: templateAgentApprovalAdmin || null,
+        whatsapp_template_admin_approval_owner: templateAdminApprovalOwner || null,
+        whatsapp_template_admin_approval_admin: templateAdminApprovalAdmin || null,
       });
 
     if (error) throw error;
@@ -170,6 +359,10 @@ export async function saveWhatsAppSettings(
     console.error("❌ Failed to save WhatsApp configuration:", err);
     return { success: false, error: err.message || "Failed to save settings." };
   }
+}
+
+export async function getWhatsAppTemplateDefaults() {
+  return WHATSAPP_TEMPLATE_DEFAULTS;
 }
 
 /**
@@ -212,7 +405,7 @@ export async function testWhatsAppConnection(testPhone: string) {
 
     if (!response.ok) {
       console.error("❌ Meta Graph API test returned error response:", result);
-      return { success: false, error: result.error?.message || "Failed to send test message." };
+      return { success: false, error: formatWhatsAppApiError(result) };
     }
 
     return { success: true, messageId: result.messages?.[0]?.id };
@@ -225,7 +418,10 @@ export async function testWhatsAppConnection(testPhone: string) {
 /**
  * Core appointment checkout receipt notification sender.
  */
-export async function sendWhatsAppNotification(bookingNo: string) {
+export async function sendWhatsAppNotification(
+  bookingNo: string,
+  overrides?: { customerPhone?: string; customerName?: string; serviceName?: string }
+) {
   const { 
     enabled, 
     phoneId, 
@@ -250,32 +446,20 @@ export async function sendWhatsAppNotification(bookingNo: string) {
   }
 
   try {
-    // 1. Fetch full booking details (including service details and salon location details)
-    const { data: booking, error: bookingErr } = await supabase
-      .from("bookings")
-      .select("*, salons(name, phone, contact_phone, address, location), services(name)")
-      .eq("booking_no", bookingNo)
-      .single();
+    const booking = await fetchBookingByNumber(
+      bookingNo,
+      "salons(name, phone, address, location)"
+    );
 
-    if (bookingErr || !booking) {
-      console.error("❌ Failed to fetch booking details for WhatsApp dispatch:", bookingErr);
+    if (!booking) {
       return { success: false, error: "Booking record not found." };
     }
 
-    // 2. Fetch customer details from users table to get name and phone
-    const { data: customer, error: custErr } = await supabase
-      .from("users")
-      .select("full_name, phone")
-      .eq("email", booking.customer_email)
-      .single();
+    const customer = await fetchCustomerContact(booking.customer_email);
 
-    if (custErr || !customer) {
-      console.error("❌ Failed to fetch customer contact card:", custErr);
-      return { success: false, error: "Customer contact profile not found." };
-    }
-
-    const customerName = customer.full_name || "Valued Client";
-    const rawCustomerPhone = customer.phone;
+    const customerName =
+      overrides?.customerName || customer?.full_name || "Valued Client";
+    const rawCustomerPhone = overrides?.customerPhone || customer?.phone;
 
     if (!rawCustomerPhone) {
       console.error("❌ Customer phone number is empty. Cannot dispatch WhatsApp.");
@@ -286,9 +470,11 @@ export async function sendWhatsAppNotification(bookingNo: string) {
     const salonName = booking.salons?.name || "Trimma Partner Salon";
     const salonAddress = booking.salons?.address || "";
     const salonLocation = booking.salons?.location || "";
-    const serviceName = booking.services?.name || "Premium Styling Service";
+    const serviceName =
+      overrides?.serviceName ||
+      (await resolveServiceName(booking.id, booking.services?.name));
     
-    const totalAmount = parseFloat(booking.amount);
+    const totalAmount = parseFloat(String(booking.amount ?? 0));
     const depositAmount = Math.round(totalAmount * 0.2);
     const balanceAmount = Math.round(totalAmount * 0.8);
 
@@ -314,7 +500,7 @@ export async function sendWhatsAppNotification(bookingNo: string) {
       maps_link: mapsLink
     };
 
-    const customerMessage = parseTemplate(templateConfirmed || DEFAULT_TEMPLATE_CONFIRMED, variables);
+    const customerMessage = parseTemplate(templateConfirmed || D.confirmed, variables);
 
     console.log(`🚀 Dispatching WhatsApp Booking Confirmation to ${customerPhone}:`);
 
@@ -344,11 +530,11 @@ export async function sendWhatsAppNotification(bookingNo: string) {
 
     if (!response.ok) {
       console.error("❌ Meta Graph API returned error response for customer:", result);
-      return { success: false, error: result.error?.message || "Failed to send WhatsApp." };
+      return { success: false, error: formatWhatsAppApiError(result) };
     }
 
     // 5. Send Notification to SALON OWNER
-    const ownerRawPhone = booking.salons?.contact_phone || booking.salons?.phone;
+    const ownerRawPhone = booking.salons?.phone;
     if (ownerRawPhone) {
       const ownerPhone = cleanPhoneNumber(ownerRawPhone);
       const ownerMessage = `🔔 *NEW CONFIRMED BOOKING* 🔔\n\nYou have a new confirmed booking from ${customerName}!\n\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${serviceName}\n💳 Deposit Paid: LKR ${depositAmount.toLocaleString()}\n\nPlease prepare for their arrival! ✂️`;
@@ -404,7 +590,7 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
 
   try {
     // 1. Fetch booking details
-    const { data: booking, error: bookingErr } = await supabase
+    const { data: booking, error: bookingErr } = await getSupabaseAdmin()
       .from("bookings")
       .select("*, salons(name), services(name)")
       .eq("booking_no", bookingNo)
@@ -413,7 +599,7 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
     if (bookingErr || !booking) return { success: false, error: "Booking not found." };
 
     // 2. Fetch customer details
-    const { data: customer } = await supabase
+    const { data: customer } = await getSupabaseAdmin()
       .from("users")
       .select("full_name, phone")
       .eq("email", booking.customer_email)
@@ -435,7 +621,7 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
       service_name: serviceName
     };
 
-    const cancelMessage = parseTemplate(templateCancelled || DEFAULT_TEMPLATE_CANCELLED, variables);
+    const cancelMessage = parseTemplate(templateCancelled || D.cancelled, variables);
 
     console.log(`❌ Dispatching WhatsApp Booking Cancellation to ${customerPhone}:`);
 
@@ -492,7 +678,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
 
   try {
     // 1. Fetch booking details
-    const { data: booking, error: bookingErr } = await supabase
+    const { data: booking, error: bookingErr } = await getSupabaseAdmin()
       .from("bookings")
       .select("*, salons(name, phone, address, location), services(name)")
       .eq("booking_no", bookingNo)
@@ -503,7 +689,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     }
 
     // 2. Fetch customer details
-    const { data: customer } = await supabase
+    const { data: customer } = await getSupabaseAdmin()
       .from("users")
       .select("full_name, phone")
       .eq("email", booking.customer_email)
@@ -539,7 +725,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
       maps_link: mapsLink
     };
 
-    const rescheduleMessage = parseTemplate(templateRescheduled || DEFAULT_TEMPLATE_RESCHEDULED, variables);
+    const rescheduleMessage = parseTemplate(templateRescheduled || D.rescheduled, variables);
 
     console.log(`🚀 Dispatching WhatsApp Booking Reschedule to ${customerPhone}:`);
 
@@ -580,45 +766,71 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
  * Sends to BOTH customer and Salon Owner.
  */
 export async function sendBookingCreatedAlert(bookingNo: string) {
-  const { enabled, phoneId, accessToken } = await getWhatsAppConfig();
-  if (!enabled || !phoneId || !accessToken) return { success: false };
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    bookingCreatedEnabled,
+    templateBookingCreatedCustomer,
+    templateBookingCreatedOwner,
+  } = await getWhatsAppConfig();
+  if (!enabled || !bookingCreatedEnabled || !phoneId || !accessToken) {
+    return { success: false, message: "Disabled" };
+  }
 
   try {
-    const { data: booking } = await supabase
-      .from("bookings")
-      .select("*, salons(name, contact_phone), services(name)")
-      .eq("booking_no", bookingNo)
-      .single();
-
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone)");
     if (!booking) return { success: false };
 
-    const { data: customer } = await supabase
-      .from("users")
-      .select("full_name, phone")
-      .eq("email", booking.customer_email)
-      .single();
-
-    if (!customer) return { success: false };
+    const customer = await fetchCustomerContact(booking.customer_email);
+    if (!customer?.phone) return { success: false };
 
     const customerPhone = cleanPhoneNumber(customer.phone);
-    const ownerPhone = booking.salons?.contact_phone ? cleanPhoneNumber(booking.salons.contact_phone) : null;
+    const serviceName = await resolveServiceName(booking.id, booking.services?.name);
+    const ownerPhone = booking.salons?.phone ? cleanPhoneNumber(booking.salons.phone) : null;
+    const customerName = customer.full_name || "Customer";
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
 
-    const customerMsg = `Hello ${customer.full_name || 'Customer'}! 🌟\n\nYour booking request at *${booking.salons?.name}* for *${booking.services?.name}* on ${booking.booking_date} at ${booking.booking_time} has been received and is currently *PENDING* confirmation from the salon.\n\nWe will notify you once they confirm! ✂️`;
-    const ownerMsg = `🔔 *NEW BOOKING REQUEST* 🔔\n\nYou have a new booking request from ${customer.full_name || 'a customer'}.\n\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${booking.services?.name}\n💳 Payment Status: ${booking.payment_status}\n\nPlease open your Trimma Dashboard to Confirm or Decline this request.`;
-
-    // Send to Customer
-    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: customerPhone, type: "text", text: { body: customerMsg } })
+    const customerMsg = parseTemplate(templateBookingCreatedCustomer || D.bookingCreatedCustomer, {
+      customer_name: customerName,
+      salon_name: salonName,
+      service_name: serviceName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
     });
 
-    // Send to Owner
+    const ownerMsg = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, {
+      customer_name: customerName,
+      salon_name: salonName,
+      service_name: serviceName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      payment_status: booking.payment_status || "unpaid",
+    });
+
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: customerPhone,
+        type: "text",
+        text: { body: customerMsg },
+      }),
+    });
+
     if (ownerPhone) {
       await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: ownerPhone, type: "text", text: { body: ownerMsg } })
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: ownerPhone,
+          type: "text",
+          text: { body: ownerMsg },
+        }),
       });
     }
 
@@ -637,7 +849,7 @@ export async function sendReviewRequestAlert(bookingNo: string) {
   if (!enabled || !bookingReviewEnabled || !phoneId || !accessToken) return { success: false };
 
   try {
-    const { data: booking } = await supabase
+    const { data: booking } = await getSupabaseAdmin()
       .from("bookings")
       .select("*, salons(name, slug)")
       .eq("booking_no", bookingNo)
@@ -645,7 +857,7 @@ export async function sendReviewRequestAlert(bookingNo: string) {
 
     if (!booking) return { success: false };
 
-    const { data: customer } = await supabase
+    const { data: customer } = await getSupabaseAdmin()
       .from("users")
       .select("full_name, phone")
       .eq("email", booking.customer_email)
@@ -662,7 +874,7 @@ export async function sendReviewRequestAlert(bookingNo: string) {
       review_link: reviewLink
     };
 
-    const msg = parseTemplate(templateReview || DEFAULT_TEMPLATE_REVIEW, variables);
+    const msg = parseTemplate(templateReview || D.review, variables);
 
     await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
       method: "POST",
@@ -711,7 +923,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
       login_link: loginLink
     };
 
-    const msg = parseTemplate(templateOnboardingInvite || DEFAULT_TEMPLATE_ONBOARDING, variables);
+    const msg = parseTemplate(templateOnboardingInvite || D.onboardingInvite, variables);
 
     console.log(`🚀 Dispatching WhatsApp Onboarding Invite to ${cleanPhone}:`);
 
@@ -747,32 +959,55 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
  * Triggers WhatsApp alerts when an Agent approves a salon to go Live.
  */
 export async function sendAgentApprovalAlerts(salonId: string, ownerPhone: string, salonName: string) {
-  const { enabled, phoneId, accessToken } = await getWhatsAppConfig();
-  if (!enabled || !phoneId || !accessToken) return { success: false };
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    agentApprovalEnabled,
+    adminAlertPhone,
+    templateAgentApprovalOwner,
+    templateAgentApprovalAdmin,
+  } = await getWhatsAppConfig();
+  if (!enabled || !agentApprovalEnabled || !phoneId || !accessToken) return { success: false };
 
   try {
-    const cleanOwnerPhone = cleanPhoneNumber(ownerPhone);
-    // TODO: Update this to the actual Admin phone number from settings
-    const adminPhone = cleanPhoneNumber("+15556625396"); // Fallback to user's test number
+    const cleanOwnerPhone = ownerPhone ? cleanPhoneNumber(ownerPhone) : "";
+    const adminPhone = adminAlertPhone ? cleanPhoneNumber(adminAlertPhone) : "";
 
-    const ownerMsg = `🎉 *Congratulations from Trimma!* 🎉\n\nYour salon, *${salonName}*, has been approved by your assigned agent and is now *LIVE* for bookings on the marketplace! 🚀\n\nThe platform admin will now review your profile to grant you the official *'Approved'* badge.`;
-    const adminMsg = `🔔 *AGENT APPROVAL ALERT* 🔔\n\nSalon *${salonName}* has just been approved by their agent and is now live.\n\nPlease review their profile in the Admin Dashboard to grant them the *Approved Badge*.`;
+    const ownerMsg = parseTemplate(templateAgentApprovalOwner || D.agentApprovalOwner, {
+      salon_name: salonName || "Partner Salon",
+    });
+    const adminMsg = parseTemplate(templateAgentApprovalAdmin || D.agentApprovalAdmin, {
+      salon_name: salonName || "Partner Salon",
+    });
 
-    // Send to Owner
     if (cleanOwnerPhone) {
       await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: cleanOwnerPhone, type: "text", text: { body: ownerMsg } })
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: cleanOwnerPhone,
+          type: "text",
+          text: { body: ownerMsg },
+        }),
       });
     }
 
-    // Send to Admin
-    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: adminPhone, type: "text", text: { body: adminMsg } })
-    });
+    if (adminPhone) {
+      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: adminPhone,
+          type: "text",
+          text: { body: adminMsg },
+        }),
+      });
+    }
 
     return { success: true };
   } catch (err: any) {
@@ -785,31 +1020,55 @@ export async function sendAgentApprovalAlerts(salonId: string, ownerPhone: strin
  * Triggers WhatsApp alerts when an Admin grants the Approved Badge.
  */
 export async function sendAdminApprovalAlerts(salonId: string, ownerPhone: string, salonName: string) {
-  const { enabled, phoneId, accessToken } = await getWhatsAppConfig();
-  if (!enabled || !phoneId || !accessToken) return { success: false };
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    adminApprovalEnabled,
+    adminAlertPhone,
+    templateAdminApprovalOwner,
+    templateAdminApprovalAdmin,
+  } = await getWhatsAppConfig();
+  if (!enabled || !adminApprovalEnabled || !phoneId || !accessToken) return { success: false };
 
   try {
-    const cleanOwnerPhone = cleanPhoneNumber(ownerPhone);
-    const adminPhone = cleanPhoneNumber("+15556625396");
+    const cleanOwnerPhone = ownerPhone ? cleanPhoneNumber(ownerPhone) : "";
+    const adminPhone = adminAlertPhone ? cleanPhoneNumber(adminAlertPhone) : "";
 
-    const ownerMsg = `🌟 *TRIMMA VERIFIED STATUS ACHIEVED!* 🌟\n\nCongratulations! The Trimma Admin Team has reviewed your profile and officially granted *${salonName}* the *Approved Badge*! ✅\n\nThis badge builds trust with customers and boosts your visibility.`;
-    const adminMsg = `✅ *BADGE GRANTED* ✅\n\nYou have successfully verified and granted the Approved Badge to *${salonName}*.`;
+    const ownerMsg = parseTemplate(templateAdminApprovalOwner || D.adminApprovalOwner, {
+      salon_name: salonName || "Partner Salon",
+    });
+    const adminMsg = parseTemplate(templateAdminApprovalAdmin || D.adminApprovalAdmin, {
+      salon_name: salonName || "Partner Salon",
+    });
 
-    // Send to Owner
     if (cleanOwnerPhone) {
       await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: cleanOwnerPhone, type: "text", text: { body: ownerMsg } })
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: cleanOwnerPhone,
+          type: "text",
+          text: { body: ownerMsg },
+        }),
       });
     }
 
-    // Send to Admin
-    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: adminPhone, type: "text", text: { body: adminMsg } })
-    });
+    if (adminPhone) {
+      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: adminPhone,
+          type: "text",
+          text: { body: adminMsg },
+        }),
+      });
+    }
 
     return { success: true };
   } catch (err: any) {

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { generatePayhereHash } from "@/app/actions/payhere";
 import { supabase } from "@/config/supabase";
 import {
   clearBookingCheckoutDraft,
@@ -11,8 +11,27 @@ import {
   splitCustomerName,
   type BookingCheckoutDraft,
 } from "@/lib/booking-checkout";
-import { submitPayhereCheckout } from "@/lib/payhere-checkout";
+import {
+  parseDisplayTimeSlot,
+  resolveAvailableStaffId,
+  type BookingConflictRow,
+} from "@/lib/booking-availability";
+import {
+  buildPromotionCheckoutService,
+  resolvePromotionBookingServices,
+} from "@/lib/promotion-booking";
+import { mapSalonPromotionRows } from "@/lib/deals";
+import {
+  validateCardPayment,
+  type CardPaymentDetails,
+  type CardType,
+} from "@/lib/card-payment";
 import { formatLkr } from "@/lib/subscription-pricing";
+import {
+  calculateBalanceDue,
+  calculateReservationFee,
+  RESERVATION_DEPOSIT_PERCENT,
+} from "@/lib/booking-pricing";
 import { CheckoutCustomerForm } from "../../../components/checkout/CheckoutCustomerForm";
 import { CheckoutStyles } from "../../../components/checkout/CheckoutStyles";
 import { ArrowLeft, CalendarRange, Clock, Loader2, Scissors, User } from "lucide-react";
@@ -27,13 +46,29 @@ type LoadedBookingCheckout = {
   rates: { platform: number; salon: number; payhere: number; agent: number };
 };
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "Something went wrong during checkout.";
+}
+
 function BookingCheckoutForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [checkoutData, setCheckoutData] = useState<LoadedBookingCheckout | null>(null);
   const [missingDraft, setMissingDraft] = useState(false);
   const [payhereEnabled, setPayhereEnabled] = useState(true);
   const [payhereEnvironment, setPayhereEnvironment] = useState("sandbox");
+  const [cardType, setCardType] = useState<CardType>("visa");
+  const [cardDetails, setCardDetails] = useState<CardPaymentDetails>({
+    cardholderName: "",
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+  });
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -47,114 +82,198 @@ function BookingCheckoutForm() {
   useEffect(() => {
     void Promise.resolve().then(() => {
       async function loadData() {
-      const draft = loadBookingCheckoutDraft();
-      if (!draft?.salonId || !draft.serviceIds?.length || !draft.bookingDate || !draft.timeSlot) {
-      setMissingDraft(true);
-      setLoading(false);
-      return;
+        const draft = loadBookingCheckoutDraft();
+        const hasPromotion = Boolean(draft?.promotionPackageId);
+        const hasServices = Boolean(draft?.serviceIds?.length);
+
+        if (!draft?.salonId || !draft.bookingDate || !draft.timeSlot || (!hasPromotion && !hasServices)) {
+          setMissingDraft(true);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const salonQuery = supabase.from("salons").select("*").eq("id", draft.salonId).maybeSingle();
+          const servicesQuery = hasServices
+            ? supabase.from("services").select("*").in("id", draft.serviceIds)
+            : Promise.resolve({ data: [] as any[], error: null });
+          const promotionQuery = hasPromotion
+            ? supabase
+                .from("salon_promotion_packages")
+                .select("*")
+                .eq("id", draft.promotionPackageId!)
+                .maybeSingle()
+            : Promise.resolve({ data: null, error: null });
+          const salonServicesQuery = hasPromotion
+            ? supabase.from("services").select("*").eq("salon_id", draft.salonId).eq("status", "active")
+            : Promise.resolve({ data: [] as any[], error: null });
+
+          const [
+            { data: salon },
+            { data: servicesData },
+            { data: promotionData },
+            { data: salonServicesData },
+            { data: ratesData },
+            { data: paymentSettings },
+          ] = await Promise.all([
+            salonQuery,
+            servicesQuery,
+            promotionQuery,
+            salonServicesQuery,
+            supabase
+              .from("commission_master")
+              .select("*")
+              .eq("commission_type", "booking")
+              .eq("active", true)
+              .maybeSingle(),
+            supabase
+              .from("global_payment_settings")
+              .select("payhere_enabled, environment")
+              .eq("id", "00000000-0000-0000-0000-000000000001")
+              .maybeSingle(),
+          ]);
+
+          let services = servicesData || [];
+          let promotionPackage = promotionData ? mapSalonPromotionRows([promotionData])[0] || null : null;
+
+          if (hasPromotion) {
+            if (!promotionPackage) {
+              promotionPackage = {
+                id: draft.promotionPackageId!,
+                name: draft.promotionPackageName || "Promotion Package",
+                description: null,
+                package_price: draft.promotionPackagePrice || 0,
+                original_price: draft.promotionPackagePrice || 0,
+                included_services: draft.promotionPackageIncludedServices || [],
+                start_date: null,
+                end_date: null,
+                status: "active",
+                promotion_type: null,
+              };
+            }
+
+            const salonServices = (salonServicesData || []).map((service: any) => ({
+              id: service.id,
+              name: service.name,
+              duration: service.duration_min,
+              duration_min: service.duration_min,
+              price: service.price,
+              description: service.description,
+            }));
+
+            const resolution = resolvePromotionBookingServices(promotionPackage, salonServices);
+            draft.serviceIds = resolution.serviceIds;
+            services = [buildPromotionCheckoutService(promotionPackage, salonServices, resolution)];
+          }
+
+          if (!salon || !services.length) {
+            setMissingDraft(true);
+            setLoading(false);
+            return;
+          }
+
+          let staffMember = null;
+          if (draft.staffId && draft.staffId !== "any") {
+            const { data: staffData } = await supabase
+              .from("salon_staff")
+              .select("*")
+              .eq("id", draft.staffId)
+              .maybeSingle();
+            staffMember = staffData;
+          } else {
+            const [{ data: staffList }, { data: dayBookings }] = await Promise.all([
+              supabase.from("salon_staff").select("*").eq("salon_id", draft.salonId),
+              supabase
+                .from("bookings")
+                .select("booking_time, staff_id, status, created_at")
+                .eq("salon_id", draft.salonId)
+                .eq("booking_date", draft.bookingDate),
+            ]);
+
+            const staffIds = (staffList || []).map((member) => member.id).filter(Boolean);
+            const formattedTime = parseDisplayTimeSlot(draft.timeSlot);
+            const availableStaffId = resolveAvailableStaffId(
+              staffIds,
+              (dayBookings || []) as BookingConflictRow[],
+              formattedTime
+            );
+
+            staffMember =
+              staffList?.find((member) => member.id === availableStaffId) ||
+              staffList?.[0] ||
+              null;
+          }
+
+          const rates = {
+            platform: ratesData?.platform_percentage || 10,
+            salon: ratesData?.salon_percentage || 10,
+            payhere: ratesData?.payhere_percentage || 3,
+            agent: ratesData?.agent_percentage || 20,
+          };
+
+          const serviceTotal =
+            typeof draft.promotionPackagePrice === "number" && draft.promotionPackagePrice > 0
+              ? draft.promotionPackagePrice
+              : services.reduce((sum, service) => sum + parseFloat(service.price || 0), 0);
+          const reservationFee = calculateReservationFee(serviceTotal);
+
+          setPayhereEnabled(paymentSettings?.payhere_enabled !== false);
+          setPayhereEnvironment(paymentSettings?.environment || "sandbox");
+          setCheckoutData({
+            draft,
+            salon,
+            services,
+            staffMember,
+            reservationFee,
+            serviceTotal,
+            rates,
+          });
+
+          const nameParts = splitCustomerName(draft.customerDetails.fullName || "");
+          setCustomerDetails((prev) => ({
+            ...prev,
+            firstName: nameParts.firstName,
+            lastName: nameParts.lastName,
+            email: draft.customerDetails.email || prev.email,
+            phone: draft.customerDetails.phone || prev.phone,
+          }));
+          setCardDetails((prev) => ({
+            ...prev,
+            cardholderName:
+              draft.customerDetails.fullName ||
+              `${nameParts.firstName} ${nameParts.lastName}`.trim(),
+          }));
+
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.user && !draft.customerDetails.email) {
+            const user = session.user;
+            setCustomerDetails((prev) => ({
+              ...prev,
+              firstName: user.user_metadata?.first_name || prev.firstName,
+              lastName: user.user_metadata?.last_name || prev.lastName,
+              email: user.email || prev.email,
+              phone: user.phone || user.user_metadata?.phone || prev.phone,
+            }));
+          }
+        } catch (error) {
+          console.error("Error loading booking checkout:", error);
+          setMissingDraft(true);
+        } finally {
+          setLoading(false);
+        }
       }
-      
-      try {
-      const [{ data: salon }, { data: services }, { data: ratesData }, { data: paymentSettings }] =
-      await Promise.all([
-      supabase.from("salons").select("*").eq("id", draft.salonId).maybeSingle(),
-      supabase.from("services").select("*").in("id", draft.serviceIds),
-      supabase
-      .from("commission_master")
-      .select("*")
-      .eq("commission_type", "booking")
-      .eq("active", true)
-      .maybeSingle(),
-      supabase
-      .from("global_payment_settings")
-      .select("payhere_enabled, environment")
-      .eq("id", "00000000-0000-0000-0000-000000000001")
-      .maybeSingle(),
-      ]);
-      
-      if (!salon || !services?.length) {
-      setMissingDraft(true);
-      setLoading(false);
-      return;
-      }
-      
-      let staffMember = null;
-      if (draft.staffId && draft.staffId !== "any") {
-      const { data: staffData } = await supabase
-      .from("staff")
-      .select("*")
-      .eq("id", draft.staffId)
-      .maybeSingle();
-      staffMember = staffData;
-      } else {
-      const { data: staffList } = await supabase
-      .from("staff")
-      .select("*")
-      .eq("salon_id", draft.salonId)
-      .limit(1);
-      staffMember = staffList?.[0] || null;
-      }
-      
-      const rates = {
-      platform: ratesData?.platform_percentage || 10,
-      salon: ratesData?.salon_percentage || 10,
-      payhere: ratesData?.payhere_percentage || 3,
-      agent: ratesData?.agent_percentage || 20,
-      };
-      
-      const serviceTotal = services.reduce(
-      (sum, service) => sum + parseFloat(service.price || 0),
-      0
-      );
-      const reservationPct = rates.platform + rates.salon + rates.payhere;
-      const reservationFee = serviceTotal * (reservationPct / 100);
-      
-      setPayhereEnabled(paymentSettings?.payhere_enabled !== false);
-      setPayhereEnvironment(paymentSettings?.environment || "sandbox");
-      setCheckoutData({
-      draft,
-      salon,
-      services,
-      staffMember,
-      reservationFee,
-      serviceTotal,
-      rates,
-      });
-      
-      const nameParts = splitCustomerName(draft.customerDetails.fullName || "");
-      setCustomerDetails((prev) => ({
-      ...prev,
-      firstName: nameParts.firstName,
-      lastName: nameParts.lastName,
-      email: draft.customerDetails.email || prev.email,
-      phone: draft.customerDetails.phone || prev.phone,
-      }));
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user && !draft.customerDetails.email) {
-      const user = session.user;
-      setCustomerDetails((prev) => ({
-      ...prev,
-      firstName: user.user_metadata?.first_name || prev.firstName,
-      lastName: user.user_metadata?.last_name || prev.lastName,
-      email: user.email || prev.email,
-      phone: user.phone || user.user_metadata?.phone || prev.phone,
-      }));
-      }
-      } catch (error) {
-      console.error("Error loading booking checkout:", error);
-      setMissingDraft(true);
-      } finally {
-      setLoading(false);
-      }
-      }
-      
+
       loadData();
     });
   }, []);
 
   const packageTitle = useMemo(() => {
     if (!checkoutData) return "";
+    if (checkoutData.draft.promotionPackageName) {
+      return checkoutData.draft.promotionPackageName;
+    }
     return checkoutData.services.map((service) => service.name).join(" + ");
   }, [checkoutData]);
 
@@ -171,7 +290,7 @@ function BookingCheckoutForm() {
   const totalDuration = useMemo(() => {
     if (!checkoutData) return 0;
     return checkoutData.services.reduce(
-      (sum, service) => sum + parseInt(service.duration || "30", 10),
+      (sum, service) => sum + parseInt(service.duration || service.duration_min || "30", 10),
       0
     );
   }, [checkoutData]);
@@ -180,181 +299,69 @@ function BookingCheckoutForm() {
     e.preventDefault();
     if (!checkoutData || !payhereEnabled) return;
 
+    const cardError = validateCardPayment(cardType, cardDetails);
+    if (cardError) {
+      alert(cardError);
+      return;
+    }
+
     setProcessing(true);
 
     try {
       const { draft, salon, services, staffMember, reservationFee, serviceTotal, rates } =
         checkoutData;
 
-      const [timeStr, period] = draft.timeSlot.split(" ");
-      let [hh, mm] = timeStr.split(":").map(Number);
-      if (period === "PM" && hh < 12) hh += 12;
-      if (period === "AM" && hh === 12) hh = 0;
-      const formattedTime = `${hh.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}:00`;
-
-      const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
-      const customerEmail = customerDetails.email || "guest@trimma.com";
-      const customerName =
-        `${customerDetails.firstName} ${customerDetails.lastName}`.trim() || "Guest Client";
-
-      const { data: emailExists } = await supabase.rpc("check_user_email_exists", {
-        email_to_check: customerEmail,
+      const response = await fetch("/api/checkout/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: {
+            salonId: draft.salonId,
+            serviceIds: draft.serviceIds,
+            staffId: draft.staffId,
+            bookingDate: draft.bookingDate,
+            timeSlot: draft.timeSlot,
+            promotionPackageId: draft.promotionPackageId,
+            promotionPackageName: draft.promotionPackageName,
+            promotionPackagePrice: draft.promotionPackagePrice,
+            promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
+          },
+          customer: customerDetails,
+          card: {
+            cardType,
+            cardNumber: cardDetails.cardNumber,
+            expiry: cardDetails.expiry,
+            cvv: cardDetails.cvv,
+            cardholderName: cardDetails.cardholderName,
+          },
+          payhereEnvironment,
+          reservationFee,
+          serviceTotal,
+          rates,
+          salon: {
+            id: salon.id,
+            onboarding_agent_email: salon.onboarding_agent_email,
+            assign_to: salon.assign_to,
+          },
+          services,
+          staffMemberId: staffMember?.id || null,
+          totalDuration,
+        }),
       });
 
-      if (!emailExists) {
-        await supabase.from("users").insert({
-          email: customerEmail,
-          full_name: customerName,
-          phone: customerDetails.phone,
-          global_role: "customer",
-        });
-      } else {
-        await supabase
-          .from("users")
-          .update({ full_name: customerName, phone: customerDetails.phone })
-          .eq("email", customerEmail);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Checkout failed.");
       }
-
-      let agentEmail = null;
-      let agentCommissionPct = 0;
-      let agentCommissionAmount = 0;
-
-      if (salon.onboarding_agent_email) {
-        agentEmail = salon.onboarding_agent_email;
-        agentCommissionPct = rates.agent;
-        const platformCommission = serviceTotal * (rates.platform / 100);
-        agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
-      }
-
-      const primaryServiceId = draft.serviceIds[0];
-      const resolvedStaffId =
-        draft.staffId === "any" || !draft.staffId ? staffMember?.id || null : draft.staffId;
-
-      const { data: newBooking, error: bookingErr } = await supabase
-        .from("bookings")
-        .insert({
-          booking_no: bookingNo,
-          salon_id: salon.id,
-          customer_email: customerEmail,
-          service_id: primaryServiceId,
-          staff_id: resolvedStaffId,
-          booking_date: draft.bookingDate,
-          booking_time: formattedTime,
-          amount: serviceTotal,
-          status: "pending",
-          payment_status: "unpaid",
-          reservation_fee_paid: false,
-          reservation_fee_refundable: false,
-          total_reservation_fee: reservationFee,
-          salon_upfront_amount: serviceTotal * (rates.salon / 100),
-          platform_commission_amount: serviceTotal * (rates.platform / 100),
-          payhere_fee_amount: serviceTotal * (rates.payhere / 100),
-          agent_email: agentEmail,
-          agent_commission_percent: agentCommissionPct,
-          agent_commission_amount: agentCommissionAmount,
-        })
-        .select()
-        .single();
-
-      if (bookingErr || !newBooking) {
-        throw bookingErr || new Error("Failed to create booking.");
-      }
-
-      await supabase.from("booking_services").insert(
-        services.map((service) => ({
-          booking_id: newBooking.id,
-          service_id: service.id,
-          price: parseFloat(service.price || 0),
-          duration_min: parseInt(service.duration || "30", 10),
-        }))
-      );
-
-      await supabase.from("booking_staff").insert(
-        services.map((service) => ({
-          booking_id: newBooking.id,
-          staff_id: resolvedStaffId,
-          service_id: service.id,
-        }))
-      );
-
-      const { data: salonResources } = await supabase
-        .from("resources")
-        .select("*")
-        .eq("salon_id", salon.id);
-
-      if (salonResources?.length) {
-        const startMin = hh * 60 + mm;
-        const endMin = startMin + totalDuration;
-        const endH = Math.floor(endMin / 60);
-        const endM = endMin % 60;
-        const formattedEndTime = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}:00`;
-
-        await supabase.from("resource_bookings").insert(
-          salonResources.map((resource) => ({
-            booking_id: newBooking.id,
-            resource_id: resource.id,
-            booking_date: draft.bookingDate,
-            start_time: formattedTime,
-            end_time: formattedEndTime,
-          }))
-        );
-      }
-
-      await supabase.from("payments").insert({
-        booking_id: newBooking.id,
-        salon_id: salon.id,
-        provider: "payhere",
-        amount: reservationFee,
-        currency: "LKR",
-        status: "pending",
-      });
-
-      const { data: paymentSettings } = await supabase
-        .from("global_payment_settings")
-        .select("*")
-        .eq("id", "00000000-0000-0000-0000-000000000001")
-        .maybeSingle();
-
-      const merchantId = paymentSettings?.payhere_merchant_id || "1211149";
-      const merchantSecret = paymentSettings?.payhere_merchant_secret || "4a5s6d7f8g9h";
-      const environment = paymentSettings?.environment || "sandbox";
-      const amount = reservationFee.toFixed(2);
-
-      const secureHash = await generatePayhereHash(
-        merchantId,
-        bookingNo,
-        amount,
-        "LKR",
-        merchantSecret
-      );
 
       clearBookingCheckoutDraft();
-
-      submitPayhereCheckout(
-        {
-          merchant_id: merchantId,
-          return_url: `${window.location.origin}/customer?payment_success=true&booking_no=${bookingNo}`,
-          cancel_url: window.location.href,
-          notify_url: "https://whxmyfjlrvyjqbmqhnzd.supabase.co/functions/v1/payhere-webhook",
-          order_id: bookingNo,
-          items: `Reservation Fee for ${packageTitle}`,
-          custom_1: `${salon.name} — ${packageTitle}`,
-          currency: "LKR",
-          amount,
-          first_name: customerDetails.firstName || "Guest",
-          last_name: customerDetails.lastName || "Client",
-          email: customerEmail,
-          phone: customerDetails.phone || "0000000000",
-          address: customerDetails.address,
-          city: customerDetails.city,
-          country: "Sri Lanka",
-          hash: secureHash,
-        },
-        environment
+      const whatsappQuery = result.whatsappSent ? "&whatsapp_sent=true" : "&whatsapp_sent=false";
+      router.push(
+        `/customer?payment_success=true&booking_no=${result.bookingNo}${whatsappQuery}`
       );
     } catch (error) {
-      console.error("Booking checkout failed:", error);
-      alert("Failed to initialize PayHere checkout. Please try again.");
+      console.error("Booking checkout failed:", getErrorMessage(error), error);
+      alert(getErrorMessage(error) || "Payment failed. Please check your card details and try again.");
       setProcessing(false);
     }
   };
@@ -384,6 +391,7 @@ function BookingCheckoutForm() {
   const { draft, salon, staffMember, reservationFee, serviceTotal } = checkoutData;
   const formattedReservationFee = formatLkr(reservationFee, 2);
   const formattedServiceTotal = formatLkr(serviceTotal, 2);
+  const formattedBalanceDue = formatLkr(calculateBalanceDue(serviceTotal), 2);
   const backHref = draft.salonSlug ? `/salons/${draft.salonSlug}` : "/salons";
   const appointmentDate = format(parseISO(draft.bookingDate), "MMMM d, yyyy");
   const staffLabel = staffMember?.name || "Anyone Available";
@@ -403,9 +411,18 @@ function BookingCheckoutForm() {
               Back to salon
             </Link>
 
-            <h1 className="text-2xl lg:text-3xl font-bold text-zinc-950 tracking-tight mb-6">
-              Service Package
-            </h1>
+            <div className="mb-6">
+              <h1 className="text-2xl lg:text-3xl font-black text-zinc-950 tracking-tight">
+                Reserve Your Slot
+              </h1>
+              <p className="text-sm lg:text-base text-zinc-900/80 font-medium mt-2 leading-relaxed">
+                Lock in your preferred time with a small deposit today — your appointment is secured instantly, and you pay the balance at the salon.
+              </p>
+            </div>
+
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-800 mb-3">
+              {checkoutData.draft.promotionPackageName ? "Promotion Package" : "Service Package"}
+            </p>
 
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mr-4 shadow-sm overflow-hidden">
@@ -449,12 +466,16 @@ function BookingCheckoutForm() {
                 <span className="text-zinc-950 font-bold">{formattedServiceTotal}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-900 font-semibold">Reservation fee due today</span>
+                <span className="text-zinc-900 font-semibold">
+                  Reservation deposit ({RESERVATION_DEPOSIT_PERCENT}%)
+                </span>
                 <span className="text-zinc-950 font-bold">{formattedReservationFee}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-900 font-semibold">Tax</span>
-                <span className="text-zinc-950 font-bold">LKR 0.00</span>
+                <span className="text-zinc-900 font-semibold">
+                  Balance due at salon ({100 - RESERVATION_DEPOSIT_PERCENT}%)
+                </span>
+                <span className="text-zinc-950 font-bold">{formattedBalanceDue}</span>
               </div>
             </div>
 
@@ -473,8 +494,13 @@ function BookingCheckoutForm() {
               processing={processing}
               payhereEnabled={payhereEnabled}
               payhereEnvironment={payhereEnvironment}
-              submitLabel={`Pay reservation fee — ${formattedReservationFee}`}
+              submitLabel={`Pay ${RESERVATION_DEPOSIT_PERCENT}% deposit — ${formattedReservationFee}`}
               onSubmit={handleSubmit}
+              paymentMode="inline"
+              cardType={cardType}
+              setCardType={setCardType}
+              cardDetails={cardDetails}
+              setCardDetails={setCardDetails}
             />
           </div>
         </div>

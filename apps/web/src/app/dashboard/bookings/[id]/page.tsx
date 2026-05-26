@@ -6,6 +6,7 @@ import { supabase } from "@/config/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { sendWhatsAppCancellationNotification } from "@/app/actions/whatsapp";
 import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
 
 // Timeline step definition
@@ -26,7 +27,7 @@ function getTimeline(bookingStatus: string): TimelineStep[] {
     { key: "completed", label: "Completed", icon: <CheckCircle2 className="w-4 h-4" /> },
   ];
 
-  const terminalStatuses = ["cancelled", "declined", "no_show"];
+  const terminalStatuses = ["canceled", "cancelled", "declined", "no_show"];
   if (terminalStatuses.includes(s)) {
     return steps.map((step) => ({
       ...step,
@@ -105,11 +106,8 @@ export default function BookingDetailPage() {
         case "no_show":
           updatePayload.status = "no_show";
           break;
-        case "decline":
-          updatePayload.status = "declined";
-          break;
         case "cancel":
-          updatePayload.status = "cancelled";
+          updatePayload.status = "canceled";
           break;
       }
 
@@ -119,6 +117,10 @@ export default function BookingDetailPage() {
         .eq("id", bookingId);
 
       if (error) throw error;
+
+      if (action === "cancel" && booking?.booking_no) {
+        await sendWhatsAppCancellationNotification(booking.booking_no);
+      }
 
       toast.success(`Booking updated to "${Object.values(updatePayload)[0]}"!`);
       await fetchBooking();
@@ -342,7 +344,7 @@ export default function BookingDetailPage() {
                 )}
                 <div className="h-px bg-slate-100 my-2" />
                 <ActionButton label="No Show" action="no_show" color="bg-amber-500 hover:bg-amber-600" icon={<EyeOff className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
-                <ActionButton label="Decline / Cancel" action="decline" color="bg-rose-500 hover:bg-rose-600" icon={<Ban className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
+                <ActionButton label="Cancel Booking" action="cancel" color="bg-rose-500 hover:bg-rose-600" icon={<Ban className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
               </div>
             </div>
           )}

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Logo from "../../components/Logo";
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -80,14 +81,8 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         
         {/* Sidebar Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
-          <Link href="/agent" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-[#F5B700] rounded-lg flex items-center justify-center shrink-0">
-              <span className="text-black text-xs font-black">A</span>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-white leading-tight">Trimma Sales</div>
-              <div className="text-[10px] text-zinc-500 leading-tight">Agent Portal</div>
-            </div>
+          <Link href="/agent" className="hover:opacity-90 transition-opacity">
+            <Logo iconSize={32} inverse tagline="Agent Portal" />
           </Link>
           <button
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
@@ -153,11 +148,8 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           {/* Left: Title on desktop / Logo badge on mobile */}
           <div className="flex items-center gap-3">
             <div className="hidden lg:block text-sm font-bold text-zinc-400">Sales Operating System</div>
-            <div className="lg:hidden flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#F5B700] rounded-md flex items-center justify-center">
-                <span className="text-black text-[10px] font-black">A</span>
-              </div>
-              <span className="text-sm font-bold text-white">Trimma Sales</span>
+            <div className="lg:hidden">
+              <Logo iconSize={28} inverse />
             </div>
           </div>
 

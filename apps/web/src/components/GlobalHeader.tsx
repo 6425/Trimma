@@ -2,18 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu, X, Scissors, MapPin, Tag, Globe, HelpCircle, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown } from "lucide-react";
+import { LogOut, Menu, X, Scissors, MapPin, Tag, Globe, HelpCircle, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/config/supabase";
-
-const HeaderLogo = () => (
-  <div className="flex items-center gap-2">
-    <div className="w-8 h-8 rounded-lg bg-[#F5B700] flex items-center justify-center">
-      <Scissors className="w-5 h-5 text-black" />
-    </div>
-    <span className="text-xl font-bold text-black tracking-tight">Trimma.</span>
-  </div>
-);
+import Logo from "./Logo";
 
 const IconMap: Record<string, any> = {
   Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
@@ -29,6 +21,8 @@ export default function GlobalHeader() {
   const pathname = usePathname();
 
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
+  const isDealsActive = pathname === "/deals";
+  const isStylesActive = pathname === "/styles";
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -82,7 +76,7 @@ export default function GlobalHeader() {
       <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white">
         <div className="mx-auto max-w-7xl px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           <Link href="/" className="hover:opacity-90 transition-opacity shrink-0">
-            <HeaderLogo />
+            <Logo iconSize={32} />
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -133,6 +127,22 @@ export default function GlobalHeader() {
               </Link>
               <Link href="/pricing" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors">
                 Pricing
+              </Link>
+              <Link
+                href="/styles"
+                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
+                  isStylesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Styles
+              </Link>
+              <Link
+                href="/deals"
+                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
+                  isDealsActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Deals
               </Link>
             </div>
 
@@ -278,6 +288,24 @@ export default function GlobalHeader() {
             >
               <CreditCard className="w-4 h-4 shrink-0" />
               Pricing
+            </Link>
+            <Link
+              href="/styles"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isStylesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              <Scissors className="w-4 h-4 shrink-0" />
+              Styles
+            </Link>
+            <Link
+              href="/deals"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
+            >
+              <Gift className="w-4 h-4 shrink-0" />
+              Deals
             </Link>
             <div className="h-px bg-zinc-100 my-2" />
             <Link

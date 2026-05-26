@@ -157,6 +157,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: 'Amenities', href: '/admin/amenities' },
       ]
     },
+    { name: "Style Mgmt", href: "/admin/styles", icon: <Sparkles className="w-4 h-4" /> },
     { 
       name: "Geography Mgmt", 
       href: "/admin/territories", 

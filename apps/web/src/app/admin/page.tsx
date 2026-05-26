@@ -368,7 +368,7 @@ export default function AdminDashboard() {
           <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.bookings.toLocaleString()}</p>
         </div>
 
-        <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-zinc-900 shadow-2xl relative overflow-hidden group">
+        <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden group trimma-dark-surface">
           <div className="absolute -right-6 -top-6 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-700 ease-out z-0"></div>
           <div className="relative z-10 flex justify-between items-start mb-4">
             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
@@ -378,8 +378,8 @@ export default function AdminDashboard() {
               Action Req
             </Badge>
           </div>
-          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.leads.toLocaleString()}</p>
+          <h3 className="text-zinc-400 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
+          <p className="text-3xl font-black text-white relative z-10">{loading ? "..." : stats.leads.toLocaleString()}</p>
         </div>
       </div>
 
@@ -410,7 +410,7 @@ export default function AdminDashboard() {
                 <Button 
                   disabled={syncing}
                   onClick={handleSyncData}
-                  className="w-full bg-slate-50 hover:bg-zinc-800 text-zinc-900 rounded-xl h-10 text-xs font-bold"
+                  className="w-full bg-slate-50 hover:bg-zinc-800 hover:text-white text-zinc-900 rounded-xl h-10 text-xs font-bold"
                 >
                   {syncing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                   {syncing ? 'Synchronizing...' : 'Sync Fleet Database'}

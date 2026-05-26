@@ -7,6 +7,10 @@ export type BookingCheckoutDraft = {
   staffId: string;
   bookingDate: string;
   timeSlot: string;
+  promotionPackageId?: string;
+  promotionPackageName?: string;
+  promotionPackagePrice?: number;
+  promotionPackageIncludedServices?: string[];
   customerDetails: {
     fullName: string;
     email: string;

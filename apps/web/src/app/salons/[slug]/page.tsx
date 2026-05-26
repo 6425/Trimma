@@ -4,15 +4,28 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid } from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { BookingSheet } from "../../../components/BookingSheet";
 import { SalonLocationMap } from "../../../components/SalonLocationMap";
+import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
 import { supabase } from "../../../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
+import { calculateCommissionSplit } from "@/lib/booking-pricing";
+import { getBlockedDisplaySlots } from "@/lib/booking-availability";
 import { getSalonDirectionsUrl } from "@/lib/salon-map";
+import {
+  mapSalonPromotionRows,
+  type SalonPromotionPackage,
+} from "@/lib/deals";
+import {
+  buildPromotionCheckoutService,
+  estimatePromotionDurationMinutes,
+  resolvePromotionBookingServices,
+} from "@/lib/promotion-booking";
+import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
 import { toast } from "sonner";
 
 const iconMap: Record<string, any> = {
@@ -76,6 +89,8 @@ export default function SalonPage() {
   // LIVE DATA STATES
   const [salon, setSalon] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [promotionPackages, setPromotionPackages] = useState<SalonPromotionPackage[]>([]);
+  const [selectedPromotionPackage, setSelectedPromotionPackage] = useState<SalonPromotionPackage | null>(null);
   const [staff, setStaff] = useState<any[]>([]);
   const [amenities, setAmenities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +178,7 @@ export default function SalonPage() {
       setSalon(salonData);
       
       // 2 & 3. Fetch Services, Staff, and Amenities in parallel directly from Supabase
-      const [servicesRes, staffRes, amenitiesRes, globalRes] = await Promise.all([
+      const [servicesRes, staffRes, amenitiesRes, globalRes, promotionsRes] = await Promise.all([
       supabase
       .from("services")
       .select("*")
@@ -181,7 +196,12 @@ export default function SalonPage() {
       .or("has_amenity.eq.true,quantity.gt.0"),
       supabase
       .from("global_amenities")
-      .select("*")
+      .select("*"),
+      supabase
+      .from("salon_promotion_packages")
+      .select("id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type")
+      .eq("salon_id", salonData.id)
+      .eq("status", "active"),
       ]);
       
       const servicesData = servicesRes.data;
@@ -197,6 +217,10 @@ export default function SalonPage() {
       description: svc.description || 'Experience premium service.',
       popular: false
       })));
+      }
+
+      if (promotionsRes.data) {
+      setPromotionPackages(mapSalonPromotionRows(promotionsRes.data));
       }
       
       if (staffData) {
@@ -236,10 +260,13 @@ export default function SalonPage() {
     });
   }, [slug]);
 
+  const getPromotionResolution = (promotion: SalonPromotionPackage) =>
+    resolvePromotionBookingServices(promotion, services);
+
   // Dynamic slot generation for inline scheduler form
   useEffect(() => {
     void Promise.resolve().then(() => {
-      if (selectedServiceId && salon?.id) {
+      if ((selectedServiceId || selectedPromotionPackage) && salon?.id) {
       async function fetchSlots() {
       setLoadingSlots(true);
       try {
@@ -319,30 +346,18 @@ export default function SalonPage() {
       .eq("salon_id", salon.id)
       .eq("booking_date", formattedDate);
       
-      const bookedTimes = bookedEvents ? bookedEvents.filter(b => {
-      // Hardening: Auto-release pending bookings older than 10 minutes (Checklist #1 & #7)
-      if (b.status === 'pending' && b.created_at) {
-      const createdAt = new Date(b.created_at).getTime();
-      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-      if (createdAt < tenMinutesAgo) {
-      return false; // Abandoned checkout, release timeslot!
-      }
-      }
-      if (selectedStaffId && selectedStaffId !== 'any') {
-      return b.staff_id === selectedStaffId;
-      }
-      return true;
-      }).map(b => {
-      const parts = b.booking_time.split(":");
-      const hh = parseInt(parts[0]);
-      const mm = parts[1];
-      const period = hh >= 12 ? "PM" : "AM";
-      const displayHh = hh % 12 === 0 ? 12 : hh % 12;
-      return `${displayHh.toString().padStart(2, '0')}:${mm} ${period}`;
-      }) : [];
+      const staffIds = staff.map((member) => member.id).filter(Boolean);
+      const blockedSlots = getBlockedDisplaySlots(
+      bookedEvents || [],
+      selectedStaffId || "any",
+      staffIds
+      );
       
       const selectedSvc = services.find(s => s.id === selectedServiceId);
-      const duration = parseInt(selectedSvc?.duration || 30);
+      let duration = parseInt(selectedSvc?.duration || 30);
+      if (selectedPromotionPackage) {
+      duration = getPromotionResolution(selectedPromotionPackage).durationMinutes;
+      }
       
       // 4. Fetch Resources and Resource Bookings to avoid conflicts
       const { data: salonResources } = await supabase
@@ -358,7 +373,7 @@ export default function SalonPage() {
       // Filter base slots with all schedules, breaks, booked events, and resources
       const finalSlots = baseSlots.filter(slot => {
       // Check standard booking overlap
-      if (bookedTimes.includes(slot)) return false;
+      if (blockedSlots.has(slot)) return false;
       
       // Final Booking Availability Formula:
       // Slot Start Time + Service Duration + Buffer Time <= MIN(Salon Closing Time, Staff Shift End Time)
@@ -421,6 +436,7 @@ export default function SalonPage() {
       });
       
       setTimeSlots(finalSlots);
+      setSelectedTimeSlot((prev) => (prev && finalSlots.includes(prev) ? prev : null));
       } catch(e) {
       console.error(e);
       setTimeSlots(["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]);
@@ -431,12 +447,16 @@ export default function SalonPage() {
       fetchSlots();
       }
     });
-  }, [selectedServiceId, selectedStaffId, selectedDate, salon, services]);
+  }, [selectedServiceId, selectedStaffId, selectedDate, salon, services, staff, selectedPromotionPackage]);
 
   const handleInlineBookSubmit = async () => {
-    if (!selectedServiceId || !selectedTimeSlot || !customerDetails.fullName || !customerDetails.phone) {
+    if ((!selectedServiceId && !selectedPromotionPackage) || !selectedTimeSlot || !customerDetails.fullName || !customerDetails.phone) {
       return;
     }
+
+    const promotionResolution = selectedPromotionPackage
+      ? getPromotionResolution(selectedPromotionPackage)
+      : null;
 
     setIsProcessing(true);
     try {
@@ -452,10 +472,18 @@ export default function SalonPage() {
         saveBookingCheckoutDraft({
           salonId: salon.id,
           salonSlug: slug,
-          serviceIds: [selectedServiceId],
+          serviceIds: promotionResolution?.serviceIds.length
+            ? promotionResolution.serviceIds
+            : selectedServiceId
+              ? [selectedServiceId]
+              : [],
           staffId: selectedStaffId || "any",
           bookingDate: format(selectedDate, "yyyy-MM-dd"),
           timeSlot: selectedTimeSlot,
+          promotionPackageId: selectedPromotionPackage?.id,
+          promotionPackageName: selectedPromotionPackage?.name,
+          promotionPackagePrice: selectedPromotionPackage?.package_price,
+          promotionPackageIncludedServices: selectedPromotionPackage?.included_services,
           customerDetails,
         });
         router.push("/checkout/booking");
@@ -499,7 +527,9 @@ export default function SalonPage() {
       }
 
       const selectedService = services.find(s => s.id === selectedServiceId);
-      const totalPrice = parseFloat(selectedService?.price || 0);
+      const totalPrice = selectedPromotionPackage
+        ? selectedPromotionPackage.package_price
+        : parseFloat(selectedService?.price || 0);
 
       // Fetch dynamic commissions
       const { data: ratesData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
@@ -508,8 +538,12 @@ export default function SalonPage() {
       const payhereRate = ratesData?.payhere_percentage || 3;
       const agentRate = ratesData?.agent_percentage || 20;
 
-      const totalReservationPct = platformRate + salonRate + payhereRate;
-      const reservationFee = totalPrice * (totalReservationPct / 100);
+      const pricing = calculateCommissionSplit(totalPrice, {
+        platform: platformRate,
+        salon: salonRate,
+        payhere: payhereRate,
+      });
+      const reservationFee = pricing.reservationFee;
 
       let agentEmail = null;
       let agentCommissionPct = 0;
@@ -519,8 +553,7 @@ export default function SalonPage() {
       if (salonData?.onboarding_agent_email) {
         agentEmail = salonData.onboarding_agent_email;
         agentCommissionPct = agentRate;
-        const platformCommission = totalPrice * (platformRate / 100);
-        agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
+        agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
       }
 
       // 2. Insert master booking row directly into Supabase database (with backward compatibility fallback)
@@ -540,9 +573,9 @@ export default function SalonPage() {
           reservation_fee_paid: false,
           reservation_fee_refundable: false,
           total_reservation_fee: reservationFee,
-          salon_upfront_amount: totalPrice * (salonRate / 100),
-          platform_commission_amount: totalPrice * (platformRate / 100),
-          payhere_fee_amount: totalPrice * (payhereRate / 100),
+          salon_upfront_amount: pricing.salonUpfront,
+          platform_commission_amount: pricing.platformCommission,
+          payhere_fee_amount: pricing.payhereFee,
           agent_email: agentEmail,
           agent_commission_percent: agentCommissionPct,
           agent_commission_amount: agentCommissionAmount
@@ -666,6 +699,8 @@ export default function SalonPage() {
       return;
     }
 
+    setSelectedPromotionPackage(null);
+
     if (serviceName) {
       const match = services.find(s => s.name === serviceName);
       if (match) {
@@ -687,6 +722,31 @@ export default function SalonPage() {
       setInitialBookingService(undefined);
       setIsBookingOpen(true);
     }
+  };
+
+  const handleBookPromotion = (promotion: SalonPromotionPackage) => {
+    if (!salon.is_verified) {
+      toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
+      return;
+    }
+
+    const resolution = getPromotionResolution(promotion);
+
+    setSelectedPromotionPackage(promotion);
+    setSelectedServiceId(resolution.anchorServiceId);
+    setSelectedTimeSlot(null);
+    setInitialBookingService(promotion.name);
+
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setIsBookingOpen(true);
+    } else {
+      const sidebarElement = document.getElementById("booking-sidebar-card");
+      if (sidebarElement) {
+        sidebarElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    toast.success(`Promotion selected: ${promotion.name}`);
   };
 
   const formatPrice = (price: number) => {
@@ -770,7 +830,13 @@ export default function SalonPage() {
 
             {/* Quick Actions Panel */}
             <div className="flex flex-wrap sm:flex-nowrap md:flex-col lg:flex-row gap-3 min-w-[280px]">
-              <Button 
+              <SalonFavoriteButton
+                salonId={salon.id}
+                salonName={salon.name}
+                variant="hero"
+                className="h-12 w-12 shrink-0"
+              />
+              <Button
                 size="lg" 
                 disabled={!salon.is_verified}
                 className={`flex-1 md:flex-none hidden md:flex rounded-xl font-bold transition-all active:scale-[0.98] text-xs h-12 px-6 ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
@@ -857,6 +923,84 @@ export default function SalonPage() {
                   )}
                 </div>
               </div>
+
+              {promotionPackages.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Gift className="w-5 h-5 text-brand" />
+                    <h3 className="text-xl font-bold tracking-tight text-zinc-900">Deals & Promotions</h3>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="divide-y divide-slate-100">
+                      {promotionPackages.map((promotion) => {
+                        const hasDiscount = promotion.original_price > promotion.package_price;
+                        const savings = promotion.original_price - promotion.package_price;
+
+                        return (
+                          <div
+                            key={promotion.id}
+                            className="p-4 sm:p-6 hover:bg-amber-50/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                          >
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <Tag className="w-4 h-4 text-brand shrink-0" />
+                                <h3 className="font-semibold text-zinc-900 text-lg">{promotion.name}</h3>
+                                {hasDiscount && (
+                                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold uppercase">
+                                    Save LKR {savings.toLocaleString()}
+                                  </Badge>
+                                )}
+                              </div>
+                              {promotion.description && (
+                                <p className="text-zinc-500 text-sm mb-2 max-w-md">{promotion.description}</p>
+                              )}
+                              {promotion.included_services.length > 0 && (
+                                <p className="text-xs text-zinc-500 mb-2">
+                                  Includes: {promotion.included_services.slice(0, 4).join(", ")}
+                                  {promotion.included_services.length > 4 ? "…" : ""}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-zinc-500">
+                                {(promotion.start_date || promotion.end_date) && (
+                                  <span>
+                                    Valid {promotion.start_date ? formatDisplayDate(promotion.start_date) : "now"}
+                                    {promotion.end_date ? ` – ${formatDisplayDate(promotion.end_date)}` : ""}
+                                  </span>
+                                )}
+                                {promotion.end_date && (
+                                  <>
+                                    <span className="text-slate-300">•</span>
+                                    <span>{getRemainingDaysLabel(promotion.end_date)}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
+                              <div className="text-right">
+                                <div className="font-bold text-lg text-zinc-900">
+                                  LKR {promotion.package_price.toLocaleString()}
+                                </div>
+                                {hasDiscount && (
+                                  <div className="text-xs text-zinc-400 line-through">
+                                    LKR {promotion.original_price.toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                              <Button
+                                className="rounded-full shadow-sm px-6 bg-brand hover:bg-[#c21b52]"
+                                onClick={() => handleBookPromotion(promotion)}
+                              >
+                                Book Deal
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </section>
 
             {/* 6. STAFF SECTION */}
@@ -973,21 +1117,53 @@ export default function SalonPage() {
                    <p className="text-xs text-zinc-400 mt-0.5">Select service, professional, date and time below.</p>
                  </div>
 
+                 {selectedPromotionPackage && (
+                   <div className="rounded-xl border border-brand/20 bg-brand/5 p-3">
+                     <p className="text-[10px] font-bold uppercase tracking-widest text-brand mb-1">Promotion Package</p>
+                     <p className="text-sm font-semibold text-zinc-900">{selectedPromotionPackage.name}</p>
+                     <p className="text-xs text-zinc-500 mt-1">
+                       Package price: {formatPrice(selectedPromotionPackage.package_price)}
+                     </p>
+                   </div>
+                 )}
+
                  {/* 1. SELECT SERVICE */}
                  <div className="space-y-1.5">
                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Select Service</label>
                    <select 
-                     value={selectedServiceId || ""} 
+                     value={selectedPromotionPackage ? `promo:${selectedPromotionPackage.id}` : selectedServiceId || ""} 
                      onChange={(e) => {
-                       setSelectedServiceId(e.target.value || null);
+                       const value = e.target.value;
+                       if (value.startsWith("promo:")) {
+                         const promotion = promotionPackages.find((item) => item.id === value.replace("promo:", ""));
+                         if (promotion) {
+                           const resolution = getPromotionResolution(promotion);
+                           setSelectedPromotionPackage(promotion);
+                           setSelectedServiceId(resolution.anchorServiceId);
+                         }
+                       } else {
+                         setSelectedPromotionPackage(null);
+                         setSelectedServiceId(value || null);
+                       }
                        setSelectedTimeSlot(null);
                      }}
                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-xs font-semibold text-zinc-800 bg-white"
                    >
                      <option value="">-- Choose a Service --</option>
+                     <optgroup label="Services">
                      {services.map(s => (
                        <option key={s.id} value={s.id}>{s.name} ({formatPrice(s.price)})</option>
                      ))}
+                     </optgroup>
+                     {promotionPackages.length > 0 && (
+                       <optgroup label="Deals & Promotions">
+                         {promotionPackages.map((promotion) => (
+                           <option key={promotion.id} value={`promo:${promotion.id}`}>
+                             {promotion.name} ({formatPrice(promotion.package_price)})
+                           </option>
+                         ))}
+                       </optgroup>
+                     )}
                    </select>
                  </div>
 

@@ -294,7 +294,15 @@
   }
 
   /* Global safeguard: Dark backgrounds should default to white text */
-  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-neutral-950, .bg-stone-900, .bg-stone-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\] {
+  .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950, .bg-slate-800, .bg-slate-900, .bg-slate-950, .bg-gray-800, .bg-gray-900, .bg-gray-950, .bg-neutral-800, .bg-neutral-900, .bg-neutral-950, .bg-stone-900, .bg-stone-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\] {
+    color: var(--text-light);
+  }
+
+  /* Dark gradient panels (admin KPI cards, hero sections, etc.) */
+  [class*="bg-gradient-to"][class*="from-[#1A1C29]"],
+  [class*="bg-gradient-to"][class*="from-[#0B0B0B]"],
+  [class*="bg-gradient-to"][class*="to-[#0A0B10]"],
+  [class*="bg-gradient-to"][class*="to-[#151515]"] {
     color: var(--text-light);
   }
 
@@ -314,16 +322,58 @@
 
   /* Dark surfaces — keep light text on hover/focus/active */
   :is(
-    .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950,
-    .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-neutral-950,
-    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\]
+    .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950, .bg-slate-800, .bg-slate-900, .bg-slate-950,
+    .bg-gray-800, .bg-gray-900, .bg-gray-950, .bg-neutral-800, .bg-neutral-900, .bg-neutral-950,
+    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\]
   ):is(:hover, :focus, :focus-within, :active),
   :is(
-    .hover\:bg-black:hover, .hover\:bg-zinc-900:hover, .hover\:bg-zinc-950:hover,
-    .hover\:bg-slate-900:hover, .hover\:bg-slate-950:hover,
-    .hover\:bg-\[\#0B0B0B\]:hover, .hover\:bg-\[\#151515\]:hover
+    .hover\:bg-black:hover, .hover\:bg-zinc-800:hover, .hover\:bg-zinc-900:hover, .hover\:bg-zinc-950:hover,
+    .hover\:bg-slate-800:hover, .hover\:bg-slate-900:hover, .hover\:bg-slate-950:hover,
+    .hover\:bg-gray-800:hover, .hover\:bg-gray-900:hover, .hover\:bg-neutral-900:hover,
+    .hover\:bg-\[\#0B0B0B\]:hover, .hover\:bg-\[\#151515\]:hover, .hover\:bg-\[\#1A1C29\]:hover
   ) {
-    color: var(--text-light);
+    color: var(--text-light) !important;
+  }
+
+  /*
+   * Dark surface text contract — never allow dark/muted text utilities on dark backgrounds.
+   * Covers default state, hover, focus, and active (e.g. admin dashboard buttons).
+   */
+  :is(
+    .trimma-dark-surface,
+    .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
+    .bg-slate-800, .bg-slate-900, .bg-slate-950,
+    .bg-gray-800, .bg-gray-900, .bg-neutral-900,
+    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\],
+    [class*="bg-gradient-to"][class*="from-[#1A1C29]"],
+    [class*="bg-gradient-to"][class*="from-[#0B0B0B]"],
+    [class*="bg-gradient-to"][class*="to-[#0A0B10]"]
+  ):is(
+    [class*="text-zinc-9"], [class*="text-zinc-8"], [class*="text-zinc-7"], [class*="text-zinc-6"],
+    [class*="text-slate-9"], [class*="text-slate-8"], [class*="text-gray-9"], [class*="text-neutral-9"],
+    [class*="text-black"]
+  ),
+  :is(
+    .hover\:bg-zinc-800:hover, .hover\:bg-zinc-900:hover, .hover\:bg-zinc-950:hover,
+    .hover\:bg-slate-800:hover, .hover\:bg-slate-900:hover, .hover\:bg-black:hover,
+    .hover\:bg-\[\#0B0B0B\]:hover, .hover\:bg-\[\#151515\]:hover, .hover\:bg-\[\#1A1C29\]:hover
+  ):is(
+    [class*="text-zinc-9"], [class*="text-zinc-8"], [class*="text-zinc-7"], [class*="text-zinc-6"],
+    [class*="text-slate-9"], [class*="text-slate-8"], [class*="text-gray-9"], [class*="text-black"]
+  ) {
+    color: var(--text-light) !important;
+  }
+
+  /* Icons and labels inside dark surfaces inherit readable light text */
+  :is(
+    .trimma-dark-surface,
+    .bg-zinc-800, .bg-zinc-900, .bg-zinc-950, .bg-slate-900, .bg-slate-950,
+    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\],
+    [class*="bg-gradient-to"][class*="from-[#1A1C29]"]
+  ) :where(
+    h1, h2, h3, h4, h5, h6, p, span, label, button, a, li, td, th, svg
+  ):not([class*="bg-[#F5B700]"]):not([class*="bg-brand"]):not([class*="bg-primary"]):not([class*="text-[#F5B700]"]):not([class*="text-brand"]) {
+    color: inherit;
   }
 
   /* Prevent white/light text on light hover backgrounds inside light pages */
@@ -345,11 +395,12 @@
   /* Prevent dark text on dark hover backgrounds */
   .trimma-dark-context :is(
     [class*="hover:bg-black"]:hover,
+    [class*="hover:bg-zinc-8"]:hover,
     [class*="hover:bg-zinc-9"]:hover,
     [class*="hover:bg-slate-9"]:hover,
     [class*="hover:bg-[#0B0B0B]"]:hover,
     [class*="hover:bg-[#151515]"]:hover,
-    [class*="hover:bg-white/"]:hover,
+    [class*="hover:bg-[#1A1C29]"]:hover,
     [class*="focus:bg-accent"]:focus,
     [class*="focus:bg-accent"]:focus-visible
   ):not([class*="bg-[#F5B700]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
@@ -594,6 +645,30 @@
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
     color: var(--text-light);
+  }
+
+  /* Explicit dark panel — use on admin cards, hero blocks, modals on black */
+  .trimma-dark-surface {
+    color: var(--text-light);
+    --foreground: #ffffff;
+    --card-foreground: #ffffff;
+    --muted-foreground: #d4d4d8;
+    --accent-foreground: #ffffff;
+  }
+
+  .trimma-dark-surface :is(h1, h2, h3, h4, h5, h6, p, span, label, button, a) {
+    color: inherit;
+  }
+
+  /* Customer / dashboard sidebars — keep menu items clear of site header overlap */
+  .trimma-dashboard-sidebar-nav {
+    padding-top: 1rem;
+  }
+
+  @media (min-width: 1024px) {
+    .trimma-dashboard-sidebar-nav {
+      padding-top: 1.5rem;
+    }
   }
 
   .trimma-card-standard {

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, Star, MapPin, CalendarDays } from "lucide-react";
+import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SalonFavoriteButton } from "./SalonFavoriteButton";
 
 export interface SalonCardInternalProps {
   key?: string;
@@ -41,9 +42,7 @@ export function SalonCard(props: SalonCardInternalProps) {
           </div>
         )}
 
-        <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-colors border border-white/20 z-20">
-          <Heart className="w-5 h-5" />
-        </button>
+        <SalonFavoriteButton salonId={salon.id} salonName={salon.name} />
         {salon.status === "Open Now" && (
           <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm z-20">
             Open Now

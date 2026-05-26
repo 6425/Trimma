@@ -3,8 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CalendarDays, Sparkles, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CalendarDays, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../../config/supabase";
@@ -24,25 +23,38 @@ function DashboardContent() {
       // Handle PayHere Success Redirect
       if (searchParams.get("payment_success") === "true") {
       const bookingNo = searchParams.get("booking_no");
-      
-      if (bookingNo) {
-      // Trigger WhatsApp Notification Server Action
-      sendWhatsAppNotification(bookingNo).then((res) => {
-      if (res?.success) {
-      toast.success("Receipt sent to your WhatsApp! 📱", {
-      position: "top-center"
-      });
-      } else {
-      console.error("WhatsApp dispatch failure:", res?.error);
-      }
-      });
-      }
-      
+      const whatsappSentFromCheckout = searchParams.get("whatsapp_sent") === "true";
+
       toast.success(`Payment successful! Booking ${bookingNo} is confirmed.`, {
       duration: 5000,
       position: "top-center"
       });
-      // Clean up URL parameter
+
+      if (bookingNo) {
+      const dedupKey = `trimma-wa-${bookingNo}`;
+
+      if (whatsappSentFromCheckout) {
+      sessionStorage.setItem(dedupKey, "sent");
+      toast.success("Receipt sent to your WhatsApp! 📱", {
+      position: "top-center"
+      });
+      } else if (!sessionStorage.getItem(dedupKey)) {
+      sendWhatsAppNotification(bookingNo).then((res) => {
+      sessionStorage.setItem(dedupKey, res?.success ? "sent" : "failed");
+      if (res?.success) {
+      toast.success("Receipt sent to your WhatsApp! 📱", {
+      position: "top-center"
+      });
+      } else if (res?.error && res.error !== "Disabled") {
+      console.error("WhatsApp dispatch failure:", res.error);
+      toast.error(`Booking confirmed, but WhatsApp receipt failed: ${res.error}`, {
+      position: "top-center"
+      });
+      }
+      });
+      }
+      }
+
       window.history.replaceState(null, '', '/customer');
       }
     });
@@ -139,62 +151,52 @@ function DashboardContent() {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="bg-zinc-900/50 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-          <h2 className="text-xl font-bold mb-4 text-white">Your Bookings</h2>
-          {loading ? (
-            <div className="flex justify-center py-8"><span className="animate-pulse text-zinc-400">Loading...</span></div>
-          ) : upcomingBookings.length === 0 ? (
-            <div className="text-center py-12 text-zinc-500">
-              <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
-              <p>You have no bookings yet.</p>
-              <Link href="/salons" className="inline-flex mt-2 text-[#F5B700] hover:text-[#F5B700]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
-                Browse salons to book
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {upcomingBookings.map((booking) => (
-                <div key={booking.id} className="p-4 rounded-xl border border-white/10 bg-zinc-900 hover:border-[#F5B700]/30 hover:bg-[#F5B700]/5 transition-all flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold text-zinc-100">{booking.salons?.name || 'Trimma Partner Salon'}</h3>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-zinc-400">
-                      <CalendarDays className="w-4 h-4 text-[#F5B700]/80" />
-                      <span>{booking.booking_date} at {booking.booking_time}</span>
-                    </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-1.5 max-w-[240px]">
-                    <span className="font-bold text-white">Total: Rs. {booking.amount}</span>
-                    
-                    {booking.status === 'confirmed' || booking.status === 'pending' ? (
-                      <>
-                        <Badge className="bg-[#F5B700]/10 hover:bg-[#F5B700]/20 text-[#F5B700] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
-                          20% Deposit Paid (Rs. {Math.round(booking.amount * 0.2)})
-                        </Badge>
-                        <span className="text-[9px] text-zinc-500 font-medium text-right">
-                          Balance 80% (Rs. {Math.round(booking.amount * 0.8)}) paid at salon
-                        </span>
-                      </>
-                    ) : (
-                      <Badge variant="outline" className="text-[9px] uppercase border-white/20 text-zinc-300">
-                        {booking.status}
-                      </Badge>
-                    )}
+      <section className="bg-zinc-900/50 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
+        <h2 className="text-xl font-bold mb-4 text-white">Your Bookings</h2>
+        {loading ? (
+          <div className="flex justify-center py-8"><span className="animate-pulse text-zinc-400">Loading...</span></div>
+        ) : upcomingBookings.length === 0 ? (
+          <div className="text-center py-12 text-zinc-500">
+            <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
+            <p>You have no bookings yet.</p>
+            <Link href="/salons" className="inline-flex mt-2 text-[#F5B700] hover:text-[#F5B700]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
+              Browse salons to book
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {upcomingBookings.map((booking) => (
+              <div key={booking.id} className="p-4 rounded-xl border border-white/10 bg-zinc-900 hover:border-[#F5B700]/30 hover:bg-[#F5B700]/5 transition-all flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold text-zinc-100">{booking.salons?.name || 'Trimma Partner Salon'}</h3>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-zinc-400">
+                    <CalendarDays className="w-4 h-4 text-[#F5B700]/80" />
+                    <span>{booking.booking_date} at {booking.booking_time}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="bg-zinc-900/50 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-          <h2 className="text-xl font-bold mb-4 text-white">Quick Recommendations</h2>
-          <div className="text-center py-12 text-zinc-500">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20 text-[#F5B700]" />
-            <p>Style recommendations will appear here.</p>
+                <div className="text-right flex flex-col items-end gap-1.5 max-w-[240px]">
+                  <span className="font-bold text-white">Total: Rs. {booking.amount}</span>
+                  
+                  {booking.status === 'confirmed' || booking.status === 'pending' ? (
+                    <>
+                      <Badge className="bg-[#F5B700]/10 hover:bg-[#F5B700]/20 text-[#F5B700] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
+                        20% Deposit Paid (Rs. {Math.round(booking.amount * 0.2)})
+                      </Badge>
+                      <span className="text-[9px] text-zinc-500 font-medium text-right">
+                        Balance 80% (Rs. {Math.round(booking.amount * 0.8)}) paid at salon
+                      </span>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-[9px] uppercase border-white/20 text-zinc-300">
+                      {booking.status}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </section>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

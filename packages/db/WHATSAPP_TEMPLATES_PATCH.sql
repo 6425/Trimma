@@ -1,5 +1,9 @@
 -- ==============================================================================
--- WHATSAPP NOTIFICATION TEMPLATES PATCH (SELF-HEALING)
+-- WHATSAPP NOTIFICATION TEMPLATES PATCH (SELF-HEALING) — PARTIAL (4 templates)
+-- ==============================================================================
+-- ⚠️  SUPERSEDED: For all 11 triggers + admin alert phone, run instead:
+--     packages/db/WHATSAPP_TEMPLATES_FULL_PATCH.sql
+--     (or WHATSAPP_MISSING_COLUMNS_PATCH.sql if you already ran this file)
 -- ==============================================================================
 -- Run this script in your Supabase SQL Editor.
 -- It extends the global_payment_settings table to support customizable template text.
@@ -46,8 +50,7 @@ SET
     '📅 *Original Date:* {booking_date}' || E'\n' ||
     '⏰ *Original Time:* {booking_time}' || E'\n' ||
     '💇 *Service:* {service_name}' || E'\n\n' ||
-    'Refund of your 20% online deposit has been initiated to your original payment method. 💳' || E'\n\n' ||
-    'If you believe this was an error, please contact the salon immediately.' || E'\n\n' ||
+    'Your 20% online reservation deposit is non-refundable. For any questions about your booking, please contact the salon directly.' || E'\n\n' ||
     'Trimma Notification Services ✂️'
   ),
   whatsapp_template_review = COALESCE(

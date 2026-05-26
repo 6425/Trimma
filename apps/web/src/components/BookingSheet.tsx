@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
+import { getBlockedDisplaySlots } from "@/lib/booking-availability";
+import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
 import { sendBookingCreatedAlert, sendWhatsAppNotification } from "@/app/actions/whatsapp";
 
 export function BookingSheet({ 
@@ -272,8 +274,8 @@ export function BookingSheet({
   const serviceCharge = priceAfterDiscount * 0.10; // 10% Taxes & Service Charge
   const totalPrice = priceAfterDiscount + serviceCharge;
 
-  const totalReservationPct = globalRates.platform + globalRates.salon + globalRates.payhere;
-  const reservationFee = totalPrice * (totalReservationPct / 100);
+  const reservationFee = calculateReservationFee(totalPrice);
+  const pricing = calculateCommissionSplit(totalPrice, globalRates);
   const remainingBalance = totalPrice - reservationFee;
   const selectedStaffObj = activeStaff.find(s => s.id === selectedStaffId);
 
@@ -380,8 +382,7 @@ export function BookingSheet({
                   if (salonData?.onboarding_agent_email) {
                     agentEmail = salonData.onboarding_agent_email;
                     agentCommissionPct = globalRates.agent;
-                    const platformCommission = totalPrice * (globalRates.platform / 100);
-                    agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
+                    agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
                   }
 
                   // 1. Create Confirmed Booking row
@@ -397,13 +398,13 @@ export function BookingSheet({
                       booking_time: formattedTime,
                       amount: totalPrice,
                       status: "confirmed",
-                      payment_status: "partially_paid",
+                      payment_status: "reservation_paid",
                       reservation_fee_paid: true,
                       reservation_fee_refundable: false,
                       total_reservation_fee: reservationFee,
-                      salon_upfront_amount: totalPrice * (globalRates.salon / 100),
-                      platform_commission_amount: totalPrice * (globalRates.platform / 100),
-                      payhere_fee_amount: totalPrice * (globalRates.payhere / 100),
+                      salon_upfront_amount: pricing.salonUpfront,
+                      platform_commission_amount: pricing.platformCommission,
+                      payhere_fee_amount: pricing.payhereFee,
                       agent_email: agentEmail,
                       agent_commission_percent: agentCommissionPct,
                       agent_commission_amount: agentCommissionAmount
@@ -589,27 +590,12 @@ export function BookingSheet({
       .eq("salon_id", salonId)
       .eq("booking_date", formattedDate);
       
-      const bookedTimes = bookedEvents ? bookedEvents.filter(b => {
-      // Hardening: Auto-release pending bookings older than 10 minutes (Checklist #1 & #7)
-      if (b.status === 'pending' && b.created_at) {
-      const createdAt = new Date(b.created_at).getTime();
-      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-      if (createdAt < tenMinutesAgo) {
-      return false; // Abandoned checkout, release timeslot!
-      }
-      }
-      if (selectedStaffId && selectedStaffId !== 'any') {
-      return b.staff_id === selectedStaffId;
-      }
-      return true;
-      }).map(b => {
-      const parts = b.booking_time.split(":");
-      const hh = parseInt(parts[0]);
-      const mm = parts[1];
-      const period = hh >= 12 ? "PM" : "AM";
-      const displayHh = hh % 12 === 0 ? 12 : hh % 12;
-      return `${displayHh.toString().padStart(2, '0')}:${mm} ${period}`;
-      }) : [];
+      const staffIds = staff.map((member) => member.id).filter(Boolean);
+      const blockedSlots = getBlockedDisplaySlots(
+      bookedEvents || [],
+      selectedStaffId || "any",
+      staffIds
+      );
       
       // 4. Fetch Resources and Resource Bookings to avoid conflicts
       const { data: salonResources } = await supabase
@@ -625,7 +611,7 @@ export function BookingSheet({
       // Filter base slots with all schedules, breaks, booked events, and resources
       const finalSlots = baseSlots.filter(slot => {
       // Check standard booking overlap
-      if (bookedTimes.includes(slot)) return false;
+      if (blockedSlots.has(slot)) return false;
       
       // Final Booking Availability Formula:
       // Slot Start Time + Service Duration + Buffer Time <= MIN(Salon Closing Time, Staff Shift End Time)
@@ -688,6 +674,7 @@ export function BookingSheet({
       });
       
       setTimeSlots(finalSlots);
+      setSelectedTimeSlot((prev) => (prev && finalSlots.includes(prev) ? prev : null));
       } catch(e) {
       console.error(e);
       setTimeSlots(["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]);
@@ -698,7 +685,7 @@ export function BookingSheet({
       fetchSlots();
       }
     });
-  }, [step, selectedDate, selectedStaffId, selectedServiceIds, salonId]);
+  }, [step, selectedDate, selectedStaffId, selectedServiceIds, salonId, staff]);
 
   // Autofill search by phone
   const handleSearchCustomer = async () => {
@@ -810,8 +797,7 @@ export function BookingSheet({
       if (salonData?.onboarding_agent_email) {
         agentEmail = salonData.onboarding_agent_email;
         agentCommissionPct = globalRates.agent;
-        const platformCommission = totalPrice * (globalRates.platform / 100);
-        agentCommissionAmount = platformCommission * (agentCommissionPct / 100);
+        agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
       }
 
       // 1. Write master booking row directly into Supabase database (with backward compatibility fallback)
@@ -827,13 +813,13 @@ export function BookingSheet({
           booking_time: formattedTime,
           amount: totalPrice,
           status: paymentMethod === 'payhere' ? "pending" : "confirmed",
-          payment_status: paymentMethod === 'payhere' ? "unpaid" : "partially_paid",
+          payment_status: paymentMethod === 'payhere' ? "unpaid" : "reservation_paid",
           reservation_fee_paid: paymentMethod !== 'payhere',
           reservation_fee_refundable: false,
           total_reservation_fee: reservationFee,
-          salon_upfront_amount: totalPrice * (globalRates.salon / 100),
-          platform_commission_amount: totalPrice * (globalRates.platform / 100),
-          payhere_fee_amount: totalPrice * (globalRates.payhere / 100),
+          salon_upfront_amount: pricing.salonUpfront,
+          platform_commission_amount: pricing.platformCommission,
+          payhere_fee_amount: pricing.payhereFee,
           agent_email: agentEmail,
           agent_commission_percent: agentCommissionPct,
           agent_commission_amount: agentCommissionAmount
