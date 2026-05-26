@@ -25,9 +25,10 @@ import { toast } from "sonner";
 import {
   STYLE_CROP_ASPECT,
   centerAspectCrop,
-  getCroppedWebPBlob,
+  getCroppedImageBlob,
   prepareImageForCrop,
-} from "@/lib/image-crop-webp";
+  DEFAULT_UPLOAD_EXT,
+} from "@/lib/image-crop";
 import { uploadStyleImage } from "../../actions/style-images";
 import { deletePlatformStyle, savePlatformStyle } from "../../actions/platform-styles";
 
@@ -173,11 +174,11 @@ export default function AdminStyleManagementPage() {
     try {
       setIsUploadingImage(true);
       setUploadStage("compressing");
-      const webpBlob = await getCroppedWebPBlob(imgRef.current, completedCrop);
+      const imageBlob = await getCroppedImageBlob(imgRef.current, completedCrop);
 
       setUploadStage("uploading");
       const formDataUpload = new FormData();
-      formDataUpload.append("file", webpBlob, "style.webp");
+      formDataUpload.append("file", imageBlob, `style.${DEFAULT_UPLOAD_EXT}`);
       const result = await uploadStyleImage(formDataUpload);
 
       if (!result.success) {
@@ -188,7 +189,7 @@ export default function AdminStyleManagementPage() {
       setIsCropping(false);
       revokeCropPreview();
       setUpImg(undefined);
-      toast.success(`Style image saved (${Math.max(1, Math.round(result.bytes / 1024))} KB WebP).`);
+      toast.success(`Style image saved (${Math.max(1, Math.round(result.bytes / 1024))} KB).`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Upload failed";
       toast.error(message);
@@ -317,7 +318,7 @@ export default function AdminStyleManagementPage() {
             </div>
 
             <p className="text-xs text-zinc-500 mb-3">
-              Output: 600×800 WebP portrait — shown on the public Styles gallery and customer saved styles.
+              Output: 600×800 portrait — shown on the public Styles gallery and customer saved styles.
             </p>
 
             <div className="flex-1 overflow-auto bg-zinc-100 rounded-xl flex items-center justify-center border border-zinc-200">
@@ -350,7 +351,7 @@ export default function AdminStyleManagementPage() {
                     ? "Uploading..."
                     : isUploadingImage
                       ? "Processing..."
-                      : "Apply & Upload WebP"}
+                      : "Apply & Upload"}
               </Button>
             </div>
           </div>

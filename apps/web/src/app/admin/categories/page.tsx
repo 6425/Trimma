@@ -13,6 +13,12 @@ import { toast } from "sonner";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
+import {
+  DEFAULT_UPLOAD_EXT,
+  DEFAULT_UPLOAD_MIME,
+  getCroppedImageBlobNative,
+  uploadFileName,
+} from "@/lib/image-crop";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_CROP_ASPECT = 16 / 9;
@@ -98,75 +104,25 @@ export default function CategoryManagement() {
     setCrop(centerAspectCrop(width, height, 16 / 9));
   };
 
-  const getCroppedWebP = async (image: HTMLImageElement, crop: PixelCrop): Promise<Blob> => {
-    const canvas = document.createElement('canvas');
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    canvas.width = crop.width;
-    canvas.height = crop.height;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
-      throw new Error('No 2d context');
-    }
-
-    ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
-      0,
-      0,
-      crop.width,
-      crop.height
-    );
-
-    return new Promise((resolve, reject) => {
-      // Start with 0.9 quality
-      let quality = 0.9;
-      
-      const attemptCompression = () => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Canvas is empty'));
-              return;
-            }
-            // If greater than 100KB and quality can be reduced
-            if (blob.size > 100 * 1024 && quality > 0.1) {
-              quality -= 0.1;
-              attemptCompression();
-            } else {
-              resolve(blob);
-            }
-          },
-          'image/webp',
-          quality
-        );
-      };
-
-      attemptCompression();
-    });
-  };
-
   const handleCropSave = async () => {
     if (!completedCrop || !imgRef.current) return;
     
     try {
       setIsUploadingImage(true);
-      const webpBlob = await getCroppedWebP(imgRef.current, completedCrop);
+      const imageBlob = await getCroppedImageBlobNative(imgRef.current, completedCrop, {
+        maxBytes: 150 * 1024,
+      });
       
-      if (webpBlob.size > 100 * 1024) {
-         toast.warning("Image is slightly above 100KB even after compression. Proceeding anyway.");
+      if (imageBlob.size > 150 * 1024) {
+         toast.warning("Image is slightly above 150KB even after compression. Proceeding anyway.");
       }
 
-      const fileName = `cat_${Date.now()}.webp`;
+      const fileName = uploadFileName("cat", DEFAULT_UPLOAD_EXT);
       
       const { data, error } = await supabase.storage
         .from('public-assets')
-        .upload(`categories/${fileName}`, webpBlob, {
-          contentType: 'image/webp',
+        .upload(`categories/${fileName}`, imageBlob, {
+          contentType: DEFAULT_UPLOAD_MIME,
           cacheControl: '3600',
           upsert: false
         });
@@ -472,7 +428,7 @@ export default function CategoryManagement() {
                      <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer text-zinc-500 group">
                        <ImageIcon className="w-6 h-6 mb-1 text-zinc-400 group-hover:text-brand transition-colors" />
                        <span className="text-xs font-semibold">Upload Image</span>
-                       <span className="text-[9px] uppercase tracking-widest mt-0.5">WebP • Max 100KB • 16:9</span>
+                       <span className="text-[9px] uppercase tracking-widest mt-0.5">JPEG • Max 150KB • 16:9</span>
                        <input type="file" accept="image/*" onChange={onSelectFile} className="hidden" />
                      </label>
                    )}

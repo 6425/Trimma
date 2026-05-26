@@ -597,15 +597,15 @@ export default function DashboardStaff() {
       setAvatarBlob(blob);
       setAvatarPreviewUrl(URL.createObjectURL(blob));
       setIsCropModalOpen(false);
-    }, 'image/webp', 0.9);
+    }, 'image/jpeg', 0.9);
   }
 
   async function uploadAvatar(blob: Blob, staffId: string) {
-    const fileName = `${staffId}-${Date.now()}.webp`;
+    const fileName = `${staffId}-${Date.now()}.jpg`;
     const { data, error } = await supabase.storage
       .from('staff-avatars')
       .upload(fileName, blob, {
-        contentType: 'image/webp',
+        contentType: 'image/jpeg',
         upsert: true
       });
     if (error) throw error;

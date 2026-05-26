@@ -23,53 +23,6 @@ const SIZING_INFO = {
   gallery: { label: "Featured Image", resolution: "800x600px", sizeText: "3MB max", size: 3 * 1024 * 1024 }
 };
 
-// Client-side WebP image transcoder to dramatically enhance page load speeds
-const convertToWebP = (file: File): Promise<File> => {
-  return new Promise((resolve) => {
-    // If it's already a webp file, proceed directly
-    if (file.type === "image/webp") {
-      return resolve(file);
-    }
-
-    const img = new Image();
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(img.src);
-        return resolve(file); // Fallback to original file if canvas context is unavailable
-      }
-      
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(img.src);
-          if (!blob) {
-            return resolve(file); // Fallback
-          }
-          const webpFile = new File(
-            [blob], 
-            file.name.replace(/\.[^/.]+$/, "") + ".webp", 
-            { type: "image/webp" }
-          );
-          resolve(webpFile);
-        },
-        "image/webp",
-        0.82 // Optimal size/quality compression ratio
-      );
-    };
-    
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      resolve(file); // Fallback to original on error
-    };
-  });
-};
-
 
 export default function SalonProfilePage() {
   const [salon, setSalon] = useState<any>(null);
@@ -311,18 +264,7 @@ export default function SalonProfilePage() {
       return;
     }
 
-    let finalFile = file;
-    const progressToastId = toast.loading(`Optimizing and converting image to premium WebP format... ⚡`);
-
-    try {
-      finalFile = await convertToWebP(file);
-    } catch (optimizeErr) {
-      console.warn("WebP optimization failed, using original file:", optimizeErr);
-    } finally {
-      toast.dismiss(progressToastId);
-    }
-
-    const uploadedUrl = await processImageFile(finalFile, type);
+    const uploadedUrl = await processImageFile(file, type);
     if (!uploadedUrl) return;
 
     let updatedLogo = logoUrl;

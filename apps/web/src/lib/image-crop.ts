@@ -7,6 +7,9 @@ export const STYLE_OUTPUT_HEIGHT = 800;
 /** Crop UI max edge — output is only 600×800 so 1200 is plenty. */
 export const CROP_PREP_MAX_DIMENSION = 1200;
 
+export const DEFAULT_UPLOAD_MIME = "image/jpeg";
+export const DEFAULT_UPLOAD_EXT = "jpg";
+
 export function centerAspectCrop(
   mediaWidth: number,
   mediaHeight: number,
@@ -107,28 +110,52 @@ export async function prepareImageForCrop(
     }
 
     ctx.drawImage(decoded.source, 0, 0, width, height);
-    const jpegBlob = await canvasToBlob(canvas, "image/jpeg", 0.85);
+    const jpegBlob = await canvasToBlob(canvas, DEFAULT_UPLOAD_MIME, 0.85);
     return URL.createObjectURL(jpegBlob);
   } finally {
     decoded.cleanup();
   }
 }
 
-type CropWebPOptions = {
+type CropImageOptions = {
   outputWidth?: number;
   outputHeight?: number;
   quality?: number;
+  mime?: string;
+  maxBytes?: number;
 };
 
-/** Final export: single WebP encode at 600×800 (typically ~60–120 KB). */
-export async function getCroppedWebPBlob(
+async function encodeCanvasWithOptionalLimit(
+  canvas: HTMLCanvasElement,
+  options: CropImageOptions
+): Promise<Blob> {
+  const mime = options.mime ?? DEFAULT_UPLOAD_MIME;
+  let quality = options.quality ?? 0.85;
+  const maxBytes = options.maxBytes;
+
+  if (!maxBytes) {
+    return canvasToBlob(canvas, mime, quality);
+  }
+
+  while (quality >= 0.35) {
+    const blob = await canvasToBlob(canvas, mime, quality);
+    if (blob.size <= maxBytes) {
+      return blob;
+    }
+    quality -= 0.08;
+  }
+
+  return canvasToBlob(canvas, mime, 0.35);
+}
+
+/** Final export at fixed dimensions (e.g. 600×800 style portraits). */
+export async function getCroppedImageBlob(
   image: HTMLImageElement,
   crop: PixelCrop,
-  options: CropWebPOptions = {}
+  options: CropImageOptions = {}
 ): Promise<Blob> {
   const outputWidth = options.outputWidth ?? STYLE_OUTPUT_WIDTH;
   const outputHeight = options.outputHeight ?? STYLE_OUTPUT_HEIGHT;
-  const quality = options.quality ?? 0.78;
 
   const canvas = document.createElement("canvas");
   canvas.width = outputWidth;
@@ -154,5 +181,41 @@ export async function getCroppedWebPBlob(
     outputHeight
   );
 
-  return canvasToBlob(canvas, "image/webp", quality);
+  return encodeCanvasWithOptionalLimit(canvas, options);
+}
+
+/** Export at the crop region's native pixel size (e.g. 16:9 category banners). */
+export async function getCroppedImageBlobNative(
+  image: HTMLImageElement,
+  crop: PixelCrop,
+  options: CropImageOptions = {}
+): Promise<Blob> {
+  const canvas = document.createElement("canvas");
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
+  canvas.width = Math.max(1, Math.round(crop.width * scaleX));
+  canvas.height = Math.max(1, Math.round(crop.height * scaleY));
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("No 2d context");
+  }
+
+  ctx.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  return encodeCanvasWithOptionalLimit(canvas, options);
+}
+
+export function uploadFileName(prefix: string, ext = DEFAULT_UPLOAD_EXT) {
+  return `${prefix}_${Date.now()}.${ext}`;
 }

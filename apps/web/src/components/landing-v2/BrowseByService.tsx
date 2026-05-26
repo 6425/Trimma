@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/config/supabase";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// Mapping of category slugs to beautiful Unsplash images (in WebP format)
+// Mapping of category slugs to Unsplash images (optimized by Vercel at delivery time)
 const CATEGORY_IMAGES: Record<string, string> = {
   "hair": "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=400&fm=webp&fit=crop",
   "barbers": "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=400&fm=webp&fit=crop",

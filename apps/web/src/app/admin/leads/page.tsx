@@ -631,13 +631,13 @@ export default function Leads() {
     }
   };
 
-  // Convert uploaded image to WebP (16:9) and upload to Supabase
+  // Crop uploaded image to 16:9 and upload to Supabase
   const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, leadId: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      toast.loading("Cropping and converting to WebP...", { id: `upload_${leadId}` });
+      toast.loading("Cropping and uploading image...", { id: `upload_${leadId}` });
       
       // 1. Read file as Data URL to draw on canvas
       const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -686,21 +686,21 @@ export default function Leads() {
       
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, 0, 0, targetWidth, targetHeight);
       
-      // 4. Convert to WebP blob
-      const webpBlob = await new Promise<Blob>((resolve, reject) => {
+      // 4. Export cropped JPEG
+      const imageBlob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((blob) => {
           if (blob) resolve(blob);
           else reject(new Error("Canvas toBlob failed"));
-        }, "image/webp", 0.9);
+        }, "image/jpeg", 0.88);
       });
 
       // 5. Upload to Supabase Storage
-      toast.loading("Uploading optimized image...", { id: `upload_${leadId}` });
-      const fileName = `leads/hero_${leadId}_${Date.now()}.webp`;
+      toast.loading("Uploading image...", { id: `upload_${leadId}` });
+      const fileName = `leads/hero_${leadId}_${Date.now()}.jpg`;
       
       const { data, error } = await supabase.storage
         .from('salon-images')
-        .upload(fileName, webpBlob, { cacheControl: '3600', upsert: true });
+        .upload(fileName, imageBlob, { cacheControl: '3600', upsert: true, contentType: 'image/jpeg' });
 
       if (error) {
         throw error;
@@ -713,7 +713,7 @@ export default function Leads() {
       // 6. Save URL to Database
       await handleSaveCell(leadId, "hero_url", publicUrl);
       
-      toast.success("Image successfully cropped to WebP and uploaded!", { id: `upload_${leadId}` });
+      toast.success("Image cropped and uploaded!", { id: `upload_${leadId}` });
     } catch (err: any) {
       toast.error("Upload failed: " + err.message, { id: `upload_${leadId}` });
     } finally {
@@ -773,19 +773,18 @@ export default function Leads() {
       
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, 0, 0, targetWidth, targetHeight);
       
-      // Convert to WebP with very low quality to guarantee < 100KB capacity
-      const webpBlob = await new Promise<Blob>((resolve, reject) => {
+      const imageBlob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((blob) => {
           if (blob) resolve(blob);
           else reject(new Error("Canvas toBlob failed"));
-        }, "image/webp", 0.4); 
+        }, "image/jpeg", 0.82); 
       });
 
-      const fileName = `leads/${field}_${Date.now()}.webp`;
+      const fileName = `leads/${field}_${Date.now()}.jpg`;
       
       const { data, error } = await supabase.storage
         .from('salon-images')
-        .upload(fileName, webpBlob, { cacheControl: '3600', upsert: true });
+        .upload(fileName, imageBlob, { cacheControl: '3600', upsert: true, contentType: 'image/jpeg' });
 
       if (error) throw error;
 
@@ -795,7 +794,7 @@ export default function Leads() {
 
       setFormData((prev: any) => ({ ...prev, [field]: publicUrl }));
       
-      toast.success(`Image optimized & uploaded! (${(webpBlob.size / 1024).toFixed(1)} KB)`, { id: `upload_modal_${field}` });
+      toast.success(`Image uploaded! (${(imageBlob.size / 1024).toFixed(1)} KB)`, { id: `upload_modal_${field}` });
     } catch (err: any) {
       toast.error("Upload failed: " + err.message, { id: `upload_modal_${field}` });
     } finally {

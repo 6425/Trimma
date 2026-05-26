@@ -1048,7 +1048,7 @@ export default function SalonPage() {
                   <p className="text-xs text-zinc-400">Branding & design works from {salon.name}'s dynamic portfolio catalog.</p>
                 </div>
                 <Badge variant="outline" className="bg-zinc-50 border-zinc-200 text-zinc-500 font-bold text-[9px] uppercase tracking-wider py-1 px-2.5">
-                  Portfolio Standard (4:3 WebP)
+                  Portfolio Standard (4:3)
                 </Badge>
               </div>
 

@@ -2,6 +2,13 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 
+function extensionForMime(mime: string) {
+  if (mime.includes("png")) return "png";
+  if (mime.includes("webp")) return "webp";
+  if (mime.includes("gif")) return "gif";
+  return "jpg";
+}
+
 export async function uploadStyleImage(formData: FormData) {
   try {
     const file = formData.get("file");
@@ -9,17 +16,19 @@ export async function uploadStyleImage(formData: FormData) {
       return { success: false as const, error: "No image file provided." };
     }
 
-    if (file.size > 512 * 1024) {
-      return { success: false as const, error: "Image is too large after compression." };
+    if (file.size > 2 * 1024 * 1024) {
+      return { success: false as const, error: "Image is too large after cropping." };
     }
 
-    const fileName = `style_${Date.now()}.webp`;
+    const contentType = file.type || "image/jpeg";
+    const ext = extensionForMime(contentType);
+    const fileName = `style_${Date.now()}.${ext}`;
     const path = `styles/${fileName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase.storage.from("public-assets").upload(path, buffer, {
-      contentType: "image/webp",
+      contentType,
       cacheControl: "31536000",
       upsert: true,
     });

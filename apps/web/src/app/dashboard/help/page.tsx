@@ -18,7 +18,7 @@ export default function HelpCenterPage() {
     },
     {
       q: "What image resolutions work best for branding visuals?",
-      a: "To ensure maximum visual aesthetic and page loading speeds, please follow these guidelines: Logo should be square (500x500px, max 2MB), Cover banner landscape (1200x400px, max 5MB), and Hero header banner high-resolution (1920x680px, max 8MB). All images are automatically compressed to high-density WebP format client-side before uploading!"
+      a: "Follow these guidelines for best results: Logo square (500x500px, max 2MB), Cover banner landscape (1200x400px, max 5MB), Hero header (1920x680px, max 8MB). Upload cropped images in JPEG or PNG — Vercel optimizes delivery automatically."
     },
     {
       q: "Are client online bookings secured with notifications?",
