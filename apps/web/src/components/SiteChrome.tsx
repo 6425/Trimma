@@ -9,8 +9,15 @@ import { SavedStylesProvider } from "@/hooks/useSavedStyles";
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isCheckout = pathname?.startsWith("/checkout");
+  const usesDashboardShell =
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/agent") ||
+    pathname?.startsWith("/customer") ||
+    pathname === "/login" ||
+    pathname === "/signup";
 
-  if (isCheckout) {
+  if (isCheckout || usesDashboardShell) {
     return <main className="min-h-screen">{children}</main>;
   }
 

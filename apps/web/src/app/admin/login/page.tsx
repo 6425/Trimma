@@ -53,7 +53,7 @@ export default function AdminLogin() {
           
           <div className="space-y-4 relative z-10">
             <div className="mb-4">
-              <Logo title="Trimma" tagline="Admin Command Center" />
+              <Logo title="Trimma" tagline="Admin Command Center" showTagline />
             </div>
             <div>
               <h2 className="text-zinc-900 text-xl font-bold">Restricted Access</h2>
