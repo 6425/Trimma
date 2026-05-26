@@ -24,9 +24,11 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
   return (
     <SalonFavoritesProvider>
       <SavedStylesProvider>
-        <GlobalHeader />
-        <main className="flex-1">{children}</main>
-        <GlobalFooter />
+        <div className="trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900">
+          <GlobalHeader />
+          <main className="flex-1">{children}</main>
+          <GlobalFooter />
+        </div>
       </SavedStylesProvider>
     </SalonFavoritesProvider>
   );

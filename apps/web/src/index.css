@@ -427,23 +427,6 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading tracking-tight font-semibold;
   }
-
-  /* 50% H1 Typography Downscales */
-  h1.text-7xl { font-size: 2.25rem !important; line-height: 1 !important; }
-  h1.text-6xl { font-size: 1.875rem !important; line-height: 1 !important; }
-  h1.text-5xl { font-size: 1.5rem !important; line-height: 1.1 !important; }
-  h1.text-4xl { font-size: 1.125rem !important; line-height: 1.2 !important; }
-  h1.text-3xl { font-size: 0.9375rem !important; line-height: 1.2 !important; }
-  h1.text-2xl { font-size: 0.75rem !important; line-height: 1.2 !important; }
-  h1.text-xl  { font-size: 0.625rem !important; line-height: 1.2 !important; }
-
-  @media (min-width: 768px) {
-    h1.md\:text-7xl { font-size: 2.25rem !important; line-height: 1 !important; }
-    h1.md\:text-6xl { font-size: 1.875rem !important; line-height: 1 !important; }
-    h1.md\:text-5xl { font-size: 1.5rem !important; line-height: 1.1 !important; }
-    h1.md\:text-4xl { font-size: 1.125rem !important; line-height: 1.2 !important; }
-    h1.md\:text-3xl { font-size: 0.9375rem !important; line-height: 1.2 !important; }
-  }
 }
 
 @layer utilities {
@@ -489,17 +472,11 @@
   [data-slot="button"],
   [role="button"] {
     max-width: 100%;
-    /* Prevent text overflow inside buttons */
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
-  /* Card containers clip overflow so nothing bleeds out */
+  /* Card containers clip overflow so media doesn't bleed out */
   .card,
-  [data-slot="card"],
-  .rounded-xl,
-  .rounded-2xl,
-  .rounded-3xl {
+  [data-slot="card"] {
     overflow: hidden;
   }
 
