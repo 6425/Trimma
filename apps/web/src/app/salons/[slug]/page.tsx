@@ -27,6 +27,7 @@ import {
 } from "@/lib/promotion-booking";
 import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
 import { toast } from "sonner";
+import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 
 const iconMap: Record<string, any> = {
   Wind, Wifi, Car, Armchair, Sofa, Coffee, Star, Shield, Sun, CheckCircle, Smartphone, LayoutGrid
@@ -193,7 +194,7 @@ export default function SalonPage() {
       .from("salon_amenities")
       .select("*")
       .eq("salon_id", salonData.id)
-      .or("has_amenity.eq.true,quantity.gt.0"),
+      .or("value.eq.true,value.gt.0"),
       supabase
       .from("global_amenities")
       .select("*"),
@@ -238,16 +239,13 @@ export default function SalonPage() {
       
       if (amenitiesRes.data && globalRes.data) {
       const globalMap = Object.fromEntries(globalRes.data.map((g: any) => [g.id, g]));
-      const formatted = amenitiesRes.data.map((am: any) => {
+      const formatted = amenitiesRes.data
+      .map((am: any) => {
       const ga = globalMap[am.amenity_id];
       if (!ga) return null;
-      return {
-      name: ga.name,
-      icon_name: ga.icon_name,
-      quantity: am.quantity,
-      type: ga.type
-      };
-      }).filter(Boolean);
+      return formatPublicSalonAmenity(ga, am);
+      })
+      .filter(Boolean);
       setAmenities(formatted);
       }
       } catch (err) {

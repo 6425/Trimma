@@ -10,6 +10,10 @@ import Card from "../../../components/ui/Card";
 import { supabase } from "../../../config/supabase";
 import { toast } from "sonner";
 import { LocationHierarchySelect } from "../../../components/locations/LocationHierarchySelect";
+import {
+  buildSalonAmenityInsert,
+  parseSalonAmenityValue,
+} from "@/lib/salon-amenities";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -232,8 +236,12 @@ export default function SalonProfilePage() {
       const { data: salonAmenitiesData } = await supabase.from("salon_amenities").select("*").eq("salon_id", salonData.id);
       if (salonAmenitiesData) {
         const amenitiesMap: Record<string, any> = {};
-        salonAmenitiesData.forEach(sa => {
-          amenitiesMap[sa.amenity_id] = { has_amenity: sa.has_amenity, quantity: sa.quantity };
+        salonAmenitiesData.forEach((sa) => {
+          const globalAmenity = amenitiesList?.find((item) => item.id === sa.amenity_id);
+          amenitiesMap[sa.amenity_id] = parseSalonAmenityValue(
+            globalAmenity?.type ?? "boolean",
+            sa.value
+          );
         });
         setSalonAmenities(amenitiesMap);
       }
@@ -520,17 +528,29 @@ export default function SalonProfilePage() {
 
       // Update Salon Amenities
       const amenityInserts = Object.keys(salonAmenities)
-        .filter(amenityId => salonAmenities[amenityId].has_amenity || salonAmenities[amenityId].quantity !== null)
-        .map(amenityId => ({
-          salon_id: salon.id,
-          amenity_id: amenityId,
-          has_amenity: salonAmenities[amenityId].has_amenity,
-          quantity: salonAmenities[amenityId].quantity
-        }));
-      
-      await supabase.from("salon_amenities").delete().eq("salon_id", salon.id);
+        .map((amenityId) => {
+          const globalAmenity = globalAmenities.find((item) => item.id === amenityId);
+          if (!globalAmenity) return null;
+          return buildSalonAmenityInsert(
+            salon.id,
+            amenityId,
+            globalAmenity.type,
+            salonAmenities[amenityId]
+          );
+        })
+        .filter(Boolean);
+
+      const { error: deleteAmenitiesError } = await supabase
+        .from("salon_amenities")
+        .delete()
+        .eq("salon_id", salon.id);
+      if (deleteAmenitiesError) throw deleteAmenitiesError;
+
       if (amenityInserts.length > 0) {
-        await supabase.from("salon_amenities").insert(amenityInserts);
+        const { error: insertAmenitiesError } = await supabase
+          .from("salon_amenities")
+          .insert(amenityInserts);
+        if (insertAmenitiesError) throw insertAmenitiesError;
       }
 
       toast.success("Profile saved successfully");
