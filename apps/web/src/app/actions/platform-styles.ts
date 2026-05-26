@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { createServerSupabaseClient } from "@/config/supabase-server";
 
 export type SavePlatformStyleInput = {
   id?: string;
@@ -77,7 +78,7 @@ function normalizePublicStyles(rows: RawPublicStyleRow[] | null): PublicPlatform
 
 export async function getPublicPlatformStyles() {
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from("platform_styles")
       .select(PUBLIC_STYLE_SELECT)
@@ -101,13 +102,6 @@ export async function getPublicPlatformStyles() {
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load styles.";
-    if (message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
-      return {
-        success: false as const,
-        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY (add it to apps/web/.env).",
-        styles: [] as PublicPlatformStyle[],
-      };
-    }
     return { success: false as const, error: message, styles: [] as PublicPlatformStyle[] };
   }
 }

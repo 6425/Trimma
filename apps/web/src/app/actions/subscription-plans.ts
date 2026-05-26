@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { createServerSupabaseClient } from "@/config/supabase-server";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 
 export type PublicSubscriptionPlan = {
@@ -24,7 +24,7 @@ export type PublicSubscriptionPlan = {
 
 export async function getPublicSubscriptionPlans() {
   try {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from("subscription_plans")
       .select("*")
