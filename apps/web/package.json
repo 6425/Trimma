@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "predev": "node scripts/ensure-dev-port.mjs",
-    "dev": "next dev --turbo -p 3000",
+    "dev": "next dev -p 3000",
     "dev:restart": "node scripts/restart-dev.mjs",
     "build": "next build",
     "start": "next start",
