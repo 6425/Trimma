@@ -17,8 +17,18 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
     pathname === "/login" ||
     pathname === "/signup";
 
-  if (isCheckout || usesDashboardShell) {
+  if (isCheckout) {
     return <main className="min-h-screen">{children}</main>;
+  }
+
+  if (usesDashboardShell) {
+    return (
+      <SalonFavoritesProvider>
+        <SavedStylesProvider>
+          <main className="min-h-screen">{children}</main>
+        </SavedStylesProvider>
+      </SalonFavoritesProvider>
+    );
   }
 
   return (
