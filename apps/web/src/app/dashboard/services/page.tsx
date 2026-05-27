@@ -1,16 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, Scissors, Search, Loader2, Trash2, Edit2, Sparkles, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/config/supabase";
+import { normalizeEmail } from "@/lib/normalize-email";
+import { parseFeatureFlags } from "@/lib/parse-feature-flags";
 
 export default function DashboardServices() {
+  const router = useRouter();
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   
   // Salon and Subscription States
@@ -40,106 +45,117 @@ export default function DashboardServices() {
   });
   const [updating, setUpdating] = useState(false);
 
-  const fetchSalonAndPlan = async () => {
+  const fetchSalonAndPlan = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
+
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Unauthorized");
-
-      // 1. Fetch Salon
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("*")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
-      if (!salonData) {
-        setLoading(false);
+      if (!session?.user?.email) {
+        router.replace("/login?redirectTo=/dashboard/services");
         return;
       }
+
+      const email = normalizeEmail(session.user.email);
+
+      const { data: salonData, error: salonError } = await supabase
+        .from("salons")
+        .select("*")
+        .or(`owner_email.eq.${email},owner_gmail.eq.${email}`)
+        .maybeSingle();
+
+      if (salonError) throw salonError;
+
+      if (!salonData) {
+        setLoadError("No salon is linked to your account yet. Complete salon activation first.");
+        setServices([]);
+        setSalon(null);
+        return;
+      }
+
       setSalon(salonData);
 
-      // 2. Fetch Active Salon Services
-      const { data: activeServices } = await supabase
-        .from("services")
-        .select("*")
-        .eq("salon_id", salonData.id)
-        .order("created_at", { ascending: false });
-      setServices(activeServices || []);
-
-      // 3. Fetch Subscription Plan
-      let plan = null;
-      if (salonData.subscription_plan_id) {
-        const { data: planData } = await supabase
-          .from("subscription_plans")
+      const [
+        activeServicesRes,
+        planRes,
+        categoriesRes,
+        masterServicesRes,
+      ] = await Promise.all([
+        supabase
+          .from("services")
           .select("*")
-          .eq("id", salonData.subscription_plan_id)
-          .maybeSingle();
-        plan = planData;
-      }
+          .eq("salon_id", salonData.id)
+          .order("created_at", { ascending: false }),
+        salonData.subscription_plan_id
+          ? supabase
+              .from("subscription_plans")
+              .select("*")
+              .eq("id", salonData.subscription_plan_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        supabase.from("categories").select("*").order("name"),
+        supabase.from("global_services").select("*").order("name"),
+      ]);
+
+      if (activeServicesRes.error) throw activeServicesRes.error;
+      if (planRes.error) throw planRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
+      if (masterServicesRes.error) throw masterServicesRes.error;
+
+      setServices(activeServicesRes.data || []);
+
+      const plan = planRes.data;
       setSubscriptionPlan(plan);
 
-      // 4. Fetch All Primary Categories and Filter by Plan Rules
-      const { data: allCategories } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
+      const allCategories = categoriesRes.data || [];
+      let filteredCats = allCategories;
 
-      let filteredCats = allCategories || [];
-      
-      if (plan) {
+      if (plan?.name) {
         const planNameLower = plan.name.toLowerCase();
-        // Dynamic subscription business logics:
-        if (planNameLower.includes("basic") || plan.monthly_price <= 5000) {
-          filteredCats = (allCategories || []).filter(c => 
-            c.name === "Barber Salon" || c.name === "Men's Grooming"
+        if (planNameLower.includes("basic") || Number(plan.monthly_price) <= 5000) {
+          filteredCats = allCategories.filter((c) =>
+            ["Barber Salon", "Men's Grooming"].includes(c.name)
           );
-        } else if (planNameLower.includes("growth") || plan.monthly_price <= 10000) {
-          filteredCats = (allCategories || []).filter(c => 
-            c.name === "Barber Salon" || c.name === "Men's Grooming" || 
-            c.name === "Beauty Parlours" || c.name === "Nail Studio"
+        } else if (planNameLower.includes("growth") || Number(plan.monthly_price) <= 10000) {
+          filteredCats = allCategories.filter((c) =>
+            ["Barber Salon", "Men's Grooming", "Beauty Parlours", "Nail Studio"].includes(c.name)
           );
         }
       }
-      
+
       setAllowedCategories(filteredCats);
-      if (filteredCats.length > 0) {
-        setActiveCategoryTab(filteredCats[0].id);
-      }
+      setActiveCategoryTab(filteredCats[0]?.id || "");
 
-      // 5. Fetch Global Master Services
-      const { data: masterServices } = await supabase
-        .from("global_services")
-        .select("*");
-      setGlobalServices(masterServices || []);
+      const masterServices = masterServicesRes.data || [];
+      setGlobalServices(masterServices);
 
-      // Pre-initialize selected services state for standard services mapping
-      if (masterServices) {
-        const initialSelectedState: any = {};
-        masterServices.forEach((s: any) => {
-          const matchedCat = allCategories?.find(c => c.id === s.category_id);
-          initialSelectedState[s.id] = {
-            price: (s.suggested_price || 1500).toString(),
-            duration_min: "30",
-            checked: false,
-            name: s.name,
-            description: s.description || "",
-            categoryName: matchedCat ? matchedCat.name : "General"
-          };
-        });
-        setSelectedServices(initialSelectedState);
-      }
-
-    } catch (error: any) {
-      toast.error("Failed to load catalog configurations: " + error.message);
+      const initialSelectedState: typeof selectedServices = {};
+      masterServices.forEach((service: any) => {
+        const matchedCat = allCategories.find((c) => c.id === service.category_id);
+        initialSelectedState[service.id] = {
+          price: (service.suggested_price || 1500).toString(),
+          duration_min: "30",
+          checked: false,
+          name: service.name,
+          description: service.description || "",
+          categoryName: matchedCat ? matchedCat.name : "General",
+        };
+      });
+      setSelectedServices(initialSelectedState);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setLoadError(message);
+      toast.error("Failed to load service catalog: " + message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchSalonAndPlan());
-  }, []);
+    void fetchSalonAndPlan();
+  }, [fetchSalonAndPlan]);
+
+  const planFlags = parseFeatureFlags(subscriptionPlan?.feature_flags);
 
   const handleToggleSelect = (id: string) => {
     const isCurrentlyChecked = selectedServices[id]?.checked || false;
@@ -158,7 +174,7 @@ export default function DashboardServices() {
       }
 
       // 2. Check maximum unique categories limit
-      const allowedCategoriesLimit = subscriptionPlan?.feature_flags?.allowed_categories_limit || 2;
+      const allowedCategoriesLimit = planFlags.allowed_categories_limit || 2;
       const projectedCategories = new Set(services.map(s => s.category));
       
       selectedIds.forEach(x => {
@@ -209,7 +225,7 @@ export default function DashboardServices() {
       );
     }
 
-    const allowedCategoriesLimit = subscriptionPlan?.feature_flags?.allowed_categories_limit || 2;
+    const allowedCategoriesLimit = planFlags.allowed_categories_limit || 2;
     const projectedCategories = new Set(services.map(s => s.category));
     
     selectedIds.forEach(id => {
@@ -323,7 +339,7 @@ export default function DashboardServices() {
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const hasDiscountFeature = subscriptionPlan?.feature_flags?.features?.includes("Discounts & Promotions") ?? false;
+  const hasDiscountFeature = planFlags.features?.includes("Discounts & Promotions") ?? false;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -403,6 +419,19 @@ export default function DashboardServices() {
           <div className="py-24 flex flex-col items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-brand mb-2" />
             <p className="text-zinc-400 font-medium font-sans">Syncing service database...</p>
+          </div>
+        ) : loadError ? (
+          <div className="py-24 flex flex-col items-center justify-center text-center p-8">
+            <h3 className="text-lg font-semibold text-zinc-900">Unable to load services</h3>
+            <p className="text-zinc-500 max-w-md mx-auto mt-2 mb-6">{loadError}</p>
+            <div className="flex gap-3">
+              <Button onClick={() => fetchSalonAndPlan()} variant="outline" className="rounded-xl font-bold">
+                Retry
+              </Button>
+              <Button onClick={() => router.push("/dashboard/profile")} className="rounded-xl font-bold bg-brand text-white">
+                Complete Salon Setup
+              </Button>
+            </div>
           </div>
         ) : filteredServices.length === 0 ? (
           <div className="py-24 flex flex-col items-center justify-center text-center p-8">
