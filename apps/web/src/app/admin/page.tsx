@@ -458,11 +458,13 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 text-amber-800 font-bold text-sm mb-2">
                         <ShieldAlert className="w-4 h-4" /> Policy Action Required
                       </div>
-                      <p className="text-xs text-amber-900 mb-2">Supabase is blocking guest writes. Run this in your SQL editor to bypass:</p>
+                      <p className="text-xs text-amber-900 mb-2">
+                        Supabase RLS is blocking guest checkout or admin writes. Run the production-safe patch in Supabase SQL Editor:
+                      </p>
                       <pre className="p-3 bg-slate-50 text-amber-400 font-mono text-[10px] rounded-lg overflow-x-auto">
-{`ALTER TABLE public.bookings DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
+{`-- File: packages/db/GUEST_WRITE_RLS_PATCH.sql
+-- Keeps RLS enabled; adds checkout + admin policies.
+-- Do NOT disable RLS on users or bookings in production.`}
                       </pre>
                     </div>
                   )}
