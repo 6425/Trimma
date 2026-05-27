@@ -11,7 +11,7 @@ function extensionForMime(mime: string) {
 
 async function uploadPublicAssetImage(
   formData: FormData,
-  folder: "styles" | "global-services",
+  folder: string,
   filePrefix: string
 ) {
   try {
@@ -65,4 +65,11 @@ export async function uploadStyleImage(formData: FormData) {
 
 export async function uploadGlobalServiceImage(formData: FormData) {
   return uploadPublicAssetImage(formData, "global-services", "gsvc");
+}
+
+export async function uploadSalonServiceImage(formData: FormData, salonId: string) {
+  if (!salonId) {
+    return { success: false as const, error: "Salon ID is required for service image upload." };
+  }
+  return uploadPublicAssetImage(formData, `salon-services/${salonId}`, "svc");
 }

@@ -23,11 +23,17 @@ export const SERVICE_IMAGE_DIMENSION_LABEL = `${SERVICE_IMAGE_WIDTH} × ${SERVIC
 
 type UploadStage = "idle" | "preparing" | "compressing" | "uploading";
 
+export type ServiceImageUploadResult =
+  | { success: true; publicUrl: string; bytes: number }
+  | { success: false; error: string };
+
 type GlobalServiceIconUploadProps = {
   value?: string | null;
   onChange: (url: string) => void;
   onClear: () => void;
   size?: "sm" | "md";
+  uploadAction?: (formData: FormData) => Promise<ServiceImageUploadResult>;
+  uploadContextLabel?: string;
 };
 
 export function GlobalServiceIconUpload({
@@ -35,6 +41,8 @@ export function GlobalServiceIconUpload({
   onChange,
   onClear,
   size = "md",
+  uploadAction,
+  uploadContextLabel = "global service catalog",
 }: GlobalServiceIconUploadProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const cropPreviewRevokeRef = useRef<(() => void) | null>(null);
@@ -130,9 +138,10 @@ export function GlobalServiceIconUpload({
       const formData = new FormData();
       formData.append("file", imageBlob, `service.${DEFAULT_UPLOAD_EXT}`);
 
-      const result = await uploadGlobalServiceImage(formData);
+      const upload = uploadAction ?? uploadGlobalServiceImage;
+      const result = await upload(formData);
       if (!result.success) {
-        throw new Error(result.error);
+        throw new Error("error" in result ? result.error : "Upload failed.");
       }
 
       onChange(result.publicUrl);
@@ -176,7 +185,7 @@ export function GlobalServiceIconUpload({
             </div>
 
             <p className="text-xs text-zinc-500 mb-3">
-              Output: {SERVICE_IMAGE_DIMENSION_LABEL} square JPG for the global service catalog.
+              Output: {SERVICE_IMAGE_DIMENSION_LABEL} square JPG for the {uploadContextLabel}.
             </p>
 
             <div className="flex-1 overflow-auto bg-zinc-100 rounded-xl flex items-center justify-center border border-zinc-200 p-4">

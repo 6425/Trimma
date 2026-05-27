@@ -31,6 +31,9 @@ import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "
 import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { fetchCachedGlobalAmenities, formatPublicSalonAmenity } from "@/lib/salon-amenities";
+import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
+
+const salonServiceIconMap = { LayoutGrid, Scissors };
 
 const BookingSheet = dynamic(
   () => import("../../../components/BookingSheet").then((m) => m.BookingSheet),
@@ -221,6 +224,7 @@ export default function SalonPage() {
       price: svc.price,
       category: svc.category || 'Hair',
       description: svc.description || 'Experience premium service.',
+      image_url: svc.image_url || null,
       popular: false
       })));
       }
@@ -931,15 +935,22 @@ export default function SalonPage() {
                 <div className="divide-y divide-slate-100">
                   {filteredServices.map((service) => (
                     <div key={service.id} className="p-4 sm:p-6 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-zinc-900 text-lg">{service.name}</h3>
-                        </div>
-                        <p className="text-zinc-500 text-sm mb-2 max-w-md">{service.description}</p>
-                        <div className="flex items-center gap-3 text-sm font-medium text-zinc-500">
-                          <span className="flex items-center"><Clock className="w-3.5 h-3.5 mr-1"/> {service.duration} mins</span>
-                          <span className="text-slate-300">•</span>
-                          <span>{service.category}</span>
+                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                        <GlobalServiceIconPreview
+                          iconImageUrl={service.image_url}
+                          iconMap={salonServiceIconMap}
+                          className="w-14 h-14 rounded-2xl"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-zinc-900 text-lg">{service.name}</h3>
+                          </div>
+                          <p className="text-zinc-500 text-sm mb-2 max-w-md">{service.description}</p>
+                          <div className="flex items-center gap-3 text-sm font-medium text-zinc-500">
+                            <span className="flex items-center"><Clock className="w-3.5 h-3.5 mr-1"/> {service.duration} mins</span>
+                            <span className="text-slate-300">•</span>
+                            <span>{service.category}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">

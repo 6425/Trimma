@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Scissors, Search, Loader2, Trash2, Edit2, Sparkles, Ban } from "lucide-react";
+import { Plus, Scissors, Search, Loader2, Trash2, Edit2, Sparkles, Ban, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,14 @@ import { toast } from "sonner";
 import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { parseFeatureFlags } from "@/lib/parse-feature-flags";
+import {
+  GlobalServiceIconPreview,
+  GlobalServiceIconUpload,
+  SERVICE_IMAGE_DIMENSION_LABEL,
+} from "../../../components/admin/GlobalServiceIconUpload";
+import { uploadSalonServiceImage } from "@/app/actions/style-images";
+
+const serviceIconMap = { LayoutGrid, Scissors };
 
 export default function DashboardServices() {
   const router = useRouter();
@@ -41,7 +49,8 @@ export default function DashboardServices() {
     description: "",
     status: "active",
     discount_percentage: "0",
-    discount_end_date: ""
+    discount_end_date: "",
+    image_url: "",
   });
   const [updating, setUpdating] = useState(false);
 
@@ -152,7 +161,13 @@ export default function DashboardServices() {
   }, [router]);
 
   useEffect(() => {
-    void fetchSalonAndPlan();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) void fetchSalonAndPlan();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [fetchSalonAndPlan]);
 
   const planFlags = parseFeatureFlags(subscriptionPlan?.feature_flags);
@@ -244,6 +259,7 @@ export default function DashboardServices() {
       
       const insertPayloads = selectedIds.map(id => {
         const info = selectedServices[id];
+        const globalSvc = globalServices.find((g) => g.id === id);
         return {
           salon_id: salon.id,
           name: info.name,
@@ -251,6 +267,7 @@ export default function DashboardServices() {
           price: parseFloat(info.price) || 1500,
           duration_min: parseInt(info.duration_min) || 30,
           description: info.description,
+          image_url: globalSvc?.icon_image_url || null,
           status: "active"
         };
       });
@@ -267,7 +284,14 @@ export default function DashboardServices() {
       // Refresh local catalog
       fetchSalonAndPlan();
     } catch (error: any) {
-      toast.error("Failed to publish services: " + error.message);
+      const message = error.message || "Unknown error";
+      if (message.includes("image_url")) {
+        toast.error(
+          "Database missing image_url column. Run packages/db/SERVICES_IMAGE_URL_PATCH.sql in Supabase SQL Editor, then try again."
+        );
+      } else {
+        toast.error("Failed to publish services: " + message);
+      }
     } finally {
       setImporting(false);
     }
@@ -299,7 +323,8 @@ export default function DashboardServices() {
       description: service.description || "",
       status: service.status,
       discount_percentage: service.discount_percentage?.toString() || "0",
-      discount_end_date: service.discount_end_date ? new Date(service.discount_end_date).toISOString().split('T')[0] : ""
+      discount_end_date: service.discount_end_date ? new Date(service.discount_end_date).toISOString().split('T')[0] : "",
+      image_url: service.image_url || "",
     });
     setShowEditModal(true);
   };
@@ -320,7 +345,8 @@ export default function DashboardServices() {
           description: editForm.description,
           status: editForm.status,
           discount_percentage: parseFloat(editForm.discount_percentage) || 0,
-          discount_end_date: editForm.discount_end_date ? new Date(editForm.discount_end_date).toISOString() : null
+          discount_end_date: editForm.discount_end_date ? new Date(editForm.discount_end_date).toISOString() : null,
+          image_url: editForm.image_url || null,
         })
         .eq("id", editingServiceId);
 
@@ -329,7 +355,14 @@ export default function DashboardServices() {
       setShowEditModal(false);
       fetchSalonAndPlan();
     } catch (error: any) {
-      toast.error("Failed to update service: " + error.message);
+      const message = error.message || "Unknown error";
+      if (message.includes("image_url")) {
+        toast.error(
+          "Database missing image_url column. Run packages/db/SERVICES_IMAGE_URL_PATCH.sql in Supabase SQL Editor, then try again."
+        );
+      } else {
+        toast.error("Failed to update service: " + message);
+      }
     } finally {
       setUpdating(false);
     }
@@ -466,8 +499,16 @@ export default function DashboardServices() {
                 {filteredServices.map((service) => (
                   <tr key={service.id} className="hover:bg-zinc-50/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-zinc-800">{service.name}</div>
-                      <div className="text-[10px] text-zinc-400 truncate max-w-[200px]">{service.description || "Experience premium service."}</div>
+                      <div className="flex items-center gap-3">
+                        <GlobalServiceIconPreview
+                          iconImageUrl={service.image_url}
+                          iconMap={serviceIconMap}
+                        />
+                        <div>
+                          <div className="font-bold text-zinc-800">{service.name}</div>
+                          <div className="text-[10px] text-zinc-400 truncate max-w-[200px]">{service.description || "Experience premium service."}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant="outline" className="bg-zinc-50 text-zinc-600 border-none px-2 py-0.5 font-bold text-[10px]">
@@ -585,6 +626,11 @@ export default function DashboardServices() {
                             onChange={() => handleToggleSelect(s.id)}
                             className="mt-1 w-4 h-4 rounded border-zinc-300 text-brand focus:ring-brand accent-brand cursor-pointer"
                           />
+                          <GlobalServiceIconPreview
+                            iconImageUrl={s.icon_image_url}
+                            iconName={s.icon}
+                            iconMap={serviceIconMap}
+                          />
                           <div className="min-w-0" onClick={() => handleToggleSelect(s.id)}>
                             <h4 className="font-bold text-sm text-zinc-800 flex items-center gap-1.5 cursor-pointer">
                               {s.name}
@@ -679,6 +725,19 @@ export default function DashboardServices() {
 
             {/* Modal Body / Form */}
             <form onSubmit={handleUpdateService} className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">
+                  Service Image ({SERVICE_IMAGE_DIMENSION_LABEL})
+                </label>
+                <GlobalServiceIconUpload
+                  value={editForm.image_url}
+                  onChange={(url) => setEditForm((prev) => ({ ...prev, image_url: url }))}
+                  onClear={() => setEditForm((prev) => ({ ...prev, image_url: "" }))}
+                  uploadAction={(formData) => uploadSalonServiceImage(formData, salon?.id || "")}
+                  uploadContextLabel="salon service catalog"
+                />
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Service Name</label>
                 <Input 

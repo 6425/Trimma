@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format, addDays } from "date-fns";
-import { Clock, User, Scissors, CheckCircle2, ChevronLeft, CreditCard, Loader2, Sparkles, Tag, AlertCircle, CalendarRange } from "lucide-react";
+import { Clock, User, Scissors, CheckCircle2, ChevronLeft, CreditCard, Loader2, Sparkles, Tag, AlertCircle, CalendarRange, LayoutGrid } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +11,9 @@ import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { getBlockedDisplaySlots } from "@/lib/booking-availability";
 import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
 import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
+import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
+
+const bookingServiceIconMap = { LayoutGrid, Scissors };
 
 export function BookingSheet({ 
   isOpen, 
@@ -937,11 +940,18 @@ export function BookingSheet({
                       isSelected ? 'border-zinc-900 ring-1 ring-zinc-900' : 'border-slate-100 hover:border-slate-200'
                     }`}
                   >
-                    <div>
-                      <div className="font-bold text-zinc-900">{service.name}</div>
-                      <div className="text-xs text-zinc-400 font-medium mt-1 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                        {service.duration} mins • {service.category}
+                    <div className="flex items-center gap-4 min-w-0">
+                      <GlobalServiceIconPreview
+                        iconImageUrl={service.image_url}
+                        iconMap={bookingServiceIconMap}
+                        className="w-12 h-12 rounded-2xl"
+                      />
+                      <div className="min-w-0">
+                        <div className="font-bold text-zinc-900">{service.name}</div>
+                        <div className="text-xs text-zinc-400 font-medium mt-1 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                          {service.duration} mins • {service.category}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
