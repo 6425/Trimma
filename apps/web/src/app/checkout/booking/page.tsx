@@ -356,8 +356,11 @@ function BookingCheckoutForm() {
 
       clearBookingCheckoutDraft();
       const whatsappQuery = result.whatsappSent ? "&whatsapp_sent=true" : "&whatsapp_sent=false";
+      const errorQuery = result.whatsappError
+        ? `&whatsapp_error=${encodeURIComponent(result.whatsappError)}`
+        : "";
       router.push(
-        `/customer?payment_success=true&booking_no=${result.bookingNo}${whatsappQuery}`
+        `/checkout/booking/success?booking_no=${result.bookingNo}${whatsappQuery}${errorQuery}`
       );
     } catch (error) {
       console.error("Booking checkout failed:", getErrorMessage(error), error);

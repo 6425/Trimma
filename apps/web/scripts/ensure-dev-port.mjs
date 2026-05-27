@@ -24,15 +24,32 @@ function isPortListening(port) {
   }
 }
 
-async function isDevServerHealthy(port) {
+async function fetchStatus(path) {
   try {
-    const response = await fetch(`http://127.0.0.1:${port}/pricing`, {
-      signal: AbortSignal.timeout(4000),
+    const response = await fetch(`http://127.0.0.1:${WEB_DEV_PORT}${path}`, {
+      signal: AbortSignal.timeout(6000),
+      cache: "no-store",
     });
-    return response.ok;
+    return response.status;
   } catch {
-    return false;
+    return 0;
   }
+}
+
+async function isDevServerHealthy() {
+  const checks = ["/api/health", "/", "/pricing"];
+  const results = await Promise.all(checks.map((path) => fetchStatus(path)));
+  return results.every((status) => status >= 200 && status < 500);
+}
+
+function restartDevCleanly() {
+  console.warn("\nDev server looks unhealthy. Restarting with a clean .next cache...\n");
+  const result = spawnSync("node", ["scripts/restart-dev.mjs"], {
+    cwd: root,
+    stdio: "inherit",
+    shell: true,
+  });
+  process.exit(result.status ?? 1);
 }
 
 const requestedPort = Number(process.env.PORT);
@@ -45,19 +62,10 @@ if (requestedPort && requestedPort !== WEB_DEV_PORT) {
 }
 
 if (isPortListening(WEB_DEV_PORT)) {
-  const healthy = await isDevServerHealthy(WEB_DEV_PORT);
+  const healthy = await isDevServerHealthy();
 
   if (!healthy) {
-    console.warn(
-      `\nPort ${WEB_DEV_PORT} is in use but the dev server looks unhealthy (Internal Server Error).\n` +
-        `Restarting with a clean cache...\n`
-    );
-    const result = spawnSync("node", ["scripts/restart-dev.mjs"], {
-      cwd: root,
-      stdio: "inherit",
-      shell: true,
-    });
-    process.exit(result.status ?? 1);
+    restartDevCleanly();
   }
 
   console.error(

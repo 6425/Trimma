@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
-import { supabase } from "../../config/supabase";
+import { supabase, signOutTrimmaSession } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
@@ -91,9 +91,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate.push("/");
+  const handleLogout = () => {
+    void signOutTrimmaSession("/");
   };
   
   const isAd = pathname?.startsWith('/admin') ?? false;
@@ -286,6 +285,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {role === 'admin' ? 'Global Settings' : 'Settings'}
           </Link>
           <button
+            type="button"
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >
@@ -357,6 +357,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
 
             <button
+              type="button"
               onClick={handleLogout}
               className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
             >

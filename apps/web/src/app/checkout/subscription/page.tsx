@@ -34,6 +34,10 @@ const DEFAULT_PLANS: Record<string, (typeof DEFAULT_SUBSCRIPTION_PLANS)[number]>
   DEFAULT_SUBSCRIPTION_PLANS.filter((p) => p.name !== "Free").map((p) => [p.name.toLowerCase(), p])
 );
 
+function createSubscriptionOrderId() {
+  return `SUB-${Math.floor(100000 + Math.random() * 900000)}`;
+}
+
 function SubscriptionCheckoutForm() {
   const searchParams = useSearchParams();
   const planParam = (searchParams.get("plan") || "pro").toLowerCase();
@@ -124,7 +128,7 @@ function SubscriptionCheckoutForm() {
       const merchantId = paymentSettings?.payhere_merchant_id || "1211149";
       const merchantSecret = paymentSettings?.payhere_merchant_secret || "4a5s6d7f8g9h";
       const environment = paymentSettings?.environment || "sandbox";
-      const orderId = `SUB-${Math.floor(100000 + Math.random() * 900000)}`;
+      const orderId = createSubscriptionOrderId();
       const amount = chargeAmount.toFixed(2);
       const cycleLabel = billingCycle === "annual" ? "Annual" : "Monthly";
 

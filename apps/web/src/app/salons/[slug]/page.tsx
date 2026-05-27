@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -8,7 +9,6 @@ import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, S
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { BookingSheet } from "../../../components/BookingSheet";
 import { SalonLocationMap } from "../../../components/SalonLocationMap";
 import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
 import { supabase } from "../../../config/supabase";
@@ -30,7 +30,12 @@ import { toast } from "sonner";
 import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
 import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
-import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
+import { fetchCachedGlobalAmenities, formatPublicSalonAmenity } from "@/lib/salon-amenities";
+
+const BookingSheet = dynamic(
+  () => import("../../../components/BookingSheet").then((m) => m.BookingSheet),
+  { ssr: false, loading: () => null }
+);
 
 const iconMap: Record<string, any> = {
   Wind, Wifi, Car, Armchair, Sofa, Coffee, Star, Shield, Sun, CheckCircle, Smartphone, LayoutGrid
@@ -96,6 +101,7 @@ export default function SalonPage() {
   const [salonReviews, setSalonReviews] = useState<PublicSalonReview[]>([]);
   const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(buildReviewSummary([]));
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   
   // UI STATES
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -180,7 +186,7 @@ export default function SalonPage() {
       setSalon(salonData);
       
       // 2 & 3. Fetch Services, Staff, and Amenities in parallel directly from Supabase
-      const [servicesRes, staffRes, amenitiesRes, globalRes, promotionsRes] = await Promise.all([
+      const [servicesRes, staffRes, amenitiesRes, globalAmenities, promotionsRes] = await Promise.all([
       supabase
       .from("services")
       .select("*")
@@ -196,9 +202,7 @@ export default function SalonPage() {
       .select("*")
       .eq("salon_id", salonData.id)
       .or("value.eq.true,value.gt.0"),
-      supabase
-      .from("global_amenities")
-      .select("*"),
+      fetchCachedGlobalAmenities(supabase),
       supabase
       .from("salon_promotion_packages")
       .select("id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type")
@@ -238,8 +242,8 @@ export default function SalonPage() {
       })));
       }
       
-      if (amenitiesRes.data && globalRes.data) {
-      const globalMap = Object.fromEntries(globalRes.data.map((g: any) => [g.id, g]));
+      if (amenitiesRes.data && globalAmenities) {
+      const globalMap = Object.fromEntries(globalAmenities.map((g: any) => [g.id, g]));
       const formatted = amenitiesRes.data
       .map((am: any) => {
       const ga = globalMap[am.amenity_id];
@@ -249,13 +253,6 @@ export default function SalonPage() {
       .filter(Boolean);
       setAmenities(formatted);
       }
-
-      const [summary, reviews] = await Promise.all([
-        getSalonReviewSummary(salonData.id),
-        getSalonReviews(salonData.id),
-      ]);
-      setReviewSummary(summary);
-      setSalonReviews(reviews);
       } catch (err) {
       console.error("Failed to load salon data via Supabase direct query", err);
       } finally {
@@ -265,6 +262,32 @@ export default function SalonPage() {
       if (slug) loadData();
     });
   }, [slug]);
+
+  // Reviews use server actions (extra round-trip) — load after the page is visible
+  useEffect(() => {
+    if (!salon?.id) return;
+    let cancelled = false;
+    void (async () => {
+      setReviewsLoading(true);
+      try {
+        const [summary, reviews] = await Promise.all([
+          getSalonReviewSummary(salon.id),
+          getSalonReviews(salon.id),
+        ]);
+        if (!cancelled) {
+          setReviewSummary(summary);
+          setSalonReviews(reviews);
+        }
+      } catch (err) {
+        console.error("Failed to load salon reviews", err);
+      } finally {
+        if (!cancelled) setReviewsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [salon?.id]);
 
   const getPromotionResolution = (promotion: SalonPromotionPackage) =>
     resolvePromotionBookingServices(promotion, services);
@@ -672,7 +695,7 @@ export default function SalonPage() {
           </div>
           <h2 className="text-2xl font-black text-zinc-900 mb-3 tracking-tight">Salon Not Found</h2>
           <p className="text-zinc-500 text-sm mb-8 leading-relaxed font-medium">
-            The salon experience you are trying to reach doesn't exist or may have been unlinked. Let's get you back on track to find Sri Lanka's finest grooming spots!
+            The salon experience you are trying to reach doesn&apos;t exist or may have been unlinked. Let&apos;s get you back on track to find Sri Lanka&apos;s finest grooming spots!
           </p>
           <div className="w-full space-y-3">
             <Link href="/salons" className="block w-full">
@@ -1045,7 +1068,7 @@ export default function SalonPage() {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Featured Gallery</h2>
-                  <p className="text-xs text-zinc-400">Branding & design works from {salon.name}'s dynamic portfolio catalog.</p>
+                  <p className="text-xs text-zinc-400">Branding & design works from {salon.name}&apos;s dynamic portfolio catalog.</p>
                 </div>
                 <Badge variant="outline" className="bg-zinc-50 border-zinc-200 text-zinc-500 font-bold text-[9px] uppercase tracking-wider py-1 px-2.5">
                   Portfolio Standard (4:3)
@@ -1110,7 +1133,14 @@ export default function SalonPage() {
                </div>
             </section>
 
-            <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
+            {reviewsLoading ? (
+              <div className="flex items-center justify-center py-12 text-zinc-400">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <span className="text-sm font-medium">Loading reviews...</span>
+              </div>
+            ) : (
+              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
+            )}
 
             {/* Mobile / tablet: map in main column */}
             <section className="lg:hidden">
@@ -1276,7 +1306,13 @@ export default function SalonPage() {
                   <Button 
                     className="w-full h-12 text-xs font-bold bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl shadow-md transition-transform active:scale-[0.98]"
                     onClick={handleInlineBookSubmit}
-                    disabled={isProcessing || !selectedServiceId || !selectedTimeSlot || !customerDetails.fullName || !customerDetails.phone}
+                    disabled={
+                      isProcessing ||
+                      (!selectedServiceId && !selectedPromotionPackage) ||
+                      !selectedTimeSlot ||
+                      !customerDetails.fullName ||
+                      !customerDetails.phone
+                    }
                   >
                     {isProcessing ? "Processing..." : "Book Now"}
                   </Button>

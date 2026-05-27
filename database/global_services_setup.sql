@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS global_services (
     suggested_price DECIMAL(10, 2),
     suggested_duration_minutes INT,
     icon VARCHAR(100), -- Lucide icon name
+    icon_image_url TEXT, -- Square service image URL (public-assets/global-services/)
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),

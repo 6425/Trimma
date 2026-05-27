@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { User, Phone, Mail, Save, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "../../../config/supabase";
 
 function ProfileFormContent() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -20,13 +22,15 @@ function ProfileFormContent() {
     void Promise.resolve().then(() => {
       async function loadProfile() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      if (!session) {
+        router.replace("/login?redirectTo=/customer/profile");
+        return;
+      }
       const user = session.user;
       setFirstName(user.user_metadata?.first_name || "");
       setLastName(user.user_metadata?.last_name || "");
       setEmail(user.email || "");
       setPhone(user.phone || user.user_metadata?.phone || "");
-      }
       setLoading(false);
       }
       loadProfile();

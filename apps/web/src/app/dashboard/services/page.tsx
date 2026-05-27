@@ -371,7 +371,7 @@ export default function DashboardServices() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Service Catalog</h1>
-          <p className="text-sm text-zinc-500">Manage your salon's service offerings and pricing.</p>
+          <p className="text-sm text-zinc-500">Manage your salon&apos;s service offerings and pricing.</p>
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 

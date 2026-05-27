@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X, Scissors, MapPin, Tag, Globe, HelpCircle, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/config/supabase";
+import { supabase, signOutTrimmaSession } from "@/config/supabase";
 import Logo from "./Logo";
 
 const IconMap: Record<string, any> = {
@@ -20,6 +20,7 @@ export default function GlobalHeader() {
   const [navCategories, setNavCategories] = useState<any[]>([]);
   const pathname = usePathname();
 
+  const isSalonsActive = pathname === "/salons" || pathname?.startsWith("/salons/");
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isDealsActive = pathname === "/deals";
   const isStylesActive = pathname === "/styles";
@@ -37,26 +38,58 @@ export default function GlobalHeader() {
     return () => window.removeEventListener("trimma:close-site-menu", closeSiteMenu);
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
-    const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
-    if (data?.role) setUserRole(data.role);
+  const fetchUserRole = async (userId: string, email?: string | null) => {
+    const { data: roleRow } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
+    if (roleRow?.role) {
+      setUserRole(roleRow.role);
+      return;
+    }
+    if (email) {
+      const { data: profile } = await supabase.from('users').select('global_role').eq('email', email).maybeSingle();
+      if (profile?.global_role) setUserRole(profile.global_role);
+    }
   };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchUserRole(session.user.id);
+      if (session?.user) fetchUserRole(session.user.id, session.user.email);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchUserRole(session.user.id);
+      if (session?.user) {
+        fetchUserRole(session.user.id, session.user.email);
+      } else {
+        setUserRole("customer");
+      }
     });
 
     void Promise.resolve().then(() => {
       const fetchCategories = async () => {
+        const cacheKey = "trimma:nav-categories";
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached) as { ts: number; data: Array<{ id: string; name: string; slug: string; icon: string }> };
+            if (Date.now() - parsed.ts < 5 * 60 * 1000 && Array.isArray(parsed.data)) {
+              setNavCategories(parsed.data);
+              return;
+            }
+          }
+        } catch {
+          // ignore cache parse errors
+        }
+
         const { data } = await supabase.from('categories').select('id, name, slug, icon').order('name');
-        if (data) setNavCategories(data);
+        if (data) {
+          setNavCategories(data);
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+          } catch {
+            // ignore quota errors
+          }
+        }
       };
       fetchCategories();
     });
@@ -82,6 +115,14 @@ export default function GlobalHeader() {
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             {/* Main nav — Categories submenus live here only */}
             <div className="hidden lg:flex items-center gap-1">
+              <Link
+                href="/salons"
+                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
+                  isSalonsActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Salons
+              </Link>
               <div
                 className="relative"
                 onMouseEnter={() => setCategoriesOpen(true)}
@@ -169,7 +210,8 @@ export default function GlobalHeader() {
                     <span className="hidden sm:inline">Dashboard</span>
                   </Link>
                   <button
-                    onClick={() => { supabase.auth.signOut().then(() => window.location.href = '/'); }}
+                    type="button"
+                    onClick={() => { void signOutTrimmaSession("/"); }}
                     className="flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100"
                     title="Sign Out"
                   >
@@ -243,6 +285,16 @@ export default function GlobalHeader() {
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-zinc-100 bg-white pb-4 max-h-[70vh] overflow-y-auto">
           <nav className="px-4 pt-2 pb-4 flex flex-col gap-1" aria-label="Site navigation">
+            <Link
+              href="/salons"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isSalonsActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              <Scissors className="w-4 h-4 shrink-0" />
+              Salons
+            </Link>
             <button
               type="button"
               onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}

@@ -8,7 +8,10 @@ export async function GET(request: Request) {
     const q = searchParams.get('q') || '';
     const location = searchParams.get('location') || '';
     const category = searchParams.get('category') || '';
-    const limit = parseInt(searchParams.get('limit') || '8', 10);
+    const sort = searchParams.get('sort') || 'recommended';
+    const minRating = parseFloat(searchParams.get('minRating') || '0');
+    const verifiedOnly = searchParams.get('verified') === 'true';
+    const limit = parseInt(searchParams.get('limit') || '12', 10);
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     const supabase = createServerSupabaseClient();
@@ -32,8 +35,22 @@ export async function GET(request: Request) {
     if (category) {
       query = query.ilike('category', `%${category}%`);
     }
+    if (minRating > 0) {
+      query = query.gte('rating', minRating);
+    }
+    if (verifiedOnly) {
+      query = query.eq('is_verified', true);
+    }
 
-    query = query.range(offset, offset + limit - 1).order('rating', { ascending: false });
+    if (sort === 'rating') {
+      query = query.order('rating', { ascending: false });
+    } else if (sort === 'name') {
+      query = query.order('name', { ascending: true });
+    } else {
+      query = query.order('is_featured', { ascending: false }).order('rating', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
 
     const { data, error } = await query;
 

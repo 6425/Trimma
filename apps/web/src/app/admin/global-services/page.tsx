@@ -5,15 +5,6 @@ import { Plus, Search, Filter, Edit2, Trash2, Loader2, LayoutGrid, Scissors, Spa
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +23,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import {
+  GlobalServiceIconPreview,
+  GlobalServiceIconUpload,
+  SERVICE_IMAGE_DIMENSION_LABEL,
+} from "../../../components/admin/GlobalServiceIconUpload";
 
 const iconMap: Record<string, any> = {
   Scissors,
@@ -91,7 +87,8 @@ export default function GlobalServiceManagement() {
         description: "",
         suggested_price: "",
         suggested_duration_minutes: 30,
-        icon: "Scissors"
+        icon: "Scissors",
+        icon_image_url: "",
       });
     }
     setIsDialogOpen(true);
@@ -105,35 +102,45 @@ export default function GlobalServiceManagement() {
 
     setIsSaving(true);
     try {
-      const payload = {
-        ...editingService,
-        slug: editingService.slug || editingService.name.toLowerCase().replace(/ /g, "-")
+      const basePayload = {
+        name: editingService.name,
+        slug: editingService.slug || editingService.name.toLowerCase().replace(/ /g, "-"),
+        category_id: editingService.category_id,
+        description: editingService.description || null,
+        suggested_price: editingService.suggested_price || null,
+        suggested_duration_minutes: Number(editingService.suggested_duration_minutes) || 30,
+        icon: editingService.icon || "Scissors",
+        icon_image_url: editingService.icon_image_url || null,
       };
 
-      // Remove joined data before saving
-      delete payload.category;
-
       let error;
-      if (payload.id) {
+      if (editingService.id) {
         const { error: err } = await supabase
           .from("global_services")
-          .update(payload)
-          .eq("id", payload.id);
+          .update(basePayload)
+          .eq("id", editingService.id);
         error = err;
       } else {
         const { error: err } = await supabase
           .from("global_services")
-          .insert([payload]);
+          .insert([basePayload]);
         error = err;
       }
 
       if (error) throw error;
 
-      toast.success(payload.id ? "Template updated" : "Global service created");
+      toast.success(editingService.id ? "Template updated" : "Global service created");
       setIsDialogOpen(false);
       fetchData();
     } catch (error: any) {
-      toast.error("Error saving: " + error.message);
+      const message = error.message || "Unknown error";
+      if (message.includes("icon_image_url")) {
+        toast.error(
+          "Database missing icon_image_url column. Run packages/db/GLOBAL_SERVICES_ICON_IMAGE_PATCH.sql in Supabase SQL Editor, then try again."
+        );
+      } else {
+        toast.error("Error saving: " + message);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -242,15 +249,15 @@ export default function GlobalServiceManagement() {
                   </td>
                 </tr>
               ) : (
-                filteredServices.map((service) => {
-                  const IconComp = iconMap[service.icon] || LayoutGrid;
-                  return (
+                filteredServices.map((service) => (
                     <tr key={service.id} className="hover:bg-zinc-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-500 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
-                            <IconComp className="w-6 h-6" />
-                          </div>
+                          <GlobalServiceIconPreview
+                            iconImageUrl={service.icon_image_url}
+                            iconName={service.icon}
+                            iconMap={iconMap}
+                          />
                           <div>
                             <div className="font-bold text-[#1A1C29]">{service.name}</div>
                             <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">slug: {service.slug}</div>
@@ -295,8 +302,7 @@ export default function GlobalServiceManagement() {
                         </div>
                       </td>
                     </tr>
-                  )
-                })
+                  ))
               )}
             </tbody>
           </table>
@@ -305,6 +311,7 @@ export default function GlobalServiceManagement() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {editingService && (
         <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
           <div className="bg-white p-8 text-zinc-900 relative">
             <LayoutGrid className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12" />
@@ -354,38 +361,19 @@ export default function GlobalServiceManagement() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Icon Styling</label>
-                <Select 
-                  value={editingService?.icon}
-                  onValueChange={(val) => setEditingService({ ...editingService, icon: val })}
-                >
-                  <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
-                    <SelectValue placeholder="Select icon">
-                      {editingService?.icon && iconMap[editingService.icon] ? (
-                        <div className="flex items-center gap-2 text-zinc-700">
-                          {(() => {
-                            const IconComp = iconMap[editingService.icon];
-                            return <IconComp className="w-4 h-4 text-brand" />;
-                          })()}
-                          <span>{editingService.icon}</span>
-                        </div>
-                      ) : "Select icon"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl max-h-64">
-                    {Object.keys(iconMap).map(icon => {
-                      const IconComp = iconMap[icon];
-                      return (
-                        <SelectItem key={icon} value={icon}>
-                          <div className="flex items-center gap-2">
-                            <IconComp className="w-4 h-4 text-zinc-500" />
-                            <span>{icon}</span>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Service Image</label>
+                <GlobalServiceIconUpload
+                  value={editingService?.icon_image_url}
+                  onChange={(url) =>
+                    setEditingService({ ...editingService, icon_image_url: url })
+                  }
+                  onClear={() =>
+                    setEditingService({ ...editingService, icon_image_url: "" })
+                  }
+                />
+                <p className="text-[10px] text-zinc-400 font-medium">
+                  Square service image ({SERVICE_IMAGE_DIMENSION_LABEL}) for the catalog. Lucide icon is used when no image is set.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -439,6 +427,7 @@ export default function GlobalServiceManagement() {
             </DialogFooter>
           </div>
         </DialogContent>
+        )}
       </Dialog>
     </div>
   );

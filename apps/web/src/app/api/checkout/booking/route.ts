@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { completeBookingCheckout } from "@/lib/complete-booking-checkout";
+import { getClientIp } from "@/lib/email/rate-limit";
 import { validateCardPayment, type CardType } from "@/lib/card-payment";
 
 export async function POST(request: Request) {
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
       services: body.services || [],
       staffMemberId: body.staffMemberId || null,
       totalDuration: Number(body.totalDuration || 0),
+      clientIp: getClientIp(request),
     });
 
     return NextResponse.json(result);

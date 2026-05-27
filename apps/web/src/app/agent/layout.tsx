@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
-  Home, Map, UserPlus,
+  Home, Map, UserPlus, Building2,
   Wallet, MapPin, PhoneCall, User, LogOut, Search,
   KanbanSquare, Menu, X, Bell
 } from "lucide-react";
-import { supabase } from "@/config/supabase";
+import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "../../components/Logo";
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -23,9 +22,8 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
     });
   }, [pathname]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    void signOutTrimmaSession("/");
   };
 
   const menuSections = [
@@ -36,16 +34,17 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       ]
     },
     {
-      title: "Leads & Pipeline",
+      title: "Salons",
       items: [
-        { name: "My Assigned Salons", path: "/agent/leads", icon: <KanbanSquare className="w-4 h-4" /> },
+        { name: "My Salons", path: "/agent/salons", icon: <Building2 className="w-4 h-4" /> },
+        { name: "Field Editor", path: "/agent/leads", icon: <KanbanSquare className="w-4 h-4" /> },
+        { name: "Add Manual Lead", path: "/agent/leads/new", icon: <UserPlus className="w-4 h-4" /> },
       ]
     },
     {
       title: "Prospecting",
       items: [
         { name: "Discover Salons", path: "/agent/discover", icon: <Map className="w-4 h-4" /> },
-        { name: "Add Manual Lead", path: "/agent/leads/new", icon: <UserPlus className="w-4 h-4" /> },
       ]
     },
     {
@@ -101,7 +100,13 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                 {section.title}
               </div>
               {section.items.map((item) => {
-                const isActive = pathname === item.path || (item.path !== '/agent' && pathname.startsWith(item.path));
+                const isActive =
+                  item.path === "/agent/leads"
+                    ? pathname === "/agent/leads"
+                    : item.path === "/agent/salons"
+                      ? pathname === "/agent/salons"
+                      : pathname === item.path ||
+                        (item.path !== "/agent" && pathname.startsWith(item.path));
                 return (
                   <Link
                     key={item.name}
@@ -124,6 +129,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-white/8 shrink-0">
           <button
+            type="button"
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >
@@ -191,7 +197,8 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-2 py-2 z-30">
         {[
           { name: "Home", path: "/agent", icon: <Home className="w-5 h-5" /> },
-          { name: "My Salons", path: "/agent/leads", icon: <KanbanSquare className="w-5 h-5" /> },
+          { name: "Salons", path: "/agent/salons", icon: <Building2 className="w-5 h-5" /> },
+          { name: "Editor", path: "/agent/leads", icon: <KanbanSquare className="w-5 h-5" /> },
           { name: "Discover", path: "/agent/discover", icon: <Map className="w-5 h-5" /> },
           { name: "Tasks", path: "/agent/tasks", icon: <PhoneCall className="w-5 h-5" /> },
           { name: "Profile", path: "/agent/profile", icon: <User className="w-5 h-5" /> },

@@ -9,6 +9,7 @@ import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getAgentSalonStatusClass, getAgentSalonStatusLabel } from "@/lib/agent-salons";
 
 export default function AgentDashboard() {
   const router = useRouter();
@@ -62,22 +63,21 @@ export default function AgentDashboard() {
       setAgentEmail(email);
       setAgentName(user.user_metadata?.full_name || email.split("@")[0]);
 
-      // 2. Fetch Assigned Leads count
-      const { count: assignedCount, error: assignedErr } = await supabase
-        .from("salon_leads")
-        .select("id", { count: "exact", head: true })
-        .eq("assign_to", email);
+      // 2. Fetch assigned salons from the salons pipeline
+      const { data: assignedSalons, error: assignedErr } = await supabase
+        .from("salons")
+        .select("id, name, address, phone, rating, onboarding_status, created_at")
+        .eq("assign_to", email)
+        .order("created_at", { ascending: false });
 
       if (assignedErr) throw assignedErr;
 
-      // 3. Fetch Converted Leads count
-      const { count: convertedCount, error: convertedErr } = await supabase
-        .from("salon_leads")
-        .select("id", { count: "exact", head: true })
-        .eq("assign_to", email)
-        .eq("status", "converted");
-
-      if (convertedErr) throw convertedErr;
+      const salonRows = assignedSalons || [];
+      const assignedCount = salonRows.length;
+      const convertedCount = salonRows.filter((salon) =>
+        ["AGENT_APPROVED", "VERIFIED"].includes(salon.onboarding_status || "")
+      ).length;
+      const hotLeads = salonRows.slice(0, 3);
 
       // 4. Fetch Agent Commission Rate
       const { data: agentProfile } = await supabase
@@ -88,17 +88,7 @@ export default function AgentDashboard() {
 
       const commRate = agentProfile?.commission_rate || 10;
 
-      // 5. Fetch Hot Leads list (top 5 sorted by rating and recency)
-      const { data: hotLeads, error: leadsErr } = await supabase
-        .from("salon_leads")
-        .select("*")
-        .eq("assign_to", email)
-        .order("created_at", { ascending: false })
-        .limit(3);
-
-      if (leadsErr) throw leadsErr;
-
-      // 6. Fetch Total Booking Commissions
+      // 5. Recent assigned salons for quick access
       let totalBookingCommissions = 0;
       if (email) {
         const { data: commData } = await supabase
@@ -112,11 +102,11 @@ export default function AgentDashboard() {
       }
 
       setStats({
-        assignedCount: assignedCount || 0,
-        convertedCount: convertedCount || 0,
+        assignedCount,
+        convertedCount,
         commissionRate: commRate,
         bookingCommissions: totalBookingCommissions,
-        hotLeads: hotLeads || []
+        hotLeads,
       });
 
     } catch (error: any) {
@@ -184,9 +174,9 @@ export default function AgentDashboard() {
           {/* KPI CARDS */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
             {[
-              { title: "Assigned Leads", value: stats.assignedCount, trend: "In your pipeline", icon: <Users className="w-5 h-5 text-indigo-500" /> },
-              { title: "Active Pipeline", value: stats.assignedCount - stats.convertedCount, trend: "Leads to contact", icon: <Rocket className="w-5 h-5 text-amber-500" /> },
-              { title: "Converted Salons", value: stats.convertedCount, trend: "Subscribed live", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> },
+              { title: "Assigned Salons", value: stats.assignedCount, trend: "Managed by you", icon: <Users className="w-5 h-5 text-indigo-500" /> },
+              { title: "In Progress", value: stats.assignedCount - stats.convertedCount, trend: "Still onboarding", icon: <Rocket className="w-5 h-5 text-amber-500" /> },
+              { title: "Live Salons", value: stats.convertedCount, trend: "Approved / verified", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> },
               { title: "Total Earnings", value: `Rs ${((stats.convertedCount * 5000) + stats.bookingCommissions).toLocaleString()}`, trend: `Sub + Booking fees`, icon: <Target className="w-5 h-5 text-sky-500" /> },
             ].map((kpi, i) => (
               <div key={i} className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
@@ -217,16 +207,16 @@ export default function AgentDashboard() {
               <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 shadow-sm">
                  <div className="flex items-center gap-2 mb-4">
                    <AlertCircle className="w-5 h-5 text-emerald-600" />
-                   <h2 className="text-lg font-bold text-emerald-900">Today's Priorities</h2>
+                   <h2 className="text-lg font-bold text-emerald-900">Today&apos;s Priorities</h2>
                  </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                    <div 
-                     onClick={() => router.push("/agent/leads")}
+                     onClick={() => router.push("/agent/salons")}
                      className="bg-white rounded-xl p-4 border border-emerald-100/50 flex items-center justify-between shadow-sm cursor-pointer hover:border-emerald-300 transition-colors"
                    >
                       <div>
-                        <div className="font-bold text-zinc-900">Call Your Leads</div>
-                        <div className="text-xs font-medium text-zinc-500">Contact {stats.assignedCount - stats.convertedCount} un-contacted salons</div>
+                        <div className="font-bold text-zinc-900">View My Salons</div>
+                        <div className="text-xs font-medium text-zinc-500">{stats.assignedCount} salons assigned to you</div>
                       </div>
                       <PhoneCall className="w-5 h-5 text-emerald-500" />
                    </div>
@@ -235,8 +225,8 @@ export default function AgentDashboard() {
                      className="bg-white rounded-xl p-4 border border-emerald-100/50 flex items-center justify-between shadow-sm cursor-pointer hover:border-emerald-300 transition-colors"
                    >
                       <div>
-                        <div className="font-bold text-zinc-900">Review Live Salons</div>
-                        <div className="text-xs font-medium text-zinc-500">Verify your {stats.convertedCount} conversions</div>
+                        <div className="font-bold text-zinc-900">Open Field Editor</div>
+                        <div className="text-xs font-medium text-zinc-500">Verify details and invite owners</div>
                       </div>
                       <MessageCircle className="w-5 h-5 text-amber-500" />
                    </div>
@@ -247,11 +237,11 @@ export default function AgentDashboard() {
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="p-5 lg:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                   <div>
-                    <h2 className="text-lg font-bold text-zinc-900">Assigned Leads Queue</h2>
-                    <p className="text-sm text-zinc-500 mt-0.5">Quick lookup of your newly assigned salons</p>
+                    <h2 className="text-lg font-bold text-zinc-900">Recent Assigned Salons</h2>
+                    <p className="text-sm text-zinc-500 mt-0.5">Quick access to salons managed by you</p>
                   </div>
-                  <Link href="/agent/leads" className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline">
-                    Spreadsheet View &rarr;
+                  <Link href="/agent/salons" className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline">
+                    View all salons &rarr;
                   </Link>
                 </div>
                 <div className="divide-y divide-slate-100">
@@ -265,12 +255,8 @@ export default function AgentDashboard() {
                         <div className="flex-1">
                           <div className="flex items-start justify-between mb-1">
                             <h3 className="font-bold text-zinc-900 text-base">{lead.name}</h3>
-                            <Badge variant="secondary" className={`shadow-none font-bold text-[9px] uppercase px-2.5 py-0.5 ${
-                              lead.status === 'converted' ? 'bg-emerald-50 text-emerald-600 border-none' :
-                              lead.status === 'new' ? 'bg-blue-50 text-blue-600 border-none' :
-                              'bg-zinc-100 text-zinc-500 border-none'
-                            }`}>
-                              {lead.status}
+                            <Badge variant="secondary" className={`shadow-none font-bold text-[9px] uppercase px-2.5 py-0.5 ${getAgentSalonStatusClass(lead.onboarding_status)}`}>
+                              {getAgentSalonStatusLabel(lead.onboarding_status)}
                             </Badge>
                           </div>
                           <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">

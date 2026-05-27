@@ -69,7 +69,7 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     };
 
-    void init();
+    const timer = window.setTimeout(() => void init(), 0);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
@@ -83,6 +83,7 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      window.clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, [loadFavorites]);

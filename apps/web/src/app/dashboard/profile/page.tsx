@@ -14,6 +14,7 @@ import {
   buildSalonAmenityInsert,
   parseSalonAmenityValue,
 } from "@/lib/salon-amenities";
+import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -512,12 +513,14 @@ export default function SalonProfilePage() {
   const handleCompleteOnboarding = async () => {
     try {
       setSaving(true);
+      const { data: { session } } = await supabase.auth.getSession();
       const { error } = await supabase
         .from("salons")
         .update({
           onboarding_status: "OWNER_ACTIVATED",
           status: "pending_verification",
-          owner_activated_at: new Date().toISOString()
+          owner_activated_at: new Date().toISOString(),
+          owner_email: session?.user?.email || salon.owner_email,
         })
         .eq("id", salon.id);
 
@@ -544,7 +547,7 @@ export default function SalonProfilePage() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-20 relative">
 
       {/* OWNER ONBOARDING WIZARD OVERLAY */}
-      {onboardingStatus === "AGENT_VERIFIED" && (
+      {needsOwnerActivationWizard(onboardingStatus) && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
           <div className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 flex flex-col justify-center">
             <div className="text-center mb-10">
@@ -553,7 +556,7 @@ export default function SalonProfilePage() {
               </div>
               <h1 className="text-4xl font-black text-zinc-900 tracking-tight">Welcome to Trimma!</h1>
               <p className="text-lg text-zinc-500 mt-3 max-w-lg mx-auto">
-                We've auto-provisioned your digital storefront. Please review your details and set up your password to activate your account.
+                We&apos;ve auto-provisioned your digital storefront. Please review your details and set up your password to activate your account.
               </p>
             </div>
 
@@ -617,7 +620,7 @@ export default function SalonProfilePage() {
         <div>
           <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">{name || "Salon Profile Studio"}</h1>
-          <p className="text-zinc-500 text-sm mt-1">Manage your salon's public presence, images, and branding.</p>
+          <p className="text-zinc-500 text-sm mt-1">Manage your salon&apos;s public presence, images, and branding.</p>
         </div>
         
         <div className="flex items-center gap-3">

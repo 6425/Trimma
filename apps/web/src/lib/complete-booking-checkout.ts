@@ -1,7 +1,11 @@
 import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { insertBookingRecord, updateBookingAfterPayment } from "@/lib/booking-insert";
-import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
+import { sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
+import { sendTriggeredEmail } from "@/app/actions/email-settings";
+import { isEmailSendFailure } from "@/lib/email/result";
+import { APP_BASE_URL } from "@/lib/email/config";
+import { buildEmailRateLimitKey } from "@/lib/email/rate-limit";
 import {
   assertStaffSlotAvailable,
   parseDisplayTimeSlot,
@@ -59,6 +63,7 @@ export type CompleteBookingCheckoutInput = {
   }>;
   staffMemberId: string | null;
   totalDuration: number;
+  clientIp?: string;
 };
 
 function parseTimeSlot(timeSlot: string) {
@@ -70,7 +75,7 @@ function parseTimeSlot(timeSlot: string) {
 
 export async function completeBookingCheckout(input: CompleteBookingCheckoutInput) {
   const supabase = createSupabaseAdminClient();
-  const { draft, customer, card, payhereEnvironment, reservationFee, serviceTotal, rates, salon, services, staffMemberId, totalDuration } = input;
+  const { draft, customer, card, payhereEnvironment, reservationFee, serviceTotal, rates, salon, services, staffMemberId, totalDuration, clientIp } = input;
 
   const { hh, mm, formattedTime } = parseTimeSlot(draft.timeSlot);
   const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -285,17 +290,56 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   if (paymentUpdateError) throw new Error(paymentUpdateError.message);
 
   await updateBookingAfterPayment(supabase, newBooking.id, {
-    status: "confirmed",
+    status: "pending",
     payment_status: "reservation_paid",
     reservation_fee_paid: true,
   });
 
   try {
-    const whatsappResult = await sendWhatsAppNotification(bookingNo, {
-      customerPhone: customer.phone,
-      customerName,
-      serviceName: draft.promotionPackageName || services[0]?.name || undefined,
+    const [{ data: salonRow }, whatsappResult] = await Promise.all([
+      supabase.from("salons").select("name, address, location, slug").eq("id", salon.id).maybeSingle(),
+      sendWhatsAppReservationPaidNotification(bookingNo, {
+        customerPhone: customer.phone,
+        customerName,
+        serviceName: draft.promotionPackageName || services[0]?.name || undefined,
+      }),
+    ]);
+
+    const salonName = salonRow?.name || "your salon";
+    const salonAddress = salonRow?.address || salonRow?.location || "See Trimma for details";
+    const mapsLink = salonRow?.slug
+      ? `${APP_BASE_URL}/salons/${salonRow.slug}`
+      : APP_BASE_URL;
+    const serviceName =
+      draft.promotionPackageName ||
+      services
+        .map((service) => service.name)
+        .filter(Boolean)
+        .join(", ") ||
+      "Salon service";
+    const balanceToPay = Math.max(0, serviceTotal - resolvedReservationFee);
+
+    const emailResult = await sendTriggeredEmail({
+      triggerId: "reservation-paid",
+      to: customerEmail,
+      variables: {
+        customer_name: customerName,
+        booking_no: bookingNo,
+        salon_name: salonName,
+        booking_date: draft.bookingDate,
+        booking_time: formattedTime,
+        service_name: serviceName,
+        deposit_paid: Number(resolvedReservationFee).toLocaleString("en-LK"),
+        balance_to_pay: balanceToPay.toLocaleString("en-LK"),
+        dashboard_link: `${APP_BASE_URL}/customer`,
+      },
+      rateLimitKey: buildEmailRateLimitKey(clientIp || "checkout", customerEmail),
+      idempotencyKey: `booking-reservation-paid/${bookingNo}`,
     });
+
+    if (isEmailSendFailure(emailResult) && !emailResult.skipped) {
+      console.error("Reservation payment email failed:", emailResult.error);
+    }
 
     if (!whatsappResult.success) {
       console.error("WhatsApp confirmation failed after checkout:", whatsappResult.error);
@@ -306,15 +350,22 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
       bookingId: newBooking.id,
       whatsappSent: whatsappResult.success,
       whatsappError: whatsappResult.error || null,
+      emailSent: emailResult.success,
+      emailError: isEmailSendFailure(emailResult) ? emailResult.error : null,
+      emailId: emailResult.success ? emailResult.id : null,
     };
-  } catch (whatsappError) {
-    console.error("WhatsApp confirmation failed after checkout:", whatsappError);
+  } catch (notificationError) {
+    console.error("Post-checkout notifications failed:", notificationError);
     return {
       bookingNo,
       bookingId: newBooking.id,
       whatsappSent: false,
       whatsappError:
-        whatsappError instanceof Error ? whatsappError.message : "WhatsApp dispatch failed.",
+        notificationError instanceof Error ? notificationError.message : "Notification dispatch failed.",
+      emailSent: false,
+      emailError:
+        notificationError instanceof Error ? notificationError.message : "Email dispatch failed.",
+      emailId: null,
     };
   }
 }

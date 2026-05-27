@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../../config/supabase";
 import { toast } from "sonner";
-import { sendWhatsAppNotification } from "../actions/whatsapp";
+import { sendWhatsAppReservationPaidNotification } from "../actions/whatsapp";
 
 function DashboardContent() {
   const router = useRouter();
@@ -39,7 +39,7 @@ function DashboardContent() {
       position: "top-center"
       });
       } else if (!sessionStorage.getItem(dedupKey)) {
-      sendWhatsAppNotification(bookingNo).then((res) => {
+      sendWhatsAppReservationPaidNotification(bookingNo).then((res) => {
       sessionStorage.setItem(dedupKey, res?.success ? "sent" : "failed");
       if (res?.success) {
       toast.success("Receipt sent to your WhatsApp! 📱", {

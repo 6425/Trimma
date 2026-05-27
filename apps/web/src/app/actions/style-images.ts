@@ -9,7 +9,11 @@ function extensionForMime(mime: string) {
   return "jpg";
 }
 
-export async function uploadStyleImage(formData: FormData) {
+async function uploadPublicAssetImage(
+  formData: FormData,
+  folder: "styles" | "global-services",
+  filePrefix: string
+) {
   try {
     const file = formData.get("file");
     if (!(file instanceof Blob) || file.size === 0) {
@@ -22,8 +26,8 @@ export async function uploadStyleImage(formData: FormData) {
 
     const contentType = file.type || "image/jpeg";
     const ext = extensionForMime(contentType);
-    const fileName = `style_${Date.now()}.${ext}`;
-    const path = `styles/${fileName}`;
+    const fileName = `${filePrefix}_${Date.now()}.${ext}`;
+    const path = `${folder}/${fileName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const supabase = createSupabaseAdminClient();
@@ -53,4 +57,12 @@ export async function uploadStyleImage(formData: FormData) {
       error: err instanceof Error ? err.message : "Upload failed.",
     };
   }
+}
+
+export async function uploadStyleImage(formData: FormData) {
+  return uploadPublicAssetImage(formData, "styles", "style");
+}
+
+export async function uploadGlobalServiceImage(formData: FormData) {
+  return uploadPublicAssetImage(formData, "global-services", "gsvc");
 }

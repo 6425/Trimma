@@ -10,7 +10,7 @@ import { supabase } from "../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { getBlockedDisplaySlots } from "@/lib/booking-availability";
 import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
-import { sendBookingCreatedAlert, sendWhatsAppNotification } from "@/app/actions/whatsapp";
+import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
 
 export function BookingSheet({ 
   isOpen, 
@@ -467,7 +467,7 @@ export function BookingSheet({
                   });
 
                   // 6. Trigger WhatsApp Alerts (Since PayPal is instantly confirmed)
-                  await sendWhatsAppNotification(bookingNo);
+                  await sendWhatsAppReservationPaidNotification(bookingNo);
 
                   setConfirmedBookingId(bookingNo);
                   setStep(6);

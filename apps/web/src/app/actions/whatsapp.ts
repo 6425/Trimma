@@ -118,10 +118,33 @@ function formatWhatsAppApiError(result: {
     lower.includes("authentication error") ||
     lower.includes("error validating access token")
   ) {
-    return "Your Meta WhatsApp access token has expired. Open Meta Developer Console → WhatsApp → API Setup, generate a new token, paste it in Admin → Global Settings and apps/web/.env, then restart the dev server.";
+    return "Your Meta WhatsApp access token has expired or is invalid. Generate a new token in Meta Developer Console → WhatsApp → API Setup, then paste it in Admin → Global Settings and click Save (this updates the database — local .env alone is not enough unless it is the only configured source). Meta temporary sandbox tokens usually expire after ~24 hours.";
   }
 
   return message;
+}
+
+/**
+ * Trimma stores WhatsApp credentials in Supabase (global_payment_settings) and optionally in .env.
+ * Production uses the database value (admin panel). Local dev prefers .env when set so a fresh
+ * paste + restart works without overwriting the DB first.
+ */
+function resolveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
+  const envPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() || "";
+  const envAccessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim() || "";
+  const dbToken = dbAccessToken?.trim() || "";
+  const isDev = process.env.NODE_ENV !== "production";
+
+  const phoneId = dbPhoneId?.trim() || envPhoneId;
+  const accessToken = isDev && envAccessToken ? envAccessToken : dbToken || envAccessToken;
+  const source =
+    accessToken === dbToken && dbToken
+      ? "database"
+      : accessToken === envAccessToken && envAccessToken
+        ? "env"
+        : "database";
+
+  return { phoneId, accessToken, source, dbToken, envToken: envAccessToken };
 }
 
 export async function validateWhatsAppCredentials(
@@ -173,6 +196,7 @@ export async function getWhatsAppConfig() {
         whatsapp_access_token, 
         whatsapp_enabled,
         whatsapp_admin_alert_phone,
+        whatsapp_reservation_paid_enabled,
         whatsapp_booking_confirmed_enabled,
         whatsapp_booking_rescheduled_enabled,
         whatsapp_booking_cancelled_enabled,
@@ -181,6 +205,9 @@ export async function getWhatsAppConfig() {
         whatsapp_booking_created_enabled,
         whatsapp_agent_approval_enabled,
         whatsapp_admin_approval_enabled,
+        whatsapp_welcome_customer_enabled,
+        whatsapp_agent_lead_assigned_enabled,
+        whatsapp_template_reservation_paid,
         whatsapp_template_confirmed,
         whatsapp_template_rescheduled,
         whatsapp_template_cancelled,
@@ -191,7 +218,9 @@ export async function getWhatsAppConfig() {
         whatsapp_template_agent_approval_owner,
         whatsapp_template_agent_approval_admin,
         whatsapp_template_admin_approval_owner,
-        whatsapp_template_admin_approval_admin
+        whatsapp_template_admin_approval_admin,
+        whatsapp_template_welcome_customer,
+        whatsapp_template_agent_lead_assigned
       `)
       .single();
 
@@ -200,16 +229,13 @@ export async function getWhatsAppConfig() {
     }
 
     const enabled = dbSettings.whatsapp_enabled !== false;
-    const phoneId =
-      dbSettings.whatsapp_phone_number_id?.trim() ||
-      process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() ||
-      "";
-    const accessToken =
-      dbSettings.whatsapp_access_token?.trim() ||
-      process.env.WHATSAPP_ACCESS_TOKEN?.trim() ||
-      "";
+    const { phoneId, accessToken, source } = resolveWhatsAppCredentials(
+      dbSettings.whatsapp_phone_number_id || "",
+      dbSettings.whatsapp_access_token || ""
+    );
     
     // Trigger toggles
+    const reservationPaidEnabled = dbSettings.whatsapp_reservation_paid_enabled !== false;
     const bookingConfirmedEnabled = dbSettings.whatsapp_booking_confirmed_enabled !== false;
     const bookingRescheduledEnabled = dbSettings.whatsapp_booking_rescheduled_enabled !== false;
     const bookingCancelledEnabled = dbSettings.whatsapp_booking_cancelled_enabled !== false;
@@ -218,8 +244,11 @@ export async function getWhatsAppConfig() {
     const bookingCreatedEnabled = dbSettings.whatsapp_booking_created_enabled !== false;
     const agentApprovalEnabled = dbSettings.whatsapp_agent_approval_enabled !== false;
     const adminApprovalEnabled = dbSettings.whatsapp_admin_approval_enabled !== false;
+    const welcomeCustomerEnabled = dbSettings.whatsapp_welcome_customer_enabled !== false;
+    const agentLeadAssignedEnabled = dbSettings.whatsapp_agent_lead_assigned_enabled !== false;
     const adminAlertPhone = dbSettings.whatsapp_admin_alert_phone?.trim() || "";
 
+    const templateReservationPaid = dbSettings.whatsapp_template_reservation_paid || D.reservationPaid;
     const templateConfirmed = dbSettings.whatsapp_template_confirmed || D.confirmed;
     const templateRescheduled = dbSettings.whatsapp_template_rescheduled || D.rescheduled;
     const templateCancelled = dbSettings.whatsapp_template_cancelled || D.cancelled;
@@ -237,12 +266,17 @@ export async function getWhatsAppConfig() {
       dbSettings.whatsapp_template_admin_approval_owner || D.adminApprovalOwner;
     const templateAdminApprovalAdmin =
       dbSettings.whatsapp_template_admin_approval_admin || D.adminApprovalAdmin;
+    const templateWelcomeCustomer =
+      dbSettings.whatsapp_template_welcome_customer || D.welcomeCustomer;
+    const templateAgentLeadAssigned =
+      dbSettings.whatsapp_template_agent_lead_assigned || D.agentLeadAssigned;
 
     return { 
       enabled, 
       phoneId, 
       accessToken,
       adminAlertPhone,
+      reservationPaidEnabled,
       bookingConfirmedEnabled,
       bookingRescheduledEnabled,
       bookingCancelledEnabled,
@@ -251,6 +285,9 @@ export async function getWhatsAppConfig() {
       bookingCreatedEnabled,
       agentApprovalEnabled,
       adminApprovalEnabled,
+      welcomeCustomerEnabled,
+      agentLeadAssignedEnabled,
+      templateReservationPaid,
       templateConfirmed,
       templateRescheduled,
       templateCancelled,
@@ -262,14 +299,18 @@ export async function getWhatsAppConfig() {
       templateAgentApprovalAdmin,
       templateAdminApprovalOwner,
       templateAdminApprovalAdmin,
-      source: "database" 
+      templateWelcomeCustomer,
+      templateAgentLeadAssigned,
+      source,
     };
   } catch (err) {
     console.warn("⚠️ Failed to load WhatsApp settings from DB, falling back to static default states:", err);
+    const { phoneId, accessToken, source } = resolveWhatsAppCredentials("", "");
     return {
       enabled: true,
-      phoneId: process.env.WHATSAPP_PHONE_NUMBER_ID || "",
-      accessToken: process.env.WHATSAPP_ACCESS_TOKEN || "",
+      phoneId,
+      accessToken,
+      reservationPaidEnabled: true,
       bookingConfirmedEnabled: true,
       bookingRescheduledEnabled: true,
       bookingCancelledEnabled: true,
@@ -278,7 +319,10 @@ export async function getWhatsAppConfig() {
       bookingCreatedEnabled: true,
       agentApprovalEnabled: true,
       adminApprovalEnabled: true,
+      welcomeCustomerEnabled: true,
+      agentLeadAssignedEnabled: true,
       adminAlertPhone: "",
+      templateReservationPaid: D.reservationPaid,
       templateConfirmed: D.confirmed,
       templateRescheduled: D.rescheduled,
       templateCancelled: D.cancelled,
@@ -290,7 +334,9 @@ export async function getWhatsAppConfig() {
       templateAgentApprovalAdmin: D.agentApprovalAdmin,
       templateAdminApprovalOwner: D.adminApprovalOwner,
       templateAdminApprovalAdmin: D.adminApprovalAdmin,
-      source: "env"
+      templateWelcomeCustomer: D.welcomeCustomer,
+      templateAgentLeadAssigned: D.agentLeadAssigned,
+      source,
     };
   }
 }
@@ -302,11 +348,13 @@ export async function saveWhatsAppSettings(
   phoneId: string,
   accessToken: string,
   enabled: boolean,
+  reservationPaidEnabled?: boolean,
   bookingConfirmedEnabled?: boolean,
   bookingRescheduledEnabled?: boolean,
   bookingCancelledEnabled?: boolean,
   bookingReviewEnabled?: boolean,
   onboardingInviteEnabled?: boolean,
+  templateReservationPaid?: string,
   templateConfirmed?: string,
   templateRescheduled?: string,
   templateCancelled?: string,
@@ -321,17 +369,33 @@ export async function saveWhatsAppSettings(
   templateAgentApprovalOwner?: string,
   templateAgentApprovalAdmin?: string,
   templateAdminApprovalOwner?: string,
-  templateAdminApprovalAdmin?: string
+  templateAdminApprovalAdmin?: string,
+  welcomeCustomerEnabled?: boolean,
+  agentLeadAssignedEnabled?: boolean,
+  templateWelcomeCustomer?: string,
+  templateAgentLeadAssigned?: string
 ) {
   try {
+    const trimmedPhoneId = phoneId.trim();
+    const trimmedToken = accessToken.trim();
+
+    const validation = await validateWhatsAppCredentials(trimmedPhoneId, trimmedToken);
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: validation.error || "WhatsApp token validation failed. Generate a new Meta token and try again.",
+      };
+    }
+
     const { error } = await getSupabaseAdmin()
       .from("global_payment_settings")
       .upsert({
         id: "00000000-0000-0000-0000-000000000001",
-        whatsapp_phone_number_id: phoneId,
-        whatsapp_access_token: accessToken,
+        whatsapp_phone_number_id: trimmedPhoneId,
+        whatsapp_access_token: trimmedToken,
         whatsapp_enabled: enabled,
         whatsapp_admin_alert_phone: adminAlertPhone?.trim() || null,
+        whatsapp_reservation_paid_enabled: reservationPaidEnabled !== false,
         whatsapp_booking_confirmed_enabled: bookingConfirmedEnabled !== false,
         whatsapp_booking_rescheduled_enabled: bookingRescheduledEnabled !== false,
         whatsapp_booking_cancelled_enabled: bookingCancelledEnabled !== false,
@@ -340,6 +404,9 @@ export async function saveWhatsAppSettings(
         whatsapp_booking_created_enabled: bookingCreatedEnabled !== false,
         whatsapp_agent_approval_enabled: agentApprovalEnabled !== false,
         whatsapp_admin_approval_enabled: adminApprovalEnabled !== false,
+        whatsapp_welcome_customer_enabled: welcomeCustomerEnabled !== false,
+        whatsapp_agent_lead_assigned_enabled: agentLeadAssignedEnabled !== false,
+        whatsapp_template_reservation_paid: templateReservationPaid || null,
         whatsapp_template_confirmed: templateConfirmed || null,
         whatsapp_template_rescheduled: templateRescheduled || null,
         whatsapp_template_cancelled: templateCancelled || null,
@@ -351,6 +418,8 @@ export async function saveWhatsAppSettings(
         whatsapp_template_agent_approval_admin: templateAgentApprovalAdmin || null,
         whatsapp_template_admin_approval_owner: templateAdminApprovalOwner || null,
         whatsapp_template_admin_approval_admin: templateAdminApprovalAdmin || null,
+        whatsapp_template_welcome_customer: templateWelcomeCustomer || null,
+        whatsapp_template_agent_lead_assigned: templateAgentLeadAssigned || null,
       });
 
     if (error) throw error;
@@ -416,7 +485,105 @@ export async function testWhatsAppConnection(testPhone: string) {
 }
 
 /**
- * Core appointment checkout receipt notification sender.
+ * Sent immediately after the customer pays the 20% reservation fee.
+ */
+export async function sendWhatsAppReservationPaidNotification(
+  bookingNo: string,
+  overrides?: { customerPhone?: string; customerName?: string; serviceName?: string }
+) {
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    reservationPaidEnabled,
+    templateReservationPaid,
+  } = await getWhatsAppConfig();
+
+  if (!enabled) {
+    return { success: true, message: "Disabled" };
+  }
+
+  if (!reservationPaidEnabled) {
+    return { success: true, message: "Reservation Paid Alerts Disabled" };
+  }
+
+  if (!phoneId || !accessToken) {
+    return { success: false, error: "WhatsApp credentials not configured." };
+  }
+
+  try {
+    const booking = await fetchBookingByNumber(
+      bookingNo,
+      "salons(name, phone, address, location)"
+    );
+
+    if (!booking) {
+      return { success: false, error: "Booking record not found." };
+    }
+
+    const customer = await fetchCustomerContact(booking.customer_email);
+    const customerName =
+      overrides?.customerName || customer?.full_name || "Valued Client";
+    const rawCustomerPhone = overrides?.customerPhone || customer?.phone;
+
+    if (!rawCustomerPhone) {
+      return { success: false, error: "Customer phone number is missing." };
+    }
+
+    const customerPhone = cleanPhoneNumber(rawCustomerPhone);
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
+    const serviceName =
+      overrides?.serviceName ||
+      (await resolveServiceName(booking.id, booking.services?.name));
+
+    const totalAmount = parseFloat(String(booking.amount ?? 0));
+    const depositAmount = Math.round(totalAmount * 0.2);
+    const balanceAmount = Math.round(totalAmount * 0.8);
+
+    const variables = {
+      customer_name: customerName,
+      booking_no: bookingNo,
+      salon_name: salonName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      service_name: serviceName,
+      deposit_paid: depositAmount.toLocaleString(),
+      balance_to_pay: balanceAmount.toLocaleString(),
+    };
+
+    const customerMessage = parseTemplate(templateReservationPaid || D.reservationPaid, variables);
+
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: customerPhone,
+        type: "text",
+        text: { preview_url: false, body: customerMessage },
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      return { success: false, error: formatWhatsAppApiError(result) };
+    }
+
+    return { success: true, messageId: result.messages?.[0]?.id };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send WhatsApp reservation alert.",
+    };
+  }
+}
+
+/**
+ * Salon confirmation notification sender (after owner confirms a reserved booking).
  */
 export async function sendWhatsAppNotification(
   bookingNo: string,
@@ -489,6 +656,7 @@ export async function sendWhatsAppNotification(
     // 3. Format the dynamic message via merge-tag parser
     const variables = {
       customer_name: customerName,
+      booking_no: bookingNo,
       salon_name: salonName,
       booking_date: booking.booking_date || "",
       booking_time: booking.booking_time || "",
@@ -537,7 +705,7 @@ export async function sendWhatsAppNotification(
     const ownerRawPhone = booking.salons?.phone;
     if (ownerRawPhone) {
       const ownerPhone = cleanPhoneNumber(ownerRawPhone);
-      const ownerMessage = `🔔 *NEW CONFIRMED BOOKING* 🔔\n\nYou have a new confirmed booking from ${customerName}!\n\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${serviceName}\n💳 Deposit Paid: LKR ${depositAmount.toLocaleString()}\n\nPlease prepare for their arrival! ✂️`;
+      const ownerMessage = `🔔 *BOOKING CONFIRMED* 🔔\n\nYou confirmed the booking from *${customerName}*.\n\n📋 Ref: ${bookingNo}\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${serviceName}\n\nPlease prepare for their arrival! ✂️`;
 
       await fetch(
         `https://graph.facebook.com/v18.0/${phoneId}/messages`,

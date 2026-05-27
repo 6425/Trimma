@@ -75,7 +75,7 @@ export function TopRatedSalons() {
                 <span className="text-xs text-zinc-500">{salon.reviews} reviews</span>
               </div>
               
-              <p className="text-sm text-zinc-700 italic">"{salon.quote}"</p>
+              <p className="text-sm text-zinc-700 italic">&ldquo;{salon.quote}&rdquo;</p>
             </Link>
           ))}
         </div>

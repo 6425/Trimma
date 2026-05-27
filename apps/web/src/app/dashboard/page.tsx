@@ -8,6 +8,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { CommissionCard } from "../../components/CommissionCard";
 import { fetchCommission } from "@/lib/api/commission";
 import type { CommissionRow } from "@/lib/types/commission";
+import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function Dashboard() {
       }
 
       // If the salon hasn't been verified by the owner yet, force them to the profile wizard!
-      if (salonData.onboarding_status === "AGENT_VERIFIED") {
+      if (needsOwnerActivationWizard(salonData.onboarding_status)) {
         router.replace("/dashboard/profile");
         return;
       }
@@ -219,7 +220,7 @@ export default function Dashboard() {
           </li>
           <li className="flex items-center gap-2">
              <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-             New service "Premium Fade" activated
+             New service &ldquo;Premium Fade&rdquo; activated
           </li>
         </ul>
       </div>

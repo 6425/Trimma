@@ -1,19 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   Home, CalendarDays, Heart, 
   User, LifeBuoy,
   LogOut, Scissors, Menu, X, Bell
 } from "lucide-react";
-import { supabase } from "@/config/supabase";
+import { signOutTrimmaSession } from "@/config/supabase";
 import Logo from "../../components/Logo";
 
 export default function CustomerDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -22,9 +21,8 @@ export default function CustomerDashboardLayout({ children }: { children: React.
     });
   }, [pathname]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+  const handleLogout = () => {
+    void signOutTrimmaSession("/");
   };
 
   const navItems = [
@@ -119,6 +117,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-white/8">
           <button
+            type="button"
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >

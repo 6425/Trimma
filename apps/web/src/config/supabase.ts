@@ -23,23 +23,62 @@ function isInvalidRefreshTokenError(error: unknown): boolean {
   );
 }
 
+function deleteCookie(name: string) {
+  const expired = "expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  for (const variant of [
+    `${name}=;${expired};path=/`,
+    `${name}=;${expired};path=/;SameSite=Lax`,
+    `${name}=;${expired};path=/;SameSite=Lax;Secure`,
+  ]) {
+    document.cookie = variant;
+  }
+}
+
 /** Remove all Supabase auth keys from localStorage and cookies. */
 function clearSupabaseAuthStorage() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key?.startsWith('sb-')) keysToRemove.push(key);
+    if (key?.startsWith("sb-")) keysToRemove.push(key);
   }
   keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-  document.cookie.split(';').forEach((cookie) => {
-    const name = cookie.trim().split('=')[0];
-    if (name.startsWith('sb-')) {
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
+  deleteCookie("sb-access-token");
+  deleteCookie("user-role");
+  deleteCookie("supabase-auth-token");
+
+  document.cookie.split(";").forEach((cookie) => {
+    const name = cookie.trim().split("=")[0];
+    if (name.startsWith("sb-") || name === "user-role" || name === "supabase-auth-token") {
+      deleteCookie(name);
     }
   });
+}
+
+/** Full sign-out: clears Supabase session, middleware cookies, then reloads. */
+export async function signOutTrimmaSession(redirectTo = "/") {
+  if (typeof window === "undefined") return;
+
+  sessionStorage.setItem(FORCE_CLEAR_KEY, "1");
+  sessionStorage.removeItem("sb-auth-reloaded");
+
+  await Promise.race([
+    supabase.auth
+      .signOut({ scope: "global" })
+      .catch(() => supabase.auth.signOut({ scope: "local" }))
+      .catch(() => undefined),
+    new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+  ]);
+
+  clearSupabaseAuthStorage();
+
+  const safeRedirect =
+    redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
+  window.location.replace(
+    `/api/auth/logout?redirect=${encodeURIComponent(safeRedirect)}`
+  );
 }
 
 // Clear storage before the client boots so it never attempts a doomed refresh.

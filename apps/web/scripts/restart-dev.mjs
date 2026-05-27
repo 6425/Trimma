@@ -38,27 +38,34 @@ function killPort(port) {
 killPort(WEB_DEV_PORT);
 
 const nextDir = resolve(root, ".next");
-if (existsSync(nextDir)) {
+const nextCacheDir = resolve(nextDir, "cache");
+
+function removeDir(target) {
+  if (!existsSync(target)) return;
   try {
-    rmSync(nextDir, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
-    console.log("Cleared .next cache");
+    rmSync(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
   } catch (error) {
     if (platform() === "win32") {
       spawnSync(
         "powershell",
-        ["-NoProfile", "-Command", `Remove-Item -LiteralPath '${nextDir.replace(/'/g, "''")}' -Recurse -Force -ErrorAction SilentlyContinue`],
+        ["-NoProfile", "-Command", `Remove-Item -LiteralPath '${target.replace(/'/g, "''")}' -Recurse -Force -ErrorAction SilentlyContinue`],
         { stdio: "inherit" }
       );
-      console.log("Cleared .next cache (powershell fallback)");
     } else {
       throw error;
     }
   }
 }
 
+removeDir(nextDir);
+if (existsSync(nextCacheDir)) {
+  console.log("Cleared .next/cache");
+}
+console.log("Cleared .next cache");
+
 console.log(`Starting Trimma web dev on http://localhost:${WEB_DEV_PORT} ...\n`);
 
-const result = spawnSync("npx", ["next", "dev", "-p", String(WEB_DEV_PORT)], {
+const result = spawnSync("npx", ["next", "dev", "-p", String(WEB_DEV_PORT), "--turbo"], {
   cwd: root,
   stdio: "inherit",
   shell: true,

@@ -72,3 +72,31 @@ export function formatPublicSalonAmenity(
     type: globalAmenity.type,
   };
 }
+
+type GlobalAmenityRow = {
+  id: string;
+  name: string;
+  icon_name: string;
+  type: string;
+};
+
+let cachedGlobalAmenities: GlobalAmenityRow[] | null = null;
+let globalAmenitiesInflight: Promise<GlobalAmenityRow[]> | null = null;
+
+/** Shared lookup table — cache in memory so every salon page does not re-fetch it. */
+export async function fetchCachedGlobalAmenities(
+  supabase: { from: (table: string) => { select: (cols: string) => PromiseLike<{ data: GlobalAmenityRow[] | null; error: unknown }> } }
+): Promise<GlobalAmenityRow[]> {
+  if (cachedGlobalAmenities) return cachedGlobalAmenities;
+  if (!globalAmenitiesInflight) {
+    globalAmenitiesInflight = (async () => {
+      const { data, error } = await supabase.from("global_amenities").select("*");
+      if (error) throw error;
+      cachedGlobalAmenities = data || [];
+      return cachedGlobalAmenities;
+    })().finally(() => {
+      globalAmenitiesInflight = null;
+    });
+  }
+  return globalAmenitiesInflight;
+}

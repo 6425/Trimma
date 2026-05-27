@@ -20,17 +20,36 @@ try {
 }
 
 /** @type {import('next').NextConfig} */
+const isDev = process.env.NODE_ENV !== "production";
+
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "motion", "date-fns", "recharts"]
   },
   images: {
+    // Dev: skip _next/image proxy — Supabase image fetches were timing out at 60s and blocking pages.
+    unoptimized: isDev,
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
       { protocol: 'http', hostname: '**' }
     ]
-  }
+  },
+  webpack: (config, { dev }) => {
+    // Windows dev file-watching can leave .next in a broken state after rapid edits.
+    if (dev && process.platform === "win32") {
+      config.watchOptions = {
+        ...config.watchOptions,
+        aggregateTimeout: 300,
+        poll: 1000,
+      };
+    }
+    return config;
+  },
 }
 
 export default nextConfig;

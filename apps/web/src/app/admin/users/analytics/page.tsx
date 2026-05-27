@@ -365,7 +365,7 @@ function ActivityRow({ name, role, action, context, ip, time, status }: any) {
         </div>
       </td>
       <td className="px-6 py-4 font-medium text-zinc-600">{action}</td>
-      <td className="px-6 py-4 text-zinc-500 max-w-xs truncate italic">"{context}"</td>
+      <td className="px-6 py-4 text-zinc-500 max-w-xs truncate italic">&ldquo;{context}&rdquo;</td>
       <td className="px-6 py-4 font-mono text-xs text-zinc-500">{ip}</td>
       <td className="px-6 py-4 text-zinc-500 text-xs">{time}</td>
       <td className="px-6 py-4 text-right">

@@ -1,20 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import * as Icons from "lucide-react";
-import { Search, MapPin, Star, Grid, SlidersHorizontal, Scissors, Sparkles, Loader2, Map as MapIcon } from "lucide-react";
+import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SalonListRow } from "../../components/marketplace/SalonListRow";
 import {
-  FeaturedSalonsSection,
-  PopularSalonsSection,
-  DiscountsOffersSection,
-  WhyTrimmaSection,
-  SalonOnboardingCTA,
-} from "../../components/marketplace/MarketplaceSections";
-import { SalonCard } from "../../components/marketplace/SalonCard";
+  SalonFiltersPanel,
+  countActiveFilters,
+  defaultSalonFilters,
+  type SalonFilters,
+} from "../../components/marketplace/SalonFiltersPanel";
 
 interface Salon {
   id: string;
@@ -46,7 +44,9 @@ interface Props {
   categories: Category[];
 }
 
-export default function SalonsClient({ salons: initialFeaturedSalons, categories }: Props) {
+type SortOption = "recommended" | "rating" | "price_low" | "price_high";
+
+export default function SalonsClient({ categories }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const qParam = searchParams?.get("q") || "";
@@ -55,69 +55,66 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
 
   const [searchQuery, setSearchQuery] = useState(qParam);
   const [selectedLocation, setSelectedLocation] = useState(lParam);
-  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [sortBy, setSortBy] = useState<SortOption>("recommended");
+  const [filters, setFilters] = useState<SalonFilters>(() => ({
+    ...defaultSalonFilters,
+    selectedCategories: categoryParam ? [categoryParam] : [],
+  }));
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const { current } = scrollRef;
-      const scrollAmount = direction === 'left' ? -current.offsetWidth / 2 : current.offsetWidth / 2;
-      current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
-  // Lazy loading state
   const [searchResults, setSearchResults] = useState<Salon[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const LIMIT = 8;
+  const LIMIT = 12;
 
-  const isSearching = searchQuery !== "" || selectedLocation !== "" || categoryParam !== "";
+  const fetchResults = useCallback(
+    async (reset: boolean = false) => {
+      setIsLoading(true);
+      try {
+        const offset = reset ? 0 : page * LIMIT;
+        const params = new URLSearchParams({
+          q: searchQuery,
+          location: selectedLocation,
+          category: categoryParam,
+          limit: LIMIT.toString(),
+          offset: offset.toString(),
+          sort: sortBy === "price_low" || sortBy === "price_high" ? "recommended" : sortBy,
+        });
+        if (filters.minRating > 0) params.set("minRating", String(filters.minRating));
+        if (filters.verifiedOnly) params.set("verified", "true");
 
-  // Fetch results when search params or page changes
-  const fetchResults = useCallback(async (reset: boolean = false) => {
-    if (!isSearching) return;
-    
-    setIsLoading(true);
-    try {
-      const offset = reset ? 0 : page * LIMIT;
-      const params = new URLSearchParams({
-        q: searchQuery,
-        location: selectedLocation,
-        category: categoryParam,
-        limit: LIMIT.toString(),
-        offset: offset.toString(),
-      });
-      
-      const res = await fetch(`/api/salons/search?${params.toString()}`);
-      if (!res.ok) throw new Error("Search failed");
-      const data = await res.json();
-      
-      if (reset) {
-        setSearchResults(data.salons || []);
-      } else {
-        setSearchResults((prev) => [...prev, ...(data.salons || [])]);
+        const res = await fetch(`/api/salons/search?${params.toString()}`);
+        if (!res.ok) throw new Error("Search failed");
+        const data = await res.json();
+
+        if (reset) {
+          setSearchResults(data.salons || []);
+        } else {
+          setSearchResults((prev) => [...prev, ...(data.salons || [])]);
+        }
+        setHasMore(data.hasMore);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
       }
-      setHasMore(data.hasMore);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchQuery, selectedLocation, categoryParam, page, isSearching]);
+    },
+    [searchQuery, selectedLocation, categoryParam, page, sortBy, filters.minRating, filters.verifiedOnly]
+  );
 
-  // Sync params when they change in URL
   useEffect(() => {
     void Promise.resolve().then(() => {
       setSearchQuery(qParam);
       setSelectedLocation(lParam);
+      setFilters((prev) => ({
+        ...prev,
+        selectedCategories: categoryParam ? [categoryParam] : [],
+      }));
       setPage(0);
     });
   }, [qParam, lParam, categoryParam]);
 
-  // Trigger search on mount if params exist, or when page changes
   useEffect(() => {
     void Promise.resolve().then(() => {
       fetchResults(page === 0);
@@ -129,39 +126,79 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
     if (searchQuery) params.set("q", searchQuery);
     if (selectedLocation) params.set("l", selectedLocation);
     if (categoryParam) params.set("category", categoryParam);
-    setPage(0); // reset pagination
+    setPage(0);
     router.push(`/salons?${params.toString()}`);
   };
 
-  const renderIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Sparkles;
-    return <IconComponent className="w-5 h-5 text-brand-pink" />;
-  };
+  const applyClientFilters = useCallback(
+    (salons: Salon[]) => {
+      let rows = [...salons];
 
-  // Mapper for SalonCard props
-  const mapToCardProps = (s: Salon) => ({
+      if (filters.maxPrice != null) {
+        rows = rows.filter((s) => s.startingPrice <= filters.maxPrice!);
+      }
+      if (filters.openNowOnly) {
+        rows = rows.filter((s) => s.openNow);
+      }
+      if (filters.selectedCategories.length > 0) {
+        rows = rows.filter((s) =>
+          filters.selectedCategories.some(
+            (slug) =>
+              s.category.toLowerCase().includes(slug.replace(/-/g, " ")) ||
+              s.tags.some((t) => t.toLowerCase().includes(slug.replace(/-/g, " ")))
+          )
+        );
+      }
+
+      if (sortBy === "price_low") {
+        rows.sort((a, b) => a.startingPrice - b.startingPrice);
+      } else if (sortBy === "price_high") {
+        rows.sort((a, b) => b.startingPrice - a.startingPrice);
+      } else if (sortBy === "rating") {
+        rows.sort((a, b) => b.rating - a.rating);
+      }
+
+      return rows;
+    },
+    [filters, sortBy]
+  );
+
+  const filteredSalons = useMemo(
+    () => applyClientFilters(searchResults),
+    [searchResults, applyClientFilters]
+  );
+
+  const mapToRowProps = (s: Salon) => ({
     id: s.id,
     slug: s.slug,
     name: s.name,
     image: s.image,
-    logo: s.logo,
     status: s.openNow ? "Open Now" : "Closed",
     rating: s.rating,
     reviews: s.reviews,
     city: s.location.split(",")[0].trim(),
-    categories: s.tags,
+    location: s.location,
+    categories: s.tags.length ? s.tags : [s.category],
     nextAvailable: s.nextSlot,
     priceFrom: s.startingPrice,
+    popularService: s.popularService,
     featured: s.featured,
     isVerified: s.isVerified,
   });
 
-  const featuredMapped = initialFeaturedSalons.map(mapToCardProps);
-  const searchMapped = searchResults.map(mapToCardProps);
+  const locationLabel = selectedLocation
+    ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1)
+    : "Sri Lanka";
+  const activeFilterCount = countActiveFilters(filters);
+
+  const clearFilters = () => {
+    setFilters(defaultSalonFilters);
+    setPage(0);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* HERO */}
+      {/* HERO — unchanged search bar */}
       <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-10 md:py-14">
         <div className="absolute inset-0 z-0">
           <img
@@ -184,7 +221,6 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
             <span className="text-gradient bg-primary-gradient">Sri Lanka</span>
           </h1>
 
-          {/* Search Bar */}
           <div className="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100 mt-8">
             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl">
               <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
@@ -222,130 +258,195 @@ export default function SalonsClient({ salons: initialFeaturedSalons, categories
         </div>
       </section>
 
-      {/* Categories Bar */}
-      <section className="py-6 bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="relative group">
-            <button 
-              onClick={() => scroll('left')} 
-              className="absolute -left-4 top-[calc(50%-0.5rem)] -translate-y-1/2 z-10 bg-white shadow-md p-2 rounded-full hidden md:group-hover:flex items-center justify-center hover:bg-zinc-50 transition-colors border border-zinc-100 text-zinc-700"
-            >
-              <Icons.ChevronLeft className="w-4 h-4" />
-            </button>
-            <div ref={scrollRef} className="flex overflow-x-auto gap-4 pb-2 scrollbar-none snap-x justify-start md:justify-center scroll-smooth">
-            <Link
-              href="/salons"
-              className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-            >
-              <div className="mb-1 text-brand-pink">
-                <Star className="w-5 h-5 fill-brand-pink" />
-              </div>
-              <span className="text-[10px] font-bold text-center">All</span>
+      {/* Results sub-header */}
+      <div className="bg-zinc-950 border-b border-white/5">
+        <div className="container mx-auto px-4 max-w-7xl py-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <nav className="flex items-center gap-2 text-zinc-400">
+            <Link href="/" className="hover:text-brand transition-colors">
+              Home
             </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/category/${cat.slug}`}
-                className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-              >
-                <div className="mb-1">{renderIcon(cat.icon)}</div>
-                <span className="text-[10px] font-bold text-center leading-tight">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-            </div>
-            <button 
-              onClick={() => scroll('right')} 
-              className="absolute -right-4 top-[calc(50%-0.5rem)] -translate-y-1/2 z-10 bg-white shadow-md p-2 rounded-full hidden md:group-hover:flex items-center justify-center hover:bg-zinc-50 transition-colors border border-zinc-100 text-zinc-700"
-            >
-              <Icons.ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Filter / View Bar */}
-      <div className="sticky top-[calc(3.5rem)] z-20 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex items-center justify-between h-14">
-            <div className="hidden lg:flex items-center gap-2">
-              <Button variant="outline" className="h-9 rounded-full border-slate-200 text-zinc-600 font-medium">
-                <SlidersHorizontal className="w-4 h-4 mr-2" /> All Filters
-              </Button>
-              <div className="h-6 w-px bg-slate-200 mx-2" />
-              {["Any Price", "Open Now", "Highest Rated", "AC Available"].map((f) => (
-                <Button key={f} variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">
-                  {f}
-                </Button>
-              ))}
-            </div>
-            <div className="flex items-center bg-slate-100 p-1 rounded-lg">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-900"}`}
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("map")}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === "map" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-900"}`}
-              >
-                <MapIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+            <span className="text-zinc-600">›</span>
+            <span className="font-semibold text-white">Salons in {locationLabel}</span>
+          </nav>
+          <p className="text-zinc-400 text-xs md:text-sm">
+            {isLoading && page === 0 ? (
+              "Searching salons..."
+            ) : (
+              <>
+                <span className="text-brand font-bold">{filteredSalons.length}</span> salon
+                {filteredSalons.length === 1 ? "" : "s"} found
+              </>
+            )}
+          </p>
         </div>
       </div>
 
-      {/* Salon Results / Featured */}
-      <div className="container mx-auto px-4 max-w-7xl py-8">
-        {!isSearching ? (
-          <>
-            <FeaturedSalonsSection salons={featuredMapped} />
-            <PopularSalonsSection salons={featuredMapped} />
-            <DiscountsOffersSection />
-            <WhyTrimmaSection />
-            <SalonOnboardingCTA />
-          </>
-        ) : (
-          <div className="flex flex-col space-y-8">
-            <h2 className="text-2xl font-black text-zinc-900">Search Results</h2>
-            {searchMapped.length === 0 && !isLoading ? (
-              <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
-                <Scissors className="w-12 h-12 text-zinc-300 mb-4" />
-                <p className="text-zinc-800 font-black text-lg">No salons match your search</p>
-                <p className="text-zinc-400 text-xs mt-1">Try clearing your filters or adjusting your search.</p>
+      <div className="container mx-auto px-4 max-w-7xl py-6">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left filter sidebar — desktop */}
+          <aside className="hidden lg:block w-[280px] shrink-0">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+              <SalonFiltersPanel
+                filters={filters}
+                categories={categories}
+                onChange={(next) => {
+                  setFilters(next);
+                  setPage(0);
+                }}
+                onClear={clearFilters}
+              />
+            </div>
+          </aside>
+
+          {/* Results column */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {/* Sort + mobile filter trigger */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+              <Button
+                type="button"
+                variant="outline"
+                className="lg:hidden h-10 rounded-xl border-slate-200 font-bold text-sm hover:border-brand/40 hover:text-brand"
+                onClick={() => setMobileFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="ml-2 bg-brand text-black text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <label htmlFor="salon-sort" className="text-sm font-bold text-zinc-600 whitespace-nowrap">
+                  Sort by:
+                </label>
+                <select
+                  id="salon-sort"
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value as SortOption);
+                    setPage(0);
+                  }}
+                  className="h-10 min-w-[180px] rounded-xl border border-slate-200 bg-zinc-50 px-3 text-sm font-semibold text-zinc-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                >
+                  <option value="recommended">Our top picks</option>
+                  <option value="rating">Highest rated</option>
+                  <option value="price_low">Price (lowest first)</option>
+                  <option value="price_high">Price (highest first)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active filter chips */}
+            {activeFilterCount > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {filters.verifiedOnly && (
+                  <Badge variant="secondary" className="bg-brand/10 text-brand border border-brand/20 font-semibold">
+                    Verified only
+                  </Badge>
+                )}
+                {filters.openNowOnly && (
+                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold">
+                    Open now
+                  </Badge>
+                )}
+                {filters.minRating > 0 && (
+                  <Badge variant="secondary" className="bg-white border border-slate-200 text-zinc-700 font-semibold">
+                    {filters.minRating}+ rating
+                  </Badge>
+                )}
+                {filters.maxPrice != null && (
+                  <Badge variant="secondary" className="bg-white border border-slate-200 text-zinc-700 font-semibold">
+                    Under LKR {filters.maxPrice.toLocaleString()}
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Results list */}
+            {isLoading && page === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-slate-200/80">
+                <Loader2 className="w-10 h-10 text-brand animate-spin mb-4" />
+                <p className="text-sm font-bold text-zinc-500">Loading salons...</p>
+              </div>
+            ) : filteredSalons.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-slate-200/80 text-center px-6">
+                <Star className="w-12 h-12 text-zinc-300 mb-4" />
+                <p className="text-lg font-black text-[#1A1C29]">No salons match your filters</p>
+                <p className="text-sm text-zinc-500 mt-1 max-w-md">
+                  Try adjusting your search, location, or filters to see more results.
+                </p>
+                <Button variant="outline" className="mt-4 rounded-xl border-brand/30 text-brand font-bold hover:bg-brand/5" onClick={clearFilters}>
+                  Clear filters
+                </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {searchMapped.map((salon) => (
-                  <SalonCard key={salon.id} salon={salon as any} />
+              <div className="space-y-4">
+                {filteredSalons.map((salon) => (
+                  <SalonListRow key={salon.id} salon={mapToRowProps(salon)} />
                 ))}
               </div>
             )}
 
-            {isLoading && (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-8 h-8 text-brand-pink animate-spin" />
+            {isLoading && page > 0 && (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-8 h-8 text-brand animate-spin" />
               </div>
             )}
 
-            {hasMore && !isLoading && searchMapped.length > 0 && (
-              <div className="flex justify-center mt-8">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="rounded-full px-8 border-slate-200 shadow-sm text-brand font-bold"
-                  onClick={() => setPage(p => p + 1)}
+            {hasMore && !isLoading && filteredSalons.length > 0 && (
+              <div className="flex justify-center pt-4 pb-8">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="rounded-xl px-8 border-slate-200 text-[#1A1C29] font-bold hover:border-brand/40 hover:text-brand shadow-sm"
+                  onClick={() => setPage((p) => p + 1)}
                 >
-                  Load Next 8
+                  Load more salons
                 </Button>
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Mobile filters drawer */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileFiltersOpen(false)}
+            aria-hidden
+          />
+          <div className="absolute inset-y-0 left-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto border-r border-slate-100">
+            <div className="sticky top-0 bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between">
+              <h2 className="font-black text-lg text-[#1A1C29]">Filters</h2>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="p-2 rounded-md hover:bg-slate-100"
+                aria-label="Close filters"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <SalonFiltersPanel
+                filters={filters}
+                categories={categories}
+                onChange={setFilters}
+                onClear={clearFilters}
+                compact
+                onApply={() => {
+                  setPage(0);
+                  setMobileFiltersOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

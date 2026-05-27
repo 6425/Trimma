@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS global_services (
   description TEXT,
   suggested_price NUMERIC,
   icon TEXT,
+  icon_image_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

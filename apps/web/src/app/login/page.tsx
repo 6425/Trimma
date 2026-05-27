@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React from 'react';
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { Suspense } from 'react';
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,17 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/config/supabase";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white text-zinc-500">Loading…</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || searchParams.get("redirect") || "/auth/callback";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +38,15 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/auth/callback");
+    // Always pass through auth callback so middleware cookies (sb-access-token, user-role) are set
+    router.push(`/auth/callback?next=${encodeURIComponent(redirectTo)}`);
   };
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`
       }
     });
     
@@ -112,7 +123,7 @@ export default function LoginPage() {
           </form>
           
           <div className="text-center text-sm text-zinc-500">
-            Don't have an account? <Link href="/signup" className="text-zinc-900 font-medium hover:underline">Create an account</Link>
+            Don&apos;t have an account? <Link href="/signup" className="text-zinc-900 font-medium hover:underline">Create an account</Link>
           </div>
         </div>
       </div>

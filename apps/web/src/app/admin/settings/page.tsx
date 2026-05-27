@@ -10,6 +10,7 @@ import {
   getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection, validateWhatsAppCredentials
 } from "../../actions/whatsapp";
 import { WHATSAPP_TRIGGER_CATALOG } from "@/lib/whatsapp-templates";
+import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
 
 function SettingsPanelContent() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ function SettingsPanelContent() {
   const [phoneId, setPhoneId] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [enabled, setEnabled] = useState(true);
+  const [reservationPaidEnabled, setReservationPaidEnabled] = useState(true);
   const [bookingConfirmedEnabled, setBookingConfirmedEnabled] = useState(true);
   const [bookingRescheduledEnabled, setBookingRescheduledEnabled] = useState(true);
   const [bookingCancelledEnabled, setBookingCancelledEnabled] = useState(true);
@@ -28,10 +30,13 @@ function SettingsPanelContent() {
   const [bookingCreatedEnabled, setBookingCreatedEnabled] = useState(true);
   const [agentApprovalEnabled, setAgentApprovalEnabled] = useState(true);
   const [adminApprovalEnabled, setAdminApprovalEnabled] = useState(true);
+  const [welcomeCustomerEnabled, setWelcomeCustomerEnabled] = useState(true);
+  const [agentLeadAssignedEnabled, setAgentLeadAssignedEnabled] = useState(true);
   const [adminAlertPhone, setAdminAlertPhone] = useState("");
   const [configSource, setConfigSource] = useState("database");
 
   // Dynamic template states
+  const [templateReservationPaid, setTemplateReservationPaid] = useState("");
   const [templateConfirmed, setTemplateConfirmed] = useState("");
   const [templateRescheduled, setTemplateRescheduled] = useState("");
   const [templateCancelled, setTemplateCancelled] = useState("");
@@ -43,6 +48,8 @@ function SettingsPanelContent() {
   const [templateAgentApprovalAdmin, setTemplateAgentApprovalAdmin] = useState("");
   const [templateAdminApprovalOwner, setTemplateAdminApprovalOwner] = useState("");
   const [templateAdminApprovalAdmin, setTemplateAdminApprovalAdmin] = useState("");
+  const [templateWelcomeCustomer, setTemplateWelcomeCustomer] = useState("");
+  const [templateAgentLeadAssigned, setTemplateAgentLeadAssigned] = useState("");
 
   // Show/Hide Access Token
   const [showToken, setShowToken] = useState(false);
@@ -58,6 +65,7 @@ function SettingsPanelContent() {
       setPhoneId(config.phoneId);
       setAccessToken(config.accessToken);
       setEnabled(config.enabled);
+      setReservationPaidEnabled(config.reservationPaidEnabled !== false);
       setBookingConfirmedEnabled(config.bookingConfirmedEnabled !== false);
       setBookingRescheduledEnabled(config.bookingRescheduledEnabled !== false);
       setBookingCancelledEnabled(config.bookingCancelledEnabled !== false);
@@ -66,7 +74,10 @@ function SettingsPanelContent() {
       setBookingCreatedEnabled(config.bookingCreatedEnabled !== false);
       setAgentApprovalEnabled(config.agentApprovalEnabled !== false);
       setAdminApprovalEnabled(config.adminApprovalEnabled !== false);
+      setWelcomeCustomerEnabled(config.welcomeCustomerEnabled !== false);
+      setAgentLeadAssignedEnabled(config.agentLeadAssignedEnabled !== false);
       setAdminAlertPhone(config.adminAlertPhone || "");
+      setTemplateReservationPaid(config.templateReservationPaid || "");
       setTemplateConfirmed(config.templateConfirmed || "");
       setTemplateRescheduled(config.templateRescheduled || "");
       setTemplateCancelled(config.templateCancelled || "");
@@ -78,6 +89,8 @@ function SettingsPanelContent() {
       setTemplateAgentApprovalAdmin(config.templateAgentApprovalAdmin || "");
       setTemplateAdminApprovalOwner(config.templateAdminApprovalOwner || "");
       setTemplateAdminApprovalAdmin(config.templateAdminApprovalAdmin || "");
+      setTemplateWelcomeCustomer(config.templateWelcomeCustomer || "");
+      setTemplateAgentLeadAssigned(config.templateAgentLeadAssigned || "");
       setConfigSource(config.source);
 
       const validation = await validateWhatsAppCredentials(config.phoneId, config.accessToken);
@@ -98,11 +111,13 @@ function SettingsPanelContent() {
         phoneId, 
         accessToken, 
         enabled,
+        reservationPaidEnabled,
         bookingConfirmedEnabled,
         bookingRescheduledEnabled,
         bookingCancelledEnabled,
         bookingReviewEnabled,
         onboardingInviteEnabled,
+        templateReservationPaid,
         templateConfirmed,
         templateRescheduled,
         templateCancelled,
@@ -117,7 +132,11 @@ function SettingsPanelContent() {
         templateAgentApprovalOwner,
         templateAgentApprovalAdmin,
         templateAdminApprovalOwner,
-        templateAdminApprovalAdmin
+        templateAdminApprovalAdmin,
+        welcomeCustomerEnabled,
+        agentLeadAssignedEnabled,
+        templateWelcomeCustomer,
+        templateAgentLeadAssigned
       );
       if (res.success) {
         toast.success("WhatsApp configuration updated successfully!", {
@@ -164,6 +183,7 @@ function SettingsPanelContent() {
   };
 
   const toggleValues: Record<string, boolean> = {
+    reservationPaidEnabled,
     bookingConfirmedEnabled,
     bookingRescheduledEnabled,
     bookingCancelledEnabled,
@@ -172,10 +192,13 @@ function SettingsPanelContent() {
     bookingCreatedEnabled,
     agentApprovalEnabled,
     adminApprovalEnabled,
+    welcomeCustomerEnabled,
+    agentLeadAssignedEnabled,
   };
 
   const setToggleValue = (key: string, value: boolean) => {
     const setters: Record<string, (value: boolean) => void> = {
+      reservationPaidEnabled: setReservationPaidEnabled,
       bookingConfirmedEnabled: setBookingConfirmedEnabled,
       bookingRescheduledEnabled: setBookingRescheduledEnabled,
       bookingCancelledEnabled: setBookingCancelledEnabled,
@@ -184,11 +207,14 @@ function SettingsPanelContent() {
       bookingCreatedEnabled: setBookingCreatedEnabled,
       agentApprovalEnabled: setAgentApprovalEnabled,
       adminApprovalEnabled: setAdminApprovalEnabled,
+      welcomeCustomerEnabled: setWelcomeCustomerEnabled,
+      agentLeadAssignedEnabled: setAgentLeadAssignedEnabled,
     };
     setters[key]?.(value);
   };
 
   const templateValues: Record<string, string> = {
+    templateReservationPaid,
     templateConfirmed,
     templateRescheduled,
     templateCancelled,
@@ -200,10 +226,13 @@ function SettingsPanelContent() {
     templateAgentApprovalAdmin,
     templateAdminApprovalOwner,
     templateAdminApprovalAdmin,
+    templateWelcomeCustomer,
+    templateAgentLeadAssigned,
   };
 
   const setTemplateValue = (key: string, value: string) => {
     const setters: Record<string, (value: string) => void> = {
+      templateReservationPaid: setTemplateReservationPaid,
       templateConfirmed: setTemplateConfirmed,
       templateRescheduled: setTemplateRescheduled,
       templateCancelled: setTemplateCancelled,
@@ -215,6 +244,8 @@ function SettingsPanelContent() {
       templateAgentApprovalAdmin: setTemplateAgentApprovalAdmin,
       templateAdminApprovalOwner: setTemplateAdminApprovalOwner,
       templateAdminApprovalAdmin: setTemplateAdminApprovalAdmin,
+      templateWelcomeCustomer: setTemplateWelcomeCustomer,
+      templateAgentLeadAssigned: setTemplateAgentLeadAssigned,
     };
     setters[key]?.(value);
   };
@@ -231,7 +262,7 @@ function SettingsPanelContent() {
             <Settings2 className="w-8 h-8 text-emerald-600" />
             Global Settings
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">Configure and manage third-party system integrations.</p>
+          <p className="text-sm text-zinc-500 mt-1">Configure WhatsApp, email templates, and third-party integrations.</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -338,7 +369,7 @@ function SettingsPanelContent() {
                     </button>
                   </div>
                   <p className="text-[10px] text-zinc-500">
-                    Ensure this matches your Meta dashboard access token (temporary Sandbox tokens last for 23 hours).
+                    Meta temporary sandbox tokens expire after ~24 hours. Paste a new token here and click Save — this updates Supabase (used in production). On localhost, <code className="text-[9px] bg-zinc-100 px-1 rounded">apps/web/.env</code> is used when set.
                   </p>
                 </div>
 
@@ -366,7 +397,7 @@ function SettingsPanelContent() {
                       Automated Notification Trigger Events & Templates
                     </h4>
                     <p className="text-[10px] text-zinc-500 mt-0.5">
-                      All 11 message templates used by Trimma. Toggle each trigger and edit copy with merge tags below.
+                      All 14 message templates used by Trimma. Toggle each trigger and edit copy with merge tags below.
                     </p>
                   </div>
                   
@@ -522,6 +553,8 @@ function SettingsPanelContent() {
 
         </div>
       )}
+
+      {!loading && <EmailSettingsPanel />}
 
     </div>
   );

@@ -261,7 +261,7 @@ function AdminUserCreateInner() {
               <Shield className="w-5 h-5 text-pink-400" /> Security Note
             </h4>
             <p className="text-zinc-500 text-sm leading-relaxed mb-6 font-medium">
-              Provisioning "Admin" or "Super Admin" roles grants full access to marketplace data, financials, and system settings. Ensure you follow the <strong>Identity Verification Protocol</strong> before creating these accounts.
+              Provisioning &ldquo;Admin&rdquo; or &ldquo;Super Admin&rdquo; roles grants full access to marketplace data, financials, and system settings. Ensure you follow the <strong>Identity Verification Protocol</strong> before creating these accounts.
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-xs font-bold text-zinc-900/80">
@@ -283,7 +283,7 @@ function AdminUserCreateInner() {
              <div className="space-y-4">
                 <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
                   <p className="text-xs text-zinc-500 leading-relaxed font-medium">
-                    Agents do not receive invitation emails by default. Admin must provide credentials manually as per "100% Admin Managed" protocol.
+                    Agents do not receive invitation emails by default. Admin must provide credentials manually as per &ldquo;100% Admin Managed&rdquo; protocol.
                   </p>
                 </div>
              </div>

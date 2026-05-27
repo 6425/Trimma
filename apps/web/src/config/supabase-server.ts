@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
  * Use this in Server Components and Route Handlers only — never in "use client" files.
  */
 export function createServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
   return createClient(supabaseUrl, supabaseAnonKey);
 }

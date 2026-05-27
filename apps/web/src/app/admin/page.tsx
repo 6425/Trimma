@@ -102,12 +102,7 @@ export default function AdminDashboard() {
         toast.success("Marketplace data synchronized successfully!");
         fetchStats();
       } else {
-        // Look for RLS policy error specifically
-        if (result.error?.includes("row-level security policy")) {
-          toast.error("Database Protection Active: Please run the provided SQL script in your Supabase dashboard to allow master data updates.");
-        } else {
-          toast.error("Sync failed: " + result.error);
-        }
+        toast.error("Sync failed: " + result.error);
       }
     } catch (err: any) {
       toast.error("Error: " + err.message);
@@ -516,7 +511,7 @@ ALTER TABLE public.territories DISABLE ROW LEVEL SECURITY;`}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-zinc-800">Global Service Added</p>
-                  <p className="text-xs text-zinc-500 mt-1">Master template "Keratin Treatment Level 3" published to network.</p>
+                  <p className="text-xs text-zinc-500 mt-1">Master template &ldquo;Keratin Treatment Level 3&rdquo; published to network.</p>
                   <p className="text-[10px] text-zinc-600 mt-2 font-mono">5 hours ago</p>
                 </div>
               </div>

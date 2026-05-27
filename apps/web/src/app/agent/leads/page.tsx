@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,7 +108,21 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
   );
 }
 
-export default function AgentLeads() {
+export default function AgentLeadsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+      </div>
+    }>
+      <AgentLeads />
+    </Suspense>
+  );
+}
+
+function AgentLeads() {
+  const searchParams = useSearchParams();
+  const openSalonId = searchParams.get("open");
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,6 +132,7 @@ export default function AgentLeads() {
   const [agentEmail, setAgentEmail] = useState("");
   const [agentName, setAgentName] = useState("");
   const [activeTab, setActiveTab] = useState<'assigned' | 'field_verified' | 'completed'>('assigned');
+  const openedSalonRef = useRef<string | null>(null);
 
   const [formData, setFormData] = useState<any>({
     id: "",
@@ -171,28 +188,6 @@ export default function AgentLeads() {
     }
   };
 
-  useEffect(() => {
-    void Promise.resolve().then(() => fetchLeads());
-  }, []);
-
-  const logActivity = async (salonId: string, action: string, notes: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentEmail = user?.email || agentEmail;
-      
-      await supabase
-        .from("onboarding_logs")
-        .insert({
-          salon_id: salonId,
-          actor_email: currentEmail,
-          action: action,
-          notes: notes
-        });
-    } catch (err) {
-      console.error("Activity logging failed:", err);
-    }
-  };
-
   const handleOpenModal = (lead: any) => {
     setSelectedLead(lead);
     setFormData({
@@ -218,6 +213,38 @@ export default function AgentLeads() {
       admin_notes: lead.admin_notes || ""
     });
     setIsModalOpen(true);
+  };
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchLeads());
+  }, []);
+
+  useEffect(() => {
+    if (!openSalonId || loading || leads.length === 0) return;
+    if (openedSalonRef.current === openSalonId) return;
+    const lead = leads.find((item) => item.id === openSalonId);
+    if (lead) {
+      openedSalonRef.current = openSalonId;
+      void Promise.resolve().then(() => handleOpenModal(lead));
+    }
+  }, [openSalonId, loading, leads]);
+
+  const logActivity = async (salonId: string, action: string, notes: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentEmail = user?.email || agentEmail;
+      
+      await supabase
+        .from("onboarding_logs")
+        .insert({
+          salon_id: salonId,
+          actor_email: currentEmail,
+          action: action,
+          notes: notes
+        });
+    } catch (err) {
+      console.error("Activity logging failed:", err);
+    }
   };
 
   const handleSave = async () => {
@@ -316,7 +343,11 @@ export default function AgentLeads() {
       const res = await fetch("/api/invite-owner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ salonId: selectedLead.id, ownerEmail: formData.owner_gmail })
+        body: JSON.stringify({
+          salonId: selectedLead.id,
+          ownerEmail: formData.owner_gmail,
+          actorEmail: agentEmail,
+        }),
       });
       
       if (!res.ok) {
@@ -450,7 +481,7 @@ export default function AgentLeads() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Field Verification Editor</h1>
-          <p className="text-zinc-500 text-sm mt-1">Your assigned draft salons. Visit, verify, set up Gmail for owner, and submit for Admin approval.</p>
+          <p className="text-zinc-500 text-sm mt-1">Verify salon details, set owner Gmail, and send invites. See all assigned salons in <Link href="/agent/salons" className="text-brand font-semibold hover:underline">My Salons</Link>.</p>
         </div>
       </div>
 

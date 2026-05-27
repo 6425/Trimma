@@ -62,7 +62,7 @@ export function Testimonials() {
                   </div>
                 </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed italic">
-                  "{review.text}"
+                  &ldquo;{review.text}&rdquo;
                 </p>
                 <div className="mt-4 inline-flex text-xs font-semibold text-brand-pink bg-brand-pink/10 px-2.5 py-1 rounded-md">
                   Booked: {review.service}

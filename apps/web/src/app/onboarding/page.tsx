@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "../../config/supabase";
 import { toast } from "sonner";
+import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
 
 export default function OnboardingPage() {
@@ -47,7 +48,17 @@ export default function OnboardingPage() {
       }
       
       if (existingRoles?.role === 'salon_owner') {
-      router.push("/dashboard");
+      const { data: ownerSalon } = await supabase
+        .from('salons')
+        .select('onboarding_status')
+        .or(`owner_email.eq.${activeSession.user.email},owner_gmail.eq.${activeSession.user.email}`)
+        .maybeSingle();
+
+      router.push(
+        needsOwnerActivationWizard(ownerSalon?.onboarding_status)
+          ? "/dashboard/profile"
+          : "/dashboard"
+      );
       return;
       }
       
@@ -68,20 +79,23 @@ export default function OnboardingPage() {
       // MAGIC LINK FIX: Check if the agent verified them using owner_gmail
       const { data: preVerifiedSalon } = await supabase
       .from('salons')
-      .select('id')
+      .select('id, onboarding_status')
       .eq('owner_gmail', activeSession.user.email)
       .limit(1)
       .maybeSingle();
       
       if (preVerifiedSalon) {
-      // Auto-onboard the user to this pre-verified salon
       await supabase.from('salons').update({ owner_email: activeSession.user.email }).eq('id', preVerifiedSalon.id);
       await supabase.from('user_roles').upsert({ user_id: activeSession.user.id, role: 'salon_owner' });
       await supabase.from('users').update({ global_role: 'salon_owner' }).eq('email', activeSession.user.email);
       
       document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
       toast.success("Welcome! Your salon profile has been linked successfully.");
-      router.push("/dashboard");
+      router.push(
+        needsOwnerActivationWizard(preVerifiedSalon.onboarding_status)
+          ? "/dashboard/profile"
+          : "/dashboard"
+      );
       return;
       }
       }

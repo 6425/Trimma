@@ -16,6 +16,7 @@ import {
   sendWhatsAppCancellationNotification, 
   sendReviewRequestAlert 
 } from "@/app/actions/whatsapp";
+import { sendBookingConfirmedEmail } from "@/app/actions/email-settings";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
@@ -209,7 +210,10 @@ export default function DashboardBookings() {
       switch (action) {
         case 'confirm': 
           updatePayload.status = 'confirmed'; 
-          if (bookingNo) await sendWhatsAppNotification(bookingNo);
+          if (bookingNo) {
+            await sendWhatsAppNotification(bookingNo);
+            void sendBookingConfirmedEmail(bookingNo);
+          }
           break;
         case 'in_progress': 
           updatePayload.status = 'in_progress'; 
