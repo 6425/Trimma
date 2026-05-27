@@ -61,7 +61,6 @@ export default function SignupPage() {
           redirectTo: `${window.location.origin}/auth/callback`
         }
       });
-      
       if (error) {
         console.error("Error with Google signup:", error.message);
       }

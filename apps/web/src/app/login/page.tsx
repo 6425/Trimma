@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { sanitizeNextPath } from "@/lib/auth-routes";
 
 export default function LoginPage() {
   return (
@@ -22,15 +23,11 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitedEmail = normalizeEmail(searchParams.get("email"));
-  const redirectTo =
+  const redirectTo = sanitizeNextPath(
     searchParams.get("redirectTo") ||
-    searchParams.get("redirect") ||
-    searchParams.get("next") ||
-    "/auth/callback";
-
-  const callbackPath = `/auth/callback?next=${encodeURIComponent(
-    redirectTo.startsWith("/") ? redirectTo : "/auth/callback"
-  )}`;
+      searchParams.get("redirect") ||
+      searchParams.get("next")
+  );
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,14 +45,21 @@ function LoginForm() {
       return;
     }
 
-    router.push(`/auth/callback?next=${encodeURIComponent(redirectTo)}`);
+    const callbackPath = redirectTo
+      ? `/auth/callback?next=${encodeURIComponent(redirectTo)}`
+      : "/auth/callback";
+    router.push(callbackPath);
   };
 
   const handleGoogleLogin = async () => {
+    const oauthRedirect = redirectTo
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`
+      : `${window.location.origin}/auth/callback`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}${callbackPath}`,
+        redirectTo: oauthRedirect,
         queryParams: invitedEmail ? { login_hint: invitedEmail } : undefined,
       },
     });

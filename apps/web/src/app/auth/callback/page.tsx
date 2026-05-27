@@ -1,100 +1,127 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../config/supabase";
+import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
-import { resolveTrimmaUserRole, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
+import {
+  redirectAfterAuth,
+  resolveTrimmaUserRole,
+  setTrimmaMiddlewareCookies,
+} from "@/lib/trimma-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 
 function AuthCallbackContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath =
+  const nextPath = sanitizeNextPath(
     searchParams.get("next") ||
-    searchParams.get("redirectTo") ||
-    searchParams.get("redirect");
+      searchParams.get("redirectTo") ||
+      searchParams.get("redirect")
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    let isProcessing = false;
-    let completed = false;
+    let cancelled = false;
 
-    const processAuth = async (session: {
-      access_token: string;
-      user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> };
-    }) => {
-      if (isProcessing || completed) return;
-      isProcessing = true;
+    async function waitForSession(maxAttempts = 20): Promise<Session | null> {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
 
-      let onboardingStatus: string | null = null;
-
-      try {
-        const linkRes = await fetch("/api/auth/link-owner", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          credentials: "include",
-        });
-
-        if (linkRes.ok) {
-          const linkData = await linkRes.json();
-          onboardingStatus = linkData.onboardingStatus ?? null;
+      if (code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          throw new Error(error.message);
         }
-      } catch (err) {
-        console.error("Owner link step failed:", err);
+        if (data.session) {
+          window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+          return data.session;
+        }
       }
 
-      let role: TrimmaUserRole | null = await resolveTrimmaUserRole(
-        session.user.id,
-        session.user.email
-      );
-
-      if (!role) {
-        role = "customer";
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          return session;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
       }
 
-      setTrimmaMiddlewareCookies(session.access_token, role);
-      completed = true;
+      return null;
+    }
 
-      router.push(
-        resolveAuthenticatedDestination({
+    async function completeAuth() {
+      try {
+        const session = await waitForSession();
+        if (cancelled) return;
+
+        if (!session) {
+          setErrorMessage("Sign-in could not be completed. Please try again.");
+          window.setTimeout(() => redirectAfterAuth("/login"), 2000);
+          return;
+        }
+
+        let onboardingStatus: string | null = null;
+
+        try {
+          const linkRes = await fetch("/api/auth/link-owner", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            credentials: "include",
+          });
+
+          if (linkRes.ok) {
+            const linkData = await linkRes.json();
+            onboardingStatus = linkData.onboardingStatus ?? null;
+          }
+        } catch (err) {
+          console.error("Owner link step failed:", err);
+        }
+
+        let role: TrimmaUserRole | null = await resolveTrimmaUserRole(
+          session.user.id,
+          session.user.email
+        );
+
+        if (!role) {
+          role = "customer";
+        }
+
+        setTrimmaMiddlewareCookies(session.access_token, role);
+
+        const destination = resolveAuthenticatedDestination({
           role,
           nextPath,
           onboardingStatus,
-        })
-      );
-    };
+        });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        void processAuth(session);
+        redirectAfterAuth(destination);
+      } catch (err) {
+        console.error("Auth callback failed:", err);
+        if (!cancelled) {
+          setErrorMessage(err instanceof Error ? err.message : "Authentication failed.");
+          window.setTimeout(() => redirectAfterAuth("/login"), 2000);
+        }
       }
-    });
+    }
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        void processAuth(session);
-      }
-    });
-
-    const timeout = setTimeout(() => {
-      if (!completed) {
-        router.push("/login");
-      }
-    }, 15000);
+    void completeAuth();
 
     return () => {
-      authListener.subscription.unsubscribe();
-      clearTimeout(timeout);
+      cancelled = true;
     };
-  }, [router, nextPath]);
+  }, [nextPath]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative z-50">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-full border-4 border-zinc-200 border-t-zinc-900 animate-spin"></div>
-        <div className="text-zinc-500 font-medium animate-pulse">Authenticating workspace...</div>
+        <div className="text-zinc-500 font-medium animate-pulse">
+          {errorMessage || "Authenticating workspace..."}
+        </div>
       </div>
     </div>
   );

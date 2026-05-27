@@ -42,8 +42,15 @@ export async function resolveAdminAccess(
 }
 
 export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
-  document.cookie = `sb-access-token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
-  document.cookie = `user-role=${role}; path=/; max-age=86400; SameSite=Lax`;
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `sb-access-token=${accessToken}; path=/; max-age=86400; SameSite=Lax${secure}`;
+  document.cookie = `user-role=${role}; path=/; max-age=86400; SameSite=Lax${secure}`;
+}
+
+/** Hard navigation so middleware receives freshly written auth cookies. */
+export function redirectAfterAuth(destination: string) {
+  window.location.replace(destination);
 }
 
 export { pickHighestRole, ROLE_PRIORITY };

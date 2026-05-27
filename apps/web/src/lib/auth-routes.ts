@@ -35,12 +35,25 @@ export function isSafeInternalPath(path: string | null | undefined): path is str
   return Boolean(path && path.startsWith("/") && !path.startsWith("//"));
 }
 
+const LOOP_PATH_PREFIXES = ["/login", "/admin/login", "/auth/callback", "/signup"];
+
+/** Strip auth-loop paths so OAuth cannot bounce between login and callback. */
+export function sanitizeNextPath(path: string | null | undefined): string | null {
+  if (!isSafeInternalPath(path)) return null;
+  const pathname = path.split("?")[0];
+  if (LOOP_PATH_PREFIXES.some((blocked) => pathname === blocked || pathname.startsWith(`${blocked}/`))) {
+    return null;
+  }
+  return path;
+}
+
 export function resolvePostAuthRedirect(
   role: TrimmaUserRole | null,
   nextPath: string | null
 ): string {
-  if (isSafeInternalPath(nextPath) && (role === "admin" || canAccessTrimmaRoute(role, nextPath))) {
-    return nextPath;
+  const safeNext = sanitizeNextPath(nextPath);
+  if (safeNext && (role === "admin" || canAccessTrimmaRoute(role, safeNext))) {
+    return safeNext;
   }
 
   if (role === "admin") return "/admin";

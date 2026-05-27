@@ -1,5 +1,5 @@
 import type { TrimmaUserRole } from "@/lib/auth-routes";
-import { resolvePostAuthRedirect } from "@/lib/auth-routes";
+import { resolvePostAuthRedirect, sanitizeNextPath } from "@/lib/auth-routes";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 
 export type PostAuthContext = {
@@ -22,5 +22,5 @@ export function resolveAuthenticatedDestination({
     return "/dashboard/profile";
   }
 
-  return resolvePostAuthRedirect(role, nextPath ?? null);
+  return resolvePostAuthRedirect(role, sanitizeNextPath(nextPath));
 }
