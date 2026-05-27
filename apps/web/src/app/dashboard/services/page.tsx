@@ -262,6 +262,8 @@ export default function DashboardServices() {
         const globalSvc = globalServices.find((g) => g.id === id);
         return {
           salon_id: salon.id,
+          global_service_id: id,
+          category_id: globalSvc?.category_id || null,
           name: info.name,
           category: info.categoryName,
           price: parseFloat(info.price) || 1500,
@@ -344,8 +346,6 @@ export default function DashboardServices() {
           duration_min: parseInt(editForm.duration_min) || 0,
           description: editForm.description,
           status: editForm.status,
-          discount_percentage: parseFloat(editForm.discount_percentage) || 0,
-          discount_end_date: editForm.discount_end_date ? new Date(editForm.discount_end_date).toISOString() : null,
           image_url: editForm.image_url || null,
         })
         .eq("id", editingServiceId);
