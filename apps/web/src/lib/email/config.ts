@@ -8,7 +8,7 @@ export const RESEND_FROM = `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`;
 export const APP_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
   process.env.APP_URL?.replace(/\/$/, "") ||
-  "http://localhost:3000";
+  (process.env.NODE_ENV === "production" ? "https://www.trimma.io" : "http://localhost:3000");
 
 /** Max sends per IP + user within the sliding window. */
 export const EMAIL_RATE_LIMIT_MAX = Number(process.env.EMAIL_RATE_LIMIT_MAX || 10);
