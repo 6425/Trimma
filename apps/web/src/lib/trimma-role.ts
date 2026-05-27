@@ -1,5 +1,6 @@
 import { supabase } from "@/config/supabase";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 const ROLE_PRIORITY: TrimmaUserRole[] = ["admin", "salon_owner", "agent", "customer"];
 
@@ -14,17 +15,22 @@ function pickHighestRole(
   return null;
 }
 
-/** Resolve the effective Trimma role from user_roles + users.global_role. */
+/** Resolve the effective Trimma role from user_roles + users.global_role (DB is authoritative). */
 export async function resolveTrimmaUserRole(
   userId: string,
   email: string | null | undefined
 ): Promise<TrimmaUserRole | null> {
-  const [{ data: roleData }, { data: userData }] = await Promise.all([
-    supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
-    supabase.from("users").select("global_role").eq("email", email).maybeSingle(),
+  const normalizedEmail = normalizeEmail(email);
+
+  const [{ data: roleRows }, { data: userData }] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+    normalizedEmail
+      ? supabase.from("users").select("global_role").eq("email", normalizedEmail).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
-  return pickHighestRole(roleData?.role, userData?.global_role);
+  const tableRoles = (roleRows || []).map((row) => row.role);
+  return pickHighestRole(...tableRoles, userData?.global_role);
 }
 
 export async function resolveAdminAccess(
@@ -39,3 +45,5 @@ export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
   document.cookie = `sb-access-token=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
   document.cookie = `user-role=${role}; path=/; max-age=86400; SameSite=Lax`;
 }
+
+export { pickHighestRole, ROLE_PRIORITY };

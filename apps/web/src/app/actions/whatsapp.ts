@@ -1,6 +1,8 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { APP_BASE_URL } from "@/lib/email/config";
+import { normalizeEmail } from "@/lib/normalize-email";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 
 const D = WHATSAPP_TEMPLATE_DEFAULTS;
@@ -1081,14 +1083,15 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
 
   try {
     const cleanPhone = cleanPhoneNumber(phone);
-    const loginLink = ownerGmail 
-      ? `https://trimma-web.vercel.app/login?email=${encodeURIComponent(ownerGmail)}` 
-      : "https://trimma-web.vercel.app/login";
+    const normalizedGmail = normalizeEmail(ownerGmail);
+    const loginLink = normalizedGmail
+      ? `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedGmail)}&next=${encodeURIComponent("/dashboard/profile")}`
+      : `${APP_BASE_URL}/login?next=${encodeURIComponent("/onboarding")}`;
 
     const variables = {
       salon_name: salonName || "Partner",
-      owner_gmail: ownerGmail || "your verified email",
-      login_link: loginLink
+      owner_gmail: normalizedGmail || "your verified email",
+      login_link: loginLink,
     };
 
     const msg = parseTemplate(templateOnboardingInvite || D.onboardingInvite, variables);

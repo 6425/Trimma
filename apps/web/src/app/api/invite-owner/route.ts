@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
     const ip = getClientIp(request);
     const rateLimitKey = buildEmailRateLimitKey(ip, actorEmail);
-    const loginLink = `${APP_BASE_URL}/login?next=${encodeURIComponent("/onboarding")}`;
+    const loginLink = `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedOwnerEmail)}&next=${encodeURIComponent("/dashboard/profile")}`;
 
     const emailResult = await sendTriggeredEmail({
       triggerId: "onboarding",

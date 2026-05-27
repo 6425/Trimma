@@ -3,9 +3,9 @@
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../../config/supabase";
-import { isPlaceholderOwnerEmail, needsOwnerActivationWizard } from "@/lib/salon-onboarding";
-import { resolvePostAuthRedirect } from "@/lib/auth-routes";
+import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { resolveTrimmaUserRole, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
+import type { TrimmaUserRole } from "@/lib/auth-routes";
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -17,55 +17,53 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     let isProcessing = false;
+    let completed = false;
 
-    const processAuth = async (session: { access_token: string; user: { id: string; email?: string | null } }) => {
-      if (isProcessing) return;
+    const processAuth = async (session: {
+      access_token: string;
+      user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> };
+    }) => {
+      if (isProcessing || completed) return;
       isProcessing = true;
 
-      let role = await resolveTrimmaUserRole(session.user.id, session.user.email);
+      let onboardingStatus: string | null = null;
 
-      const { data: linkedSalon } = await supabase
-        .from("salons")
-        .select("id, owner_email, onboarding_status")
-        .eq("owner_gmail", session.user.email)
-        .limit(1)
-        .maybeSingle();
+      try {
+        const linkRes = await fetch("/api/auth/link-owner", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          credentials: "include",
+        });
 
-      if (linkedSalon && role !== "admin") {
-        if (isPlaceholderOwnerEmail(linkedSalon.owner_email) || linkedSalon.owner_email !== session.user.email) {
-          await supabase
-            .from("salons")
-            .update({ owner_email: session.user.email })
-            .eq("id", linkedSalon.id);
+        if (linkRes.ok) {
+          const linkData = await linkRes.json();
+          onboardingStatus = linkData.onboardingStatus ?? null;
         }
-
-        if (!role || role !== "salon_owner") {
-          await supabase.from("user_roles").upsert({ user_id: session.user.id, role: "salon_owner" });
-          await supabase.from("users").update({ global_role: "salon_owner" }).eq("email", session.user.email);
-          role = "salon_owner";
-        }
+      } catch (err) {
+        console.error("Owner link step failed:", err);
       }
+
+      let role: TrimmaUserRole | null = await resolveTrimmaUserRole(
+        session.user.id,
+        session.user.email
+      );
 
       if (!role) {
         role = "customer";
       }
 
       setTrimmaMiddlewareCookies(session.access_token, role);
+      completed = true;
 
-      if (role === "salon_owner") {
-        const { data: ownerSalon } = await supabase
-          .from("salons")
-          .select("onboarding_status")
-          .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-          .maybeSingle();
-
-        if (needsOwnerActivationWizard(ownerSalon?.onboarding_status)) {
-          router.push("/dashboard/profile");
-          return;
-        }
-      }
-
-      router.push(resolvePostAuthRedirect(role, nextPath));
+      router.push(
+        resolveAuthenticatedDestination({
+          role,
+          nextPath,
+          onboardingStatus,
+        })
+      );
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -81,10 +79,10 @@ function AuthCallbackContent() {
     });
 
     const timeout = setTimeout(() => {
-      if (!isProcessing) {
+      if (!completed) {
         router.push("/login");
       }
-    }, 3000);
+    }, 15000);
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -115,4 +113,3 @@ export default function AuthCallback() {
     </Suspense>
   );
 }
-

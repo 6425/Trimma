@@ -10,7 +10,9 @@ import { supabase } from "../../config/supabase";
 import { toast } from "sonner";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { resolveTrimmaUserRole } from "@/lib/trimma-role";
+import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -35,6 +37,19 @@ export default function OnboardingPage() {
       if (activeSession) {
       setSession(activeSession);
       setEmail(activeSession.user.email || "");
+
+      const { data: { session: linkSession } } = await supabase.auth.getSession();
+      if (linkSession?.access_token) {
+        try {
+          await fetch("/api/auth/link-owner", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${linkSession.access_token}` },
+            credentials: "include",
+          });
+        } catch (linkErr) {
+          console.error("Owner link during onboarding failed:", linkErr);
+        }
+      }
       
       // Check if already registered
       const effectiveRole = await resolveTrimmaUserRole(
@@ -55,9 +70,10 @@ export default function OnboardingPage() {
         .maybeSingle();
 
       router.push(
-        needsOwnerActivationWizard(ownerSalon?.onboarding_status)
-          ? "/dashboard/profile"
-          : "/dashboard"
+        resolveAuthenticatedDestination({
+          role: "salon_owner",
+          onboardingStatus: ownerSalon?.onboarding_status,
+        })
       );
       return;
       }
@@ -80,21 +96,22 @@ export default function OnboardingPage() {
       const { data: preVerifiedSalon } = await supabase
       .from('salons')
       .select('id, onboarding_status')
-      .eq('owner_gmail', activeSession.user.email)
+      .ilike('owner_gmail', normalizeEmail(activeSession.user.email))
       .limit(1)
       .maybeSingle();
       
       if (preVerifiedSalon) {
-      await supabase.from('salons').update({ owner_email: activeSession.user.email }).eq('id', preVerifiedSalon.id);
+      await supabase.from('salons').update({ owner_email: normalizeEmail(activeSession.user.email) }).eq('id', preVerifiedSalon.id);
       await supabase.from('user_roles').upsert({ user_id: activeSession.user.id, role: 'salon_owner' });
       await supabase.from('users').update({ global_role: 'salon_owner' }).eq('email', activeSession.user.email);
       
       document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
       toast.success("Welcome! Your salon profile has been linked successfully.");
       router.push(
-        needsOwnerActivationWizard(preVerifiedSalon.onboarding_status)
-          ? "/dashboard/profile"
-          : "/dashboard"
+        resolveAuthenticatedDestination({
+          role: "salon_owner",
+          onboardingStatus: preVerifiedSalon.onboarding_status,
+        })
       );
       return;
       }

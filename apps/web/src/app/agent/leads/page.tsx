@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 
 const DAYS_OF_WEEK = [
@@ -272,7 +273,7 @@ function AgentLeads() {
         price_level: formData.price_level || null,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
-        owner_gmail: formData.owner_gmail || null,
+        owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
         agent_notes: formData.agent_notes || null
       };
 
@@ -326,7 +327,7 @@ function AgentLeads() {
         price_level: formData.price_level || null,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
-        owner_gmail: formData.owner_gmail || null,
+        owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
         agent_notes: formData.agent_notes || null,
         onboarding_status: "AGENT_VERIFIED"
       };

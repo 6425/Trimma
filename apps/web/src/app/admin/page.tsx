@@ -5,22 +5,31 @@ import { useRouter } from "next/navigation";
 import AdminCard from "../../components/ui/AdminCard";
 import { supabase } from "@/config/supabase";
 import { Loader2, RefreshCw, Play, ShieldAlert, ShieldCheck, Globe, Activity, Database, Lock, Server, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
 import { resolveAdminAccess } from "@/lib/trimma-role";
-
+import {
+  ActivityItem,
+  formatLkr,
+  formatRelativeTime,
+  getBookingAmount,
+} from "@/lib/dashboard-stats";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState({
     salons: 0,
+    salonsThisWeek: 0,
     bookings: 0,
-    leads: 0,
-    templates: 0,
-    revenue: "0"
+    bookingGmv: 0,
+    pendingApprovals: 0,
+    platformMrr: 0,
+    users: 0,
   });
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -29,20 +38,129 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const [salons, bookings, leads, templates] = await Promise.all([
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekAgoIso = weekAgo.toISOString();
+
+      const [
+        salonsRes,
+        salonsWeekRes,
+        bookingsCountRes,
+        bookingsRowsRes,
+        pendingSalonsRowsRes,
+        usersRes,
+        activeSalonsRes,
+        onboardingLogsRes,
+        recentBookingsRes,
+        recentSalonsRes,
+        recentServicesRes,
+      ] = await Promise.all([
         supabase.from("salons").select("id", { count: "exact", head: true }),
+        supabase.from("salons").select("id", { count: "exact", head: true }).gte("created_at", weekAgoIso),
         supabase.from("bookings").select("id", { count: "exact", head: true }),
-        supabase.from("leads").select("id", { count: "exact", head: true }),
-        supabase.from("global_services").select("id", { count: "exact", head: true })
+        supabase.from("bookings").select("amount, total_reservation_fee, status"),
+        supabase
+          .from("salons")
+          .select("id, status, onboarding_status, is_verified"),
+        supabase.from("users").select("email", { count: "exact", head: true }),
+        supabase
+          .from("salons")
+          .select("subscription_plan_id, subscription_plans(monthly_price, intro_monthly_price)")
+          .or("activation_status.eq.ACTIVE,status.eq.active,status.eq.verified,is_verified.eq.true"),
+        supabase
+          .from("onboarding_logs")
+          .select("id, action, notes, actor_email, created_at, salons(name)")
+          .order("created_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("bookings")
+          .select("id, booking_no, amount, total_reservation_fee, created_at, salons(name)")
+          .order("created_at", { ascending: false })
+          .limit(3),
+        supabase
+          .from("salons")
+          .select("id, name, onboarding_status, created_at, verified_at")
+          .order("created_at", { ascending: false })
+          .limit(3),
+        supabase
+          .from("global_services")
+          .select("id, name, created_at")
+          .order("created_at", { ascending: false })
+          .limit(2),
       ]);
 
+      const bookingGmv = (bookingsRowsRes.data || [])
+        .filter((row) => ["confirmed", "completed", "pending", "reservation_paid"].includes(String(row.status || "").toLowerCase()))
+        .reduce((sum, row) => sum + getBookingAmount(row), 0);
+
+      const platformMrr = (activeSalonsRes.data || []).reduce((sum, salon: any) => {
+        const plan = salon.subscription_plans;
+        const price = Number(plan?.intro_monthly_price ?? plan?.monthly_price ?? 0);
+        return sum + price;
+      }, 0);
+
+      const pendingApprovals = (pendingSalonsRowsRes.data || []).filter((salon) => {
+        const status = String(salon.status || "").toLowerCase();
+        if (["pending", "pending_approval"].includes(status)) return true;
+        const onboarding = salon.onboarding_status || "";
+        if (["OWNER_ACTIVATED", "AGENT_APPROVED"].includes(onboarding) && !salon.is_verified) return true;
+        return false;
+      }).length;
+
       setStats({
-        salons: salons.count || 0,
-        bookings: bookings.count || 0,
-        leads: leads.count || 0,
-        templates: templates.count || 0,
-        revenue: "3.2M" // Mock for Platform MRR / GMV
+        salons: salonsRes.count || 0,
+        salonsThisWeek: salonsWeekRes.count || 0,
+        bookings: bookingsCountRes.count || 0,
+        bookingGmv,
+        pendingApprovals,
+        platformMrr,
+        users: usersRes.count || 0,
       });
+
+      const feed: ActivityItem[] = [];
+
+      for (const log of onboardingLogsRes.data || []) {
+        const salonName = (log as any).salons?.name || "Salon";
+        feed.push({
+          id: `log-${log.id}`,
+          title: String(log.action || "Onboarding update").replace(/_/g, " "),
+          description: log.notes || `${salonName} updated by ${log.actor_email || "system"}`,
+          time: formatRelativeTime(log.created_at),
+          tone: "amber",
+        });
+      }
+
+      for (const booking of recentBookingsRes.data || []) {
+        feed.push({
+          id: `booking-${booking.id}`,
+          title: "New booking",
+          description: `${(booking as any).salons?.name || "Salon"} · LKR ${formatLkr(getBookingAmount(booking))} · ${booking.booking_no || booking.id}`,
+          time: formatRelativeTime(booking.created_at),
+          tone: "blue",
+        });
+      }
+
+      for (const salon of recentSalonsRes.data || []) {
+        feed.push({
+          id: `salon-${salon.id}`,
+          title: salon.onboarding_status === "VERIFIED" ? "Salon verified" : "Salon registered",
+          description: `${salon.name} · ${String(salon.onboarding_status || "DISCOVERED").replace(/_/g, " ")}`,
+          time: formatRelativeTime(salon.verified_at || salon.created_at),
+          tone: "emerald",
+        });
+      }
+
+      for (const service of recentServicesRes.data || []) {
+        feed.push({
+          id: `service-${service.id}`,
+          title: "Global service published",
+          description: service.name,
+          time: formatRelativeTime(service.created_at),
+          tone: "purple",
+        });
+      }
+
+      setActivity(feed.slice(0, 8));
     } catch (err) {
       console.error("Error fetching stats:", err);
     } finally {
@@ -333,10 +451,12 @@ export default function AdminDashboard() {
             <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
               <Globe className="w-6 h-6" />
             </div>
-            <Badge className="bg-emerald-50 text-emerald-600 border-none">+12% MRR</Badge>
+            <Badge className="bg-emerald-50 text-emerald-600 border-none">
+              {stats.users.toLocaleString()} users
+            </Badge>
           </div>
           <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Platform MRR</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">LKR {stats.revenue}</p>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">LKR {formatLkr(stats.platformMrr)}</p>
         </div>
 
         <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
@@ -345,10 +465,12 @@ export default function AdminDashboard() {
             <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
               <Building2 className="w-6 h-6" />
             </div>
-            <Badge className="bg-emerald-50 text-emerald-600 border-none">+4 this week</Badge>
+            <Badge className="bg-emerald-50 text-emerald-600 border-none">
+              +{stats.salonsThisWeek} this week
+            </Badge>
           </div>
           <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Active Fleet</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.salons.toLocaleString()}</p>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">{stats.salons.toLocaleString()}</p>
         </div>
 
         <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
@@ -357,10 +479,12 @@ export default function AdminDashboard() {
             <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center">
               <Activity className="w-6 h-6" />
             </div>
-            <Badge className="bg-zinc-100 text-zinc-600 border-none">99.9% Uptime</Badge>
+            <Badge className="bg-zinc-100 text-zinc-600 border-none">
+              {stats.bookings.toLocaleString()} bookings
+            </Badge>
           </div>
-          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Total Bookings GMV</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">{loading ? "..." : stats.bookings.toLocaleString()}</p>
+          <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Booking GMV</h3>
+          <p className="text-3xl font-black text-zinc-900 relative z-10">LKR {formatLkr(stats.bookingGmv)}</p>
         </div>
 
         <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden group trimma-dark-surface">
@@ -369,12 +493,14 @@ export default function AdminDashboard() {
             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
               <CreditCard className="w-6 h-6" />
             </div>
-            <Badge className="bg-amber-500 text-amber-950 font-black border-none px-2 py-0.5 text-[10px] uppercase tracking-widest">
-              Action Req
-            </Badge>
+            {stats.pendingApprovals > 0 ? (
+              <Badge className="bg-amber-500 text-amber-950 font-black border-none px-2 py-0.5 text-[10px] uppercase tracking-widest">
+                Action Req
+              </Badge>
+            ) : null}
           </div>
           <h3 className="text-zinc-400 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
-          <p className="text-3xl font-black text-white relative z-10">{loading ? "..." : stats.leads.toLocaleString()}</p>
+          <p className="text-3xl font-black text-white relative z-10">{stats.pendingApprovals.toLocaleString()}</p>
         </div>
       </div>
 
@@ -485,43 +611,46 @@ export default function AdminDashboard() {
             </div>
 
             <div className="relative z-10 space-y-5">
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
-                  <Building2 className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-zinc-800">New Salon Registration</p>
-                  <p className="text-xs text-zinc-500 mt-1"><span className="text-amber-400 font-medium">Glam Studio Colombo</span> passed verification and is now live on the marketplace.</p>
-                  <p className="text-[10px] text-zinc-600 mt-2 font-mono">14 mins ago</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
-                  <CreditCard className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-zinc-800">Commission Disbursed</p>
-                  <p className="text-xs text-zinc-500 mt-1">Platform automatically routed <span className="text-emerald-400">LKR 124,000</span> to 45 partner salons.</p>
-                  <p className="text-[10px] text-zinc-600 mt-2 font-mono">2 hours ago</p>
-                </div>
-              </div>
-
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
-                  <Settings className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-zinc-800">Global Service Added</p>
-                  <p className="text-xs text-zinc-500 mt-1">Master template &ldquo;Keratin Treatment Level 3&rdquo; published to network.</p>
-                  <p className="text-[10px] text-zinc-600 mt-2 font-mono">5 hours ago</p>
-                </div>
-              </div>
+              {activity.length === 0 ? (
+                <p className="text-sm text-zinc-500">No recent platform activity yet.</p>
+              ) : (
+                activity.map((item) => (
+                  <div key={item.id} className="flex gap-4 group">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${
+                        item.tone === "emerald"
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                          : item.tone === "blue"
+                            ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                            : item.tone === "purple"
+                              ? "bg-purple-500/20 text-purple-400 border-purple-500/30"
+                              : "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                      }`}
+                    >
+                      {item.tone === "emerald" ? <Building2 className="w-3.5 h-3.5" /> :
+                       item.tone === "blue" ? <CreditCard className="w-3.5 h-3.5" /> :
+                       item.tone === "purple" ? <Settings className="w-3.5 h-3.5" /> :
+                       <Activity className="w-3.5 h-3.5" />}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-zinc-800">{item.title}</p>
+                      <p className="text-xs text-zinc-500 mt-1">{item.description}</p>
+                      <p className="text-[10px] text-zinc-600 mt-2 font-mono">{item.time}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
             
-            <Button variant="ghost" className="w-full mt-8 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs font-bold rounded-xl relative z-10">
-              View Full Audit Log <ExternalLink className="w-3 h-3 ml-2" />
-            </Button>
+            <Link
+              href="/admin/leads"
+              className={buttonVariants({
+                variant: "ghost",
+                className: "w-full mt-8 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs font-bold rounded-xl relative z-10",
+              })}
+            >
+              View onboarding pipeline <ExternalLink className="w-3 h-3 ml-2" />
+            </Link>
           </div>
         </div>
       </div>

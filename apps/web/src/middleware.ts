@@ -63,18 +63,13 @@ export async function middleware(req: NextRequest) {
   const roleCookie = req.cookies.get('user-role'); // Assume the user role is stored in a cookie upon login
 
   if (!sessionCookie) {
-    // Not authenticated, redirect to the appropriate login page
-    let loginPath = '/login';
-    if (pathname.startsWith('/admin')) {
-      loginPath = '/admin/login';
-    } else if (pathname.startsWith('/agent')) {
-      loginPath = '/agent/login';
-    } else if (pathname.startsWith('/salon')) {
-      loginPath = '/salon/login';
+    let loginPath = "/login";
+    if (pathname.startsWith("/admin")) {
+      loginPath = "/admin/login";
     }
-    
+
     const loginUrl = new URL(loginPath, req.url);
-    loginUrl.searchParams.set('redirect', pathname);
+    loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 

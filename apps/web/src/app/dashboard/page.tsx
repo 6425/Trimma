@@ -6,39 +6,91 @@ import Card from "../../components/ui/Card";
 import { supabase } from "@/config/supabase";
 import { Loader2, RefreshCw } from "lucide-react";
 import { CommissionCard } from "../../components/CommissionCard";
-import { fetchCommission } from "@/lib/api/commission";
 import type { CommissionRow } from "@/lib/types/commission";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
+import {
+  ActivityItem,
+  formatLkr,
+  formatRelativeTime,
+  getBookingAmount,
+  groupBookingsByMonth,
+  type MonthlyPoint,
+} from "@/lib/dashboard-stats";
+
+function SimpleBarChart({
+  title,
+  points,
+  valueKey,
+}: {
+  title: string;
+  points: MonthlyPoint[];
+  valueKey: "bookings" | "revenue";
+}) {
+  const max = Math.max(...points.map((p) => p[valueKey]), 1);
+
+  return (
+    <div className="bg-white p-4 rounded-xl border border-slate-200 h-64 flex flex-col">
+      <h3 className="font-semibold text-zinc-900 mb-4">{title}</h3>
+      {points.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-zinc-400 text-sm">
+          No booking data yet
+        </div>
+      ) : (
+        <div className="flex-1 flex items-end gap-2">
+          {points.map((point) => (
+            <div key={point.label} className="flex-1 flex flex-col items-center gap-2 min-w-0">
+              <div className="w-full flex items-end justify-center h-36">
+                <div
+                  className="w-full max-w-10 rounded-t-md bg-brand/80 transition-all"
+                  style={{ height: `${Math.max(8, (point[valueKey] / max) * 100)}%` }}
+                  title={`${point.label}: ${valueKey === "revenue" ? `LKR ${formatLkr(point.revenue)}` : point.bookings}`}
+                />
+              </div>
+              <span className="text-[10px] font-semibold text-zinc-500 truncate w-full text-center">
+                {point.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const router = useRouter();
+  const [salonName, setSalonName] = useState("your salon");
   const [stats, setStats] = useState({
     totalBookings: 0,
     activeServices: 0,
     totalStaff: 0,
     revenue: 0,
   });
+  const [monthlyPoints, setMonthlyPoints] = useState<MonthlyPoint[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
 
   const fetchDashboardStats = useCallback(async (forceRefresh = false) => {
     try {
-      if (!forceRefresh) {
+      if (forceRefresh) {
+        setIsRefreshing(true);
+        sessionStorage.removeItem("dashboardCache");
+      } else {
         const cached = sessionStorage.getItem("dashboardCache");
         if (cached) {
           const parsed = JSON.parse(cached);
+          setSalonName(parsed.salonName || "your salon");
           setStats(parsed.stats);
           setCommissions(parsed.commissions);
+          setMonthlyPoints(parsed.monthlyPoints || []);
+          setActivity(parsed.activity || []);
           setLoading(false);
           return;
         }
-      } else {
-        setIsRefreshing(true);
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
-      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.replace("/login?redirectTo=/dashboard");
@@ -47,7 +99,7 @@ export default function Dashboard() {
 
       const { data: salonData } = await supabase
         .from("salons")
-        .select("*")
+        .select("id, name, onboarding_status")
         .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
         .maybeSingle();
 
@@ -58,72 +110,123 @@ export default function Dashboard() {
         return;
       }
 
-      // If the salon hasn't been verified by the owner yet, force them to the profile wizard!
       if (needsOwnerActivationWizard(salonData.onboarding_status)) {
         router.replace("/dashboard/profile");
         return;
       }
 
-      const salon = salonData;
+      setSalonName(salonData.name || "your salon");
+
       const [bookingsRes, servicesRes, staffRes] = await Promise.all([
-        fetch(`${API_URL}/salons/${salon.id}/bookings`),
-        fetch(`${API_URL}/salons/${salon.id}/services`),
-        fetch(`${API_URL}/salons/${salon.id}/staff`)
+        supabase
+          .from("bookings")
+          .select(
+            "id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, created_at, customer_email"
+          )
+          .eq("salon_id", salonData.id)
+          .order("created_at", { ascending: false }),
+        supabase.from("services").select("id, name, status, created_at").eq("salon_id", salonData.id),
+        supabase.from("salon_staff").select("id, name, created_at").eq("salon_id", salonData.id),
       ]);
 
-      let totalBookings = 0;
-      let revenue = 0;
-      let activeServices = 0;
-      let totalStaff = 0;
+      const bookings = bookingsRes.data || [];
+      const services = servicesRes.data || [];
+      const staff = staffRes.data || [];
+
+      const revenue = bookings.reduce((sum, booking) => sum + getBookingAmount(booking), 0);
+      const activeServices = services.filter((service) => service.status === "active").length;
+
+      const newStats = {
+        totalBookings: bookings.length,
+        activeServices,
+        totalStaff: staff.length,
+        revenue,
+      };
+
       let fetchedCommissions: CommissionRow[] = [];
+      const latestBooking = bookings[0];
+      if (latestBooking) {
+        const salonShare = Number(latestBooking.salon_upfront_amount ?? 0);
+        const platformShare = Number(latestBooking.platform_commission_amount ?? 0);
+        const agentShare = Number(latestBooking.agent_commission_amount ?? 0);
 
-      if (bookingsRes.ok) {
-        const bookings = await bookingsRes.json();
-        totalBookings = bookings.length;
-        revenue = bookings.reduce((sum: number, b: any) => sum + parseFloat(b.amount || 0), 0);
-
-        if (bookings && bookings.length > 0) {
-          const latestBooking = bookings[0];
-          const bookingId = latestBooking.id || latestBooking.booking_id;
-          if (bookingId) {
-            const comms = await fetchCommission(bookingId);
-            if (comms && "rows" in comms && comms.rows.length > 0) {
-              fetchedCommissions = comms.rows;
-            } else {
-              fetchedCommissions = [
-                { entity_type: "salon", amount: parseFloat(latestBooking.amount || 0) * 0.8, description: "Salon Net Yield (80% booking share)" },
-                { entity_type: "platform", amount: parseFloat(latestBooking.amount || 0) * 0.2, description: "Platform Fee (20% base rate)" }
-              ];
-            }
+        if (salonShare > 0 || platformShare > 0) {
+          if (salonShare > 0) {
+            fetchedCommissions.push({
+              entity_type: "salon",
+              amount: salonShare,
+              description: "Salon share from latest booking",
+            });
+          }
+          if (platformShare > 0) {
+            fetchedCommissions.push({
+              entity_type: "platform",
+              amount: platformShare,
+              description: "Platform fee from latest booking",
+            });
+          }
+          if (agentShare > 0) {
+            fetchedCommissions.push({
+              entity_type: "agent",
+              amount: agentShare,
+              description: "Agent referral from latest booking",
+            });
           }
         } else {
+          const total = Number(latestBooking.amount ?? 0);
           fetchedCommissions = [
-            { entity_type: "salon", amount: 4000, description: "Salon Net Yield (80% booking share)" },
-            { entity_type: "platform", amount: 1000, description: "Platform Fee (20% base rate)" }
+            { entity_type: "salon", amount: Math.round(total * 0.8), description: "Estimated salon share (80%)" },
+            { entity_type: "platform", amount: Math.round(total * 0.2), description: "Estimated platform fee (20%)" },
           ];
         }
       }
 
-      if (servicesRes.ok) {
-        const services = await servicesRes.json();
-        activeServices = services.filter((s: any) => s.status === 'active').length;
+      const feed: ActivityItem[] = [];
+      for (const booking of bookings.slice(0, 4)) {
+        feed.push({
+          id: `booking-${booking.id}`,
+          title: "Booking update",
+          description: `${booking.customer_email || "Customer"} · LKR ${formatLkr(getBookingAmount(booking))} · ${booking.status}`,
+          time: formatRelativeTime(booking.created_at),
+          tone: "blue",
+        });
+      }
+      for (const service of services.slice(0, 2)) {
+        feed.push({
+          id: `service-${service.id}`,
+          title: service.status === "active" ? "Service active" : "Service updated",
+          description: service.name,
+          time: formatRelativeTime(service.created_at),
+          tone: "purple",
+        });
+      }
+      for (const member of staff.slice(0, 2)) {
+        feed.push({
+          id: `staff-${member.id}`,
+          title: "Staff member",
+          description: member.name,
+          time: formatRelativeTime(member.created_at),
+          tone: "emerald",
+        });
       }
 
-      if (staffRes.ok) {
-        const staff = await staffRes.json();
-        totalStaff = staff.length;
-      }
+      const monthly = groupBookingsByMonth(bookings);
 
-      const newStats = { totalBookings, activeServices, totalStaff, revenue };
       setStats(newStats);
       setCommissions(fetchedCommissions);
+      setMonthlyPoints(monthly);
+      setActivity(feed.slice(0, 6));
 
-      // Cache it for the next visit
-      sessionStorage.setItem("dashboardCache", JSON.stringify({
-        stats: newStats,
-        commissions: fetchedCommissions
-      }));
-
+      sessionStorage.setItem(
+        "dashboardCache",
+        JSON.stringify({
+          salonName: salonData.name,
+          stats: newStats,
+          commissions: fetchedCommissions,
+          monthlyPoints: monthly,
+          activity: feed.slice(0, 6),
+        })
+      );
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
     } finally {
@@ -141,44 +244,47 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
-         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
-         <p className="text-zinc-500 font-medium">Calculating salon performance...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
+        <p className="text-zinc-500 font-medium">Calculating salon performance...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
-      
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Salon Performance</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Welcome back. Here is what is happening at Crown & Comb today.</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Welcome back. Here is what is happening at {salonName} today.
+          </p>
         </div>
-        <button 
-          onClick={() => fetchDashboardStats(true)} 
+        <button
+          onClick={() => fetchDashboardStats(true)}
           disabled={isRefreshing}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-sm"
         >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-brand' : 'text-zinc-500'}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-brand" : "text-zinc-500"}`} />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
-      {/* KPI GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Total Bookings" value={stats.totalBookings.toLocaleString()} />
         <Card title="Active Services" value={stats.activeServices.toLocaleString()} />
         <Card title="Total Staff" value={stats.totalStaff.toLocaleString()} />
-        <Card title="Total Revenue" value={`LKR ${stats.revenue.toLocaleString()}`} />
+        <Card title="Total Revenue" value={`LKR ${formatLkr(stats.revenue)}`} />
       </div>
 
-      {/* COMMISSIONS SECTION */}
       {commissions.length > 0 && (
         <div className="bg-white dark:bg-brand-surface-dark p-6 rounded-3xl border border-slate-200 dark:border-white/5 space-y-4">
           <div>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Recent Booking Commission Split</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Split breakdown (platform and salon shares) for the latest booking.</p>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              Recent Booking Commission Split
+            </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+              Split breakdown from your most recent booking in the database.
+            </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {commissions.map((row, i) => (
@@ -188,41 +294,39 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* CHART SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 h-64 flex flex-col">
-          <h3 className="font-semibold text-zinc-900 mb-2">Booking Trends</h3>
-          <div className="flex-1 border-2 border-dashed border-zinc-100 rounded-lg flex items-center justify-center text-zinc-400">
-            [Chart Placeholder]
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 h-64 flex flex-col">
-          <h3 className="font-semibold text-zinc-900 mb-2">Revenue Growth</h3>
-          <div className="flex-1 border-2 border-dashed border-zinc-100 rounded-lg flex items-center justify-center text-zinc-400">
-            [Chart Placeholder]
-          </div>
-        </div>
+        <SimpleBarChart title="Booking Trends" points={monthlyPoints} valueKey="bookings" />
+        <SimpleBarChart title="Revenue Growth" points={monthlyPoints} valueKey="revenue" />
       </div>
 
-      {/* RECENT ACTIVITY */}
       <div className="bg-white p-4 rounded-xl border border-slate-200">
         <h3 className="font-semibold text-zinc-900 mb-4">Recent Activity</h3>
-
-        <ul className="space-y-3 text-sm text-zinc-600">
-          <li className="flex items-center gap-2">
-             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-             New booking confirmed for LKR 2,000
-          </li>
-          <li className="flex items-center gap-2">
-             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-             Staff schedule updated for Nuwan Abeywickrama
-          </li>
-          <li className="flex items-center gap-2">
-             <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-             New service &ldquo;Premium Fade&rdquo; activated
-          </li>
-        </ul>
+        {activity.length === 0 ? (
+          <p className="text-sm text-zinc-500">No recent activity yet.</p>
+        ) : (
+          <ul className="space-y-3 text-sm text-zinc-600">
+            {activity.map((item) => (
+              <li key={item.id} className="flex items-start gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                    item.tone === "emerald"
+                      ? "bg-emerald-500"
+                      : item.tone === "blue"
+                        ? "bg-blue-500"
+                        : item.tone === "purple"
+                          ? "bg-purple-500"
+                          : "bg-amber-500"
+                  }`}
+                />
+                <div>
+                  <p className="font-medium text-zinc-800">{item.title}</p>
+                  <p className="text-zinc-500">{item.description}</p>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">{item.time}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

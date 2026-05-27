@@ -11,8 +11,10 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "../../../config/supabase";
 import {
   resolveAdminAccess,
+  resolveTrimmaUserRole,
   setTrimmaMiddlewareCookies,
 } from "../../../lib/trimma-role";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export default function AdminLogin() {
   const navigate = useRouter();
@@ -24,9 +26,9 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
     
-    const email = (document.getElementById('email') as HTMLInputElement).value.trim();
-    const password = (document.getElementById('password') as HTMLInputElement).value;
-    
+    const email = normalizeEmail((document.getElementById("email") as HTMLInputElement).value);
+    const password = (document.getElementById("password") as HTMLInputElement).value;
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -53,7 +55,8 @@ export default function AdminLogin() {
       return;
     }
 
-    setTrimmaMiddlewareCookies(session.access_token, "admin");
+    const dbRole = (await resolveTrimmaUserRole(session.user.id, session.user.email)) || "admin";
+    setTrimmaMiddlewareCookies(session.access_token, dbRole);
     navigate.push("/admin");
   };
 
