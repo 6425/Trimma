@@ -27,6 +27,13 @@ const B2BCTA = dynamic(
   () => import("../components/landing-v2/B2BCTA").then((m) => ({ default: m.B2BCTA })),
   { loading: () => <SectionSkeleton height="h-40" /> }
 );
+const DealsDiscountSection = dynamic(
+  () =>
+    import("../components/landing-v2/DealsDiscountSection").then((m) => ({
+      default: m.DealsDiscountSection,
+    })),
+  { loading: () => <SectionSkeleton /> }
+);
 const WhyTrimmaSection = dynamic(
   () =>
     import("../components/marketplace/MarketplaceSections").then((m) => ({
@@ -53,6 +60,7 @@ export default function LandingPage() {
       <TopRatedSalons />
       <TrustBadges />
       <B2BCTA />
+      <DealsDiscountSection />
       <div className="container mx-auto px-4 max-w-7xl pt-16 pb-16">
         <WhyTrimmaSection />
       </div>

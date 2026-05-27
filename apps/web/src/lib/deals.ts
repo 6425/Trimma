@@ -179,3 +179,16 @@ export function groupDealsByLocation(deals: SalonDealRow[]): Record<string, Salo
     Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
   );
 }
+
+export function getDealDiscountPercent(
+  deal: Pick<SalonDealRow, "original_price" | "package_price">
+): number {
+  if (deal.original_price <= 0 || deal.package_price >= deal.original_price) return 0;
+  return Math.round(((deal.original_price - deal.package_price) / deal.original_price) * 100);
+}
+
+export function pickTopDiscountDeals(deals: SalonDealRow[], limit = 4): SalonDealRow[] {
+  return [...deals]
+    .sort((a, b) => getDealDiscountPercent(b) - getDealDiscountPercent(a))
+    .slice(0, limit);
+}
