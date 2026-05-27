@@ -26,8 +26,7 @@ async function assertPlatformAdmin(accessToken: string) {
 
   const role = profile?.global_role;
   const isAllowed =
-    (role && PLATFORM_ADMIN_ROLES.has(role)) ||
-    user.email === "thusitha.jayalath@gmail.com";
+    Boolean(role && PLATFORM_ADMIN_ROLES.has(role));
 
   if (!isAllowed) {
     throw new Error("Admin access required.");

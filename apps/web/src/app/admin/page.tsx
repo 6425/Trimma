@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
+import { resolveAdminAccess } from "@/lib/trimma-role";
 
 
 export default function AdminDashboard() {
@@ -55,19 +56,18 @@ export default function AdminDashboard() {
       try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-      router.replace("/login?redirectTo=/admin");
+      router.replace("/admin/login");
       return;
       }
-      
-      // Verify admin role
+
       const { data: userData } = await supabase
       .from('users')
       .select('global_role')
       .eq('email', session.user.email)
-      .single();
-      
+      .maybeSingle();
+
       const role = userData?.global_role;
-      const isAllowedAdmin = role === 'admin' || session.user.email === 'thusitha.jayalath@gmail.com';
+      const isAllowedAdmin = await resolveAdminAccess(session.user.id, session.user.email);
       
       if (!isAllowedAdmin) {
       // If not admin, redirect to correct cockpit
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
       fetchStats();
       } catch (err) {
       console.error("Auth check failed", err);
-      router.replace("/login");
+      router.replace("/admin/login");
       }
       }
       checkAdminAuth();

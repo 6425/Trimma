@@ -44,7 +44,7 @@ export default function AgentDashboard() {
         .single();
 
       const role = userData?.global_role;
-      const isAllowedAgent = role === 'agent' || role === 'admin' || user.email === 'thusitha.jayalath@gmail.com';
+      const isAllowedAgent = role === "agent" || role === "admin";
 
       if (!isAllowedAgent) {
         if (role === 'salon_owner') {

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "../../config/supabase";
 import { toast } from "sonner";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
+import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
 
 export default function OnboardingPage() {
@@ -36,18 +37,17 @@ export default function OnboardingPage() {
       setEmail(activeSession.user.email || "");
       
       // Check if already registered
-      const { data: existingRoles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', activeSession.user.id)
-      .maybeSingle();
-      
-      if (existingRoles?.role === 'admin' || activeSession.user.email === 'thusitha.jayalath@gmail.com') {
+      const effectiveRole = await resolveTrimmaUserRole(
+        activeSession.user.id,
+        activeSession.user.email
+      );
+
+      if (effectiveRole === "admin") {
       router.push("/admin");
       return;
       }
       
-      if (existingRoles?.role === 'salon_owner') {
+      if (effectiveRole === "salon_owner") {
       const { data: ownerSalon } = await supabase
         .from('salons')
         .select('onboarding_status')

@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "../../../config/supabase";
+import {
+  resolveAdminAccess,
+  setTrimmaMiddlewareCookies,
+} from "../../../lib/trimma-role";
 
 export default function AdminLogin() {
   const navigate = useRouter();
@@ -20,7 +24,7 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
     
-    const email = (document.getElementById('email') as HTMLInputElement).value;
+    const email = (document.getElementById('email') as HTMLInputElement).value.trim();
     const password = (document.getElementById('password') as HTMLInputElement).value;
     
     const { data, error: authError } = await supabase.auth.signInWithPassword({
@@ -34,13 +38,22 @@ export default function AdminLogin() {
       return;
     }
 
-    // Set cookies so Next.js edge middleware can authorize the request
-    if (data.session) {
-      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax; secure`;
-      document.cookie = `user-role=admin; path=/; max-age=${data.session.expires_in}; SameSite=Lax; secure`;
+    const session = data.session;
+    if (!session) {
+      setError("Sign-in succeeded but no session was returned. Please try again.");
+      setLoading(false);
+      return;
     }
 
-    // Route directly to admin dashboard
+    const isAdmin = await resolveAdminAccess(session.user.id, session.user.email);
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      setError("This account does not have admin access. Use the standard login for salon, agent, or customer accounts.");
+      setLoading(false);
+      return;
+    }
+
+    setTrimmaMiddlewareCookies(session.access_token, "admin");
     navigate.push("/admin");
   };
 

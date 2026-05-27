@@ -37,8 +37,7 @@ export function isSafeInternalPath(path: string | null | undefined): path is str
 
 export function resolvePostAuthRedirect(
   role: TrimmaUserRole | null,
-  nextPath: string | null,
-  email?: string | null
+  nextPath: string | null
 ): string {
   if (isSafeInternalPath(nextPath) && (role === "admin" || canAccessTrimmaRoute(role, nextPath))) {
     return nextPath;
@@ -48,6 +47,5 @@ export function resolvePostAuthRedirect(
   if (role === "salon_owner") return "/dashboard";
   if (role === "agent") return "/agent";
   if (role === "customer") return "/customer";
-  if (email === "thusitha.jayalath@gmail.com") return "/admin";
   return "/onboarding";
 }
