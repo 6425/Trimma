@@ -8,6 +8,7 @@ import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 import {
   readWhatsAppEnvAccessToken,
   readWhatsAppEnvPhoneId,
+  resolveEffectiveWhatsAppCredentials,
 } from "@/lib/whatsapp-env";
 import {
   clearWhatsAppPhoneResolutionCache,
@@ -130,7 +131,10 @@ function formatWhatsAppApiError(result: {
     lower.includes("authentication error") ||
     lower.includes("error validating access token")
   ) {
-    return "Your Meta WhatsApp access token has expired or is invalid. Generate a new token in Meta Developer Console → WhatsApp → API Setup, then paste it in Admin → Global Settings and click Save (this updates the database — local .env alone is not enough unless it is the only configured source). Meta temporary sandbox tokens usually expire after ~24 hours.";
+    const vercelHint = readWhatsAppEnvAccessToken()
+      ? " Trimma is using WHATSAPP_ACCESS_TOKEN from Vercel. If this error persists after redeploy, clear the stale token in Supabase (packages/db/WHATSAPP_CLEAR_STALE_DB_TOKEN.sql)."
+      : " Set WHATSAPP_ACCESS_TOKEN in Vercel, or paste your token in Admin → Global Settings and Save.";
+    return `${message}.${vercelHint}`;
   }
 
   if (code === 100 && lower.includes("nonexisting field") && lower.includes("verified_name")) {
@@ -144,23 +148,20 @@ function cleanWhatsAppCredential(value: string | undefined): string {
   return cleanEnvValue(value) || "";
 }
 
-/** Stored Meta WhatsApp Phone Number ID (App ID). Vercel env: WHATSAPP_PHONE_NUMBER_ID. */
+/** Vercel WHATSAPP_* env wins over Supabase. Stale DB tokens are ignored when Vercel is set. */
 function resolveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
-  const envPhoneId = readWhatsAppEnvPhoneId();
-  const envAccessToken = readWhatsAppEnvAccessToken();
-  const dbToken = cleanWhatsAppCredential(dbAccessToken);
-  const dbPhone = cleanWhatsAppCredential(dbPhoneId);
-
-  const accountId = envPhoneId || dbPhone;
-  const accessToken = envAccessToken || dbToken;
-  const source =
-    accessToken === envAccessToken && envAccessToken
-      ? "env"
-      : accessToken === dbToken && dbToken
-        ? "database"
-        : "none";
-
-  return { accountId, accessToken, source, dbToken, envToken: envAccessToken };
+  const resolved = resolveEffectiveWhatsAppCredentials(dbPhoneId, dbAccessToken);
+  return {
+    accountId: resolved.accountId,
+    accessToken: resolved.accessToken,
+    source: resolved.source,
+    tokenFromEnv: resolved.tokenFromEnv,
+    phoneIdFromEnv: resolved.phoneIdFromEnv,
+    databaseAccessToken: resolved.databaseAccessToken,
+    databasePhoneId: resolved.databasePhoneId,
+    dbToken: resolved.databaseAccessToken,
+    envToken: readWhatsAppEnvAccessToken(),
+  };
 }
 
 async function resolveMessagingPhoneId(accountId: string, accessToken: string): Promise<string | null> {
@@ -173,8 +174,12 @@ export async function validateWhatsAppCredentials(
   accessTokenOverride?: string
 ) {
   const config = await getWhatsAppConfig();
-  const accountId = accountIdOverride?.trim() || config.accountId || config.phoneId;
-  const accessToken = accessTokenOverride?.trim() || config.accessToken;
+  const envToken = readWhatsAppEnvAccessToken();
+  const envPhoneId = readWhatsAppEnvPhoneId();
+  const accountId =
+    accountIdOverride?.trim() || envPhoneId || config.accountId || config.phoneId;
+  // Never validate a stale Supabase token when Vercel WHATSAPP_ACCESS_TOKEN is configured.
+  const accessToken = envToken || accessTokenOverride?.trim() || config.accessToken;
 
   const validation = await validateWhatsAppMetaAccount(accountId, accessToken);
   if (validation.valid === false) {
@@ -235,7 +240,8 @@ export async function getWhatsAppConfig() {
     }
 
     const enabled = dbSettings.whatsapp_enabled !== false;
-    const { accountId, accessToken, source } = resolveWhatsAppCredentials(
+    const { accountId, accessToken, source, tokenFromEnv, phoneIdFromEnv, databaseAccessToken } =
+      resolveWhatsAppCredentials(
       dbSettings.whatsapp_phone_number_id || "",
       dbSettings.whatsapp_access_token || ""
     );
@@ -282,6 +288,10 @@ export async function getWhatsAppConfig() {
       accountId,
       phoneId: accountId,
       accessToken,
+      tokenFromEnv,
+      phoneIdFromEnv,
+      databaseAccessToken,
+      credentialsSource: source,
       adminAlertPhone,
       reservationPaidEnabled,
       bookingConfirmedEnabled,
@@ -312,12 +322,23 @@ export async function getWhatsAppConfig() {
     };
   } catch (err) {
     console.warn("⚠️ Failed to load WhatsApp settings from DB, falling back to static default states:", err);
-    const { accountId, accessToken, source } = resolveWhatsAppCredentials("", "");
+    const {
+      accountId,
+      accessToken,
+      source,
+      tokenFromEnv,
+      phoneIdFromEnv,
+      databaseAccessToken,
+    } = resolveWhatsAppCredentials("", "");
     return {
       enabled: true,
       accountId,
       phoneId: accountId,
       accessToken,
+      tokenFromEnv,
+      phoneIdFromEnv,
+      databaseAccessToken,
+      credentialsSource: source,
       reservationPaidEnabled: true,
       bookingConfirmedEnabled: true,
       bookingRescheduledEnabled: true,
@@ -405,14 +426,25 @@ export async function saveWhatsAppSettings(
   templateAgentLeadAssigned?: string
 ) {
   try {
-    const trimmedAccountId = cleanWhatsAppCredential(accountId);
-    const trimmedToken = cleanWhatsAppCredential(accessToken);
+    const envToken = readWhatsAppEnvAccessToken();
+    const envPhoneId = readWhatsAppEnvPhoneId();
+    const trimmedAccountId = cleanWhatsAppCredential(accountId || envPhoneId);
+    const trimmedToken = cleanWhatsAppCredential(envToken || accessToken);
+
+    if (!trimmedAccountId || !trimmedToken) {
+      return {
+        success: false,
+        error: envToken
+          ? "Phone Number ID is required. Set WHATSAPP_PHONE_NUMBER_ID in Vercel or enter it here."
+          : "WhatsApp Phone Number ID and access token are required.",
+      };
+    }
 
     const validation = await validateWhatsAppCredentials(trimmedAccountId, trimmedToken);
     if (!validation.valid) {
       return {
         success: false,
-        error: validation.error || "WhatsApp token validation failed. Generate a new Meta token and try again.",
+        error: validation.error || "WhatsApp credentials could not be validated with Meta.",
       };
     }
 

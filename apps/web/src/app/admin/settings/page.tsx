@@ -34,6 +34,7 @@ function SettingsPanelContent() {
   const [agentLeadAssignedEnabled, setAgentLeadAssignedEnabled] = useState(true);
   const [adminAlertPhone, setAdminAlertPhone] = useState("");
   const [configSource, setConfigSource] = useState("database");
+  const [tokenFromEnv, setTokenFromEnv] = useState(false);
 
   // Dynamic template states
   const [templateReservationPaid, setTemplateReservationPaid] = useState("");
@@ -68,7 +69,8 @@ function SettingsPanelContent() {
       async function loadConfig() {
       const config = await getWhatsAppConfig();
       setAccountId(config.phoneId);
-      setAccessToken(config.accessToken);
+      setAccessToken(config.tokenFromEnv ? "" : config.accessToken);
+      setTokenFromEnv(Boolean(config.tokenFromEnv));
       setEnabled(config.enabled);
       setReservationPaidEnabled(config.reservationPaidEnabled !== false);
       setBookingConfirmedEnabled(config.bookingConfirmedEnabled !== false);
@@ -96,9 +98,9 @@ function SettingsPanelContent() {
       setTemplateAdminApprovalAdmin(config.templateAdminApprovalAdmin || "");
       setTemplateWelcomeCustomer(config.templateWelcomeCustomer || "");
       setTemplateAgentLeadAssigned(config.templateAgentLeadAssigned || "");
-      setConfigSource(config.source);
+      setConfigSource(config.credentialsSource || config.source);
 
-      const validation = await validateWhatsAppCredentials(config.phoneId, config.accessToken);
+      const validation = await validateWhatsAppCredentials();
       setTokenStatus(
         validation.valid
           ? {
@@ -319,11 +321,13 @@ function SettingsPanelContent() {
                 </label>
               </div>
 
-              {configSource === "env" && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                    <strong>Note:</strong> Loaded from Vercel env (<code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_ACCESS_TOKEN</code>) or Supabase. Saving here updates the database.
+              {configSource === "vercel" && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2.5">
+                  <AlertTriangle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
+                    <strong>Using Vercel credentials.</strong> Production reads{" "}
+                    <code>WHATSAPP_PHONE_NUMBER_ID</code> and <code>WHATSAPP_ACCESS_TOKEN</code> from Vercel first.
+                    Stale Supabase tokens are ignored. Save here to sync templates and phone ID to the database.
                   </p>
                 </div>
               )}
@@ -345,7 +349,7 @@ function SettingsPanelContent() {
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
                   <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                   <p className="text-[11px] text-red-700 font-medium leading-relaxed">
-                    <strong>Token expired or invalid.</strong> {tokenStatus.error}
+                    <strong>Meta rejected the credentials.</strong> {tokenStatus.error}
                   </p>
                 </div>
               )}
@@ -382,8 +386,8 @@ function SettingsPanelContent() {
                       type={showToken ? "text" : "password"}
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
-                      required
-                      placeholder="Paste EAASjC... Access Token"
+                      required={!tokenFromEnv}
+                      placeholder={tokenFromEnv ? "Using WHATSAPP_ACCESS_TOKEN from Vercel" : "Paste EAASjC... Access Token"}
                       className="h-11 border-slate-200 focus:border-zinc-950 pr-12 rounded-xl text-sm font-mono text-zinc-900"
                     />
                     <button
@@ -395,7 +399,9 @@ function SettingsPanelContent() {
                     </button>
                   </div>
                   <p className="text-[10px] text-zinc-500">
-                    Meta temporary sandbox tokens expire after ~24 hours. Paste a new token here and click Save — this updates Supabase (used in production). Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_ACCESS_TOKEN</code>. Localhost: <code className="text-[9px] bg-zinc-100 px-1 rounded">apps/web/.env</code>
+                    {tokenFromEnv
+                      ? "Permanent token is loaded from Vercel WHATSAPP_ACCESS_TOKEN. Leave blank unless you want to override and save a different token to Supabase."
+                      : "Paste your Meta access token here, or set WHATSAPP_ACCESS_TOKEN in Vercel for production."}
                   </p>
                 </div>
 

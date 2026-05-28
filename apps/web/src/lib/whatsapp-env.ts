@@ -33,5 +33,35 @@ export function readWhatsAppEnvAccessToken(): string {
   return "";
 }
 
-/** @deprecated Use readWhatsAppEnvPhoneId */
-export const readWhatsAppEnvAccountId = readWhatsAppEnvPhoneId;
+export function hasWhatsAppEnvCredentials(): boolean {
+  return Boolean(readWhatsAppEnvAccessToken() || readWhatsAppEnvPhoneId());
+}
+
+export function resolveEffectiveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
+  const envPhoneId = readWhatsAppEnvPhoneId();
+  const envAccessToken = readWhatsAppEnvAccessToken();
+  const dbPhone = (dbPhoneId || "").trim();
+  const dbToken = (dbAccessToken || "").trim();
+
+  const phoneId = envPhoneId || dbPhone;
+  const accessToken = envAccessToken || dbToken;
+  const tokenFromEnv = Boolean(envAccessToken);
+  const phoneIdFromEnv = Boolean(envPhoneId);
+  const source =
+    tokenFromEnv || phoneIdFromEnv
+      ? "vercel"
+      : accessToken || phoneId
+        ? "database"
+        : "none";
+
+  return {
+    phoneId,
+    accountId: phoneId,
+    accessToken,
+    source,
+    tokenFromEnv,
+    phoneIdFromEnv,
+    databaseAccessToken: dbToken,
+    databasePhoneId: dbPhone,
+  };
+}
