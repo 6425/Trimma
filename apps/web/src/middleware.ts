@@ -77,8 +77,12 @@ export async function middleware(req: NextRequest) {
   const userRole = (roleCookie?.value as UserRole) || null;
   
   if (!hasPermission(userRole, pathname)) {
-    // Authenticated but unauthorized, redirect to unauthorized page
-    return NextResponse.redirect(new URL('/unauthorized', req.url));
+    if (pathname.startsWith("/admin")) {
+      const loginUrl = new URL("/admin/login", req.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
   // Allow access

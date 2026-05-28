@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
-import { supabase, signOutTrimmaSession } from "../../config/supabase";
+import { signOutTrimmaSession } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
@@ -35,44 +35,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    const fetchRoleAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (roleData) {
-          setRole(roleData.role);
-          
-          if (roleData.role === 'admin') {
-            const { data: brandingData } = await supabase
-              .from('global_branding_settings')
-              .select('logo_image_url, logo_svg_raw')
-              .limit(1)
-              .maybeSingle();
-            if (brandingData) {
-              setAvatarUrl(brandingData.logo_image_url || null);
-            }
-          } else {
-            const { data: salonData } = await supabase
-              .from('salons')
-              .select('name, logo_url')
-              .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-              .maybeSingle();
-            if (salonData) {
-              setSalonName(salonData.name || "My Salon");
-              setAvatarUrl(salonData.logo_url || null);
-            }
-          }
-        }
+    const roleFromCookie = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
+    if (roleFromCookie) {
+      try {
+        setRole(decodeURIComponent(roleFromCookie));
+      } catch {
+        setRole(roleFromCookie);
       }
-    };
+    }
+  }, []);
 
-    void Promise.resolve().then(() => fetchRoleAndProfile());
-
+  useEffect(() => {
     const handleBrandingUpdate = (e: any) => {
       if (e.detail?.logo_image_url !== undefined) {
         setAvatarUrl(e.detail.logo_image_url);

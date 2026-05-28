@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useState } from 'react';
 import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "../../../components/Logo";
@@ -9,15 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "../../../config/supabase";
-import {
-  resolveAdminAccess,
-  resolveTrimmaUserRole,
-  setTrimmaMiddlewareCookies,
-} from "../../../lib/trimma-role";
+import { setTrimmaMiddlewareCookies, redirectAfterAuth } from "../../../lib/trimma-role";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { verifyAdminLoginSession } from "@/app/actions/admin-auth";
 
 export default function AdminLogin() {
-  const navigate = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,17 +42,16 @@ export default function AdminLogin() {
       return;
     }
 
-    const isAdmin = await resolveAdminAccess(session.user.id, session.user.email);
-    if (!isAdmin) {
+    const isAdmin = await verifyAdminLoginSession(session.access_token);
+    if (isAdmin.success === false) {
       await supabase.auth.signOut();
-      setError("This account does not have admin access. Use the standard login for salon, agent, or customer accounts.");
+      setError(isAdmin.error);
       setLoading(false);
       return;
     }
 
-    const dbRole = (await resolveTrimmaUserRole(session.user.id, session.user.email)) || "admin";
-    setTrimmaMiddlewareCookies(session.access_token, dbRole);
-    navigate.push("/admin");
+    setTrimmaMiddlewareCookies(session.access_token, isAdmin.role);
+    redirectAfterAuth("/admin");
   };
 
   return (

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import AdminCard from "../../components/ui/AdminCard";
 import { supabase } from "@/config/supabase";
+import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw, Play, ShieldAlert, ShieldCheck, Globe, Activity, Database, Lock, Server, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 } from "@/lib/dashboard-stats";
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     salons: 0,
     salonsThisWeek: 0,
@@ -44,6 +46,14 @@ export default function AdminDashboard() {
       );
 
       if (result.success === false) {
+        if (
+          result.error.includes("sign in") ||
+          result.error.includes("Admin access") ||
+          result.error.includes("SUPABASE_SERVICE_ROLE_KEY")
+        ) {
+          router.replace("/admin/login?redirect=/admin");
+          return;
+        }
         throw new Error(result.error);
       }
 
@@ -128,9 +138,9 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    void Promise.resolve().then(() => {
+    void Promise.resolve().then(async () => {
       setAuthorized(true);
-      void fetchStats();
+      await fetchStats();
     });
   }, []);
 
