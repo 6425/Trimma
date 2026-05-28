@@ -1,5 +1,8 @@
 "use server";
 
+import { sendBookingConfirmedEmail } from "@/app/actions/email-settings";
+import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
+import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
 import {
   parseSalonScheduleFromWorkingHours,
@@ -57,6 +60,41 @@ export async function updateOwnerBooking(bookingId: string, payload: Record<stri
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
+}
+
+export async function confirmOwnerBooking(bookingId: string) {
+  let bookingNo: string | null = null;
+
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: booking, error: readErr } = await supabase
+      .from("bookings")
+      .select("id, salon_id, booking_no, status")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!booking || booking.salon_id !== ctx.salonId) {
+      throw new Error("Booking not found for your salon.");
+    }
+    if (booking.status !== "pending") {
+      throw new Error("Only pending bookings can be confirmed.");
+    }
+
+    const { error } = await supabase.from("bookings").update({ status: "confirmed" }).eq("id", bookingId);
+    if (error) throw new Error(error.message);
+
+    bookingNo = booking.booking_no as string;
+    await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
+    return { bookingNo };
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+
+  if (bookingNo) {
+    await sendWhatsAppNotification(bookingNo);
+    void sendBookingConfirmedEmail(bookingNo);
+  }
+
+  return { success: true as const, bookingNo };
 }
 
 export async function insertSalonPromotionPackages(payloads: Record<string, unknown>[]) {

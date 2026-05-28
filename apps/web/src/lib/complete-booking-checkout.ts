@@ -1,6 +1,7 @@
 import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { insertBookingRecord, updateBookingAfterPayment } from "@/lib/booking-insert";
+import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
 import { sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { isEmailSendFailure } from "@/lib/email/result";
@@ -296,8 +297,11 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   });
 
   try {
-    const [{ data: salonRow }, whatsappResult] = await Promise.all([
+    const [{ data: salonRow }, { data: staffRow }, whatsappResult] = await Promise.all([
       supabase.from("salons").select("name, address, location, slug").eq("id", salon.id).maybeSingle(),
+      resolvedStaffId
+        ? supabase.from("salon_staff").select("name").eq("id", resolvedStaffId).maybeSingle()
+        : Promise.resolve({ data: null }),
       sendWhatsAppReservationPaidNotification(bookingNo, {
         customerPhone: customer.phone,
         customerName,
@@ -318,6 +322,20 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
         .join(", ") ||
       "Salon service";
     const balanceToPay = Math.max(0, serviceTotal - resolvedReservationFee);
+
+    void createBookingPendingConfirmNotification(supabase, {
+      salonId: salon.id,
+      bookingId: newBooking.id,
+      bookingNo,
+      customerEmail,
+      customerName,
+      bookingDate: draft.bookingDate,
+      bookingTime: formattedTime,
+      amount: serviceTotal,
+      serviceName,
+      staffName: staffRow?.name || null,
+      paymentStatus: "reservation_paid",
+    });
 
     const emailResult = await sendTriggeredEmail({
       triggerId: "reservation-paid",

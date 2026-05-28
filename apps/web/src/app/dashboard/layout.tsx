@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { readRoleFromCookie } from "@/lib/client-auth-cookie";
 import { fetchSalonLayoutShell } from "@/app/actions/salon-dashboard-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
+import { SalonOwnerNotificationBell } from "../../components/dashboard/SalonOwnerNotificationBell";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -303,10 +304,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
 
             {/* Bell */}
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
-            </button>
+            <SalonOwnerNotificationBell />
 
             <div className="w-px h-6 bg-white/10 mx-1" />
 

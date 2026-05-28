@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,19 +12,43 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { 
-  sendWhatsAppNotification, 
   sendWhatsAppCancellationNotification, 
   sendReviewRequestAlert 
 } from "@/app/actions/whatsapp";
-import { sendBookingConfirmedEmail } from "@/app/actions/email-settings";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
-import { updateOwnerBooking } from "@/app/actions/salon-operations";
+import { confirmOwnerBooking, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 
 import { ChevronDown } from "lucide-react";
+
+type BookingStatusTab = "pending" | "confirmed" | "rescheduled" | "canceled";
+
+const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
+  { key: "pending", label: "Pending" },
+  { key: "confirmed", label: "Confirmed" },
+  { key: "rescheduled", label: "Rescheduled" },
+  { key: "canceled", label: "Cancelled" },
+];
+
+function matchesBookingTab(booking: any, tab: BookingStatusTab) {
+  const status = (booking.status || "pending").toLowerCase();
+  if (tab === "pending") return status === "pending";
+  if (tab === "confirmed") return status === "confirmed" || status === "in_progress" || status === "completed";
+  if (tab === "rescheduled") {
+    return (
+      status === "rescheduled" ||
+      booking.reschedule_requested === true ||
+      booking.reschedule_status === "approved" ||
+      booking.reschedule_status === "pending_salon"
+    );
+  }
+  if (tab === "canceled") return status === "canceled" || status === "no_show";
+  return true;
+}
 
 // Context-Aware Action Menu — only shows valid actions based on current booking status
 const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onAction: (id: string, action: string) => void, processingId: string | null }) => {
@@ -145,10 +169,14 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
 
 export default function DashboardBookings() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const tabParam = searchParams.get("tab") as BookingStatusTab | null;
+  const statusTab: BookingStatusTab =
+    tabParam && BOOKING_STATUS_TABS.some((t) => t.key === tabParam) ? tabParam : "pending";
 
   async function fetchBookings() {
     try {
@@ -169,6 +197,10 @@ export default function DashboardBookings() {
     });
   }, []);
 
+  const handleStatusTabChange = (tab: BookingStatusTab) => {
+    router.replace(`/dashboard/bookings?tab=${tab}`, { scroll: false });
+  };
+
   const handleBookingLifecycleAction = async (bookingId: string, action: string) => {
     if (action === 'view') {
       router.push(`/dashboard/bookings/${bookingId}`);
@@ -186,13 +218,14 @@ export default function DashboardBookings() {
       const bookingNo = booking?.booking_no;
       
       switch (action) {
-        case 'confirm': 
-          updatePayload.status = 'confirmed'; 
-          if (bookingNo) {
-            await sendWhatsAppNotification(bookingNo);
-            void sendBookingConfirmedEmail(bookingNo);
-          }
-          break;
+        case 'confirm': {
+          const confirmResult = await confirmOwnerBooking(bookingId);
+          if (confirmResult.success === false) throw new Error(confirmResult.error);
+          toast.success(`Booking successfully confirmed!`);
+          await fetchBookings();
+          setProcessingId(null);
+          return;
+        }
         case 'in_progress': 
           updatePayload.status = 'in_progress'; 
           break;
@@ -206,6 +239,7 @@ export default function DashboardBookings() {
         case 'cancel': 
           updatePayload.status = 'canceled'; 
           if (bookingNo) await sendWhatsAppCancellationNotification(bookingNo);
+          void markBookingNotificationsReadForOwner(bookingId);
           break;
         case 'reservation_paid': 
           updatePayload.payment_status = 'reservation_paid'; 
@@ -235,9 +269,19 @@ export default function DashboardBookings() {
     toast.info("Reschedule requests are not enabled on this schema yet.");
   };
 
-  const filteredBookings = bookings.filter(b => 
+  const searchedBookings = bookings.filter(b => 
     (b.customer_email || 'Walk-in Customer').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (b.booking_no || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredBookings = searchedBookings.filter((b) => matchesBookingTab(b, statusTab));
+
+  const tabCounts = BOOKING_STATUS_TABS.reduce(
+    (acc, tab) => {
+      acc[tab.key] = searchedBookings.filter((b) => matchesBookingTab(b, tab.key)).length;
+      return acc;
+    },
+    {} as Record<BookingStatusTab, number>
   );
 
   const pendingRequests: any[] = [];
@@ -307,6 +351,43 @@ export default function DashboardBookings() {
         </div>
       )}
 
+      {/* Status Tabs */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-2 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          {BOOKING_STATUS_TABS.map((tab) => {
+            const active = statusTab === tab.key;
+            const count = tabCounts[tab.key] || 0;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => handleStatusTabChange(tab.key)}
+                className={`h-10 px-4 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 ${
+                  active
+                    ? tab.key === "pending"
+                      ? "bg-amber-500 text-zinc-900 border-amber-500 shadow-sm"
+                      : tab.key === "confirmed"
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                        : tab.key === "rescheduled"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                          : "bg-rose-600 text-white border-rose-600 shadow-sm"
+                    : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                }`}
+              >
+                {tab.label}
+                <span
+                  className={`min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black flex items-center justify-center ${
+                    active ? "bg-black/15 text-inherit" : "bg-zinc-100 text-zinc-500"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Bookings List Table */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs min-h-[400px]">
         {loading ? (
@@ -319,7 +400,8 @@ export default function DashboardBookings() {
              <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-4">
                <Calendar className="w-8 h-8 text-slate-400" />
              </div>
-             <h3 className="text-base font-bold text-zinc-900">No bookings found</h3>
+             <h3 className="text-base font-bold text-zinc-900">No {BOOKING_STATUS_TABS.find((t) => t.key === statusTab)?.label.toLowerCase()} bookings</h3>
+             <p className="text-sm text-zinc-500 mt-1">Try another tab or adjust your search.</p>
            </div>
         ) : (
           <div className="overflow-x-auto">
