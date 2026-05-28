@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 
 export async function GET(request: Request) {
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const salons = (data || []).map((s: any, idx: number) => mapSalonRowToUI(s, idx));
+    const salons = filterPublicSalons(data || []).map((s: any, idx: number) => mapSalonRowToUI(s, idx));
 
     return NextResponse.json({ salons, hasMore: salons.length === limit });
   } catch (err: any) {

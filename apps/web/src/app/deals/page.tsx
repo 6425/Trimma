@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 import DealsClient from "./DealsClient";
 import {
   getDealLocationKey,
@@ -48,7 +49,9 @@ async function loadDealsPageData() {
       if (salonsError) {
         console.error("Failed to load deal salons:", salonsError.message);
       } else {
-        salonsById = new Map((salonRows || []).map((salon) => [salon.id, salon as DealSalon]));
+        salonsById = new Map(
+          filterPublicSalons(salonRows || []).map((salon) => [salon.id, salon as DealSalon])
+        );
       }
     }
 

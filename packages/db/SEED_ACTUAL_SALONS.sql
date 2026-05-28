@@ -1,9 +1,8 @@
 -- ==============================================================================
 -- SEED ACTUAL REALISTIC SALONS (SRI LANKA CONTEXT)
 -- ==============================================================================
--- Run this script in your Supabase SQL Editor.
--- This script completely cleans out all dummy salons/bookings/staff and seeds 
--- 3 premium actual establishments with proper service catalogs and staff.
+-- ⚠️  DO NOT RUN IN PRODUCTION — this wipes all salons and inserts demo data.
+--     To keep only Sampath Barber Saloon, use DELETE_DUMMY_SALONS_KEEP_SAMPATH.sql
 -- ==============================================================================
 
 -- 1. SAFE DELETION AND SLATE CLEARING (IN REVERSE DEPENDENCY ORDER)

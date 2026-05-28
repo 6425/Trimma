@@ -6,6 +6,7 @@ import Image from "next/image";
 import { LayoutGrid, Search, Sparkles, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 
 const CATEGORY_IMAGES: Record<string, string> = {
   hair: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&fm=webp&fit=crop",
@@ -57,12 +58,12 @@ export default function CategoriesPage() {
 
           const { data: salonData, error: salonError } = await supabase
             .from("salons")
-            .select("category");
+            .select("category, name");
 
           if (salonError) throw salonError;
 
           const counts: Record<string, number> = {};
-          salonData?.forEach((salon) => {
+          filterPublicSalons(salonData || []).forEach((salon) => {
             if (salon.category) {
               counts[salon.category] = (counts[salon.category] || 0) + 1;
             }

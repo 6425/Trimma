@@ -19,6 +19,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 import {
   buildDistrictCards,
   getProvinceByRouteSlug,
@@ -109,7 +110,7 @@ export default function ProvinceDetailPage() {
         if (error) throw error;
 
         // Transform DB records into UI formats
-        const formatted = (dbSalons || []).map((s: any) => {
+        const formatted = filterPublicSalons(dbSalons || []).map((s: any) => {
           const prices = s.services?.map((ser: any) => Number(ser.price)) || [];
           const startingPrice = prices.length > 0 ? Math.min(...prices) : 1500;
           const popularService = s.services?.[0]?.name || "Premium Cut & Style";

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/config/supabase";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Mapping of category slugs to Unsplash images (optimized by Vercel at delivery time)
@@ -55,19 +56,17 @@ export function BrowseByService() {
       // Fetch salon counts per category to show true dynamic counts
       const { data: salonData, error: salonError } = await supabase
       .from('salons')
-      .select('category');
+      .select('category, name');
       
       if (salonError) throw salonError;
       
       // Count salons manually by category name
       const counts: Record<string, number> = {};
-      if (salonData) {
-      salonData.forEach(salon => {
+      filterPublicSalons(salonData || []).forEach(salon => {
       if (salon.category) {
       counts[salon.category] = (counts[salon.category] || 0) + 1;
       }
       });
-      }
       
       if (catData) {
       const enriched = catData.map(c => ({
