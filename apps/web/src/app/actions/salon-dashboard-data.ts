@@ -247,14 +247,22 @@ export async function fetchSalonProfilePage() {
       supabase.from("salon_amenities").select("*").eq("salon_id", ctx.salonId),
     ]);
 
-    if (amenitiesRes.error) throw new Error(amenitiesRes.error.message);
-    if (salonAmenitiesRes.error) throw new Error(salonAmenitiesRes.error.message);
+    const amenitiesMissing =
+      amenitiesRes.error?.message?.toLowerCase().includes("does not exist") ||
+      amenitiesRes.error?.message?.toLowerCase().includes("schema cache") ||
+      salonAmenitiesRes.error?.message?.toLowerCase().includes("does not exist") ||
+      salonAmenitiesRes.error?.message?.toLowerCase().includes("schema cache");
+
+    if (!amenitiesMissing) {
+      if (amenitiesRes.error) throw new Error(amenitiesRes.error.message);
+      if (salonAmenitiesRes.error) throw new Error(salonAmenitiesRes.error.message);
+    }
 
     return {
       salon: ctx.salon,
       subscriptionPlan: plan,
-      globalAmenities: amenitiesRes.data || [],
-      salonAmenities: salonAmenitiesRes.data || [],
+      globalAmenities: amenitiesMissing ? [] : amenitiesRes.data || [],
+      salonAmenities: amenitiesMissing ? [] : salonAmenitiesRes.data || [],
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);

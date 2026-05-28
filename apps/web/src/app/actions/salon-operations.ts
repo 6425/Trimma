@@ -1,6 +1,11 @@
 "use server";
 
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
+import {
+  parseSalonScheduleFromWorkingHours,
+  pickSalonProfileUpdate,
+  slugifySalonName,
+} from "@/lib/salon-profile-save";
 
 async function assertSalonService(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -226,75 +231,118 @@ export async function updateSalonMediaFields(payload: {
 export async function saveSalonProfile(input: {
   profile: Record<string, unknown>;
   amenityRows: Record<string, unknown>[];
-  salonSchedule: Record<string, unknown>;
 }) {
-  const result = await withSalonDb(async (supabase, ctx) => {
-    const { error: profileError } = await supabase
-      .from("salons")
-      .update(input.profile)
-      .eq("id", ctx.salonId);
-    if (profileError) throw new Error(profileError.message);
+  try {
+    const result = await withSalonDb(async (supabase, ctx) => {
+      const profile = pickSalonProfileUpdate(input.profile);
+      const salonSchedule = parseSalonScheduleFromWorkingHours(profile.working_hours);
 
-    const { data: staffList, error: staffReadError } = await supabase
-      .from("salon_staff")
-      .select("id, working_hours")
-      .eq("salon_id", ctx.salonId);
-    if (staffReadError) throw new Error(staffReadError.message);
-
-    for (const staff of staffList || []) {
-      let staffModified = false;
-      const currentStaffSchedule = (staff.working_hours as { schedule?: Record<string, any> })?.schedule || {};
-
-      Object.keys(input.salonSchedule).forEach((day) => {
-        const salonDay = input.salonSchedule[day] as { isWorking: boolean; start: string; end: string };
-        const staffDay = currentStaffSchedule[day];
-        if (!staffDay) return;
-
-        if (!salonDay.isWorking && staffDay.isWorking) {
-          staffDay.isWorking = false;
-          staffModified = true;
+      if (typeof profile.name === "string" && profile.name.trim()) {
+        const nextSlug = slugifySalonName(profile.name);
+        if (nextSlug) {
+          const { data: slugOwner, error: slugError } = await supabase
+            .from("salons")
+            .select("id")
+            .eq("slug", nextSlug)
+            .maybeSingle();
+          if (slugError) throw new Error(slugError.message);
+          profile.slug =
+            !slugOwner || slugOwner.id === ctx.salonId
+              ? nextSlug
+              : `${nextSlug}-${String(ctx.salonId).slice(0, 8)}`;
         }
-
-        if (salonDay.isWorking && staffDay.isWorking) {
-          if (staffDay.start < salonDay.start) {
-            staffDay.start = salonDay.start;
-            staffModified = true;
-          }
-          if (staffDay.end > salonDay.end) {
-            staffDay.end = salonDay.end;
-            staffModified = true;
-          }
-        }
-      });
-
-      if (staffModified) {
-        const updatedStaffWorkingHours = {
-          ...(staff.working_hours as Record<string, unknown>),
-          schedule: currentStaffSchedule,
-        };
-        const { error: staffUpdateError } = await supabase
-          .from("salon_staff")
-          .update({ working_hours: updatedStaffWorkingHours })
-          .eq("id", staff.id);
-        if (staffUpdateError) throw new Error(staffUpdateError.message);
       }
+
+      const { error: profileError } = await supabase
+        .from("salons")
+        .update(profile)
+        .eq("id", ctx.salonId);
+      if (profileError) throw new Error(profileError.message);
+
+      if (Object.keys(salonSchedule).length > 0) {
+        const { data: staffList, error: staffReadError } = await supabase
+          .from("salon_staff")
+          .select("id, working_hours")
+          .eq("salon_id", ctx.salonId);
+        if (staffReadError) throw new Error(staffReadError.message);
+
+        for (const staff of staffList || []) {
+          let staffModified = false;
+          const workingHours =
+            staff.working_hours && typeof staff.working_hours === "object" && !Array.isArray(staff.working_hours)
+              ? (staff.working_hours as Record<string, unknown>)
+              : {};
+          const currentStaffSchedule =
+            workingHours.schedule && typeof workingHours.schedule === "object" && !Array.isArray(workingHours.schedule)
+              ? (workingHours.schedule as Record<string, { isWorking?: boolean; start?: string; end?: string }>)
+              : {};
+
+          for (const day of Object.keys(salonSchedule)) {
+            const salonDay = salonSchedule[day];
+            const staffDay = currentStaffSchedule[day];
+            if (!staffDay) continue;
+
+            if (!salonDay.isWorking && staffDay.isWorking) {
+              staffDay.isWorking = false;
+              staffModified = true;
+            }
+
+            if (salonDay.isWorking && staffDay.isWorking && staffDay.start && staffDay.end) {
+              if (staffDay.start < salonDay.start) {
+                staffDay.start = salonDay.start;
+                staffModified = true;
+              }
+              if (staffDay.end > salonDay.end) {
+                staffDay.end = salonDay.end;
+                staffModified = true;
+              }
+            }
+          }
+
+          if (!staffModified) continue;
+
+          const { error: staffUpdateError } = await supabase
+            .from("salon_staff")
+            .update({
+              working_hours: {
+                ...workingHours,
+                schedule: currentStaffSchedule,
+              },
+            })
+            .eq("id", staff.id);
+          if (staffUpdateError) throw new Error(staffUpdateError.message);
+        }
+      }
+
+      const { error: deleteAmenitiesError } = await supabase
+        .from("salon_amenities")
+        .delete()
+        .eq("salon_id", ctx.salonId);
+
+      if (deleteAmenitiesError) {
+        const lower = deleteAmenitiesError.message.toLowerCase();
+        if (!lower.includes("does not exist") && !lower.includes("schema cache")) {
+          throw new Error(deleteAmenitiesError.message);
+        }
+      } else if (input.amenityRows.length > 0) {
+        const rows = input.amenityRows.map((row) => ({
+          amenity_id: row.amenity_id,
+          value: row.value,
+          salon_id: ctx.salonId,
+        }));
+        const { error: insertAmenitiesError } = await supabase.from("salon_amenities").insert(rows);
+        if (insertAmenitiesError) throw new Error(insertAmenitiesError.message);
+      }
+    });
+
+    if (!isSalonDbSuccess(result)) {
+      return salonDbFailure(result, "Run packages/db/AMENITIES_PATCH.sql if amenities fail to save.");
     }
-
-    const { error: deleteAmenitiesError } = await supabase
-      .from("salon_amenities")
-      .delete()
-      .eq("salon_id", ctx.salonId);
-    if (deleteAmenitiesError) throw new Error(deleteAmenitiesError.message);
-
-    if (input.amenityRows.length > 0) {
-      const rows = input.amenityRows.map((row) => ({ ...row, salon_id: ctx.salonId }));
-      const { error: insertAmenitiesError } = await supabase.from("salon_amenities").insert(rows);
-      if (insertAmenitiesError) throw new Error(insertAmenitiesError.message);
-    }
-  });
-
-  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
-  return { success: true as const };
+    return { success: true as const };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to save salon profile.";
+    return { success: false as const, error: message };
+  }
 }
 
 export async function completeSalonOwnerOnboarding(ownerEmail: string | null | undefined) {

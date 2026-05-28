@@ -21,6 +21,7 @@ import {
   buildSalonAmenityInsert,
   parseSalonAmenityValue,
 } from "@/lib/salon-amenities";
+import { formatServerActionError, slugifySalonName } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 
 // Recommended sizing placeholders for image cards
@@ -366,24 +367,24 @@ export default function SalonProfilePage() {
 
     try {
       setSaving(true);
-      const updatedSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+      const updatedSlug = slugifySalonName(name);
 
       const updateData = {
         name,
         slug: updatedSlug,
         phone: contact,
         address: address,
-        city: address, // Keep city sync'd
+        city: address,
         province,
         district,
         description,
-        summary: description, // sync
+        summary: description,
         working_hours: JSON.stringify(salonSchedule),
-        logo_url: logoUrl,
-        cover_url: coverUrl,
-        hero_url: heroUrl,
+        logo_url: logoUrl || null,
+        cover_url: coverUrl || null,
+        hero_url: heroUrl || null,
         featured_images: featuredImages,
-        status: status
+        status: status,
       };
 
       const amenityInserts = Object.keys(salonAmenities)
@@ -402,15 +403,14 @@ export default function SalonProfilePage() {
       const saveResult = await saveSalonProfile({
         profile: updateData,
         amenityRows: amenityInserts,
-        salonSchedule,
       });
 
       if (saveResult.success === false) throw new Error(saveResult.error);
 
       toast.success("Profile saved successfully");
       fetchSalonProfile();
-    } catch (err: any) {
-      toast.error("Failed to save profile: " + err.message);
+    } catch (err: unknown) {
+      toast.error("Failed to save profile: " + formatServerActionError(err));
     } finally {
       setSaving(false);
     }

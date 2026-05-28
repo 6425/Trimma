@@ -4,8 +4,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SalonDbResult<T> = { success: true; data: T } | { success: false; error: string };
 
-export function mapSalonDbError(message: string): string {
+export function mapSalonDbError(message: string, hint?: string): string {
   const lower = message.toLowerCase();
+  if (lower.includes("does not exist") || lower.includes("schema cache")) {
+    return hint || "Database table is missing. Run the matching packages/db patch in Supabase SQL Editor.";
+  }
+  if (lower.includes("duplicate key") || lower.includes("salons_slug_key")) {
+    return "That salon URL slug is already taken. Try a slightly different salon name.";
+  }
   if (lower.includes("row-level security") || lower.includes("permission denied")) {
     return "Save blocked by database permissions.";
   }
@@ -37,7 +43,10 @@ export function isSalonDbSuccess<T>(result: SalonDbResult<T>): result is { succe
   return result.success === true;
 }
 
-export function salonDbFailure<T>(result: SalonDbResult<T>): { success: false; error: string } {
+export function salonDbFailure<T>(
+  result: SalonDbResult<T>,
+  hint?: string
+): { success: false; error: string } {
   const message = result.success === false ? result.error : "Request failed.";
-  return { success: false as const, error: mapSalonDbError(message) };
+  return { success: false as const, error: mapSalonDbError(message, hint) };
 }

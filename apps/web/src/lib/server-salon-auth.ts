@@ -44,14 +44,21 @@ export async function findOwnerSalon(
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
-  const { data, error } = await supabase
+  const { data: byOwnerEmail, error: ownerEmailError } = await supabase
     .from("salons")
     .select("*")
-    .or(`owner_email.eq.${normalized},owner_gmail.eq.${normalized}`)
+    .eq("owner_email", normalized)
     .maybeSingle();
+  if (ownerEmailError) throw new Error(ownerEmailError.message);
+  if (byOwnerEmail) return byOwnerEmail as Record<string, unknown>;
 
-  if (error) throw new Error(error.message);
-  return data as Record<string, unknown> | null;
+  const { data: byOwnerGmail, error: ownerGmailError } = await supabase
+    .from("salons")
+    .select("*")
+    .eq("owner_gmail", normalized)
+    .maybeSingle();
+  if (ownerGmailError) throw new Error(ownerGmailError.message);
+  return (byOwnerGmail as Record<string, unknown> | null) ?? null;
 }
 
 export async function requireSalonOwnerFromCookies(): Promise<
@@ -73,7 +80,15 @@ export async function requireSalonOwnerFromCookies(): Promise<
   }
 
   const email = normalizeEmail(user.email)!;
-  const salon = await findOwnerSalon(supabase, email);
+
+  let salon: Record<string, unknown> | null;
+  try {
+    salon = await findOwnerSalon(supabase, email);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not load your salon.";
+    return { error: message };
+  }
+
   if (!salon?.id) {
     return { error: "No salon is linked to your account yet." };
   }
