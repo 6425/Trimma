@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
-import { formatServerActionError } from "@/lib/salon-profile-save";
+import { buildAdminSalonFormPayload } from "@/lib/admin-salon-update";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -76,7 +76,12 @@ export default function Salons() {
       logo_url: salon.logo_url || "",
       cover_url: salon.cover_url || "",
       status: salon.status || "active",
-      working_hours: salon.working_hours ? JSON.stringify(salon.working_hours, null, 2) : "[]",
+      working_hours:
+        typeof salon.working_hours === "string"
+          ? salon.working_hours
+          : salon.working_hours
+            ? JSON.stringify(salon.working_hours, null, 2)
+            : "",
       is_verified: salon.is_verified || false
     });
     setViewModalOpen(true);
@@ -88,51 +93,35 @@ export default function Salons() {
       setIsSavingEdit(true);
       toast.loading("Saving salon details...");
 
-      let parsedHours: string | Record<string, unknown> | unknown[] = "[]";
-      try {
-        parsedHours = JSON.parse(editForm.working_hours || "[]");
-      } catch {
-        parsedHours = editForm.working_hours || "[]";
-      }
-
-      const parseOptionalFloat = (value: string) => {
-        const trimmed = (value || "").trim();
-        if (!trimmed) return null;
-        const parsed = parseFloat(trimmed);
-        return Number.isFinite(parsed) ? parsed : null;
-      };
-
-      const updatePayload = {
-        name: editForm.name,
-        description: editForm.description,
-        email: editForm.email,
-        phone: editForm.phone,
-        address: editForm.address,
-        city: editForm.city,
-        district: editForm.district,
-        province: editForm.province,
-        latitude: parseOptionalFloat(editForm.latitude),
-        longitude: parseOptionalFloat(editForm.longitude),
-        rating: parseOptionalFloat(editForm.rating),
-        logo_url: editForm.logo_url,
-        cover_url: editForm.cover_url,
-        status: editForm.status,
-        working_hours: parsedHours,
-        is_verified: editForm.is_verified,
-      };
+      const updatePayload = buildAdminSalonFormPayload(editForm);
 
       const result = await updateAdminSalon(selectedSalon.id, updatePayload);
-      if (result.success === false) throw new Error(result.error);
+      if (!result || result.success === false) {
+        throw new Error(
+          result && result.success === false
+            ? result.error
+            : "Save failed with no response from server."
+        );
+      }
 
       toast.dismiss();
       toast.success("Salon onboarding details updated!");
       
-      setSelectedSalon({ ...selectedSalon, ...updatePayload });
+      setSelectedSalon({
+        ...selectedSalon,
+        ...updatePayload,
+        owner_email: updatePayload.email || selectedSalon.owner_email,
+        owner_gmail: updatePayload.email || selectedSalon.owner_gmail,
+      });
       fetchSalons(); 
       setViewModalOpen(false);
     } catch (error: unknown) {
       toast.dismiss();
-      toast.error("Failed to save changes: " + formatServerActionError(error));
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while saving the salon.";
+      toast.error("Failed to save changes: " + message);
     } finally {
       setIsSavingEdit(false);
     }

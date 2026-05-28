@@ -45,9 +45,45 @@ export async function updateAdminSalon(salonId: string, payload: Record<string, 
     }
 
     const result = await withAdminDb(async (supabase) => {
+      const { data: existing, error: readError } = await supabase
+        .from("salons")
+        .select("owner_email, owner_gmail, name, phone")
+        .eq("id", salonId)
+        .maybeSingle();
+      if (readError) throw new Error(readError.message);
+
+      const ownerEmail =
+        (typeof sanitized.owner_email === "string" && sanitized.owner_email) ||
+        (typeof sanitized.owner_gmail === "string" && sanitized.owner_gmail) ||
+        existing?.owner_email ||
+        existing?.owner_gmail ||
+        null;
+
+      const ownerPhone =
+        (typeof sanitized.phone === "string" && sanitized.phone) ||
+        existing?.phone ||
+        null;
+
+      const ownerName =
+        (typeof sanitized.name === "string" && sanitized.name) || existing?.name || "Salon Owner";
+
+      if (ownerEmail) {
+        const { error: userError } = await supabase.from("users").upsert(
+          {
+            email: ownerEmail,
+            global_role: "salon_owner",
+            full_name: ownerName,
+            ...(ownerPhone ? { phone: ownerPhone } : {}),
+          },
+          { onConflict: "email" }
+        );
+        if (userError) throw new Error(userError.message);
+      }
+
       const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);
       if (error) throw new Error(error.message);
     });
+
     if (!isAdminDbSuccess(result)) return adminDbFailure(result);
     return { success: true as const };
   } catch (err) {

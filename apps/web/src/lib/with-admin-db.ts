@@ -15,6 +15,9 @@ export function mapAdminDbError(message: string, hint?: string): string {
   if (lower.includes("could not find") && lower.includes("column")) {
     return "Save included an invalid salon field. Refresh the page and try again.";
   }
+  if (lower.includes("foreign key") || lower.includes("violates")) {
+    return "Could not save salon owner details. The platform will create the owner account automatically on retry.";
+  }
   if (lower.includes("row-level security") || lower.includes("permission denied")) {
     return "Save blocked by database permissions. Ensure your account has admin role.";
   }
