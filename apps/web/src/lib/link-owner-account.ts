@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { normalizeEmail } from "@/lib/normalize-email";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { pickHighestRole } from "@/lib/trimma-role";
@@ -11,17 +11,16 @@ export type LinkOwnerResult = {
   salonName: string | null;
 };
 
-function getAdminClient(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+function getAdminClient() {
+  try {
+    return createSupabaseAdminClient();
+  } catch {
+    return null;
+  }
 }
 
 async function resolveDbRole(
-  admin: SupabaseClient,
+  admin: ReturnType<typeof createSupabaseAdminClient>,
   authUserId: string,
   normalizedEmail: string
 ): Promise<TrimmaUserRole | null> {

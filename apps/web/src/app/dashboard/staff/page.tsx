@@ -8,9 +8,27 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonStaffPage } from "@/app/actions/salon-dashboard-data";
-import { supabase } from "@/config/supabase";
+import {
+  deleteSalonStaff,
+  insertSalonStaff,
+  toggleSalonStaffStatus,
+  updateSalonStaff,
+  uploadSalonStaffAvatar,
+} from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 export default function DashboardStaff() {
   const [salonId, setSalonId] = useState<string | null>(null);
@@ -341,27 +359,24 @@ export default function DashboardStaff() {
         assigned_services: assignedServicesConfig
       };
 
-      const { data: newStaffData, error } = await supabase
-        .from("salon_staff")
-        .insert({
-          salon_id: salonId,
+      const insertResult = await insertSalonStaff({
           name: newName,
           email: newEmail || null,
           role: newRole,
           skill_level: newSkill,
           commission_rate: parseFloat(newCommission) || 0,
           working_hours: workingHoursPayload,
-          status: "active"
-        })
-        .select()
-        .single();
+          status: "active",
+        });
 
-      if (error) throw error;
+      if (insertResult.success === false) throw new Error(insertResult.error);
+      const newStaffId = insertResult.staffId;
       
-      if (avatarBlob && newStaffData) {
+      if (avatarBlob && newStaffId) {
         try {
-          const avatarUrl = await uploadAvatar(avatarBlob, newStaffData.id);
-          await supabase.from("salon_staff").update({ avatar_url: avatarUrl }).eq("id", newStaffData.id);
+          const base64 = await blobToBase64(avatarBlob);
+          const avatarResult = await uploadSalonStaffAvatar(newStaffId, base64);
+          if (avatarResult.success === false) throw new Error(avatarResult.error);
         } catch (uploadErr) {
           console.error("Avatar upload failed:", uploadErr);
           toast.error("Staff created, but failed to upload avatar.");
@@ -441,27 +456,27 @@ export default function DashboardStaff() {
       let updatedAvatarUrl = existingAvatarUrl;
       if (avatarBlob && editingStaffId) {
         try {
-          updatedAvatarUrl = await uploadAvatar(avatarBlob, editingStaffId);
+          const base64 = await blobToBase64(avatarBlob);
+          const avatarResult = await uploadSalonStaffAvatar(editingStaffId, base64);
+          if (avatarResult.success === false) throw new Error(avatarResult.error);
+          updatedAvatarUrl = avatarResult.publicUrl;
         } catch (uploadErr) {
           console.error("Avatar upload failed:", uploadErr);
           toast.error("Failed to upload avatar.");
         }
       }
 
-      const { error } = await supabase
-        .from("salon_staff")
-        .update({
+      const updateResult = await updateSalonStaff(editingStaffId!, {
           name: editName,
           email: editEmail || null,
           role: editRole,
           skill_level: editSkill,
           commission_rate: parseFloat(editCommission) || 0,
           working_hours: workingHoursPayload,
-          avatar_url: updatedAvatarUrl || null
-        })
-        .eq("id", editingStaffId);
+          avatar_url: updatedAvatarUrl || null,
+        });
 
-      if (error) throw error;
+      if (updateResult.success === false) throw new Error(updateResult.error);
 
       toast.success(`Stylist settings for ${editName} updated successfully! 🌟`);
       setIsEditModalOpen(false);
@@ -478,12 +493,8 @@ export default function DashboardStaff() {
   const handleToggleStatus = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === "active" ? "inactive" : "active";
     try {
-      const { error } = await supabase
-        .from("salon_staff")
-        .update({ status: nextStatus })
-        .eq("id", id);
-
-      if (error) throw error;
+      const result = await toggleSalonStaffStatus(id, nextStatus);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Staff member status updated.");
       fetchStaff();
     } catch (err: any) {
@@ -495,8 +506,8 @@ export default function DashboardStaff() {
     if (!confirm("Are you sure you want to completely remove this staff member? This action cannot be undone.")) return;
     try {
       setLoading(true);
-      const { error } = await supabase.from("salon_staff").delete().eq("id", id);
-      if (error) throw error;
+      const result = await deleteSalonStaff(id);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Staff member removed successfully.");
       fetchStaff();
     } catch (err: any) {
@@ -562,22 +573,6 @@ export default function DashboardStaff() {
     }, 'image/jpeg', 0.9);
   }
 
-  async function uploadAvatar(blob: Blob, staffId: string) {
-    const fileName = `${staffId}-${Date.now()}.jpg`;
-    const { data, error } = await supabase.storage
-      .from('staff-avatars')
-      .upload(fileName, blob, {
-        contentType: 'image/jpeg',
-        upsert: true
-      });
-    if (error) throw error;
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from('staff-avatars')
-      .getPublicUrl(fileName);
-      
-    return publicUrl;
-  }
   // -------------------------;
 
   return (

@@ -1,25 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-let adminClient: SupabaseClient | null = null;
+import { getSupabaseServerEnv } from "@/lib/supabase-server-env";
 
 export function createSupabaseAdminClient(): SupabaseClient {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { url, serviceRoleKey } = getSupabaseServerEnv();
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY is missing. Add it to apps/web/.env to enable checkout."
-    );
-  }
-
-  if (!adminClient) {
-    adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-  }
-
-  return adminClient;
+  return createClient(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

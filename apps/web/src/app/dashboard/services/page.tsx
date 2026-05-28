@@ -7,8 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { supabase } from "@/config/supabase";
 import { fetchSalonServicesPage } from "@/app/actions/salon-dashboard-data";
+import {
+  deleteSalonService,
+  insertSalonServices,
+  updateSalonService,
+} from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { parseFeatureFlags } from "@/lib/parse-feature-flags";
@@ -226,11 +230,8 @@ export default function DashboardServices() {
         };
       });
 
-      const { error } = await supabase
-        .from("services")
-        .insert(insertPayloads);
-
-      if (error) throw error;
+      const result = await insertSalonServices(insertPayloads);
+      if (result.success === false) throw new Error(result.error);
 
       toast.success(`${insertPayloads.length} services customized and published successfully!`);
       setShowImportModal(false);
@@ -254,12 +255,8 @@ export default function DashboardServices() {
   const handleDeleteService = async (serviceId: string) => {
     if (!confirm("Are you sure you want to remove this service from your active catalog?")) return;
     try {
-      const { error } = await supabase
-        .from("services")
-        .delete()
-        .eq("id", serviceId);
-      
-      if (error) throw error;
+      const result = await deleteSalonService(serviceId);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Service removed from catalog");
       fetchSalonAndPlan();
     } catch (error: any) {
@@ -293,9 +290,7 @@ export default function DashboardServices() {
 
     try {
       setUpdating(true);
-      const { error } = await supabase
-        .from("services")
-        .update({
+      const result = await updateSalonService(editingServiceId, {
           name: editForm.name,
           category: editForm.category,
           price: parseFloat(editForm.price) || 0,
@@ -308,10 +303,8 @@ export default function DashboardServices() {
             hasDiscountFeature && discountPct > 0 && editForm.discount_end_date
               ? new Date(editForm.discount_end_date).toISOString()
               : null,
-        })
-        .eq("id", editingServiceId);
-
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
       toast.success("Service updated successfully!");
       setShowEditModal(false);
       fetchSalonAndPlan();

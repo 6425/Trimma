@@ -8,7 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import Card from "../../../components/ui/Card";
 import { fetchSalonProfilePage } from "@/app/actions/salon-dashboard-data";
-import { supabase } from "../../../config/supabase";
+import {
+  completeSalonOwnerOnboarding,
+  saveSalonProfile,
+  updateSalonMediaFields,
+  uploadSalonProfileImage,
+} from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { LocationHierarchySelect } from "../../../components/locations/LocationHierarchySelect";
@@ -26,6 +31,18 @@ const SIZING_INFO = {
   gallery: { label: "Featured Image", resolution: "800x600px", sizeText: "3MB max", size: 3 * 1024 * 1024 }
 };
 
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function SalonProfilePage() {
   const [salon, setSalon] = useState<any>(null);
@@ -194,17 +211,10 @@ export default function SalonProfilePage() {
 
       setUploadingType(type);
 
-      // 1. Try uploading to Supabase Storage bucket 'salon-images'
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${salon.id}/${type}_${Date.now()}.${fileExt}`;
-      
-      const { data, error } = await supabase.storage
-        .from('salon-images')
-        .upload(fileName, file, { cacheControl: '3600', upsert: true });
-
-      if (error) {
-        // Fallback: If bucket is not configured, generate a local base64 string for immediate operational use!
-        console.warn("Storage upload failed, using local base64 fallback:", error);
+      const base64 = await fileToBase64(file);
+      const uploadResult = await uploadSalonProfileImage(type, base64, file.type || "image/jpeg");
+      if (uploadResult.success === false) {
+        console.warn("Storage upload failed, using local base64 fallback:", uploadResult.error);
         return new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
@@ -212,12 +222,7 @@ export default function SalonProfilePage() {
         });
       }
 
-      // 2. Get Public Url from bucket
-      const { data: { publicUrl } } = supabase.storage
-        .from('salon-images')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
+      return uploadResult.publicUrl;
     } catch (err: any) {
       toast.error("Upload error: " + err.message);
       return null;
@@ -266,17 +271,14 @@ export default function SalonProfilePage() {
 
     // Auto-save immediately to Supabase database
     try {
-      const { error } = await supabase
-        .from("salons")
-        .update({
+      const saveResult = await updateSalonMediaFields({
           logo_url: updatedLogo,
           cover_url: updatedCover,
           hero_url: updatedHero,
-          featured_images: updatedGallery
-        })
-        .eq("id", salon.id);
+          featured_images: updatedGallery,
+        });
 
-      if (error) throw error;
+      if (saveResult.success === false) throw new Error(saveResult.error);
       toast.success(`${SIZING_INFO[type].label} optimized, uploaded & auto-saved live! 🌟`);
     } catch (err: any) {
       console.error("Auto-save failed details:", {
@@ -312,16 +314,13 @@ export default function SalonProfilePage() {
     }
 
     try {
-      const { error } = await supabase
-        .from("salons")
-        .update({
+      const saveResult = await updateSalonMediaFields({
           logo_url: updatedLogo,
           cover_url: updatedCover,
-          hero_url: updatedHero
-        })
-        .eq("id", salon.id);
+          hero_url: updatedHero,
+        });
 
-      if (error) throw error;
+      if (saveResult.success === false) throw new Error(saveResult.error);
       toast.info(`${SIZING_INFO[type].label} removed and auto-saved.`);
     } catch (err: any) {
       console.error("Remove auto-save failed details:", {
@@ -340,14 +339,11 @@ export default function SalonProfilePage() {
     setFeaturedImages(updatedGallery);
 
     try {
-      const { error } = await supabase
-        .from("salons")
-        .update({
-          featured_images: updatedGallery
-        })
-        .eq("id", salon.id);
+      const saveResult = await updateSalonMediaFields({
+          featured_images: updatedGallery,
+        });
 
-      if (error) throw error;
+      if (saveResult.success === false) throw new Error(saveResult.error);
       toast.info("Gallery image removed and auto-saved.");
     } catch (err: any) {
       console.error("Gallery remove auto-save failed details:", {
@@ -390,57 +386,6 @@ export default function SalonProfilePage() {
         status: status
       };
 
-      const { error } = await supabase
-        .from("salons")
-        .update(updateData)
-        .eq("id", salon.id);
-
-      if (error) throw error;
-      
-      // Ensure staff schedules don't exceed salon schedule
-      try {
-        const { data: staffList } = await supabase.from("salon_staff").select("id, working_hours").eq("salon_id", salon.id);
-        if (staffList && staffList.length > 0) {
-          for (const staff of staffList) {
-            let staffModified = false;
-            let currentStaffSchedule = staff.working_hours?.schedule || {};
-            
-            Object.keys(salonSchedule).forEach((day) => {
-              const salonDay = salonSchedule[day as keyof typeof salonSchedule];
-              let staffDay = currentStaffSchedule[day];
-              
-              if (!staffDay) return;
-              
-              // If salon is out, staff must be out
-              if (!salonDay.isWorking && staffDay.isWorking) {
-                staffDay.isWorking = false;
-                staffModified = true;
-              }
-              
-              if (salonDay.isWorking && staffDay.isWorking) {
-                // Check bounds
-                if (staffDay.start < salonDay.start) {
-                  staffDay.start = salonDay.start;
-                  staffModified = true;
-                }
-                if (staffDay.end > salonDay.end) {
-                  staffDay.end = salonDay.end;
-                  staffModified = true;
-                }
-              }
-            });
-            
-            if (staffModified) {
-              const updatedStaffWorkingHours = { ...staff.working_hours, schedule: currentStaffSchedule };
-              await supabase.from("salon_staff").update({ working_hours: updatedStaffWorkingHours }).eq("id", staff.id);
-            }
-          }
-        }
-      } catch (staffErr) {
-        console.error("Failed to enforce schedule bounds on staff:", staffErr);
-      }
-
-      // Update Salon Amenities
       const amenityInserts = Object.keys(salonAmenities)
         .map((amenityId) => {
           const globalAmenity = globalAmenities.find((item) => item.id === amenityId);
@@ -452,20 +397,15 @@ export default function SalonProfilePage() {
             salonAmenities[amenityId]
           );
         })
-        .filter(Boolean);
+        .filter(Boolean) as Record<string, unknown>[];
 
-      const { error: deleteAmenitiesError } = await supabase
-        .from("salon_amenities")
-        .delete()
-        .eq("salon_id", salon.id);
-      if (deleteAmenitiesError) throw deleteAmenitiesError;
+      const saveResult = await saveSalonProfile({
+        profile: updateData,
+        amenityRows: amenityInserts,
+        salonSchedule,
+      });
 
-      if (amenityInserts.length > 0) {
-        const { error: insertAmenitiesError } = await supabase
-          .from("salon_amenities")
-          .insert(amenityInserts);
-        if (insertAmenitiesError) throw insertAmenitiesError;
-      }
+      if (saveResult.success === false) throw new Error(saveResult.error);
 
       toast.success("Profile saved successfully");
       fetchSalonProfile();
@@ -484,17 +424,8 @@ export default function SalonProfilePage() {
   const handleCompleteOnboarding = async () => {
     try {
       setSaving(true);
-      const { error } = await supabase
-        .from("salons")
-        .update({
-          onboarding_status: "OWNER_ACTIVATED",
-          status: "pending_verification",
-          owner_activated_at: new Date().toISOString(),
-          owner_email: salon.owner_email,
-        })
-        .eq("id", salon.id);
-
-      if (error) throw error;
+      const result = await completeSalonOwnerOnboarding(salon.owner_email);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Onboarding complete! Your salon is awaiting final admin verification.");
       setOnboardingStatus("OWNER_ACTIVATED");
     } catch (err: any) {
