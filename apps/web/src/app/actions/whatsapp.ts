@@ -6,6 +6,10 @@ import { normalizeEmail } from "@/lib/normalize-email";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 import {
+  readWhatsAppEnvAccessToken,
+  readWhatsAppEnvPhoneId,
+} from "@/lib/whatsapp-env";
+import {
   clearWhatsAppPhoneResolutionCache,
   resolveWhatsAppPhoneNumberId,
   validateWhatsAppMetaAccount,
@@ -130,7 +134,7 @@ function formatWhatsAppApiError(result: {
   }
 
   if (code === 100 && lower.includes("nonexisting field") && lower.includes("verified_name")) {
-    return "Use your Meta WhatsApp Business Account ID in the ID field. Trimma resolves the linked phone number automatically. Find it in Meta Developer Console → WhatsApp → API Setup.";
+    return "Check that the Phone Number ID (App ID) in Admin → Global Settings matches Meta Developer Console → WhatsApp → API Setup.";
   }
 
   return message;
@@ -140,30 +144,14 @@ function cleanWhatsAppCredential(value: string | undefined): string {
   return cleanEnvValue(value) || "";
 }
 
-function readWhatsAppEnv(...names: string[]): string {
-  for (const name of names) {
-    const value = cleanEnvValue(process.env[name]);
-    if (value) return value;
-  }
-  return "";
-}
-
-/** Stored Meta WhatsApp Business Account ID (WABA) or legacy phone number ID. */
-function resolveWhatsAppCredentials(dbAccountId: string, dbAccessToken: string) {
-  const envAccountId = readWhatsAppEnv(
-    "WHATSAPP_BUSINESS_ACCOUNT_ID",
-    "WHATSAPP_PHONE_NUMBER_ID",
-    "META_WHATSAPP_PHONE_NUMBER_ID"
-  );
-  const envAccessToken = readWhatsAppEnv(
-    "WHATSAPP_ACCESS_TOKEN",
-    "META_WHATSAPP_ACCESS_TOKEN",
-    "WHATSAPP_TOKEN"
-  );
+/** Stored Meta WhatsApp Phone Number ID (App ID). Vercel env: WHATSAPP_PHONE_NUMBER_ID. */
+function resolveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
+  const envPhoneId = readWhatsAppEnvPhoneId();
+  const envAccessToken = readWhatsAppEnvAccessToken();
   const dbToken = cleanWhatsAppCredential(dbAccessToken);
-  const dbAccount = cleanWhatsAppCredential(dbAccountId);
+  const dbPhone = cleanWhatsAppCredential(dbPhoneId);
 
-  const accountId = envAccountId || dbAccount;
+  const accountId = envPhoneId || dbPhone;
   const accessToken = envAccessToken || dbToken;
   const source =
     accessToken === envAccessToken && envAccessToken

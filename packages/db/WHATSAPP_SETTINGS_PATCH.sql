@@ -13,7 +13,7 @@ ALTER TABLE public.global_payment_settings ADD COLUMN IF NOT EXISTS whatsapp_ena
 -- 2. Populate default values for sandbox fallback (using the Phone ID we successfully configured)
 UPDATE public.global_payment_settings 
 SET 
-  whatsapp_phone_number_id = COALESCE(whatsapp_phone_number_id, '1167527226439884'),
+  whatsapp_phone_number_id = COALESCE(whatsapp_phone_number_id, '100068412247940'),
   whatsapp_enabled = COALESCE(whatsapp_enabled, true)
 WHERE id = '00000000-0000-0000-0000-000000000001'::uuid;
 

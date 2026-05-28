@@ -323,7 +323,7 @@ function SettingsPanelContent() {
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                    <strong>Note:</strong> Loaded from static <code>.env</code> file configuration. Saving values in this dashboard will securely override it with hot-reloadable database values.
+                    <strong>Note:</strong> Loaded from Vercel env (<code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_ACCESS_TOKEN</code>) or Supabase. Saving here updates the database.
                   </p>
                 </div>
               )}
@@ -355,19 +355,19 @@ function SettingsPanelContent() {
                 
                 {/* META BUSINESS ACCOUNT ID */}
                 <div className="space-y-2">
-                  <Label htmlFor="account_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
-                    ID:
+                  <Label htmlFor="phone_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                    Phone Number ID (App ID)
                   </Label>
                   <Input 
-                    id="account_id"
+                    id="phone_id"
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                     required
-                    placeholder="Meta WhatsApp Business Account ID"
+                    placeholder="100068412247940"
                     className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
                   />
                   <p className="text-[10px] text-zinc-500">
-                    Your Meta WhatsApp Business Account ID from Meta Developer Console → WhatsApp → API Setup (same page as the access token). Trimma automatically resolves the linked phone number for sending messages.
+                    From Meta Developer Console → WhatsApp → API Setup. Trimma production ID: <strong>100068412247940</strong>. Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>
                   </p>
                 </div>
 
@@ -395,7 +395,7 @@ function SettingsPanelContent() {
                     </button>
                   </div>
                   <p className="text-[10px] text-zinc-500">
-                    Meta temporary sandbox tokens expire after ~24 hours. Paste a new token here and click Save — this updates Supabase (used in production). On localhost, <code className="text-[9px] bg-zinc-100 px-1 rounded">apps/web/.env</code> is used when set.
+                    Meta temporary sandbox tokens expire after ~24 hours. Paste a new token here and click Save — this updates Supabase (used in production). Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_ACCESS_TOKEN</code>. Localhost: <code className="text-[9px] bg-zinc-100 px-1 rounded">apps/web/.env</code>
                   </p>
                 </div>
 

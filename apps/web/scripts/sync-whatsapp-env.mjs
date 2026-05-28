@@ -13,18 +13,33 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-function updateEnvFile(filePath, token, phoneId) {
+function readEnvAccountId() {
+  return (
+    process.env.WHATSAPP_ID ||
+    process.env.WHATSAPP_BUSINESS_ACCOUNT_ID ||
+    process.env.WHATSAPP_PHONE_NUMBER_ID ||
+    ""
+  ).trim();
+}
+
+function updateEnvFile(filePath, token, accountId) {
   if (!fs.existsSync(filePath)) return false;
   let content = fs.readFileSync(filePath, "utf8");
   content = content.replace(
     /WHATSAPP_ACCESS_TOKEN="[^"]*"/,
     `WHATSAPP_ACCESS_TOKEN="${token}"`
   );
-  if (phoneId) {
-    content = content.replace(
-      /WHATSAPP_PHONE_NUMBER_ID="[^"]*"/,
-      `WHATSAPP_PHONE_NUMBER_ID="${phoneId}"`
-    );
+  if (accountId) {
+    if (/WHATSAPP_ID="[^"]*"/.test(content)) {
+      content = content.replace(/WHATSAPP_ID="[^"]*"/, `WHATSAPP_ID="${accountId}"`);
+    } else if (/WHATSAPP_PHONE_NUMBER_ID="[^"]*"/.test(content)) {
+      content = content.replace(
+        /WHATSAPP_PHONE_NUMBER_ID="[^"]*"/,
+        `WHATSAPP_ID="${accountId}"`
+      );
+    } else {
+      content += `\nWHATSAPP_ID="${accountId}"\n`;
+    }
   }
   fs.writeFileSync(filePath, content);
   return true;
@@ -42,13 +57,13 @@ if (error || !data?.whatsapp_access_token) {
 }
 
 const token = data.whatsapp_access_token.trim();
-const phoneId = (data.whatsapp_phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID || "").trim();
+const accountId = (data.whatsapp_phone_number_id || readEnvAccountId()).trim();
 
-updateEnvFile(path.join(webRoot, ".env"), token, phoneId);
-updateEnvFile(path.join(webRoot, "..", "..", ".env"), token, phoneId);
+updateEnvFile(path.join(webRoot, ".env"), token, accountId);
+updateEnvFile(path.join(webRoot, "..", "..", ".env"), token, accountId);
 
 const response = await fetch(
-  `https://graph.facebook.com/v18.0/${phoneId}?fields=verified_name`,
+  `https://graph.facebook.com/v18.0/${accountId}/phone_numbers?fields=id,display_phone_number`,
   { headers: { Authorization: `Bearer ${token}` } }
 );
 const result = await response.json();
@@ -58,5 +73,6 @@ if (!response.ok) {
   process.exit(1);
 }
 
+const phone = result.data?.[0];
 console.log("ENV_SYNCED_OK");
-console.log("META_VALIDATE_OK", result.verified_name || "connected");
+console.log("META_VALIDATE_OK", phone?.display_phone_number || phone?.id || "connected");
