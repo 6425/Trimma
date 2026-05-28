@@ -15,7 +15,8 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/config/supabase";
+import { fetchSalonBillingPage } from "@/app/actions/salon-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   DEFAULT_SUBSCRIPTION_PLANS,
   formatLkr,
@@ -58,28 +59,9 @@ export default function BillingPage() {
   const fetchActivePlan = async () => {
     try {
       setLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("subscription_plan_id")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
-      if (!salonData?.subscription_plan_id) return;
-
-      const { data: planData } = await supabase
-        .from("subscription_plans")
-        .select("*")
-        .eq("id", salonData.subscription_plan_id)
-        .maybeSingle();
-
-      if (planData) {
-        setActivePlan(planData);
-      }
+      const result = await withTimeout(fetchSalonBillingPage(), 20000, "Loading timed out.");
+      if (result.success === false) return;
+      if (result.activePlan) setActivePlan(result.activePlan);
     } catch (err: any) {
       console.warn("Failed to load active plan details:", err.message);
     } finally {

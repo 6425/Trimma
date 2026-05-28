@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/config/supabase";
+import { fetchSalonBookingDetail } from "@/app/actions/salon-dashboard-data";
+import { updateOwnerBooking } from "@/app/actions/salon-operations";
+import { withTimeout } from "@/lib/promise-timeout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -60,14 +62,9 @@ export default function BookingDetailPage() {
   async function fetchBooking() {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("id", bookingId)
-        .maybeSingle();
-
-      if (error) throw error;
-      setBooking(data);
+      const result = await withTimeout(fetchSalonBookingDetail(bookingId), 20000, "Loading timed out.");
+      if (result.success === false) throw new Error(result.error);
+      setBooking(result.booking);
     } catch (err) {
       console.error("Failed to fetch booking:", err);
       toast.error("Failed to load booking details.");
@@ -111,12 +108,8 @@ export default function BookingDetailPage() {
           break;
       }
 
-      const { error } = await supabase
-        .from("bookings")
-        .update(updatePayload)
-        .eq("id", bookingId);
-
-      if (error) throw error;
+      const result = await updateOwnerBooking(bookingId, updatePayload);
+      if (result.success === false) throw new Error(result.error);
 
       if (action === "cancel" && booking?.booking_no) {
         await sendWhatsAppCancellationNotification(booking.booking_no);

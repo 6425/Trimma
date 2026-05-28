@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
-import { supabase, signOutTrimmaSession } from "../../config/supabase";
+import { signOutTrimmaSession } from "../../config/supabase";
+import { readRoleFromCookie } from "@/lib/client-auth-cookie";
+import { fetchSalonLayoutShell } from "@/app/actions/salon-dashboard-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
@@ -17,7 +19,7 @@ import {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const navigate = useRouter();
-  const [role, setRole] = useState<string | null>(null);
+  const [role] = useState<string | null>(() => readRoleFromCookie() || "salon_owner");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [salonName, setSalonName] = useState<string>("My Salon");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,43 +37,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   useEffect(() => {
-    const fetchRoleAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-          
-        if (roleData) {
-          setRole(roleData.role);
-          
-          if (roleData.role === 'admin') {
-            const { data: brandingData } = await supabase
-              .from('global_branding_settings')
-              .select('logo_image_url, logo_svg_raw')
-              .limit(1)
-              .maybeSingle();
-            if (brandingData) {
-              setAvatarUrl(brandingData.logo_image_url || null);
-            }
-          } else {
-            const { data: salonData } = await supabase
-              .from('salons')
-              .select('name, logo_url')
-              .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-              .maybeSingle();
-            if (salonData) {
-              setSalonName(salonData.name || "My Salon");
-              setAvatarUrl(salonData.logo_url || null);
-            }
-          }
-        }
+    void fetchSalonLayoutShell().then((result) => {
+      if (result.success && result.salonName) {
+        setSalonName(result.salonName);
+        if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
       }
-    };
-
-    void Promise.resolve().then(() => fetchRoleAndProfile());
+    });
 
     const handleBrandingUpdate = (e: any) => {
       if (e.detail?.logo_image_url !== undefined) {

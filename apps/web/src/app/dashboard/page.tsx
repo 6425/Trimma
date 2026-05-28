@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Card from "../../components/ui/Card";
-import { supabase } from "@/config/supabase";
+import { fetchSalonDashboardPage } from "@/app/actions/salon-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { Loader2, RefreshCw } from "lucide-react";
 import { CommissionCard } from "../../components/CommissionCard";
 import type { CommissionRow } from "@/lib/types/commission";
@@ -91,47 +92,24 @@ export default function Dashboard() {
         }
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.replace("/login?redirectTo=/dashboard");
-        return;
+      const result = await withTimeout(
+        fetchSalonDashboardPage(),
+        20000,
+        "Loading timed out. Refresh the page."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
       }
 
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("id, name, onboarding_status")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
+      const { salon: salonData, bookings, services, staff } = result;
 
-      if (!salonData) {
-        setStats({ totalBookings: 0, activeServices: 0, totalStaff: 0, revenue: 0 });
-        setLoading(false);
-        setIsRefreshing(false);
-        return;
-      }
-
-      if (needsOwnerActivationWizard(salonData.onboarding_status)) {
+      if (needsOwnerActivationWizard(salonData.onboarding_status as string)) {
         router.replace("/dashboard/profile");
         return;
       }
 
-      setSalonName(salonData.name || "your salon");
-
-      const [bookingsRes, servicesRes, staffRes] = await Promise.all([
-        supabase
-          .from("bookings")
-          .select(
-            "id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, created_at, customer_email"
-          )
-          .eq("salon_id", salonData.id)
-          .order("created_at", { ascending: false }),
-        supabase.from("services").select("id, name, status, created_at").eq("salon_id", salonData.id),
-        supabase.from("salon_staff").select("id, name, created_at").eq("salon_id", salonData.id),
-      ]);
-
-      const bookings = bookingsRes.data || [];
-      const services = servicesRes.data || [];
-      const staff = staffRes.data || [];
+      setSalonName((salonData.name as string) || "your salon");
 
       const revenue = bookings.reduce((sum, booking) => sum + getBookingAmount(booking), 0);
       const activeServices = services.filter((service) => service.status === "active").length;

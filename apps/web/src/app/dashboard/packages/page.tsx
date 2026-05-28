@@ -31,7 +31,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { supabase } from "@/config/supabase";
+import { fetchSalonPackagesPage } from "@/app/actions/salon-dashboard-data";
+import {
+  insertSalonPromotionPackages,
+  deleteSalonPromotionPackage,
+  updateSalonPromotionPackage,
+} from "@/app/actions/salon-operations";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   getPromotionPeriodLabel,
   getRemainingDaysBadgeClass,
@@ -131,62 +137,24 @@ export default function PackagesPage() {
   const fetchSalonAndPackages = async () => {
     try {
       setLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("Unauthorized");
+      const result = await withTimeout(fetchSalonPackagesPage(), 20000, "Loading timed out.");
+      if (result.success === false) throw new Error(result.error);
 
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("*")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
-      if (!salonData) {
-        setLoading(false);
-        return;
+      setSalon(result.salon);
+      setPackages(result.packages || []);
+      setSubscriptionPlan(result.subscriptionPlan);
+      setAllowedPromotionTypes(result.allowedPromotionTypes || []);
+      if ((result.allowedPromotionTypes || []).length > 0) {
+        setActiveTypeTab(result.allowedPromotionTypes![0].id);
       }
-      setSalon(salonData);
+      setGlobalPackages(result.globalPackages || []);
 
-      const { data: salonPackages } = await supabase
-        .from("salon_promotion_packages")
-        .select("*")
-        .eq("salon_id", salonData.id)
-        .order("created_at", { ascending: false });
-      setPackages(salonPackages || []);
-
-      let plan = null;
-      if (salonData.subscription_plan_id) {
-        const { data: planData } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .eq("id", salonData.subscription_plan_id)
-          .maybeSingle();
-        plan = planData;
-      }
-      setSubscriptionPlan(plan);
-
-      const { data: allTypes } = await supabase.from("promotion_types").select("*").order("name");
-      let filteredTypes = allTypes || [];
-      const typesLimit = plan?.feature_flags?.allowed_promotion_types_limit;
-      if (typesLimit && typesLimit < 999) {
-        filteredTypes = (allTypes || []).slice(0, typesLimit);
-      }
-      setAllowedPromotionTypes(filteredTypes);
-      if (filteredTypes.length > 0) {
-        setActiveTypeTab(filteredTypes[0].id);
-      }
-
-      const { data: masterPackages } = await supabase
-        .from("global_promotion_packages")
-        .select("*")
-        .eq("is_active", true);
-      setGlobalPackages(masterPackages || []);
-
-      if (masterPackages) {
+      const allTypes = result.promotionTypes || [];
+      const masterPackages = result.globalPackages || [];
+      if (masterPackages.length) {
         const initialSelected: Record<string, SelectedPackageState> = {};
         masterPackages.forEach((pkg: any) => {
-          const matchedType = allTypes?.find((t) => t.id === pkg.promotion_type_id);
+          const matchedType = allTypes.find((t) => t.id === pkg.promotion_type_id);
           initialSelected[pkg.id] = {
             checked: false,
             name: pkg.name,
@@ -286,8 +254,8 @@ export default function PackagesPage() {
         };
       });
 
-      const { error } = await supabase.from("salon_promotion_packages").insert(insertPayloads);
-      if (error) throw error;
+      const result = await insertSalonPromotionPackages(insertPayloads);
+      if (result.success === false) throw new Error(result.error);
 
       toast.success(`${insertPayloads.length} promotion packages published successfully!`);
       setShowImportModal(false);
@@ -302,8 +270,8 @@ export default function PackagesPage() {
   const handleDeletePackage = async (packageId: string) => {
     if (!confirm("Remove this promotion package from your salon catalog?")) return;
     try {
-      const { error } = await supabase.from("salon_promotion_packages").delete().eq("id", packageId);
-      if (error) throw error;
+      const result = await deleteSalonPromotionPackage(packageId);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Promotion package removed");
       fetchSalonAndPackages();
     } catch (error: any) {
@@ -347,9 +315,7 @@ export default function PackagesPage() {
 
     try {
       setUpdating(true);
-      const { error } = await supabase
-        .from("salon_promotion_packages")
-        .update({
+      const result = await updateSalonPromotionPackage(editingPackageId, {
           name: editForm.name,
           promotion_type_id: selectedType.id,
           promotion_type: selectedType.name,
@@ -360,10 +326,8 @@ export default function PackagesPage() {
           start_date,
           end_date,
           status: editForm.status,
-        })
-        .eq("id", editingPackageId);
-
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
       toast.success("Promotion package updated");
       setShowEditModal(false);
       fetchSalonAndPackages();

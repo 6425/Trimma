@@ -80,6 +80,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 
+  if (pathname === "/login" && roleCookie?.value === "salon_owner") {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   // 4. Role Validation (RBAC)
   const userRole = (roleCookie?.value as UserRole) || null;
   

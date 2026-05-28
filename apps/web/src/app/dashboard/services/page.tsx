@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/config/supabase";
+import { fetchSalonServicesPage } from "@/app/actions/salon-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { parseFeatureFlags } from "@/lib/parse-feature-flags";
 import {
@@ -64,85 +66,29 @@ export default function DashboardServices() {
       setLoading(true);
       setLoadError(null);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) {
-        router.replace("/login?redirectTo=/dashboard/services");
-        return;
-      }
-
-      const email = normalizeEmail(session.user.email);
-
-      const { data: salonData, error: salonError } = await supabase
-        .from("salons")
-        .select("*")
-        .or(`owner_email.eq.${email},owner_gmail.eq.${email}`)
-        .maybeSingle();
-
-      if (salonError) throw salonError;
-
-      if (!salonData) {
-        setLoadError("No salon is linked to your account yet. Complete salon activation first.");
-        setServices([]);
-        setSalon(null);
-        return;
-      }
-
-      setSalon(salonData);
-
-      const [
-        activeServicesRes,
-        planRes,
-        categoriesRes,
-        masterServicesRes,
-      ] = await Promise.all([
-        supabase
-          .from("services")
-          .select("*")
-          .eq("salon_id", salonData.id)
-          .order("created_at", { ascending: false }),
-        salonData.subscription_plan_id
-          ? supabase
-              .from("subscription_plans")
-              .select("*")
-              .eq("id", salonData.subscription_plan_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-        supabase.from("categories").select("*").order("name"),
-        supabase.from("global_services").select("*").order("name"),
-      ]);
-
-      if (activeServicesRes.error) throw activeServicesRes.error;
-      if (planRes.error) throw planRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
-      if (masterServicesRes.error) throw masterServicesRes.error;
-
-      setServices(activeServicesRes.data || []);
-
-      const plan = planRes.data;
-      setSubscriptionPlan(plan);
-
-      const allCategories = categoriesRes.data || [];
-      let filteredCats = allCategories;
-
-      if (plan?.name) {
-        const planNameLower = plan.name.toLowerCase();
-        if (planNameLower.includes("basic") || Number(plan.monthly_price) <= 5000) {
-          filteredCats = allCategories.filter((c) =>
-            ["Barber Salon", "Men's Grooming"].includes(c.name)
-          );
-        } else if (planNameLower.includes("growth") || Number(plan.monthly_price) <= 10000) {
-          filteredCats = allCategories.filter((c) =>
-            ["Barber Salon", "Men's Grooming", "Beauty Parlours", "Nail Studio"].includes(c.name)
-          );
+      const result = await withTimeout(fetchSalonServicesPage(), 20000, "Loading timed out.");
+      if (result.success === false) {
+        if (result.error.includes("No salon")) {
+          setLoadError("No salon is linked to your account yet. Complete salon activation first.");
+          setServices([]);
+          setSalon(null);
+          return;
         }
+        throw new Error(result.error);
       }
 
-      setAllowedCategories(filteredCats);
-      setActiveCategoryTab(filteredCats[0]?.id || "");
+      const salonData = result.salon;
+      setSalon(salonData);
+      setServices(result.services || []);
+      setSubscriptionPlan(result.subscriptionPlan);
+      setAllowedCategories(result.allowedCategories || []);
+      setGlobalServices(result.globalServices || []);
+      if ((result.allowedCategories || []).length > 0) {
+        setActiveCategoryTab(result.allowedCategories![0].id);
+      }
 
-      const masterServices = masterServicesRes.data || [];
-      setGlobalServices(masterServices);
-
+      const allCategories = result.allowedCategories || [];
+      const masterServices = result.globalServices || [];
       const initialSelectedState: typeof selectedServices = {};
       masterServices.forEach((service: any) => {
         const matchedCat = allCategories.find((c) => c.id === service.category_id);

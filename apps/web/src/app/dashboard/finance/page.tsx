@@ -4,9 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Calendar, FileText, ArrowRight, Activity, Loader2, TrendingUp, Sparkles, Store, Briefcase, Handshake, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/config/supabase";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { fetchSalonFinancePage } from "@/app/actions/salon-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 interface BookingWithSplits {
   id: string;
@@ -24,7 +23,6 @@ interface BookingWithSplits {
 }
 
 export default function FinanceDashboard() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [salon, setSalon] = useState<any>(null);
   const [bookings, setBookings] = useState<BookingWithSplits[]>([]);
@@ -51,33 +49,11 @@ export default function FinanceDashboard() {
     void Promise.resolve().then(() => {
       async function loadFinanceData() {
       try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-      router.replace("/login?redirectTo=/dashboard/finance");
-      return;
-      }
-      
-      // 1. Fetch Salon Data
-      const { data: salonData } = await supabase.from("salons").select("id").or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`).maybeSingle();
-      
-      let salonId = null;
-      if (salonData) salonId = salonData.id;
-      
-      // 2. Fetch User Role
-      const { data: roleData } = await supabase.from("users").select("global_role").eq("email", session.user.email).maybeSingle();
-      
-      // 3. Fetch Bookings (Only theirs)
-      let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
-      if (salonId) {
-      query = query.eq("salon_id", salonId);
-      } else if (roleData?.global_role !== 'admin') {
-      setLoading(false);
-      return; // Neither admin nor salon owner
-      }
-      
-      const { data: bookingsData, error } = await query;
-      if (!error && bookingsData) {
-      
+      const result = await withTimeout(fetchSalonFinancePage(), 20000, "Loading timed out.");
+      if (result.success === false) throw new Error(result.error);
+
+      setSalon(result.salon);
+      const bookingsData = result.bookings || [];
       const resolvedBookings = bookingsData.map((b: any) => ({
       ...b,
       amount: parseFloat(b.total_price || 0),
@@ -116,7 +92,6 @@ export default function FinanceDashboard() {
       payhereComm: payhere,
       completedCount: completed
       });
-      }
       } catch (err) {
       console.error("Failed to load finance data", err);
       } finally {
@@ -125,7 +100,7 @@ export default function FinanceDashboard() {
       }
       loadFinanceData();
     });
-  }, [router]);
+  }, []);
 
   const formatLKR = (amount: number) => {
     return new Intl.NumberFormat("en-LK", {

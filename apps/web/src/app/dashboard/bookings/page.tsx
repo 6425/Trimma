@@ -19,7 +19,9 @@ import {
 import { sendBookingConfirmedEmail } from "@/app/actions/email-settings";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
+import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
+import { updateOwnerBooking } from "@/app/actions/salon-operations";
+import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 
 import { ChevronDown } from "lucide-react";
@@ -151,33 +153,9 @@ export default function DashboardBookings() {
   async function fetchBookings() {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Unauthorized");
-
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("*")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
-      if (!salonData) {
-        setBookings([]);
-        setLoading(false);
-        return;
-      }
-
-      const salon = salonData;
-
-      // Note: In a fully related schema we would do .select("*, services(name), staff(name)")
-      const { data: bookingsData, error: bookingsError } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("salon_id", salon.id)
-        .order("booking_date", { ascending: false })
-        .order("booking_time", { ascending: false });
-
-      if (bookingsError) throw bookingsError;
-      setBookings(bookingsData || []);
+      const result = await withTimeout(fetchSalonBookingsPage(), 20000, "Loading timed out.");
+      if (result.success === false) throw new Error(result.error);
+      setBookings(result.bookings || []);
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
     } finally {
@@ -241,12 +219,8 @@ export default function DashboardBookings() {
           return;
       }
 
-      const { error } = await supabase
-        .from("bookings")
-        .update(updatePayload)
-        .eq("id", bookingId);
-
-      if (error) throw error;
+      const result = await updateOwnerBooking(bookingId, updatePayload);
+      if (result.success === false) throw new Error(result.error);
 
       toast.success(`Booking successfully updated!`);
       await fetchBookings(); // Refresh UI
@@ -257,25 +231,8 @@ export default function DashboardBookings() {
     }
   };
 
-  const handleActionReschedule = async (bookingId: string, status: 'approved' | 'rejected') => {
-    setProcessingId(bookingId);
-    try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({
-          reschedule_requested: false,
-          reschedule_status: status
-        })
-        .eq("id", bookingId);
-
-      if (error) throw error;
-      toast.success(`Reschedule request ${status === 'approved' ? 'approved' : 'declined'}!`);
-      await fetchBookings();
-    } catch (e: any) {
-      toast.error("Failed to process reschedule action: " + e.message);
-    } finally {
-      setProcessingId(null);
-    }
+  const handleActionReschedule = async (_bookingId: string, _status: 'approved' | 'rejected') => {
+    toast.info("Reschedule requests are not enabled on this schema yet.");
   };
 
   const filteredBookings = bookings.filter(b => 
@@ -283,7 +240,7 @@ export default function DashboardBookings() {
     (b.booking_no || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const pendingRequests = bookings.filter(b => b.reschedule_requested);
+  const pendingRequests: any[] = [];
 
   const renderStatusBadge = (status: string) => {
     const s = (status || 'pending').toLowerCase();

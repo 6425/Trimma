@@ -5,3 +5,14 @@ export function getAccessTokenFromCookie(): string | null {
   if (!match) return null;
   return decodeURIComponent(match.slice("sb-access-token=".length));
 }
+
+export function readRoleFromCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match);
+  } catch {
+    return match;
+  }
+}

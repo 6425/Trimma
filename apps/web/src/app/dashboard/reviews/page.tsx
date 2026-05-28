@@ -4,8 +4,9 @@ import React, { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Star, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/config/supabase";
-import { getSalonOwnerReviews, submitSalonReviewReply } from "@/app/actions/reviews";
+import { fetchSalonReviewsPage } from "@/app/actions/salon-dashboard-data";
+import { getAccessTokenFromCookie } from "@/lib/client-auth-cookie";
+import { submitSalonReviewReply } from "@/app/actions/reviews";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import type { PublicSalonReview } from "@/app/actions/reviews";
 import { StarRatingDisplay } from "../../../components/reviews/StarRatingInput";
@@ -22,30 +23,14 @@ export default function ReviewsPage() {
   const loadReviews = async () => {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) {
-        setReviews([]);
-        setSummary(buildReviewSummary([]));
-        return;
-      }
+      const token = getAccessTokenFromCookie();
+      if (token) setAccessToken(token);
 
-      setAccessToken(session.access_token);
-
-      const { data: salon } = await supabase
-        .from("salons")
-        .select("id")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
-      if (!salon?.id) {
-        setReviews([]);
-        setSummary(buildReviewSummary([]));
-        return;
-      }
-
-      const result = await getSalonOwnerReviews(session.access_token, salon.id);
-      if (!result.success) {
+      const result = await fetchSalonReviewsPage();
+      if (result.success === false) {
         toast.error(result.error);
+        setReviews([]);
+        setSummary(buildReviewSummary([]));
         return;
       }
 
@@ -77,7 +62,7 @@ export default function ReviewsPage() {
         replyText,
       });
 
-      if (!result.success) {
+      if (result.success === false) {
         toast.error(result.error);
         return;
       }

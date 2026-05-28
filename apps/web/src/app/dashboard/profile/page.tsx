@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import Card from "../../../components/ui/Card";
+import { fetchSalonProfilePage } from "@/app/actions/salon-dashboard-data";
 import { supabase } from "../../../config/supabase";
+import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { LocationHierarchySelect } from "../../../components/locations/LocationHierarchySelect";
 import {
@@ -79,20 +81,15 @@ export default function SalonProfilePage() {
   const fetchSalonProfile = async () => {
     try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Please login to access profile settings.");
+      const result = await withTimeout(fetchSalonProfilePage(), 20000, "Loading timed out.");
+      if (result.success === false) {
+        toast.error(result.error);
         return;
       }
 
-      // 1. Fetch Salon owned by active email
-      const { data: salonData, error: salonError } = await supabase
-        .from("salons")
-        .select("*")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
-      if (salonError) throw salonError;
+      const salonData = result.salon as any;
+      const amenitiesList = result.globalAmenities || [];
+      const salonAmenitiesData = result.salonAmenities || [];
 
       if (!salonData) {
         toast.error("No onboarded salon found for this account.");
@@ -148,47 +145,21 @@ export default function SalonProfilePage() {
       }
 
       // 2. Fetch Subscription Plan Details & Limits
-      if (salonData.subscription_plan_id) {
-        const { data: planData } = await supabase
-          .from("subscription_plans")
-          .select("name, max_images")
-          .eq("id", salonData.subscription_plan_id)
-          .maybeSingle();
-        if (planData) {
-          setSubscriptionName(`${planData.name} Plan`);
-          setMaxImagesLimit(planData.max_images !== undefined && planData.max_images !== null ? planData.max_images : 3);
-        }
+      const planData = result.subscriptionPlan as any;
+      if (planData) {
+        setSubscriptionName(`${planData.name} Plan`);
+        setMaxImagesLimit(planData.max_images !== undefined && planData.max_images !== null ? planData.max_images : 3);
       } else {
-        // Self-healing: Fetch the default "Free" subscription plan and associate it with this salon
-        const { data: freePlan } = await supabase
-          .from("subscription_plans")
-          .select("id, name, max_images")
-          .eq("name", "Free")
-          .maybeSingle();
-        
-        if (freePlan) {
-          setSubscriptionName(`${freePlan.name} Plan`);
-          setMaxImagesLimit(freePlan.max_images !== undefined && freePlan.max_images !== null ? freePlan.max_images : 3);
-          
-          // Auto-link the existing salon's subscription_plan_id so it gets permanently updated in the database!
-          await supabase
-            .from("salons")
-            .update({ subscription_plan_id: freePlan.id })
-            .eq("id", salonData.id);
-        } else {
-          setSubscriptionName("Free Plan");
-          setMaxImagesLimit(3);
-        }
+        setSubscriptionName("Free Plan");
+        setMaxImagesLimit(3);
       }
 
       // 3. Fetch Amenities Data
-      const { data: amenitiesList } = await supabase.from("global_amenities").select("*").order("name");
-      if (amenitiesList) {
+      if (amenitiesList.length) {
         setGlobalAmenities(amenitiesList);
       }
       
-      const { data: salonAmenitiesData } = await supabase.from("salon_amenities").select("*").eq("salon_id", salonData.id);
-      if (salonAmenitiesData) {
+      if (salonAmenitiesData.length) {
         const amenitiesMap: Record<string, any> = {};
         salonAmenitiesData.forEach((sa) => {
           const globalAmenity = amenitiesList?.find((item) => item.id === sa.amenity_id);
@@ -513,14 +484,13 @@ export default function SalonProfilePage() {
   const handleCompleteOnboarding = async () => {
     try {
       setSaving(true);
-      const { data: { session } } = await supabase.auth.getSession();
       const { error } = await supabase
         .from("salons")
         .update({
           onboarding_status: "OWNER_ACTIVATED",
           status: "pending_verification",
           owner_activated_at: new Date().toISOString(),
-          owner_email: session?.user?.email || salon.owner_email,
+          owner_email: salon.owner_email,
         })
         .eq("id", salon.id);
 

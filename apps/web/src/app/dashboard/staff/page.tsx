@@ -7,10 +7,13 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { fetchSalonStaffPage } from "@/app/actions/salon-dashboard-data";
 import { supabase } from "@/config/supabase";
+import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 
 export default function DashboardStaff() {
+  const [salonId, setSalonId] = useState<string | null>(null);
   const [staff, setStaff] = useState<any[]>([]);
   const [salonServices, setSalonServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,19 +81,13 @@ export default function DashboardStaff() {
   async function fetchStaff() {
     try {
       setLoading(true);
-      // 1. Resolve Salon ID dynamically from active user session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Unauthorized");
+      const result = await withTimeout(fetchSalonStaffPage(), 20000, "Loading timed out.");
+      if (result.success === false) throw new Error(result.error);
 
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("*")
-        .or(`owner_email.eq.${session.user.email},owner_gmail.eq.${session.user.email}`)
-        .maybeSingle();
-
+      const salonData = result.salon as any;
+      if (salonData?.id) setSalonId(salonData.id);
       if (!salonData) {
         setStaff([]);
-        setLoading(false);
         return;
       }
 
@@ -123,54 +120,28 @@ export default function DashboardStaff() {
       }
 
       // 2. Fetch Subscription Plan Details & Limits
-      if (salonData.subscription_plan_id) {
-        const { data: planData } = await supabase
-          .from("subscription_plans")
-          .select("name, max_staff")
-          .eq("id", salonData.subscription_plan_id)
-          .maybeSingle();
-        if (planData) {
-          setSubscriptionName(planData.name || "Free");
-          setMaxStaffLimit(planData.max_staff || 2);
-        }
+      const planData = result.subscriptionPlan as any;
+      if (planData) {
+        setSubscriptionName(planData.name || "Free");
+        setMaxStaffLimit(planData.max_staff || 2);
       }
 
-      // 3. Fetch all active services available for this specific shop/salon
-      const { data: servicesData } = await supabase
-        .from("services")
-        .select("*")
-        .eq("salon_id", salonData.id)
-        .eq("status", "active");
-
+      const servicesData = result.salonServices || [];
       let prePopServices: any = {};
-      if (servicesData) {
+      if (servicesData.length) {
         setSalonServices(servicesData);
-        servicesData.forEach(s => {
+        servicesData.forEach((s: any) => {
           prePopServices[s.id] = { enabled: false, commission: "10", buffer: "15", duration: s.duration_min?.toString() || "30" };
         });
         setSelectedServices(prePopServices);
       }
 
-      // 4. Fetch Staff for this Salon directly from Supabase
-      const { data: staffData } = await supabase
-        .from("salon_staff")
-        .select("*")
-        .eq("salon_id", salonData.id);
+      setStaff(result.staff || []);
 
-      if (staffData) {
-        setStaff(staffData);
-      }
-
-      // 5. Fetch Global Staff Roles
-      const { data: rolesData } = await supabase
-        .from("global_staff_roles")
-        .select("*")
-        .order("category");
-      
-      if (rolesData && rolesData.length > 0) {
+      const rolesData = result.globalStaffRoles || [];
+      if (rolesData.length > 0) {
         setGlobalRoles(rolesData);
       } else {
-        // Fallback roles if table is empty or missing
         setGlobalRoles([
           { role_name: "Stylist", category: "Operational" },
           { role_name: "Barber", category: "Operational" },
@@ -333,16 +304,7 @@ export default function DashboardStaff() {
 
     try {
       setAdding(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Unauthorized session");
-
-      const { data: salonData } = await supabase
-        .from("salons")
-        .select("id")
-        .eq("owner_email", session.user.email)
-        .maybeSingle();
-
-      if (!salonData) throw new Error("Salon profile not configured.");
+      if (!salonId) throw new Error("Salon profile not configured.");
 
       // Validate bounds against Salon Operational Hours
       for (const day of Object.keys(newSchedule)) {
@@ -382,7 +344,7 @@ export default function DashboardStaff() {
       const { data: newStaffData, error } = await supabase
         .from("salon_staff")
         .insert({
-          salon_id: salonData.id,
+          salon_id: salonId,
           name: newName,
           email: newEmail || null,
           role: newRole,
