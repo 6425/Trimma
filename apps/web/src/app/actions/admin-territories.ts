@@ -120,10 +120,9 @@ export async function saveDistrict(input: {
     return { success: false as const, error: "Name and province are required." };
   }
 
-  const payload: TerritoryPayload = {
+  const payload = {
     name: input.name.trim(),
     slug: (input.slug || input.name).toLowerCase().replace(/\s+/g, "-"),
-    image_url: input.image_url || null,
     province_id: input.province_id,
   };
 
@@ -201,10 +200,9 @@ export async function saveCity(input: {
     return { success: false as const, error: "Name and district are required." };
   }
 
-  const payload: TerritoryPayload = {
+  const payload = {
     name: input.name.trim(),
     slug: (input.slug || input.name).toLowerCase().replace(/\s+/g, "-"),
-    image_url: input.image_url || null,
     district_id: input.district_id,
   };
 

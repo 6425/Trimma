@@ -63,6 +63,9 @@ export async function middleware(req: NextRequest) {
   const roleCookie = req.cookies.get('user-role'); // Assume the user role is stored in a cookie upon login
 
   if (!sessionCookie) {
+    if (pathname === "/admin/login") {
+      return NextResponse.next();
+    }
     let loginPath = "/login";
     if (pathname.startsWith("/admin")) {
       loginPath = "/admin/login";
@@ -71,6 +74,10 @@ export async function middleware(req: NextRequest) {
     const loginUrl = new URL(loginPath, req.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (pathname === "/admin/login" && roleCookie?.value === "admin") {
+    return NextResponse.redirect(new URL("/admin", req.url));
   }
 
   // 4. Role Validation (RBAC)

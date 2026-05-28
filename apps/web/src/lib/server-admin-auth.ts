@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { assertPlatformAdmin } from "@/lib/platform-admin";
 import { withTimeout } from "@/lib/promise-timeout";
 
@@ -31,5 +32,20 @@ export async function requirePlatformAdminFromCookies(): Promise<
   } catch (err) {
     const message = err instanceof Error ? err.message : "Admin access required.";
     return { error: message };
+  }
+}
+
+export async function getAdminActorEmail(): Promise<string> {
+  const accessToken = await getAdminAccessTokenFromCookies();
+  if (!accessToken) return "admin@trimma.lk";
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser(accessToken);
+    return user?.email || "admin@trimma.lk";
+  } catch {
+    return "admin@trimma.lk";
   }
 }

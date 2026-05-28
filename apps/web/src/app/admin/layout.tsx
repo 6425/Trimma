@@ -14,10 +14,21 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
+function readRoleFromCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const roleFromCookie = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
+  if (!roleFromCookie) return null;
+  try {
+    return decodeURIComponent(roleFromCookie);
+  } catch {
+    return roleFromCookie;
+  }
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const navigate = useRouter();
-  const [role, setRole] = useState<string | null>(null);
+  const [role] = useState<string | null>(() => readRoleFromCookie() || "admin");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [salonName, setSalonName] = useState<string>("My Salon");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,17 +43,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const closeDashboardMenu = () => setMobileMenuOpen(false);
     window.addEventListener("trimma:close-dashboard-menu", closeDashboardMenu);
     return () => window.removeEventListener("trimma:close-dashboard-menu", closeDashboardMenu);
-  }, []);
-
-  useEffect(() => {
-    const roleFromCookie = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
-    if (roleFromCookie) {
-      try {
-        setRole(decodeURIComponent(roleFromCookie));
-      } catch {
-        setRole(roleFromCookie);
-      }
-    }
   }, []);
 
   useEffect(() => {

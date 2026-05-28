@@ -5,11 +5,11 @@ import { Calendar, Search, Filter, AlertCircle, Loader2, DollarSign, Percent, Ac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { fetchAdminBookings } from "@/app/actions/admin-list-data";
 import { withTimeout } from "@/lib/promise-timeout";
 import { sendWhatsAppNotification, sendWhatsAppCancellationNotification, sendWhatsAppRescheduleNotification } from "../../actions/whatsapp";
+import { fetchAdminBookings } from "@/app/actions/admin-list-data";
+import { updateAdminBookingStatus, rescheduleAdminBooking } from "@/app/actions/admin-operations";
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -51,12 +51,8 @@ export default function AdminBookings() {
   const handleOverrideStatus = async (bookingId: string, newStatus: 'confirmed' | 'cancelled') => {
     setActioningId(bookingId);
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: newStatus })
-        .eq("id", bookingId);
-
-      if (error) throw error;
+      const result = await updateAdminBookingStatus(bookingId, newStatus);
+      if (result.success === false) throw new Error(result.error);
       toast.success(`Booking successfully marked as ${newStatus}!`);
 
       // Find the booking number in state to trigger live WhatsApp notification
@@ -86,29 +82,9 @@ export default function AdminBookings() {
     setActioningId(reschedulingBooking.id);
     try {
       const formattedTime = newTime.length === 5 ? `${newTime}:00` : newTime;
-      
-      // 1. Update primary booking record
-      const { error } = await supabase
-        .from("bookings")
-        .update({ 
-          booking_date: newDate, 
-          booking_time: formattedTime,
-          reschedule_status: 'approved',
-          reschedule_requested: false
-        })
-        .eq("id", reschedulingBooking.id);
 
-      if (error) throw error;
-      
-      // 2. Write trace log to public.reschedule_requests for clean audit trails
-      await supabase
-        .from("reschedule_requests")
-        .insert({
-          booking_id: reschedulingBooking.id,
-          requested_by: 'salon',
-          status: 'approved',
-          handled_by_salon: true
-        });
+      const result = await rescheduleAdminBooking(reschedulingBooking.id, newDate, formattedTime);
+      if (result.success === false) throw new Error(result.error);
 
       toast.success("Appointment successfully rescheduled! 📅");
 
@@ -121,8 +97,6 @@ export default function AdminBookings() {
           ...b, 
           booking_date: newDate, 
           booking_time: formattedTime,
-          reschedule_status: 'approved',
-          reschedule_requested: false
         } : b
       ));
 

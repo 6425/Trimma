@@ -5,9 +5,9 @@ import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminSalons } from "@/app/actions/admin-list-data";
+import { updateAdminSalon, approveAdminSalon, verifyAdminSalon, rejectAdminSalon } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -112,12 +112,8 @@ export default function Salons() {
         working_hours: parsedHours
       };
 
-      const { error } = await supabase
-        .from("salons")
-        .update(updatePayload)
-        .eq('id', selectedSalon.id);
-
-      if (error) throw error;
+      const result = await updateAdminSalon(selectedSalon.id, updatePayload);
+      if (result.success === false) throw new Error(result.error);
 
       toast.dismiss();
       toast.success("Salon onboarding details updated!");
@@ -137,12 +133,8 @@ export default function Salons() {
     try {
       toast.loading("Approving salon for platform access...");
       // Grant platform access (active) but NOT verified badge yet
-      const { error } = await supabase
-        .from("salons")
-        .update({ status: 'active', is_verified: false })
-        .eq('id', salonId);
-      
-      if (error) throw error;
+      const result = await approveAdminSalon(salonId);
+      if (result.success === false) throw new Error(result.error);
       toast.dismiss();
       toast.success("Salon approved! The owner can now log in and complete their profile setup.");
       fetchSalons();
@@ -160,12 +152,8 @@ export default function Salons() {
     try {
       toast.loading("Awarding verified badge...");
       // Final verification, awarding the badge
-      const { error } = await supabase
-        .from("salons")
-        .update({ status: 'active', is_verified: true })
-        .eq('id', salonId);
-      
-      if (error) throw error;
+      const result = await verifyAdminSalon(salonId);
+      if (result.success === false) throw new Error(result.error);
       
       const salon = salons.find(s => s.id === salonId);
       if (salon && salon.phone) {
@@ -246,16 +234,8 @@ export default function Salons() {
     try {
       setIsProcessing(true);
       toast.loading("Rejecting salon...");
-      const { error } = await supabase
-        .from("salons")
-        .update({ 
-          status: 'rejected', 
-          is_verified: false,
-          rejection_reason: rejectionReason 
-        })
-        .eq('id', salonToReject.id);
-      
-      if (error) throw error;
+      const result = await rejectAdminSalon(salonToReject.id, rejectionReason);
+      if (result.success === false) throw new Error(result.error);
       
       toast.dismiss();
       toast.success("Salon has been rejected.");

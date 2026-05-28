@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "../../../config/supabase";
+import { fetchAdminProfilePage, saveGlobalBrandingSettings, updateAdminUserProfile } from "@/app/actions/admin-operations";
 import { pubSubUpdateBranding } from "../../../components/Logo";
 
 // Font Family Preset Options
@@ -85,20 +85,11 @@ export default function AdminProfilePage() {
       async function loadData() {
       try {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-      toast.error("Access Denied. Please log in.");
-      return;
-      }
-      
-      // 1. Load User Profile details
-      const { data: userProfile, error: profileErr } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", session.user.email)
-      .maybeSingle();
-      
-      if (profileErr) throw profileErr;
+      const result = await fetchAdminProfilePage();
+      if (result.success === false) throw new Error(result.error);
+
+      const userProfile = result.profile;
+      const brandingData = result.branding;
       if (userProfile) {
       setEmail(userProfile.email || "");
       setFullName(userProfile.full_name || "");
@@ -107,13 +98,6 @@ export default function AdminProfilePage() {
       }
       
       // 2. Load Branding Config details
-      const { data: brandingData, error: brandingErr } = await supabase
-      .from("global_branding_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-      
-      if (brandingErr) throw brandingErr;
       if (brandingData) {
       setLogoName(brandingData.logo_name || "Trimma");
       setLogoNameFontFamily(brandingData.logo_name_font_family || "Outfit");
@@ -143,15 +127,11 @@ export default function AdminProfilePage() {
     setSavingProfile(true);
 
     try {
-      const { error } = await supabase
-        .from("users")
-        .update({
+      const result = await updateAdminUserProfile(email, {
           full_name: fullName,
           phone: phone
-        })
-        .eq("email", email);
-
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
       toast.success("Personal admin profile updated successfully!", { position: "top-center" });
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile info.");
@@ -275,14 +255,8 @@ export default function AdminProfilePage() {
     };
 
     try {
-      const { error } = await supabase
-        .from("global_branding_settings")
-        .upsert({
-          id: "00000000-0000-0000-0000-000000000002",
-          ...payload
-        });
-
-      if (error) throw error;
+      const result = await saveGlobalBrandingSettings(payload);
+      if (result.success === false) throw new Error(result.error);
 
       // Hot reload all mounted logo modules across the workspace instantly
       pubSubUpdateBranding({

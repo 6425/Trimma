@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/config/supabase";
+import { saveAdminUserWithRole } from "@/app/actions/admin-operations";
 import { toast } from "sonner";
 import { fetchAdminUsers } from "@/app/actions/admin-list-data";
 import { withTimeout } from "@/lib/promise-timeout";
@@ -80,52 +80,13 @@ function AdminUserList() {
     if (!editingUser) return;
     setIsUpdating(true);
     try {
-      // 1. Get current user role to see if it changed
-      const { data: currentUser } = await supabase
-        .from("users")
-        .select("global_role")
-        .eq("email", editingUser.email)
-        .single();
-
-      // 2. Update profile
-      const { error: profileError } = await supabase
-        .from("users")
-        .update({
-          full_name: editingUser.full_name,
-          global_role: editingUser.global_role,
-          phone: editingUser.phone
-        })
-        .eq("email", editingUser.email);
-      
-      if (profileError) throw profileError;
-      
-      // 3. Handle Agents table replication if role became agent/admin/superadmin/regional_admin
-      const rolesToReplicate = ["agent", "admin", "superadmin", "regional_admin"];
-      if (rolesToReplicate.includes(editingUser.global_role)) {
-        // Check if agent record already exists
-        const { data: existingAgent } = await supabase
-          .from("agents")
-          .select("id")
-          .eq("user_email", editingUser.email)
-          .maybeSingle();
-
-        if (!existingAgent) {
-          // Create agent record
-          const { error: agentError } = await supabase
-            .from("agents")
-            .insert([{
-              user_email: editingUser.email,
-              status: 'active',
-              commission_rate: 0
-            }]);
-          if (agentError) throw agentError;
-        }
-      } else if (currentUser && rolesToReplicate.includes(currentUser.global_role)) {
-        // If role was a replicated one and now it's not, we might want to keep it or delete it.
-        // Usually, keep it for history but mark as inactive? 
-        // For now we just leave it or could delete if strict:
-        // await supabase.from("agents").delete().eq("user_email", editingUser.email);
-      }
+      const result = await saveAdminUserWithRole({
+        email: editingUser.email,
+        full_name: editingUser.full_name,
+        phone: editingUser.phone,
+        global_role: editingUser.global_role,
+      });
+      if (result.success === false) throw new Error(result.error);
       
       toast.success("User profile updated successfully");
       setIsEditDialogOpen(false);

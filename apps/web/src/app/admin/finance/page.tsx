@@ -4,10 +4,9 @@ import React, { useEffect, useState } from "react";
 import { Calendar, FileText, ArrowRight, Activity, Loader2, TrendingUp, Sparkles, Store, Briefcase, Handshake, CreditCard, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/config/supabase";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { fetchAdminFinancePage } from "@/app/actions/admin-list-data";
+import { saveAdminFinanceBookingRates } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 
 interface BookingWithSplits {
@@ -26,7 +25,6 @@ interface BookingWithSplits {
 }
 
 export default function FinanceDashboard() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [salon, setSalon] = useState<any>(null);
   const [bookings, setBookings] = useState<BookingWithSplits[]>([]);
@@ -46,18 +44,13 @@ export default function FinanceDashboard() {
   // Admin Settings
   const [isAdmin, setIsAdmin] = useState(false);
   const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, payhere: 3, agent: 20 });
+  const [activeCommissionId, setActiveCommissionId] = useState<string | null>(null);
   const [savingRates, setSavingRates] = useState(false);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
       async function loadFinanceData() {
       try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-      router.replace("/login?redirectTo=/dashboard/finance");
-      return;
-      }
-
       const result = await withTimeout(
         fetchAdminFinancePage(),
         20000,
@@ -68,15 +61,14 @@ export default function FinanceDashboard() {
         throw new Error(result.error);
       }
 
-      const { adminRoles, commissionMaster, salons, bookings: bookingsData } = result;
-      const isUserAdmin = (adminRoles || []).some((r) => r.user_id === session.user.id);
-
-      if (isUserAdmin) {
+      const { commissionMaster, bookings: bookingsData } = result;
       setIsAdmin(true);
+
       const commData = (commissionMaster || []).find(
         (c) => c.commission_type === "booking" && c.active
       );
       if (commData) {
+      setActiveCommissionId(commData.id);
       setGlobalRates({
       platform: commData.platform_percentage,
       salon: commData.salon_percentage,
@@ -84,21 +76,8 @@ export default function FinanceDashboard() {
       agent: commData.agent_percentage || 0
       });
       }
-      }
 
-      let salonId = null;
-      const salonData = (salons || []).find((s) => s.owner_email === session.user.email);
-      if (salonData) salonId = salonData.id;
-
-      let filteredBookings = bookingsData || [];
-      if (salonId) {
-      filteredBookings = filteredBookings.filter((b: any) => b.salon_id === salonId);
-      } else if (!isUserAdmin) {
-      setLoading(false);
-      return;
-      }
-
-      const resolvedBookings = filteredBookings.map((b: any) => ({
+      const resolvedBookings = (bookingsData || []).map((b: any) => ({
       ...b,
       amount: parseFloat(b.total_price || b.amount || 0),
       platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
@@ -144,30 +123,20 @@ export default function FinanceDashboard() {
       }
       loadFinanceData();
     });
-  }, [router]);
+  }, []);
 
   const handleUpdateRates = async () => {
     try {
       setSavingRates(true);
-      
-      const { error: dropErr } = await supabase
-        .from('commission_master')
-        .update({ active: false })
-        .eq('commission_type', 'booking')
-        .eq('active', true);
 
-      const { error: insertErr } = await supabase
-        .from('commission_master')
-        .insert({
-          commission_type: 'booking',
-          platform_percentage: globalRates.platform,
-          salon_percentage: globalRates.salon,
-          payhere_percentage: globalRates.payhere,
-          agent_percentage: globalRates.agent,
-          active: true
-        });
+      const result = await saveAdminFinanceBookingRates({
+        platform: globalRates.platform,
+        salon: globalRates.salon,
+        payhere: globalRates.payhere,
+        previousId: activeCommissionId,
+      });
 
-      if (insertErr) throw insertErr;
+      if (result.success === false) throw new Error(result.error);
       toast.success("Global Commission Structure updated successfully!");
     } catch (err: any) {
       toast.error("Failed to update rates: " + err.message);

@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
 import { assignAgentTerritory, removeAgentTerritory } from "@/app/actions/agent-territories";
+import {
+  saveAdminAgentProfile,
+  demoteAdminAgent,
+  insertAgentActivityLog,
+  updateCommissionLedgerStatus,
+} from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 
 export default function AdminAgents() {
@@ -37,58 +42,6 @@ export default function AdminAgents() {
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
   const [newTerritoryId, setNewTerritoryId] = useState("");
 
-  const fetchAgentsData = async () => {
-    try {
-      // 1. Fetch all users who are platform agents
-      const { data: usersData, error: usersError } = await supabase
-        .from("users")
-        .select("email, full_name, phone, global_role, created_at")
-        .eq("global_role", "agent")
-        .order("created_at", { ascending: false });
-
-      if (usersError) throw usersError;
-
-      // 2. Fetch all matching agent profiles
-      const { data: agentsData, error: agentsError } = await supabase
-        .from("agents")
-        .select("user_email, status, commission_rate");
-
-      if (agentsError) throw agentsError;
-
-      // 3. Fetch count of generated leads for performance calculations
-      const { data: leadsData } = await supabase
-        .from("salon_leads")
-        .select("assign_to, onboarding_stage");
-
-      // 4. Map in memory (extremely robust and immune to schema cache issues!)
-      const flattened = (usersData || []).map((u: any) => {
-        const agentMeta: any = (agentsData || []).find((a: any) => a.user_email === u.email) || {};
-        const agentLeads = (leadsData || []).filter((l: any) => l.assign_to === u.email);
-        const convertedCount = agentLeads.filter((l: any) => l.onboarding_stage === 'CONVERTED').length;
-        
-        return {
-          email: u.email,
-          full_name: u.full_name || "New Agent",
-          phone: u.phone || "No Phone",
-          created_at: u.created_at,
-          agent_exists: !!agentMeta.user_email,
-          status: agentMeta.status || "active",
-          commission_rate: agentMeta.commission_rate !== undefined ? agentMeta.commission_rate : 10,
-          total_leads: agentLeads.length,
-          converted_leads: convertedCount,
-          conversion_rate: agentLeads.length > 0 ? Math.round((convertedCount / agentLeads.length) * 100) : 0
-        };
-      });
-
-      setAgents(flattened);
-      if (flattened.length > 0 && !newTerritoryEmail) {
-        setNewTerritoryEmail(flattened[0].email);
-      }
-    } catch (error: any) {
-      toast.error("Failed to load agents: " + error.message);
-    }
-  };
-
   const refreshTerritoryAssignments = async () => {
     try {
       const result = await fetchAdminAgentsPage();
@@ -97,35 +50,6 @@ export default function AdminAgents() {
       setTerritoryCatalog(result.territoryCatalog || []);
     } catch (e: any) {
       console.error("Territories fetch failed:", e.message || e);
-    }
-  };
-
-  const fetchLedgerData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("commission_ledger")
-        .select(`
-          *,
-          lead:salon_leads(name)
-        `)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setLedger(data || []);
-    } catch (e: any) {
-      console.error("Ledger fetch failed:", e.message || e);
-    }
-  };
-
-  const fetchLogsData = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("agent_activity_logs")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setActivityLogs(data || []);
-    } catch (e: any) {
-      console.error("Logs fetch failed:", e.message || e);
     }
   };
 
@@ -194,18 +118,8 @@ export default function AdminAgents() {
 
   const logAgentActivity = async (agentEmail: string, action: string, notes: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentEmail = user?.email || "admin@trimma.lk";
-      
-      await supabase
-        .from("agent_activity_logs")
-        .insert({
-          actor_email: currentEmail,
-          agent_email: agentEmail,
-          action: action,
-          notes: notes
-        });
-      fetchLogsData();
+      await insertAgentActivityLog({ agent_email: agentEmail, action, notes });
+      fetchInitialData();
     } catch (err) {
       console.error("Failed to insert agent audit log", err);
     }
@@ -217,25 +131,13 @@ export default function AdminAgents() {
       setUpdating(true);
       const parsedRate = parseFloat(editCommission) || 0;
 
-      if (!selectedAgent.agent_exists) {
-        const { error: insertErr } = await supabase
-          .from("agents")
-          .insert({
-            user_email: selectedAgent.email,
-            status: editStatus,
-            commission_rate: parsedRate
-          });
-        if (insertErr) throw insertErr;
-      } else {
-        const { error: updateErr } = await supabase
-          .from("agents")
-          .update({
-            status: editStatus,
-            commission_rate: parsedRate
-          })
-          .eq("user_email", selectedAgent.email);
-        if (updateErr) throw updateErr;
-      }
+      const result = await saveAdminAgentProfile({
+        user_email: selectedAgent.email,
+        status: editStatus,
+        commission_rate: parsedRate,
+        createIfMissing: !selectedAgent.agent_exists,
+      });
+      if (result.success === false) throw new Error(result.error);
 
       await logAgentActivity(
         selectedAgent.email,
@@ -246,7 +148,7 @@ export default function AdminAgents() {
       toast.success(`Successfully updated ${selectedAgent.full_name}!`);
       setIsEditModalOpen(false);
       setSelectedAgent(null);
-      fetchAgentsData();
+      fetchInitialData();
     } catch (error: any) {
       toast.error("Update failed: " + error.message);
     } finally {
@@ -259,17 +161,8 @@ export default function AdminAgents() {
     try {
       toast.loading("Demoting agent...", { id: "delete_agent" });
 
-      await supabase
-        .from("agents")
-        .delete()
-        .eq("user_email", agent.email);
-
-      const { error: userErr } = await supabase
-        .from("users")
-        .update({ global_role: "customer" })
-        .eq("email", agent.email);
-
-      if (userErr) throw userErr;
+      const result = await demoteAdminAgent(agent.email);
+      if (result.success === false) throw new Error(result.error);
 
       await logAgentActivity(
         agent.email,
@@ -278,7 +171,7 @@ export default function AdminAgents() {
       );
 
       toast.success(`Successfully deleted and demoted ${agent.full_name}!`, { id: "delete_agent" });
-      fetchAgentsData();
+      fetchInitialData();
     } catch (error: any) {
       toast.error("Failed to delete agent: " + error.message, { id: "delete_agent" });
     }
@@ -336,16 +229,11 @@ export default function AdminAgents() {
   // Payout settlement handler
   const handleSettlementAction = async (id: string, email: string, amount: number, newStatus: string) => {
     try {
-      const payload: any = { status: newStatus };
-      if (newStatus === 'APPROVED') payload.approved_at = new Date().toISOString();
-      if (newStatus === 'PAID') payload.paid_at = new Date().toISOString();
-
-      const { error } = await supabase
-        .from("commission_ledger")
-        .update(payload)
-        .eq("id", id);
-
-      if (error) throw error;
+      const result = await updateCommissionLedgerStatus(id, newStatus, {
+        approved_at: newStatus === "APPROVED" ? new Date().toISOString() : undefined,
+        paid_at: newStatus === "PAID" ? new Date().toISOString() : undefined,
+      });
+      if (result.success === false) throw new Error(result.error);
 
       await logAgentActivity(
         email,
@@ -354,7 +242,7 @@ export default function AdminAgents() {
       );
 
       toast.success(`Transaction status successfully updated to ${newStatus}!`);
-      fetchLedgerData();
+      fetchInitialData();
     } catch (e: any) {
       toast.error("Settlement transaction failed: " + e.message);
     }

@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminSubscriptionPlans } from "@/app/actions/admin-list-data";
+import {
+  saveAdminSubscriptionPlan,
+  deleteAdminSubscriptionPlan,
+  seedAdminSubscriptionPlans,
+} from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { DEFAULT_SUBSCRIPTION_PLANS, formatPromotionPackageLimit } from "@/lib/subscription-pricing";
 
@@ -45,23 +49,8 @@ export default function SubscriptionPlanManagement() {
 
   const seedDefaultPlans = async () => {
     try {
-      const defaultPlans = DEFAULT_SUBSCRIPTION_PLANS.map((plan) => ({
-        id: plan.id,
-        name: plan.name,
-        list_monthly_price: plan.list_monthly_price,
-        intro_monthly_price: plan.intro_monthly_price,
-        monthly_price: plan.intro_monthly_price ?? plan.monthly_price,
-        annual_price: plan.annual_price,
-        max_staff: plan.max_staff,
-        max_services: plan.max_services,
-        max_images: plan.max_images,
-        max_branches: plan.max_branches,
-        max_promotion_packages: plan.max_promotion_packages,
-        feature_flags: plan.feature_flags,
-      }));
-
-      const { error } = await supabase.from("subscription_plans").upsert(defaultPlans, { onConflict: 'id' });
-      if (error) throw error;
+      const result = await seedAdminSubscriptionPlans();
+      if (result.success === false) throw new Error(result.error);
       toast.success("Default subscription plans successfully seeded!");
     } catch (error: any) {
       console.error("Auto seeding failed:", error?.message || error?.details || JSON.stringify(error));
@@ -134,39 +123,28 @@ export default function SubscriptionPlanManagement() {
       .map(f => f.trim())
       .filter(f => f);
     
-    const payload = {
-      name: formData.name,
-      monthly_price: parseFloat(formData.monthly_price),
-      annual_price: parseFloat(formData.monthly_price) * 10, // standard annual discount
-      max_staff: formData.max_staff ? parseInt(formData.max_staff) : 2,
-      max_services: formData.max_services ? parseInt(formData.max_services) : 6,
-      max_images: formData.max_images ? parseInt(formData.max_images) : 4,
-      max_branches: formData.max_branches ? parseInt(formData.max_branches) : 0,
-      max_promotion_packages: formData.max_promotion_packages
-        ? parseInt(formData.max_promotion_packages)
-        : 2,
-      feature_flags: {
-        allowed_categories_limit: formData.allowed_categories_limit ? parseInt(formData.allowed_categories_limit) : 2,
-        features: featuresArray
-      }
-    };
-    
     try {
       setSaving(true);
-      if (editId) {
-        const { error } = await supabase
-          .from("subscription_plans")
-          .update(payload)
-          .eq("id", editId);
-        if (error) throw error;
-        toast.success("Plan updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("subscription_plans")
-          .insert([payload]);
-        if (error) throw error;
-        toast.success("Plan created successfully");
-      }
+      const payload = {
+        id: editId || undefined,
+        name: formData.name,
+        monthly_price: parseFloat(formData.monthly_price),
+        max_staff: formData.max_staff ? parseInt(formData.max_staff) : 2,
+        max_services: formData.max_services ? parseInt(formData.max_services) : 6,
+        max_images: formData.max_images ? parseInt(formData.max_images) : 4,
+        max_branches: formData.max_branches ? parseInt(formData.max_branches) : 0,
+        max_promotion_packages: formData.max_promotion_packages
+          ? parseInt(formData.max_promotion_packages)
+          : 2,
+        feature_flags: {
+          allowed_categories_limit: formData.allowed_categories_limit ? parseInt(formData.allowed_categories_limit) : 2,
+          features: featuresArray
+        }
+      };
+
+      const result = await saveAdminSubscriptionPlan(payload);
+      if (result.success === false) throw new Error(result.error);
+      toast.success(editId ? "Plan updated successfully" : "Plan created successfully");
       setFormData(emptyFormData);
       setEditId(null);
       fetchPlans();
@@ -181,8 +159,8 @@ export default function SubscriptionPlanManagement() {
     if (!confirm("Are you sure? This will delete the plan and might affect active subscriptions.")) return;
     
     try {
-      const { error } = await supabase.from("subscription_plans").delete().eq("id", id);
-      if (error) throw error;
+      const result = await deleteAdminSubscriptionPlan(id);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Plan deleted successfully");
       fetchPlans();
     } catch (error: any) {

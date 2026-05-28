@@ -6,10 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminLeadsPage } from "@/app/actions/admin-list-data";
+import {
+  updateAdminSalon,
+  insertOnboardingLog,
+  fetchSalonServicesAndStaff,
+  deleteAdminSalonService,
+  deleteAdminSalonStaff,
+  updateAdminSalonStaff,
+  bulkInsertAdminSalons,
+  deleteAdminSalon,
+  uploadAdminSalonImage,
+  publishAdminLead,
+  fetchAdminActorEmail,
+  createAdminSalonDraft,
+} from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 // Sri Lankan Hierarchical Geography Dictionary
 const SRI_LANKA_GEOGRAPHY: any = {
@@ -321,12 +347,10 @@ export default function Leads() {
 
   const fetchModalExtras = async (id: string) => {
     try {
-      const [servicesRes, staffRes] = await Promise.all([
-        supabase.from('services').select('*').eq('salon_id', id).order('created_at', { ascending: false }),
-        supabase.from('salon_staff').select('*').eq('salon_id', id).order('created_at', { ascending: false })
-      ]);
-      if (!servicesRes.error) setModalServices(servicesRes.data || []);
-      if (!staffRes.error) setModalStaff(staffRes.data || []);
+      const result = await fetchSalonServicesAndStaff(id);
+      if (result.success === false) throw new Error(result.error);
+      setModalServices(result.services || []);
+      setModalStaff(result.staff || []);
     } catch (err) {
       console.error("Failed to fetch modal extras", err);
     }
@@ -385,8 +409,8 @@ export default function Leads() {
 
   const handleDeleteModalService = async (serviceId: string) => {
     try {
-      const { error } = await supabase.from('services').delete().eq('id', serviceId);
-      if (error) throw error;
+      const result = await deleteAdminSalonService(serviceId);
+      if (result.success === false) throw new Error(result.error);
       setModalServices(prev => prev.filter(s => s.id !== serviceId));
       toast.success("Service deleted.");
     } catch (err: any) {
@@ -396,8 +420,8 @@ export default function Leads() {
 
   const handleDeleteModalStaff = async (staffId: string) => {
     try {
-      const { error } = await supabase.from('salon_staff').delete().eq('id', staffId);
-      if (error) throw error;
+      const result = await deleteAdminSalonStaff(staffId);
+      if (result.success === false) throw new Error(result.error);
       setModalStaff(prev => prev.filter(s => s.id !== staffId));
       toast.success("Staff member deleted.");
     } catch (err: any) {
@@ -417,16 +441,12 @@ export default function Leads() {
   const handleSaveModalStaff = async () => {
     if (!editingStaffId) return;
     try {
-      const { error } = await supabase
-        .from('salon_staff')
-        .update({
+      const result = await updateAdminSalonStaff(editingStaffId, {
           name: staffEditData.name,
           role: staffEditData.role,
           skill_level: staffEditData.skill_level
-        })
-        .eq('id', editingStaffId);
-        
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
       
       setModalStaff(prev => prev.map(s => 
         s.id === editingStaffId ? { ...s, ...staffEditData } : s
@@ -480,17 +500,7 @@ export default function Leads() {
 
   const logActivity = async (leadId: string, action: string, notes: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentEmail = user?.email || "admin@trimma.lk";
-      
-      await supabase
-        .from("onboarding_logs")
-        .insert({
-          salon_id: leadId,
-          actor_email: currentEmail,
-          action: action,
-          notes: notes
-        });
+      await insertOnboardingLog({ salon_id: leadId, action, notes });
     } catch (err) {
       console.error("Activity logging failed:", err);
     }
@@ -569,12 +579,8 @@ export default function Leads() {
         owner_gmail: formData.owner_gmail || null
       };
 
-      const { error } = await supabase
-        .from("salons")
-        .update(updatePayload)
-        .eq("id", selectedLead.id);
-
-      if (error) throw error;
+      const result = await updateAdminSalon(selectedLead.id, updatePayload);
+      if (result.success === false) throw new Error(result.error);
 
       // Log the update activity
       await logActivity(selectedLead.id, "LEAD_UPDATED", "Lead details updated via Admin Editor Form.");
@@ -621,12 +627,8 @@ export default function Leads() {
     }
 
     try {
-      const { error } = await supabase
-        .from("salons")
-        .update(updatePayload)
-        .eq("id", leadId);
-
-      if (error) throw error;
+      const result = await updateAdminSalon(leadId, updatePayload);
+      if (result.success === false) throw new Error(result.error);
       
       // Log inline cell update
       await logActivity(leadId, "CELL_UPDATED", `Spreadsheet cell '${field}' updated inline to '${newValue || "empty"}'.`);
@@ -717,18 +719,10 @@ export default function Leads() {
       // 5. Upload to Supabase Storage
       toast.loading("Uploading image...", { id: `upload_${leadId}` });
       const fileName = `leads/hero_${leadId}_${Date.now()}.jpg`;
-      
-      const { data, error } = await supabase.storage
-        .from('salon-images')
-        .upload(fileName, imageBlob, { cacheControl: '3600', upsert: true, contentType: 'image/jpeg' });
-
-      if (error) {
-        throw error;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('salon-images')
-        .getPublicUrl(fileName);
+      const base64 = await blobToBase64(imageBlob);
+      const uploadResult = await uploadAdminSalonImage(fileName, base64, "image/jpeg");
+      if (uploadResult.success === false) throw new Error(uploadResult.error);
+      const publicUrl = uploadResult.publicUrl;
 
       // 6. Save URL to Database
       await handleSaveCell(leadId, "hero_url", publicUrl);
@@ -801,16 +795,10 @@ export default function Leads() {
       });
 
       const fileName = `leads/${field}_${Date.now()}.jpg`;
-      
-      const { data, error } = await supabase.storage
-        .from('salon-images')
-        .upload(fileName, imageBlob, { cacheControl: '3600', upsert: true, contentType: 'image/jpeg' });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('salon-images')
-        .getPublicUrl(fileName);
+      const base64 = await blobToBase64(imageBlob);
+      const uploadResult = await uploadAdminSalonImage(fileName, base64, "image/jpeg");
+      if (uploadResult.success === false) throw new Error(uploadResult.error);
+      const publicUrl = uploadResult.publicUrl;
 
       setFormData((prev: any) => ({ ...prev, [field]: publicUrl }));
       
@@ -837,14 +825,10 @@ export default function Leads() {
         source_type: "MANUAL"
       };
 
-      const { data, error } = await supabase
-        .from("salons")
-        .insert([newLeadPayload])
-        .select();
-
-      if (error) throw error;
+      const result = await createAdminSalonDraft(newLeadPayload);
+      if (result.success === false) throw new Error(result.error);
       
-      const createdLead = data[0];
+      const createdLead = result.salon;
       toast.success("New lead draft created! Opening editor form...");
       
       await fetchLeads();
@@ -934,11 +918,8 @@ export default function Leads() {
 
         toast.loading(`Importing ${leadsToInsert.length} draft salons in bulk...`, { id: "csv_upload" });
 
-        const { error } = await supabase
-          .from("salons")
-          .insert(leadsToInsert);
-
-        if (error) throw error;
+        const result = await bulkInsertAdminSalons(leadsToInsert);
+        if (result.success === false) throw new Error(result.error);
 
         toast.success(`Successfully imported ${leadsToInsert.length} leads!`, { id: "csv_upload" });
         fetchLeads();
@@ -955,8 +936,8 @@ export default function Leads() {
     try {
       toast.loading(`Provisioning draft storefront for "${lead.name}"...`, { id: "provision_salon" });
 
-      const { data: { user } } = await supabase.auth.getUser();
-      const actorEmail = user?.email || "admin@trimma.io";
+      const actorResult = await fetchAdminActorEmail();
+      const actorEmail = actorResult.success ? actorResult.email : "admin@trimma.io";
 
       const response = await fetch("/api/provision-salon", {
         method: "POST",
@@ -987,12 +968,8 @@ export default function Leads() {
   const handleDeleteLead = async (leadId: string) => {
     if (!confirm("Are you sure you want to delete this lead? This cannot be undone.")) return;
     try {
-      const { error } = await supabase
-        .from("salons")
-        .delete()
-        .eq("id", leadId);
-
-      if (error) throw error;
+      const result = await deleteAdminSalon(leadId);
+      if (result.success === false) throw new Error(result.error);
       toast.success("Lead deleted successfully!");
       setLeads(prev => prev.filter(l => l.id !== leadId));
     } catch (error: any) {
@@ -1005,58 +982,17 @@ export default function Leads() {
     try {
       toast.loading(`Publishing "${lead.name}" as live Salon owner...`, { id: "publish_lead" });
 
-      // Generate slug from salon name
-      const slug = lead.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
+      const result = await publishAdminLead({
+        id: lead.id,
+        name: lead.name,
+        province: selectedProvince || "Western Province",
+        district: selectedDistrict || "Colombo",
+        city: selectedCity || "Colombo",
+        address: lead.address,
+      });
+      if (result.success === false) throw new Error(result.error);
 
-      // 1. Retrieve the "Free" subscription plan ID
-      const { data: freePlan } = await supabase
-        .from("subscription_plans")
-        .select("id")
-        .eq("name", "Free")
-        .maybeSingle();
-
-      let freePlanId = freePlan?.id;
-      if (!freePlanId) {
-        const { data: anyPlan } = await supabase
-          .from("subscription_plans")
-          .select("id")
-          .limit(1)
-          .maybeSingle();
-        freePlanId = anyPlan?.id;
-      }
-
-      // 2. Insert the Live Salon record in DRAFT state (Golden Rule 1)
-      const { error: salonError } = await supabase
-        .from("salons")
-        .insert({
-          name: lead.name,
-          slug: slug,
-          owner_email: `owner-${slug}@trimma.io`, // unique default email format for pre-populating profile pairing
-          province: selectedProvince || "Western Province",
-          district: selectedDistrict || "Colombo",
-          city: lead.address || selectedCity || "Colombo",
-          subscription_plan_id: freePlanId || null,
-          status: "DRAFT" // Enforces RLS, invisible to public search until claimed/verified by owner
-        });
-
-      if (salonError) throw salonError;
-
-      // 3. Update status in salon_leads to converted and pipeline stages
-      const { error: statusError } = await supabase
-        .from("salon_leads")
-        .update({ 
-          status: "converted", // legacy backward-compatibility
-          lead_status: "INTERESTED",
-          onboarding_stage: "CONVERTED"
-        })
-        .eq("id", lead.id);
-
-      if (statusError) throw statusError;
-
-      // Log the lead conversion audit trail
+      const slug = result.slug;
       await logActivity(lead.id, "LEAD_CONVERTED", `Lead converted. Salon created in DRAFT state with owner email owner-${slug}@trimma.io.`);
 
       toast.success(`Successfully published "${lead.name}"! Created in DRAFT state under owner-${slug}@trimma.io 🚀`, { id: "publish_lead" });
@@ -1081,14 +1017,10 @@ export default function Leads() {
       const agentUser = agents.find(a => a.email === lead.assign_to);
       const agentLabel = agentUser ? agentUser.full_name || agentUser.email : lead.assign_to;
 
-      const { error } = await supabase
-        .from("salons")
-        .update({
+      const result = await updateAdminSalon(lead.id, {
           onboarding_status: "ASSIGNED_TO_AGENT"
-        })
-        .eq("id", lead.id);
-
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
 
       await logActivity(lead.id, "ASSIGNED_TO_AGENT", `Salon assigned and routed to field agent: ${agentLabel}.`);
 
@@ -1106,18 +1038,14 @@ export default function Leads() {
       setVerifying(true);
       toast.loading(`Verifying "${lead.name}"...`, { id: "verify_salon" });
 
-      const { error } = await supabase
-        .from("salons")
-        .update({
+      const result = await updateAdminSalon(lead.id, {
           onboarding_status: "VERIFIED",
           activation_status: "ACTIVE",
           is_verified: true,
           booking_enabled: true,
           verified_at: new Date().toISOString()
-        })
-        .eq("id", lead.id);
-
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
 
       await logActivity(lead.id, "SALON_VERIFIED", "Salon verified and activated by Admin. Now live on the platform.");
       toast.success(`"${lead.name}" is now VERIFIED and LIVE! ✓`, { id: "verify_salon" });
@@ -1134,15 +1062,11 @@ export default function Leads() {
     try {
       toast.loading(`Rejecting "${rejectTarget.name}"...`, { id: "reject_salon" });
 
-      const { error } = await supabase
-        .from("salons")
-        .update({
+      const result = await updateAdminSalon(rejectTarget.id, {
           onboarding_status: "REJECTED",
           rejection_reason: rejectReason
-        })
-        .eq("id", rejectTarget.id);
-
-      if (error) throw error;
+        });
+      if (result.success === false) throw new Error(result.error);
 
       await logActivity(rejectTarget.id, "SALON_REJECTED", `Salon rejected by Admin. Reason: ${rejectReason}`);
       toast.success(`"${rejectTarget.name}" has been rejected.`, { id: "reject_salon" });

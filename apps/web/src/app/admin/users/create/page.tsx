@@ -13,7 +13,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { supabase } from "@/config/supabase";
+import { getAccessTokenFromCookie } from "@/lib/client-auth-cookie";
 import { toast } from "sonner";
 
 function AdminUserCreateInner() {
@@ -42,8 +42,8 @@ function AdminUserCreateInner() {
 
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      const accessToken = getAccessTokenFromCookie();
+      if (!accessToken) {
         throw new Error("You must be signed in as a platform admin.");
       }
 
@@ -51,7 +51,7 @@ function AdminUserCreateInner() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           email: formData.email,

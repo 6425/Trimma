@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "../../../config/supabase";
+import { fetchGlobalBrandingSettings, saveGlobalBrandingSettings } from "@/app/actions/admin-operations";
 import { pubSubUpdateBranding } from "../../../components/Logo";
 
 // Font Family Preset Options
@@ -67,13 +67,9 @@ export default function AdminBrandingPage() {
       async function loadConfig() {
       try {
       setLoading(true);
-      const { data, error } = await supabase
-      .from("global_branding_settings")
-      .select("*")
-      .limit(1)
-      .maybeSingle();
-      
-      if (error) throw error;
+      const result = await fetchGlobalBrandingSettings();
+      if (result.success === false) throw new Error(result.error);
+      const data = result.settings;
       if (data) {
       setLogoName(data.logo_name || "Trimma");
       setLogoNameFontFamily(data.logo_name_font_family || "Outfit");
@@ -266,14 +262,8 @@ export default function AdminBrandingPage() {
     };
 
     try {
-      const { error } = await supabase
-        .from("global_branding_settings")
-        .upsert({
-          id: "00000000-0000-0000-0000-000000000002",
-          ...payload
-        });
-
-      if (error) throw error;
+      const result = await saveGlobalBrandingSettings(payload);
+      if (result.success === false) throw new Error(result.error);
 
       // Hot reload the entire app's logo elements
       pubSubUpdateBranding({

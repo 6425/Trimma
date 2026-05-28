@@ -5,9 +5,9 @@ import { CreditCard, Save, Settings, Zap, Loader2, Lock, Eye, EyeOff, AlertTrian
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminPaymentsPage } from "@/app/actions/admin-list-data";
+import { saveGlobalPaymentSettings, simulateAdminTestPayment } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 
 export default function AdminPayments() {
@@ -115,10 +115,7 @@ export default function AdminPayments() {
     try {
       setSaving(true);
       
-      const { error } = await supabase
-        .from("global_payment_settings")
-        .upsert({
-          id: "00000000-0000-0000-0000-000000000001",
+      const result = await saveGlobalPaymentSettings({
           environment,
           paypal_client_id_sandbox: paypalClientSandbox,
           paypal_client_id_live: paypalClientLive,
@@ -128,8 +125,8 @@ export default function AdminPayments() {
           payhere_app_secret: payhereAppSecret,
           paypal_enabled: paypalEnabled,
           payhere_enabled: payhereEnabled,
-          updated_at: new Date().toISOString()
         });
+      if (result.success === false) throw new Error(result.error);
 
       localStorage.setItem("trimma_payment_env", environment);
       localStorage.setItem("trimma_paypal_sb", paypalClientSandbox);
@@ -148,28 +145,9 @@ export default function AdminPayments() {
 
   const simulateTestTransaction = async () => {
     try {
-      // Find a dummy booking to link to
-      const { data: booking } = await supabase.from("bookings").select("id, salon_id, amount").limit(1).maybeSingle();
-      
-      if (booking) {
-        // Insert a real mock row in payments table for simulation!
-        const isPayPal = Math.random() > 0.5;
-        const { error } = await supabase
-          .from("payments")
-          .insert({
-            booking_id: booking.id,
-            salon_id: booking.salon_id,
-            provider: isPayPal ? "paypal" : "payhere",
-            provider_payment_id: "SIM-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-            amount: booking.amount,
-            currency: "LKR",
-            status: "success",
-            raw_response: { note: "Generated via payments configuration simulator console" }
-          });
-        
-        if (error) throw error;
-        await fetchRealPayments();
-      }
+      const result = await simulateAdminTestPayment();
+      if (result.success === false) throw new Error(result.error);
+      await fetchRealPayments();
 
       const newLog = {
         id: Date.now(),
