@@ -8,6 +8,7 @@ import {
   withCustomerDb,
 } from "@/lib/with-customer-db";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { loadCustomerProfile, saveCustomerProfileRecord } from "@/lib/customer-profile-save";
 
 export type CustomerDashboardBooking = {
   id: string;
@@ -120,14 +121,7 @@ export async function fetchCustomerDashboardPage() {
 }
 
 export async function fetchCustomerProfilePage() {
-  const result = await withCustomerDb(async (_supabase, ctx) => {
-    return {
-      firstName: (ctx.userMetadata.first_name as string | undefined) || "",
-      lastName: (ctx.userMetadata.last_name as string | undefined) || "",
-      email: ctx.email,
-      phone: ctx.phone || (ctx.userMetadata.phone as string | undefined) || "",
-    };
-  });
+  const result = await withCustomerDb(async (supabase, ctx) => loadCustomerProfile(supabase, ctx));
 
   if (!isCustomerDbSuccess(result)) return customerDbFailure(result);
   return { success: true as const, ...result.data };
@@ -145,27 +139,7 @@ export async function saveCustomerProfile(input: {
 
   try {
     const supabase = createSupabaseAdminClient();
-    const fullName = `${input.firstName} ${input.lastName}`.trim();
-
-    const { error: authError } = await supabase.auth.admin.updateUserById(auth.userId, {
-      phone: input.phone || undefined,
-      user_metadata: {
-        ...auth.userMetadata,
-        first_name: input.firstName,
-        last_name: input.lastName,
-        full_name: fullName,
-        phone: input.phone,
-      },
-    });
-    if (authError) throw new Error(authError.message);
-
-    const { error: dbError } = await supabase
-      .from("users")
-      .update({ full_name: fullName, phone: input.phone })
-      .eq("email", auth.email);
-    if (dbError) throw new Error(dbError.message);
-
-    return { success: true as const };
+    return await saveCustomerProfileRecord(supabase, auth, input);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update profile.";
     return { success: false as const, error: message };

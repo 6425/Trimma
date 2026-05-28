@@ -7,22 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { fetchCustomerProfilePage, saveCustomerProfile } from "@/app/actions/customer-dashboard-data";
+import { fetchCustomerProfileViaApi, patchCustomerProfileViaApi } from "@/lib/customer-profile-api-client";
 import { withTimeout } from "@/lib/promise-timeout";
 
 function ProfileFormContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
   const loadProfile = useCallback(async () => {
+    setLoadError(null);
     try {
       const result = await withTimeout(
-        fetchCustomerProfilePage(),
+        fetchCustomerProfileViaApi(),
         20000,
         "Loading timed out. Refresh the page."
       );
@@ -40,10 +42,9 @@ function ProfileFormContent() {
       setEmail(result.email);
       setPhone(result.phone);
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load profile.";
+      setLoadError(message);
       console.error("Failed to load profile:", err);
-      toast.error(err instanceof Error ? err.message : "Could not load profile.", {
-        position: "top-center",
-      });
     } finally {
       setLoading(false);
     }
@@ -58,7 +59,7 @@ function ProfileFormContent() {
     setSaving(true);
 
     try {
-      const result = await saveCustomerProfile({ firstName, lastName, phone });
+      const result = await patchCustomerProfileViaApi({ firstName, lastName, phone });
       if (result.success === false) throw new Error(result.error);
 
       toast.success("Profile updated successfully!", {
@@ -90,6 +91,21 @@ function ProfileFormContent() {
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
           <p className="text-sm text-zinc-500 font-bold">Loading your profile...</p>
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-col items-center justify-center py-20 space-y-4 text-center px-4">
+          <p className="text-sm text-zinc-400 max-w-md">{loadError}</p>
+          <Button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              void loadProfile();
+            }}
+            className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </div>
       ) : (
         <form onSubmit={handleSaveProfile} className="space-y-6">
