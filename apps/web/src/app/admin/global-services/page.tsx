@@ -23,6 +23,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { deleteGlobalService, saveGlobalService } from "@/app/actions/global-services";
 import {
   GlobalServiceIconPreview,
   GlobalServiceIconUpload,
@@ -102,45 +103,37 @@ export default function GlobalServiceManagement() {
 
     setIsSaving(true);
     try {
-      const basePayload = {
-        name: editingService.name,
-        slug: editingService.slug || editingService.name.toLowerCase().replace(/ /g, "-"),
-        category_id: editingService.category_id,
-        description: editingService.description || null,
-        suggested_price: editingService.suggested_price || null,
-        suggested_duration_minutes: Number(editingService.suggested_duration_minutes) || 30,
-        icon: editingService.icon || "Scissors",
-        icon_image_url: editingService.icon_image_url || null,
-      };
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      let error;
-      if (editingService.id) {
-        const { error: err } = await supabase
-          .from("global_services")
-          .update(basePayload)
-          .eq("id", editingService.id);
-        error = err;
-      } else {
-        const { error: err } = await supabase
-          .from("global_services")
-          .insert([basePayload]);
-        error = err;
+      if (!session?.access_token) {
+        toast.error("Please sign in again at /admin/login.");
+        return;
       }
 
-      if (error) throw error;
+      const result = await saveGlobalService({
+        accessToken: session.access_token,
+        id: editingService.id,
+        name: editingService.name,
+        slug: editingService.slug,
+        category_id: editingService.category_id,
+        description: editingService.description,
+        suggested_price: editingService.suggested_price,
+        suggested_duration_minutes: Number(editingService.suggested_duration_minutes) || 30,
+        icon: editingService.icon,
+        icon_image_url: editingService.icon_image_url,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
       toast.success(editingService.id ? "Template updated" : "Global service created");
       setIsDialogOpen(false);
       fetchData();
     } catch (error: any) {
-      const message = error.message || "Unknown error";
-      if (message.includes("icon_image_url")) {
-        toast.error(
-          "Database missing icon_image_url column. Run packages/db/GLOBAL_SERVICES_ICON_IMAGE_PATCH.sql in Supabase SQL Editor, then try again."
-        );
-      } else {
-        toast.error("Error saving: " + message);
-      }
+      toast.error("Error saving: " + (error.message || "Unknown error"));
     } finally {
       setIsSaving(false);
     }
@@ -150,8 +143,18 @@ export default function GlobalServiceManagement() {
     if (!confirm("Are you sure? This will remove the template but existing salon services will remain.")) return;
     
     try {
-      const { error } = await supabase.from("global_services").delete().eq("id", id);
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        toast.error("Please sign in again at /admin/login.");
+        return;
+      }
+
+      const result = await deleteGlobalService(session.access_token, id);
+      if (!result.success) throw new Error(result.error);
+
       toast.success("Service template deleted");
       fetchData();
     } catch (error: any) {
