@@ -11,6 +11,9 @@ export function buildDefaultEmailTemplateFields(): Record<string, string | boole
   const fields: Record<string, string | boolean> = {
     enabled: true,
     adminAlertEmail: "",
+    resendApiKey: "",
+    fromEmail: "no-reply@trimma.io",
+    fromName: "Trimma",
     reservationPaidEnabled: true,
     bookingConfirmedEnabled: true,
     bookingRescheduledEnabled: true,
@@ -38,6 +41,9 @@ export function buildDefaultEmailTemplateFields(): Record<string, string | boole
 export const EMAIL_DB_COLUMN_MAP: Record<string, string> = {
   email_enabled: "enabled",
   email_admin_alert_email: "adminAlertEmail",
+  resend_api_key: "resendApiKey",
+  resend_from_email: "fromEmail",
+  resend_from_name: "fromName",
   email_reservation_paid_enabled: "reservationPaidEnabled",
   email_booking_confirmed_enabled: "bookingConfirmedEnabled",
   email_booking_rescheduled_enabled: "bookingRescheduledEnabled",

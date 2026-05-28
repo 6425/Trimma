@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Mail, PlayCircle, RefreshCw, Save, Send } from "lucide-react";
+import { Mail, PlayCircle, RefreshCw, Save, Send, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,8 @@ import {
   getEmailConfig,
   saveEmailSettings,
   testEmailConnection,
-  type EmailConfig,
+  validateResendCredentials,
+  type EmailConfigWithSource,
 } from "@/app/actions/email-settings";
 import { isEmailSendFailure } from "@/lib/email/result";
 import { EMAIL_TRIGGER_CATALOG } from "@/lib/email-templates";
@@ -19,18 +20,22 @@ export function EmailSettingsPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [config, setConfig] = useState<EmailConfig | null>(null);
+  const [config, setConfig] = useState<EmailConfigWithSource | null>(null);
   const [testEmail, setTestEmail] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [keyStatus, setKeyStatus] = useState<{ valid: boolean; error?: string } | null>(null);
 
   useEffect(() => {
     void Promise.resolve().then(async () => {
       const loaded = await getEmailConfig();
       setConfig(loaded);
+      const validation = await validateResendCredentials(loaded.resendApiKey, loaded.fromEmail);
+      setKeyStatus(validation.valid ? { valid: true } : { valid: false, error: validation.error });
       setLoading(false);
     });
   }, []);
 
-  const updateConfig = (patch: Partial<EmailConfig>) => {
+  const updateConfig = (patch: Partial<EmailConfigWithSource>) => {
     setConfig((prev) => (prev ? { ...prev, ...patch } : prev));
   };
 
@@ -41,7 +46,10 @@ export function EmailSettingsPanel() {
     try {
       const res = await saveEmailSettings(config);
       if (!res.success) throw new Error(res.error);
-      toast.success("Email templates saved successfully.");
+      const validation = await validateResendCredentials(config.resendApiKey, config.fromEmail);
+      setKeyStatus(validation.valid ? { valid: true } : { valid: false, error: validation.error });
+      setConfig((prev) => (prev ? { ...prev, source: "database" } : prev));
+      toast.success("Resend email configuration saved successfully.");
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to save email settings.");
     } finally {
@@ -86,10 +94,10 @@ export function EmailSettingsPanel() {
             <div>
               <h3 className="font-extrabold text-zinc-900 text-base flex items-center gap-2">
                 <Mail className="w-5 h-5 text-brand" />
-                Resend Email Templates
+                Resend Email API
               </h3>
               <p className="text-[10px] text-zinc-500 mt-1">
-                From: {config.fromEmail} · English subject + trilingual body (EN / SI / TA)
+                From: {config.fromName} &lt;{config.fromEmail}&gt; · English subject + trilingual body (EN / SI / TA)
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer shrink-0">
@@ -102,6 +110,77 @@ export function EmailSettingsPanel() {
               <div className="w-11 h-6 bg-zinc-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand" />
               <span className="ml-2 text-xs font-bold text-zinc-700 uppercase tracking-wider">Enable Email</span>
             </label>
+          </div>
+
+          {config.source === "env" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                Loaded from <code>.env</code>. Save here to store credentials in the database (same as WhatsApp) — no Vercel redeploy needed.
+              </p>
+            </div>
+          )}
+
+          {keyStatus && !keyStatus.valid && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-red-700 font-medium leading-relaxed">
+                <strong>Resend credentials invalid.</strong> {keyStatus.error}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-4 pb-4 border-b border-slate-100">
+            <div className="space-y-2">
+              <Label className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                Resend API Key
+              </Label>
+              <div className="relative">
+                <Input
+                  type={showApiKey ? "text" : "password"}
+                  value={config.resendApiKey}
+                  onChange={(e) => updateConfig({ resendApiKey: e.target.value })}
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxx"
+                  className="h-11 border-slate-200 rounded-xl pr-10 font-mono text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+                >
+                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-zinc-500">
+                From Resend → API Keys → Create API Key (starts with <code>re_</code>).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                  From Email
+                </Label>
+                <Input
+                  value={config.fromEmail}
+                  onChange={(e) => updateConfig({ fromEmail: e.target.value })}
+                  placeholder="no-reply@trimma.io"
+                  className="h-11 border-slate-200 rounded-xl"
+                />
+                <p className="text-[10px] text-zinc-500">Must be verified in Resend → Domains.</p>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                  From Name
+                </Label>
+                <Input
+                  value={config.fromName}
+                  onChange={(e) => updateConfig({ fromName: e.target.value })}
+                  placeholder="Trimma"
+                  className="h-11 border-slate-200 rounded-xl"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -150,7 +229,7 @@ export function EmailSettingsPanel() {
                             type="checkbox"
                             checked={isEnabled}
                             onChange={(e) =>
-                              updateConfig({ [trigger.toggleKey]: e.target.checked } as Partial<EmailConfig>)
+                              updateConfig({ [trigger.toggleKey]: e.target.checked } as Partial<EmailConfigWithSource>)
                             }
                             className="sr-only peer"
                           />
@@ -168,7 +247,7 @@ export function EmailSettingsPanel() {
                           <Input
                             value={String(configRecord[trigger.subjectKey] || "")}
                             onChange={(e) =>
-                              updateConfig({ [trigger.subjectKey]: e.target.value } as Partial<EmailConfig>)
+                              updateConfig({ [trigger.subjectKey]: e.target.value } as Partial<EmailConfigWithSource>)
                             }
                             className="h-10 bg-white border-slate-200 rounded-xl text-xs"
                           />
@@ -187,7 +266,7 @@ export function EmailSettingsPanel() {
                             </Label>
                             <textarea
                               value={String(configRecord[key] || "")}
-                              onChange={(e) => updateConfig({ [key]: e.target.value } as Partial<EmailConfig>)}
+                              onChange={(e) => updateConfig({ [key]: e.target.value } as Partial<EmailConfigWithSource>)}
                               rows={label.startsWith("English") ? 7 : 5}
                               className="w-full p-3 bg-white text-zinc-900 border border-slate-200 rounded-xl text-xs font-mono focus:border-zinc-950 focus:outline-none leading-relaxed"
                             />
@@ -218,7 +297,7 @@ export function EmailSettingsPanel() {
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 mr-2" /> Save Email Templates
+                  <Save className="w-4 h-4 mr-2" /> Save Email Configuration
                 </>
               )}
             </Button>

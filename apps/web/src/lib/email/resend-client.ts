@@ -1,18 +1,23 @@
 import { Resend } from "resend";
+import { cleanEnvValue } from "@/lib/supabase-server-env";
 
-let client: Resend | null = null;
-
-export function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) {
+export function createResendClient(apiKey: string): Resend {
+  const key = apiKey.trim();
+  if (!key) {
     throw new Error(
-      "RESEND_API_KEY is missing. Add it to apps/web/.env to enable transactional email."
+      "Resend API key is missing. Add it in Admin → Global Settings → Resend Email."
     );
   }
+  return new Resend(key);
+}
 
-  if (!client) {
-    client = new Resend(apiKey);
+/** @deprecated Use createResendClient with resolved credentials from getEmailConfig(). */
+export function getResendClient() {
+  const apiKey = cleanEnvValue(process.env.RESEND_API_KEY);
+  if (!apiKey) {
+    throw new Error(
+      "RESEND_API_KEY is missing. Add it in Admin → Global Settings → Resend Email."
+    );
   }
-
-  return client;
+  return createResendClient(apiKey);
 }

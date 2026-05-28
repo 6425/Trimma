@@ -1,4 +1,4 @@
-function cleanEnvValue(raw: string | undefined): string | undefined {
+export function cleanEnvValue(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
 
   let value = raw.replace(/\r/g, "").trim();

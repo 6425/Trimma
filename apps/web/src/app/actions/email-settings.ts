@@ -2,7 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { DynamicTrimmaEmail } from "@/emails/DynamicTrimmaEmail";
-import { APP_BASE_URL, RESEND_FROM } from "@/lib/email/config";
+import { APP_BASE_URL } from "@/lib/email/config";
 import {
   buildDefaultEmailTemplateFields,
   buildEmailDbUpsertPayload,
@@ -10,11 +10,12 @@ import {
 } from "@/lib/email-config-fields";
 import { parseEmailTemplate } from "@/lib/email/parse-template";
 import { checkEmailRateLimit } from "@/lib/email/rate-limit";
-import { getResendClient } from "@/lib/email/resend-client";
+import { createResendClient } from "@/lib/email/resend-client";
 import {
   getEmailTriggerById,
   type EmailTriggerId,
 } from "@/lib/email-templates";
+import { cleanEnvValue } from "@/lib/supabase-server-env";
 
 const SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -92,15 +93,73 @@ export type EmailConfig = {
   templateAgentLeadAssigned: string;
   templateAgentLeadAssignedSi: string;
   templateAgentLeadAssignedTa: string;
+  resendApiKey: string;
   fromEmail: string;
+  fromName: string;
 };
+
+export type EmailConfigWithSource = EmailConfig & { source: "database" | "env" };
 
 function defaultEmailConfig(): EmailConfig {
   const fields = buildDefaultEmailTemplateFields();
   return {
-    ...(fields as Omit<EmailConfig, "fromEmail">),
-    fromEmail: process.env.RESEND_FROM_EMAIL || "no-reply@trimma.io",
+    ...(fields as Omit<EmailConfig, "resendApiKey" | "fromEmail" | "fromName">),
+    resendApiKey: cleanEnvValue(process.env.RESEND_API_KEY) || "",
+    fromEmail: cleanEnvValue(process.env.RESEND_FROM_EMAIL) || "no-reply@trimma.io",
+    fromName: cleanEnvValue(process.env.RESEND_FROM_NAME) || "Trimma",
   };
+}
+
+function resolveResendCredentials(config: Pick<EmailConfig, "resendApiKey" | "fromEmail" | "fromName">) {
+  const envApiKey = cleanEnvValue(process.env.RESEND_API_KEY) || "";
+  const envFromEmail = cleanEnvValue(process.env.RESEND_FROM_EMAIL) || "";
+  const envFromName = cleanEnvValue(process.env.RESEND_FROM_NAME) || "";
+  const isDev = process.env.NODE_ENV !== "production";
+
+  const dbApiKey = config.resendApiKey?.trim() || "";
+  const apiKey = isDev && envApiKey ? envApiKey : dbApiKey || envApiKey;
+  const fromEmail = config.fromEmail?.trim() || envFromEmail || "no-reply@trimma.io";
+  const fromName = config.fromName?.trim() || envFromName || "Trimma";
+  const source: "database" | "env" =
+    apiKey === dbApiKey && dbApiKey
+      ? "database"
+      : apiKey === envApiKey && envApiKey
+        ? "env"
+        : dbApiKey
+          ? "database"
+          : "env";
+
+  return {
+    apiKey,
+    fromEmail,
+    fromName,
+    from: `${fromName} <${fromEmail}>`,
+    source,
+  };
+}
+
+export async function validateResendCredentials(apiKey: string, fromEmail: string) {
+  const trimmedKey = apiKey.trim();
+  if (!trimmedKey) {
+    return { valid: false as const, error: "Resend API key is required." };
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail.trim())) {
+    return { valid: false as const, error: "From email must be a valid address." };
+  }
+
+  try {
+    const resend = createResendClient(trimmedKey);
+    const { error } = await resend.domains.list();
+    if (error) {
+      return { valid: false as const, error: error.message || "Resend rejected the API key." };
+    }
+    return { valid: true as const };
+  } catch (err) {
+    return {
+      valid: false as const,
+      error: err instanceof Error ? err.message : "Failed to validate Resend credentials.",
+    };
+  }
 }
 
 function mapDbRow(row: Record<string, unknown>): EmailConfig {
@@ -148,7 +207,8 @@ function isTriggerEnabled(config: EmailConfig, toggleKey: string) {
   return (config as unknown as Record<string, boolean>)[toggleKey] !== false;
 }
 
-export async function getEmailConfig(): Promise<EmailConfig> {
+export async function getEmailConfig(): Promise<EmailConfigWithSource> {
+  let config: EmailConfig;
   try {
     const { data, error } = await getSupabaseAdmin()
       .from("global_payment_settings")
@@ -160,11 +220,20 @@ export async function getEmailConfig(): Promise<EmailConfig> {
       throw error || new Error("No settings record found.");
     }
 
-    return mapDbRow(data as Record<string, unknown>);
+    config = mapDbRow(data as Record<string, unknown>);
   } catch (err) {
     console.warn("Failed to load email settings from DB, using defaults:", err);
-    return defaultEmailConfig();
+    config = defaultEmailConfig();
   }
+
+  const resolved = resolveResendCredentials(config);
+  return {
+    ...config,
+    resendApiKey: resolved.apiKey,
+    fromEmail: config.fromEmail || resolved.fromEmail,
+    fromName: config.fromName || resolved.fromName,
+    source: resolved.source,
+  };
 }
 
 export async function saveEmailSettings(config: EmailConfig) {
@@ -256,10 +325,18 @@ export async function sendTriggeredEmail(
   const ctaUrl = ctaVariable ? input.variables[ctaVariable] : undefined;
   const ctaLabel = "ctaLabel" in trigger ? trigger.ctaLabel : undefined;
 
+  const credentials = resolveResendCredentials(config);
+  if (!credentials.apiKey) {
+    return {
+      success: false,
+      error: "Resend API key is not configured. Add it in Admin → Global Settings → Resend Email.",
+    };
+  }
+
   try {
-    const resend = getResendClient();
+    const resend = createResendClient(credentials.apiKey);
     const { data, error } = await resend.emails.send({
-      from: RESEND_FROM,
+      from: credentials.from,
       to: [to],
       subject,
       react: DynamicTrimmaEmail({
