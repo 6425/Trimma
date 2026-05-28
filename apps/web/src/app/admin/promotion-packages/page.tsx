@@ -35,14 +35,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import {
+  deletePromotionPackage,
+  fetchPromotionPackagesCatalog,
+  savePromotionPackage,
+} from "@/app/actions/promotion-packages";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   getPromotionPeriodLabel,
   getRemainingDaysLabel,
-  normalizeDatePayload,
-  toDateInputValue,
   validatePromotionDates,
+  toDateInputValue,
 } from "@/lib/promotion-package-dates";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -79,21 +83,20 @@ export default function GlobalPromotionPackageManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [packagesRes, typesRes] = await Promise.all([
-        supabase
-          .from("global_promotion_packages")
-          .select("*, promotion_type:promotion_types(name, icon)")
-          .order("name"),
-        supabase.from("promotion_types").select("*").order("name"),
-      ]);
+      const result = await withTimeout(
+        fetchPromotionPackagesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) or run PROMOTION_PACKAGES_PATCH.sql."
+      );
 
-      if (packagesRes.error) throw packagesRes.error;
-      if (typesRes.error) throw typesRes.error;
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
-      setPackages(packagesRes.data || []);
-      setPromotionTypes(typesRes.data || []);
+      setPackages(result.packages || []);
+      setPromotionTypes(result.promotionTypes || []);
     } catch (error: any) {
-      toast.error("Failed to fetch records: " + error.message);
+      toast.error("Failed to fetch records: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -106,10 +109,17 @@ export default function GlobalPromotionPackageManagement() {
   const handleOpenDialog = (pkg: any = null) => {
     if (pkg) {
       setEditingPackage({
-        ...pkg,
+        id: pkg.id,
+        name: pkg.name || "",
+        slug: pkg.slug || "",
+        promotion_type_id: pkg.promotion_type_id || "",
+        description: pkg.description || "",
+        package_price: pkg.package_price ?? "",
+        original_price: pkg.original_price ?? "",
         included_services_text: formatIncludedServices(pkg.included_services),
         start_date: toDateInputValue(pkg.start_date),
         end_date: toDateInputValue(pkg.end_date),
+        is_active: pkg.is_active !== false,
       });
     } else {
       setEditingPackage({
@@ -146,47 +156,51 @@ export default function GlobalPromotionPackageManagement() {
     setIsSaving(true);
     try {
       const included_services = parseIncludedServices(editingPackage.included_services_text || "");
-      const packagePrice = parseFloat(editingPackage.package_price) || 0;
-      const originalPrice = parseFloat(editingPackage.original_price) || 0;
       const selectedType = promotionTypes.find((type) => type.id === editingPackage.promotion_type_id);
-      const { start_date, end_date } = normalizeDatePayload(
-        editingPackage.start_date || "",
-        editingPackage.end_date || ""
+
+      const result = await withTimeout(
+        savePromotionPackage({
+          id: editingPackage.id,
+          name: editingPackage.name,
+          slug: editingPackage.slug,
+          promotion_type_id: editingPackage.promotion_type_id,
+          description: editingPackage.description,
+          package_price: editingPackage.package_price,
+          original_price: editingPackage.original_price,
+          included_services,
+          icon: selectedType?.icon || "Gift",
+          start_date: editingPackage.start_date,
+          end_date: editingPackage.end_date,
+          is_active: editingPackage.is_active !== false,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
       );
 
-      const payload = {
-        name: editingPackage.name,
-        slug: editingPackage.slug || editingPackage.name.toLowerCase().replace(/ /g, "-"),
-        promotion_type_id: editingPackage.promotion_type_id,
-        description: editingPackage.description || "",
-        package_price: packagePrice,
-        original_price: originalPrice,
-        included_services,
-        icon: selectedType?.icon || "Gift",
-        start_date,
-        end_date,
-        is_active: editingPackage.is_active !== false,
-      };
-
-      let error;
-      if (editingPackage.id) {
-        const { error: err } = await supabase
-          .from("global_promotion_packages")
-          .update(payload)
-          .eq("id", editingPackage.id);
-        error = err;
-      } else {
-        const { error: err } = await supabase.from("global_promotion_packages").insert([payload]);
-        error = err;
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
-      if (error) throw error;
+      const saved = result.pkg;
+      const promotionType = promotionTypes.find((type) => type.id === saved.promotion_type_id);
+      const nextRow = {
+        ...saved,
+        promotion_type: promotionType
+          ? { name: promotionType.name, icon: promotionType.icon }
+          : null,
+      };
+
+      setPackages((prev) => {
+        if (editingPackage.id) {
+          return prev.map((row) => (row.id === saved.id ? nextRow : row));
+        }
+        return [...prev, nextRow].sort((a, b) => a.name.localeCompare(b.name));
+      });
 
       toast.success(editingPackage.id ? "Promotion package updated" : "Global promotion package created");
       setIsDialogOpen(false);
-      fetchData();
     } catch (error: any) {
-      toast.error("Error saving: " + error.message);
+      toast.error("Error saving: " + (error.message || "Unknown error"));
     } finally {
       setIsSaving(false);
     }
@@ -196,10 +210,15 @@ export default function GlobalPromotionPackageManagement() {
     if (!confirm("Remove this global promotion package template?")) return;
 
     try {
-      const { error } = await supabase.from("global_promotion_packages").delete().eq("id", id);
-      if (error) throw error;
+      const result = await withTimeout(
+        deletePromotionPackage(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
+      if (!result.success) throw new Error(result.error);
+
+      setPackages((prev) => prev.filter((row) => row.id !== id));
       toast.success("Promotion package template deleted");
-      fetchData();
     } catch (error: any) {
       toast.error("Delete failed: " + error.message);
     }
@@ -363,6 +382,7 @@ export default function GlobalPromotionPackageManagement() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {editingPackage && (
         <DialogContent className="sm:max-w-[640px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
           <div className="bg-white p-8 text-zinc-900 relative">
             <Gift className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12" />
@@ -395,7 +415,7 @@ export default function GlobalPromotionPackageManagement() {
                   Promotion Type *
                 </label>
                 <Select
-                  value={editingPackage?.promotion_type_id || ""}
+                  value={editingPackage?.promotion_type_id || undefined}
                   onValueChange={(val) => setEditingPackage({ ...editingPackage, promotion_type_id: val })}
                 >
                   <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
@@ -527,11 +547,19 @@ export default function GlobalPromotionPackageManagement() {
                 disabled={isSaving}
                 className="flex-[2] bg-brand hover:bg-brand-hover text-zinc-900 h-12 rounded-xl font-bold shadow-lg"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Global Package"}
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Publish Global Package"
+                )}
               </Button>
             </DialogFooter>
           </div>
         </DialogContent>
+        )}
       </Dialog>
     </div>
   );
