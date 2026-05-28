@@ -51,7 +51,9 @@ function ProfileFormContent() {
   }, [router]);
 
   useEffect(() => {
-    void loadProfile();
+    void Promise.resolve().then(() => {
+      void loadProfile();
+    });
   }, [loadProfile]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {

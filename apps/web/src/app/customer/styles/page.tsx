@@ -52,7 +52,9 @@ function SavedStylesContent() {
   }, [router]);
 
   useEffect(() => {
-    void fetchSaved();
+    void Promise.resolve().then(() => {
+      void fetchSaved();
+    });
   }, [fetchSaved]);
 
   const handleRemove = async (rowId: string, _styleId: string, title: string) => {

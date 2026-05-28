@@ -95,7 +95,9 @@ function DashboardContent() {
   }, [router]);
 
   useEffect(() => {
-    void loadDashboard();
+    void Promise.resolve().then(() => {
+      void loadDashboard();
+    });
   }, [loadDashboard]);
 
   const getGreeting = () => {

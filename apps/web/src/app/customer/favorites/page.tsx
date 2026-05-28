@@ -54,7 +54,9 @@ function FavoritesContent() {
   }, [router]);
 
   useEffect(() => {
-    void fetchFavorites();
+    void Promise.resolve().then(() => {
+      void fetchFavorites();
+    });
   }, [fetchFavorites]);
 
   const handleRemove = async (favoriteId: string, salonName: string) => {

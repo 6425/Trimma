@@ -47,7 +47,9 @@ function BookingsListContent() {
   }, [router]);
 
   useEffect(() => {
-    void loadBookings();
+    void Promise.resolve().then(() => {
+      void loadBookings();
+    });
   }, [loadBookings]);
 
   useEffect(() => {
