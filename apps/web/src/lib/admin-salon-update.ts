@@ -37,6 +37,7 @@ export const ADMIN_SALON_UPDATE_FIELDS = new Set([
   "booking_enabled",
   "subscription_plan_id",
   "verification_notes",
+  "verified_at",
 ]);
 
 export function sanitizeAdminNumeric(value: unknown): number | null {

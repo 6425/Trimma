@@ -7,13 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fetchAdminSalons } from "@/app/actions/admin-list-data";
-import { updateAdminSalon, approveAdminSalon, verifyAdminSalon, rejectAdminSalon } from "@/app/actions/admin-operations";
+import { approveAdminSalon, verifyAdminSalon, rejectAdminSalon } from "@/app/actions/admin-operations";
+import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
 import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
-import { buildAdminSalonFormPayload } from "@/lib/admin-salon-update";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -93,15 +93,9 @@ export default function Salons() {
       setIsSavingEdit(true);
       toast.loading("Saving salon details...");
 
-      const updatePayload = buildAdminSalonFormPayload(editForm);
-
-      const result = await updateAdminSalon(selectedSalon.id, updatePayload);
-      if (!result || result.success === false) {
-        throw new Error(
-          result && result.success === false
-            ? result.error
-            : "Save failed with no response from server."
-        );
+      const result = await patchAdminSalonViaApi(selectedSalon.id, editForm);
+      if (result.success === false) {
+        throw new Error(result.error);
       }
 
       toast.dismiss();
@@ -109,9 +103,10 @@ export default function Salons() {
       
       setSelectedSalon({
         ...selectedSalon,
-        ...updatePayload,
-        owner_email: updatePayload.email || selectedSalon.owner_email,
-        owner_gmail: updatePayload.email || selectedSalon.owner_gmail,
+        ...editForm,
+        owner_email: editForm.email || selectedSalon.owner_email,
+        owner_gmail: editForm.email || selectedSalon.owner_gmail,
+        phone: editForm.phone,
       });
       fetchSalons(); 
       setViewModalOpen(false);
