@@ -1,6 +1,5 @@
 "use server";
 
-import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
@@ -107,6 +106,41 @@ export async function getPublicPlatformStyles() {
   }
 }
 
+type RawAdminStyleRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  category_id: string | null;
+  category: string | null;
+  tags: string[] | null;
+  image_url: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  categories: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null;
+};
+
+function normalizeAdminStyles(rows: RawAdminStyleRow[] | null) {
+  return (rows ?? []).map((row) => ({
+    ...row,
+    categories: Array.isArray(row.categories) ? row.categories[0] ?? null : row.categories,
+  }));
+}
+
+function buildStylePayload(input: SavePlatformStyleInput) {
+  return {
+    title: input.title,
+    description: input.description,
+    category_id: input.category_id,
+    category: input.category,
+    tags: input.tags,
+    image_url: input.image_url,
+    is_active: input.is_active,
+    sort_order: input.sort_order,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export async function fetchAdminPlatformStylesCatalog() {
   const result = await withAdminDb(async (supabase) => {
     const [stylesRes, categoriesRes] = await Promise.all([
@@ -118,35 +152,26 @@ export async function fetchAdminPlatformStylesCatalog() {
       supabase.from("categories").select("id, name, slug").order("name"),
     ]);
 
-    if (stylesRes.error) throw new Error(stylesRes.error.message);
+    if (stylesRes.error) throw new Error(mapDbError(stylesRes.error.message));
     if (categoriesRes.error) throw new Error(categoriesRes.error.message);
 
     return {
-      styles: stylesRes.data || [],
+      styles: normalizeAdminStyles(stylesRes.data as RawAdminStyleRow[]),
       categories: categoriesRes.data || [],
     };
   });
 
-  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  if (!isAdminDbSuccess(result)) {
+    return adminDbFailure(result, "Style tables missing. Run packages/db/STYLE_CATEGORIES_PATCH.sql in Supabase.");
+  }
 
   return { success: true as const, ...result.data };
 }
 
 export async function savePlatformStyle(input: SavePlatformStyleInput) {
-  try {
-    const supabase = createSupabaseAdminClient();
-    const payload = {
-      title: input.title,
-      description: input.description,
-      category_id: input.category_id,
-      category: input.category,
-      tags: input.tags,
-      image_url: input.image_url,
-      is_active: input.is_active,
-      sort_order: input.sort_order,
-      updated_at: new Date().toISOString(),
-    };
+  const payload = buildStylePayload(input);
 
+  const result = await withAdminDb(async (supabase) => {
     if (input.id) {
       const { data, error } = await supabase
         .from("platform_styles")
@@ -154,12 +179,8 @@ export async function savePlatformStyle(input: SavePlatformStyleInput) {
         .eq("id", input.id)
         .select(STYLE_SELECT)
         .single();
-
-      if (error) {
-        return { success: false as const, error: mapDbError(error.message) };
-      }
-
-      return { success: true as const, style: data };
+      if (error) throw new Error(mapDbError(error.message));
+      return normalizeAdminStyles([data as RawAdminStyleRow])[0];
     }
 
     const { data, error } = await supabase
@@ -167,38 +188,20 @@ export async function savePlatformStyle(input: SavePlatformStyleInput) {
       .insert([payload])
       .select(STYLE_SELECT)
       .single();
+    if (error) throw new Error(mapDbError(error.message));
+    return normalizeAdminStyles([data as RawAdminStyleRow])[0];
+  });
 
-    if (error) {
-      return { success: false as const, error: mapDbError(error.message) };
-    }
-
-    return { success: true as const, style: data };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Save failed.";
-    if (message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
-      return {
-        success: false as const,
-        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY (add it to apps/web/.env).",
-      };
-    }
-    return { success: false as const, error: message };
-  }
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const, style: result.data };
 }
 
 export async function deletePlatformStyle(id: string) {
-  try {
-    const supabase = createSupabaseAdminClient();
+  const result = await withAdminDb(async (supabase) => {
     const { error } = await supabase.from("platform_styles").delete().eq("id", id);
+    if (error) throw new Error(mapDbError(error.message));
+  });
 
-    if (error) {
-      return { success: false as const, error: mapDbError(error.message) };
-    }
-
-    return { success: true as const };
-  } catch (err) {
-    return {
-      success: false as const,
-      error: err instanceof Error ? err.message : "Delete failed.",
-    };
-  }
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const };
 }
