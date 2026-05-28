@@ -3,6 +3,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { cleanEnvValue } from "@/lib/supabase-server-env";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 
 const D = WHATSAPP_TEMPLATE_DEFAULTS;
@@ -126,25 +127,40 @@ function formatWhatsAppApiError(result: {
   return message;
 }
 
+function cleanWhatsAppCredential(value: string | undefined): string {
+  return cleanEnvValue(value) || "";
+}
+
+function readWhatsAppEnv(...names: string[]): string {
+  for (const name of names) {
+    const value = cleanEnvValue(process.env[name]);
+    if (value) return value;
+  }
+  return "";
+}
+
 /**
- * Trimma stores WhatsApp credentials in Supabase (global_payment_settings) and optionally in .env.
- * Production uses the database value (admin panel). Local dev prefers .env when set so a fresh
- * paste + restart works without overwriting the DB first.
+ * Trimma stores WhatsApp credentials in Supabase (global_payment_settings) and optionally in Vercel env.
+ * When Vercel env vars are set they take priority so token rotation does not require a stale DB value.
  */
 function resolveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
-  const envPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() || "";
-  const envAccessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim() || "";
-  const dbToken = dbAccessToken?.trim() || "";
-  const isDev = process.env.NODE_ENV !== "production";
+  const envPhoneId = readWhatsAppEnv("WHATSAPP_PHONE_NUMBER_ID", "META_WHATSAPP_PHONE_NUMBER_ID");
+  const envAccessToken = readWhatsAppEnv(
+    "WHATSAPP_ACCESS_TOKEN",
+    "META_WHATSAPP_ACCESS_TOKEN",
+    "WHATSAPP_TOKEN"
+  );
+  const dbToken = cleanWhatsAppCredential(dbAccessToken);
+  const dbPhone = cleanWhatsAppCredential(dbPhoneId);
 
-  const phoneId = dbPhoneId?.trim() || envPhoneId;
-  const accessToken = isDev && envAccessToken ? envAccessToken : dbToken || envAccessToken;
+  const phoneId = envPhoneId || dbPhone;
+  const accessToken = envAccessToken || dbToken;
   const source =
-    accessToken === dbToken && dbToken
-      ? "database"
-      : accessToken === envAccessToken && envAccessToken
-        ? "env"
-        : "database";
+    accessToken === envAccessToken && envAccessToken
+      ? "env"
+      : accessToken === dbToken && dbToken
+        ? "database"
+        : "none";
 
   return { phoneId, accessToken, source, dbToken, envToken: envAccessToken };
 }
@@ -378,8 +394,8 @@ export async function saveWhatsAppSettings(
   templateAgentLeadAssigned?: string
 ) {
   try {
-    const trimmedPhoneId = phoneId.trim();
-    const trimmedToken = accessToken.trim();
+    const trimmedPhoneId = cleanWhatsAppCredential(phoneId);
+    const trimmedToken = cleanWhatsAppCredential(accessToken);
 
     const validation = await validateWhatsAppCredentials(trimmedPhoneId, trimmedToken);
     if (!validation.valid) {
@@ -818,7 +834,7 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
     );
 
     const result = await response.json();
-    if (!response.ok) return { success: false, error: result.error?.message };
+    if (!response.ok) return { success: false, error: formatWhatsAppApiError(result) };
 
     return { success: true, messageId: result.messages?.[0]?.id };
   } catch (err: any) {
@@ -922,7 +938,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     );
 
     const result = await response.json();
-    if (!response.ok) return { success: false, error: result.error?.message };
+    if (!response.ok) return { success: false, error: formatWhatsAppApiError(result) };
 
     return { success: true, messageId: result.messages?.[0]?.id };
   } catch (error: any) {
@@ -1116,7 +1132,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
     const result = await response.json();
     if (!response.ok) {
       console.error("❌ Meta Graph API returned error response:", result);
-      return { success: false, error: result.error?.message || "Failed to send WhatsApp invite." };
+      return { success: false, error: formatWhatsAppApiError(result) };
     }
 
     return { success: true, messageId: result.messages?.[0]?.id };
