@@ -21,6 +21,12 @@ function mapGlobalServiceError(message: string): string {
   if (lower.includes("icon_image_url")) {
     return "Database missing icon_image_url column. Run packages/db/GLOBAL_SERVICES_ICON_IMAGE_PATCH.sql in Supabase SQL Editor, then try again.";
   }
+  if (lower.includes("duplicate key") || lower.includes("global_services_slug")) {
+    return "A global service with this slug already exists. Change the service name or slug.";
+  }
+  if (lower.includes("pgrst116") || lower.includes("0 rows")) {
+    return "Update did not apply. Refresh the page and try again, or confirm the service still exists.";
+  }
   if (lower.includes("row-level security") || lower.includes("permission denied")) {
     return "Save blocked by database permissions. Ensure GUEST_WRITE_RLS_PATCH.sql is applied and your account has admin role.";
   }
@@ -61,11 +67,18 @@ export async function saveGlobalService(input: SaveGlobalServiceInput) {
         .from("global_services")
         .update(payload)
         .eq("id", input.id)
-        .select("*, category:categories(name)")
-        .single();
+        .select("*")
+        .maybeSingle();
 
       if (error) {
         return { success: false as const, error: mapGlobalServiceError(error.message) };
+      }
+
+      if (!data) {
+        return {
+          success: false as const,
+          error: "Update did not apply. The service may have been deleted. Refresh and try again.",
+        };
       }
 
       return { success: true as const, service: data };
@@ -74,7 +87,7 @@ export async function saveGlobalService(input: SaveGlobalServiceInput) {
     const { data, error } = await supabase
       .from("global_services")
       .insert([payload])
-      .select("*, category:categories(name)")
+      .select("*")
       .single();
 
     if (error) {

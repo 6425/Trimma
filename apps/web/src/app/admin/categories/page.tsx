@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { deleteCategory, saveCategory } from "@/app/actions/categories";
+import { getTrimmaAccessToken } from "@/lib/client-auth";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
@@ -155,17 +156,15 @@ export default function CategoryManagement() {
     try {
       setSaving(true);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const accessToken = await getTrimmaAccessToken();
 
-      if (!session?.access_token) {
+      if (!accessToken) {
         toast.error("Please sign in again at /admin/login.");
         return;
       }
 
       const result = await saveCategory({
-        accessToken: session.access_token,
+        accessToken: accessToken,
         id: editId || undefined,
         name: formData.name,
         slug,
@@ -192,16 +191,14 @@ export default function CategoryManagement() {
     if (!confirm("Are you sure? This will delete the category and might affect linked services.")) return;
     
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const accessToken = await getTrimmaAccessToken();
 
-      if (!session?.access_token) {
+      if (!accessToken) {
         toast.error("Please sign in again at /admin/login.");
         return;
       }
 
-      const result = await deleteCategory(session.access_token, id);
+      const result = await deleteCategory(accessToken, id);
       if (!result.success) throw new Error(result.error);
 
       toast.success("Category deleted");

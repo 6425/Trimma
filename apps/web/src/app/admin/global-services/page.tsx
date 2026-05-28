@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { deleteGlobalService, saveGlobalService } from "@/app/actions/global-services";
+import { getTrimmaAccessToken } from "@/lib/client-auth";
 import {
   GlobalServiceIconPreview,
   GlobalServiceIconUpload,
@@ -79,7 +80,17 @@ export default function GlobalServiceManagement() {
 
   const handleOpenDialog = (service: any = null) => {
     if (service) {
-      setEditingService({ ...service });
+      setEditingService({
+        id: service.id,
+        name: service.name || "",
+        slug: service.slug || "",
+        category_id: service.category_id || "",
+        description: service.description || "",
+        suggested_price: service.suggested_price ?? "",
+        suggested_duration_minutes: service.suggested_duration_minutes ?? 30,
+        icon: service.icon || "Scissors",
+        icon_image_url: service.icon_image_url || "",
+      });
     } else {
       setEditingService({
         name: "",
@@ -103,17 +114,15 @@ export default function GlobalServiceManagement() {
 
     setIsSaving(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const accessToken = await getTrimmaAccessToken();
 
-      if (!session?.access_token) {
+      if (!accessToken) {
         toast.error("Please sign in again at /admin/login.");
         return;
       }
 
       const result = await saveGlobalService({
-        accessToken: session.access_token,
+        accessToken,
         id: editingService.id,
         name: editingService.name,
         slug: editingService.slug,
@@ -143,16 +152,14 @@ export default function GlobalServiceManagement() {
     if (!confirm("Are you sure? This will remove the template but existing salon services will remain.")) return;
     
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const accessToken = await getTrimmaAccessToken();
 
-      if (!session?.access_token) {
+      if (!accessToken) {
         toast.error("Please sign in again at /admin/login.");
         return;
       }
 
-      const result = await deleteGlobalService(session.access_token, id);
+      const result = await deleteGlobalService(accessToken, id);
       if (!result.success) throw new Error(result.error);
 
       toast.success("Service template deleted");
@@ -343,7 +350,7 @@ export default function GlobalServiceManagement() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Category *</label>
                 <Select 
-                  value={editingService?.category_id}
+                  value={editingService?.category_id || undefined}
                   onValueChange={(val) => setEditingService({ ...editingService, category_id: val })}
                 >
                   <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
