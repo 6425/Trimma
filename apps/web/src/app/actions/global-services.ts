@@ -1,10 +1,9 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { assertPlatformAdmin } from "@/lib/platform-admin";
+import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
 export type SaveGlobalServiceInput = {
-  accessToken: string;
   id?: string;
   name: string;
   slug?: string;
@@ -47,17 +46,61 @@ function buildPayload(input: SaveGlobalServiceInput) {
   };
 }
 
-export async function saveGlobalService(input: SaveGlobalServiceInput) {
+function mapServiceRow(row: Record<string, unknown>, categoriesById: Map<string, { name: string }>) {
+  const categoryId = String(row.category_id ?? "");
+  return {
+    ...row,
+    category: categoriesById.get(categoryId) ?? null,
+  };
+}
+
+export async function fetchGlobalServicesCatalog() {
   try {
-    if (!input.accessToken) {
-      return { success: false as const, error: "You must be signed in as an admin." };
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
     }
 
+    const supabase = createSupabaseAdminClient();
+    const [servicesRes, categoriesRes] = await Promise.all([
+      supabase.from("global_services").select("*").order("name"),
+      supabase.from("categories").select("*").order("name"),
+    ]);
+
+    if (servicesRes.error) {
+      return { success: false as const, error: servicesRes.error.message };
+    }
+    if (categoriesRes.error) {
+      return { success: false as const, error: categoriesRes.error.message };
+    }
+
+    const categories = categoriesRes.data || [];
+    const categoriesById = new Map(categories.map((c) => [c.id, { name: c.name }]));
+    const services = (servicesRes.data || []).map((row) => mapServiceRow(row, categoriesById));
+
+    return { success: true as const, services, categories };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load catalog.";
+    if (message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
+      return {
+        success: false as const,
+        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it in Vercel environment variables.",
+      };
+    }
+    return { success: false as const, error: message };
+  }
+}
+
+export async function saveGlobalService(input: SaveGlobalServiceInput) {
+  try {
     if (!input.name?.trim() || !input.category_id) {
       return { success: false as const, error: "Please fill in required fields." };
     }
 
-    await assertPlatformAdmin(input.accessToken);
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
+    }
 
     const supabase = createSupabaseAdminClient();
     const payload = buildPayload(input);
@@ -107,17 +150,16 @@ export async function saveGlobalService(input: SaveGlobalServiceInput) {
   }
 }
 
-export async function deleteGlobalService(accessToken: string, id: string) {
+export async function deleteGlobalService(id: string) {
   try {
-    if (!accessToken) {
-      return { success: false as const, error: "You must be signed in as an admin." };
-    }
-
     if (!id) {
       return { success: false as const, error: "Service id is required." };
     }
 
-    await assertPlatformAdmin(accessToken);
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
+    }
 
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase.from("global_services").delete().eq("id", id);

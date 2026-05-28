@@ -21,10 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { deleteGlobalService, saveGlobalService } from "@/app/actions/global-services";
-import { getTrimmaAccessToken } from "@/lib/client-auth";
+import {
+  deleteGlobalService,
+  fetchGlobalServicesCatalog,
+  saveGlobalService,
+} from "@/app/actions/global-services";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   GlobalServiceIconPreview,
   GlobalServiceIconUpload,
@@ -54,21 +57,25 @@ export default function GlobalServiceManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
     try {
-      const [servicesRes, categoriesRes] = await Promise.all([
-        supabase.from("global_services").select("*, category:categories(name)").order("name"),
-        supabase.from("categories").select("*").order("name")
-      ]);
+      const result = await withTimeout(
+        fetchGlobalServicesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      if (servicesRes.error) throw servicesRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
+      if (!result.success) {
+        throw new Error(result.error);
+      }
 
-      setServices(servicesRes.data || []);
-      setCategories(categoriesRes.data || []);
+      setServices(result.services || []);
+      setCategories(result.categories || []);
     } catch (error: any) {
-      toast.error("Failed to fetch records: " + error.message);
+      toast.error("Failed to fetch records: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -114,33 +121,38 @@ export default function GlobalServiceManagement() {
 
     setIsSaving(true);
     try {
-      const accessToken = await getTrimmaAccessToken();
-
-      if (!accessToken) {
-        toast.error("Please sign in again at /admin/login.");
-        return;
-      }
-
-      const result = await saveGlobalService({
-        accessToken,
-        id: editingService.id,
-        name: editingService.name,
-        slug: editingService.slug,
-        category_id: editingService.category_id,
-        description: editingService.description,
-        suggested_price: editingService.suggested_price,
-        suggested_duration_minutes: Number(editingService.suggested_duration_minutes) || 30,
-        icon: editingService.icon,
-        icon_image_url: editingService.icon_image_url,
-      });
+      const result = await withTimeout(
+        saveGlobalService({
+          id: editingService.id,
+          name: editingService.name,
+          slug: editingService.slug,
+          category_id: editingService.category_id,
+          description: editingService.description,
+          suggested_price: editingService.suggested_price,
+          suggested_duration_minutes: Number(editingService.suggested_duration_minutes) || 30,
+          icon: editingService.icon,
+          icon_image_url: editingService.icon_image_url,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
+      );
 
       if (!result.success) {
         throw new Error(result.error);
       }
 
+      const saved = result.service;
+      const category = categories.find((c) => c.id === saved.category_id);
+      setServices((prev) => {
+        const nextRow = { ...saved, category: category ? { name: category.name } : null };
+        if (editingService.id) {
+          return prev.map((row) => (row.id === saved.id ? nextRow : row));
+        }
+        return [...prev, nextRow].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
       toast.success(editingService.id ? "Template updated" : "Global service created");
       setIsDialogOpen(false);
-      fetchData();
     } catch (error: any) {
       toast.error("Error saving: " + (error.message || "Unknown error"));
     } finally {
@@ -152,18 +164,15 @@ export default function GlobalServiceManagement() {
     if (!confirm("Are you sure? This will remove the template but existing salon services will remain.")) return;
     
     try {
-      const accessToken = await getTrimmaAccessToken();
-
-      if (!accessToken) {
-        toast.error("Please sign in again at /admin/login.");
-        return;
-      }
-
-      const result = await deleteGlobalService(accessToken, id);
+      const result = await withTimeout(
+        deleteGlobalService(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
       if (!result.success) throw new Error(result.error);
 
+      setServices((prev) => prev.filter((row) => row.id !== id));
       toast.success("Service template deleted");
-      fetchData();
     } catch (error: any) {
       toast.error("Delete failed: " + error.message);
     }
@@ -432,7 +441,14 @@ export default function GlobalServiceManagement() {
                 disabled={isSaving}
                 className="flex-[2] bg-brand hover:bg-brand-hover text-zinc-900 h-12 rounded-xl font-bold shadow-lg"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Master Template"}
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  "Publish Master Template"
+                )}
               </Button>
             </DialogFooter>
           </div>

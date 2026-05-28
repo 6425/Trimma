@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
 function extensionForMime(mime: string) {
   if (mime.includes("png")) return "png";
@@ -15,6 +16,11 @@ async function uploadPublicAssetImage(
   filePrefix: string
 ) {
   try {
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
+    }
+
     const file = formData.get("file");
     if (!(file instanceof Blob) || file.size === 0) {
       return { success: false as const, error: "No image file provided." };
@@ -52,9 +58,16 @@ async function uploadPublicAssetImage(
     const { data } = supabase.storage.from("public-assets").getPublicUrl(path);
     return { success: true as const, publicUrl: data.publicUrl, bytes: file.size };
   } catch (err) {
+    const message = err instanceof Error ? err.message : "Upload failed.";
+    if (message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
+      return {
+        success: false as const,
+        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it in Vercel environment variables.",
+      };
+    }
     return {
       success: false as const,
-      error: err instanceof Error ? err.message : "Upload failed.",
+      error: message,
     };
   }
 }

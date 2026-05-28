@@ -8,6 +8,7 @@ import { ImageIcon, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { uploadGlobalServiceImage } from "@/app/actions/style-images";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   DEFAULT_UPLOAD_EXT,
   DEFAULT_UPLOAD_MIME,
@@ -139,7 +140,11 @@ export function GlobalServiceIconUpload({
       formData.append("file", imageBlob, `service.${DEFAULT_UPLOAD_EXT}`);
 
       const upload = uploadAction ?? uploadGlobalServiceImage;
-      const result = await upload(formData);
+      const result = await withTimeout(
+        upload(formData),
+        30000,
+        "Upload timed out after 30s. Check Vercel SUPABASE_SERVICE_ROLE_KEY and the public-assets storage bucket."
+      );
       if (!result.success) {
         throw new Error("error" in result ? result.error : "Upload failed.");
       }
