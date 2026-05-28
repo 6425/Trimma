@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { deleteCategory, saveCategory } from "@/app/actions/categories";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
@@ -153,33 +154,35 @@ export default function CategoryManagement() {
     
     try {
       setSaving(true);
-      
-      const payload = { 
-        name: formData.name, 
-        slug, 
-        icon: formData.icon,
-        image_url: formData.image_url
-      };
 
-      if (editId) {
-        const { error } = await supabase
-          .from("categories")
-          .update(payload)
-          .eq("id", editId);
-        if (error) throw error;
-        toast.success("Category updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("categories")
-          .insert([payload]);
-        if (error) throw error;
-        toast.success("Category created successfully");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        toast.error("Please sign in again at /admin/login.");
+        return;
       }
+
+      const result = await saveCategory({
+        accessToken: session.access_token,
+        id: editId || undefined,
+        name: formData.name,
+        slug,
+        icon: formData.icon,
+        image_url: formData.image_url,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      toast.success(editId ? "Category updated successfully" : "Category created successfully");
       setFormData({ name: "", slug: "", icon: "", image_url: "" });
       setEditId(null);
       fetchCategories();
     } catch (error: any) {
-      toast.error("Error saving category: " + error.message);
+      toast.error("Error saving category: " + (error.message || "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -189,8 +192,18 @@ export default function CategoryManagement() {
     if (!confirm("Are you sure? This will delete the category and might affect linked services.")) return;
     
     try {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        toast.error("Please sign in again at /admin/login.");
+        return;
+      }
+
+      const result = await deleteCategory(session.access_token, id);
+      if (!result.success) throw new Error(result.error);
+
       toast.success("Category deleted");
       fetchCategories();
     } catch (error: any) {
