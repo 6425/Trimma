@@ -1,97 +1,65 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Bookmark, Scissors, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "../../../config/supabase";
+import {
+  fetchCustomerStylesPage,
+  removeCustomerSavedStyle,
+  type CustomerSavedStyleRow,
+} from "@/app/actions/customer-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { useSavedStyles } from "@/hooks/useSavedStyles";
-
-type SavedStyleRow = {
-  id: string;
-  created_at: string;
-  platform_styles: {
-    id: string;
-    title: string;
-    description: string | null;
-    image_url: string;
-    categories: {
-      id: string;
-      name: string;
-      slug: string;
-    } | null;
-  } | null;
-};
 
 function SavedStylesContent() {
   const router = useRouter();
   const { refreshSavedStyles } = useSavedStyles();
-  const [saved, setSaved] = useState<SavedStyleRow[]>([]);
+  const [saved, setSaved] = useState<CustomerSavedStyleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const fetchSaved = async () => {
+  const fetchSaved = useCallback(async () => {
     setLoadError(null);
-    const { data: { session } } = await supabase.auth.getSession();
+    try {
+      const result = await withTimeout(
+        fetchCustomerStylesPage(),
+        20000,
+        "Loading timed out. Refresh the page."
+      );
 
-    if (!session) {
-      router.replace("/login?redirectTo=/customer/styles");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("customer_saved_styles")
-      .select(`
-        id,
-        created_at,
-        platform_styles (
-          id,
-          title,
-          description,
-          image_url,
-          categories ( id, name, slug )
-        )
-      `)
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Failed to load saved styles:", error);
-      if (error.message.includes("customer_saved_styles") || error.code === "42P01") {
-        setLoadError(
-          "Saved styles storage is not set up yet. Run packages/db/STYLE_MANAGEMENT_PATCH.sql in Supabase."
-        );
-      } else {
-        setLoadError(error.message || "Could not load your saved styles.");
+      if (result.success === false) {
+        if (result.error.includes("sign in") || result.error.includes("session expired")) {
+          router.replace("/login?redirectTo=/customer/styles");
+          return;
+        }
+        setLoadError(result.error);
+        setSaved([]);
+        return;
       }
-      setSaved([]);
-    } else {
-      setSaved((data as unknown as SavedStyleRow[]) || []);
-    }
 
-    setLoading(false);
-  };
+      setSaved(result.saved);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load your saved styles.";
+      setLoadError(message);
+      setSaved([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchSaved());
-  }, []);
+    void fetchSaved();
+  }, [fetchSaved]);
 
-  const handleRemove = async (rowId: string, styleId: string, title: string) => {
+  const handleRemove = async (rowId: string, _styleId: string, title: string) => {
     setRemovingId(rowId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { error } = await supabase
-        .from("customer_saved_styles")
-        .delete()
-        .eq("id", rowId)
-        .eq("user_id", session.user.id);
-
-      if (error) throw error;
+      const result = await removeCustomerSavedStyle(rowId);
+      if (result.success === false) throw new Error(result.error);
 
       setSaved((prev) => prev.filter((s) => s.id !== rowId));
       await refreshSavedStyles();

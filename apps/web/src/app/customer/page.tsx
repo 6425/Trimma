@@ -1,24 +1,26 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CalendarDays, Loader2 } from "lucide-react";
+import { CalendarDays, Loader2, RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "../../config/supabase";
 import { toast } from "sonner";
 import { sendWhatsAppReservationPaidNotification } from "../actions/whatsapp";
 import { formatLkr, getBookingAmount, getBookingBalance } from "@/lib/dashboard-stats";
+import { fetchCustomerDashboardPage, type CustomerDashboardBooking } from "@/app/actions/customer-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 function DashboardContent() {
   const router = useRouter();
   const [userName, setUserName] = useState("Guest");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userRole, setUserRole] = useState("Member");
-  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<CustomerDashboardBooking[]>([]);
   const [bookingStats, setBookingStats] = useState({ total: 0, upcoming: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -62,75 +64,39 @@ function DashboardContent() {
     });
   }, [searchParams]);
 
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      async function fetchUser() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+  const loadDashboard = useCallback(async () => {
+    setLoadError(null);
+    try {
+      const result = await withTimeout(
+        fetchCustomerDashboardPage(),
+        20000,
+        "Loading timed out. Refresh the page."
+      );
+
+      if (result.success === false) {
+        if (result.error.includes("sign in") || result.error.includes("session expired")) {
           router.replace("/login?redirectTo=/customer");
           return;
         }
-
-        if (session.user) {
-          const email = session.user.email || "";
-
-          const { data: profile } = await supabase
-            .from("users")
-            .select("full_name, avatar_url, global_role")
-            .eq("email", email)
-            .maybeSingle();
-
-          const name =
-            profile?.full_name ||
-            session.user.user_metadata?.first_name ||
-            session.user.user_metadata?.full_name ||
-            email.split("@")[0] ||
-            "Guest";
-          setUserName(name);
-          setAvatarUrl(profile?.avatar_url || session.user.user_metadata?.avatar_url || null);
-
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
-
-          const role = roleData?.role || profile?.global_role;
-          if (role === "admin") setUserRole("Admin");
-          else if (role === "agent") setUserRole("Agent");
-          else if (role === "salon_owner") setUserRole("Salon Partner");
-          else if (role) setUserRole(String(role).replace(/_/g, " "));
-          else setUserRole("Member");
-
-          const today = new Date().toISOString().slice(0, 10);
-
-          const { data: bookingsData } = await supabase
-            .from("bookings")
-            .select("*, salons(name, city)")
-            .ilike("customer_email", email)
-            .order("booking_date", { ascending: true });
-
-          const allBookings = bookingsData || [];
-          const upcoming = allBookings.filter((booking) => {
-            const status = String(booking.status || "").toLowerCase();
-            if (["cancelled", "refunded", "completed"].includes(status)) return false;
-            return !booking.booking_date || booking.booking_date >= today;
-          });
-
-          setUpcomingBookings(upcoming.slice(0, 5));
-          setBookingStats({
-            total: allBookings.length,
-            upcoming: upcoming.length,
-            completed: allBookings.filter((b) => String(b.status || "").toLowerCase() === "completed").length,
-          });
-        }
-
-        setLoading(false);
+        throw new Error(result.error);
       }
 
-      fetchUser();
-    });
+      setUserName(result.userName);
+      setAvatarUrl(result.avatarUrl);
+      setUserRole(result.userRole);
+      setUpcomingBookings(result.upcomingBookings);
+      setBookingStats(result.bookingStats);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load your dashboard.";
+      setLoadError(message);
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -144,6 +110,25 @@ function DashboardContent() {
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
         <p className="text-zinc-500 font-medium">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4 px-4 text-center">
+        <p className="text-zinc-400 max-w-md">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            void loadDashboard();
+          }}
+          className="inline-flex items-center gap-2 bg-[#F5B700] text-black font-bold rounded-xl px-4 py-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Retry
+        </button>
       </div>
     );
   }

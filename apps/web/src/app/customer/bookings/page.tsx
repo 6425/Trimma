@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { CalendarDays, MapPin, Scissors, Clock, CheckCircle2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "../../../config/supabase";
-import { getCustomerReviewableBookings, type ReviewableBooking } from "@/app/actions/reviews";
+import { type ReviewableBooking } from "@/app/actions/reviews";
+import { fetchCustomerBookingsPage } from "@/app/actions/customer-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { ReviewFormDialog } from "../../../components/reviews/ReviewFormDialog";
 
 function BookingsListContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [bookings, setBookings] = useState<ReviewableBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,23 +20,35 @@ function BookingsListContent() {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [activeReviewBooking, setActiveReviewBooking] = useState<ReviewableBooking | null>(null);
 
-  const loadBookings = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-      setBookings([]);
-      setLoading(false);
-      return;
-    }
+  const loadBookings = useCallback(async () => {
+    try {
+      const result = await withTimeout(
+        fetchCustomerBookingsPage(),
+        20000,
+        "Loading timed out. Refresh the page."
+      );
 
-    setAccessToken(session.access_token);
-    const reviewableBookings = await getCustomerReviewableBookings(session.access_token);
-    setBookings(reviewableBookings);
-    setLoading(false);
-  };
+      if (result.success === false) {
+        if (result.error.includes("sign in") || result.error.includes("session expired")) {
+          router.replace("/login?redirectTo=/customer/bookings");
+          return;
+        }
+        throw new Error(result.error);
+      }
+
+      setAccessToken(result.accessToken);
+      setBookings(result.bookings);
+    } catch (err) {
+      console.error("Failed to load bookings:", err);
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadBookings());
-  }, []);
+    void loadBookings();
+  }, [loadBookings]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {

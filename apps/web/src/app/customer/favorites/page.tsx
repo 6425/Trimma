@@ -1,110 +1,67 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Heart, MapPin, Star, Scissors, Loader2, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { supabase } from "../../../config/supabase";
+import {
+  fetchCustomerFavoritesPage,
+  removeCustomerFavorite,
+  type CustomerFavoriteRow,
+} from "@/app/actions/customer-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { useSalonFavorites } from "@/hooks/useSalonFavorites";
-
-type FavoriteRow = {
-  id: string;
-  created_at: string;
-  salons: {
-    id: string;
-    name: string;
-    slug: string;
-    city: string | null;
-    district: string | null;
-    cover_url: string | null;
-    logo_url: string | null;
-    rating: number | null;
-    is_verified: boolean | null;
-    category: string | null;
-    services?: { price: number; category?: string; name?: string }[];
-  } | null;
-};
 
 function FavoritesContent() {
   const router = useRouter();
   const { refreshFavorites } = useSalonFavorites();
-  const [favorites, setFavorites] = useState<FavoriteRow[]>([]);
+  const [favorites, setFavorites] = useState<CustomerFavoriteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     setLoadError(null);
-    const { data: { session } } = await supabase.auth.getSession();
+    try {
+      const result = await withTimeout(
+        fetchCustomerFavoritesPage(),
+        20000,
+        "Loading timed out. Refresh the page."
+      );
 
-    if (!session) {
-      router.replace("/login?redirectTo=/customer/favorites");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("customer_favorite_salons")
-      .select(`
-        id,
-        created_at,
-        salons (
-          id,
-          name,
-          slug,
-          city,
-          district,
-          cover_url,
-          logo_url,
-          rating,
-          is_verified,
-          category,
-          services ( price, category, name )
-        )
-      `)
-      .eq("user_id", session.user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Failed to load favorites:", error);
-      if (error.message.includes("customer_favorite_salons") || error.code === "42P01") {
-        setLoadError(
-          "Favorites storage is not set up yet. Ask your admin to run packages/db/CUSTOMER_FAVORITES_PATCH.sql in Supabase."
-        );
-      } else {
-        setLoadError(error.message || "Could not load your favorite salons.");
+      if (result.success === false) {
+        if (result.error.includes("sign in") || result.error.includes("session expired")) {
+          router.replace("/login?redirectTo=/customer/favorites");
+          return;
+        }
+        setLoadError(result.error);
+        setFavorites([]);
+        return;
       }
-      setFavorites([]);
-    } else {
-      setFavorites((data as unknown as FavoriteRow[]) || []);
-    }
 
-    setLoading(false);
-  };
+      setFavorites(result.favorites);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not load your favorite salons.";
+      setLoadError(message);
+      setFavorites([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      void fetchFavorites();
-    });
-  }, []);
+    void fetchFavorites();
+  }, [fetchFavorites]);
 
   const handleRemove = async (favoriteId: string, salonName: string) => {
     setRemovingId(favoriteId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { error } = await supabase
-        .from("customer_favorite_salons")
-        .delete()
-        .eq("id", favoriteId)
-        .eq("user_id", session.user.id);
-
-      if (error) throw error;
+      const result = await removeCustomerFavorite(favoriteId);
+      if (result.success === false) throw new Error(result.error);
 
       setFavorites((prev) => prev.filter((f) => f.id !== favoriteId));
       await refreshFavorites();

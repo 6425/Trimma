@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { User, Phone, Mail, Save, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { supabase } from "../../../config/supabase";
+import { fetchCustomerProfilePage, saveCustomerProfile } from "@/app/actions/customer-dashboard-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 function ProfileFormContent() {
   const router = useRouter();
@@ -18,59 +19,55 @@ function ProfileFormContent() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      async function loadProfile() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.replace("/login?redirectTo=/customer/profile");
-        return;
+  const loadProfile = useCallback(async () => {
+    try {
+      const result = await withTimeout(
+        fetchCustomerProfilePage(),
+        20000,
+        "Loading timed out. Refresh the page."
+      );
+
+      if (result.success === false) {
+        if (result.error.includes("sign in") || result.error.includes("session expired")) {
+          router.replace("/login?redirectTo=/customer/profile");
+          return;
+        }
+        throw new Error(result.error);
       }
-      const user = session.user;
-      setFirstName(user.user_metadata?.first_name || "");
-      setLastName(user.user_metadata?.last_name || "");
-      setEmail(user.email || "");
-      setPhone(user.phone || user.user_metadata?.phone || "");
+
+      setFirstName(result.firstName);
+      setLastName(result.lastName);
+      setEmail(result.email);
+      setPhone(result.phone);
+    } catch (err) {
+      console.error("Failed to load profile:", err);
+      toast.error(err instanceof Error ? err.message : "Could not load profile.", {
+        position: "top-center",
+      });
+    } finally {
       setLoading(false);
-      }
-      loadProfile();
-    });
-  }, []);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          full_name: `${firstName} ${lastName}`.trim(),
-          phone: phone
-        }
-      });
+      const result = await saveCustomerProfile({ firstName, lastName, phone });
+      if (result.success === false) throw new Error(result.error);
 
-      if (authError) throw authError;
-
-      // Proactively synchronize user metadata to the public database users table for instant notification lookups!
-      const { error: dbError } = await supabase
-        .from("users")
-        .update({
-          full_name: `${firstName} ${lastName}`.trim(),
-          phone: phone
-        })
-        .eq("email", email);
-
-      if (dbError) throw dbError;
-      
       toast.success("Profile updated successfully!", {
-        position: "top-center"
+        position: "top-center",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to update profile", err);
-      toast.error(err.message || "Failed to update profile", {
-        position: "top-center"
+      toast.error(err instanceof Error ? err.message : "Failed to update profile", {
+        position: "top-center",
       });
     } finally {
       setSaving(false);
