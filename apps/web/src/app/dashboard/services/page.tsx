@@ -11,6 +11,11 @@ import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { parseFeatureFlags } from "@/lib/parse-feature-flags";
 import {
+  getDiscountedServicePrice,
+  getServiceDiscountLabel,
+  isServiceDiscountActive,
+} from "@/lib/service-discount";
+import {
   GlobalServiceIconPreview,
   GlobalServiceIconUpload,
   SERVICE_IMAGE_DIMENSION_LABEL,
@@ -171,6 +176,7 @@ export default function DashboardServices() {
   }, [fetchSalonAndPlan]);
 
   const planFlags = parseFeatureFlags(subscriptionPlan?.feature_flags);
+  const hasDiscountFeature = planFlags.features?.includes("Discounts & Promotions") ?? false;
 
   const handleToggleSelect = (id: string) => {
     const isCurrentlyChecked = selectedServices[id]?.checked || false;
@@ -335,6 +341,10 @@ export default function DashboardServices() {
     e.preventDefault();
     if (!editingServiceId) return;
 
+    const discountPct = hasDiscountFeature
+      ? Math.min(100, Math.max(0, parseFloat(editForm.discount_percentage) || 0))
+      : 0;
+
     try {
       setUpdating(true);
       const { error } = await supabase
@@ -347,6 +357,11 @@ export default function DashboardServices() {
           description: editForm.description,
           status: editForm.status,
           image_url: editForm.image_url || null,
+          discount_percentage: discountPct,
+          discount_end_date:
+            hasDiscountFeature && discountPct > 0 && editForm.discount_end_date
+              ? new Date(editForm.discount_end_date).toISOString()
+              : null,
         })
         .eq("id", editingServiceId);
 
@@ -360,6 +375,10 @@ export default function DashboardServices() {
         toast.error(
           "Database missing image_url column. Run packages/db/SERVICES_IMAGE_URL_PATCH.sql in Supabase SQL Editor, then try again."
         );
+      } else if (message.includes("discount_percentage") || message.includes("discount_end_date")) {
+        toast.error(
+          "Database missing discount columns. Run packages/db/SERVICES_DISCOUNTS_PATCH.sql in Supabase SQL Editor, then try again."
+        );
       } else {
         toast.error("Failed to update service: " + message);
       }
@@ -371,8 +390,6 @@ export default function DashboardServices() {
   const filteredServices = services.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const hasDiscountFeature = planFlags.features?.includes("Discounts & Promotions") ?? false;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -516,7 +533,23 @@ export default function DashboardServices() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-zinc-500">{service.duration_min} mins</td>
-                    <td className="px-6 py-4 text-sm font-black text-brand">LKR {parseFloat(service.price).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm">
+                      {isServiceDiscountActive(service) ? (
+                        <div className="space-y-1">
+                          <div className="font-black text-emerald-600">
+                            LKR {getDiscountedServicePrice(service).toLocaleString()}
+                          </div>
+                          <div className="text-[10px] text-zinc-400 line-through">
+                            LKR {parseFloat(service.price).toLocaleString()}
+                          </div>
+                          <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                            {getServiceDiscountLabel(service)}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="font-black text-brand">LKR {parseFloat(service.price).toLocaleString()}</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <Badge className={service.status === 'active' ? "bg-emerald-50 text-emerald-600 border-none" : "bg-zinc-100 text-zinc-400 border-none"}>
                         {service.status === 'active' ? "Active" : "Inactive"}
@@ -830,6 +863,9 @@ export default function DashboardServices() {
                     onChange={(e) => setEditForm(prev => ({ ...prev, discount_end_date: e.target.value }))}
                     className={`h-11 rounded-xl border-zinc-200 ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-zinc-800 focus:ring-brand'}`}
                   />
+                  {hasDiscountFeature && (
+                    <p className="text-[10px] text-zinc-400">Leave empty for no expiry.</p>
+                  )}
                 </div>
               </div>
 

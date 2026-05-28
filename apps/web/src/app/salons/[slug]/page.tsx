@@ -32,6 +32,11 @@ import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSec
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { fetchCachedGlobalAmenities, formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
+import {
+  getDiscountedServicePrice,
+  getServiceDiscountLabel,
+  isServiceDiscountActive,
+} from "@/lib/service-discount";
 
 const salonServiceIconMap = { LayoutGrid, Scissors };
 
@@ -222,6 +227,8 @@ export default function SalonPage() {
       name: svc.name,
       duration: svc.duration_min,
       price: svc.price,
+      discount_percentage: svc.discount_percentage,
+      discount_end_date: svc.discount_end_date,
       category: svc.category || 'Hair',
       description: svc.description || 'Experience premium service.',
       image_url: svc.image_url || null,
@@ -954,7 +961,23 @@ export default function SalonPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
-                        <div className="font-bold text-lg text-zinc-900">LKR {service.price}</div>
+                        <div className="text-right">
+                          {isServiceDiscountActive(service) ? (
+                            <>
+                              <div className="font-bold text-lg text-emerald-600">
+                                LKR {getDiscountedServicePrice(service).toLocaleString()}
+                              </div>
+                              <div className="text-xs text-zinc-400 line-through">
+                                LKR {Number(service.price).toLocaleString()}
+                              </div>
+                              <Badge variant="outline" className="mt-1 text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                                {getServiceDiscountLabel(service)}
+                              </Badge>
+                            </>
+                          ) : (
+                            <div className="font-bold text-lg text-zinc-900">LKR {service.price}</div>
+                          )}
+                        </div>
                         <Button className="rounded-full shadow-sm px-6" onClick={() => handleBookService(service.name)}>
                           Book Now
                         </Button>

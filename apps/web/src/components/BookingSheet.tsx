@@ -12,6 +12,7 @@ import { getBlockedDisplaySlots } from "@/lib/booking-availability";
 import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
 import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
+import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 
 const bookingServiceIconMap = { LayoutGrid, Scissors };
 
@@ -257,8 +258,13 @@ export function BookingSheet({
         duration: parseInt(custom.custom_duration_min)
       };
     }
+    const listPrice = parseFloat(service.price || 0);
     return {
-      price: parseFloat(service.price || 0),
+      price: getDiscountedServicePrice({
+        price: listPrice,
+        discount_percentage: service.discount_percentage,
+        discount_end_date: service.discount_end_date,
+      }),
       duration: parseInt(service.duration || 0)
     };
   };
@@ -955,7 +961,16 @@ export function BookingSheet({
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="font-extrabold text-zinc-900">{formatPrice(service.price)}</div>
+                      <div className="text-right">
+                        {isServiceDiscountActive(service) ? (
+                          <>
+                            <div className="font-extrabold text-emerald-600">{formatPrice(getDiscountedServicePrice(service))}</div>
+                            <div className="text-[10px] text-zinc-400 line-through">{formatPrice(Number(service.price))}</div>
+                          </>
+                        ) : (
+                          <div className="font-extrabold text-zinc-900">{formatPrice(service.price)}</div>
+                        )}
+                      </div>
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                         isSelected ? 'bg-zinc-900 border-zinc-900 text-white' : 'border-slate-200'
                       }`}>
