@@ -89,13 +89,15 @@ export async function fetchAdminFinancePage() {
 
 export async function fetchAdminCommissionsPage() {
   const result = await withAdminDb(async (supabase) => {
-    const [commissionRes, tiersRes] = await Promise.all([
+    const [commissionRes, rulesRes] = await Promise.all([
       supabase.from("commission_master").select("*"),
-      supabase.from("agent_tiers").select("*").order("min_salons"),
+      supabase.from("commission_rules").select("*").order("tier_min"),
     ]);
     if (commissionRes.error) throw new Error(commissionRes.error.message);
-    if (tiersRes.error) throw new Error(tiersRes.error.message);
-    return { commissionMaster: commissionRes.data || [], agentTiers: tiersRes.data || [] };
+    return {
+      commissionMaster: commissionRes.data || [],
+      commissionRules: rulesRes.error ? [] : rulesRes.data || [],
+    };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const, ...result.data };
@@ -103,22 +105,30 @@ export async function fetchAdminCommissionsPage() {
 
 export async function fetchAdminAgentsPage() {
   const result = await withAdminDb(async (supabase) => {
-    const [usersRes, agentsRes, leadsRes, territoriesRes, ledgerRes, logsRes] = await Promise.all([
-      supabase.from("users").select("*").order("email"),
-      supabase.from("agents").select("*"),
-      supabase.from("salon_leads").select("*").order("created_at", { ascending: false }),
-      supabase.from("agent_territories").select("*"),
-      supabase.from("commission_ledger").select("*").order("created_at", { ascending: false }).limit(50),
-      supabase.from("agent_activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
-    ]);
-    for (const res of [usersRes, agentsRes, leadsRes, territoriesRes, ledgerRes, logsRes]) {
+    const [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes] =
+      await Promise.all([
+        supabase.from("users").select("*").order("email"),
+        supabase.from("agents").select("*"),
+        supabase.from("salon_leads").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("agent_territories")
+          .select(
+            "agent_id, territory_id, created_at, agents ( id, user_email ), territories ( id, name, type, slug, parent_id )"
+          )
+          .order("created_at", { ascending: false }),
+        supabase.from("territories").select("id, name, type, slug, parent_id").order("name"),
+        supabase.from("commission_ledger").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("agent_activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
+      ]);
+    for (const res of [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes]) {
       if (res.error) throw new Error(res.error.message);
     }
     return {
       users: usersRes.data || [],
       agents: agentsRes.data || [],
       leads: leadsRes.data || [],
-      territories: territoriesRes.data || [],
+      agentTerritories: assignmentsRes.data || [],
+      territoryCatalog: catalogRes.data || [],
       ledger: ledgerRes.data || [],
       activityLogs: logsRes.data || [],
     };

@@ -90,18 +90,24 @@ export default function AgentDashboard() {
         agentProfileRes,
         bookingCommissionsRes,
         ledgerRes,
-        territoriesRes,
       ] = await Promise.all([
         supabase
           .from("salons")
           .select("id, name, address, phone, rating, onboarding_status, created_at")
           .eq("assign_to", email)
           .order("created_at", { ascending: false }),
-        supabase.from("agents").select("commission_rate").eq("user_email", email).maybeSingle(),
+        supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
         supabase.from("bookings").select("agent_commission_amount").eq("agent_email", email),
         supabase.from("commission_ledger").select("amount, status").eq("agent_email", email),
-        supabase.from("agent_territories").select("province, district, city").eq("agent_email", email),
       ]);
+
+      let territoriesRes: { data: any[] | null; error: any } = { data: [], error: null };
+      if (agentProfileRes.data?.id) {
+        territoriesRes = await supabase
+          .from("agent_territories")
+          .select("territories ( name, type )")
+          .eq("agent_id", agentProfileRes.data.id);
+      }
 
       if (assignedSalonsRes.error) throw assignedSalonsRes.error;
 
@@ -124,8 +130,10 @@ export default function AgentDashboard() {
 
       const territories = territoriesRes.data || [];
       if (territories.length > 0) {
-        const labels = territories.map((t) => [t.city, t.district, t.province].filter(Boolean).join(", "));
-        setTerritoryLabel(labels.join(" · "));
+        const labels = territories
+          .map((t: any) => t.territories?.name)
+          .filter(Boolean);
+        setTerritoryLabel(labels.length > 0 ? labels.join(" · ") : "No territory assigned");
       } else {
         setTerritoryLabel("No territory assigned");
       }

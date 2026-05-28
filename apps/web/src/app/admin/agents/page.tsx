@@ -9,27 +9,16 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
+import { assignAgentTerritory, removeAgentTerritory } from "@/app/actions/agent-territories";
 import { withTimeout } from "@/lib/promise-timeout";
-
-// Sri Lankan Geography presets for territory dropdowns
-const PROVINCES = [
-  { value: "Western Province", label: "Western Province" },
-  { value: "Central Province", label: "Central Province" },
-  { value: "Southern Province", label: "Southern Province" }
-];
-
-const DISTRICTS: Record<string, string[]> = {
-  "Western Province": ["Colombo", "Gampaha", "Kalutara"],
-  "Central Province": ["Kandy", "Matale", "Nuwara Eliya"],
-  "Southern Province": ["Galle", "Matara", "Hambantota"]
-};
 
 export default function AdminAgents() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'directory' | 'territories' | 'ledger' | 'logs'>('dashboard');
   
   // Data States
   const [agents, setAgents] = useState<any[]>([]);
-  const [territories, setTerritories] = useState<any[]>([]);
+  const [agentTerritories, setAgentTerritories] = useState<any[]>([]);
+  const [territoryCatalog, setTerritoryCatalog] = useState<any[]>([]);
   const [ledger, setLedger] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,10 +35,7 @@ export default function AdminAgents() {
 
   // Territory Creation states
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
-  const [newTerritoryProvince, setNewTerritoryProvince] = useState("Western Province");
-  const [newTerritoryDistrict, setNewTerritoryDistrict] = useState("Colombo");
-  const [newTerritoryCity, setNewTerritoryCity] = useState("");
-  const [newTerritoryExclusive, setNewTerritoryExclusive] = useState(false);
+  const [newTerritoryId, setNewTerritoryId] = useState("");
 
   const fetchAgentsData = async () => {
     try {
@@ -103,14 +89,12 @@ export default function AdminAgents() {
     }
   };
 
-  const fetchTerritoriesData = async () => {
+  const refreshTerritoryAssignments = async () => {
     try {
-      const { data, error } = await supabase
-        .from("agent_territories")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setTerritories(data || []);
+      const result = await fetchAdminAgentsPage();
+      if (result.success === false) throw new Error(result.error);
+      setAgentTerritories(result.agentTerritories || []);
+      setTerritoryCatalog(result.territoryCatalog || []);
     } catch (e: any) {
       console.error("Territories fetch failed:", e.message || e);
     }
@@ -186,7 +170,8 @@ export default function AdminAgents() {
       }
 
       mapAgentsFromPageData(result.users || [], result.agents || [], result.leads || []);
-      setTerritories(result.territories || []);
+      setAgentTerritories(result.agentTerritories || []);
+      setTerritoryCatalog(result.territoryCatalog || []);
       setLedger(result.ledger || []);
       setActivityLogs(result.activityLogs || []);
     } catch (error: any) {
@@ -299,36 +284,29 @@ export default function AdminAgents() {
     }
   };
 
-  // Territory assignment trigger
   const handleAssignTerritory = async () => {
-    if (!newTerritoryEmail || !newTerritoryCity) {
-      toast.error("Please enter a Target City to define the territory boundaries!");
+    if (!newTerritoryEmail || !newTerritoryId) {
+      toast.error("Please select an agent and territory.");
       return;
     }
 
     try {
       setUpdating(true);
-      const { error } = await supabase
-        .from("agent_territories")
-        .insert({
-          agent_email: newTerritoryEmail,
-          province: newTerritoryProvince,
-          district: newTerritoryDistrict,
-          city: newTerritoryCity,
-          is_exclusive: newTerritoryExclusive
-        });
+      const result = await assignAgentTerritory(newTerritoryEmail, newTerritoryId);
+      if (result.success === false) throw new Error(result.error);
 
-      if (error) throw error;
+      const territoryName =
+        territoryCatalog.find((t) => t.id === newTerritoryId)?.name || newTerritoryId;
 
       await logAgentActivity(
         newTerritoryEmail,
         "TERRITORY_ASSIGNED",
-        `Assigned territory in ${newTerritoryCity} (${newTerritoryDistrict}, ${newTerritoryProvince}) | Exclusive: ${newTerritoryExclusive ? "YES" : "NO"}.`
+        `Assigned territory: ${territoryName}.`
       );
 
-      toast.success(`Successfully assigned territory in ${newTerritoryCity}!`);
-      setNewTerritoryCity("");
-      fetchTerritoriesData();
+      toast.success(`Successfully assigned ${territoryName}!`);
+      setNewTerritoryId("");
+      await refreshTerritoryAssignments();
     } catch (error: any) {
       toast.error("Territory assignment failed: " + error.message);
     } finally {
@@ -336,24 +314,20 @@ export default function AdminAgents() {
     }
   };
 
-  const handleDeleteTerritory = async (id: string, email: string, city: string) => {
-    if (!confirm(`Are you sure you want to revoke the territory assignment in ${city}?`)) return;
+  const handleDeleteTerritory = async (agentEmail: string, territoryId: string, territoryName: string) => {
+    if (!confirm(`Are you sure you want to revoke the territory assignment for ${territoryName}?`)) return;
     try {
-      const { error } = await supabase
-        .from("agent_territories")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
+      const result = await removeAgentTerritory(agentEmail, territoryId);
+      if (result.success === false) throw new Error(result.error);
 
       await logAgentActivity(
-        email,
+        agentEmail,
         "TERRITORY_REVOKED",
-        `Revoked assigned territory boundaries in ${city}.`
+        `Revoked assigned territory: ${territoryName}.`
       );
 
       toast.success("Territory assignment revoked!");
-      fetchTerritoriesData();
+      await refreshTerritoryAssignments();
     } catch (e: any) {
       toast.error("Failed to revoke territory: " + e.message);
     }
@@ -657,7 +631,9 @@ export default function AdminAgents() {
                         </tr>
                       ) : (
                         filteredAgents.map((agent, i) => {
-                          const matchingTerritories = territories.filter(t => t.agent_email === agent.email);
+                          const matchingTerritories = agentTerritories.filter(
+                            (t) => t.agents?.user_email === agent.email
+                          );
                           return (
                             <tr key={agent.email} className="hover:bg-zinc-50/50 transition-colors h-14">
                               
@@ -680,9 +656,13 @@ export default function AdminAgents() {
                                   {matchingTerritories.length === 0 ? (
                                     <span className="text-[10px] text-zinc-500 italic">No assigned zones</span>
                                   ) : (
-                                    matchingTerritories.map(t => (
-                                      <Badge key={t.id} variant="secondary" className="px-1.5 py-0 border-none bg-slate-100 text-zinc-600 font-semibold text-[9px]">
-                                        {t.city} {t.is_exclusive && <Lock className="w-2.5 h-2.5 inline ml-0.5 text-zinc-500" />}
+                                    matchingTerritories.map((t) => (
+                                      <Badge
+                                        key={`${t.agent_id}-${t.territory_id}`}
+                                        variant="secondary"
+                                        className="px-1.5 py-0 border-none bg-slate-100 text-zinc-600 font-semibold text-[9px]"
+                                      >
+                                        {t.territories?.name || t.territory_id}
                                       </Badge>
                                     ))
                                   )}
@@ -766,7 +746,7 @@ export default function AdminAgents() {
                   <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-brand" /> Map Coverage Allocation
                   </h3>
-                  <p className="text-[11px] text-zinc-500">Assign physical boundaries and exclusivity parameters to prospected regions.</p>
+                  <p className="text-[11px] text-zinc-500">Assign territories from the platform catalog to sales agents.</p>
                 </div>
 
                 <div className="space-y-4 text-xs font-semibold text-zinc-500">
@@ -784,63 +764,23 @@ export default function AdminAgents() {
                     </select>
                   </div>
 
-                  {/* Province Selector */}
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Province</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Territory</label>
                     <select
-                      value={newTerritoryProvince}
-                      onChange={(e) => {
-                        setNewTerritoryProvince(e.target.value);
-                        setNewTerritoryDistrict(DISTRICTS[e.target.value]?.[0] || "");
-                      }}
+                      value={newTerritoryId}
+                      onChange={(e) => setNewTerritoryId(e.target.value)}
                       className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
                     >
-                      {PROVINCES.map(p => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
+                      <option value="">Choose a territory...</option>
+                      {territoryCatalog.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({t.type})
+                        </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* District Selector */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select District</label>
-                    <select
-                      value={newTerritoryDistrict}
-                      onChange={(e) => setNewTerritoryDistrict(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
-                    >
-                      {(DISTRICTS[newTerritoryProvince] || []).map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Target City */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Target City / Zone Name</label>
-                    <Input 
-                      placeholder="e.g. Colombo 03, Negombo, Galle Fort"
-                      value={newTerritoryCity}
-                      onChange={(e) => setNewTerritoryCity(e.target.value)}
-                      className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-brand/20 rounded-xl"
-                    />
-                  </div>
-
-                  {/* Exclusive Toggle */}
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div>
-                      <span className="font-extrabold text-zinc-800 text-xs">Lock Exclusive Rights</span>
-                      <p className="text-[10px] text-zinc-500 font-semibold mt-0.5">Prevents other agents from claiming prospects in this city.</p>
-                    </div>
-                    <input 
-                      type="checkbox" 
-                      checked={newTerritoryExclusive}
-                      onChange={(e) => setNewTerritoryExclusive(e.target.checked)}
-                      className="w-4 h-4 rounded text-brand focus:ring-brand/20 border-slate-200"
-                    />
-                  </div>
-
-                  <Button 
+                  <Button
                     onClick={handleAssignTerritory}
                     disabled={updating}
                     className="w-full bg-brand hover:bg-brand/90 text-zinc-900 h-11 rounded-xl font-bold gap-2 text-xs"
@@ -860,7 +800,7 @@ export default function AdminAgents() {
                   
                   {/* Conflict model alert callout */}
                   <Badge variant="secondary" className="px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border-none shrink-0 gap-1">
-                    <Lock className="w-3 h-3" /> First Valid Attribution Model Enabled
+                    <MapPin className="w-3 h-3" /> Live territory catalog
                   </Badge>
                 </div>
 
@@ -869,44 +809,40 @@ export default function AdminAgents() {
                     <thead>
                       <tr className="bg-zinc-50 text-zinc-500 font-bold uppercase text-[9px] h-9 border-b border-zinc-100">
                         <th className="px-4 py-1.5">Assigned Agent</th>
-                        <th className="px-4 py-1.5">Province</th>
-                        <th className="px-4 py-1.5">District</th>
-                        <th className="px-4 py-1.5">City / Zone</th>
-                        <th className="px-4 py-1.5 text-center">Rights</th>
+                        <th className="px-4 py-1.5">Territory</th>
+                        <th className="px-4 py-1.5">Type</th>
+                        <th className="px-4 py-1.5">Assigned</th>
                         <th className="px-4 py-1.5 text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-50 font-semibold text-zinc-600">
-                      {territories.length === 0 ? (
+                      {agentTerritories.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-14 text-zinc-700 italic">
+                          <td colSpan={5} className="text-center py-14 text-zinc-700 italic">
                             No boundaries assigned yet.
                           </td>
                         </tr>
                       ) : (
-                        territories.map(t => {
-                          const ag = agents.find(a => a.email === t.agent_email);
+                        agentTerritories.map((t) => {
+                          const agentEmail = t.agents?.user_email || "";
+                          const ag = agents.find((a) => a.email === agentEmail);
+                          const territoryName = t.territories?.name || t.territory_id;
                           return (
-                            <tr key={t.id} className="hover:bg-slate-50/50 transition-colors h-11">
+                            <tr key={`${t.agent_id}-${t.territory_id}`} className="hover:bg-slate-50/50 transition-colors h-11">
                               <td className="px-4 py-1.5">
                                 <span className="font-bold text-zinc-900">{ag?.full_name || "Unknown Agent"}</span>
-                                <div className="text-[10px] text-zinc-500 font-normal">{t.agent_email}</div>
+                                <div className="text-[10px] text-zinc-500 font-normal">{agentEmail}</div>
                               </td>
-                              <td className="px-4 py-1.5">{t.province}</td>
-                              <td className="px-4 py-1.5">{t.district}</td>
-                              <td className="px-4 py-1.5 font-bold text-zinc-800">{t.city}</td>
-                              <td className="px-4 py-1.5 text-center">
-                                <Badge className={`shadow-none font-bold uppercase text-[8px] px-1.5 py-0 border-none ${
-                                  t.is_exclusive ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-zinc-500"
-                                }`}>
-                                  {t.is_exclusive ? "EXCLUSIVE" : "SHARED"}
-                                </Badge>
+                              <td className="px-4 py-1.5 font-bold text-zinc-800">{territoryName}</td>
+                              <td className="px-4 py-1.5 capitalize">{t.territories?.type || "—"}</td>
+                              <td className="px-4 py-1.5">
+                                {t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}
                               </td>
                               <td className="px-4 py-1.5 text-center">
-                                <Button 
-                                  onClick={() => handleDeleteTerritory(t.id, t.agent_email, t.city)}
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  onClick={() => handleDeleteTerritory(agentEmail, t.territory_id, territoryName)}
+                                  variant="ghost"
+                                  size="icon"
                                   className="w-7 h-7 rounded-lg text-zinc-700 hover:text-rose-600 hover:bg-rose-50"
                                   title="Revoke Territory"
                                 >

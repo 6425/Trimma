@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
+import { syncAgentTerritories } from "@/app/actions/agent-territories";
+import { withTimeout } from "@/lib/promise-timeout";
 
 export default function AdminAgentManagement() {
   const navigate = useRouter();
@@ -36,64 +38,41 @@ export default function AdminAgentManagement() {
   const [selectedTerritories, setSelectedTerritories] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  const fetchTerritories = async () => {
+  const fetchInitialData = async () => {
     try {
-      const { data, error } = await supabase.from("agent_territories").select("*");
-      if (error) {
-        console.error("Error fetching territories:", error);
-        return;
-      }
-      if (data) {
-        setTerritories(data.map(t => ({ id: t.id, name: `${t.city} (${t.district})` })));
-      }
-    } catch (err: any) {
-      console.error("Fetch territories exception:", err);
-    }
-  };
+      setLoading(true);
+      const result = await withTimeout(
+        fetchAdminAgentsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-  const fetchAgents = async () => {
-    try {
-      // 1. Fetch users under agent role
-      const { data: usersData, error: usersError } = await supabase
-        .from("users")
-        .select("email, full_name, phone, avatar_url, global_role")
-        .eq("global_role", "agent");
+      if (result.success === false) throw new Error(result.error);
 
-      if (usersError) throw usersError;
+      const agentUsers = (result.users || []).filter((u: any) => u.global_role === "agent");
+      const assignments = result.agentTerritories || [];
+      const catalog = result.territoryCatalog || [];
 
-      // 2. Fetch agent configurations
-      const { data: agentsData, error: agentsError } = await supabase
-        .from("agents")
-        .select("user_email, status, commission_rate");
+      setTerritories(catalog.map((t: any) => ({ id: t.id, name: `${t.name} (${t.type})` })));
 
-      if (agentsError) throw agentsError;
+      const flattened = agentUsers.map((u: any) => {
+        const am: any = (result.agents || []).find((a: any) => a.user_email === u.email) || {};
+        const matchedT = assignments.filter((row: any) => row.agents?.user_email === u.email);
 
-      // 3. Fetch boundaries
-      const { data: territoriesData } = await supabase
-        .from("agent_territories")
-        .select("*");
-
-      // 4. Map client-side safely
-      const flattened = (usersData || []).map((u: any) => {
-        const am: any = (agentsData || []).find((a: any) => a.user_email === u.email) || {};
-        const matchedT = (territoriesData || []).filter((t: any) => t.agent_email === u.email);
-        
         return {
           id: u.email,
           user_email: u.email,
           users: {
             full_name: u.full_name || "New Agent",
             email: u.email,
-            avatar_url: u.avatar_url
+            avatar_url: u.avatar_url,
           },
           status: am.status || "active",
           commission_rate: am.commission_rate !== undefined ? am.commission_rate : 10,
-          agent_territories: matchedT.map(t => ({
-            territory_id: t.id,
-            territories: {
-              name: t.city
-            }
-          }))
+          agent_territories: matchedT.map((row: any) => ({
+            territory_id: row.territory_id,
+            territories: row.territories,
+          })),
         };
       });
 
@@ -101,18 +80,6 @@ export default function AdminAgentManagement() {
     } catch (error: any) {
       console.error("Error fetching agents:", error.message || error);
       toast.error("Failed to load agents directory.");
-    }
-  };
-
-  const fetchInitialData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([
-        fetchAgents(),
-        fetchTerritories()
-      ]);
-    } catch (err) {
-      console.error("Initial load failed", err);
     } finally {
       setLoading(false);
     }
@@ -195,9 +162,11 @@ export default function AdminAgentManagement() {
     if (!editingAgent) return;
     setIsSaving(true);
     try {
-      toast.success("Agent profile configurations updated successfully!");
+      const result = await syncAgentTerritories(editingAgent.user_email, selectedTerritories);
+      if (result.success === false) throw new Error(result.error);
+      toast.success("Agent territories updated successfully!");
       setIsEditDialogOpen(false);
-      fetchAgents();
+      await fetchInitialData();
     } catch (err: any) {
       toast.error(err.message || "Failed to update territories");
     } finally {
@@ -378,6 +347,14 @@ export default function AdminAgentManagement() {
                         </td>
                         <td className="px-6 py-2 text-center pr-6">
                            <div className="flex items-center justify-center gap-1.5">
+                             <Button
+                               variant="outline"
+                               size="sm"
+                               className="font-bold text-zinc-500 border-slate-200 hover:text-brand hover:bg-slate-50 h-8 px-2.5 rounded-lg text-[10px] gap-1"
+                               onClick={() => handleEditAgent(agent)}
+                             >
+                               <MapPin className="w-3.5 h-3.5" /> Territories
+                             </Button>
                              <Button 
                                variant="outline" 
                                size="sm" 
@@ -494,6 +471,45 @@ export default function AdminAgentManagement() {
           </div>
         </div>
       )}
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-black">
+              Edit Territories — {editingAgent?.users?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-64 overflow-y-auto py-2">
+            {territories.length === 0 ? (
+              <p className="text-xs text-zinc-500">No territories in catalog.</p>
+            ) : (
+              territories.map((t) => (
+                <label key={t.id} className="flex items-center gap-2 text-xs font-semibold text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={selectedTerritories.includes(t.id)}
+                    onChange={(e) => {
+                      setSelectedTerritories((prev) =>
+                        e.target.checked ? [...prev, t.id] : prev.filter((id) => id !== t.id)
+                      );
+                    }}
+                    className="rounded border-slate-300"
+                  />
+                  {t.name}
+                </label>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveTerritories} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Territories"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

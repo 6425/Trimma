@@ -4,9 +4,13 @@ import React, { useState, useEffect } from "react";
 import { Building2, UserCheck, ShieldCheck, Activity, Calculator, FileText, RefreshCw, Layers, Pencil, Save, X, Loader2, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { fetchAdminCommissionsPage } from "@/app/actions/admin-list-data";
+import {
+  saveBookingCommissionMaster,
+  saveCommissionRules,
+  saveSubscriptionCommissionMaster,
+} from "@/app/actions/commission-master";
 import { withTimeout } from "@/lib/promise-timeout";
 
 export default function CommissionManagement() {
@@ -17,7 +21,7 @@ export default function CommissionManagement() {
   // Live DB state
   const [bookingConfig, setBookingConfig] = useState<any>(null);
   const [subscriptionConfig, setSubscriptionConfig] = useState<any>(null);
-  const [agentTiers, setAgentTiers] = useState<any[]>([]);
+  const [commissionRules, setCommissionRules] = useState<any[]>([]);
 
   // Edit mode flags
   const [editBooking, setEditBooking] = useState(false);
@@ -51,7 +55,13 @@ export default function CommissionManagement() {
       }
 
       const commissionMaster = result.commissionMaster || [];
-      const tierData = result.agentTiers || [];
+      const rulesData = result.commissionRules || [];
+
+      const defaultRules = [
+        { id: "default-bronze", name: "Bronze", rule_type: "PERCENTAGE", rate: 10, tier_min: 0, tier_max: 49999 },
+        { id: "default-silver", name: "Silver", rule_type: "PERCENTAGE", rate: 12, tier_min: 50000, tier_max: 99999 },
+        { id: "default-gold", name: "Gold", rule_type: "PERCENTAGE", rate: 15, tier_min: 100000, tier_max: null },
+      ];
 
       const bookingData = commissionMaster
         .filter((c) => c.commission_type === "booking" && c.active)
@@ -75,9 +85,12 @@ export default function CommissionManagement() {
         setSubscriptionForm({ platform: 80, agent: 20 });
       }
 
-      if (tierData.length > 0) {
-        setAgentTiers(tierData);
-        setTiersForm(tierData.map(t => ({ ...t })));
+      if (rulesData.length > 0) {
+        setCommissionRules(rulesData);
+        setTiersForm(rulesData.map((t: any) => ({ ...t })));
+      } else {
+        setCommissionRules(defaultRules);
+        setTiersForm(defaultRules.map((t) => ({ ...t })));
       }
 
     } catch (err: any) {
@@ -96,21 +109,13 @@ export default function CommissionManagement() {
     }
     setSaving(true);
     try {
-      // Deactivate old version
-      if (bookingConfig?.id) {
-        await supabase.from("commission_master").update({ active: false, effective_to: new Date().toISOString() }).eq("id", bookingConfig.id);
-      }
-      // Insert new version
-      const { error } = await supabase.from("commission_master").insert({
-        commission_type: "booking",
-        platform_percentage: bookingForm.platform,
-        salon_percentage: bookingForm.salon,
-        payhere_percentage: bookingForm.payhere,
-        agent_percentage: 0,
-        active: true,
-        effective_from: new Date().toISOString(),
+      const result = await saveBookingCommissionMaster({
+        platform: bookingForm.platform,
+        salon: bookingForm.salon,
+        payhere: bookingForm.payhere,
+        previousId: bookingConfig?.id,
       });
-      if (error) throw error;
+      if (result.success === false) throw new Error(result.error);
       toast.success("Booking commission updated. New ledger version activated.");
       setEditBooking(false);
       await loadData();
@@ -129,18 +134,12 @@ export default function CommissionManagement() {
     }
     setSaving(true);
     try {
-      if (subscriptionConfig?.id) {
-        await supabase.from("commission_master").update({ active: false, effective_to: new Date().toISOString() }).eq("id", subscriptionConfig.id);
-      }
-      const { error } = await supabase.from("commission_master").insert({
-        commission_type: "subscription",
-        platform_percentage: subscriptionForm.platform,
-        salon_percentage: 0,
-        agent_percentage: subscriptionForm.agent,
-        active: true,
-        effective_from: new Date().toISOString(),
+      const result = await saveSubscriptionCommissionMaster({
+        platform: subscriptionForm.platform,
+        agent: subscriptionForm.agent,
+        previousId: subscriptionConfig?.id,
       });
-      if (error) throw error;
+      if (result.success === false) throw new Error(result.error);
       toast.success("Subscription commission updated. New ledger version activated.");
       setEditSubscription(false);
       await loadData();
@@ -151,22 +150,16 @@ export default function CommissionManagement() {
     }
   }
 
-  // Save Agent Tiers
   async function saveAgentTiers() {
     setSaving(true);
     try {
-      for (const tier of tiersForm) {
-        const { error } = await supabase.from("agent_tiers").update({
-          subscription_percentage: tier.subscription_percentage,
-          booking_percentage: tier.booking_percentage,
-        }).eq("id", tier.id);
-        if (error) throw error;
-      }
-      toast.success("Agent tiers updated successfully.");
+      const result = await saveCommissionRules(tiersForm);
+      if (result.success === false) throw new Error(result.error);
+      toast.success("Commission rules updated successfully.");
       setEditTiers(false);
       await loadData();
     } catch (err: any) {
-      toast.error("Failed to save tiers: " + err.message);
+      toast.error("Failed to save rules: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -310,7 +303,7 @@ export default function CommissionManagement() {
                <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Validated: Total is 23%</p>
              )}
              <div className="mt-4 text-xs font-semibold text-zinc-500 flex items-center justify-between">
-                <span>Effective: {bookingConfig?.effective_from ? new Date(bookingConfig.effective_from).toLocaleDateString() : "Pending"}</span>
+                <span>Last updated: {bookingConfig?.created_at ? new Date(bookingConfig.created_at).toLocaleDateString() : "Pending"}</span>
                 <span className="text-indigo-600 cursor-pointer hover:underline">View History</span>
              </div>
           </div>
@@ -401,8 +394,8 @@ export default function CommissionManagement() {
                    <Layers className="w-5 h-5 text-rose-600" />
                  </div>
                  <div>
-                   <h2 className="font-bold text-zinc-900">Agent Tiers Overview</h2>
-                   <p className="text-xs text-zinc-500 font-medium">Rank-based commission distribution overrides</p>
+                   <h2 className="font-bold text-zinc-900">Commission Rules Overview</h2>
+                   <p className="text-xs text-zinc-500 font-medium">Tier rules from commission_rules (read-only defaults if table is empty)</p>
                  </div>
                </div>
                {!editTiers ? (
@@ -414,7 +407,7 @@ export default function CommissionManagement() {
                    <Button size="sm" onClick={saveAgentTiers} disabled={saving} className="h-8 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-zinc-900 font-bold text-xs gap-1.5">
                      {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save
                    </Button>
-                   <Button variant="outline" size="sm" onClick={() => { setEditTiers(false); setTiersForm(agentTiers.map(t => ({ ...t }))); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
+                   <Button variant="outline" size="sm" onClick={() => { setEditTiers(false); setTiersForm(commissionRules.map(t => ({ ...t }))); }} className="h-8 rounded-lg border-slate-200 text-zinc-600 font-bold text-xs gap-1.5">
                      <X className="w-3.5 h-3.5" /> Cancel
                    </Button>
                  </div>
@@ -425,9 +418,10 @@ export default function CommissionManagement() {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100">
-                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tier Name</th>
-                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">SaaS Comm %</th>
-                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Booking % (Ref)</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Rule Name</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Type</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Rate %</th>
+                      <th className="pb-3 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Tier Range</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -437,42 +431,49 @@ export default function CommissionManagement() {
                         Silver: "bg-slate-200 text-slate-700",
                         Gold: "bg-amber-100 text-amber-700",
                       };
+                      const isReadOnly = String(tier.id).startsWith("default-");
                       return (
                         <tr key={tier.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                           <td className="py-4">
                             <Badge className={`${tierColors[tier.name] || "bg-zinc-100 text-zinc-600"} border-none font-black shadow-sm`}>{tier.name}</Badge>
                           </td>
                           <td className="py-4">
-                            {editTiers ? (
+                            {editTiers && !isReadOnly ? (
                               <input
-                                type="number" step="0.5" min="0" max="100"
-                                value={tier.subscription_percentage}
+                                type="text"
+                                value={tier.rule_type || "PERCENTAGE"}
                                 onChange={(e) => {
                                   const updated = [...tiersForm];
-                                  updated[idx] = { ...updated[idx], subscription_percentage: Number(e.target.value) };
+                                  updated[idx] = { ...updated[idx], rule_type: e.target.value };
                                   setTiersForm(updated);
                                 }}
-                                className="w-20 h-9 text-sm font-bold text-zinc-900 bg-white border border-rose-200 rounded-lg px-2 focus:outline-none focus:border-rose-500 transition-colors"
+                                className="w-28 h-9 text-sm font-bold text-zinc-900 bg-white border border-rose-200 rounded-lg px-2 focus:outline-none focus:border-rose-500 transition-colors"
                               />
                             ) : (
-                              <span className="text-sm font-bold text-zinc-700">{tier.subscription_percentage}%</span>
+                              <span className="text-sm font-bold text-zinc-700">{tier.rule_type || "PERCENTAGE"}</span>
                             )}
                           </td>
                           <td className="py-4">
-                            {editTiers ? (
+                            {editTiers && !isReadOnly ? (
                               <input
-                                type="number" step="0.1" min="0" max="100"
-                                value={tier.booking_percentage}
+                                type="number" step="0.5" min="0" max="100"
+                                value={tier.rate}
                                 onChange={(e) => {
                                   const updated = [...tiersForm];
-                                  updated[idx] = { ...updated[idx], booking_percentage: Number(e.target.value) };
+                                  updated[idx] = { ...updated[idx], rate: Number(e.target.value) };
                                   setTiersForm(updated);
                                 }}
                                 className="w-20 h-9 text-sm font-bold text-zinc-900 bg-white border border-rose-200 rounded-lg px-2 focus:outline-none focus:border-rose-500 transition-colors"
                               />
                             ) : (
-                              <span className="text-sm font-bold text-zinc-700">{tier.booking_percentage}%</span>
+                              <span className="text-sm font-bold text-zinc-700">{tier.rate}%</span>
                             )}
+                          </td>
+                          <td className="py-4">
+                            <span className="text-sm font-bold text-zinc-700">
+                              {tier.tier_min ?? 0}
+                              {tier.tier_max != null ? ` – ${tier.tier_max}` : "+"}
+                            </span>
                           </td>
                         </tr>
                       );
