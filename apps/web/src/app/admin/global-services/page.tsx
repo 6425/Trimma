@@ -68,7 +68,7 @@ export default function GlobalServiceManagement() {
         "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
       );
 
-      if (!result.success) {
+      if (result.success === false) {
         throw new Error(result.error);
       }
 
@@ -137,7 +137,7 @@ export default function GlobalServiceManagement() {
         "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
       );
 
-      if (!result.success) {
+      if (result.success === false) {
         throw new Error(result.error);
       }
 
@@ -169,7 +169,7 @@ export default function GlobalServiceManagement() {
         20000,
         "Delete timed out. Refresh the page and try again."
       );
-      if (!result.success) throw new Error(result.error);
+      if (result.success === false) throw new Error(result.error);
 
       setServices((prev) => prev.filter((row) => row.id !== id));
       toast.success("Service template deleted");

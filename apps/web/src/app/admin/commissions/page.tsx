@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminCommissionsPage } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 export default function CommissionManagement() {
   const [simAmount, setSimAmount] = useState(10000);
@@ -38,15 +40,22 @@ export default function CommissionManagement() {
     try {
       setLoading(true);
 
-      // Fetch active booking commission
-      const { data: bookingData } = await supabase
-        .from("commission_master")
-        .select("*")
-        .eq("commission_type", "booking")
-        .eq("active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const result = await withTimeout(
+        fetchAdminCommissionsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      const commissionMaster = result.commissionMaster || [];
+      const tierData = result.agentTiers || [];
+
+      const bookingData = commissionMaster
+        .filter((c) => c.commission_type === "booking" && c.active)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
       if (bookingData) {
         setBookingConfig(bookingData);
@@ -55,15 +64,9 @@ export default function CommissionManagement() {
         setBookingForm({ platform: 10, salon: 10, payhere: 3 });
       }
 
-      // Fetch active subscription commission
-      const { data: subData } = await supabase
-        .from("commission_master")
-        .select("*")
-        .eq("commission_type", "subscription")
-        .eq("active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const subData = commissionMaster
+        .filter((c) => c.commission_type === "subscription" && c.active)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
       if (subData) {
         setSubscriptionConfig(subData);
@@ -72,19 +75,14 @@ export default function CommissionManagement() {
         setSubscriptionForm({ platform: 80, agent: 20 });
       }
 
-      // Fetch agent tiers
-      const { data: tierData } = await supabase
-        .from("agent_tiers")
-        .select("*")
-        .order("subscription_percentage");
-
-      if (tierData) {
+      if (tierData.length > 0) {
         setAgentTiers(tierData);
         setTiersForm(tierData.map(t => ({ ...t })));
       }
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load commission data:", err);
+      toast.error("Failed to load commission data: " + (err.message || "Unknown error"));
     } finally {
       setLoading(false);
     }

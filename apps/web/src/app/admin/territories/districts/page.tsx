@@ -15,8 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import {
+  deleteDistrict,
+  fetchDistrictsCatalog,
+  saveDistrict,
+} from "@/app/actions/admin-territories";
+import { withTimeout } from "@/lib/promise-timeout";
 
 export default function DistrictManagement() {
   const [districts, setDistricts] = useState<any[]>([]);
@@ -33,18 +38,17 @@ export default function DistrictManagement() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [districtsRes, provincesRes] = await Promise.all([
-        supabase.from("districts").select(`*, provinces(name), cities(count)`).order("name"),
-        supabase.from("provinces").select("*").order("name")
-      ]);
-      
-      if (districtsRes.error) throw districtsRes.error;
-      if (provincesRes.error) throw provincesRes.error;
+      const result = await withTimeout(
+        fetchDistrictsCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      setDistricts(districtsRes.data || []);
-      setProvinces(provincesRes.data || []);
+      if (result.success === false) throw new Error(result.error);
+      setDistricts(result.districts || []);
+      setProvinces(result.provinces || []);
     } catch (error: any) {
-      toast.error("Failed to load data: " + error.message);
+      toast.error("Failed to load data: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -57,30 +61,45 @@ export default function DistrictManagement() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.province_id) return toast.error("Name and Province are required");
-    
-    const slug = formData.slug || formData.name.toLowerCase().replace(/ /g, "-");
-    
+
     try {
       setSaving(true);
-      if (editId) {
-        const { error } = await supabase
-          .from("districts")
-          .update({ name: formData.name, slug, province_id: formData.province_id })
-          .eq("id", editId);
-        if (error) throw error;
-        toast.success("District updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("districts")
-          .insert([{ name: formData.name, slug, province_id: formData.province_id }]);
-        if (error) throw error;
-        toast.success("District created successfully");
-      }
+
+      const result = await withTimeout(
+        saveDistrict({
+          id: editId || undefined,
+          name: formData.name,
+          slug: formData.slug || undefined,
+          province_id: formData.province_id,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
+      );
+
+      if (result.success === false) throw new Error(result.error);
+
+      const province = provinces.find((p) => p.id === formData.province_id);
+      const existing = editId ? districts.find((d) => d.id === editId) : null;
+      const saved = {
+        ...result.district,
+        provinces: province || null,
+        cities: existing?.cities || [{ count: 0 }],
+      };
+
+      setDistricts((prev) => {
+        if (editId) {
+          return prev
+            .map((row) => (row.id === saved.id ? saved : row))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return [...prev, saved].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      toast.success(editId ? "District updated successfully" : "District created successfully");
       setFormData({ name: "", slug: "", province_id: "" });
       setEditId(null);
-      fetchData();
     } catch (error: any) {
-      toast.error("Error saving district: " + error.message);
+      toast.error("Error saving district: " + (error.message || "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -88,14 +107,19 @@ export default function DistrictManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure? This will delete the district and might affect linked cities.")) return;
-    
+
     try {
-      const { error } = await supabase.from("districts").delete().eq("id", id);
-      if (error) throw error;
+      const result = await withTimeout(
+        deleteDistrict(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
+      if (result.success === false) throw new Error(result.error);
+
+      setDistricts((prev) => prev.filter((row) => row.id !== id));
       toast.success("District deleted");
-      fetchData();
     } catch (error: any) {
-      toast.error("Error deleting district: " + error.message);
+      toast.error("Error deleting district: " + (error.message || "Unknown error"));
     }
   };
 

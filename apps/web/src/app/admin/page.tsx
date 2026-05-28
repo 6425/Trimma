@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import AdminCard from "../../components/ui/AdminCard";
 import { supabase } from "@/config/supabase";
 import { Loader2, RefreshCw, Play, ShieldAlert, ShieldCheck, Globe, Activity, Database, Lock, Server, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
@@ -10,7 +9,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
-import { resolveAdminAccess } from "@/lib/trimma-role";
+import { fetchAdminDashboard } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   ActivityItem,
   formatLkr,
@@ -19,7 +19,6 @@ import {
 } from "@/lib/dashboard-stats";
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const [stats, setStats] = useState({
     salons: 0,
     salonsThisWeek: 0,
@@ -38,68 +37,27 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const weekAgoIso = weekAgo.toISOString();
+      const result = await withTimeout(
+        fetchAdminDashboard(),
+        25000,
+        "Dashboard load timed out. Check Vercel SUPABASE_SERVICE_ROLE_KEY and refresh."
+      );
 
-      const [
-        salonsRes,
-        salonsWeekRes,
-        bookingsCountRes,
-        bookingsRowsRes,
-        pendingSalonsRowsRes,
-        usersRes,
-        activeSalonsRes,
-        onboardingLogsRes,
-        recentBookingsRes,
-        recentSalonsRes,
-        recentServicesRes,
-      ] = await Promise.all([
-        supabase.from("salons").select("id", { count: "exact", head: true }),
-        supabase.from("salons").select("id", { count: "exact", head: true }).gte("created_at", weekAgoIso),
-        supabase.from("bookings").select("id", { count: "exact", head: true }),
-        supabase.from("bookings").select("amount, total_reservation_fee, status"),
-        supabase
-          .from("salons")
-          .select("id, status, onboarding_status, is_verified"),
-        supabase.from("users").select("email", { count: "exact", head: true }),
-        supabase
-          .from("salons")
-          .select("subscription_plan_id, subscription_plans(monthly_price, intro_monthly_price)")
-          .or("activation_status.eq.ACTIVE,status.eq.active,status.eq.verified,is_verified.eq.true"),
-        supabase
-          .from("onboarding_logs")
-          .select("id, action, notes, actor_email, created_at, salons(name)")
-          .order("created_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("bookings")
-          .select("id, booking_no, amount, total_reservation_fee, created_at, salons(name)")
-          .order("created_at", { ascending: false })
-          .limit(3),
-        supabase
-          .from("salons")
-          .select("id, name, onboarding_status, created_at, verified_at")
-          .order("created_at", { ascending: false })
-          .limit(3),
-        supabase
-          .from("global_services")
-          .select("id, name, created_at")
-          .order("created_at", { ascending: false })
-          .limit(2),
-      ]);
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
 
-      const bookingGmv = (bookingsRowsRes.data || [])
+      const bookingGmv = (result.bookingRows || [])
         .filter((row) => ["confirmed", "completed", "pending", "reservation_paid"].includes(String(row.status || "").toLowerCase()))
         .reduce((sum, row) => sum + getBookingAmount(row), 0);
 
-      const platformMrr = (activeSalonsRes.data || []).reduce((sum, salon: any) => {
+      const platformMrr = (result.activeSalons || []).reduce((sum, salon: any) => {
         const plan = salon.subscription_plans;
         const price = Number(plan?.intro_monthly_price ?? plan?.monthly_price ?? 0);
         return sum + price;
       }, 0);
 
-      const pendingApprovals = (pendingSalonsRowsRes.data || []).filter((salon) => {
+      const pendingApprovals = (result.pendingSalons || []).filter((salon) => {
         const status = String(salon.status || "").toLowerCase();
         if (["pending", "pending_approval"].includes(status)) return true;
         const onboarding = salon.onboarding_status || "";
@@ -108,18 +66,18 @@ export default function AdminDashboard() {
       }).length;
 
       setStats({
-        salons: salonsRes.count || 0,
-        salonsThisWeek: salonsWeekRes.count || 0,
-        bookings: bookingsCountRes.count || 0,
+        salons: result.salonsCount || 0,
+        salonsThisWeek: result.salonsThisWeek || 0,
+        bookings: result.bookingsCount || 0,
         bookingGmv,
         pendingApprovals,
         platformMrr,
-        users: usersRes.count || 0,
+        users: result.usersCount || 0,
       });
 
       const feed: ActivityItem[] = [];
 
-      for (const log of onboardingLogsRes.data || []) {
+      for (const log of result.onboardingLogs || []) {
         const salonName = (log as any).salons?.name || "Salon";
         feed.push({
           id: `log-${log.id}`,
@@ -130,7 +88,7 @@ export default function AdminDashboard() {
         });
       }
 
-      for (const booking of recentBookingsRes.data || []) {
+      for (const booking of result.recentBookings || []) {
         feed.push({
           id: `booking-${booking.id}`,
           title: "New booking",
@@ -140,7 +98,7 @@ export default function AdminDashboard() {
         });
       }
 
-      for (const salon of recentSalonsRes.data || []) {
+      for (const salon of result.recentSalons || []) {
         feed.push({
           id: `salon-${salon.id}`,
           title: salon.onboarding_status === "VERIFIED" ? "Salon verified" : "Salon registered",
@@ -150,7 +108,7 @@ export default function AdminDashboard() {
         });
       }
 
-      for (const service of recentServicesRes.data || []) {
+      for (const service of result.recentServices || []) {
         feed.push({
           id: `service-${service.id}`,
           title: "Global service published",
@@ -163,6 +121,7 @@ export default function AdminDashboard() {
       setActivity(feed.slice(0, 8));
     } catch (err) {
       console.error("Error fetching stats:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
@@ -170,47 +129,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      async function checkAdminAuth() {
-      try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-      router.replace("/admin/login");
-      return;
-      }
-
-      const { data: userData } = await supabase
-      .from('users')
-      .select('global_role')
-      .eq('email', session.user.email)
-      .maybeSingle();
-
-      const role = userData?.global_role;
-      const isAllowedAdmin = await resolveAdminAccess(session.user.id, session.user.email);
-      
-      if (!isAllowedAdmin) {
-      // If not admin, redirect to correct cockpit
-      if (role === 'salon_owner') {
-      router.replace("/dashboard");
-      } else if (role === 'agent') {
-      router.replace("/agent");
-      } else if (role === 'customer') {
-      router.replace("/customer");
-      } else {
-      router.replace("/onboarding");
-      }
-      return;
-      }
-      
       setAuthorized(true);
-      fetchStats();
-      } catch (err) {
-      console.error("Auth check failed", err);
-      router.replace("/admin/login");
-      }
-      }
-      checkAdminAuth();
+      void fetchStats();
     });
-  }, [router]);
+  }, []);
 
   const handleSyncData = async () => {
     try {

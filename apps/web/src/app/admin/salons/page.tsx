@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminSalons } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,13 +36,17 @@ export default function Salons() {
   const fetchSalons = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("salons")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      setSalons(data || []);
+      const result = await withTimeout(
+        fetchAdminSalons(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setSalons(result.salons || []);
     } catch (error: any) {
       toast.error("Failed to load salons: " + error.message);
     } finally {
@@ -165,7 +171,7 @@ export default function Salons() {
       if (salon && salon.phone) {
         toast.loading("Sending WhatsApp Badge Alerts...");
         const result = await sendAdminApprovalAlerts(salon.id, salon.phone, salon.name);
-        if (!result.success) {
+        if (result.success === false) {
           toast.error("Verified, but WhatsApp alert failed: " + result.error);
         }
       } else {

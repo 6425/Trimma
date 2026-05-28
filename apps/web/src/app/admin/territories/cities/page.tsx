@@ -14,8 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import {
+  deleteCity,
+  fetchCitiesCatalog,
+  saveCity,
+} from "@/app/actions/admin-territories";
+import { withTimeout } from "@/lib/promise-timeout";
 
 export default function CityManagement() {
   const [cities, setCities] = useState<any[]>([]);
@@ -32,18 +37,17 @@ export default function CityManagement() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [citiesRes, districtsRes] = await Promise.all([
-        supabase.from("cities").select(`*, districts(name), salons(count)`).order("name"),
-        supabase.from("districts").select("*").order("name")
-      ]);
-      
-      if (citiesRes.error) throw citiesRes.error;
-      if (districtsRes.error) throw districtsRes.error;
+      const result = await withTimeout(
+        fetchCitiesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      setCities(citiesRes.data || []);
-      setDistricts(districtsRes.data || []);
+      if (result.success === false) throw new Error(result.error);
+      setCities(result.cities || []);
+      setDistricts(result.districts || []);
     } catch (error: any) {
-      toast.error("Failed to load data: " + error.message);
+      toast.error("Failed to load data: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -56,30 +60,45 @@ export default function CityManagement() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.district_id) return toast.error("Name and District are required");
-    
-    const slug = formData.slug || formData.name.toLowerCase().replace(/ /g, "-");
-    
+
     try {
       setSaving(true);
-      if (editId) {
-        const { error } = await supabase
-          .from("cities")
-          .update({ name: formData.name, slug, district_id: formData.district_id })
-          .eq("id", editId);
-        if (error) throw error;
-        toast.success("City updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("cities")
-          .insert([{ name: formData.name, slug, district_id: formData.district_id }]);
-        if (error) throw error;
-        toast.success("City created successfully");
-      }
+
+      const result = await withTimeout(
+        saveCity({
+          id: editId || undefined,
+          name: formData.name,
+          slug: formData.slug || undefined,
+          district_id: formData.district_id,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
+      );
+
+      if (result.success === false) throw new Error(result.error);
+
+      const district = districts.find((d) => d.id === formData.district_id);
+      const existing = editId ? cities.find((c) => c.id === editId) : null;
+      const saved = {
+        ...result.city,
+        districts: district || null,
+        salons: existing?.salons || [{ count: 0 }],
+      };
+
+      setCities((prev) => {
+        if (editId) {
+          return prev
+            .map((row) => (row.id === saved.id ? saved : row))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return [...prev, saved].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      toast.success(editId ? "City updated successfully" : "City created successfully");
       setFormData({ name: "", slug: "", district_id: "" });
       setEditId(null);
-      fetchData();
     } catch (error: any) {
-      toast.error("Error saving city: " + error.message);
+      toast.error("Error saving city: " + (error.message || "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -87,14 +106,19 @@ export default function CityManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure? This will delete the city and might affect linked salons.")) return;
-    
+
     try {
-      const { error } = await supabase.from("cities").delete().eq("id", id);
-      if (error) throw error;
+      const result = await withTimeout(
+        deleteCity(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
+      if (result.success === false) throw new Error(result.error);
+
+      setCities((prev) => prev.filter((row) => row.id !== id));
       toast.success("City deleted");
-      fetchData();
     } catch (error: any) {
-      toast.error("Error deleting city: " + error.message);
+      toast.error("Error deleting city: " + (error.message || "Unknown error"));
     }
   };
 

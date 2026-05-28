@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
 export type SavePlatformStyleInput = {
   id?: string;
@@ -104,6 +105,31 @@ export async function getPublicPlatformStyles() {
     const message = err instanceof Error ? err.message : "Could not load styles.";
     return { success: false as const, error: message, styles: [] as PublicPlatformStyle[] };
   }
+}
+
+export async function fetchAdminPlatformStylesCatalog() {
+  const result = await withAdminDb(async (supabase) => {
+    const [stylesRes, categoriesRes] = await Promise.all([
+      supabase
+        .from("platform_styles")
+        .select(STYLE_SELECT)
+        .order("sort_order", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase.from("categories").select("id, name, slug").order("name"),
+    ]);
+
+    if (stylesRes.error) throw new Error(stylesRes.error.message);
+    if (categoriesRes.error) throw new Error(categoriesRes.error.message);
+
+    return {
+      styles: stylesRes.data || [],
+      categories: categoriesRes.data || [],
+    };
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+
+  return { success: true as const, ...result.data };
 }
 
 export async function savePlatformStyle(input: SavePlatformStyleInput) {

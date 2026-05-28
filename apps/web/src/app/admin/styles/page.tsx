@@ -20,7 +20,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import {
   STYLE_CROP_ASPECT,
@@ -29,8 +28,13 @@ import {
   prepareImageForCrop,
   DEFAULT_UPLOAD_EXT,
 } from "@/lib/image-crop";
-import { uploadStyleImage } from "../../actions/style-images";
-import { deletePlatformStyle, savePlatformStyle } from "../../actions/platform-styles";
+import { uploadStyleImage } from "@/app/actions/style-images";
+import {
+  deletePlatformStyle,
+  fetchAdminPlatformStylesCatalog,
+  savePlatformStyle,
+} from "@/app/actions/platform-styles";
+import { withTimeout } from "@/lib/promise-timeout";
 
 type SalonCategory = {
   id: string;
@@ -80,42 +84,28 @@ export default function AdminStyleManagementPage() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadStage, setUploadStage] = useState<"idle" | "preparing" | "compressing" | "uploading">("idle");
 
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, name, slug")
-      .order("name");
-
-    if (error) {
-      console.error("Failed to load categories:", error);
-      toast.error("Could not load salon categories");
-      return;
-    }
-
-    setCategories((data as SalonCategory[]) || []);
-  };
-
   const revokeCropPreview = () => {
     cropPreviewRevokeRef.current?.();
     cropPreviewRevokeRef.current = null;
   };
 
-  const fetchStyles = async (options?: { silent?: boolean }) => {
+  const fetchCatalog = async (options?: { silent?: boolean }) => {
     try {
       if (!options?.silent) {
         setLoading(true);
       }
-      const { data, error } = await supabase
-        .from("platform_styles")
-        .select(`
-          *,
-          categories ( id, name, slug )
-        `)
-        .order("sort_order", { ascending: false })
-        .order("created_at", { ascending: false });
+      const result = await withTimeout(
+        fetchAdminPlatformStylesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      if (error) throw error;
-      setStyles((data as PlatformStyle[]) || []);
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setStyles((result.styles as PlatformStyle[]) || []);
+      setCategories((result.categories as SalonCategory[]) || []);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to load styles";
       toast.error(message);
@@ -132,7 +122,7 @@ export default function AdminStyleManagementPage() {
 
   useEffect(() => {
     void Promise.resolve().then(async () => {
-      await Promise.all([fetchCategories(), fetchStyles()]);
+      await fetchCatalog();
     });
   }, []);
 
@@ -181,7 +171,7 @@ export default function AdminStyleManagementPage() {
       formDataUpload.append("file", imageBlob, `style.${DEFAULT_UPLOAD_EXT}`);
       const result = await uploadStyleImage(formDataUpload);
 
-      if (!result.success) {
+      if (result.success === false) {
         throw new Error(result.error);
       }
 
@@ -226,7 +216,7 @@ export default function AdminStyleManagementPage() {
         sort_order: Number(formData.sort_order) || 0,
       });
 
-      if (!result.success) {
+      if (result.success === false) {
         toast.error(result.error);
         return;
       }
@@ -257,7 +247,7 @@ export default function AdminStyleManagementPage() {
 
     try {
       const result = await deletePlatformStyle(id);
-      if (!result.success) {
+      if (result.success === false) {
         toast.error(result.error);
         return;
       }

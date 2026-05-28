@@ -2,15 +2,14 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { runSeedMarketplaceData } from "@/lib/seed-marketplace-core";
-import { assertPlatformAdmin } from "@/lib/platform-admin";
+import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
-export async function syncMasterData(accessToken: string) {
+export async function syncMasterData() {
   try {
-    if (!accessToken) {
-      return { success: false as const, error: "You must be signed in as an admin." };
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) {
+      return { success: false as const, error: auth.error };
     }
-
-    await assertPlatformAdmin(accessToken);
 
     const supabaseAdmin = createSupabaseAdminClient();
     await runSeedMarketplaceData(supabaseAdmin);
@@ -23,7 +22,7 @@ export async function syncMasterData(accessToken: string) {
     if (message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
       return {
         success: false as const,
-        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it to apps/web/.env.",
+        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it in Vercel environment variables.",
       };
     }
 

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminBookings } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { sendWhatsAppNotification, sendWhatsAppCancellationNotification, sendWhatsAppRescheduleNotification } from "../../actions/whatsapp";
 
 export default function AdminBookings() {
@@ -24,21 +26,17 @@ export default function AdminBookings() {
   const fetchGlobalBookings = async () => {
     try {
       setLoading(true);
-      // Fetch bookings and join with salons
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(`
-          *,
-          salons (
-            id,
-            name
-          )
-        `)
-        .order("booking_date", { ascending: false })
-        .order("booking_time", { ascending: false });
+      const result = await withTimeout(
+        fetchAdminBookings(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      if (error) throw error;
-      setBookings(data || []);
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setBookings(result.bookings || []);
     } catch (error: any) {
       toast.error("Failed to load platform bookings: " + error.message);
     } finally {

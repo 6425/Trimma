@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 // Sri Lankan Geography presets for territory dropdowns
 const PROVINCES = [
@@ -143,17 +145,52 @@ export default function AdminAgents() {
     }
   };
 
+  const mapAgentsFromPageData = (usersData: any[], agentsData: any[], leadsData: any[]) => {
+    const agentUsers = (usersData || []).filter((u) => u.global_role === "agent");
+    const flattened = agentUsers.map((u: any) => {
+      const agentMeta: any = (agentsData || []).find((a: any) => a.user_email === u.email) || {};
+      const agentLeads = (leadsData || []).filter((l: any) => l.assign_to === u.email);
+      const convertedCount = agentLeads.filter((l: any) => l.onboarding_stage === "CONVERTED").length;
+
+      return {
+        email: u.email,
+        full_name: u.full_name || "New Agent",
+        phone: u.phone || "No Phone",
+        created_at: u.created_at,
+        agent_exists: !!agentMeta.user_email,
+        status: agentMeta.status || "active",
+        commission_rate: agentMeta.commission_rate !== undefined ? agentMeta.commission_rate : 10,
+        total_leads: agentLeads.length,
+        converted_leads: convertedCount,
+        conversion_rate: agentLeads.length > 0 ? Math.round((convertedCount / agentLeads.length) * 100) : 0,
+      };
+    });
+
+    setAgents(flattened);
+    if (flattened.length > 0 && !newTerritoryEmail) {
+      setNewTerritoryEmail(flattened[0].email);
+    }
+  };
+
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        fetchAgentsData(),
-        fetchTerritoriesData(),
-        fetchLedgerData(),
-        fetchLogsData(),
-      ]);
-    } catch (error) {
-      console.error("Failed to load dashboard data context", error);
+      const result = await withTimeout(
+        fetchAdminAgentsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      mapAgentsFromPageData(result.users || [], result.agents || [], result.leads || []);
+      setTerritories(result.territories || []);
+      setLedger(result.ledger || []);
+      setActivityLogs(result.activityLogs || []);
+    } catch (error: any) {
+      toast.error("Failed to load agents: " + error.message);
     } finally {
       setLoading(false);
     }

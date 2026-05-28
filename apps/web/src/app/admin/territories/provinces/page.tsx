@@ -8,6 +8,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import {
+  deleteProvince,
+  fetchProvincesCatalog,
+  saveProvince,
+} from "@/app/actions/admin-territories";
+import { withTimeout } from "@/lib/promise-timeout";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
@@ -60,15 +66,16 @@ export default function ProvinceManagement() {
   const fetchProvinces = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("provinces")
-        .select(`*, districts:districts(count)`)
-        .order("name");
-      
-      if (error) throw error;
-      setProvinces(data || []);
+      const result = await withTimeout(
+        fetchProvincesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) throw new Error(result.error);
+      setProvinces(result.provinces || []);
     } catch (error: any) {
-      toast.error("Failed to load provinces: " + error.message);
+      toast.error("Failed to load provinces: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -138,37 +145,43 @@ export default function ProvinceManagement() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) return toast.error("Name is required");
-    
-    const slug = formData.slug || formData.name.toLowerCase().replace(/ /g, "-");
-    
+
     try {
       setSaving(true);
-      
-      const payload = { 
-        name: formData.name, 
-        slug, 
-        image_url: formData.image_url
+
+      const result = await withTimeout(
+        saveProvince({
+          id: editId || undefined,
+          name: formData.name,
+          slug: formData.slug || undefined,
+          image_url: formData.image_url || null,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
+      );
+
+      if (result.success === false) throw new Error(result.error);
+
+      const existing = editId ? provinces.find((p) => p.id === editId) : null;
+      const saved = {
+        ...result.province,
+        districts: existing?.districts || [{ count: 0 }],
       };
 
-      if (editId) {
-        const { error } = await supabase
-          .from("provinces")
-          .update(payload)
-          .eq("id", editId);
-        if (error) throw error;
-        toast.success("Province updated successfully");
-      } else {
-        const { error } = await supabase
-          .from("provinces")
-          .insert([payload]);
-        if (error) throw error;
-        toast.success("Province created successfully");
-      }
+      setProvinces((prev) => {
+        if (editId) {
+          return prev
+            .map((row) => (row.id === saved.id ? saved : row))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return [...prev, saved].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      toast.success(editId ? "Province updated successfully" : "Province created successfully");
       setFormData({ name: "", slug: "", image_url: "" });
       setEditId(null);
-      fetchProvinces();
     } catch (error: any) {
-      toast.error("Error saving province: " + error.message);
+      toast.error("Error saving province: " + (error.message || "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -176,14 +189,19 @@ export default function ProvinceManagement() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure? This will delete the province and might affect linked districts.")) return;
-    
+
     try {
-      const { error } = await supabase.from("provinces").delete().eq("id", id);
-      if (error) throw error;
+      const result = await withTimeout(
+        deleteProvince(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
+      if (result.success === false) throw new Error(result.error);
+
+      setProvinces((prev) => prev.filter((row) => row.id !== id));
       toast.success("Province deleted");
-      fetchProvinces();
     } catch (error: any) {
-      toast.error("Error deleting province: " + error.message);
+      toast.error("Error deleting province: " + (error.message || "Unknown error"));
     }
   };
 

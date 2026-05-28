@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminSubscriptionPlans } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import { DEFAULT_SUBSCRIPTION_PLANS, formatPromotionPackageLimit } from "@/lib/subscription-pricing";
 
 export default function SubscriptionPlanManagement() {
@@ -70,24 +72,31 @@ export default function SubscriptionPlanManagement() {
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("subscription_plans")
-        .select("*")
-        .order("monthly_price");
-      
-      if (error) throw error;
+      const result = await withTimeout(
+        fetchAdminSubscriptionPlans(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      const data = result.plans || [];
 
       // Auto-seed default tiers if none exist
-      if (!data || data.length === 0) {
+      if (data.length === 0) {
         await seedDefaultPlans();
-        // Refetch plans after seeding
-        const { data: refetchedData } = await supabase
-          .from("subscription_plans")
-          .select("*")
-          .order("monthly_price");
-        setPlans(refetchedData || []);
+        const refetch = await withTimeout(
+          fetchAdminSubscriptionPlans(),
+          20000,
+          "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+        );
+        if (refetch.success) {
+          setPlans(refetch.plans || []);
+        }
       } else {
-        setPlans(data || []);
+        setPlans(data);
       }
     } catch (error: any) {
       toast.error("Failed to load plans: " + error.message);

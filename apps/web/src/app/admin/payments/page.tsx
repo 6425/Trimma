@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminPaymentsPage } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 export default function AdminPayments() {
   const [loading, setLoading] = useState(true);
@@ -39,12 +41,17 @@ export default function AdminPayments() {
   const fetchPaymentSettings = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("global_payment_settings")
-        .select("*")
-        .eq("id", "00000000-0000-0000-0000-000000000001")
-        .maybeSingle();
+      const result = await withTimeout(
+        fetchAdminPaymentsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      const data = result.settings;
       if (data) {
         setEnvironment(data.environment || "sandbox");
         setPaypalClientSandbox(data.paypal_client_id_sandbox || "sb");
@@ -69,8 +76,8 @@ export default function AdminPayments() {
         const localPayhereMerchant = localStorage.getItem("trimma_payhere_merchant");
         if (localPayhereMerchant) setPayhereMerchantId(localPayhereMerchant);
       }
-    } catch (err) {
-      console.warn("Table global_payment_settings not found yet. Using local fallback.");
+    } catch (err: any) {
+      console.warn("Failed to load payment settings:", err.message || err);
     } finally {
       setLoading(false);
     }
@@ -79,18 +86,17 @@ export default function AdminPayments() {
   const fetchRealPayments = async () => {
     try {
       setLoadingRealPayments(true);
-      const { data, error } = await supabase
-        .from("payments")
-        .select(`
-          *,
-          salons (
-            name
-          )
-        `)
-        .order("created_at", { ascending: false });
+      const result = await withTimeout(
+        fetchAdminPaymentsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      if (error) throw error;
-      setRealPayments(data || []);
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setRealPayments(result.payments || []);
     } catch (err: any) {
       console.warn("Failed to fetch real payments:", err.message);
     } finally {

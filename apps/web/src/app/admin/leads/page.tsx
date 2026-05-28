@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminLeadsPage } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 // Sri Lankan Hierarchical Geography Dictionary
 const SRI_LANKA_GEOGRAPHY: any = {
@@ -227,10 +229,42 @@ export default function Leads() {
     owner_gmail: ""
   });
 
+  const applyLeadsFromSalons = (allSalons: any[], limit?: number) => {
+    const pipelineData = (allSalons || []).filter(
+      (s) => s.activation_status === "INACTIVE" && s.onboarding_status !== "DISCOVERED"
+    );
+
+    let newlyDiscovered: any[] = [];
+    if (limit) {
+      newlyDiscovered = (allSalons || [])
+        .filter((s) => s.activation_status === "INACTIVE" && s.onboarding_status === "DISCOVERED")
+        .slice(0, limit);
+    }
+
+    setLeads((prev) => {
+      const prevDiscovered = prev.filter((l) => l.onboarding_status === "DISCOVERED");
+      const existingIds = new Set(prevDiscovered.map((l) => l.id));
+      const uniqueNew = newlyDiscovered.filter((l) => !existingIds.has(l.id));
+
+      const finalDiscovered = [...uniqueNew, ...prevDiscovered];
+      return [...finalDiscovered, ...pipelineData];
+    });
+  };
+
   const fetchGlobalRoles = async () => {
     try {
-      const { data } = await supabase.from('global_staff_roles').select('*').order('category');
-      if (data && data.length > 0) {
+      const result = await withTimeout(
+        fetchAdminLeadsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      const data = result.staffRoles || [];
+      if (data.length > 0) {
         setGlobalRoles(data);
       } else {
         setGlobalRoles([
@@ -245,39 +279,18 @@ export default function Leads() {
   const fetchLeads = async (limit?: number) => {
     try {
       setLoading(true);
-      
-      const { data: pipelineData, error: pipelineError } = await supabase
-        .from("salons")
-        .select("*")
-        .eq('activation_status', 'INACTIVE')
-        .neq('onboarding_status', 'DISCOVERED')
-        .order("created_at", { ascending: false });
-        
-      if (pipelineError) throw pipelineError;
-      
-      let newlyDiscovered: any[] = [];
-      if (limit) {
-        const { data: discoveryData, error: discoveryError } = await supabase
-          .from("salons")
-          .select("*")
-          .eq('activation_status', 'INACTIVE')
-          .eq('onboarding_status', 'DISCOVERED')
-          .order("created_at", { ascending: false })
-          .limit(limit);
-          
-        if (discoveryError) throw discoveryError;
-        newlyDiscovered = discoveryData || [];
+
+      const result = await withTimeout(
+        fetchAdminLeadsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
       }
 
-      setLeads(prev => {
-        const prevDiscovered = prev.filter(l => l.onboarding_status === 'DISCOVERED');
-        const existingIds = new Set(prevDiscovered.map(l => l.id));
-        const uniqueNew = newlyDiscovered.filter(l => !existingIds.has(l.id));
-        
-        const finalDiscovered = [...uniqueNew, ...prevDiscovered];
-        return [...finalDiscovered, ...(pipelineData || [])];
-      });
-
+      applyLeadsFromSalons(result.salons || [], limit);
     } catch (error: any) {
       toast.error("Failed to load leads: " + error.message);
     } finally {
@@ -287,13 +300,20 @@ export default function Leads() {
 
   const fetchAgents = async () => {
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("email, full_name, global_role")
-        .in("global_role", ["agent", "admin"]);
-      
-      if (error) throw error;
-      setAgents(data || []);
+      const result = await withTimeout(
+        fetchAdminLeadsPage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      const data = (result.users || []).filter((u) =>
+        ["agent", "admin"].includes(u.global_role)
+      );
+      setAgents(data);
     } catch (error: any) {
       console.error("Failed to load agents", error);
     }

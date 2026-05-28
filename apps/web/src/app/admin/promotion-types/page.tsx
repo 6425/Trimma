@@ -20,7 +20,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
+import {
+  deletePromotionType,
+  fetchPromotionTypesCatalog,
+  savePromotionType,
+} from "@/app/actions/promotion-types";
+import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 
 const IconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -45,15 +50,19 @@ export default function PromotionTypeManagement() {
   const fetchPromotionTypes = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("promotion_types")
-        .select(`*, global_promotion_packages:global_promotion_packages(count)`)
-        .order("name");
+      const result = await withTimeout(
+        fetchPromotionTypesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      if (error) throw error;
-      setPromotionTypes(data || []);
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setPromotionTypes(result.promotionTypes || []);
     } catch (error: any) {
-      toast.error("Failed to load promotion types: " + error.message);
+      toast.error("Failed to load promotion types: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -71,28 +80,42 @@ export default function PromotionTypeManagement() {
 
     try {
       setSaving(true);
-      const payload = {
-        name: formData.name,
-        slug,
-        icon: formData.icon,
-        description: formData.description,
-      };
+      const result = await withTimeout(
+        savePromotionType({
+          id: editId || undefined,
+          name: formData.name,
+          slug,
+          icon: formData.icon,
+          description: formData.description,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
+      );
 
-      if (editId) {
-        const { error } = await supabase.from("promotion_types").update(payload).eq("id", editId);
-        if (error) throw error;
-        toast.success("Promotion type updated");
-      } else {
-        const { error } = await supabase.from("promotion_types").insert([payload]);
-        if (error) throw error;
-        toast.success("Promotion type created");
+      if (result.success === false) {
+        throw new Error(result.error);
       }
 
+      const saved = result.promotionType;
+      setPromotionTypes((prev) => {
+        const nextRow = {
+          ...saved,
+          global_promotion_packages:
+            prev.find((t) => t.id === saved.id)?.global_promotion_packages ?? [{ count: 0 }],
+        };
+        if (editId) {
+          return prev
+            .map((row) => (row.id === saved.id ? nextRow : row))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return [...prev, nextRow].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      toast.success(editId ? "Promotion type updated" : "Promotion type created");
       setFormData({ name: "", slug: "", icon: "Gift", description: "" });
       setEditId(null);
-      fetchPromotionTypes();
     } catch (error: any) {
-      toast.error("Error saving promotion type: " + error.message);
+      toast.error("Error saving promotion type: " + (error.message || "Unknown error"));
     } finally {
       setSaving(false);
     }
@@ -102,10 +125,15 @@ export default function PromotionTypeManagement() {
     if (!confirm("Delete this promotion type? Linked global packages may be affected.")) return;
 
     try {
-      const { error } = await supabase.from("promotion_types").delete().eq("id", id);
-      if (error) throw error;
+      const result = await withTimeout(
+        deletePromotionType(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
+      if (result.success === false) throw new Error(result.error);
+
+      setPromotionTypes((prev) => prev.filter((row) => row.id !== id));
       toast.success("Promotion type deleted");
-      fetchPromotionTypes();
     } catch (error: any) {
       toast.error("Error deleting promotion type: " + error.message);
     }

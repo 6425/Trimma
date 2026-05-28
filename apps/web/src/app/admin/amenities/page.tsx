@@ -28,8 +28,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import {
+  deleteAmenity,
+  fetchAmenitiesCatalog,
+  saveAmenity,
+} from "@/app/actions/amenities";
+import { withTimeout } from "@/lib/promise-timeout";
 
 const iconMap: Record<string, any> = {
   Wind,
@@ -57,15 +62,19 @@ export default function GlobalAmenitiesManagement() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("global_amenities")
-        .select("*")
-        .order("name");
+      const result = await withTimeout(
+        fetchAmenitiesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
 
-      if (error) throw error;
-      setAmenities(data || []);
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setAmenities(result.amenities || []);
     } catch (error: any) {
-      toast.error("Failed to fetch records: " + error.message);
+      toast.error("Failed to fetch records: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -96,27 +105,35 @@ export default function GlobalAmenitiesManagement() {
 
     setIsSaving(true);
     try {
-      let error;
-      if (editingAmenity.id) {
-        const { error: err } = await supabase
-          .from("global_amenities")
-          .update(editingAmenity)
-          .eq("id", editingAmenity.id);
-        error = err;
-      } else {
-        const { error: err } = await supabase
-          .from("global_amenities")
-          .insert([editingAmenity]);
-        error = err;
+      const result = await withTimeout(
+        saveAmenity({
+          id: editingAmenity.id,
+          name: editingAmenity.name,
+          type: editingAmenity.type,
+          icon_name: editingAmenity.icon_name,
+        }),
+        25000,
+        "Save timed out after 25s. Check Vercel SUPABASE_SERVICE_ROLE_KEY, then try again."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
       }
 
-      if (error) throw error;
+      const saved = result.amenity;
+      setAmenities((prev) => {
+        if (editingAmenity.id) {
+          return prev
+            .map((row) => (row.id === saved.id ? saved : row))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        return [...prev, saved].sort((a, b) => a.name.localeCompare(b.name));
+      });
 
       toast.success(editingAmenity.id ? "Amenity updated" : "Global amenity created");
       setIsDialogOpen(false);
-      fetchData();
     } catch (error: any) {
-      toast.error("Error saving: " + error.message);
+      toast.error("Error saving: " + (error.message || "Unknown error"));
     } finally {
       setIsSaving(false);
     }
@@ -126,12 +143,17 @@ export default function GlobalAmenitiesManagement() {
     if (!confirm("Are you sure? This will remove the amenity from all salons as well.")) return;
     
     try {
-      const { error } = await supabase.from("global_amenities").delete().eq("id", id);
-      if (error) throw error;
+      const result = await withTimeout(
+        deleteAmenity(id),
+        20000,
+        "Delete timed out. Refresh the page and try again."
+      );
+      if (result.success === false) throw new Error(result.error);
+
+      setAmenities((prev) => prev.filter((row) => row.id !== id));
       toast.success("Amenity deleted");
-      fetchData();
     } catch (error: any) {
-      toast.error("Delete failed: " + error.message);
+      toast.error("Delete failed: " + (error.message || "Unknown error"));
     }
   };
 
@@ -277,7 +299,7 @@ export default function GlobalAmenitiesManagement() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Data Type *</label>
                 <Select 
-                  value={editingAmenity?.type}
+                  value={editingAmenity?.type || undefined}
                   onValueChange={(val) => setEditingAmenity({ ...editingAmenity, type: val })}
                 >
                   <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
@@ -293,7 +315,7 @@ export default function GlobalAmenitiesManagement() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Icon Styling *</label>
                 <Select 
-                  value={editingAmenity?.icon_name}
+                  value={editingAmenity?.icon_name || undefined}
                   onValueChange={(val) => setEditingAmenity({ ...editingAmenity, icon_name: val })}
                 >
                   <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">

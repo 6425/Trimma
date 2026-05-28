@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAdminUsers } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 function AdminUserList() {
   const navigate = useRouter();
@@ -47,13 +49,17 @@ function AdminUserList() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      setUsers(data || []);
+      const result = await withTimeout(
+        fetchAdminUsers(roleFilter),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setUsers(result.users || []);
     } catch (error: any) {
       toast.error("Failed to load users: " + error.message);
     } finally {
@@ -63,7 +69,7 @@ function AdminUserList() {
 
   useEffect(() => {
     void Promise.resolve().then(() => fetchUsers());
-  }, []);
+  }, [roleFilter]);
 
   const handleEditClick = (user: any) => {
     setEditingUser({ ...user });

@@ -1,10 +1,8 @@
 "use server";
 
-import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { assertPlatformAdmin } from "@/lib/platform-admin";
+import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
 export type SaveCategoryInput = {
-  accessToken: string;
   id?: string;
   name: string;
   slug?: string;
@@ -12,17 +10,6 @@ export type SaveCategoryInput = {
   image_url?: string | null;
   description?: string | null;
 };
-
-function mapCategoryError(message: string): string {
-  const lower = message.toLowerCase();
-  if (lower.includes("row-level security") || lower.includes("permission denied")) {
-    return "Save blocked by database permissions. Ensure GUEST_WRITE_RLS_PATCH.sql is applied and your account has admin role.";
-  }
-  if (lower.includes("duplicate key") || lower.includes("categories_slug")) {
-    return "A category with this slug already exists. Choose a different name or slug.";
-  }
-  return message;
-}
 
 function buildPayload(input: SaveCategoryInput) {
   return {
@@ -34,81 +21,87 @@ function buildPayload(input: SaveCategoryInput) {
   };
 }
 
+export async function fetchCategoriesCatalog() {
+  const result = await withAdminDb(async (supabase) => {
+    const [{ data: categories, error: categoriesError }, { data: services, error: servicesError }, { data: globalServices, error: globalError }] =
+      await Promise.all([
+        supabase.from("categories").select("*").order("name"),
+        supabase.from("services").select("category_id"),
+        supabase.from("global_services").select("category_id"),
+      ]);
+
+    if (categoriesError) throw new Error(categoriesError.message);
+    if (servicesError) throw new Error(servicesError.message);
+    if (globalError) throw new Error(globalError.message);
+
+    const serviceCounts = new Map<string, number>();
+    for (const row of services || []) {
+      const id = row.category_id as string | null;
+      if (!id) continue;
+      serviceCounts.set(id, (serviceCounts.get(id) || 0) + 1);
+    }
+
+    const globalCounts = new Map<string, number>();
+    for (const row of globalServices || []) {
+      const id = row.category_id as string | null;
+      if (!id) continue;
+      globalCounts.set(id, (globalCounts.get(id) || 0) + 1);
+    }
+
+    const rows = (categories || []).map((category) => ({
+      ...category,
+      services: [{ count: serviceCounts.get(category.id) || 0 }],
+      global_services: [{ count: globalCounts.get(category.id) || 0 }],
+    }));
+
+    return { categories: rows };
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+
+  return { success: true as const, categories: result.data.categories };
+}
+
 export async function saveCategory(input: SaveCategoryInput) {
-  try {
-    if (!input.accessToken) {
-      return { success: false as const, error: "You must be signed in as an admin." };
-    }
+  if (!input.name?.trim()) {
+    return { success: false as const, error: "Category name is required." };
+  }
 
-    if (!input.name?.trim()) {
-      return { success: false as const, error: "Category name is required." };
-    }
-
-    await assertPlatformAdmin(input.accessToken);
-
-    const supabase = createSupabaseAdminClient();
-    const payload = buildPayload(input);
-
+  const payload = buildPayload(input);
+  const result = await withAdminDb(async (supabase) => {
     if (input.id) {
       const { data, error } = await supabase
         .from("categories")
         .update(payload)
         .eq("id", input.id)
         .select("*")
-        .single();
-
-      if (error) {
-        return { success: false as const, error: mapCategoryError(error.message) };
-      }
-
-      return { success: true as const, category: data };
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) throw new Error("Update did not apply.");
+      return data;
     }
 
-    const { data, error } = await supabase
-      .from("categories")
-      .insert([payload])
-      .select("*")
-      .single();
+    const { data, error } = await supabase.from("categories").insert([payload]).select("*").single();
+    if (error) throw new Error(error.message);
+    return data;
+  });
 
-    if (error) {
-      return { success: false as const, error: mapCategoryError(error.message) };
-    }
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
 
-    return { success: true as const, category: data };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Save failed.";
-    if (message.includes("SUPABASE_SERVICE_ROLE_KEY")) {
-      return {
-        success: false as const,
-        error: "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it in Vercel environment variables.",
-      };
-    }
-    return { success: false as const, error: mapCategoryError(message) };
-  }
+  return { success: true as const, category: result.data };
 }
 
-export async function deleteCategory(accessToken: string, id: string) {
-  try {
-    if (!accessToken) {
-      return { success: false as const, error: "You must be signed in as an admin." };
-    }
-
-    if (!id) {
-      return { success: false as const, error: "Category id is required." };
-    }
-
-    await assertPlatformAdmin(accessToken);
-
-    const supabase = createSupabaseAdminClient();
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-
-    if (error) {
-      return { success: false as const, error: mapCategoryError(error.message) };
-    }
-
-    return { success: true as const };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Delete failed.";
-    return { success: false as const, error: mapCategoryError(message) };
+export async function deleteCategory(id: string) {
+  if (!id) {
+    return { success: false as const, error: "Category id is required." };
   }
+
+  const result = await withAdminDb(async (supabase) => {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+
+  return { success: true as const };
 }

@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/config/supabase";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { fetchAdminFinancePage } from "@/app/actions/admin-list-data";
+import { withTimeout } from "@/lib/promise-timeout";
 
 interface BookingWithSplits {
   id: string;
@@ -55,13 +57,25 @@ export default function FinanceDashboard() {
       router.replace("/login?redirectTo=/dashboard/finance");
       return;
       }
-      
-      // 1. Check if user is Admin
-      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle();
-      if (roleData?.role === 'admin') {
+
+      const result = await withTimeout(
+        fetchAdminFinancePage(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      const { adminRoles, commissionMaster, salons, bookings: bookingsData } = result;
+      const isUserAdmin = (adminRoles || []).some((r) => r.user_id === session.user.id);
+
+      if (isUserAdmin) {
       setIsAdmin(true);
-      // Fetch current active commission rule
-      const { data: commData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
+      const commData = (commissionMaster || []).find(
+        (c) => c.commission_type === "booking" && c.active
+      );
       if (commData) {
       setGlobalRates({
       platform: commData.platform_percentage,
@@ -71,45 +85,37 @@ export default function FinanceDashboard() {
       });
       }
       }
-      
-      // 2. Fetch Salon Data
+
       let salonId = null;
-      if (roleData?.role === 'salon_owner') {
-      const { data: salonData } = await supabase.from("salons").select("id").eq("owner_email", session.user.email).maybeSingle();
+      const salonData = (salons || []).find((s) => s.owner_email === session.user.email);
       if (salonData) salonId = salonData.id;
-      }
-      
-      // 3. Fetch Bookings (If Admin, fetch all platform bookings. If Salon, fetch only theirs)
-      let query = supabase.from("bookings").select("*").order("created_at", { ascending: false });
+
+      let filteredBookings = bookingsData || [];
       if (salonId) {
-      query = query.eq("salon_id", salonId);
-      } else if (roleData?.role !== 'admin') {
+      filteredBookings = filteredBookings.filter((b: any) => b.salon_id === salonId);
+      } else if (!isUserAdmin) {
       setLoading(false);
-      return; // Neither admin nor salon owner
+      return;
       }
-      
-      const { data: bookingsData, error } = await query;
-      if (!error && bookingsData) {
-      
-      const resolvedBookings = bookingsData.map((b: any) => ({
+
+      const resolvedBookings = filteredBookings.map((b: any) => ({
       ...b,
-      amount: parseFloat(b.total_price || 0),
+      amount: parseFloat(b.total_price || b.amount || 0),
       platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
       salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
       payhere_fee_amount: parseFloat(b.payhere_fee_amount || 0),
       agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
       }));
-      
+
       setBookings(resolvedBookings);
-      
-      // 4. Calculate aggregates
+
       let gross = 0;
       let platform = 0;
       let salonUpfront = 0;
       let agent = 0;
       let payhere = 0;
       let completed = 0;
-      
+
       resolvedBookings.forEach((b: BookingWithSplits) => {
       if (b.status === "completed" || b.status === "confirmed") {
       gross += b.amount;
@@ -120,7 +126,7 @@ export default function FinanceDashboard() {
       completed += 1;
       }
       });
-      
+
       setStats({
       grossRevenue: gross,
       platformComm: platform,
@@ -129,9 +135,9 @@ export default function FinanceDashboard() {
       payhereComm: payhere,
       completedCount: completed
       });
-      }
-      } catch (err) {
+      } catch (err: any) {
       console.error("Failed to load finance data", err);
+      toast.error("Failed to load finance data: " + (err.message || "Unknown error"));
       } finally {
       setLoading(false);
       }

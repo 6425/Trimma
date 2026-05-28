@@ -10,8 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { deleteCategory, saveCategory } from "@/app/actions/categories";
-import { getTrimmaAccessToken } from "@/lib/client-auth";
+import { deleteCategory, fetchCategoriesCatalog, saveCategory } from "@/app/actions/categories";
+import { withTimeout } from "@/lib/promise-timeout";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
@@ -72,15 +72,19 @@ export default function CategoryManagement() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("categories")
-        .select(`*, services:services(count), global_services:global_services(count)`)
-        .order("name");
-      
-      if (error) throw error;
-      setCategories(data || []);
+      const result = await withTimeout(
+        fetchCategoriesCatalog(),
+        20000,
+        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+      );
+
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
+
+      setCategories(result.categories || []);
     } catch (error: any) {
-      toast.error("Failed to load categories: " + error.message);
+      toast.error("Failed to load categories: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -156,15 +160,7 @@ export default function CategoryManagement() {
     try {
       setSaving(true);
 
-      const accessToken = await getTrimmaAccessToken();
-
-      if (!accessToken) {
-        toast.error("Please sign in again at /admin/login.");
-        return;
-      }
-
       const result = await saveCategory({
-        accessToken: accessToken,
         id: editId || undefined,
         name: formData.name,
         slug,
@@ -172,7 +168,7 @@ export default function CategoryManagement() {
         image_url: formData.image_url,
       });
 
-      if (!result.success) {
+      if (result.success === false) {
         throw new Error(result.error);
       }
 
@@ -191,15 +187,8 @@ export default function CategoryManagement() {
     if (!confirm("Are you sure? This will delete the category and might affect linked services.")) return;
     
     try {
-      const accessToken = await getTrimmaAccessToken();
-
-      if (!accessToken) {
-        toast.error("Please sign in again at /admin/login.");
-        return;
-      }
-
-      const result = await deleteCategory(accessToken, id);
-      if (!result.success) throw new Error(result.error);
+      const result = await deleteCategory(id);
+      if (result.success === false) throw new Error(result.error);
 
       toast.success("Category deleted");
       fetchCategories();
