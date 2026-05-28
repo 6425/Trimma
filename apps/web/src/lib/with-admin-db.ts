@@ -9,8 +9,11 @@ export function mapAdminDbError(message: string, hint?: string): string {
   if (lower.includes("does not exist") || lower.includes("relation")) {
     return hint || "Database table is missing. Run the matching packages/db patch in Supabase SQL Editor.";
   }
-  if (lower.includes("duplicate key")) {
+  if (lower.includes("duplicate key") || lower.includes("salons_slug_key")) {
     return "A record with this slug already exists. Choose a different name or slug.";
+  }
+  if (lower.includes("could not find") && lower.includes("column")) {
+    return "Save included an invalid salon field. Refresh the page and try again.";
   }
   if (lower.includes("row-level security") || lower.includes("permission denied")) {
     return "Save blocked by database permissions. Ensure your account has admin role.";

@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
+import { sanitizeAdminSalonPayload } from "@/lib/admin-salon-update";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { saveBookingCommissionMaster } from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
@@ -37,12 +38,22 @@ export async function rescheduleAdminBooking(bookingId: string, bookingDate: str
 // ─── Salons ─────────────────────────────────────────────────────────────────
 
 export async function updateAdminSalon(salonId: string, payload: Record<string, unknown>) {
-  const result = await withAdminDb(async (supabase) => {
-    const { error } = await supabase.from("salons").update(payload).eq("id", salonId);
-    if (error) throw new Error(error.message);
-  });
-  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
-  return { success: true as const };
+  try {
+    const sanitized = sanitizeAdminSalonPayload(payload);
+    if (Object.keys(sanitized).length === 0) {
+      return { success: false as const, error: "No valid salon fields to update." };
+    }
+
+    const result = await withAdminDb(async (supabase) => {
+      const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);
+      if (error) throw new Error(error.message);
+    });
+    if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+    return { success: true as const };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to save salon.";
+    return { success: false as const, error: message };
+  }
 }
 
 export async function approveAdminSalon(salonId: string) {

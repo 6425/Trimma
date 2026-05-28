@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
+import { formatServerActionError } from "@/lib/salon-profile-save";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -63,7 +64,7 @@ export default function Salons() {
     setEditForm({
       name: salon.name || "",
       description: salon.description || "",
-      email: salon.email || "",
+      email: salon.owner_email || salon.owner_gmail || salon.email || "",
       phone: salon.phone || "",
       address: salon.address || "",
       city: salon.city || "",
@@ -87,12 +88,19 @@ export default function Salons() {
       setIsSavingEdit(true);
       toast.loading("Saving salon details...");
 
-      let parsedHours = [];
+      let parsedHours: string | Record<string, unknown> | unknown[] = "[]";
       try {
         parsedHours = JSON.parse(editForm.working_hours || "[]");
-      } catch (e) {
-        parsedHours = editForm.working_hours;
+      } catch {
+        parsedHours = editForm.working_hours || "[]";
       }
+
+      const parseOptionalFloat = (value: string) => {
+        const trimmed = (value || "").trim();
+        if (!trimmed) return null;
+        const parsed = parseFloat(trimmed);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
 
       const updatePayload = {
         name: editForm.name,
@@ -103,13 +111,14 @@ export default function Salons() {
         city: editForm.city,
         district: editForm.district,
         province: editForm.province,
-        latitude: editForm.latitude ? parseFloat(editForm.latitude) : null,
-        longitude: editForm.longitude ? parseFloat(editForm.longitude) : null,
-        rating: editForm.rating ? parseFloat(editForm.rating) : null,
+        latitude: parseOptionalFloat(editForm.latitude),
+        longitude: parseOptionalFloat(editForm.longitude),
+        rating: parseOptionalFloat(editForm.rating),
         logo_url: editForm.logo_url,
         cover_url: editForm.cover_url,
         status: editForm.status,
-        working_hours: parsedHours
+        working_hours: parsedHours,
+        is_verified: editForm.is_verified,
       };
 
       const result = await updateAdminSalon(selectedSalon.id, updatePayload);
@@ -121,9 +130,9 @@ export default function Salons() {
       setSelectedSalon({ ...selectedSalon, ...updatePayload });
       fetchSalons(); 
       setViewModalOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.dismiss();
-      toast.error("Failed to save changes: " + error.message);
+      toast.error("Failed to save changes: " + formatServerActionError(error));
     } finally {
       setIsSavingEdit(false);
     }
@@ -200,13 +209,14 @@ export default function Salons() {
   };
 
   const handleResendInviteFromTable = async (salon: any) => {
-    if (!salon.phone || !salon.email) {
+    const ownerEmail = salon.owner_email || salon.owner_gmail || salon.email;
+    if (!salon.phone || !ownerEmail) {
       toast.error("Phone and Email are required to send an invite.");
       return;
     }
     try {
       toast.loading("Resending WhatsApp Invitation...");
-      const result = await sendOnboardingInviteAlert(salon.id, salon.phone, salon.email, salon.name);
+      const result = await sendOnboardingInviteAlert(salon.id, salon.phone, ownerEmail, salon.name);
       toast.dismiss();
       if (result.success) {
         toast.success("WhatsApp invitation sent successfully!");
