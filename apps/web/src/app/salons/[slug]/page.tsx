@@ -17,7 +17,6 @@ import { calculateCommissionSplit } from "@/lib/booking-pricing";
 import { getBlockedDisplaySlots } from "@/lib/booking-availability";
 import { getSalonDirectionsUrl } from "@/lib/salon-map";
 import {
-  mapSalonPromotionRows,
   type SalonPromotionPackage,
 } from "@/lib/deals";
 import {
@@ -28,9 +27,10 @@ import {
 import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
 import { toast } from "sonner";
 import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
+import { fetchPublicSalonPage } from "@/app/actions/public-salon-page";
+import { withTimeout } from "@/lib/promise-timeout";
 import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
-import { fetchCachedGlobalAmenities, formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
 import {
   getDiscountedServicePrice,
@@ -157,120 +157,37 @@ export default function SalonPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [confirmedBookingDetails, setConfirmedBookingDetails] = useState<any>(null);
 
-  // FETCH DATA DIRECTLY FROM SUPABASE
+  // FETCH SALON DATA VIA SERVER (client Supabase hangs on production)
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      async function loadData() {
-      try {
-      // 1. Fetch Salon by Slug directly from Supabase
-      let { data: salonData, error: salonError } = await supabase
-      .from("salons")
-      .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured")
-      .eq("slug", slug)
-      .maybeSingle();
-      
-      // Self-Healing Fallback: If not found by slug, check if the slug is actually a UUID ID
-      if (!salonData && slug) {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-      if (isUuid) {
-      const { data: fallbackData } = await supabase
-      .from("salons")
-      .select("id, slug, name, city, district, province, address, phone, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured")
-      .eq("id", slug)
-      .maybeSingle();
-      if (fallbackData) {
-      salonData = fallbackData;
-      salonError = null;
-      }
-      }
-      }
-      
-      if (salonError || !salonData) {
-      console.warn(`Salon not found in database for slug: "${slug}"`);
-      setSalon(null);
-      setLoading(false);
-      return;
-      }
-      setSalon(salonData);
-      
-      // 2 & 3. Fetch Services, Staff, and Amenities in parallel directly from Supabase
-      const [servicesRes, staffRes, amenitiesRes, globalAmenities, promotionsRes] = await Promise.all([
-      supabase
-      .from("services")
-      .select("*")
-      .eq("salon_id", salonData.id)
-      .eq("status", "active"),
-      supabase
-      .from("salon_staff")
-      .select("*")
-      .eq("salon_id", salonData.id)
-      .eq("status", "active"),
-      supabase
-      .from("salon_amenities")
-      .select("*")
-      .eq("salon_id", salonData.id)
-      .or("value.eq.true,value.gt.0"),
-      fetchCachedGlobalAmenities(supabase),
-      supabase
-      .from("salon_promotion_packages")
-      .select("id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type")
-      .eq("salon_id", salonData.id)
-      .eq("status", "active"),
-      ]);
-      
-      const servicesData = servicesRes.data;
-      const staffData = staffRes.data;
-      
-      if (servicesData) {
-      setServices(servicesData.map((svc: any) => ({
-      id: svc.id,
-      name: svc.name,
-      duration: svc.duration_min,
-      price: svc.price,
-      discount_percentage: svc.discount_percentage,
-      discount_end_date: svc.discount_end_date,
-      category: svc.category || 'Hair',
-      description: svc.description || 'Experience premium service.',
-      image_url: svc.image_url || null,
-      popular: false
-      })));
+    void Promise.resolve().then(async () => {
+      if (!slug) {
+        setLoading(false);
+        return;
       }
 
-      if (promotionsRes.data) {
-      setPromotionPackages(mapSalonPromotionRows(promotionsRes.data));
-      }
-      
-      if (staffData) {
-      setStaff(staffData.map((member: any) => ({
-      id: member.id,
-      name: member.name,
-      role: member.role || 'Professional',
-      experience: '5 yrs',
-      rating: 4.8,
-      completed: 100,
-      availableToday: true,
-      working_hours: member.working_hours
-      })));
-      }
-      
-      if (amenitiesRes.data && globalAmenities) {
-      const globalMap = Object.fromEntries(globalAmenities.map((g: any) => [g.id, g]));
-      const formatted = amenitiesRes.data
-      .map((am: any) => {
-      const ga = globalMap[am.amenity_id];
-      if (!ga) return null;
-      return formatPublicSalonAmenity(ga, am);
-      })
-      .filter(Boolean);
-      setAmenities(formatted);
-      }
+      try {
+        const result = await withTimeout(
+          fetchPublicSalonPage(slug),
+          20000,
+          "Loading timed out. Refresh the page."
+        );
+
+        if (result.success === false) {
+          setSalon(null);
+          return;
+        }
+
+        setSalon(result.salon);
+        setServices(result.services);
+        setStaff(result.staff);
+        setAmenities(result.amenities);
+        setPromotionPackages(result.promotionPackages);
       } catch (err) {
-      console.error("Failed to load salon data via Supabase direct query", err);
+        console.error("Failed to load salon page data", err);
+        setSalon(null);
       } finally {
-      setLoading(false);
+        setLoading(false);
       }
-      }
-      if (slug) loadData();
     });
   }, [slug]);
 
