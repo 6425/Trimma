@@ -4,13 +4,15 @@ import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { generatePayhereHash } from "@/app/actions/payhere";
-import { supabase } from "@/config/supabase";
+import {
+  fetchSubscriptionCheckoutPage,
+  initSubscriptionPayhereCheckout,
+} from "@/app/actions/subscription-checkout-data";
 import { submitPayhereCheckout } from "@/lib/payhere-checkout";
+import { withTimeout } from "@/lib/promise-timeout";
 import { CheckoutCustomerForm } from "../../../components/checkout/CheckoutCustomerForm";
 import { CheckoutStyles } from "../../../components/checkout/CheckoutStyles";
 import {
-  DEFAULT_SUBSCRIPTION_PLANS,
   getAnnualMonthlyRate,
   getAnnualTotal,
   getCheckoutAmount,
@@ -30,20 +32,13 @@ import {
   Users,
 } from "lucide-react";
 
-const DEFAULT_PLANS: Record<string, (typeof DEFAULT_SUBSCRIPTION_PLANS)[number]> = Object.fromEntries(
-  DEFAULT_SUBSCRIPTION_PLANS.filter((p) => p.name !== "Free").map((p) => [p.name.toLowerCase(), p])
-);
-
-function createSubscriptionOrderId() {
-  return `SUB-${Math.floor(100000 + Math.random() * 900000)}`;
-}
-
 function SubscriptionCheckoutForm() {
   const searchParams = useSearchParams();
   const planParam = (searchParams.get("plan") || "pro").toLowerCase();
   const cycleParam = searchParams.get("cycle") === "annual" ? "annual" : "monthly";
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [planDetails, setPlanDetails] = useState<any>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(cycleParam);
@@ -60,50 +55,46 @@ function SubscriptionCheckoutForm() {
   });
 
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      async function loadData() {
+    let cancelled = false;
+
+    void Promise.resolve().then(async () => {
       try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-      const user = session.user;
-      setCustomerDetails((prev) => ({
-      ...prev,
-      firstName: user.user_metadata?.first_name || prev.firstName,
-      lastName: user.user_metadata?.last_name || prev.lastName,
-      email: user.email || prev.email,
-      phone: user.phone || user.user_metadata?.phone || prev.phone,
-      }));
-      }
-      
-      const { data: paymentSettings } = await supabase
-      .from("global_payment_settings")
-      .select("payhere_enabled, environment")
-      .eq("id", "00000000-0000-0000-0000-000000000001")
-      .maybeSingle();
-      
-      setPayhereEnabled(paymentSettings?.payhere_enabled !== false);
-      setPayhereEnvironment(paymentSettings?.environment || "sandbox");
-      
-      const { data: planData } = await supabase
-      .from("subscription_plans")
-      .select("*")
-      .ilike("name", planParam)
-      .maybeSingle();
-      
-      if (planData) {
-      setPlanDetails(planData);
-      } else {
-      setPlanDetails(DEFAULT_PLANS[planParam] || DEFAULT_PLANS.pro);
-      }
+        setLoading(true);
+        setLoadError(null);
+
+        const result = await withTimeout(
+          fetchSubscriptionCheckoutPage(planParam),
+          20000,
+          "Checkout load timed out. Please refresh."
+        );
+
+        if (cancelled) return;
+
+        setPlanDetails(result.planDetails);
+        setPayhereEnabled(result.payhereEnabled);
+        setPayhereEnvironment(result.payhereEnvironment);
+
+        if (result.customerPrefill) {
+          setCustomerDetails((prev) => ({
+            ...prev,
+            firstName: result.customerPrefill!.firstName || prev.firstName,
+            lastName: result.customerPrefill!.lastName || prev.lastName,
+            email: result.customerPrefill!.email || prev.email,
+            phone: result.customerPrefill!.phone || prev.phone,
+          }));
+        }
       } catch (err) {
-      console.error("Error loading checkout data:", err);
-      setPlanDetails(DEFAULT_PLANS[planParam] || DEFAULT_PLANS.pro);
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : "Failed to load checkout.");
+        }
       } finally {
-      setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-      }
-      loadData();
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [planParam]);
 
   const chargeAmount = planDetails ? getCheckoutAmount(planDetails, billingCycle) : 0;
@@ -114,65 +105,48 @@ function SubscriptionCheckoutForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!payhereEnabled) return;
+    if (!payhereEnabled || !planDetails) return;
 
     setProcessing(true);
 
     try {
-      const { data: paymentSettings } = await supabase
-        .from("global_payment_settings")
-        .select("*")
-        .eq("id", "00000000-0000-0000-0000-000000000001")
-        .maybeSingle();
+      const result = await initSubscriptionPayhereCheckout({
+        planName: planDetails.name,
+        billingCycle,
+        chargeAmount,
+        customerDetails,
+        origin: window.location.origin,
+        cancelUrl: window.location.href,
+      });
 
-      const merchantId = paymentSettings?.payhere_merchant_id || "1211149";
-      const merchantSecret = paymentSettings?.payhere_merchant_secret || "4a5s6d7f8g9h";
-      const environment = paymentSettings?.environment || "sandbox";
-      const orderId = createSubscriptionOrderId();
-      const amount = chargeAmount.toFixed(2);
-      const cycleLabel = billingCycle === "annual" ? "Annual" : "Monthly";
+      if (result.success === false) {
+        throw new Error(result.error);
+      }
 
-      const secureHash = await generatePayhereHash(
-        merchantId,
-        orderId,
-        amount,
-        "LKR",
-        merchantSecret
-      );
-
-      submitPayhereCheckout(
-        {
-          merchant_id: merchantId,
-          return_url: `${window.location.origin}/dashboard/billing?payment_success=true&sub_order=${orderId}&plan=${planDetails.name}`,
-          cancel_url: window.location.href,
-          notify_url: "https://whxmyfjlrvyjqbmqhnzd.supabase.co/functions/v1/payhere-webhook",
-          order_id: orderId,
-          items: `Trimma ${planDetails.name} Plan (${cycleLabel})`,
-          custom_1: `Trimma ${planDetails.name} (${cycleLabel})`,
-          currency: "LKR",
-          amount,
-          first_name: customerDetails.firstName || "Guest",
-          last_name: customerDetails.lastName || "User",
-          email: customerDetails.email || "guest@trimma.com",
-          phone: customerDetails.phone || "0000000000",
-          address: customerDetails.address,
-          city: customerDetails.city,
-          country: "Sri Lanka",
-          hash: secureHash,
-        },
-        environment
-      );
+      submitPayhereCheckout(result.payload, result.environment);
     } catch (error) {
       console.error("Payment initialization failed:", error);
-      alert("Failed to initialize PayHere. Please try again.");
+      alert(error instanceof Error ? error.message : "Failed to initialize PayHere. Please try again.");
       setProcessing(false);
     }
   };
 
-  if (loading || !planDetails) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-900" />
+      </div>
+    );
+  }
+
+  if (loadError || !planDetails) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center gap-4">
+        <p className="text-lg font-semibold text-zinc-900">Could not load subscription checkout</p>
+        <p className="text-sm text-zinc-500">{loadError || "Plan details unavailable."}</p>
+        <Link href="/dashboard/billing" className="text-sm font-bold text-zinc-900 underline">
+          Back to billing
+        </Link>
       </div>
     );
   }
@@ -197,7 +171,6 @@ function SubscriptionCheckoutForm() {
       <CheckoutStyles />
 
       <div className="min-h-screen flex flex-col lg:flex-row font-sans text-gray-800 antialiased bg-white">
-        {/* LEFT — Order summary */}
         <div className="w-full lg:w-1/2 bg-[#F5B700] flex flex-col items-center justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#E5A800] text-zinc-950">
           <div className="w-full max-w-md">
             <Link
@@ -328,7 +301,6 @@ function SubscriptionCheckoutForm() {
           </div>
         </div>
 
-        {/* RIGHT — PayHere checkout */}
         <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-6 lg:p-16">
           <div className="w-full max-w-md">
             <CheckoutCustomerForm
