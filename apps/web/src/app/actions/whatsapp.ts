@@ -5,6 +5,11 @@ import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
+import {
+  clearWhatsAppPhoneResolutionCache,
+  resolveWhatsAppPhoneNumberId,
+  validateWhatsAppMetaAccount,
+} from "@/lib/whatsapp-meta-resolver";
 
 const D = WHATSAPP_TEMPLATE_DEFAULTS;
 
@@ -124,6 +129,10 @@ function formatWhatsAppApiError(result: {
     return "Your Meta WhatsApp access token has expired or is invalid. Generate a new token in Meta Developer Console → WhatsApp → API Setup, then paste it in Admin → Global Settings and click Save (this updates the database — local .env alone is not enough unless it is the only configured source). Meta temporary sandbox tokens usually expire after ~24 hours.";
   }
 
+  if (code === 100 && lower.includes("nonexisting field") && lower.includes("verified_name")) {
+    return "Use your Meta WhatsApp Business Account ID in the ID field. Trimma resolves the linked phone number automatically. Find it in Meta Developer Console → WhatsApp → API Setup.";
+  }
+
   return message;
 }
 
@@ -139,21 +148,22 @@ function readWhatsAppEnv(...names: string[]): string {
   return "";
 }
 
-/**
- * Trimma stores WhatsApp credentials in Supabase (global_payment_settings) and optionally in Vercel env.
- * When Vercel env vars are set they take priority so token rotation does not require a stale DB value.
- */
-function resolveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
-  const envPhoneId = readWhatsAppEnv("WHATSAPP_PHONE_NUMBER_ID", "META_WHATSAPP_PHONE_NUMBER_ID");
+/** Stored Meta WhatsApp Business Account ID (WABA) or legacy phone number ID. */
+function resolveWhatsAppCredentials(dbAccountId: string, dbAccessToken: string) {
+  const envAccountId = readWhatsAppEnv(
+    "WHATSAPP_BUSINESS_ACCOUNT_ID",
+    "WHATSAPP_PHONE_NUMBER_ID",
+    "META_WHATSAPP_PHONE_NUMBER_ID"
+  );
   const envAccessToken = readWhatsAppEnv(
     "WHATSAPP_ACCESS_TOKEN",
     "META_WHATSAPP_ACCESS_TOKEN",
     "WHATSAPP_TOKEN"
   );
   const dbToken = cleanWhatsAppCredential(dbAccessToken);
-  const dbPhone = cleanWhatsAppCredential(dbPhoneId);
+  const dbAccount = cleanWhatsAppCredential(dbAccountId);
 
-  const phoneId = envPhoneId || dbPhone;
+  const accountId = envAccountId || dbAccount;
   const accessToken = envAccessToken || dbToken;
   const source =
     accessToken === envAccessToken && envAccessToken
@@ -162,44 +172,34 @@ function resolveWhatsAppCredentials(dbPhoneId: string, dbAccessToken: string) {
         ? "database"
         : "none";
 
-  return { phoneId, accessToken, source, dbToken, envToken: envAccessToken };
+  return { accountId, accessToken, source, dbToken, envToken: envAccessToken };
+}
+
+async function resolveMessagingPhoneId(accountId: string, accessToken: string): Promise<string | null> {
+  const resolved = await resolveWhatsAppPhoneNumberId(accountId, accessToken);
+  return resolved.success ? resolved.phoneNumberId : null;
 }
 
 export async function validateWhatsAppCredentials(
-  phoneIdOverride?: string,
+  accountIdOverride?: string,
   accessTokenOverride?: string
 ) {
   const config = await getWhatsAppConfig();
-  const phoneId = phoneIdOverride?.trim() || config.phoneId;
+  const accountId = accountIdOverride?.trim() || config.accountId || config.phoneId;
   const accessToken = accessTokenOverride?.trim() || config.accessToken;
 
-  if (!phoneId || !accessToken) {
-    return { valid: false as const, error: "WhatsApp credentials are not configured." };
+  const validation = await validateWhatsAppMetaAccount(accountId, accessToken);
+  if (validation.valid === false) {
+    return { valid: false as const, error: validation.error };
   }
 
-  try {
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${phoneId}?fields=verified_name`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    const result = await response.json();
-
-    if (!response.ok) {
-      return { valid: false as const, error: formatWhatsAppApiError(result) };
-    }
-
-    return {
-      valid: true as const,
-      verifiedName: result.verified_name as string | undefined,
-    };
-  } catch (error) {
-    return {
-      valid: false as const,
-      error: error instanceof Error ? error.message : "Unable to validate WhatsApp credentials.",
-    };
-  }
+  return {
+    valid: true as const,
+    accountId: validation.accountId,
+    phoneNumberId: validation.phoneNumberId,
+    verifiedName: validation.verifiedName,
+    displayPhoneNumber: validation.displayPhoneNumber,
+  };
 }
 
 /**
@@ -247,7 +247,7 @@ export async function getWhatsAppConfig() {
     }
 
     const enabled = dbSettings.whatsapp_enabled !== false;
-    const { phoneId, accessToken, source } = resolveWhatsAppCredentials(
+    const { accountId, accessToken, source } = resolveWhatsAppCredentials(
       dbSettings.whatsapp_phone_number_id || "",
       dbSettings.whatsapp_access_token || ""
     );
@@ -291,7 +291,8 @@ export async function getWhatsAppConfig() {
 
     return { 
       enabled, 
-      phoneId, 
+      accountId,
+      phoneId: accountId,
       accessToken,
       adminAlertPhone,
       reservationPaidEnabled,
@@ -323,10 +324,11 @@ export async function getWhatsAppConfig() {
     };
   } catch (err) {
     console.warn("⚠️ Failed to load WhatsApp settings from DB, falling back to static default states:", err);
-    const { phoneId, accessToken, source } = resolveWhatsAppCredentials("", "");
+    const { accountId, accessToken, source } = resolveWhatsAppCredentials("", "");
     return {
       enabled: true,
-      phoneId,
+      accountId,
+      phoneId: accountId,
       accessToken,
       reservationPaidEnabled: true,
       bookingConfirmedEnabled: true,
@@ -359,11 +361,32 @@ export async function getWhatsAppConfig() {
   }
 }
 
+async function getWhatsAppMessagingConfig() {
+  const config = await getWhatsAppConfig();
+  const storedAccountId = config.accountId || config.phoneId;
+  if (!storedAccountId || !config.accessToken) {
+    return {
+      ...config,
+      accountId: storedAccountId,
+      messagingPhoneId: null as string | null,
+      phoneId: storedAccountId || "",
+    };
+  }
+
+  const messagingPhoneId = await resolveMessagingPhoneId(storedAccountId, config.accessToken);
+  return {
+    ...config,
+    accountId: storedAccountId,
+    messagingPhoneId,
+    phoneId: messagingPhoneId || "",
+  };
+}
+
 /**
  * Securely saves WhatsApp configurations and custom templates directly to the database.
  */
 export async function saveWhatsAppSettings(
-  phoneId: string,
+  accountId: string,
   accessToken: string,
   enabled: boolean,
   reservationPaidEnabled?: boolean,
@@ -394,10 +417,10 @@ export async function saveWhatsAppSettings(
   templateAgentLeadAssigned?: string
 ) {
   try {
-    const trimmedPhoneId = cleanWhatsAppCredential(phoneId);
+    const trimmedAccountId = cleanWhatsAppCredential(accountId);
     const trimmedToken = cleanWhatsAppCredential(accessToken);
 
-    const validation = await validateWhatsAppCredentials(trimmedPhoneId, trimmedToken);
+    const validation = await validateWhatsAppCredentials(trimmedAccountId, trimmedToken);
     if (!validation.valid) {
       return {
         success: false,
@@ -409,7 +432,7 @@ export async function saveWhatsAppSettings(
       .from("global_payment_settings")
       .upsert({
         id: "00000000-0000-0000-0000-000000000001",
-        whatsapp_phone_number_id: trimmedPhoneId,
+        whatsapp_phone_number_id: trimmedAccountId,
         whatsapp_access_token: trimmedToken,
         whatsapp_enabled: enabled,
         whatsapp_admin_alert_phone: adminAlertPhone?.trim() || null,
@@ -441,6 +464,7 @@ export async function saveWhatsAppSettings(
       });
 
     if (error) throw error;
+    clearWhatsAppPhoneResolutionCache();
     return { success: true };
   } catch (err: any) {
     console.error("❌ Failed to save WhatsApp configuration:", err);
@@ -456,16 +480,20 @@ export async function getWhatsAppTemplateDefaults() {
  * Triggers a live sandbox test message to the specified phone number.
  */
 export async function testWhatsAppConnection(testPhone: string) {
-  const { phoneId, accessToken } = await getWhatsAppConfig();
+  const { phoneId, accessToken, accountId } = await getWhatsAppMessagingConfig();
 
   if (!phoneId || !accessToken) {
-    return { success: false, error: "WhatsApp credentials are not configured on the server." };
+    return {
+      success: false,
+      error:
+        "Could not resolve a WhatsApp phone number for your Meta Business account ID. Check the ID and access token in Admin → Global Settings.",
+    };
   }
 
   const cleanPhone = cleanPhoneNumber(testPhone);
 
   try {
-    const testMessage = `Hello! 🌟 This is a secure test message from your *Trimma Admin Settings Panel*!\n\nYour WhatsApp Business Cloud API configuration is working perfectly! ✅\n\n⚙️ *Mode:* Developer Sandbox\n🆔 *Phone ID:* ${phoneId}`;
+    const testMessage = `Hello! 🌟 This is a secure test message from your *Trimma Admin Settings Panel*!\n\nYour WhatsApp Business Cloud API configuration is working perfectly! ✅\n\n⚙️ *Mode:* Developer Sandbox\n🆔 *Account ID:* ${accountId}\n📞 *Phone ID:* ${phoneId}`;
 
     const response = await fetch(
       `https://graph.facebook.com/v18.0/${phoneId}/messages`,
@@ -515,7 +543,7 @@ export async function sendWhatsAppReservationPaidNotification(
     accessToken,
     reservationPaidEnabled,
     templateReservationPaid,
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
     return { success: true, message: "Disabled" };
@@ -613,7 +641,7 @@ export async function sendWhatsAppNotification(
     accessToken, 
     bookingConfirmedEnabled,
     templateConfirmed
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
     console.log("ℹ️ WhatsApp alerts are disabled globally in settings.");
@@ -765,7 +793,7 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
     accessToken, 
     bookingCancelledEnabled,
     templateCancelled
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
 
   if (!enabled) return { success: true, message: "Disabled" };
   if (!bookingCancelledEnabled) return { success: true, message: "Cancellation Alerts Disabled" };
@@ -853,7 +881,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     accessToken, 
     bookingRescheduledEnabled,
     templateRescheduled
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
 
   if (!enabled) return { success: true, message: "Disabled" };
   if (!bookingRescheduledEnabled) return { success: true, message: "Reschedule Alerts Disabled" };
@@ -959,7 +987,7 @@ export async function sendBookingCreatedAlert(bookingNo: string) {
     bookingCreatedEnabled,
     templateBookingCreatedCustomer,
     templateBookingCreatedOwner,
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
   if (!enabled || !bookingCreatedEnabled || !phoneId || !accessToken) {
     return { success: false, message: "Disabled" };
   }
@@ -1031,7 +1059,7 @@ export async function sendBookingCreatedAlert(bookingNo: string) {
  * Triggers a WhatsApp review request when an appointment is completed.
  */
 export async function sendReviewRequestAlert(bookingNo: string) {
-  const { enabled, phoneId, accessToken, templateReview, bookingReviewEnabled } = await getWhatsAppConfig();
+  const { enabled, phoneId, accessToken, templateReview, bookingReviewEnabled } = await getWhatsAppMessagingConfig();
   if (!enabled || !bookingReviewEnabled || !phoneId || !accessToken) return { success: false };
 
   try {
@@ -1085,7 +1113,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
     accessToken, 
     onboardingInviteEnabled,
     templateOnboardingInvite 
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
 
   if (!enabled || !onboardingInviteEnabled || !phoneId || !accessToken) {
     console.log("ℹ️ WhatsApp onboarding invite is disabled or missing credentials.");
@@ -1154,7 +1182,7 @@ export async function sendAgentApprovalAlerts(salonId: string, ownerPhone: strin
     adminAlertPhone,
     templateAgentApprovalOwner,
     templateAgentApprovalAdmin,
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
   if (!enabled || !agentApprovalEnabled || !phoneId || !accessToken) return { success: false };
 
   try {
@@ -1215,7 +1243,7 @@ export async function sendAdminApprovalAlerts(salonId: string, ownerPhone: strin
     adminAlertPhone,
     templateAdminApprovalOwner,
     templateAdminApprovalAdmin,
-  } = await getWhatsAppConfig();
+  } = await getWhatsAppMessagingConfig();
   if (!enabled || !adminApprovalEnabled || !phoneId || !accessToken) return { success: false };
 
   try {

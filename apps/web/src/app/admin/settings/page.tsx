@@ -18,7 +18,7 @@ function SettingsPanelContent() {
   const [testing, setTesting] = useState(false);
 
   // WhatsApp form state
-  const [phoneId, setPhoneId] = useState("");
+  const [accountId, setAccountId] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [reservationPaidEnabled, setReservationPaidEnabled] = useState(true);
@@ -56,13 +56,18 @@ function SettingsPanelContent() {
 
   // Test message state
   const [testPhone, setTestPhone] = useState("+94 71 113 0179");
-  const [tokenStatus, setTokenStatus] = useState<{ valid: boolean; error?: string } | null>(null);
+  const [tokenStatus, setTokenStatus] = useState<{
+    valid: boolean;
+    error?: string;
+    phoneNumberId?: string;
+    displayPhoneNumber?: string;
+  } | null>(null);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
       async function loadConfig() {
       const config = await getWhatsAppConfig();
-      setPhoneId(config.phoneId);
+      setAccountId(config.phoneId);
       setAccessToken(config.accessToken);
       setEnabled(config.enabled);
       setReservationPaidEnabled(config.reservationPaidEnabled !== false);
@@ -94,7 +99,15 @@ function SettingsPanelContent() {
       setConfigSource(config.source);
 
       const validation = await validateWhatsAppCredentials(config.phoneId, config.accessToken);
-      setTokenStatus(validation.valid ? { valid: true } : { valid: false, error: validation.error });
+      setTokenStatus(
+        validation.valid
+          ? {
+              valid: true,
+              phoneNumberId: validation.phoneNumberId,
+              displayPhoneNumber: validation.displayPhoneNumber,
+            }
+          : { valid: false, error: validation.error }
+      );
 
       setLoading(false);
       }
@@ -108,7 +121,7 @@ function SettingsPanelContent() {
 
     try {
       const res = await saveWhatsAppSettings(
-        phoneId, 
+        accountId, 
         accessToken, 
         enabled,
         reservationPaidEnabled,
@@ -315,6 +328,19 @@ function SettingsPanelContent() {
                 </div>
               )}
 
+              {tokenStatus?.valid && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2.5">
+                  <AlertTriangle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-emerald-800 font-medium leading-relaxed">
+                    <strong>Connected.</strong>{" "}
+                    {tokenStatus.displayPhoneNumber
+                      ? `Linked WhatsApp number ${tokenStatus.displayPhoneNumber}`
+                      : "WhatsApp phone number resolved"}{" "}
+                    {tokenStatus.phoneNumberId ? `(Phone ID: ${tokenStatus.phoneNumberId})` : ""}
+                  </p>
+                </div>
+              )}
+
               {tokenStatus && !tokenStatus.valid && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2.5">
                   <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
@@ -327,21 +353,21 @@ function SettingsPanelContent() {
               {/* INPUT FIELDS */}
               <div className="space-y-4">
                 
-                {/* PHONE NUMBER ID */}
+                {/* META BUSINESS ACCOUNT ID */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
-                    Phone Number ID
+                  <Label htmlFor="account_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                    ID:
                   </Label>
                   <Input 
-                    id="phone_id"
-                    value={phoneId}
-                    onChange={(e) => setPhoneId(e.target.value)}
+                    id="account_id"
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
                     required
-                    placeholder="Enter 15-digit Phone ID"
+                    placeholder="Meta WhatsApp Business Account ID"
                     className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
                   />
                   <p className="text-[10px] text-zinc-500">
-                    Your official Meta WhatsApp Developer Sandbox or Business Phone Number ID.
+                    Your Meta WhatsApp Business Account ID from Meta Developer Console → WhatsApp → API Setup (same page as the access token). Trimma automatically resolves the linked phone number for sending messages.
                   </p>
                 </div>
 
