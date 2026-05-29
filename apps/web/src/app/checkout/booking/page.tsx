@@ -4,23 +4,14 @@ import React, { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { supabase } from "@/config/supabase";
 import {
   clearBookingCheckoutDraft,
   loadBookingCheckoutDraft,
   splitCustomerName,
   type BookingCheckoutDraft,
 } from "@/lib/booking-checkout";
-import {
-  parseDisplayTimeSlot,
-  resolveAvailableStaffId,
-  type BookingConflictRow,
-} from "@/lib/booking-availability";
-import {
-  buildPromotionCheckoutService,
-  resolvePromotionBookingServices,
-} from "@/lib/promotion-booking";
-import { mapSalonPromotionRows } from "@/lib/deals";
+import { fetchBookingCheckoutData } from "@/app/actions/booking-checkout-data";
+import { withTimeout } from "@/lib/promise-timeout";
 import {
   validateCardPayment,
   type CardPaymentDetails,
@@ -29,7 +20,6 @@ import {
 import { formatLkr } from "@/lib/subscription-pricing";
 import {
   calculateBalanceDue,
-  calculateReservationFee,
   RESERVATION_DEPOSIT_PERCENT,
 } from "@/lib/booking-pricing";
 import { CheckoutCustomerForm } from "../../../components/checkout/CheckoutCustomerForm";
@@ -80,192 +70,73 @@ function BookingCheckoutForm() {
   });
 
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      async function loadData() {
-        const draft = loadBookingCheckoutDraft();
-        const hasPromotion = Boolean(draft?.promotionPackageId);
-        const hasServices = Boolean(draft?.serviceIds?.length);
+    void Promise.resolve().then(async () => {
+      const draft = loadBookingCheckoutDraft();
+      const hasPromotion = Boolean(draft?.promotionPackageId);
+      const hasServices = Boolean(draft?.serviceIds?.length);
 
-        if (!draft?.salonId || !draft.bookingDate || !draft.timeSlot || (!hasPromotion && !hasServices)) {
+      if (!draft?.salonId || !draft.bookingDate || !draft.timeSlot || (!hasPromotion && !hasServices)) {
+        setMissingDraft(true);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const result = await withTimeout(
+          fetchBookingCheckoutData({
+            salonId: draft.salonId,
+            serviceIds: draft.serviceIds,
+            staffId: draft.staffId,
+            bookingDate: draft.bookingDate,
+            timeSlot: draft.timeSlot,
+            promotionPackageId: draft.promotionPackageId,
+            promotionPackageName: draft.promotionPackageName,
+            promotionPackagePrice: draft.promotionPackagePrice,
+            promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
+          }),
+          20000,
+          "Checkout timed out. Please refresh and try again."
+        );
+
+        if (result.success === false) {
           setMissingDraft(true);
           setLoading(false);
           return;
         }
 
-        try {
-          const salonQuery = supabase.from("salons").select("*").eq("id", draft.salonId).maybeSingle();
-          const servicesQuery = hasServices
-            ? supabase.from("services").select("*").in("id", draft.serviceIds)
-            : Promise.resolve({ data: [] as any[], error: null });
-          const promotionQuery = hasPromotion
-            ? supabase
-                .from("salon_promotion_packages")
-                .select("*")
-                .eq("id", draft.promotionPackageId!)
-                .maybeSingle()
-            : Promise.resolve({ data: null, error: null });
-          const salonServicesQuery = hasPromotion
-            ? supabase.from("services").select("*").eq("salon_id", draft.salonId).eq("status", "active")
-            : Promise.resolve({ data: [] as any[], error: null });
+        draft.serviceIds = result.resolvedServiceIds;
+        setPayhereEnabled(result.payhereEnabled);
+        setPayhereEnvironment(result.payhereEnvironment);
+        setCheckoutData({
+          draft,
+          salon: result.salon,
+          services: result.services,
+          staffMember: result.staffMember,
+          reservationFee: result.reservationFee,
+          serviceTotal: result.serviceTotal,
+          rates: result.rates,
+        });
 
-          const [
-            { data: salon },
-            { data: servicesData },
-            { data: promotionData },
-            { data: salonServicesData },
-            { data: ratesData },
-            { data: paymentSettings },
-          ] = await Promise.all([
-            salonQuery,
-            servicesQuery,
-            promotionQuery,
-            salonServicesQuery,
-            supabase
-              .from("commission_master")
-              .select("*")
-              .eq("commission_type", "booking")
-              .eq("active", true)
-              .maybeSingle(),
-            supabase
-              .from("global_payment_settings")
-              .select("payhere_enabled, environment")
-              .eq("id", "00000000-0000-0000-0000-000000000001")
-              .maybeSingle(),
-          ]);
-
-          let services = servicesData || [];
-          let promotionPackage = promotionData ? mapSalonPromotionRows([promotionData])[0] || null : null;
-
-          if (hasPromotion) {
-            if (!promotionPackage) {
-              promotionPackage = {
-                id: draft.promotionPackageId!,
-                name: draft.promotionPackageName || "Promotion Package",
-                description: null,
-                package_price: draft.promotionPackagePrice || 0,
-                original_price: draft.promotionPackagePrice || 0,
-                included_services: draft.promotionPackageIncludedServices || [],
-                start_date: null,
-                end_date: null,
-                status: "active",
-                promotion_type: null,
-              };
-            }
-
-            const salonServices = (salonServicesData || []).map((service: any) => ({
-              id: service.id,
-              name: service.name,
-              duration: service.duration_min,
-              duration_min: service.duration_min,
-              price: service.price,
-              description: service.description,
-            }));
-
-            const resolution = resolvePromotionBookingServices(promotionPackage, salonServices);
-            draft.serviceIds = resolution.serviceIds;
-            services = [buildPromotionCheckoutService(promotionPackage, salonServices, resolution)];
-          }
-
-          if (!salon || !services.length) {
-            setMissingDraft(true);
-            setLoading(false);
-            return;
-          }
-
-          let staffMember = null;
-          if (draft.staffId && draft.staffId !== "any") {
-            const { data: staffData } = await supabase
-              .from("salon_staff")
-              .select("*")
-              .eq("id", draft.staffId)
-              .maybeSingle();
-            staffMember = staffData;
-          } else {
-            const [{ data: staffList }, { data: dayBookings }] = await Promise.all([
-              supabase.from("salon_staff").select("*").eq("salon_id", draft.salonId),
-              supabase
-                .from("bookings")
-                .select("booking_time, staff_id, status, created_at")
-                .eq("salon_id", draft.salonId)
-                .eq("booking_date", draft.bookingDate),
-            ]);
-
-            const staffIds = (staffList || []).map((member) => member.id).filter(Boolean);
-            const formattedTime = parseDisplayTimeSlot(draft.timeSlot);
-            const availableStaffId = resolveAvailableStaffId(
-              staffIds,
-              (dayBookings || []) as BookingConflictRow[],
-              formattedTime
-            );
-
-            staffMember =
-              staffList?.find((member) => member.id === availableStaffId) ||
-              staffList?.[0] ||
-              null;
-          }
-
-          const rates = {
-            platform: ratesData?.platform_percentage || 10,
-            salon: ratesData?.salon_percentage || 10,
-            payhere: ratesData?.payhere_percentage || 3,
-            agent: ratesData?.agent_percentage || 20,
-          };
-
-          const serviceTotal =
-            typeof draft.promotionPackagePrice === "number" && draft.promotionPackagePrice > 0
-              ? draft.promotionPackagePrice
-              : services.reduce((sum, service) => sum + parseFloat(service.price || 0), 0);
-          const reservationFee = calculateReservationFee(serviceTotal);
-
-          setPayhereEnabled(paymentSettings?.payhere_enabled !== false);
-          setPayhereEnvironment(paymentSettings?.environment || "sandbox");
-          setCheckoutData({
-            draft,
-            salon,
-            services,
-            staffMember,
-            reservationFee,
-            serviceTotal,
-            rates,
-          });
-
-          const nameParts = splitCustomerName(draft.customerDetails.fullName || "");
-          setCustomerDetails((prev) => ({
-            ...prev,
-            firstName: nameParts.firstName,
-            lastName: nameParts.lastName,
-            email: draft.customerDetails.email || prev.email,
-            phone: draft.customerDetails.phone || prev.phone,
-          }));
-          setCardDetails((prev) => ({
-            ...prev,
-            cardholderName:
-              draft.customerDetails.fullName ||
-              `${nameParts.firstName} ${nameParts.lastName}`.trim(),
-          }));
-
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-          if (session?.user && !draft.customerDetails.email) {
-            const user = session.user;
-            setCustomerDetails((prev) => ({
-              ...prev,
-              firstName: user.user_metadata?.first_name || prev.firstName,
-              lastName: user.user_metadata?.last_name || prev.lastName,
-              email: user.email || prev.email,
-              phone: user.phone || user.user_metadata?.phone || prev.phone,
-            }));
-          }
-        } catch (error) {
-          console.error("Error loading booking checkout:", error);
-          setMissingDraft(true);
-        } finally {
-          setLoading(false);
-        }
+        const nameParts = splitCustomerName(draft.customerDetails.fullName || "");
+        setCustomerDetails((prev) => ({
+          ...prev,
+          firstName: nameParts.firstName,
+          lastName: nameParts.lastName,
+          email: draft.customerDetails.email || prev.email,
+          phone: draft.customerDetails.phone || prev.phone,
+        }));
+        setCardDetails((prev) => ({
+          ...prev,
+          cardholderName:
+            draft.customerDetails.fullName ||
+            `${nameParts.firstName} ${nameParts.lastName}`.trim(),
+        }));
+      } catch (error) {
+        console.error("Error loading booking checkout:", error);
+        setMissingDraft(true);
+      } finally {
+        setLoading(false);
       }
-
-      loadData();
     });
   }, []);
 
