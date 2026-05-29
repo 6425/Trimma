@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ArrowLeft, Building2, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
@@ -118,10 +119,9 @@ export default function AgentNewLeadPage() {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Phone</label>
-              <Input
+              <LkPhoneInput
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="+94 77 123 4567"
+                onChange={(phone) => setForm({ ...form, phone })}
                 className="h-11 bg-[#0B0B0B] border-white/10 text-white"
               />
             </div>

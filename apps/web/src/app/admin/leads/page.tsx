@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -2090,10 +2091,10 @@ export default function Leads() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="space-y-1">
                         <label className="font-bold text-zinc-500 uppercase text-[10px] tracking-wide">Phone Number</label>
-                        <Input 
+                        <LkPhoneInput
                           value={formData.phone}
-                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                          className="h-12 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-brand/20 text-sm font-medium"
+                          onChange={(phone) => setFormData({...formData, phone})}
+                          className="h-12 rounded-xl bg-zinc-50 border-zinc-200"
                         />
                       </div>
                       <div className="space-y-1">

@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { supabase } from "../../config/supabase";
 
 export default function SignupPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'customer' | 'salon'>('customer');
+  const [mobile, setMobile] = useState("");
+  const [ownerMobile, setOwnerMobile] = useState("");
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,7 +134,7 @@ export default function SignupPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="mobile" className="text-zinc-900">Mobile Number</Label>
-                  <Input id="mobile" type="tel" placeholder="+94 77 123 4567" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                  <LkPhoneInput id="mobile" value={mobile} onChange={setMobile} required className="h-11 border-zinc-200 text-zinc-900 focus-within:border-zinc-900" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password" className="text-zinc-900">Password</Label>
@@ -165,7 +168,7 @@ export default function SignupPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ownerMobile" className="text-zinc-900">Mobile</Label>
-                    <Input id="ownerMobile" type="tel" placeholder="+94 77 123 4567" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <LkPhoneInput id="ownerMobile" value={ownerMobile} onChange={setOwnerMobile} required className="h-11 border-zinc-200 text-zinc-900 focus-within:border-zinc-900" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
@@ -732,11 +733,10 @@ function AgentLeads() {
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Phone <span className="text-rose-500">*</span></label>
-                    <Input
+                    <LkPhoneInput
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      placeholder="+94..."
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                      onChange={(phone) => setFormData({...formData, phone})}
+                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200"
                     />
                   </div>
                   <div className="space-y-1 md:col-span-2">
