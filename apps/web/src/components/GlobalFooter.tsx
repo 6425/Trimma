@@ -49,7 +49,7 @@ export default function GlobalFooter() {
               <li><Link href="/about" className="hover:underline">About Trimma</Link></li>
               <li><Link href="/careers" className="hover:underline">Careers</Link></li>
               <li><Link href="/terms" className="hover:underline">Terms & Conditions</Link></li>
-              <li><Link href="/privacy" className="hover:underline">Privacy Policy</Link></li>
+              <li><Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link></li>
             </ul>
           </div>
 
