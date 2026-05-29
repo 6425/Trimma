@@ -41,7 +41,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] flex font-sans">
+    <div className="min-h-screen bg-[#0B0B0B] flex font-sans trimma-dark-context">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (

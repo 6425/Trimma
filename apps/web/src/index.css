@@ -426,9 +426,76 @@
 
   /* Yellow/Brand backgrounds must have dark text (default + hover) */
   .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#F5B700\],
-  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#F5B700\]:hover, .hover\:bg-\[\#FFC947\]:hover {
+  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#F5B700\]:hover, .hover\:bg-\[\#FFC947\]:hover,
+  .bg-primary-gradient, [class*="bg-primary-gradient"] {
     color: #000000 !important;
   }
+
+  /* Brand token alias — always yellow, never pink */
+  .text-brand-pink, .text-brand-purple {
+    color: #F5B700 !important;
+  }
+
+  /*
+   * Unified primary button contract — yellow fill, black text, gold hover.
+   * Overrides legacy inline classes (text-white, pink hovers) across the app.
+   */
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient, [class*="bg-primary-gradient"]
+  ),
+  :is(.bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient)[class*="text-white"] {
+    color: #000000 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"]
+  ):is(:hover, :focus-visible, :active),
+  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-brand"]:hover) {
+    background-color: #FFC947 !important;
+    color: #000000 !important;
+  }
+
+  /* Remove legacy pink button hovers */
+  .hover\:bg-\[\#c21b52\]:hover,
+  .hover\:bg-\[\#b01849\]:hover,
+  [class*="hover:bg-[#c21b52]"]:hover,
+  [class*="hover:bg-[#b01849]"]:hover {
+    background-color: #FFC947 !important;
+    color: #000000 !important;
+  }
+
+  /* Replace pink/rose wash hovers on light-surface controls with brand-tint neutral */
+  :is(.bg-white, .bg-zinc-50, .bg-slate-50, .bg-neutral-50, .trimma-light-context)
+    :is(button, a, [role="button"], [data-slot="button"])[class*="hover:bg-rose-50"]:hover,
+  :is(.bg-white, .bg-zinc-50, .bg-slate-50, .trimma-light-context)
+    :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-rose-50:hover {
+    background-color: rgba(245, 183, 0, 0.1) !important;
+    color: var(--text-dark) !important;
+  }
+
+  /* White cards inside dark dashboards — dark text on light panels */
+  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50, .bg-neutral-50, .bg-rose-50, .bg-amber-50, .bg-yellow-50) {
+    color: var(--text-dark);
+  }
+
+  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
+    h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
+  ):not([class*="text-brand"]):not([class*="text-[#F5B700]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-red"]) {
+    color: inherit;
+  }
+
+  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
+    button, a, [role="button"], [data-slot="button"]
+  ):not([class*="bg-brand"]):not([class*="bg-[#F5B700]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-red"]):not([class*="bg-rose-5"]):not([class*="bg-emerald"]) {
+    color: var(--text-dark);
+  }
+
+  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
+    button, a, [role="button"], [data-slot="button"]
+  ):is([class*="hover:bg-rose-50"]:hover, [class*="hover:bg-zinc-50"]:hover, [class*="hover:bg-zinc-100"]:hover) {
+    color: var(--text-dark) !important;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading tracking-tight font-semibold;
   }
@@ -502,6 +569,8 @@
   .bg-pink-500,   .bg-rose-500   { background-color: #F5B700 !important; color: #000000 !important; }
   .bg-pink-600,   .bg-rose-600   { background-color: #E6AC00 !important; color: #000000 !important; }
   .bg-pink-100,   .bg-rose-100   { background-color: rgba(245,183,0,0.12) !important; color: #000000 !important; }
+  .bg-pink-50,    .bg-rose-50,
+  .hover\:bg-rose-50:hover, .hover\:bg-pink-50:hover { background-color: rgba(245,183,0,0.08) !important; }
   .border-pink-500, .border-rose-500 { border-color: #F5B700 !important; }
   .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #F5B700 !important; }
 

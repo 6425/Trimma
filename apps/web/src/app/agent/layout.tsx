@@ -63,7 +63,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] flex font-sans text-white">
+    <div className="min-h-screen bg-[#0B0B0B] flex font-sans trimma-dark-context">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (

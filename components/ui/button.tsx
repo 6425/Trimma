@@ -32,7 +32,7 @@ const buttonVariants = cva(
       variant: {
         // ── Primary: Yellow fill, black text ──
         default:
-          "bg-[#F5B700] text-black border-[#F5B700] hover:bg-[#FFC947] hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
+          "bg-[#F5B700] !text-black border-[#F5B700] hover:bg-[#FFC947] hover:!text-black hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
 
         // ── Secondary: Surface-aware secondary action ──
         secondary:
