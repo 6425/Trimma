@@ -15,7 +15,7 @@ import {
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { normalizeEmail } from "@/lib/normalize-email";
-import { parseFeatureFlags } from "@/lib/parse-feature-flags";
+import { getAllowedCategoriesLimit, readPlanFlags } from "@/lib/salon-subscription-plan";
 import {
   getDiscountedServicePrice,
   getServiceDiscountLabel,
@@ -125,7 +125,8 @@ export default function DashboardServices() {
     };
   }, [fetchSalonAndPlan]);
 
-  const planFlags = parseFeatureFlags(subscriptionPlan?.feature_flags);
+  const planFlags = readPlanFlags(subscriptionPlan);
+  const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
   const hasDiscountFeature = planFlags.features?.includes("Discounts & Promotions") ?? false;
 
   const handleToggleSelect = (id: string) => {
@@ -145,7 +146,7 @@ export default function DashboardServices() {
       }
 
       // 2. Check maximum unique categories limit
-      const allowedCategoriesLimit = planFlags.allowed_categories_limit || 2;
+      const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
       const projectedCategories = new Set(services.map(s => s.category));
       
       selectedIds.forEach(x => {
@@ -196,7 +197,7 @@ export default function DashboardServices() {
       );
     }
 
-    const allowedCategoriesLimit = planFlags.allowed_categories_limit || 2;
+    const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
     const projectedCategories = new Set(services.map(s => s.category));
     
     selectedIds.forEach(id => {

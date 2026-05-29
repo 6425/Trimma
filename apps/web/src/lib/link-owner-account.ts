@@ -1,5 +1,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { pickHighestRole } from "@/lib/trimma-role";
 
@@ -32,7 +34,7 @@ async function resolveDbRole(
   return pickHighestRole(...(roleRows || []).map((row) => row.role), userRow?.global_role);
 }
 
-/** Link an invited salon owner by Gmail. Never overrides admin/agent roles set in the DB. */
+/** Link salon owner account, sync roles, and ensure subscription plan on sign-in. */
 export async function linkInvitedOwnerAccount(
   authUserId: string,
   email: string | null | undefined,
@@ -51,17 +53,19 @@ export async function linkInvitedOwnerAccount(
     return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null };
   }
 
-  const [{ data: userRow }, { data: linkedSalon }] = await Promise.all([
-    admin.from("users").select("global_role, full_name").eq("email", normalizedEmail).maybeSingle(),
-    admin
-      .from("salons")
-      .select("id, name, owner_email, owner_gmail, onboarding_status")
-      .ilike("owner_gmail", normalizedEmail)
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: userRow } = await admin
+    .from("users")
+    .select("global_role, full_name")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
 
   let role = (await resolveDbRole(admin, authUserId, normalizedEmail)) || fallbackRole;
+
+  const { linked, salonId } = await ensureSalonOwnerAccess(admin, normalizedEmail);
+
+  if (linked && salonId && role !== "admin" && role !== "agent" && role === "customer") {
+    role = "salon_owner";
+  }
 
   await admin.from("users").upsert(
     {
@@ -73,49 +77,25 @@ export async function linkInvitedOwnerAccount(
     { onConflict: "email" }
   );
 
-  if (!linkedSalon) {
-    return { linked: false, role, onboardingStatus: null, salonId: null, salonName: null };
+  if (role === "salon_owner") {
+    await syncUserRolesForGlobalRole(admin, normalizedEmail, "salon_owner");
   }
 
-  await admin
-    .from("salons")
-    .update({ owner_email: normalizedEmail })
-    .eq("id", linkedSalon.id);
-
-  if (role === "admin" || role === "agent") {
-    return {
-      linked: true,
-      role,
-      onboardingStatus: linkedSalon.onboarding_status ?? null,
-      salonId: linkedSalon.id,
-      salonName: linkedSalon.name ?? null,
-    };
+  let linkedSalon: { id: string; name: string | null; onboarding_status: string | null } | null = null;
+  if (salonId) {
+    const { data } = await admin
+      .from("salons")
+      .select("id, name, onboarding_status")
+      .eq("id", salonId)
+      .maybeSingle();
+    linkedSalon = data;
   }
-
-  if (role === "customer" || !userRow?.global_role) {
-    await admin.from("users").upsert(
-      {
-        email: normalizedEmail,
-        full_name: fullName || userRow?.full_name || normalizedEmail.split("@")[0],
-        avatar_url: avatarUrl || null,
-        global_role: "salon_owner",
-      },
-      { onConflict: "email" }
-    );
-
-    await admin.from("user_roles").upsert(
-      { user_id: authUserId, role: "salon_owner" },
-      { onConflict: "user_id,role" }
-    );
-  }
-
-  role = (await resolveDbRole(admin, authUserId, normalizedEmail)) || "salon_owner";
 
   return {
-    linked: true,
+    linked: Boolean(linkedSalon),
     role,
-    onboardingStatus: linkedSalon.onboarding_status ?? null,
-    salonId: linkedSalon.id,
-    salonName: linkedSalon.name ?? null,
+    onboardingStatus: linkedSalon?.onboarding_status ?? null,
+    salonId: linkedSalon?.id ?? null,
+    salonName: linkedSalon?.name ?? null,
   };
 }

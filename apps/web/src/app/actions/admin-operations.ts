@@ -2,7 +2,9 @@
 
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 import { saveAdminSalonRecord } from "@/lib/admin-salon-save-core";
+import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import { saveBookingCommissionMaster } from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 
@@ -252,6 +254,12 @@ export async function saveAdminUserWithRole(input: {
       }
     } else if (currentUser && rolesToReplicate.includes(String(currentUser.global_role))) {
       // keep agent history row
+    }
+
+    await syncUserRolesForGlobalRole(supabase, input.email, input.global_role);
+
+    if (input.global_role === "salon_owner") {
+      await ensureSalonOwnerAccess(supabase, input.email);
     }
   });
 

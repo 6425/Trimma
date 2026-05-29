@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapAdminDbError } from "@/lib/with-admin-db";
 import { sanitizeAdminSalonPayload } from "@/lib/admin-salon-update";
+import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
+import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 
 export type AdminSalonSaveResult =
   | { success: true }
@@ -52,6 +54,9 @@ export async function saveAdminSalonRecord(
       if (userError) {
         return { success: false, error: mapAdminDbError(userError.message) };
       }
+
+      await syncUserRolesForGlobalRole(supabase, ownerEmail, "salon_owner");
+      await ensureSalonOwnerAccess(supabase, ownerEmail);
     }
 
     const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);

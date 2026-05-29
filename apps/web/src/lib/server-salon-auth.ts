@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { normalizeEmail } from "@/lib/normalize-email";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -47,7 +48,9 @@ export async function findOwnerSalon(
   const { data: byOwnerEmail, error: ownerEmailError } = await supabase
     .from("salons")
     .select("*")
-    .eq("owner_email", normalized)
+    .ilike("owner_email", normalized)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
   if (ownerEmailError) throw new Error(ownerEmailError.message);
   if (byOwnerEmail) return byOwnerEmail as Record<string, unknown>;
@@ -55,7 +58,9 @@ export async function findOwnerSalon(
   const { data: byOwnerGmail, error: ownerGmailError } = await supabase
     .from("salons")
     .select("*")
-    .eq("owner_gmail", normalized)
+    .ilike("owner_gmail", normalized)
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
   if (ownerGmailError) throw new Error(ownerGmailError.message);
   return (byOwnerGmail as Record<string, unknown> | null) ?? null;
@@ -83,6 +88,7 @@ export async function requireSalonOwnerFromCookies(): Promise<
 
   let salon: Record<string, unknown> | null;
   try {
+    await ensureSalonOwnerAccess(supabase, email);
     salon = await findOwnerSalon(supabase, email);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load your salon.";

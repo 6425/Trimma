@@ -4,7 +4,11 @@ import { getSalonOwnerReviews } from "@/app/actions/reviews";
 import { findOwnerSalon, getSalonAccessTokenFromCookies, getSalonOwnerEmailFromCookies } from "@/lib/server-salon-auth";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { parseFeatureFlags } from "@/lib/parse-feature-flags";
+import {
+  ensureSalonSubscriptionPlan,
+  readPlanFlags,
+  sliceAllowedCategories,
+} from "@/lib/salon-subscription-plan";
 
 export async function fetchSalonLayoutShell() {
   const email = await getSalonOwnerEmailFromCookies();
@@ -90,11 +94,12 @@ export async function fetchSalonFinancePage() {
 
 export async function fetchSalonBillingPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const planId = ctx.salon.subscription_plan_id as string | null | undefined;
-    if (!planId) return { activePlan: null };
-    const { data, error } = await supabase.from("subscription_plans").select("*").eq("id", planId).maybeSingle();
-    if (error) throw new Error(error.message);
-    return { activePlan: data };
+    const { plan } = await ensureSalonSubscriptionPlan(
+      supabase,
+      ctx.salonId,
+      ctx.salon.subscription_plan_id as string | null | undefined
+    );
+    return { activePlan: plan };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const, ...result.data };
@@ -115,27 +120,34 @@ export async function fetchSalonReviewsPage() {
 
 export async function fetchSalonServicesPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const planId = ctx.salon.subscription_plan_id as string | null | undefined;
-    const [servicesRes, planRes, categoriesRes, globalServicesRes] = await Promise.all([
+    const { planId, plan, updatedSalon } = await ensureSalonSubscriptionPlan(
+      supabase,
+      ctx.salonId,
+      ctx.salon.subscription_plan_id as string | null | undefined
+    );
+
+    const salon =
+      updatedSalon && planId ? { ...ctx.salon, subscription_plan_id: planId } : ctx.salon;
+
+    const [servicesRes, categoriesRes, globalServicesRes] = await Promise.all([
       supabase.from("services").select("*").eq("salon_id", ctx.salonId).order("created_at", { ascending: false }),
-      planId
-        ? supabase.from("subscription_plans").select("*").eq("id", planId).maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("global_services").select("*").order("name"),
     ]);
 
-    for (const res of [servicesRes, planRes, categoriesRes, globalServicesRes]) {
+    for (const res of [servicesRes, categoriesRes, globalServicesRes]) {
       if (res.error) throw new Error(res.error.message);
     }
 
-    const plan = planRes.data;
-    const flags = parseFeatureFlags(plan?.feature_flags);
-    const limit = flags.allowed_categories_limit ?? 999;
-    const categories = (categoriesRes.data || []).slice(0, limit >= 999 ? undefined : limit);
+    const flags = readPlanFlags(plan);
+    const categories = sliceAllowedCategories(
+      categoriesRes.data || [],
+      flags,
+      (plan?.name as string | null | undefined) ?? null
+    );
 
     return {
-      salon: ctx.salon,
+      salon,
       services: servicesRes.data || [],
       subscriptionPlan: plan,
       allowedCategories: categories,
@@ -148,17 +160,19 @@ export async function fetchSalonServicesPage() {
 
 export async function fetchSalonStaffPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const planId = ctx.salon.subscription_plan_id as string | null | undefined;
-    const [staffRes, servicesRes, rolesRes, planRes] = await Promise.all([
+    const { plan } = await ensureSalonSubscriptionPlan(
+      supabase,
+      ctx.salonId,
+      ctx.salon.subscription_plan_id as string | null | undefined
+    );
+
+    const [staffRes, servicesRes, rolesRes] = await Promise.all([
       supabase.from("salon_staff").select("*").eq("salon_id", ctx.salonId),
       supabase.from("services").select("*").eq("salon_id", ctx.salonId).eq("status", "active"),
       supabase.from("global_staff_roles").select("*").order("category"),
-      planId
-        ? supabase.from("subscription_plans").select("name, max_staff").eq("id", planId).maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
     ]);
 
-    for (const res of [staffRes, servicesRes, rolesRes, planRes]) {
+    for (const res of [staffRes, servicesRes, rolesRes]) {
       if (res.error) throw new Error(res.error.message);
     }
 
@@ -167,7 +181,7 @@ export async function fetchSalonStaffPage() {
       staff: staffRes.data || [],
       salonServices: servicesRes.data || [],
       globalStaffRoles: rolesRes.data || [],
-      subscriptionPlan: planRes.data,
+      subscriptionPlan: plan ? { name: plan.name, max_staff: plan.max_staff } : null,
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
@@ -176,8 +190,13 @@ export async function fetchSalonStaffPage() {
 
 export async function fetchSalonPackagesPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const planId = ctx.salon.subscription_plan_id as string | null | undefined;
-    const [packagesRes, typesRes, globalPackagesRes, planRes] = await Promise.all([
+    const { plan } = await ensureSalonSubscriptionPlan(
+      supabase,
+      ctx.salonId,
+      ctx.salon.subscription_plan_id as string | null | undefined
+    );
+
+    const [packagesRes, typesRes, globalPackagesRes] = await Promise.all([
       supabase
         .from("salon_promotion_packages")
         .select("*")
@@ -185,20 +204,16 @@ export async function fetchSalonPackagesPage() {
         .order("created_at", { ascending: false }),
       supabase.from("promotion_types").select("*").order("name"),
       supabase.from("global_promotion_packages").select("*").eq("is_active", true),
-      planId
-        ? supabase.from("subscription_plans").select("*").eq("id", planId).maybeSingle()
-        : Promise.resolve({ data: null, error: null }),
     ]);
 
-    for (const res of [packagesRes, typesRes, globalPackagesRes, planRes]) {
+    for (const res of [packagesRes, typesRes, globalPackagesRes]) {
       if (res.error) throw new Error(res.error.message);
     }
 
-    const plan = planRes.data;
-    const flags = parseFeatureFlags(plan?.feature_flags);
+    const flags = readPlanFlags(plan);
     let allowedTypes = typesRes.data || [];
     const typesLimit = Number(flags.allowed_promotion_types_limit);
-    if (typesLimit && typesLimit < 999) {
+    if (typesLimit && typesLimit > 0 && typesLimit < 999) {
       allowedTypes = allowedTypes.slice(0, typesLimit);
     }
 
@@ -228,19 +243,14 @@ export async function fetchSalonBookingDetail(bookingId: string) {
 
 export async function fetchSalonProfilePage() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    let plan = null;
-    const planId = ctx.salon.subscription_plan_id as string | null | undefined;
+    const { planId, plan, updatedSalon } = await ensureSalonSubscriptionPlan(
+      supabase,
+      ctx.salonId,
+      ctx.salon.subscription_plan_id as string | null | undefined
+    );
 
-    if (planId) {
-      const { data } = await supabase.from("subscription_plans").select("id, name, max_images").eq("id", planId).maybeSingle();
-      plan = data;
-    } else {
-      const { data: freePlan } = await supabase.from("subscription_plans").select("id, name, max_images").eq("name", "Free").maybeSingle();
-      if (freePlan) {
-        await supabase.from("salons").update({ subscription_plan_id: freePlan.id }).eq("id", ctx.salonId);
-        plan = freePlan;
-      }
-    }
+    const salon =
+      updatedSalon && planId ? { ...ctx.salon, subscription_plan_id: planId } : ctx.salon;
 
     const [amenitiesRes, salonAmenitiesRes] = await Promise.all([
       supabase.from("global_amenities").select("*").order("name"),
@@ -259,8 +269,8 @@ export async function fetchSalonProfilePage() {
     }
 
     return {
-      salon: ctx.salon,
-      subscriptionPlan: plan,
+      salon,
+      subscriptionPlan: plan ? { id: plan.id, name: plan.name, max_images: plan.max_images } : null,
       globalAmenities: amenitiesMissing ? [] : amenitiesRes.data || [],
       salonAmenities: amenitiesMissing ? [] : salonAmenitiesRes.data || [],
     };
