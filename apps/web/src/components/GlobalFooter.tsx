@@ -38,16 +38,16 @@ export default function GlobalFooter() {
             <ul className="space-y-3 text-sm text-[#006CE4]">
               <li><Link href="/login" className="hover:underline">Partner portal login</Link></li>
               <li><Link href="/onboarding" className="hover:underline">Add your salon</Link></li>
-              <li><Link href="/affiliates" className="hover:underline">Affiliate program</Link></li>
+              <li><Link href="/about" className="hover:underline">About Trimma</Link></li>
+              <li><Link href="/careers" className="hover:underline">Careers</Link></li>
+              {/* Affiliate program temporarily removed from public access (page retained at /affiliates) */}
             </ul>
           </div>
 
-          {/* About */}
+          {/* Useful Links */}
           <div className="col-span-1 space-y-4">
-            <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">About</h4>
+            <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Useful Links</h4>
             <ul className="space-y-3 text-sm text-[#006CE4]">
-              <li><Link href="/about" className="hover:underline">About Trimma</Link></li>
-              <li><Link href="/careers" className="hover:underline">Careers</Link></li>
               <li><Link href="/terms" className="hover:underline">Terms & Conditions</Link></li>
               <li><Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link></li>
               <li><Link href="/cookies" className="hover:underline">Cookie Policy</Link></li>
