@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Loader2, Lock, ShieldCheck, Smartphone } from "lucide-react";
 import { PayHerePaymentSelector } from "../PayHerePaymentSelector";
 import { CheckoutCardPaymentSection } from "./CheckoutCardPaymentSection";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import type { CardPaymentDetails, CardType } from "@/lib/card-payment";
 
 export type CheckoutCustomerDetails = {
@@ -112,13 +113,10 @@ export function CheckoutCustomerForm({
         <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="checkout-phone">
           Phone number
         </label>
-        <input
-          className="checkout-input w-full rounded-md px-3 py-2.5 text-sm placeholder-gray-400"
-          type="tel"
+        <LkPhoneInput
           id="checkout-phone"
-          placeholder="07X XXX XXXX"
           value={customerDetails.phone}
-          onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+          onChange={(phone) => setCustomerDetails({ ...customerDetails, phone })}
           required
         />
       </div>

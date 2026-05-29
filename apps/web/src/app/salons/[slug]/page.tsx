@@ -15,6 +15,7 @@ import { supabase } from "../../../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
 import { fetchAvailableBookingSlots } from "@/app/actions/booking-slots";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { getSalonDirectionsUrl } from "@/lib/salon-map";
 import {
   type SalonPromotionPackage,
@@ -1096,13 +1097,12 @@ export default function SalonPage() {
                       onChange={(e) => setCustomerDetails(p => ({ ...p, email: e.target.value }))}
                       className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-semibold"
                     />
-                    <input 
-                      type="tel" 
-                      placeholder="WhatsApp No." 
+                    <LkPhoneInput
                       required
                       value={customerDetails.phone}
-                      onChange={(e) => setCustomerDetails(p => ({ ...p, phone: e.target.value }))}
-                      className="w-full h-10 px-3 rounded-lg border border-slate-200 text-xs font-semibold"
+                      onChange={(phone) => setCustomerDetails(p => ({ ...p, phone }))}
+                      className="h-10 rounded-lg border-slate-200"
+                      inputClassName="text-xs font-semibold"
                     />
                   </div>
 

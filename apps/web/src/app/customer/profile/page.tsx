@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { User, Phone, Mail, Save, ShieldCheck, RefreshCw } from "lucide-react";
+import { User, Mail, Save, ShieldCheck, RefreshCw } from "lucide-react";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -181,17 +182,13 @@ function ProfileFormContent() {
               {/* PHONE */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-400">WhatsApp No.</Label>
-                <div className="relative flex items-center">
-                  <Phone className="absolute left-3 w-5 h-5 text-zinc-400" />
-                  <Input 
-                    id="phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                    placeholder="+94 77 123 4567"
-                    className="h-11 bg-zinc-950 border-white/10 text-white focus:border-[#F5B700] pl-11 rounded-xl"
-                  />
-                </div>
+                <LkPhoneInput
+                  id="phone"
+                  value={phone}
+                  onChange={setPhone}
+                  required
+                  className="h-11 bg-zinc-950 border-white/10 text-white focus-within:border-[#F5B700] rounded-xl"
+                />
                 <p className="text-[10px] text-zinc-500 leading-normal">
                   Your WhatsApp number will be used to send your automated booking updates.
                 </p>

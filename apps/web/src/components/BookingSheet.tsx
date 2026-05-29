@@ -10,6 +10,7 @@ import { supabase } from "../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { fetchAvailableBookingSlots, fetchSalonClosedDays } from "@/app/actions/booking-slots";
 import { withTimeout } from "@/lib/promise-timeout";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
 import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
@@ -1018,13 +1019,12 @@ export function BookingSheet({
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">WhatsApp No.</label>
-                    <input 
-                      type="tel" 
+                    <LkPhoneInput
                       required
-                      placeholder="+94 77 123 4567" 
                       value={customerDetails.phone}
-                      onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800" 
+                      onChange={(phone) => setCustomerDetails(prev => ({ ...prev, phone }))}
+                      className="h-11 rounded-xl border-slate-200"
+                      inputClassName="font-semibold text-zinc-800"
                     />
                   </div>
 

@@ -23,6 +23,7 @@ import {
 } from "@/lib/salon-amenities";
 import { formatServerActionError, slugifySalonName } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -472,7 +473,7 @@ export default function SalonProfilePage() {
                     </div>
                     <div>
                       <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Contact Number</Label>
-                      <Input value={contact} onChange={(e) => setContact(e.target.value)} className="h-12 rounded-xl mt-1" />
+                      <LkPhoneInput value={contact} onChange={setContact} className="h-12 rounded-xl mt-1" />
                     </div>
                     <div>
                       <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Address</Label>
@@ -774,11 +775,10 @@ export default function SalonProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="font-bold text-xs text-zinc-500">Contact Number</Label>
-                  <Input 
+                  <LkPhoneInput
                     value={contact}
-                    onChange={(e) => setContact(e.target.value)}
+                    onChange={setContact}
                     className="rounded-xl h-11"
-                    placeholder="077 123 4567"
                     required
                   />
                 </div>
