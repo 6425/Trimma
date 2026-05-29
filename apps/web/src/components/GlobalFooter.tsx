@@ -51,6 +51,7 @@ export default function GlobalFooter() {
               <li><Link href="/terms" className="hover:underline">Terms & Conditions</Link></li>
               <li><Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link></li>
               <li><Link href="/cookies" className="hover:underline">Cookie Policy</Link></li>
+              <li><Link href="/data-deletion" className="hover:underline">Data Deletion</Link></li>
             </ul>
           </div>
 
