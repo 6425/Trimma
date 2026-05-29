@@ -215,12 +215,11 @@ export default function SalonProfilePage() {
       const base64 = await fileToBase64(file);
       const uploadResult = await uploadSalonProfileImage(type, base64, file.type || "image/jpeg");
       if (uploadResult.success === false) {
-        console.warn("Storage upload failed, using local base64 fallback:", uploadResult.error);
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
+        // Never fall back to storing a base64 data URI: multi-MB strings in the
+        // salons table make the public page query so large it times out.
+        console.error("Storage upload failed:", uploadResult.error);
+        toast.error(`Image upload failed: ${uploadResult.error || "storage error"}. Please try again.`);
+        return null;
       }
 
       return uploadResult.publicUrl;

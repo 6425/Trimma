@@ -904,7 +904,7 @@ export function BookingSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto flex flex-col p-0 bg-slate-50">
+      <SheetContent className="w-full sm:max-w-md max-sm:w-full! max-sm:max-w-none! overflow-y-auto flex flex-col p-0 bg-slate-50">
         <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center">
             {step > 1 && step <= 5 && (

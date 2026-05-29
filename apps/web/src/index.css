@@ -2,6 +2,12 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Shared UI components live at the repo root (mapped via "@/components/*").
+   Tailwind v4 only auto-scans apps/web, so register the root folder
+   explicitly or utilities used only there (e.g. the Sheet's data-[side]
+   positioning classes) are never generated. */
+@source "../../../components";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
