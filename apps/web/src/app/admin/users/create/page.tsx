@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/select";
 import { getAccessTokenFromCookie } from "@/lib/client-auth-cookie";
 import { toast } from "sonner";
+import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+
+const ALL_DISTRICTS = SRI_LANKA_PROVINCES.flatMap(p => p.districts.map(d => d.name)).sort();
 
 function AdminUserCreateInner() {
   const router = useRouter();
@@ -179,11 +182,13 @@ function AdminUserCreateInner() {
                     <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-2xl p-1">
-                      <SelectItem value="Colombo" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Colombo</SelectItem>
-                      <SelectItem value="Kandy" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Kandy</SelectItem>
-                      <SelectItem value="Galle" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Galle</SelectItem>
-                      <SelectItem value="Remote" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Remote (Global)</SelectItem>
+                    <SelectContent className="rounded-xl border-none shadow-2xl p-1 max-h-[300px]">
+                      {ALL_DISTRICTS.map((district) => (
+                        <SelectItem key={district} value={district} className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">
+                          {district}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="Remote" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer border-t mt-1">Remote (Global)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
