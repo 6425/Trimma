@@ -64,12 +64,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         { name: "Add Manual Lead", path: "/agent/leads/new", icon: <UserPlus className="w-4 h-4" /> },
       ]
     },
-    {
-      title: "Prospecting",
-      items: [
-        { name: "Discover Salons", path: "/agent/discover", icon: <Map className="w-4 h-4" /> },
-      ]
-    },
+
     {
       title: "Performance",
       items: [
@@ -225,7 +220,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           { name: "Home", path: "/agent", icon: <Home className="w-5 h-5" /> },
           { name: "Salons", path: "/agent/salons", icon: <Building2 className="w-5 h-5" /> },
           { name: "Editor", path: "/agent/leads", icon: <KanbanSquare className="w-5 h-5" /> },
-          { name: "Discover", path: "/agent/discover", icon: <Map className="w-5 h-5" /> },
+
           { name: "Tasks", path: "/agent/tasks", icon: <PhoneCall className="w-5 h-5" /> },
           { name: "Profile", path: "/agent/profile", icon: <User className="w-5 h-5" /> },
         ].map((item) => {
