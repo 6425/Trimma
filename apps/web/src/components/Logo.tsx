@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Scissors } from "lucide-react";
 import { supabase } from "../config/supabase";
 
 interface LogoProps {
@@ -99,20 +98,19 @@ export default function Logo({
 
   const wordmark = `${(title || "Trimma").replace(/\.$/, "")}.`;
   const displayTagline = propTagline ?? (showTagline ? defaultTagline : null);
-  const scissorsSize = Math.max(14, Math.round(iconSize * 0.62));
   const wordmarkSize = Math.max(16, Math.round(iconSize * 0.55));
 
   return (
     <div className={`flex items-center gap-2 select-none ${className}`}>
       <div
-        className="rounded-lg bg-[#F5B700] flex items-center justify-center shrink-0"
+        className="flex items-center justify-center shrink-0"
         style={{ width: iconSize, height: iconSize }}
         aria-hidden="true"
       >
-        <Scissors
-          className="text-black"
-          style={{ width: scissorsSize, height: scissorsSize }}
-          strokeWidth={2.25}
+        <img
+          src="/logo.svg"
+          alt="Trimma Logo"
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
       </div>
 
