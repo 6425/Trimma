@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Scissors } from "lucide-react";
 import { supabase } from "../config/supabase";
 
 interface LogoProps {
@@ -98,20 +99,41 @@ export default function Logo({
 
   const wordmark = `${(title || "Trimma").replace(/\.$/, "")}.`;
   const displayTagline = propTagline ?? (showTagline ? defaultTagline : null);
+  const scissorsSize = Math.max(14, Math.round(iconSize * 0.62));
   const wordmarkSize = Math.max(16, Math.round(iconSize * 0.55));
 
   return (
     <div className={`flex items-center gap-2 select-none ${className}`}>
       <div
-        className="flex items-center justify-center shrink-0"
-        style={{ width: "auto", height: iconSize * 3 }}
+        className="rounded-lg bg-[#F5B700] flex items-center justify-center shrink-0"
+        style={{ width: iconSize, height: iconSize }}
         aria-hidden="true"
       >
-        <img
-          src="/logo.svg"
-          alt="Trimma Logo"
-          style={{ height: "100%", width: "auto", objectFit: "contain" }}
+        <Scissors
+          className="text-black"
+          style={{ width: scissorsSize, height: scissorsSize }}
+          strokeWidth={2.25}
         />
+      </div>
+
+      <div className="flex flex-col justify-center min-w-0">
+        <span
+          className={`font-bold tracking-tight leading-none ${inverse ? "text-white" : "text-black"}`}
+          style={{ fontSize: wordmarkSize }}
+        >
+          {wordmark}
+        </span>
+
+        {displayTagline ? (
+          <span
+            className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
+              inverse ? "text-white/60" : "text-zinc-500"
+            }`}
+            style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
+          >
+            {displayTagline}
+          </span>
+        ) : null}
       </div>
     </div>
   );
