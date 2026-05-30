@@ -68,7 +68,7 @@ export function TopRatedSalons() {
               <h3 className="font-bold text-zinc-900 group-hover:underline">{salon.name}</h3>
               
               <div className="flex items-center gap-2 mt-1 mb-2">
-                <div className="flex items-center text-sm font-bold bg-[#003B95] text-white px-1.5 py-0.5 rounded-sm">
+                <div className="flex items-center text-sm font-bold bg-[#F5B700] text-black px-1.5 py-0.5 rounded-sm">
                   {salon.rating}
                 </div>
                 <span className="text-sm font-bold text-zinc-900">{salon.badge}</span>

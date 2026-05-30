@@ -28,12 +28,12 @@ export function SearchHeroWidget() {
           priority
           className="object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B] via-[#0B0B0B]/90 to-[#febb02]/40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B] via-[#0B0B0B]/90 to-[#F5B700]/40" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mx-auto mb-8 sm:mb-10 text-white text-center flex flex-col items-center px-1">
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-3 sm:mb-4 leading-tight !text-white hover:!text-[#febb02] transition-colors duration-300 cursor-default">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-3 sm:mb-4 leading-tight !text-white hover:!text-[#F5B700] transition-colors duration-300 cursor-default">
             Find. Book. Glow.
           </h1>
           <p className="text-base sm:text-xl md:text-2xl font-medium !text-white/90 max-w-2xl drop-shadow-md leading-relaxed">
@@ -44,10 +44,10 @@ export function SearchHeroWidget() {
         {/* The Search Widget */}
         <form
           onSubmit={handleSearch}
-          className="bg-[#febb02] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-xl max-w-5xl mx-auto flex flex-col md:flex-row gap-3 md:gap-1.5"
+          className="bg-[#F5B700] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-xl max-w-5xl mx-auto flex flex-col md:flex-row gap-3 md:gap-1.5"
         >
           {/* Location */}
-          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#006CE4] transition-colors shadow-sm md:shadow-none">
+          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#F5B700] transition-colors shadow-sm md:shadow-none">
             <MapPin className="w-5 h-5 text-zinc-400 shrink-0" aria-hidden="true" />
             <input
               type="text"
@@ -59,7 +59,7 @@ export function SearchHeroWidget() {
           </div>
 
           {/* Service */}
-          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#006CE4] transition-colors shadow-sm md:shadow-none">
+          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#F5B700] transition-colors shadow-sm md:shadow-none">
             <Search className="w-5 h-5 text-zinc-400 shrink-0" aria-hidden="true" />
             <input
               type="text"
@@ -71,7 +71,7 @@ export function SearchHeroWidget() {
           </div>
 
           {/* Date */}
-          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#006CE4] transition-colors shadow-sm md:shadow-none">
+          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#F5B700] transition-colors shadow-sm md:shadow-none">
             <Calendar className="w-5 h-5 text-zinc-400 shrink-0" aria-hidden="true" />
             <input
               type="date"
@@ -84,7 +84,7 @@ export function SearchHeroWidget() {
           {/* Search Button */}
           <button
             type="submit"
-            className="bg-[#006CE4] hover:bg-[#0057b8] active:bg-[#004a9e] text-white font-bold min-h-[52px] h-14 px-8 rounded-xl md:rounded-md transition-colors text-lg md:text-xl w-full md:w-auto md:min-w-[148px] shrink-0 shadow-sm md:shadow-none touch-manipulation"
+            className="bg-[#F5B700] hover:bg-[#E6AC00] active:bg-[#CC9B00] text-black font-bold min-h-[52px] h-14 px-8 rounded-xl md:rounded-md transition-colors text-lg md:text-xl w-full md:w-auto md:min-w-[148px] shrink-0 shadow-sm md:shadow-none touch-manipulation"
           >
             Search
           </button>

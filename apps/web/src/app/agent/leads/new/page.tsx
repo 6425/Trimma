@@ -10,13 +10,13 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 
 export default function AgentNewLeadPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    category: "",
     address: "",
     phone: "",
     owner_gmail: "",
@@ -24,6 +24,7 @@ export default function AgentNewLeadPage() {
     summary: "",
     agent_notes: "",
   });
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +48,7 @@ export default function AgentNewLeadPage() {
         body: JSON.stringify({
           agentEmail: user.email,
           ...form,
+          category: selectedCategories.join(", "),
         }),
       });
 
@@ -107,13 +109,16 @@ export default function AgentNewLeadPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Category</label>
-              <Input
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                placeholder="Barber Salon"
-                className="h-11 bg-[#0B0B0B] border-white/10 text-white"
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                Category <span className="text-zinc-600 font-normal normal-case">(select up to 2)</span>
+              </label>
+              <CategoryMultiSelect
+                value={selectedCategories}
+                onChange={setSelectedCategories}
+                maxCategories={999}
+                theme="dark"
+                showUpgradeLink={false}
               />
             </div>
 
@@ -122,10 +127,11 @@ export default function AgentNewLeadPage() {
               <LkPhoneInput
                 value={form.phone}
                 onChange={(phone) => setForm({ ...form, phone })}
-                className="h-11 bg-[#0B0B0B] border-white/10 text-white"
+                theme="dark"
+                className="h-11"
               />
             </div>
-
+            </div>
             <div className="md:col-span-2 space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Address</label>
               <Input

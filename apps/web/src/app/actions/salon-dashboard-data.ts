@@ -6,6 +6,7 @@ import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   ensureSalonSubscriptionPlan,
+  getAllowedCategoriesLimit,
   readPlanFlags,
   sliceAllowedCategories,
 } from "@/lib/salon-subscription-plan";
@@ -252,9 +253,10 @@ export async function fetchSalonProfilePage() {
     const salon =
       updatedSalon && planId ? { ...ctx.salon, subscription_plan_id: planId } : ctx.salon;
 
-    const [amenitiesRes, salonAmenitiesRes] = await Promise.all([
+    const [amenitiesRes, salonAmenitiesRes, categoriesRes] = await Promise.all([
       supabase.from("global_amenities").select("*").order("name"),
       supabase.from("salon_amenities").select("*").eq("salon_id", ctx.salonId),
+      supabase.from("categories").select("id, name, slug").order("name"),
     ]);
 
     const amenitiesMissing =
@@ -268,11 +270,19 @@ export async function fetchSalonProfilePage() {
       if (salonAmenitiesRes.error) throw new Error(salonAmenitiesRes.error.message);
     }
 
+    const flags = readPlanFlags(plan);
+    const allowedCategoriesCount = getAllowedCategoriesLimit(
+      flags,
+      (plan?.name as string | null | undefined) ?? null
+    );
+
     return {
       salon,
       subscriptionPlan: plan ? { id: plan.id, name: plan.name, max_images: plan.max_images } : null,
       globalAmenities: amenitiesMissing ? [] : amenitiesRes.data || [],
       salonAmenities: amenitiesMissing ? [] : salonAmenitiesRes.data || [],
+      categories: categoriesRes.data || [],
+      allowedCategoriesCount,
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);

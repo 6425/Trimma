@@ -4,7 +4,7 @@ import Logo from "./Logo";
 
 export default function GlobalFooter() {
   return (
-    <footer className="bg-zinc-50 dark:bg-brand-surface-dark transition-colors duration-300">
+    <footer className="bg-white border-t border-zinc-100">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -13,33 +13,33 @@ export default function GlobalFooter() {
           {/* Support */}
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Support</h4>
-            <ul className="space-y-3 text-sm text-[#006CE4]">
-              <li><Link href="/help" className="hover:underline">Help Center</Link></li>
-              <li><Link href="/help" className="hover:underline">Cancellation options</Link></li>
-              <li><Link href="/safety" className="hover:underline">Safety Resource Center</Link></li>
-              <li><Link href="/contact" className="hover:underline">Contact us</Link></li>
+            <ul className="space-y-3 text-sm text-zinc-600">
+              <li><Link href="/help" className="hover:text-[#F5B700] transition-colors">Help Center</Link></li>
+              <li><Link href="/help" className="hover:text-[#F5B700] transition-colors">Cancellation options</Link></li>
+              <li><Link href="/safety" className="hover:text-[#F5B700] transition-colors">Safety Resource Center</Link></li>
+              <li><Link href="/contact" className="hover:text-[#F5B700] transition-colors">Contact us</Link></li>
             </ul>
           </div>
 
           {/* Discover */}
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Discover</h4>
-            <ul className="space-y-3 text-sm text-[#006CE4]">
-              <li><Link href="/salons" className="hover:underline">All Salons</Link></li>
-              <li><Link href="/locations" className="hover:underline">Locations</Link></li>
-              <li><Link href="/pricing" className="hover:underline">Pricing Plans</Link></li>
-              <li><Link href="/services" className="hover:underline">All Services</Link></li>
+            <ul className="space-y-3 text-sm text-zinc-600">
+              <li><Link href="/salons" className="hover:text-[#F5B700] transition-colors">All Salons</Link></li>
+              <li><Link href="/locations" className="hover:text-[#F5B700] transition-colors">Locations</Link></li>
+              <li><Link href="/pricing" className="hover:text-[#F5B700] transition-colors">Pricing Plans</Link></li>
+              <li><Link href="/services" className="hover:text-[#F5B700] transition-colors">All Services</Link></li>
             </ul>
           </div>
 
           {/* Partner with us */}
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Partner with us</h4>
-            <ul className="space-y-3 text-sm text-[#006CE4]">
-              <li><Link href="/login" className="hover:underline">Partner portal login</Link></li>
-              <li><Link href="/onboarding" className="hover:underline">Add your salon</Link></li>
-              <li><Link href="/about" className="hover:underline">About Trimma</Link></li>
-              <li><Link href="/careers" className="hover:underline">Careers</Link></li>
+            <ul className="space-y-3 text-sm text-zinc-600">
+              <li><Link href="/login" className="hover:text-[#F5B700] transition-colors">Partner portal login</Link></li>
+              <li><Link href="/onboarding" className="hover:text-[#F5B700] transition-colors">Add your salon</Link></li>
+              <li><Link href="/about" className="hover:text-[#F5B700] transition-colors">About Trimma</Link></li>
+              <li><Link href="/careers" className="hover:text-[#F5B700] transition-colors">Careers</Link></li>
               {/* Affiliate program temporarily removed from public access (page retained at /affiliates) */}
             </ul>
           </div>
@@ -47,11 +47,11 @@ export default function GlobalFooter() {
           {/* Useful Links */}
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Useful Links</h4>
-            <ul className="space-y-3 text-sm text-[#006CE4]">
-              <li><Link href="/terms" className="hover:underline">Terms & Conditions</Link></li>
-              <li><Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link></li>
-              <li><Link href="/cookies" className="hover:underline">Cookie Policy</Link></li>
-              <li><Link href="/data-deletion" className="hover:underline">Data Deletion</Link></li>
+            <ul className="space-y-3 text-sm text-zinc-600">
+              <li><Link href="/terms" className="hover:text-[#F5B700] transition-colors">Terms &amp; Conditions</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-[#F5B700] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookies" className="hover:text-[#F5B700] transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/data-deletion" className="hover:text-[#F5B700] transition-colors">Data Deletion</Link></li>
             </ul>
           </div>
 
@@ -61,9 +61,9 @@ export default function GlobalFooter() {
               <Logo iconSize={36} />
             </Link>
             <div className="flex items-center gap-4">
-              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Instagram className="w-5 h-5" /></a>
-              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#006CE4] transition-colors"><Linkedin className="w-5 h-5" /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Facebook className="w-5 h-5" /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Linkedin className="w-5 h-5" /></a>
             </div>
           </div>
 

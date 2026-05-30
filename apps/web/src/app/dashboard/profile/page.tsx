@@ -24,6 +24,7 @@ import {
 import { formatServerActionError, slugifySalonName } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
+import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -84,8 +85,10 @@ export default function SalonProfilePage() {
   const [featuredImages, setFeaturedImages] = useState<string[]>([]);
   
   // Subscription limit states
-  const [subscriptionName, setSubscriptionName] = useState("Free Plan");
+  const [subscriptionName, setSubscriptionName] = useState("Free");
   const [maxImagesLimit, setMaxImagesLimit] = useState(3); // Default Free Plan Limit
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [allowedCategoriesCount, setAllowedCategoriesCount] = useState(2);
 
   // Amenities States
   const [globalAmenities, setGlobalAmenities] = useState<any[]>([]);
@@ -166,12 +169,21 @@ export default function SalonProfilePage() {
       // 2. Fetch Subscription Plan Details & Limits
       const planData = result.subscriptionPlan as any;
       if (planData) {
-        setSubscriptionName(`${planData.name} Plan`);
+        setSubscriptionName(planData.name || "Free");
         setMaxImagesLimit(planData.max_images !== undefined && planData.max_images !== null ? planData.max_images : 3);
       } else {
-        setSubscriptionName("Free Plan");
+        setSubscriptionName("Free");
         setMaxImagesLimit(3);
       }
+
+      // Set allowed categories count from server
+      setAllowedCategoriesCount((result as any).allowedCategoriesCount ?? 2);
+
+      // Pre-select salon's existing categories
+      const existingCategory = salonData.category || "";
+      setSelectedCategories(
+        existingCategory.split(",").map((s: string) => s.trim()).filter(Boolean)
+      );
 
       // 3. Fetch Amenities Data
       if (amenitiesList.length) {
@@ -385,6 +397,7 @@ export default function SalonProfilePage() {
         hero_url: heroUrl || null,
         featured_images: featuredImages,
         status: status,
+        category: selectedCategories.join(", ") || null,
       };
 
       const amenityInserts = Object.keys(salonAmenities)
@@ -831,6 +844,24 @@ export default function SalonProfilePage() {
                     className="w-full border border-slate-200 bg-white p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-all"
                     placeholder="Describe your salon style, values, and luxury standards..."
                     rows={4}
+                  />
+                </div>
+
+                {/* Category Multi-Select */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="font-bold text-xs text-zinc-500 flex items-center justify-between">
+                    <span>Salon Categories</span>
+                    <span className="text-[10px] font-normal text-zinc-400 normal-case">
+                      Select up to {allowedCategoriesCount >= 999 ? "unlimited" : allowedCategoriesCount} — based on your {subscriptionName} plan
+                    </span>
+                  </Label>
+                  <CategoryMultiSelect
+                    value={selectedCategories}
+                    onChange={setSelectedCategories}
+                    maxCategories={allowedCategoriesCount}
+                    planName={subscriptionName}
+                    theme="light"
+                    showUpgradeLink={true}
                   />
                 </div>
               </div>

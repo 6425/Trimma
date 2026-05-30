@@ -13,6 +13,7 @@ import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 
 
 const DAYS_OF_WEEK = [
@@ -159,6 +160,11 @@ function AgentLeads() {
     admin_notes: ""
   });
 
+  // category as array for the multi-select
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+
+
   const fetchLeads = async () => {
     try {
       setLoading(true);
@@ -214,6 +220,7 @@ function AgentLeads() {
       agent_notes: lead.agent_notes || "",
       admin_notes: lead.admin_notes || ""
     });
+    setSelectedCategories((lead.category || "").split(",").map((s: string) => s.trim()).filter(Boolean));
     setIsModalOpen(true);
   };
 
@@ -267,7 +274,7 @@ function AgentLeads() {
         phone: formData.phone || null,
         website: formData.website || null,
         map_url: formData.map_url || null,
-        category: formData.category || null,
+        category: selectedCategories.join(", ") || null,
         working_hours: parsedHours,
         latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
@@ -321,7 +328,7 @@ function AgentLeads() {
         phone: formData.phone || null,
         website: formData.website || null,
         map_url: formData.map_url || null,
-        category: formData.category || null,
+        category: selectedCategories.join(", ") || null,
         working_hours: parsedHours,
         latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
@@ -715,12 +722,17 @@ function AgentLeads() {
                       className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Category</label>
-                    <Input
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                    <CategoryMultiSelect
+                      value={selectedCategories}
+                      onChange={(cats) => {
+                        setSelectedCategories(cats);
+                        setFormData({ ...formData, category: cats.join(", ") });
+                      }}
+                      maxCategories={999}
+                      theme="light"
+                      showUpgradeLink={false}
                     />
                   </div>
                   <div className="space-y-1 md:col-span-3">
@@ -736,7 +748,8 @@ function AgentLeads() {
                     <LkPhoneInput
                       value={formData.phone}
                       onChange={(phone) => setFormData({...formData, phone})}
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200"
+                      theme="light"
+                      className="h-10"
                     />
                   </div>
                   <div className="space-y-1 md:col-span-2">

@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Enable CORS so Next.js Frontend can communicate with the API
   app.enableCors({
     origin: '*', // In production, restrict this to your Next.js domain
@@ -16,4 +16,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚀 Trimma API Gateway is running on: http://localhost:${port}`);
 }
-bootstrap();
+bootstrap().catch(console.error);

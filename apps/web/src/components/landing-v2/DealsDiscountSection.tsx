@@ -103,7 +103,7 @@ export function DealsDiscountSection() {
             </p>
             <Link
               href="/deals"
-              className="inline-block mt-4 text-sm font-semibold text-[#006CE4] hover:underline"
+              className="inline-block mt-4 text-sm font-semibold text-[#F5B700] hover:underline"
             >
               Browse all deals
             </Link>
@@ -151,7 +151,7 @@ export function DealsDiscountSection() {
                           </p>
                         ) : null}
                       </div>
-                      <span className="text-[11px] font-bold text-[#006CE4] group-hover:underline">
+                      <span className="text-[11px] font-bold text-[#F5B700] group-hover:underline">
                         View salon
                       </span>
                     </div>

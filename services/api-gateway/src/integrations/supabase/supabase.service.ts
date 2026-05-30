@@ -1,20 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
+
+type Database = any;
 
 @Injectable()
 export class SupabaseService {
-  private client: SupabaseClient;
+  private client: ReturnType<typeof createClient<Database>>;
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-    this.client = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false }
+    this.client = createClient<Database>(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
     });
   }
 
-  getClient(): SupabaseClient {
+  getClient(): ReturnType<typeof createClient<Database>> {
     return this.client;
   }
 }
