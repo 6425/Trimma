@@ -24,7 +24,13 @@ export default function AgentTasksQueue() {
   const [searchQuery, setSearchQuery] = useState("");
   
   const [workItems, setWorkItems] = useState<WorkItem[]>([]);
-  const [metrics, setMetrics] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any>({
+    totalAssignedLeads: 0,
+    verifiedSalons: 0,
+    pendingCommissionsCount: 0,
+    totalCommissionAmount: 0,
+    performanceScore: 0
+  });
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
   const loadData = async () => {
@@ -312,13 +318,13 @@ export default function AgentTasksQueue() {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-zinc-300 font-medium">Lead Conversion</span>
-                    <span className="text-brand font-bold">{metrics?.totalAssignedLeads > 0 ? Math.round((metrics?.verifiedSalons / metrics?.totalAssignedLeads) * 100) : 0}%</span>
+                    <span className="text-brand font-bold">{metrics.totalAssignedLeads > 0 ? Math.round((metrics.verifiedSalons / metrics.totalAssignedLeads) * 100) : 0}%</span>
                   </div>
                   <div className="h-2 w-full bg-black rounded-full overflow-hidden border border-white/5">
                     <motion.div 
                       className="h-full bg-brand"
                       initial={{ width: 0 }}
-                      animate={{ width: `${metrics?.totalAssignedLeads > 0 ? Math.round((metrics?.verifiedSalons / metrics?.totalAssignedLeads) * 100) : 0}%` }}
+                      animate={{ width: `${metrics.totalAssignedLeads > 0 ? Math.round((metrics.verifiedSalons / metrics.totalAssignedLeads) * 100) : 0}%` }}
                       transition={{ duration: 1, ease: "easeOut" }}
                     />
                   </div>
@@ -327,13 +333,13 @@ export default function AgentTasksQueue() {
                 <div>
                   <div className="flex justify-between text-sm mb-2 mt-6">
                     <span className="text-zinc-300 font-medium">Pending Payouts</span>
-                    <span className="text-amber-400 font-bold">LKR {metrics?.totalCommissionAmount?.toLocaleString() || 0}</span>
+                    <span className="text-amber-400 font-bold">LKR {metrics.totalCommissionAmount?.toLocaleString() || 0}</span>
                   </div>
                   <div className="h-2 w-full bg-black rounded-full overflow-hidden border border-white/5">
                     <motion.div 
                       className="h-full bg-amber-400"
                       initial={{ width: 0 }}
-                      animate={{ width: `${Math.min((metrics?.pendingCommissionsCount / 10) * 100, 100)}%` }} // arbitrary scale for demo
+                      animate={{ width: `${Math.min((metrics.pendingCommissionsCount / 10) * 100, 100)}%` }} // arbitrary scale for demo
                       transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
                     />
                   </div>
