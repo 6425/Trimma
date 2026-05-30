@@ -22,8 +22,7 @@ export async function getAgentProfile() {
       full_name,
       email,
       phone,
-      avatar_url,
-      agents ( territory )
+      avatar_url
     `)
     .eq("id", user.id)
     .single();
@@ -32,7 +31,27 @@ export async function getAgentProfile() {
     return { success: false as const, error: error.message };
   }
 
-  const agentData = Array.isArray(data.agents) ? data.agents[0] : data.agents;
+  // Get agent's territory
+  let territory = "Unassigned";
+  const { data: agentData } = await supabase
+    .from("agents")
+    .select("id")
+    .eq("user_email", data.email)
+    .maybeSingle();
+
+  if (agentData?.id) {
+    const { data: territoryData } = await supabase
+      .from("agent_territories")
+      .select("territories ( name )")
+      .eq("agent_id", agentData.id);
+
+    if (territoryData && territoryData.length > 0) {
+      territory = territoryData
+        .map((t: any) => t.territories?.name)
+        .filter(Boolean)
+        .join(" · ") || "Unassigned";
+    }
+  }
 
   return {
     success: true as const,
@@ -41,7 +60,7 @@ export async function getAgentProfile() {
       email: data.email || "",
       phone: data.phone || "",
       avatarUrl: data.avatar_url || "",
-      territory: agentData?.territory || "Unassigned",
+      territory,
     }
   };
 }
