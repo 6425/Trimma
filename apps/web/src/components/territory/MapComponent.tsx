@@ -93,7 +93,7 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
 
   useEffect(() => {
     if (selectedBusinessId) {
-      setOpenInfoWindowId(selectedBusinessId);
+      setTimeout(() => setOpenInfoWindowId(selectedBusinessId), 0);
     }
   }, [selectedBusinessId]);
 

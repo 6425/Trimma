@@ -76,7 +76,7 @@ function TerritoryExplorerContent() {
   }, [router]);
 
   useEffect(() => {
-    loadInitialData();
+    setTimeout(() => loadInitialData(), 0);
   }, [loadInitialData]);
 
   const handleSearch = async () => {
