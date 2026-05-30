@@ -12,7 +12,7 @@ import {
   Search,
   UserPlus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
@@ -128,15 +128,13 @@ export default function AgentSalonsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild className="rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold">
-            <Link href="/agent/leads/new">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add Salon
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="rounded-xl border-zinc-200">
-            <Link href="/agent/leads">Open Field Editor</Link>
-          </Button>
+          <Link href="/agent/leads/new" className={buttonVariants({ className: "rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold" })}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Salon
+          </Link>
+          <Link href="/agent/leads" className={buttonVariants({ variant: "outline", className: "rounded-xl border-zinc-200" })}>
+            Open Field Editor
+          </Link>
         </div>
       </div>
 
@@ -204,9 +202,9 @@ export default function AgentSalonsPage() {
             <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
               Salons appear here when an admin assigns them to you in Admin → Leads, or when you add a manual lead.
             </p>
-            <Button asChild className="mt-4 rounded-xl">
-              <Link href="/agent/leads/new">Add your first salon</Link>
-            </Button>
+            <Link href="/agent/leads/new" className={buttonVariants({ className: "mt-4 rounded-xl" })}>
+              Add your first salon
+            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -267,16 +265,14 @@ export default function AgentSalonsPage() {
                     </td>
                     <td className="px-5 py-4 align-top">
                       <div className="flex justify-end gap-2">
-                        <Button asChild size="sm" className="rounded-lg h-8 text-xs font-bold">
-                          <Link href={`/agent/leads?open=${salon.id}`}>Manage</Link>
-                        </Button>
+                        <Link href={`/agent/leads?open=${salon.id}`} className={buttonVariants({ size: "sm", className: "rounded-lg h-8 text-xs font-bold" })}>
+                          Manage
+                        </Link>
                         {salon.slug && isAgentSalonLive(salon.onboarding_status) && (
-                          <Button asChild size="sm" variant="outline" className="rounded-lg h-8 text-xs">
-                            <Link href={`/salons/${salon.slug}`} target="_blank">
-                              <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                              View
-                            </Link>
-                          </Button>
+                          <Link href={`/salons/${salon.slug}`} target="_blank" className={buttonVariants({ size: "sm", variant: "outline", className: "rounded-lg h-8 text-xs" })}>
+                            <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                            View
+                          </Link>
                         )}
                       </div>
                     </td>
