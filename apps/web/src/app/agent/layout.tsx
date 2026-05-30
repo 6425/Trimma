@@ -172,7 +172,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col pb-20 lg:pb-0">
+      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col bg-slate-50 text-zinc-900 pb-20 lg:pb-0">
 
         {/* Top Header */}
         <header className="h-16 bg-[#0B0B0B] border-b border-white/8 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-6">

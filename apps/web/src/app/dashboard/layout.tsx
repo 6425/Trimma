@@ -333,7 +333,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-[#0B0B0B] trimma-page-shell">
+        <main className="flex-1 overflow-auto bg-slate-50 text-zinc-900 trimma-page-shell">
           {children}
         </main>
       </div>
