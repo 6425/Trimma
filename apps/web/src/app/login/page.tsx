@@ -148,9 +148,6 @@ function LoginForm() {
                   <Label htmlFor="password" className="text-zinc-300">
                     Password
                   </Label>
-                  <Link href="/forgot-password" className="text-xs text-[#F5B700] hover:text-[#FFC947]">
-                    Forgot password?
-                  </Link>
                 </div>
                 <Input
                   id="password"
