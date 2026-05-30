@@ -11,16 +11,38 @@ import {
 import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "../../components/Logo";
+import { getAgentProfile } from "@/app/actions/agent-profile";
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [agentName, setAgentName] = useState("Agent");
+  const [agentAvatar, setAgentAvatar] = useState("");
 
   useEffect(() => {
     void Promise.resolve().then(() => {
       setMobileMenuOpen(false);
     });
   }, [pathname]);
+
+  useEffect(() => {
+    void (async () => {
+      const result = await getAgentProfile();
+      if (result.success && result.profile) {
+        setAgentName(result.profile.fullName || "Agent");
+        setAgentAvatar(result.profile.avatarUrl || "");
+      }
+    })();
+
+    const handleAvatarUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ avatarUrl?: string }>;
+      if (typeof customEvent.detail?.avatarUrl === "string") {
+        setAgentAvatar(customEvent.detail.avatarUrl);
+      }
+    };
+    window.addEventListener("trimma_agent_avatar_update", handleAvatarUpdate);
+    return () => window.removeEventListener("trimma_agent_avatar_update", handleAvatarUpdate);
+  }, []);
 
   const handleLogout = () => {
     void signOutTrimmaSession("/");
@@ -31,6 +53,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       title: "Overview",
       items: [
         { name: "Dashboard", path: "/agent", icon: <Home className="w-4 h-4" /> },
+        { name: "My Profile", path: "/agent/profile", icon: <User className="w-4 h-4" /> },
       ]
     },
     {
@@ -134,10 +157,13 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >
             <Avatar className="w-8 h-8 border border-[#F5B700]/30">
-              <AvatarFallback className="bg-[#F5B700]/10 text-[#F5B700] text-xs font-bold">AG</AvatarFallback>
+              {agentAvatar && <AvatarImage src={agentAvatar} alt={agentName} />}
+              <AvatarFallback className="bg-[#F5B700]/10 text-[#F5B700] text-xs font-bold">
+                {agentName.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <div className="text-sm font-semibold text-white truncate">Agent Dashboard</div>
+              <div className="text-sm font-semibold text-white truncate">{agentName}</div>
               <div className="text-xs text-zinc-500 truncate">Sales Team</div>
             </div>
             <LogOut className="w-4 h-4 text-zinc-500 shrink-0" />
