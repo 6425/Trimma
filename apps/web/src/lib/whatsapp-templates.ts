@@ -72,6 +72,7 @@ Your Trimma Partner Profile is ready to go live!
 Please sign in with your registered Gmail: {owner_gmail}
 
 🔐 Activate here: {login_link}
+👀 View Draft: {draft_link}
 
 Welcome to the Trimma partner network! ✂️`,
 
@@ -224,7 +225,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     toggleKey: "onboardingInviteEnabled" as const,
     templateKey: "templateOnboardingInvite" as const,
     defaultTemplate: "onboardingInvite" as const,
-    mergeTags: ["{salon_name}", "{owner_gmail}", "{login_link}"],
+    mergeTags: ["{salon_name}", "{owner_gmail}", "{login_link}", "{draft_link}"],
   },
   {
     id: "booking-created-customer",

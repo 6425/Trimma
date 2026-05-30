@@ -47,6 +47,18 @@ function TerritoryExplorerContent() {
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Attempt to load cached search state
+      const cachedBusinesses = sessionStorage.getItem("trimma_territory_businesses");
+      const cachedCategory = sessionStorage.getItem("trimma_territory_category");
+      
+      if (cachedBusinesses) {
+        setBusinesses(JSON.parse(cachedBusinesses));
+      }
+      if (cachedCategory) {
+        setSelectedCategory(cachedCategory);
+      }
+
       const res = await getAgentMapData();
       if (!res.success) {
         if (res.error?.includes("Not authenticated")) {
@@ -83,6 +95,9 @@ function TerritoryExplorerContent() {
       if (!res.success) throw new Error(res.error);
       
       setBusinesses(res.businesses);
+      sessionStorage.setItem("trimma_territory_businesses", JSON.stringify(res.businesses));
+      sessionStorage.setItem("trimma_territory_category", selectedCategory);
+      
       toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
     } catch (err: any) {
       toast.error(err.message || "Failed to search businesses");

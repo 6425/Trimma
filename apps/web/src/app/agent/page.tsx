@@ -109,7 +109,9 @@ export default function AgentDashboard() {
           .eq("agent_id", agentProfileRes.data.id);
       }
 
-      if (assignedSalonsRes.error) throw assignedSalonsRes.error;
+      if (assignedSalonsRes.error) {
+        console.error("Error fetching assigned salons:", assignedSalonsRes.error);
+      }
 
       const salonRows = assignedSalonsRes.data || [];
       const assignedCount = salonRows.length;
@@ -166,8 +168,9 @@ export default function AgentDashboard() {
         hotLeads,
         upcomingTasks,
       });
-    } catch (error: unknown) {
-      console.error("Failed to load agent metrics:", error);
+    } catch (error: any) {
+      console.error("Failed to load agent data:", error);
+      toast.error("Failed to load dashboard data: " + (error.message || "Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -188,11 +191,26 @@ export default function AgentDashboard() {
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
   };
 
-  if (loading || !authorized) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
         <p className="text-zinc-500 font-medium">Verifying agent credentials...</p>
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh]">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-bold text-zinc-900 mb-2">Access Denied</h2>
+        <p className="text-zinc-500 font-medium max-w-md text-center mb-6">
+          You do not have permission to access the Agent Dashboard.
+        </p>
+        <Button onClick={() => router.push("/")} variant="outline">
+          Return to Home
+        </Button>
       </div>
     );
   }

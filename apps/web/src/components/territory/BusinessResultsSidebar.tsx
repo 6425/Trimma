@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createLeadFromGooglePlaces } from "@/app/actions/agent-leads-creation";
+
 type SidebarProps = {
   businesses: BusinessResult[];
   selectedBusinessId: string | null;
@@ -15,11 +19,40 @@ type SidebarProps = {
 
 export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusinessSelect }: SidebarProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [creatingId, setCreatingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const filtered = businesses.filter(b => 
     b.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     b.address?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleCreateLead = async (biz: BusinessResult) => {
+    try {
+      setCreatingId(biz.id);
+      const res = await createLeadFromGooglePlaces({
+        place_id: biz.id, // using id which is place_id for google leads
+        name: biz.name,
+        address: biz.address || "",
+        category: biz.category || "General",
+        rating: biz.rating || 0,
+        latitude: biz.latitude,
+        longitude: biz.longitude,
+        logo_url: biz.logo_url,
+        phone: biz.phone,
+      });
+
+      if (!res.success) {
+        throw new Error(res.error);
+      }
+
+      toast.success("Lead created successfully!");
+      router.push(`/agent/leads?open=${res.salonId}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create lead.");
+      setCreatingId(null);
+    }
+  };
 
   return (
     <div className="flex flex-col h-[600px] bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -87,13 +120,25 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
                 </div>
 
                 {isSelected && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-200">
-                    <Button size="sm" variant="outline" className="flex-1 h-8 text-[10px] font-bold rounded-lg hover:bg-zinc-100 border-slate-200 text-zinc-700">
-                      <ExternalLink className="w-3 h-3 mr-1.5" /> Details
-                    </Button>
-                    <Button size="sm" className="flex-1 h-8 text-[10px] font-bold rounded-lg bg-[#FFC107] text-black hover:bg-[#FFC107]/90 shadow-none">
-                      <Navigation className="w-3 h-3 mr-1.5" /> Navigate
-                    </Button>
+                  <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 h-8 text-[10px] font-bold rounded-lg hover:bg-zinc-100 border-slate-200 text-zinc-700">
+                        <ExternalLink className="w-3 h-3 mr-1.5" /> Details
+                      </Button>
+                      <Button size="sm" className="flex-1 h-8 text-[10px] font-bold rounded-lg bg-slate-100 text-zinc-800 hover:bg-slate-200 shadow-none">
+                        <Navigation className="w-3 h-3 mr-1.5" /> Navigate
+                      </Button>
+                    </div>
+                    {biz.status === 'google_lead' && (
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); handleCreateLead(biz); }}
+                        disabled={creatingId === biz.id}
+                        className="w-full h-9 text-[11px] font-black rounded-lg bg-[#FFC107] text-black hover:bg-[#FFC107]/90 shadow-none mt-1"
+                      >
+                        {creatingId === biz.id ? "Creating Lead..." : "+ Create Manual Lead"}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

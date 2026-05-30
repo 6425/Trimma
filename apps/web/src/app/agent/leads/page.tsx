@@ -3,7 +3,8 @@
 import React, { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2 } from "lucide-react";
+import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2, UploadCloud, Map, Tag, Users, Plus, Trash2 } from "lucide-react";
+import { AddProfessionalForm, StaffPayload } from "../../../components/forms/AddProfessionalForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -59,7 +60,7 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
   };
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {DAYS_OF_WEEK.map(d => {
         const period = periods.find(p => p.open?.day === d.value);
         const isOpen = !!period;
@@ -162,6 +163,14 @@ function AgentLeads() {
 
   // category as array for the multi-select
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Services & Staff globals
+  const [globalServices, setGlobalServices] = useState<any[]>([]);
+  const [globalStaffRoles, setGlobalStaffRoles] = useState<any[]>([]);
+  const [selectedServices, setSelectedServices] = useState<{[key: string]: { enabled: boolean, price: string, duration: string, category: string }}>({});
+  const [staffToAdd, setStaffToAdd] = useState<StaffPayload[]>([]);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
 
 
@@ -196,7 +205,7 @@ function AgentLeads() {
     }
   };
 
-  const handleOpenModal = (lead: any) => {
+  const handleOpenModal = async (lead: any) => {
     setSelectedLead(lead);
     setFormData({
       id: lead.id || "",
@@ -222,10 +231,41 @@ function AgentLeads() {
     });
     setSelectedCategories((lead.category || "").split(",").map((s: string) => s.trim()).filter(Boolean));
     setIsModalOpen(true);
+
+    try {
+      const [svcRes] = await Promise.all([
+        supabase.from("services").select("global_service_id, price, duration, category").eq("salon_id", lead.id)
+      ]);
+      const svcMap: any = {};
+      (svcRes.data || []).forEach(s => {
+        if (s.global_service_id) {
+          svcMap[s.global_service_id] = { enabled: true, price: s.price?.toString() || "0", duration: s.duration?.toString() || "30", category: s.category || "" };
+        }
+      });
+      setSelectedServices(svcMap);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchGlobals = async () => {
+    try {
+      const [svcRes, staffRes] = await Promise.all([
+        supabase.from("global_services").select("*").eq("is_active", true),
+        supabase.from("global_staff_roles").select("*").eq("is_active", true)
+      ]);
+      setGlobalServices(svcRes.data || []);
+      setGlobalStaffRoles(staffRes.data || []);
+    } catch (e) {
+      console.error("Failed to load globals:", e);
+    }
   };
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchLeads());
+    void Promise.resolve().then(() => {
+      fetchLeads();
+      fetchGlobals();
+    });
   }, []);
 
   useEffect(() => {
@@ -253,6 +293,98 @@ function AgentLeads() {
         });
     } catch (err) {
       console.error("Activity logging failed:", err);
+    }
+  };
+
+  const syncServicesAndStaff = async (salonId: string) => {
+    const [existingSvcRes] = await Promise.all([
+      supabase.from("services").select("id, global_service_id").eq("salon_id", salonId)
+    ]);
+    const existingSvc = existingSvcRes.data || [];
+    
+    const existingSvcIds = existingSvc.map(s => s.global_service_id).filter(Boolean);
+    const selectedSvcIds = Object.keys(selectedServices).filter(id => selectedServices[id].enabled);
+    
+    const svcsToAdd = selectedSvcIds.filter(id => !existingSvcIds.includes(id));
+    const svcsToRemove = existingSvc.filter(s => !selectedSvcIds.includes(s.global_service_id!));
+    
+    if (svcsToAdd.length > 0) {
+      const inserts = svcsToAdd.map(id => {
+        const gs = globalServices.find(g => g.id === id);
+        const override = selectedServices[id];
+        return {
+          salon_id: salonId,
+          global_service_id: id,
+          name: gs?.name || "Service",
+          category: override.category || gs?.category || "Other",
+          duration: override.duration || gs?.default_duration || "30",
+          price: parseFloat(override.price) || gs?.default_price || 0,
+          image_url: gs?.icon_image_url || null
+        };
+      });
+      await supabase.from("services").insert(inserts);
+    }
+    
+    if (svcsToRemove.length > 0) {
+      await supabase.from("services").delete().in("id", svcsToRemove.map(s => s.id));
+    }
+
+    if (staffToAdd.length > 0) {
+      for (const st of staffToAdd) {
+        // Upload Avatar if any
+        let finalAvatarUrl = null;
+        if (st.avatarBlob) {
+          const fileName = `${salonId}-${Date.now()}.jpg`;
+          const { error: uploadError } = await supabase.storage.from("staff-avatars").upload(fileName, st.avatarBlob, {
+            contentType: 'image/jpeg',
+            upsert: true
+          });
+          if (!uploadError) {
+            const { data } = supabase.storage.from("staff-avatars").getPublicUrl(fileName);
+            finalAvatarUrl = data.publicUrl;
+          }
+        }
+        
+        // Insert staff
+        await supabase.from("salon_staff").insert({
+          salon_id: salonId,
+          name: st.name,
+          email: st.email || null,
+          role: st.role,
+          skill_level: st.skill_level,
+          commission_rate: st.commission_rate,
+          status: 'active',
+          avatar_url: finalAvatarUrl,
+          working_hours: {
+            schedule: st.schedule,
+            general_buffer_time: st.general_buffer_time,
+            assigned_services: Object.keys(st.services).filter(id => st.services[id].enabled).map(id => ({
+              service_id: id, 
+              commission_rate: st.services[id].commission,
+              buffer_time: st.services[id].buffer
+            }))
+          }
+        });
+      }
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingImage(true);
+      const ext = file.name.split('.').pop();
+      const fileName = `salons/${selectedLead?.id}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("salon-images").upload(fileName, file);
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from("salon-images").getPublicUrl(fileName);
+      setFormData({ ...formData, hero_url: data.publicUrl });
+      toast.success("Image uploaded successfully!");
+    } catch (err: any) {
+      toast.error("Upload failed: " + err.message);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -292,6 +424,7 @@ function AgentLeads() {
 
       if (error) throw error;
 
+      await syncServicesAndStaff(selectedLead.id);
       await logActivity(selectedLead.id, "LEAD_UPDATED", "Agent updated salon details in field editor.");
       toast.success("Changes saved!");
 
@@ -347,6 +480,7 @@ function AgentLeads() {
 
       if (error) throw error;
       
+      await syncServicesAndStaff(selectedLead.id);
       await logActivity(selectedLead.id, "AGENT_VERIFIED", "Agent completed field verification and added phone/email.");
 
       const res = await fetch("/api/invite-owner", {
@@ -370,7 +504,8 @@ function AgentLeads() {
           selectedLead.id, 
           formData.phone, 
           formData.owner_gmail, 
-          formData.name || selectedLead.name
+          formData.name || selectedLead.name,
+          selectedLead.slug
         );
         if (!waRes.success) {
           console.warn("WhatsApp notification failed:", waRes.error);
@@ -429,22 +564,6 @@ function AgentLeads() {
     }
   };
 
-  const handleDeleteLead = async (leadId: string) => {
-    if (!confirm("Are you sure you want to remove this salon from your list?")) return;
-    try {
-      const { error } = await supabase
-        .from("salons")
-        .update({ assign_to: null, onboarding_status: "DISCOVERED" })
-        .eq("id", leadId);
-
-      if (error) throw error;
-      toast.success("Salon unassigned from your list.");
-      setLeads(prev => prev.filter(l => l.id !== leadId));
-    } catch (error: any) {
-      toast.error("Failed: " + error.message);
-    }
-  };
-
   const tabLeads = leads.filter(l => {
     const status = l.onboarding_status || "ASSIGNED_TO_AGENT";
     if (activeTab === "assigned") return status === "ASSIGNED_TO_AGENT";
@@ -486,7 +605,6 @@ function AgentLeads() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Field Verification Editor</h1>
@@ -494,7 +612,6 @@ function AgentLeads() {
         </div>
       </div>
 
-      {/* KPI Cards & Search */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
@@ -535,7 +652,6 @@ function AgentLeads() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
         <div className="p-5 border-b border-zinc-50 flex items-center justify-between gap-4">
           <div>
@@ -570,7 +686,6 @@ function AgentLeads() {
           </div>
         </div>
 
-        {/* Salon Cards Grid */}
         <div className="p-5">
           {loading ? (
             <div className="flex items-center justify-center py-20 text-zinc-400">
@@ -593,7 +708,6 @@ function AgentLeads() {
                     className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer group"
                     onClick={() => handleOpenModal(lead)}
                   >
-                    {/* Hero Image */}
                     {lead.hero_url ? (
                       <div className="w-full h-32 rounded-xl overflow-hidden mb-3 bg-zinc-200">
                         <img src={lead.hero_url} alt={lead.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -620,7 +734,6 @@ function AgentLeads() {
                       </p>
                     )}
 
-                    {/* Admin Notes callout */}
                     {lead.admin_notes && (
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-2 mb-2">
                         <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Admin Notes</p>
@@ -628,7 +741,6 @@ function AgentLeads() {
                       </div>
                     )}
 
-                    {/* Completion Bar */}
                     <div className="mt-3">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Completion</span>
@@ -642,7 +754,6 @@ function AgentLeads() {
                       </div>
                     </div>
 
-                    {/* Key data pills */}
                     <div className="flex items-center gap-1.5 mt-3 flex-wrap">
                       {lead.phone && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-zinc-200 text-[10px] text-zinc-500 font-medium">
@@ -668,12 +779,10 @@ function AgentLeads() {
         </div>
       </Card>
 
-      {/* FIELD EDITOR MODAL */}
       {isModalOpen && selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 max-w-3xl w-full shadow-2xl relative border border-zinc-100 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
             
-            {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -694,7 +803,6 @@ function AgentLeads() {
               </Button>
             </div>
 
-            {/* Admin Notes Banner */}
             {formData.admin_notes && (
               <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-3">
                 <ClipboardList className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -705,10 +813,8 @@ function AgentLeads() {
               </div>
             )}
 
-            {/* Modal Body */}
             <div className="flex-1 overflow-y-auto py-5 space-y-6 pr-1 text-xs">
 
-              {/* Section 1: Salon & Owner Details */}
               <div className="space-y-3">
                 <h4 className="font-extrabold uppercase tracking-widest text-blue-600 text-[10px] border-b border-blue-100 pb-1 flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5" /> 1. Salon & Owner Details
@@ -782,13 +888,25 @@ function AgentLeads() {
                     />
                   </div>
                   <div className="space-y-1 md:col-span-2">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Hero Image URL</label>
-                    <Input
-                      value={formData.hero_url}
-                      onChange={(e) => setFormData({...formData, hero_url: e.target.value})}
-                      placeholder="https://..."
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
-                    />
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Hero Image</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={formData.hero_url}
+                        onChange={(e) => setFormData({...formData, hero_url: e.target.value})}
+                        placeholder="https://..."
+                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 flex-1"
+                      />
+                      <Button type="button" variant="outline" className="h-10 px-4 rounded-xl relative overflow-hidden bg-white hover:bg-zinc-50 text-zinc-600 font-bold text-xs" disabled={uploadingImage}>
+                        {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <><UploadCloud className="w-4 h-4 mr-2" /> Upload</>}
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                        />
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Price Level</label>
@@ -811,13 +929,11 @@ function AgentLeads() {
                 </div>
               </div>
 
-              {/* Section 2: Field Agent Data */}
               <div className="space-y-3">
                 <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
                   <Target className="w-3.5 h-3.5" /> 2. Agent Field Data
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Owner Gmail moved to Section 1 for better visibility */}
                   <div className="space-y-1 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Agent Field Notes</label>
                     <textarea
@@ -827,7 +943,7 @@ function AgentLeads() {
                       className="w-full min-h-[80px] p-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-medium leading-relaxed"
                     />
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-4 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center justify-between">
                       <span>Working Hours</span>
                     </label>
@@ -836,14 +952,128 @@ function AgentLeads() {
                       onChange={(val) => setFormData({...formData, working_hours: val})} 
                     />
                   </div>
+                  
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1.5">
+                      <Map className="w-3.5 h-3.5" /> Captured Location (Lat/Lng)
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={formData.latitude}
+                        onChange={(e) => setFormData({...formData, latitude: e.target.value})}
+                        placeholder="Latitude"
+                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200"
+                      />
+                      <Input
+                        value={formData.longitude}
+                        onChange={(e) => setFormData({...formData, longitude: e.target.value})}
+                        placeholder="Longitude"
+                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200"
+                      />
+                    </div>
+                    {formData.map_url && (
+                      <p className="text-[10px] text-zinc-400 mt-1">
+                        <a href={formData.map_url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline flex items-center gap-1">
+                          Open in Google Maps
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-3 md:col-span-2 pt-2">
+                    <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5" /> 3. Included Services
+                    </h4>
+                    <p className="text-[10px] text-zinc-500 font-medium">Select services below to include them in the salon. You can customize the price and duration.</p>
+                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto p-2 bg-zinc-50 rounded-xl border border-zinc-100 custom-scrollbar">
+                      {globalServices.length === 0 && (
+                        <span className="text-[10px] text-zinc-400 font-medium p-1">No services available.</span>
+                      )}
+                      {globalServices.map(s => {
+                        const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
+                        return (
+                          <div 
+                            key={s.id}
+                            className={`p-3 rounded-xl border transition-colors ${
+                              config.enabled ? 'bg-white border-emerald-200 shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <label className="flex items-center gap-2 cursor-pointer mb-2">
+                              <input 
+                                type="checkbox"
+                                checked={config.enabled}
+                                onChange={(e) => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }))}
+                                className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                              />
+                              <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
+                            </label>
+                            {config.enabled && (
+                              <div className="flex gap-3 pl-6 mt-2">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-zinc-400 uppercase">Price</label>
+                                  <input 
+                                    type="number" 
+                                    value={config.price} 
+                                    onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
+                                    className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-zinc-400 uppercase">Duration (m)</label>
+                                  <input 
+                                    type="number" 
+                                    value={config.duration} 
+                                    onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
+                                    className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3 md:col-span-2 pt-2">
+                    <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5" /> 4. Add Staff
+                    </h4>
+                    {staffToAdd.length > 0 && (
+                      <div className="grid grid-cols-1 gap-2 mb-3">
+                        {staffToAdd.map((st, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
+                                {st.name.substring(0,2)}
+                              </div>
+                              <div>
+                                <h5 className="text-xs font-bold text-indigo-900">{st.name}</h5>
+                                <p className="text-[10px] text-indigo-600 font-medium">{st.role} • {st.skill_level}</p>
+                              </div>
+                            </div>
+                            <button onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-indigo-400 hover:text-red-500 p-1">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsStaffModalOpen(true)}
+                      className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-12"
+                    >
+                      <Plus className="w-4 h-4 mr-2" /> Add Professional
+                    </Button>
+                  </div>
                 </div>
               </div>
 
             </div>
 
-            {/* Modal Footer — Action Buttons based on current status */}
             <div className="pt-4 border-t border-zinc-100 space-y-3">
-              {/* Progress bar in footer */}
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide shrink-0">Profile Completion</span>
                 <div className="flex-1 bg-zinc-100 rounded-full h-1.5 overflow-hidden">
@@ -871,7 +1101,6 @@ function AgentLeads() {
                 </Button>
 
                 <div className="flex items-center gap-2">
-                  {/* Save */}
                   <Button
                     onClick={() => handleSave()}
                     disabled={updating}
@@ -881,14 +1110,13 @@ function AgentLeads() {
                     {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                   </Button>
 
-                  {/* Complete Verification & Send Invite — only if ASSIGNED_TO_AGENT or AGENT_VERIFIED */}
                   {["ASSIGNED_TO_AGENT", "AGENT_VERIFIED"].includes(formData.onboarding_status) && (
                     <Button
                       onClick={handleCompleteVerification}
                       disabled={updating}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Complete Verification & Send Invite
+                      <CheckCircle2 className="w-4 h-4" /> Draft Salon Created & Send for Review
                     </Button>
                   )}
 
@@ -919,6 +1147,28 @@ function AgentLeads() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Sub-modal for Add Professional */}
+      {isStaffModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
+          <AddProfessionalForm
+            onCancel={() => setIsStaffModalOpen(false)}
+            onSubmit={(staffData) => {
+              setStaffToAdd(prev => [...prev, staffData]);
+              setIsStaffModalOpen(false);
+            }}
+            globalRoles={globalStaffRoles}
+            salonServices={Object.keys(selectedServices).filter(id => selectedServices[id].enabled).map(id => {
+              const gs = globalServices.find(g => g.id === id);
+              return {
+                id,
+                name: gs?.name || "Service",
+                duration_min: selectedServices[id].duration
+              };
+            })}
+          />
         </div>
       )}
     </div>

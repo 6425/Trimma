@@ -610,8 +610,8 @@ export default function SalonPage() {
                       <ShieldCheck className="w-3.5 h-3.5 text-brand" /> Verified Partner
                     </Badge>
                   ) : (
-                    <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-amber-400" /> Not Verified
+                    <Badge className="bg-amber-500/20 text-amber-500 border border-amber-500/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1" title="Owner needs to activate profile">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" /> Unverified
                     </Badge>
                   )}
                 </div>
@@ -749,8 +749,8 @@ export default function SalonPage() {
                             <div className="font-bold text-lg text-zinc-900">LKR {service.price}</div>
                           )}
                         </div>
-                        <Button className="rounded-full shadow-sm px-6" onClick={() => handleBookService(service.name)}>
-                          Book Now
+                        <Button className="rounded-full shadow-sm px-6" onClick={() => handleBookService(service.name)} disabled={!salon.is_verified}>
+                          {!salon.is_verified ? "Unavailable" : "Book Now"}
                         </Button>
                       </div>
                     </div>
@@ -829,8 +829,9 @@ export default function SalonPage() {
                               <Button
                                 className="rounded-full shadow-sm px-6 bg-brand hover:bg-[#c21b52]"
                                 onClick={() => handleBookPromotion(promotion)}
+                                disabled={!salon.is_verified}
                               >
-                                Book Deal
+                                {!salon.is_verified ? "Unavailable" : "Book Deal"}
                               </Button>
                             </div>
                           </div>

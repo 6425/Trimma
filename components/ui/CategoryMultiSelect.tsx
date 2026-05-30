@@ -52,6 +52,13 @@ export function CategoryMultiSelect({
 
   useEffect(() => {
     void (async () => {
+      // 1. Fast path: check session storage first
+      const cached = sessionStorage.getItem("trimma_categories_cache");
+      if (cached) {
+        setCategories(JSON.parse(cached));
+        setLoading(false);
+      }
+
       try {
         const { data } = await supabase
           .from("categories")
@@ -59,6 +66,7 @@ export function CategoryMultiSelect({
           .order("name");
         if (data) {
           setCategories(data);
+          sessionStorage.setItem("trimma_categories_cache", JSON.stringify(data));
         } else {
           console.error("Categories data is null or empty");
         }

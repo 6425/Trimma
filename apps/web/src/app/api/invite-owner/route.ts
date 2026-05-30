@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     const { data: salon, error: salonError } = await supabaseAdmin
       .from("salons")
-      .select("id, name")
+      .select("id, name, slug")
       .eq("id", salonId)
       .maybeSingle();
 
@@ -70,6 +70,8 @@ export async function POST(request: Request) {
     const rateLimitKey = buildEmailRateLimitKey(ip, actorEmail);
     const loginLink = `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedOwnerEmail)}&next=${encodeURIComponent("/dashboard/profile")}`;
 
+    const draftLink = `${APP_BASE_URL}/salons/${salon.slug || salonId}?preview=true`;
+
     const emailResult = await sendTriggeredEmail({
       triggerId: "onboarding",
       to: normalizedOwnerEmail,
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
         salon_name: salon.name || "your salon",
         owner_gmail: normalizedOwnerEmail,
         login_link: loginLink,
+        draft_link: draftLink,
       },
       rateLimitKey,
       idempotencyKey: `owner-invite/${salonId}/${normalizedOwnerEmail}`,

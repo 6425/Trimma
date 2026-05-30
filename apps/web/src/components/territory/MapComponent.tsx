@@ -133,30 +133,6 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
                 `} style={{ width: 40, height: 40, border: isSelected ? '2px solid white' : 'none' }}>
                   <Store className="w-5 h-5" />
                 </div>
-
-                {openInfoWindowId === biz.id && (
-                  <InfoWindow
-                    position={{ lat: biz.latitude, lng: biz.longitude }}
-                    onCloseClick={() => {
-                      setOpenInfoWindowId(null);
-                      onBusinessSelect(null);
-                    }}
-                  >
-                    <div className="p-1 min-w-[200px] text-zinc-900">
-                      <h4 className="font-extrabold text-sm mb-0.5">{biz.name}</h4>
-                      <p className="text-xs text-zinc-500 font-semibold mb-2">{biz.category || 'Beauty'}</p>
-                      <p className="text-[11px] text-zinc-600 mb-2 leading-relaxed">{biz.address}</p>
-                      <div className="flex gap-2 mt-3">
-                        <button className="flex-1 bg-zinc-900 text-white text-[10px] font-bold py-1.5 rounded-lg hover:bg-zinc-800 transition-colors">
-                          Details
-                        </button>
-                        <button className="flex-1 bg-[#FFC107] text-black text-[10px] font-bold py-1.5 rounded-lg hover:bg-[#FFC107]/90 transition-colors">
-                          Directions
-                        </button>
-                      </div>
-                    </div>
-                  </InfoWindow>
-                )}
               </AdvancedMarker>
             );
           })}

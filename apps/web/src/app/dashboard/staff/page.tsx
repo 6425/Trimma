@@ -815,22 +815,25 @@ export default function DashboardStaff() {
                       onChange={(e) => setNewRole(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                     >
-                      <optgroup label="Operational">
-                        {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => (
-                          <option key={r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Admin">
-                        {globalRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => (
-                          <option key={r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
-                        ))}
-                      </optgroup>
-                      {/* Fallback for roles that don't match operational/admin */}
-                      <optgroup label="Other">
-                        {globalRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => (
-                          <option key={r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
-                        ))}
-                      </optgroup>
+                  <optgroup label="Operational">
+                    {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
+                      const name = r.name || r.role_name;
+                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
+                    })}
+                  </optgroup>
+                  <optgroup label="Admin">
+                    {globalRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => {
+                      const name = r.name || r.role_name;
+                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
+                    })}
+                  </optgroup>
+                  {/* Fallback for roles that don't match operational/admin */}
+                  <optgroup label="Other">
+                    {globalRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => {
+                      const name = r.name || r.role_name;
+                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
+                    })}
+                  </optgroup>
                     </select>
                   </div>
 
@@ -1091,19 +1094,22 @@ export default function DashboardStaff() {
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                     >
                       <optgroup label="Operational">
-                        {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => (
-                          <option key={r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
-                        ))}
+                        {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
+                          const name = r.name || r.role_name;
+                          return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
+                        })}
                       </optgroup>
                       <optgroup label="Admin">
-                        {globalRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => (
-                          <option key={r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
-                        ))}
+                        {globalRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => {
+                          const name = r.name || r.role_name;
+                          return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
+                        })}
                       </optgroup>
                       <optgroup label="Other">
-                        {globalRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => (
-                          <option key={r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
-                        ))}
+                        {globalRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => {
+                          const name = r.name || r.role_name;
+                          return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
+                        })}
                       </optgroup>
                     </select>
                   </div>

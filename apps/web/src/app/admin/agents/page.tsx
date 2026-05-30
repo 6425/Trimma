@@ -41,7 +41,7 @@ export default function AdminAgents() {
 
   // Territory Creation states
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
-  const [newTerritoryId, setNewTerritoryId] = useState("");
+  const [newTerritoryIds, setNewTerritoryIds] = useState<string[]>([]);
 
   const refreshTerritoryAssignments = async () => {
     try {
@@ -182,27 +182,35 @@ export default function AdminAgents() {
   };
 
   const handleAssignTerritory = async () => {
-    if (!newTerritoryEmail || !newTerritoryId) {
-      toast.error("Please select an agent and territory.");
+    if (!newTerritoryEmail || newTerritoryIds.length === 0) {
+      toast.error("Please select an agent and at least one territory.");
       return;
     }
 
     try {
       setUpdating(true);
-      const result = await assignAgentTerritory(newTerritoryEmail, newTerritoryId);
-      if (result.success === false) throw new Error(result.error);
+      
+      for (const id of newTerritoryIds) {
+        const result = await assignAgentTerritory(newTerritoryEmail, id);
+        if (result.success === false) {
+           console.error("Failed to assign", id, result.error);
+           // We continue with others even if one fails (e.g., already assigned)
+        }
+      }
 
-      const territoryName =
-        territoryCatalog.find((t) => t.id === newTerritoryId)?.name || newTerritoryId;
+      const assignedNames = territoryCatalog
+        .filter((t) => newTerritoryIds.includes(t.id))
+        .map((t) => t.name)
+        .join(", ");
 
       await logAgentActivity(
         newTerritoryEmail,
-        "TERRITORY_ASSIGNED",
-        `Assigned territory: ${territoryName}.`
+        "TERRITORIES_ASSIGNED",
+        `Assigned territories: ${assignedNames}.`
       );
 
-      toast.success(`Successfully assigned ${territoryName}!`);
-      setNewTerritoryId("");
+      toast.success(`Successfully assigned ${newTerritoryIds.length} territories!`);
+      setNewTerritoryIds([]);
       await refreshTerritoryAssignments();
     } catch (error: any) {
       toast.error("Territory assignment failed: " + error.message);
@@ -664,19 +672,31 @@ export default function AdminAgents() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Territory</label>
-                    <select
-                      value={newTerritoryId}
-                      onChange={(e) => setNewTerritoryId(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
-                    >
-                      <option value="">Choose a territory...</option>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Territories</label>
+                    <div className="w-full max-h-[200px] overflow-y-auto border border-slate-200 rounded-xl bg-white p-2 space-y-1 custom-scrollbar">
+                      {territoryCatalog.length === 0 && (
+                        <p className="text-zinc-500 text-xs p-2">No territories available.</p>
+                      )}
                       {territoryCatalog.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name} ({t.type})
-                        </option>
+                        <label key={t.id} className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={newTerritoryIds.includes(t.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNewTerritoryIds([...newTerritoryIds, t.id]);
+                              } else {
+                                setNewTerritoryIds(newTerritoryIds.filter(id => id !== t.id));
+                              }
+                            }}
+                            className="rounded border-slate-300 text-brand focus:ring-brand/20"
+                          />
+                          <span className="text-xs font-bold text-zinc-700">
+                            {t.name} <span className="text-[10px] font-normal text-zinc-500">({t.type})</span>
+                          </span>
+                        </label>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
                   <Button

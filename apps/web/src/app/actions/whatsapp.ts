@@ -1126,7 +1126,7 @@ export async function sendReviewRequestAlert(bookingNo: string) {
 /**
  * Triggers an instant WhatsApp alert to invite a Salon Owner when onboarding is completed.
  */
-export async function sendOnboardingInviteAlert(salonId: string, phone: string, ownerGmail: string, salonName: string) {
+export async function sendOnboardingInviteAlert(salonId: string, phone: string, ownerGmail: string, salonName: string, slug?: string | null) {
   const { 
     enabled, 
     phoneId, 
@@ -1151,11 +1151,14 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
     const loginLink = normalizedGmail
       ? `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedGmail)}&next=${encodeURIComponent("/dashboard/profile")}`
       : `${APP_BASE_URL}/login?next=${encodeURIComponent("/onboarding")}`;
+      
+    const draftLink = `${APP_BASE_URL}/salons/${slug || salonId}?preview=true`;
 
     const variables = {
       salon_name: salonName || "Partner",
       owner_gmail: normalizedGmail || "your verified email",
       login_link: loginLink,
+      draft_link: draftLink,
     };
 
     const msg = parseTemplate(templateOnboardingInvite || D.onboardingInvite, variables);
