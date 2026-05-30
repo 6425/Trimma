@@ -53,7 +53,7 @@ export default function AgentTasksQueue() {
   };
 
   useEffect(() => {
-    loadData();
+    setTimeout(() => loadData(), 0);
   }, []);
 
   const filteredItems = workItems.filter(item => {
