@@ -15,7 +15,9 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
     pathname?.startsWith("/agent") ||
     pathname?.startsWith("/customer") ||
     pathname === "/login" ||
-    pathname === "/signup";
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
 
   if (isCheckout) {
     return <main className="min-h-screen">{children}</main>;

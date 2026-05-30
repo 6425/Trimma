@@ -52,6 +52,9 @@ export function resolvePostAuthRedirect(
   nextPath: string | null
 ): string {
   const safeNext = sanitizeNextPath(nextPath);
+  if (safeNext === "/reset-password" || safeNext?.startsWith("/reset-password?")) {
+    return "/reset-password";
+  }
   if (safeNext && (role === "admin" || canAccessTrimmaRoute(role, safeNext))) {
     return safeNext;
   }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense } from "react";
 import { Button } from "@/components/ui/button";
+import Logo from "../../components/Logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/config/supabase";
@@ -91,11 +92,14 @@ function LoginForm() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/70" />
         </div>
 
-        <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center">
-          <span className="mb-8 inline-flex items-center rounded-full border border-[#F5B700] px-5 py-1.5 text-sm font-semibold tracking-wide text-[#F5B700]">
-            Trimma.io
-          </span>
+        <Link
+          href="/"
+          className="absolute left-6 top-6 z-20 hover:opacity-90 transition-opacity sm:left-10 sm:top-8 lg:left-14 lg:top-10"
+        >
+          <Logo inverse iconSize={40} />
+        </Link>
 
+        <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center pt-14 sm:pt-16 lg:pt-0">
           <blockquote className="font-serif text-[1.65rem] font-medium italic leading-[1.25] tracking-tight text-white sm:text-3xl lg:text-[2.15rem] xl:text-[2.45rem]">
             &ldquo;Tired of wasting your entire Poya day morning waiting in line?&rdquo;
           </blockquote>
@@ -144,9 +148,9 @@ function LoginForm() {
                   <Label htmlFor="password" className="text-zinc-300">
                     Password
                   </Label>
-                  <a href="#" className="text-xs text-[#F5B700] hover:text-[#FFC947]">
+                  <Link href="/forgot-password" className="text-xs text-[#F5B700] hover:text-[#FFC947]">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
                 <Input
                   id="password"
@@ -201,17 +205,11 @@ function LoginForm() {
             </Button>
           </form>
 
-          <div className="space-y-2 text-center text-sm text-zinc-400">
+          <div className="text-center text-sm text-zinc-400">
             <p>
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline">
                 Create an account
-              </Link>
-            </p>
-            <p>
-              Platform admin?{" "}
-              <Link href="/admin/login" className="font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline">
-                Admin login
               </Link>
             </p>
           </div>
