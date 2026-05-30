@@ -11,6 +11,7 @@ import { getAgentSalonStatusClass, getAgentSalonStatusLabel, isAgentSalonLive } 
 import { formatRelativeTime } from "@/lib/dashboard-stats";
 import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
+import { toast } from "sonner";
 
 type AssignedSalon = {
   id: string;
