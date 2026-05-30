@@ -37,6 +37,7 @@ export default function AdminAgents() {
   // Form edit states
   const [editCommission, setEditCommission] = useState("10");
   const [editStatus, setEditStatus] = useState("active");
+  const [editTerritory, setEditTerritory] = useState("");
 
   // Territory Creation states
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
@@ -68,6 +69,7 @@ export default function AdminAgents() {
         agent_exists: !!agentMeta.user_email,
         status: agentMeta.status || "active",
         commission_rate: agentMeta.commission_rate !== undefined ? agentMeta.commission_rate : 10,
+        territory: agentMeta.territory || "",
         total_leads: agentLeads.length,
         converted_leads: convertedCount,
         conversion_rate: agentLeads.length > 0 ? Math.round((convertedCount / agentLeads.length) * 100) : 0,
@@ -113,6 +115,7 @@ export default function AdminAgents() {
     setSelectedAgent(agent);
     setEditCommission(String(agent.commission_rate));
     setEditStatus(agent.status);
+    setEditTerritory(agent.territory || "");
     setIsEditModalOpen(true);
   };
 
@@ -135,6 +138,7 @@ export default function AdminAgents() {
         user_email: selectedAgent.email,
         status: editStatus,
         commission_rate: parsedRate,
+        territory: editTerritory,
         createIfMissing: !selectedAgent.agent_exists,
       });
       if (result.success === false) throw new Error(result.error);
@@ -541,18 +545,25 @@ export default function AdminAgents() {
                               {/* Coverage */}
                               <td className="px-6 py-2">
                                 <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                  {matchingTerritories.length === 0 ? (
+                                  {agent.territory && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="px-1.5 py-0 border-none bg-[#F5B700]/20 text-[#F5B700] font-bold text-[9px] mr-1"
+                                    >
+                                      {agent.territory}
+                                    </Badge>
+                                  )}
+                                  {matchingTerritories.map((t) => (
+                                    <Badge
+                                      key={`${t.agent_id}-${t.territory_id}`}
+                                      variant="secondary"
+                                      className="px-1.5 py-0 border-none bg-slate-100 text-zinc-600 font-semibold text-[9px]"
+                                    >
+                                      {t.territories?.name || t.territory_id}
+                                    </Badge>
+                                  ))}
+                                  {!agent.territory && matchingTerritories.length === 0 && (
                                     <span className="text-[10px] text-zinc-500 italic">No assigned zones</span>
-                                  ) : (
-                                    matchingTerritories.map((t) => (
-                                      <Badge
-                                        key={`${t.agent_id}-${t.territory_id}`}
-                                        variant="secondary"
-                                        className="px-1.5 py-0 border-none bg-slate-100 text-zinc-600 font-semibold text-[9px]"
-                                      >
-                                        {t.territories?.name || t.territory_id}
-                                      </Badge>
-                                    ))
                                   )}
                                 </div>
                               </td>
@@ -995,11 +1006,22 @@ export default function AdminAgents() {
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
+                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#F5B700]/20"
                 >
                   <option value="active">Active (Authorized to Prospect)</option>
                   <option value="inactive">Inactive (Suspended)</option>
                 </select>
+              </div>
+
+              {/* Territory Text Field */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Primary Territory Assignment</label>
+                <Input 
+                  value={editTerritory}
+                  onChange={(e) => setEditTerritory(e.target.value)}
+                  placeholder="e.g. Western Province"
+                  className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-[#F5B700]/20 rounded-xl"
+                />
               </div>
             </div>
 

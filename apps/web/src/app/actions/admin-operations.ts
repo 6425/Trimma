@@ -273,6 +273,7 @@ export async function saveAdminAgentProfile(input: {
   user_email: string;
   status: string;
   commission_rate: number;
+  territory?: string;
   createIfMissing?: boolean;
 }) {
   const result = await withAdminDb(async (supabase) => {
@@ -282,10 +283,14 @@ export async function saveAdminAgentProfile(input: {
       .eq("user_email", input.user_email)
       .maybeSingle();
 
-    const payload = {
+    const payload: any = {
       status: input.status,
       commission_rate: input.commission_rate,
     };
+    
+    if (input.territory !== undefined) {
+      payload.territory = input.territory;
+    }
 
     if (existing?.id) {
       const { error } = await supabase.from("agents").update(payload).eq("user_email", input.user_email);
