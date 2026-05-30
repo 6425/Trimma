@@ -104,34 +104,14 @@ export default function Logo({
     <div className={`flex items-center gap-2 select-none ${className}`}>
       <div
         className="flex items-center justify-center shrink-0"
-        style={{ width: iconSize, height: iconSize }}
+        style={{ width: "auto", height: iconSize }}
         aria-hidden="true"
       >
         <img
           src="/logo.svg"
           alt="Trimma Logo"
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          style={{ height: "100%", width: "auto", objectFit: "contain" }}
         />
-      </div>
-
-      <div className="flex flex-col justify-center min-w-0">
-        <span
-          className={`font-bold tracking-tight leading-none ${inverse ? "text-white" : "text-black"}`}
-          style={{ fontSize: wordmarkSize }}
-        >
-          {wordmark}
-        </span>
-
-        {displayTagline ? (
-          <span
-            className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
-              inverse ? "text-white/60" : "text-zinc-500"
-            }`}
-            style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
-          >
-            {displayTagline}
-          </span>
-        ) : null}
       </div>
     </div>
   );
