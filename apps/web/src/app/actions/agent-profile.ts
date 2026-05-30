@@ -24,7 +24,7 @@ export async function getAgentProfile() {
       phone,
       avatar_url
     `)
-    .eq("id", user.id)
+    .eq("email", user.email)
     .single();
 
   if (error) {
@@ -76,7 +76,7 @@ export async function updateAgentProfile(input: { fullName: string; phone: strin
       full_name: input.fullName,
       phone: input.phone,
     })
-    .eq("id", user.id);
+    .eq("email", user.email);
 
   if (error) {
     return { success: false as const, error: error.message };
@@ -120,7 +120,7 @@ export async function uploadAgentAvatar(formData: FormData) {
   const { error: updateError } = await supabase
     .from("users")
     .update({ avatar_url: avatarUrl })
-    .eq("id", user.id);
+    .eq("email", user.email);
 
   if (updateError) {
     return { success: false as const, error: updateError.message };

@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useCallback, Suspense, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, MapPin, RefreshCw, Upload, Image as ImageIcon } from "lucide-react";
+import { User, Mail, Save, MapPin, RefreshCw, Upload, Image as ImageIcon } from "lucide-react";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { getAgentProfile, uploadAgentAvatar } from "@/app/actions/agent-profile";
+import { getAgentProfile, updateAgentProfile, uploadAgentAvatar } from "@/app/actions/agent-profile";
 
 function ProfileFormContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   
@@ -55,6 +57,27 @@ function ProfileFormContent() {
       void loadProfile();
     });
   }, [loadProfile]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      const result = await updateAgentProfile({ fullName, phone });
+      if (!result.success) throw new Error(result.error);
+
+      toast.success("Profile updated successfully!", {
+        position: "top-center",
+      });
+    } catch (err: unknown) {
+      console.error("Failed to update profile", err);
+      toast.error(err instanceof Error ? err.message : "Failed to update profile", {
+        position: "top-center",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -120,7 +143,7 @@ function ProfileFormContent() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
+        <form onSubmit={handleSaveProfile} className="space-y-6">
           
           {/* PROFILE CARD */}
           <div className="bg-zinc-900/50 rounded-2xl border border-white/10 p-6 space-y-6 shadow-sm backdrop-blur-sm">
@@ -175,8 +198,9 @@ function ProfileFormContent() {
                   <Input 
                     id="full_name"
                     value={fullName}
-                    disabled
-                    className="h-11 bg-zinc-950/50 border-white/10 text-zinc-500 rounded-xl cursor-not-allowed"
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="h-11 bg-zinc-950 border-white/10 text-white focus:border-[#F5B700] rounded-xl"
                   />
                 </div>
               </div>
@@ -184,11 +208,12 @@ function ProfileFormContent() {
               {/* PHONE */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-400">Phone Number</Label>
-                <Input
+                <LkPhoneInput
                   id="phone"
                   value={phone}
-                  disabled
-                  className="h-11 bg-zinc-950/50 border-white/10 text-zinc-500 rounded-xl cursor-not-allowed"
+                  onChange={setPhone}
+                  required
+                  className="h-11 bg-zinc-950 border-white/10 text-white focus-within:border-[#F5B700] rounded-xl"
                 />
               </div>
 
@@ -219,13 +244,33 @@ function ProfileFormContent() {
                   />
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-normal">
-                  Your details and territory are managed by the admin. Please contact an administrator if you need them updated.
+                  Contact an administrator if you need your territory updated.
                 </p>
               </div>
 
             </div>
           </div>
-        </div>
+
+          {/* ACTION BUTTON */}
+          <div className="flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={saving || uploadingAvatar}
+              className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold h-11 px-6 flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" /> Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" /> Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+
+        </form>
       )}
 
     </div>
