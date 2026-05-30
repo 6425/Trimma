@@ -196,7 +196,7 @@ export default function AgentDashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
-        <p className="text-zinc-500 font-medium">Verifying agent credentials...</p>
+        <p className="text-zinc-500 font-medium">Assembling your workspace...</p>
       </div>
     );
   }
