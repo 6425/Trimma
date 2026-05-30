@@ -104,7 +104,7 @@ export default function Logo({
     <div className={`flex items-center gap-2 select-none ${className}`}>
       <div
         className="flex items-center justify-center shrink-0"
-        style={{ width: "auto", height: iconSize * 2 }}
+        style={{ width: "auto", height: iconSize * 3 }}
         aria-hidden="true"
       >
         <img
