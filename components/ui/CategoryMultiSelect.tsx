@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Check, Loader2, Lock, Sparkles, Tag } from "lucide-react";
-import { supabase } from "@/config/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 import Link from "next/link";
 
 interface Category {
@@ -52,9 +57,13 @@ export function CategoryMultiSelect({
           .from("categories")
           .select("id, name, slug")
           .order("name");
-        if (data) setCategories(data);
-      } catch {
-        // silently ignore
+        if (data) {
+          setCategories(data);
+        } else {
+          console.error("Categories data is null or empty");
+        }
+      } catch (err) {
+        console.error("Failed to load categories from Supabase:", err);
       } finally {
         setLoading(false);
       }
