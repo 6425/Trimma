@@ -17,10 +17,10 @@ export async function getAgentMapData() {
 
   const supabase = createSupabaseAdminClient();
   
-  // 1. Find the agent's ID
+  // 1. Find the agent's ID and territory
   const { data: agentData, error: agentError } = await supabase
     .from("agents")
-    .select("id")
+    .select("id, territory")
     .eq("user_email", user.email)
     .maybeSingle();
 
@@ -28,17 +28,32 @@ export async function getAgentMapData() {
     return { success: false as const, error: "Agent not found" };
   }
 
-  // 2. Fetch assigned territories
-  const { data: territoryData, error: territoryError } = await supabase
+  // Use the territory string from the agent profile directly
+  const primaryTerritoryName = agentData.territory;
+
+  // We can also fetch from agent_territories as a fallback or addition
+  const { data: territoryData } = await supabase
     .from("agent_territories")
     .select("territory_id, territories ( id, name, type, slug )")
     .eq("agent_id", agentData.id);
 
-  if (territoryError) {
-    return { success: false as const, error: territoryError.message };
+  const territories = [];
+  
+  if (primaryTerritoryName) {
+    territories.push({
+      id: "primary-" + primaryTerritoryName,
+      name: primaryTerritoryName,
+      type: "primary"
+    });
   }
 
-  const territories = (territoryData || []).map((t: any) => t.territories).filter(Boolean);
+  if (territoryData && territoryData.length > 0) {
+    territoryData.forEach((t: any) => {
+      if (t.territories && !territories.find(existing => existing.name === t.territories.name)) {
+        territories.push(t.territories);
+      }
+    });
+  }
 
   // Return the data
   return {
@@ -59,9 +74,21 @@ export async function searchBusinessesInTerritories(categories: string[], territ
     .select("id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status");
 
   if (territoryIds.length > 0) {
-    const { data: terrs } = await supabase.from("territories").select("name").in("id", territoryIds);
-    if (terrs && terrs.length > 0) {
-      const orClauses = terrs.map(t => `city.ilike.%${t.name}%`).join(",");
+    // territoryIds might be a mix of UUIDs and "primary-TerritoryName"
+    const realIds = territoryIds.filter(id => !id.startsWith("primary-"));
+    const primaryNames = territoryIds.filter(id => id.startsWith("primary-")).map(id => id.replace("primary-", ""));
+    
+    let terrNames: string[] = [...primaryNames];
+
+    if (realIds.length > 0) {
+      const { data: terrs } = await supabase.from("territories").select("name").in("id", realIds);
+      if (terrs && terrs.length > 0) {
+        terrNames = [...terrNames, ...terrs.map(t => t.name)];
+      }
+    }
+
+    if (terrNames.length > 0) {
+      const orClauses = terrNames.map(name => `city.ilike.%${name}%,address.ilike.%${name}%`).join(",");
       if (orClauses) {
         query = query.or(orClauses);
       }
@@ -69,7 +96,9 @@ export async function searchBusinessesInTerritories(categories: string[], territ
   }
 
   if (categories.length > 0 && !categories.includes("All Categories")) {
-    query = query.in("category", categories);
+    // If it's a specific category, filter by it. We can do ilike to be safe.
+    const orClauses = categories.map(cat => `category.ilike.%${cat}%`).join(",");
+    query = query.or(orClauses);
   }
 
   const { data, error } = await query;

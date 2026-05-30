@@ -26,47 +26,56 @@ export type Territory = {
   type: string;
 };
 
-// Mock bounding box/polygon for territories for demonstration
-const MOCK_BOUNDARIES: Record<string, google.maps.LatLngLiteral[]> = {
-  "Colombo 01": [
-    { lat: 6.936, lng: 79.843 },
-    { lat: 6.940, lng: 79.848 },
-    { lat: 6.933, lng: 79.851 },
-    { lat: 6.929, lng: 79.846 },
-  ]
-};
-
-function TerritoryPolygons({ territories }: { territories: Territory[] }) {
+function TerritoryBounds({ territories }: { territories: Territory[] }) {
   const map = useMap();
-  const polygonsRef = useRef<google.maps.Polygon[]>([]);
+  const geocodedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || territories.length === 0) return;
 
-    // Clear previous
-    polygonsRef.current.forEach(p => p.setMap(null));
-    polygonsRef.current = [];
+    const geocoder = new google.maps.Geocoder();
+    const bounds = new google.maps.LatLngBounds();
+    let geocodedCount = 0;
 
     territories.forEach(t => {
-      // Use mock or fallback
-      const paths = MOCK_BOUNDARIES[t.name];
-      if (paths) {
-        const polygon = new google.maps.Polygon({
-          paths,
-          strokeColor: "#3f3f46",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#FFC107",
-          fillOpacity: 0.2,
-        });
-        polygon.setMap(map);
-        polygonsRef.current.push(polygon);
-      }
+      if (geocodedRef.current.has(t.name)) return;
+      
+      const query = t.name + ", Sri Lanka";
+      geocoder.geocode({ address: query }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          bounds.union(results[0].geometry.viewport);
+          geocodedCount++;
+          geocodedRef.current.add(t.name);
+          
+          // Draw a light polygon for the viewport as a mock boundary if we want
+          const vp = results[0].geometry.viewport;
+          if (vp) {
+            const ne = vp.getNorthEast();
+            const sw = vp.getSouthWest();
+            const paths = [
+              { lat: ne.lat(), lng: ne.lng() },
+              { lat: ne.lat(), lng: sw.lng() },
+              { lat: sw.lat(), lng: sw.lng() },
+              { lat: sw.lat(), lng: ne.lng() },
+            ];
+            const polygon = new google.maps.Polygon({
+              paths,
+              strokeColor: "#3f3f46",
+              strokeOpacity: 0.5,
+              strokeWeight: 2,
+              fillColor: "#FFC107",
+              fillOpacity: 0.05,
+              map
+            });
+          }
+          
+          if (geocodedCount > 0) {
+            map.fitBounds(bounds);
+          }
+        }
+      });
     });
 
-    return () => {
-      polygonsRef.current.forEach(p => p.setMap(null));
-    };
   }, [map, territories]);
 
   return null;
@@ -152,7 +161,7 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
             );
           })}
           
-          <TerritoryPolygons territories={territories} />
+          <TerritoryBounds territories={territories} />
         </Map>
       </APIProvider>
       {!apiKey && (
