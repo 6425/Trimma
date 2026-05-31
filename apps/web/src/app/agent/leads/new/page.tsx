@@ -72,7 +72,7 @@ export default function AgentNewLeadPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/agent/leads"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to My Salons
@@ -81,104 +81,104 @@ export default function AgentNewLeadPage() {
 
       <div>
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-[#F5B700]/15 text-[#F5B700] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <UserPlus className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Add Manual Lead</h1>
-            <p className="text-sm text-zinc-400 mt-0.5">
+            <h1 className="text-2xl font-black text-zinc-900 tracking-tight">Add Manual Lead</h1>
+            <p className="text-sm text-zinc-500 mt-0.5">
               Create a salon you found in the field. It will be assigned to you immediately.
             </p>
           </div>
         </div>
       </div>
 
-      <Card className="p-6 bg-[#121212] border-white/8 text-white">
+      <Card className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2 space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                Salon name <span className="text-rose-400">*</span>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                Salon name <span className="text-rose-500">*</span>
               </label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="e.g. City Cuts Barber"
-                className="h-11 bg-[#0B0B0B] border-white/10 text-white"
+                className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:ring-2 focus:ring-blue-500/20"
                 required
               />
             </div>
 
             <div className="md:col-span-2 space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-                Category <span className="text-zinc-600 font-normal normal-case">(select up to 2)</span>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                Category <span className="text-zinc-400 font-normal normal-case">(select up to 2)</span>
               </label>
               <CategoryMultiSelect
                 value={selectedCategories}
                 onChange={setSelectedCategories}
                 maxCategories={999}
-                theme="dark"
+                theme="light"
                 showUpgradeLink={false}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Phone</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Phone</label>
               <LkPhoneInput
                 value={form.phone}
                 onChange={(phone) => setForm({ ...form, phone })}
-                theme="dark"
+                theme="light"
                 className="h-11"
               />
             </div>
             
             <div className="md:col-span-2 space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Address</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Address</label>
               <Input
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="Street, city, district"
-                className="h-11 bg-[#0B0B0B] border-white/10 text-white"
+                className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             <div className="md:col-span-2 space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Owner Gmail</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Owner Gmail</label>
               <Input
                 type="email"
                 value={form.owner_gmail}
                 onChange={(e) => setForm({ ...form, owner_gmail: e.target.value })}
                 placeholder="owner@gmail.com"
-                className="h-11 bg-[#0B0B0B] border-white/10 text-white"
+                className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Website</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Website</label>
               <Input
                 value={form.website}
                 onChange={(e) => setForm({ ...form, website: e.target.value })}
                 placeholder="https://..."
-                className="h-11 bg-[#0B0B0B] border-white/10 text-white"
+                className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
 
             <div className="md:col-span-2 space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Notes</label>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Notes</label>
               <textarea
                 value={form.agent_notes}
                 onChange={(e) => setForm({ ...form, agent_notes: e.target.value })}
                 placeholder="How you found this salon, contact person, interest level..."
-                className="w-full min-h-[96px] p-3 rounded-xl bg-[#0B0B0B] border border-white/10 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#F5B700]/30"
+                className="w-full min-h-[96px] p-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button
               type="submit"
               disabled={saving}
-              className="h-11 px-6 bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold rounded-xl"
+              className="h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
             >
               {saving ? (
                 <>
@@ -196,7 +196,7 @@ export default function AgentNewLeadPage() {
               type="button"
               variant="outline"
               onClick={() => router.push("/agent/leads")}
-              className="h-11 px-6 border-white/10 text-zinc-300 hover:bg-white/5 rounded-xl"
+              className="h-11 px-6 border-zinc-200 text-zinc-600 hover:bg-zinc-50 rounded-xl"
             >
               Cancel
             </Button>
