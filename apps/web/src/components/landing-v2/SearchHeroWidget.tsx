@@ -52,7 +52,7 @@ export function SearchHeroWidget() {
   };
 
   return (
-    <section className="relative pt-10 sm:pt-12 pb-24 sm:pb-32 bg-[#0B0B0B] mb-20 sm:mb-24">
+    <section className="relative pt-10 sm:pt-12 pb-24 sm:pb-32 bg-[#0B0B0B] mb-56 sm:mb-40 md:mb-28 lg:mb-24">
       {/* Background Hero Image */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <Image 
