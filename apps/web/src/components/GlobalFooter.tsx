@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, MessageCircle, Send } from "lucide-react";
+import { Facebook, Instagram, Youtube } from "lucide-react";
 import Logo from "./Logo";
 
 export default function GlobalFooter() {
@@ -61,9 +61,9 @@ export default function GlobalFooter() {
               <Logo iconSize={36} />
             </Link>
             <div className="flex items-center gap-4">
-              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Instagram className="w-5 h-5" /></a>
-              <a href="#" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Linkedin className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/profile.php?id=61590121154154" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Facebook className="w-5 h-5" /></a>
+              <a href="https://www.youtube.com/@Trimma-io" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Youtube className="w-5 h-5" /></a>
+              <a href="https://www.instagram.com/trimmaio/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#F5B700] transition-colors"><Instagram className="w-5 h-5" /></a>
             </div>
           </div>
 
