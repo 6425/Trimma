@@ -252,13 +252,21 @@ function ProfileFormContent() {
               {/* PHONE */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Enter your phone number"
-                  className="h-11 shadow-none"
-                />
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-zinc-900 dark:text-zinc-100 font-medium text-sm">+947</span>
+                  <Input
+                    id="phone"
+                    value={phone.replace(/^\+?947?/, '')}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 8);
+                      setPhone(`+947${val}`);
+                    }}
+                    placeholder="7123456"
+                    className="h-11 shadow-none pl-[3.25rem]"
+                    type="tel"
+                    inputMode="numeric"
+                  />
+                </div>
               </div>
 
               {/* EMAIL */}
