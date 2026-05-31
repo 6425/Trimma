@@ -24,13 +24,16 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
   }
 
   if (usesDashboardShell) {
-    return (
-      <SalonFavoritesProvider>
-        <SavedStylesProvider>
-          <main className="min-h-screen">{children}</main>
-        </SavedStylesProvider>
-      </SalonFavoritesProvider>
-    );
+    if (pathname?.startsWith("/customer")) {
+      return (
+        <SalonFavoritesProvider>
+          <SavedStylesProvider>
+            <main className="min-h-screen">{children}</main>
+          </SavedStylesProvider>
+        </SalonFavoritesProvider>
+      );
+    }
+    return <main className="min-h-screen">{children}</main>;
   }
 
   return (
