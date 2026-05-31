@@ -51,124 +51,39 @@ export default function AgentDashboard() {
   const loadAgentData = async () => {
     try {
       setLoading(true);
-
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
+      const { getAgentDashboardData } = await import("@/app/actions/agent-dashboard");
+      
+      const res = await getAgentDashboardData();
+      
+      if (!res.success) {
+        if (res.error === "Unauthorized access") {
+          const role = res.role;
+          if (role === "salon_owner") {
+            router.replace(resolveAuthenticatedDestination({ role: "salon_owner" }));
+          } else if (role === "customer") {
+            router.replace(resolveAuthenticatedDestination({ role: "customer" }));
+          } else if (role === "admin") {
+            router.replace("/admin");
+          } else {
+            router.replace("/onboarding");
+          }
+          return;
+        }
+        
         router.replace("/login?redirectTo=/agent");
         return;
       }
-
-      const { data: userData } = await supabase
-        .from("users")
-        .select("full_name")
-        .eq("email", user.email)
-        .maybeSingle();
-
-      const role = await resolveTrimmaUserRole(user.id, user.email);
-      const isAllowedAgent = role === "agent" || role === "admin";
-
-      if (!isAllowedAgent) {
-        if (role === "salon_owner") {
-          router.replace(resolveAuthenticatedDestination({ role: "salon_owner" }));
-        } else if (role === "customer") {
-          router.replace(resolveAuthenticatedDestination({ role: "customer" }));
-        } else if (role === "admin") {
-          router.replace("/admin");
-        } else {
-          router.replace("/onboarding");
-        }
-        return;
-      }
-
+      
       setAuthorized(true);
-
-      const email = user.email || "";
-      setAgentEmail(email);
-      setAgentName(userData?.full_name || user.user_metadata?.full_name || email.split("@")[0]);
-
-      const [
-        assignedSalonsRes,
-        agentProfileRes,
-        bookingCommissionsRes,
-        ledgerRes,
-      ] = await Promise.all([
-        supabase
-          .from("salons")
-          .select("id, name, address, phone, rating, onboarding_status, created_at")
-          .eq("assign_to", email)
-          .order("created_at", { ascending: false }),
-        supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
-        supabase.from("bookings").select("agent_commission_amount").eq("agent_email", email),
-        supabase.from("commission_ledger").select("amount, status").eq("agent_email", email),
-      ]);
-
-      let territoriesRes: { data: any[] | null; error: any } = { data: [], error: null };
-      if (agentProfileRes.data?.id) {
-        territoriesRes = await supabase
-          .from("agent_territories")
-          .select("territories ( name, type )")
-          .eq("agent_id", agentProfileRes.data.id);
+      
+      const dashboardData = res.data;
+      if (dashboardData) {
+        setAgentEmail(dashboardData.agentEmail);
+        setAgentName(dashboardData.agentName);
+        setTerritoryLabel(dashboardData.territoryLabel);
+        setStats(dashboardData.stats);
       }
-
-      if (assignedSalonsRes.error) {
-        console.error("Error fetching assigned salons:", assignedSalonsRes.error);
-      }
-
-      const salonRows = assignedSalonsRes.data || [];
-      const assignedCount = salonRows.length;
-      const convertedCount = salonRows.filter((salon) => isAgentSalonLive(salon.onboarding_status)).length;
-      const hotLeads = salonRows.slice(0, 3);
-
-      const commRate = agentProfileRes.data?.commission_rate || 10;
-
-      const totalBookingCommissions = (bookingCommissionsRes.data || []).reduce(
-        (sum, booking) => sum + (Number(booking.agent_commission_amount) || 0),
-        0
-      );
-
-      const subscriptionCommissions = (ledgerRes.data || []).reduce(
-        (sum, entry) => sum + (Number(entry.amount) || 0),
-        0
-      );
-
-      const territories = territoriesRes.data || [];
-      if (territories.length > 0) {
-        const labels = territories
-          .map((t: any) => t.territories?.name)
-          .filter(Boolean);
-        setTerritoryLabel(labels.length > 0 ? labels.join(" · ") : "No territory assigned");
-      } else {
-        setTerritoryLabel("No territory assigned");
-      }
-
-      const pendingSalons = salonRows
-        .filter((salon) => !isAgentSalonLive(salon.onboarding_status) && salon.onboarding_status !== "REJECTED")
-        .slice(0, 5);
-
-      const upcomingTasks: AgentTask[] = pendingSalons.map((salon) => {
-        const status = salon.onboarding_status || "ASSIGNED_TO_AGENT";
-        let type: AgentTask["type"] = "call";
-        if (status === "OWNER_INVITED") type = "msg";
-        if (status === "AGENT_VERIFIED" || status === "OWNER_ACTIVATED") type = "visit";
-
-        return {
-          id: salon.id,
-          task: `${salon.name} · ${getAgentSalonStatusLabel(status)}`,
-          time: formatRelativeTime(salon.created_at),
-          type,
-          status,
-        };
-      });
-
-      setStats({
-        assignedCount,
-        convertedCount,
-        commissionRate: commRate,
-        bookingCommissions: totalBookingCommissions,
-        subscriptionCommissions,
-        hotLeads,
-        upcomingTasks,
-      });
+      
     } catch (error: any) {
       console.error("Failed to load agent data:", error);
       toast.error("Failed to load dashboard data: " + (error.message || "Unknown error"));
@@ -178,7 +93,7 @@ export default function AgentDashboard() {
   };
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadAgentData());
+    setTimeout(() => loadAgentData(), 0);
   }, []);
 
   const totalEarnings = stats.subscriptionCommissions + stats.bookingCommissions;
