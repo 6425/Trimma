@@ -73,29 +73,29 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2">
-      {/* Left — marketing panel (matches login design) */}
+      {/* Left Panel */}
       <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:min-h-[100dvh] overflow-hidden">
-        <div className="absolute inset-0" aria-hidden="true">
+        <div className="absolute inset-0 bg-[#F5B700]" aria-hidden="true">
           <img
             src={SIGNUP_HERO_IMAGE}
             alt=""
-            className="h-full w-full object-cover object-center grayscale brightness-[0.42] scale-105"
+            className="h-full w-full object-cover object-center grayscale opacity-40 mix-blend-multiply scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#F5B700]/60 via-[#F5B700]/70 to-[#F5B700]/90" />
         </div>
 
         <Link
           href="/"
           className="absolute left-6 top-6 z-20 hover:opacity-90 transition-opacity sm:left-10 sm:top-8 lg:left-14 lg:top-10"
         >
-          <Logo inverse iconSize={40} />
+          <Logo iconSize={40} />
         </Link>
 
         <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center pt-14 sm:pt-16 lg:pt-0">
-          <h1 className="font-serif text-[1.65rem] font-medium leading-[1.25] tracking-tight text-white sm:text-3xl lg:text-[2.15rem] xl:text-[2.45rem]">
+          <h1 className="font-serif text-[1.65rem] font-bold leading-[1.25] tracking-tight text-black sm:text-3xl lg:text-[2.15rem] xl:text-[2.45rem]">
             Join the premium beauty marketplace.
           </h1>
-          <p className="mt-6 max-w-md text-sm leading-relaxed text-zinc-300 sm:text-base sm:leading-relaxed">
+          <p className="mt-6 max-w-md text-sm font-medium leading-relaxed text-black/80 sm:text-base sm:leading-relaxed">
             {activeTab === 'customer' 
               ? 'Discover top-rated salons, manage bookings, and elevate your personal style.' 
               : 'Grow your business, manage staff, and get more bookings with our modern salon OS.'}
