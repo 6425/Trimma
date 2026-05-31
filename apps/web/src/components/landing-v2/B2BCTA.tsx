@@ -44,8 +44,8 @@ export function B2BCTA() {
             {/* Screenshot */}
             <div className="relative h-[calc(100%-2.75rem)] w-full">
               <Image 
-                src="/assets/login_mockup.webp" 
-                alt="Trimma Login Mockup" 
+                src="/assets/dashboard_mockup.png" 
+                alt="Trimma Dashboard Mockup" 
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-top"
