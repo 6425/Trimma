@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Scissors } from "lucide-react";
 import { supabase } from "../config/supabase";
 
 interface LogoProps {
@@ -97,23 +96,33 @@ export default function Logo({
     };
   }, []);
 
-  const wordmark = `${(title || "Trimma").replace(/\.$/, "")}.`;
   const displayTagline = propTagline ?? (showTagline ? defaultTagline : null);
-  const scissorsSize = Math.max(14, Math.round(iconSize * 0.62));
-  const wordmarkSize = Math.max(16, Math.round(iconSize * 0.55));
+  const logoHeight = Math.max(iconSize * 1.2, 32);
+  // inverse=true means dark background → use white logo (logo-dark.svg)
+  // inverse=false means light background → use dark logo (logo-light.svg)
+  const logoSrc = inverse ? "/logo-dark.svg" : "/logo-light.svg";
 
   return (
-    <div className={`flex items-center select-none ${className}`}>
-      <img 
-        src="/trimma-official-logo.png" 
+    <div className={`flex flex-col select-none ${className}`}>
+      <img
+        src={logoSrc}
         alt="Trimma Logo"
-        style={{ 
-          height: Math.max(iconSize * 1.2, 32),
-          filter: inverse ? "brightness(0) invert(1)" : "none" 
-        }}
+        style={{ height: logoHeight }}
         className="w-auto object-contain"
-        fetchpriority="high"
+        fetchPriority="high"
+        draggable={false}
       />
+      {displayTagline ? (
+        <span
+          className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
+            inverse ? "text-white/60" : "text-zinc-500"
+          }`}
+          style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
+        >
+          {displayTagline}
+        </span>
+      ) : null}
     </div>
   );
 }
+

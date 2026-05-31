@@ -7,7 +7,7 @@ export const metadata = {
   title: 'Trimma OS',
   description: 'The intelligent operating system for a salon marketplace.',
   icons: {
-    icon: '/logo.svg',
+    icon: '/favicon.svg',
   }
 }
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={outfit.variable}>
       <head>
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" sizes="any" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
       </head>
       <body className={`${outfit.className} antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
         <SiteChrome>{children}</SiteChrome>
