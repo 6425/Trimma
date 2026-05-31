@@ -458,6 +458,9 @@ function AgentLeads() {
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
+        agent_notes: formData.agent_notes || null
+      };
+
       const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
       
       const { success, error } = await saveAgentLeadData(
@@ -466,7 +469,7 @@ function AgentLeads() {
         servicesData,
         finalStaffToAdd,
         agentEmail,
-        null // We pass null because the /api/invite-owner sets the status to OWNER_INVITED
+        "AGENT_VERIFIED"
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
 
