@@ -104,7 +104,7 @@ function LoginForm() {
             “Tired of wasting your entire Holiday morning waiting in line?”
           </h1>
           <p className="mt-6 max-w-md text-sm font-bold leading-relaxed text-black/80 sm:text-base sm:leading-relaxed">
-            Don't let your clients feel this way. Streamline your bookings and eliminate walk-in chaos with Trimma.
+            Don&apos;t let your clients feel this way. Streamline your bookings and eliminate walk-in chaos with Trimma.
           </p>
         </div>
       </div>
