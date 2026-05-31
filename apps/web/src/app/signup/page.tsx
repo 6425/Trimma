@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { supabase } from "../../config/supabase";
 
+const SIGNUP_HERO_IMAGE = "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2400&auto=format&fit=crop";
+
 export default function SignupPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'customer' | 'salon'>('customer');
@@ -70,21 +72,30 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="hidden lg:flex bg-zinc-900 text-white p-12 flex-col justify-between relative overflow-hidden">
-        <div className="absolute inset-0 z-0 opacity-20">
-             <img src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop" className="w-full h-full object-cover" alt="bg" />
+    <div className="min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2">
+      {/* Left — marketing panel (matches login design) */}
+      <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:min-h-[100dvh] overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true">
+          <img
+            src={SIGNUP_HERO_IMAGE}
+            alt=""
+            className="h-full w-full object-cover object-center grayscale brightness-[0.42] scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/70" />
         </div>
-        <div className="relative z-10">
-          <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo showTagline={true} inverse={true} />
-          </Link>
-        </div>
-        <div className="relative z-10 max-w-md">
-          <h1 className="text-4xl font-semibold tracking-tight mb-4 leading-tight">
+
+        <Link
+          href="/"
+          className="absolute left-6 top-6 z-20 hover:opacity-90 transition-opacity sm:left-10 sm:top-8 lg:left-14 lg:top-10"
+        >
+          <Logo inverse iconSize={40} />
+        </Link>
+
+        <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center pt-14 sm:pt-16 lg:pt-0">
+          <h1 className="font-serif text-[1.65rem] font-medium leading-[1.25] tracking-tight text-white sm:text-3xl lg:text-[2.15rem] xl:text-[2.45rem]">
             Join the premium beauty marketplace.
           </h1>
-          <p className="text-zinc-400">
+          <p className="mt-6 max-w-md text-sm leading-relaxed text-zinc-300 sm:text-base sm:leading-relaxed">
             {activeTab === 'customer' 
               ? 'Discover top-rated salons, manage bookings, and elevate your personal style.' 
               : 'Grow your business, manage staff, and get more bookings with our modern salon OS.'}
@@ -92,22 +103,25 @@ export default function SignupPage() {
         </div>
       </div>
       
-      <div className="flex items-center justify-center p-6 sm:p-8 bg-white text-zinc-900 overflow-y-auto">
+      {/* Right — signup form (dark theme matching login) */}
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[#121212] p-6 sm:p-8 lg:p-12 trimma-dark-context overflow-y-auto">
         <div className="w-full max-w-md space-y-8 my-8">
           <div className="text-center sm:text-left">
-            <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Create an account</h2>
-            <p className="text-sm text-zinc-500 mt-2">Get started with Trimma today.</p>
+            <h2 className="text-2xl font-bold tracking-tight text-white">Create an account</h2>
+            <p className="text-sm text-zinc-400 mt-2">Get started with Trimma today.</p>
           </div>
           
-          <div className="bg-slate-100 p-1 rounded-xl flex">
+          <div className="bg-[#1a1a1a] p-1 rounded-xl flex border border-zinc-800">
             <button 
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'customer' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+              type="button"
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'customer' ? 'bg-[#252525] text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}
               onClick={() => setActiveTab('customer')}
             >
               Customer
             </button>
             <button 
-              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'salon' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
+              type="button"
+              className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'salon' ? 'bg-[#252525] text-white shadow-sm' : 'text-zinc-400 hover:text-white'}`}
               onClick={() => setActiveTab('salon')}
             >
               Salon Owner
@@ -120,107 +134,107 @@ export default function SignupPage() {
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-zinc-900">First Name</Label>
-                    <Input id="firstName" placeholder="John" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="firstName" className="text-zinc-300">First Name</Label>
+                    <Input id="firstName" placeholder="John" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-zinc-900">Last Name</Label>
-                    <Input id="lastName" placeholder="Doe" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="lastName" className="text-zinc-300">Last Name</Label>
+                    <Input id="lastName" placeholder="Doe" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-zinc-900">Email address</Label>
-                  <Input id="email" type="email" placeholder="john@example.com" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                  <Label htmlFor="email" className="text-zinc-300">Email address</Label>
+                  <Input id="email" type="email" placeholder="john@example.com" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mobile" className="text-zinc-900">Mobile Number</Label>
-                  <LkPhoneInput id="mobile" value={mobile} onChange={setMobile} required className="h-11 border-zinc-200 text-zinc-900 focus-within:border-zinc-900" />
+                  <Label htmlFor="mobile" className="text-zinc-300">Mobile Number</Label>
+                  <LkPhoneInput id="mobile" value={mobile} onChange={setMobile} required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white focus-within:border-[#F5B700] focus-within:ring-[#F5B700]/30 [&>div]:bg-transparent [&>div]:border-none [&_input]:bg-transparent [&_button]:bg-transparent" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-zinc-900">Password</Label>
-                  <Input id="password" type="password" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                  <Label htmlFor="password" className="text-zinc-300">Password</Label>
+                  <Input id="password" type="password" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-zinc-900">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                  <Label htmlFor="confirmPassword" className="text-zinc-300">Confirm Password</Label>
+                  <Input id="confirmPassword" type="password" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                 </div>
               </div>
             ) : (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="space-y-2">
-                  <Label htmlFor="salonName" className="text-zinc-900">Salon Name</Label>
-                  <Input id="salonName" placeholder="Glam Studio" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                  <Label htmlFor="salonName" className="text-zinc-300">Salon Name</Label>
+                  <Input id="salonName" placeholder="Glam Studio" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ownerFirstName" className="text-zinc-900">First Name</Label>
-                    <Input id="ownerFirstName" placeholder="Jane" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="ownerFirstName" className="text-zinc-300">First Name</Label>
+                    <Input id="ownerFirstName" placeholder="Jane" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="ownerLastName" className="text-zinc-900">Last Name</Label>
-                    <Input id="ownerLastName" placeholder="Doe" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ownerEmail" className="text-zinc-900">Email address</Label>
-                    <Input id="ownerEmail" type="email" placeholder="owner@salon.com" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ownerMobile" className="text-zinc-900">Mobile</Label>
-                    <LkPhoneInput id="ownerMobile" value={ownerMobile} onChange={setOwnerMobile} required className="h-11 border-zinc-200 text-zinc-900 focus-within:border-zinc-900" />
+                    <Label htmlFor="ownerLastName" className="text-zinc-300">Last Name</Label>
+                    <Input id="ownerLastName" placeholder="Doe" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ownerPassword" className="text-zinc-900">Password</Label>
-                    <Input id="ownerPassword" type="password" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="ownerEmail" className="text-zinc-300">Email address</Label>
+                    <Input id="ownerEmail" type="email" placeholder="owner@salon.com" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="ownerConfirmPassword" className="text-zinc-900">Confirm Password</Label>
-                    <Input id="ownerConfirmPassword" type="password" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="ownerMobile" className="text-zinc-300">Mobile</Label>
+                    <LkPhoneInput id="ownerMobile" value={ownerMobile} onChange={setOwnerMobile} required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white focus-within:border-[#F5B700] focus-within:ring-[#F5B700]/30 [&>div]:bg-transparent [&>div]:border-none [&_input]:bg-transparent [&_button]:bg-transparent" />
                   </div>
                 </div>
-
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ownerPassword" className="text-zinc-300">Password</Label>
+                    <Input id="ownerPassword" type="password" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ownerConfirmPassword" className="text-zinc-300">Confirm Password</Label>
+                    <Input id="ownerConfirmPassword" type="password" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
+                  </div>
+                </div>
+                
                 <div className="pt-2 pb-1">
-                  <div className="h-px w-full bg-slate-100" />
+                  <div className="h-px w-full bg-zinc-800" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="text-zinc-900">Address</Label>
-                  <Input id="address" placeholder="123 Main St" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                  <Label htmlFor="address" className="text-zinc-300">Address</Label>
+                  <Input id="address" placeholder="123 Main St" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="country" className="text-zinc-900">Country</Label>
-                    <Input id="country" defaultValue="Sri Lanka" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="country" className="text-zinc-300">Country</Label>
+                    <Input id="country" defaultValue="Sri Lanka" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="province" className="text-zinc-900">Province/State</Label>
-                    <Input id="province" placeholder="Western" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="province" className="text-zinc-300">Province/State</Label>
+                    <Input id="province" placeholder="Western" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="district" className="text-zinc-900">District</Label>
-                    <Input id="district" placeholder="Colombo" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="district" className="text-zinc-300">District</Label>
+                    <Input id="district" placeholder="Colombo" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="city" className="text-zinc-900">City</Label>
-                    <Input id="city" placeholder="Colombo 03" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="city" className="text-zinc-300">City</Label>
+                    <Input id="city" placeholder="Colombo 03" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="postalCode" className="text-zinc-900">Postal Code</Label>
-                    <Input id="postalCode" placeholder="00300" required className="h-11 bg-white text-zinc-900 border-zinc-200 placeholder:text-zinc-400 focus-visible:ring-zinc-900 focus-visible:border-zinc-900" />
+                    <Label htmlFor="postalCode" className="text-zinc-300">Postal Code</Label>
+                    <Input id="postalCode" placeholder="00300" required className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="category" className="text-zinc-900">Category</Label>
-                    <select id="category" required className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent">
+                    <Label htmlFor="category" className="text-zinc-300">Category</Label>
+                    <select id="category" required className="w-full h-11 px-3 rounded-md border border-zinc-700 bg-[#1a1a1a] text-white focus:outline-none focus:ring-2 focus:ring-[#F5B700]/30 focus:border-[#F5B700]">
                       <option value="">Select Category</option>
                       <option value="barber">Barber Shop</option>
                       <option value="beauty">Beauty Salon</option>
@@ -232,32 +246,31 @@ export default function SignupPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="package" className="text-zinc-900">Select Package</Label>
-                  <select id="package" required className="w-full h-11 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent">
+                  <Label htmlFor="package" className="text-zinc-300">Select Package</Label>
+                  <select id="package" required className="w-full h-11 px-3 rounded-md border border-zinc-700 bg-[#1a1a1a] text-white focus:outline-none focus:ring-2 focus:ring-[#F5B700]/30 focus:border-[#F5B700]">
                     <option value="">Select a Plan</option>
                     <option value="basic">Basic Plan (Free)</option>
                     <option value="pro">Pro Plan (LKR 4,990/mo)</option>
                     <option value="elite">Elite Plan (LKR 9,990/mo)</option>
                   </select>
                 </div>
-
               </div>
             )}
             
-            <Button type="submit" className="w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white rounded-md font-semibold text-base mt-6">
+            <Button type="submit" className="w-full h-11 bg-[#F5B700] text-black hover:bg-[#FFC947] hover:text-black rounded-md font-semibold text-base mt-6">
               Create Account
             </Button>
             
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-zinc-200"></div>
+                <div className="w-full border-t border-zinc-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-zinc-500">Or continue with</span>
+                <span className="px-2 bg-[#121212] text-zinc-500">Or continue with</span>
               </div>
             </div>
             
-            <Button type="button" variant="outline" className="w-full h-11 border-slate-200 text-zinc-700 font-medium hover:bg-slate-50" onClick={handleGoogleSignup}>
+            <Button type="button" variant="outline" className="h-11 w-full border-zinc-700 bg-[#1a1a1a] text-white hover:bg-[#252525] hover:text-white" onClick={handleGoogleSignup}>
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -268,8 +281,8 @@ export default function SignupPage() {
             </Button>
           </form>
           
-          <div className="text-center text-sm text-zinc-500">
-            Already have an account? <Link href="/login" className="text-zinc-900 font-medium hover:underline">Sign in</Link>
+          <div className="text-center text-sm text-zinc-400">
+            Already have an account? <Link href="/login" className="font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline">Sign in</Link>
           </div>
         </div>
       </div>
