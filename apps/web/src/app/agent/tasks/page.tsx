@@ -255,7 +255,9 @@ export default function AgentTasksQueue() {
                                 <Activity className="w-4 h-4 text-zinc-400" />
                                 {item.currentStatus.replace(/_/g, " ")}
                               </span>
-                                <Clock className="w-4 h-4 text-zinc-500" />
+                              <span className="text-zinc-300">•</span>
+                              <span className="flex items-center gap-1.5 text-zinc-500">
+                                <Clock className="w-4 h-4 text-zinc-400" />
                                 {formatRelativeTime(item.lastActivityDate)}
                               </span>
                             </div>
