@@ -11,7 +11,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-outfit), var(--font-sans);
+    --font-heading: 'Canva Sans', var(--font-outfit), var(--font-sans);
     --font-sans: var(--font-outfit), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     
     --color-sidebar-ring: var(--sidebar-ring);
