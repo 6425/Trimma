@@ -178,8 +178,9 @@ function AgentLeads() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
       if (authError) throw authError;
+      const user = session?.user;
       
       const email = user?.email || "";
       setAgentEmail(email);
