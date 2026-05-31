@@ -73,6 +73,12 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
           
           if (geocodedCount > 0) {
             map.fitBounds(bounds);
+            map.setOptions({
+              restriction: {
+                latLngBounds: bounds,
+                strictBounds: false,
+              }
+            });
           }
         }
       });

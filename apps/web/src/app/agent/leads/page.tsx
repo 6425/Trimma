@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
+import { saveAgentLeadData } from "../../actions/agent-leads-update";
 
 
 const DAYS_OF_WEEK = [
@@ -278,25 +279,9 @@ function AgentLeads() {
     }
   }, [openSalonId, loading, leads]);
 
-  const logActivity = async (salonId: string, action: string, notes: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentEmail = user?.email || agentEmail;
-      
-      await supabase
-        .from("onboarding_logs")
-        .insert({
-          salon_id: salonId,
-          actor_email: currentEmail,
-          action: action,
-          notes: notes
-        });
-    } catch (err) {
-      console.error("Activity logging failed:", err);
-    }
-  };
 
-  const syncServicesAndStaff = async (salonId: string) => {
+
+  const prepareServicesAndStaff = async (salonId: string) => {
     const [existingSvcRes] = await Promise.all([
       supabase.from("services").select("id, global_service_id").eq("salon_id", salonId)
     ]);
@@ -305,11 +290,12 @@ function AgentLeads() {
     const existingSvcIds = existingSvc.map(s => s.global_service_id).filter(Boolean);
     const selectedSvcIds = Object.keys(selectedServices).filter(id => selectedServices[id].enabled);
     
-    const svcsToAdd = selectedSvcIds.filter(id => !existingSvcIds.includes(id));
-    const svcsToRemove = existingSvc.filter(s => !selectedSvcIds.includes(s.global_service_id!));
+    const svcsToAddIds = selectedSvcIds.filter(id => !existingSvcIds.includes(id));
+    const svcsToRemoveIds = existingSvc.filter(s => !selectedSvcIds.includes(s.global_service_id!)).map(s => s.id);
     
-    if (svcsToAdd.length > 0) {
-      const inserts = svcsToAdd.map(id => {
+    let svcsToAdd: any[] = [];
+    if (svcsToAddIds.length > 0) {
+      svcsToAdd = svcsToAddIds.map(id => {
         const gs = globalServices.find(g => g.id === id);
         const override = selectedServices[id];
         return {
@@ -317,21 +303,16 @@ function AgentLeads() {
           global_service_id: id,
           name: gs?.name || "Service",
           category: override.category || gs?.category || "Other",
-          duration: override.duration || gs?.default_duration || "30",
+          duration_min: parseInt(override.duration) || gs?.default_duration || 30,
           price: parseFloat(override.price) || gs?.default_price || 0,
           image_url: gs?.icon_image_url || null
         };
       });
-      await supabase.from("services").insert(inserts);
-    }
-    
-    if (svcsToRemove.length > 0) {
-      await supabase.from("services").delete().in("id", svcsToRemove.map(s => s.id));
     }
 
+    let finalStaffToAdd: any[] = [];
     if (staffToAdd.length > 0) {
       for (const st of staffToAdd) {
-        // Upload Avatar if any
         let finalAvatarUrl = null;
         if (st.avatarBlob) {
           const fileName = `${salonId}-${Date.now()}.jpg`;
@@ -345,8 +326,7 @@ function AgentLeads() {
           }
         }
         
-        // Insert staff
-        await supabase.from("salon_staff").insert({
+        finalStaffToAdd.push({
           salon_id: salonId,
           name: st.name,
           email: st.email || null,
@@ -367,6 +347,11 @@ function AgentLeads() {
         });
       }
     }
+    
+    return {
+      servicesData: { svcsToAdd, svcsToRemoveIds },
+      staffToAdd: finalStaffToAdd
+    };
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -417,15 +402,19 @@ function AgentLeads() {
         agent_notes: formData.agent_notes || null
       };
 
-      const { error } = await supabase
-        .from("salons")
-        .update(updatePayload)
-        .eq("id", selectedLead.id);
+      const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
+      
+      const { success, error } = await saveAgentLeadData(
+        selectedLead.id,
+        updatePayload,
+        servicesData,
+        finalStaffToAdd,
+        agentEmail,
+        null
+      );
+      
+      if (!success) throw new Error(error || "Failed to save via Server Action");
 
-      if (error) throw error;
-
-      await syncServicesAndStaff(selectedLead.id);
-      await logActivity(selectedLead.id, "LEAD_UPDATED", "Agent updated salon details in field editor.");
       toast.success("Changes saved!");
 
       setIsModalOpen(false);
@@ -469,19 +458,17 @@ function AgentLeads() {
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
-        agent_notes: formData.agent_notes || null,
-        onboarding_status: "AGENT_VERIFIED"
-      };
-
-      const { error } = await supabase
-        .from("salons")
-        .update(updatePayload)
-        .eq("id", selectedLead.id);
-
-      if (error) throw error;
+      const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
       
-      await syncServicesAndStaff(selectedLead.id);
-      await logActivity(selectedLead.id, "AGENT_VERIFIED", "Agent completed field verification and added phone/email.");
+      const { success, error } = await saveAgentLeadData(
+        selectedLead.id,
+        updatePayload,
+        servicesData,
+        finalStaffToAdd,
+        agentEmail,
+        null // We pass null because the /api/invite-owner sets the status to OWNER_INVITED
+      );
+      if (!success) throw new Error(error || "Failed to save via Server Action");
 
       const res = await fetch("/api/invite-owner", {
         method: "POST",
@@ -533,14 +520,15 @@ function AgentLeads() {
         booking_enabled: true
       };
 
-      const { error } = await supabase
-        .from("salons")
-        .update(updatePayload)
-        .eq("id", selectedLead.id);
-
-      if (error) throw error;
-      
-      await logActivity(selectedLead.id, "AGENT_APPROVED", "Agent approved the salon and enabled bookings.");
+      const { success, error } = await saveAgentLeadData(
+        selectedLead.id,
+        updatePayload,
+        null,
+        null,
+        agentEmail,
+        "AGENT_APPROVED"
+      );
+      if (!success) throw new Error(error || "Failed to save via Server Action");
 
       if (formData.phone) {
         const waRes = await sendAgentApprovalAlerts(
