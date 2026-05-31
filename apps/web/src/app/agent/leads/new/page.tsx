@@ -12,7 +12,7 @@ import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { getAgentEmailFast } from "@/lib/client-auth";
-import { createAgentLeadData } from "../../../actions/agent-leads-update";
+import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-leads-update";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
 
 export default function AgentNewLeadPage() {
@@ -47,14 +47,14 @@ export default function AgentNewLeadPage() {
           setAgentEmail(email);
         }
 
-        const [svcRes, staffRes, amenitiesRes] = await Promise.all([
-          supabase.from("global_services").select("*").eq("is_active", true),
-          supabase.from("global_staff_roles").select("*").eq("is_active", true),
-          supabase.from("global_amenities").select("*").order("name")
-        ]);
-        setGlobalServices(svcRes.data || []);
-        setGlobalStaffRoles(staffRes.data || []);
-        setGlobalAmenities(amenitiesRes.data || []);
+        const res = await fetchAgentGlobals();
+        if (res.success) {
+          setGlobalServices(res.services);
+          setGlobalStaffRoles(res.staffRoles);
+          setGlobalAmenities(res.amenities);
+        } else {
+          console.error("Failed to load globals via server action");
+        }
       } catch (e) {
         console.error("Failed to load globals:", e);
       }

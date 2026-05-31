@@ -161,3 +161,18 @@ export async function createAgentLeadData(
   }
 }
 
+export async function fetchAgentGlobals() {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const [svcRes, staffRes, amenitiesRes] = await Promise.all([
+    supabaseAdmin.from("global_services").select("*").eq("is_active", true),
+    supabaseAdmin.from("global_staff_roles").select("*").eq("is_active", true),
+    supabaseAdmin.from("global_amenities").select("*").order("name")
+  ]);
+  
+  return {
+    success: true as const,
+    services: svcRes.data || [],
+    staffRoles: staffRes.data || [],
+    amenities: amenitiesRes.data || []
+  };
+}
