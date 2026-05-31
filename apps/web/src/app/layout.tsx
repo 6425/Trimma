@@ -1,7 +1,7 @@
 import '../index.css';
 import SiteChrome from '../components/SiteChrome';
 import { Toaster } from 'sonner';
-import { outfit } from '../lib/fonts';
+import { outfit, inter } from '../lib/fonts';
 
 export const metadata = {
   title: 'Trimma OS',
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={outfit.variable}>
+    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${inter.variable}`}>
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
       </head>
