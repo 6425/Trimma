@@ -172,6 +172,8 @@ function AgentLeads() {
   const [staffToAdd, setStaffToAdd] = useState<StaffPayload[]>([]);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [globalAmenities, setGlobalAmenities] = useState<any[]>([]);
+  const [salonAmenities, setSalonAmenities] = useState<Record<string, { has_amenity: boolean, quantity: number | null }>>({});
 
 
 
@@ -235,8 +237,9 @@ function AgentLeads() {
     setIsModalOpen(true);
 
     try {
-      const [svcRes] = await Promise.all([
-        supabase.from("services").select("global_service_id, price, duration, category").eq("salon_id", lead.id)
+      const [svcRes, amenitiesRes] = await Promise.all([
+        supabase.from("services").select("global_service_id, price, duration, category").eq("salon_id", lead.id),
+        supabase.from("salon_amenities").select("*").eq("salon_id", lead.id)
       ]);
       const svcMap: any = {};
       (svcRes.data || []).forEach(s => {
@@ -245,6 +248,12 @@ function AgentLeads() {
         }
       });
       setSelectedServices(svcMap);
+
+      const amMap: any = {};
+      (amenitiesRes.data || []).forEach(sa => {
+        amMap[sa.amenity_id] = { has_amenity: true, quantity: sa.quantity };
+      });
+      setSalonAmenities(amMap);
     } catch (err) {
       console.error(err);
     }
@@ -252,12 +261,14 @@ function AgentLeads() {
 
   const fetchGlobals = async () => {
     try {
-      const [svcRes, staffRes] = await Promise.all([
+      const [svcRes, staffRes, amenitiesRes] = await Promise.all([
         supabase.from("global_services").select("*").eq("is_active", true),
-        supabase.from("global_staff_roles").select("*").eq("is_active", true)
+        supabase.from("global_staff_roles").select("*").eq("is_active", true),
+        supabase.from("global_amenities").select("*").order("name")
       ]);
       setGlobalServices(svcRes.data || []);
       setGlobalStaffRoles(staffRes.data || []);
+      setGlobalAmenities(amenitiesRes.data || []);
     } catch (e) {
       console.error("Failed to load globals:", e);
     }
@@ -411,7 +422,8 @@ function AgentLeads() {
         servicesData,
         finalStaffToAdd,
         agentEmail,
-        null
+        null,
+        salonAmenities
       );
       
       if (!success) throw new Error(error || "Failed to save via Server Action");
@@ -470,7 +482,8 @@ function AgentLeads() {
         servicesData,
         finalStaffToAdd,
         agentEmail,
-        "AGENT_VERIFIED"
+        "AGENT_VERIFIED",
+        salonAmenities
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
 
@@ -530,7 +543,8 @@ function AgentLeads() {
         null,
         null,
         agentEmail,
-        "AGENT_APPROVED"
+        "AGENT_APPROVED",
+        salonAmenities
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
 
@@ -1061,6 +1075,69 @@ function AgentLeads() {
                     </Button>
                   </div>
                 </div>
+                
+                {/* 5. Amenities Section */}
+                <div className="space-y-3 pt-4 border-t border-zinc-100">
+                  <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[8px]">5</span> 
+                    Amenities & Facilities
+                  </h4>
+                  <div className="bg-zinc-50/50 border border-slate-100 rounded-2xl p-4">
+                    <p className="text-[10px] text-zinc-500 mb-4 font-medium">Select the amenities and facilities available at this salon.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                      {globalAmenities.map((amenity) => {
+                        const isChecked = salonAmenities[amenity.id]?.has_amenity || false;
+                        const qty = salonAmenities[amenity.id]?.quantity || "";
+                        
+                        return (
+                          <div key={amenity.id} className={`flex flex-col gap-2 p-3 rounded-xl border transition-all ${isChecked ? 'border-brand bg-rose-50/30' : 'border-zinc-200 bg-white'}`}>
+                            <div className="flex items-center gap-3">
+                              <input 
+                                type="checkbox" 
+                                id={`amenity-${amenity.id}`}
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  setSalonAmenities(prev => ({
+                                    ...prev,
+                                    [amenity.id]: {
+                                      has_amenity: e.target.checked,
+                                      quantity: e.target.checked ? (amenity.type === 'number' ? 1 : null) : null
+                                    }
+                                  }));
+                                }}
+                                className="w-4 h-4 rounded border-zinc-300 text-brand focus:ring-brand cursor-pointer"
+                              />
+                              <label htmlFor={`amenity-${amenity.id}`} className="text-xs font-bold text-zinc-900 cursor-pointer flex-1">
+                                {amenity.name}
+                              </label>
+                            </div>
+                            {isChecked && amenity.type === "number" && (
+                              <div className="pl-7 flex items-center gap-2 mt-1">
+                                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Quantity:</span>
+                                <Input 
+                                  type="number" 
+                                  min="1"
+                                  value={qty}
+                                  onChange={(e) => {
+                                    setSalonAmenities(prev => ({
+                                      ...prev,
+                                      [amenity.id]: {
+                                        has_amenity: true,
+                                        quantity: parseInt(e.target.value) || 1
+                                      }
+                                    }));
+                                  }}
+                                  className="h-7 w-16 px-2 rounded-lg bg-white border-zinc-200 text-xs font-bold"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
             </div>
