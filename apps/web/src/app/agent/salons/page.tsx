@@ -22,6 +22,8 @@ import {
   isAgentSalonActive,
   isAgentSalonLive,
 } from "@/lib/agent-salons";
+import { useRouter } from "next/navigation";
+import { getAgentEmailFast } from "@/lib/client-auth";
 
 type AgentSalon = {
   id: string;
@@ -38,7 +40,8 @@ type AgentSalon = {
 
 type FilterTab = "all" | "active" | "needs_action" | "live";
 
-export default function AgentSalonsPage() {
+export default function AgentSalons() {
+  const router = useRouter();
   const [salons, setSalons] = useState<AgentSalon[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -48,24 +51,21 @@ export default function AgentSalonsPage() {
   const fetchSalons = async () => {
     try {
       setLoading(true);
-      const {
-        data: { session },
-        error: authError,
-      } = await supabase.auth.getSession();
+      const email = getAgentEmailFast();
 
-      if (authError || !session?.user?.email) {
+      if (!email) {
         toast.error("Please log in as an agent.");
         return;
       }
 
-      setAgentEmail(session.user.email);
+      setAgentEmail(email);
 
       const { data, error } = await supabase
         .from("salons")
         .select(
           "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at"
         )
-        .eq("assign_to", session.user.email)
+        .eq("assign_to", email)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/config/supabase";
+import { getAgentEmailFast } from "@/lib/client-auth";
 import { fetchAgentWorkQueue, WorkItem } from "@/app/actions/agent-work-queue";
 import { 
   CheckCircle2, AlertCircle, Clock, Search, Filter, Briefcase, 
@@ -36,12 +37,12 @@ export default function AgentTasksQueue() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      if (authError || !session?.user?.email) {
+      const email = getAgentEmailFast();
+      if (!email) {
         toast.error("Not authenticated");
         return;
       }
-      const data = await fetchAgentWorkQueue(session.user.email);
+      const data = await fetchAgentWorkQueue(email);
       setWorkItems(data.workItems);
       setMetrics(data.metrics);
       setActivityLogs(data.activityLogs);

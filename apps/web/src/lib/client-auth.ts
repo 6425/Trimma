@@ -34,3 +34,16 @@ export async function getTrimmaAccessToken(): Promise<string | null> {
 
   return null;
 }
+
+/** Decode the JWT access token to get the email synchronously without network calls or locks. */
+export function getAgentEmailFast(): string | null {
+  const token = readAccessTokenCookie();
+  if (!token) return null;
+  try {
+    const payloadStr = atob(token.split('.')[1]);
+    const payload = JSON.parse(payloadStr);
+    return payload?.email || null;
+  } catch {
+    return null;
+  }
+}

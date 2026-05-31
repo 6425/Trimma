@@ -6,6 +6,7 @@ import { History, Calendar, FileText, ArrowRight, TrendingUp, Sparkles, Loader2,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/config/supabase";
+import { getAgentEmailFast } from "@/lib/client-auth";
 import { useRouter } from "next/navigation";
 
 interface ReferredBooking {
@@ -43,14 +44,13 @@ export default function AgentCommissions() {
       try {
       setLoading(true);
       
-      // 1. Get currently authenticated Agent session
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
+      // 1. Get currently authenticated Agent session fast
+      const email = getAgentEmailFast();
+      if (!email) {
       router.replace("/login?redirectTo=/agent/commissions");
       return;
       }
       
-      const email = user.email || "";
       setAgentEmail(email);
       
       // 2. Fetch converted leads assigned to this agent (which represent onboarded salons)

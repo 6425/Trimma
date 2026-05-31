@@ -11,6 +11,7 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
+import { getAgentEmailFast } from "@/lib/client-auth";
 import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
@@ -180,13 +181,13 @@ function AgentLeads() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      if (authError) throw authError;
-      const user = session?.user;
-      
-      const email = user?.email || "";
+      const email = getAgentEmailFast();
+      if (!email) {
+        toast.error("No active session found. Please log in.");
+        return;
+      }
       setAgentEmail(email);
-      setAgentName(user?.user_metadata?.full_name || email.split("@")[0]);
+      setAgentName(email.split("@")[0]);
 
       if (!email) {
         toast.error("No active session found. Please log in.");
