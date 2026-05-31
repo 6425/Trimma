@@ -72,9 +72,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] grid grid-cols-1 lg:grid-cols-2">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#121212]">
       {/* Left Panel */}
-      <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:min-h-[100dvh] overflow-hidden">
+      <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:h-[100dvh] lg:w-1/2 lg:fixed lg:top-0 lg:left-0 overflow-hidden">
         <div className="absolute inset-0 bg-[#F5B700]" aria-hidden="true">
           <img
             src={SIGNUP_HERO_IMAGE}
@@ -103,8 +103,8 @@ export default function SignupPage() {
         </div>
       </div>
       
-      {/* Right — signup form (dark theme matching login) */}
-      <div className="flex min-h-[100dvh] items-center justify-center bg-[#121212] p-6 sm:p-8 lg:p-12 trimma-dark-context overflow-y-auto">
+      {/* Right — signup form */}
+      <div className="flex flex-1 lg:ml-[50%] min-h-[100dvh] items-center justify-center bg-[#121212] p-6 sm:p-8 lg:p-12 trimma-dark-context">
         <div className="w-full max-w-md space-y-8 my-8">
           <div className="text-center sm:text-left">
             <h2 className="text-2xl font-bold tracking-tight text-white">Create an account</h2>
