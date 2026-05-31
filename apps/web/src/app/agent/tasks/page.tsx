@@ -36,12 +36,12 @@ export default function AgentTasksQueue() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) {
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      if (authError || !session?.user?.email) {
         toast.error("Not authenticated");
         return;
       }
-      const data = await fetchAgentWorkQueue(user.email);
+      const data = await fetchAgentWorkQueue(session.user.email);
       setWorkItems(data.workItems);
       setMetrics(data.metrics);
       setActivityLogs(data.activityLogs);
