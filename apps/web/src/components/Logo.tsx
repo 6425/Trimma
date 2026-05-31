@@ -103,38 +103,17 @@ export default function Logo({
   const wordmarkSize = Math.max(16, Math.round(iconSize * 0.55));
 
   return (
-    <div className={`flex items-center gap-2 select-none ${className}`}>
-      <div
-        className="rounded-lg bg-[#F5B700] flex items-center justify-center shrink-0"
-        style={{ width: iconSize, height: iconSize }}
-        aria-hidden="true"
-      >
-        <Scissors
-          className="text-black"
-          style={{ width: scissorsSize, height: scissorsSize }}
-          strokeWidth={2.25}
-        />
-      </div>
-
-      <div className="flex flex-col justify-center min-w-0">
-        <span
-          className={`font-bold tracking-tight leading-none ${inverse ? "text-white" : "text-black"}`}
-          style={{ fontSize: wordmarkSize }}
-        >
-          {wordmark}
-        </span>
-
-        {displayTagline ? (
-          <span
-            className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
-              inverse ? "text-white/60" : "text-zinc-500"
-            }`}
-            style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
-          >
-            {displayTagline}
-          </span>
-        ) : null}
-      </div>
+    <div className={`flex items-center select-none ${className}`}>
+      <img 
+        src="/trimma-official-logo.png" 
+        alt="Trimma Logo"
+        style={{ 
+          height: Math.max(iconSize * 1.2, 32),
+          filter: inverse ? "brightness(0) invert(1)" : "none" 
+        }}
+        className="w-auto object-contain"
+        fetchpriority="high"
+      />
     </div>
   );
 }
