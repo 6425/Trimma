@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Scissors } from "lucide-react";
 import { supabase } from "../config/supabase";
 
 interface LogoProps {
@@ -103,13 +104,37 @@ export default function Logo({
 
   return (
     <div className={`flex items-center gap-2 select-none ${className}`}>
-      <img 
-        src="/trimma-official-logo.png" 
-        alt="Trimma Logo"
-        style={{ height: Math.max(iconSize * 1.2, 32) }}
-        className="w-auto"
-        fetchpriority="high"
-      />
+      <div
+        className="rounded-lg bg-[#F5B700] flex items-center justify-center shrink-0"
+        style={{ width: iconSize, height: iconSize }}
+        aria-hidden="true"
+      >
+        <Scissors
+          className="text-black"
+          style={{ width: scissorsSize, height: scissorsSize }}
+          strokeWidth={2.25}
+        />
+      </div>
+
+      <div className="flex flex-col justify-center min-w-0">
+        <span
+          className={`font-bold tracking-tight leading-none ${inverse ? "text-white" : "text-black"}`}
+          style={{ fontSize: wordmarkSize }}
+        >
+          {wordmark}
+        </span>
+
+        {displayTagline ? (
+          <span
+            className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
+              inverse ? "text-white/60" : "text-zinc-500"
+            }`}
+            style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
+          >
+            {displayTagline}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
