@@ -21,7 +21,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
       </head>
-      <body className={`${outfit.className} antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
+      <body className={`font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
         <SiteChrome>{children}</SiteChrome>
         <Toaster position="top-center" richColors />
       </body>
