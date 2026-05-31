@@ -34,16 +34,25 @@ export function B2BCTA() {
           </div>
         </div>
         <div className="flex-1 relative">
-          {/* A professional placeholder for the salon owner using a tablet */}
-          <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl border border-white/10">
-            <Image 
-              src="/assets/customers_dashboard.webp" 
-              alt="Real Trimma Salon CRM Dashboard" 
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#001D40] via-transparent to-transparent opacity-50" />
+          <div className="relative aspect-[16/10] rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-[#0B0B0B] group hover:scale-[1.02] transition-transform duration-500">
+            {/* macOS Titlebar Mockup */}
+            <div className="bg-[#151515] border-b border-white/5 px-4 py-3 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-rose-500/80" />
+              <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+              <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+            </div>
+            {/* Screenshot */}
+            <div className="relative h-[calc(100%-2.75rem)] w-full">
+              <Image 
+                src="/assets/login_mockup.webp" 
+                alt="Trimma Login Mockup" 
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-top"
+              />
+              {/* Optional glare effect */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            </div>
           </div>
         </div>
       </div>
