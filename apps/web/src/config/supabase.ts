@@ -144,11 +144,11 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  supabase.auth.getSession().then(({ error }) => {
-    if (error) {
-      handleAuthError(error);
-      return;
-    }
-    sessionStorage.removeItem('sb-auth-reloaded');
-  });
+  // supabase.auth.getSession().then(({ error }) => {
+  //   if (error) {
+  //     handleAuthError(error);
+  //     return;
+  //   }
+  //   sessionStorage.removeItem('sb-auth-reloaded');
+  // });
 }

@@ -29,6 +29,7 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitedEmail = normalizeEmail(searchParams.get("email"));
@@ -40,6 +41,7 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     const email = normalizeEmail((document.getElementById("email") as HTMLInputElement).value);
     const password = (document.getElementById("password") as HTMLInputElement).value;
 
@@ -49,6 +51,7 @@ function LoginForm() {
     });
 
     if (error) {
+      setLoading(false);
       console.error("Error signing in:", error.message);
       alert("Error signing in: " + error.message);
       return;
@@ -158,9 +161,10 @@ function LoginForm() {
 
             <Button
               type="submit"
-              className="h-11 w-full rounded-md bg-[#F5B700] text-black hover:bg-[#FFC947] hover:text-black"
+              disabled={loading}
+              className="h-11 w-full rounded-md bg-[#F5B700] text-black hover:bg-[#FFC947] hover:text-black font-bold disabled:opacity-50"
             >
-              Sign in
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
 
             <div className="relative">
