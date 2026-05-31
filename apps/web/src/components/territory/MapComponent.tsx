@@ -29,6 +29,7 @@ export type Territory = {
 function TerritoryBounds({ territories }: { territories: Territory[] }) {
   const map = useMap();
   const geocodedRef = useRef<Set<string>>(new Set());
+  const polygonsRef = useRef<google.maps.Polygon[]>([]);
 
   useEffect(() => {
     if (!map || territories.length === 0) return;
@@ -39,15 +40,15 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
 
     territories.forEach(t => {
       if (geocodedRef.current.has(t.name)) return;
+      geocodedRef.current.add(t.name); // Prevent duplicate requests immediately
       
       const query = t.name + ", Sri Lanka";
       geocoder.geocode({ address: query }, (results, status) => {
         if (status === 'OK' && results && results[0]) {
           bounds.union(results[0].geometry.viewport);
           geocodedCount++;
-          geocodedRef.current.add(t.name);
           
-          // Draw a light polygon for the viewport as a mock boundary if we want
+          // Draw a light polygon for the viewport as a boundary
           const vp = results[0].geometry.viewport;
           if (vp) {
             const ne = vp.getNorthEast();
@@ -60,13 +61,14 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
             ];
             const polygon = new google.maps.Polygon({
               paths,
-              strokeColor: "#3f3f46",
-              strokeOpacity: 0.5,
-              strokeWeight: 2,
+              strokeColor: "#FFC107",
+              strokeOpacity: 0.8,
+              strokeWeight: 3,
               fillColor: "#FFC107",
-              fillOpacity: 0.05,
+              fillOpacity: 0.25, // Increased opacity so it's clearly visible in production
               map
             });
+            polygonsRef.current.push(polygon);
           }
           
           if (geocodedCount > 0) {
@@ -76,6 +78,12 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       });
     });
 
+    return () => {
+      // Cleanup polygons on unmount or when territories change
+      polygonsRef.current.forEach(p => p.setMap(null));
+      polygonsRef.current = [];
+      geocodedRef.current.clear();
+    };
   }, [map, territories]);
 
   return null;
