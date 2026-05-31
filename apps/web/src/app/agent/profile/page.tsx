@@ -13,6 +13,7 @@ function ProfileFormContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   
   const [fullName, setFullName] = useState("");
@@ -129,6 +130,30 @@ function ProfileFormContent() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!fullName.trim() || !phone.trim()) {
+      toast.error("Full name and phone number cannot be empty");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const { updateAgentProfile } = await import("@/app/actions/agent-profile");
+      const result = await updateAgentProfile({ fullName, phone });
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      
+      toast.success("Profile updated successfully!");
+    } catch (err) {
+      console.error("Failed to update profile", err);
+      toast.error(err instanceof Error ? err.message : "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
       
@@ -217,8 +242,9 @@ function ProfileFormContent() {
                   <Input 
                     id="full_name"
                     value={fullName}
-                    disabled
-                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-500 rounded-xl cursor-not-allowed shadow-none"
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="h-11 shadow-none"
                   />
                 </div>
               </div>
@@ -229,8 +255,9 @@ function ProfileFormContent() {
                 <Input
                   id="phone"
                   value={phone}
-                  disabled
-                  className="h-11 bg-zinc-50 border-zinc-200 text-zinc-500 rounded-xl cursor-not-allowed shadow-none"
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Enter your phone number"
+                  className="h-11 shadow-none"
                 />
               </div>
 
@@ -265,6 +292,23 @@ function ProfileFormContent() {
                 </p>
               </div>
 
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <Button 
+                onClick={handleSaveProfile} 
+                disabled={isSaving}
+                className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold rounded-xl px-8"
+              >
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
             </div>
           </div>
         </div>
