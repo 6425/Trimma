@@ -28,6 +28,9 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
+  serverActions: {
+    bodySizeLimit: '20mb',
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "motion", "date-fns", "recharts"]
   },
