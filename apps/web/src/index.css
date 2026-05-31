@@ -480,13 +480,13 @@
 
   .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
     h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
-  ):not([class*="text-brand"]):not([class*="text-[#F5B700]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-red"]) {
+  ):not([class*="text-brand"]):not([class*="text-[#F5B700]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-red"]):not(.text-white):not([class*="text-white"]) {
     color: var(--text-dark) !important;
   }
 
   .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
     button, a, [role="button"], [data-slot="button"]
-  ):not([class*="bg-brand"]):not([class*="bg-[#F5B700]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-red"]):not([class*="bg-rose-5"]):not([class*="bg-emerald"]) {
+  ):not([class*="bg-brand"]):not([class*="bg-[#F5B700]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-red"]):not([class*="bg-rose-5"]):not([class*="bg-emerald"]):not([class*="bg-[#1A1C29]"]):not([class*="bg-blue"]) {
     color: var(--text-dark);
   }
 

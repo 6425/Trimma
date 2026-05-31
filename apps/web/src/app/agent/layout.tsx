@@ -129,6 +129,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                   <Link
                     key={item.name}
                     href={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
                         ? "bg-[#F5B700] text-black font-semibold"
@@ -209,7 +210,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <div className="p-4 lg:p-6 flex-1">
+        <div className="p-4 sm:p-6 lg:p-8 flex-1">
           {children}
         </div>
       </main>

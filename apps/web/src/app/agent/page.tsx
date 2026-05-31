@@ -150,7 +150,7 @@ export default function AgentDashboard() {
           </Button>
           <Button
             onClick={() => router.push("/agent/leads")}
-            className="flex-1 sm:flex-none h-10 rounded-lg bg-brand hover:bg-brand/90 text-white font-semibold"
+            className="flex-1 sm:flex-none h-10 rounded-lg bg-brand hover:bg-brand/90 text-zinc-900 font-bold"
           >
             <PhoneCall className="w-4 h-4 mr-2" /> Start Calls
           </Button>
