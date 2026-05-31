@@ -49,23 +49,23 @@ export default function AgentSalonsPage() {
     try {
       setLoading(true);
       const {
-        data: { user },
+        data: { session },
         error: authError,
-      } = await supabase.auth.getUser();
+      } = await supabase.auth.getSession();
 
-      if (authError || !user?.email) {
+      if (authError || !session?.user?.email) {
         toast.error("Please log in as an agent.");
         return;
       }
 
-      setAgentEmail(user.email);
+      setAgentEmail(session.user.email);
 
       const { data, error } = await supabase
         .from("salons")
         .select(
           "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at"
         )
-        .eq("assign_to", user.email)
+        .eq("assign_to", session.user.email)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
