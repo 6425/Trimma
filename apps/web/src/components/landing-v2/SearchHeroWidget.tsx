@@ -1,24 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, MapPin, Calendar, Scissors, Sparkles, Flower2, Hand, Droplets } from "lucide-react";
+import { Search, MapPin, Calendar, Scissors, Sparkles, Flower2, Hand, Droplets, Smile, Star } from "lucide-react";
+import { getLandingCategories, type LandingCategory } from "@/app/actions/landing-data";
 
-const POPULAR_CATEGORIES = [
-  { name: "Hair", icon: Scissors },
-  { name: "Nails", icon: Sparkles },
-  { name: "Facial", icon: Droplets },
-  { name: "Spa", icon: Flower2 },
-  { name: "Massage", icon: Hand },
-];
+// Helper to map category slugs to Lucide icons
+const getCategoryIcon = (slug: string) => {
+  const mapping: Record<string, any> = {
+    "hair": Scissors,
+    "barber-salon": Scissors,
+    "barbers": Scissors,
+    "nails": Sparkles,
+    "nail-studio": Sparkles,
+    "facial": Droplets,
+    "skin": Droplets,
+    "skincare-clinics": Droplets,
+    "spa": Flower2,
+    "spa-wellness": Flower2,
+    "massage": Hand,
+    "beauty-parlours": Smile,
+  };
+  return mapping[slug.toLowerCase()] || Star;
+};
 
 export function SearchHeroWidget() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
+  const [categories, setCategories] = useState<LandingCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getLandingCategories().then((data) => {
+      if (!cancelled) {
+        // Take only the top 5 categories for the quick links
+        setCategories(data.slice(0, 5));
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,22 +145,27 @@ export function SearchHeroWidget() {
         </form>
 
         {/* Categories */}
-        <div className="mt-5 flex flex-wrap justify-center gap-6 sm:gap-10">
-          {POPULAR_CATEGORIES.map((cat) => (
-            <Link 
-              href={`/salons?q=${encodeURIComponent(cat.name)}`} 
-              key={cat.name} 
-              className="group flex flex-col items-center gap-2 cursor-pointer transition-all duration-300"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border-2 border-transparent group-hover:border-[#F5B700] group-hover:bg-zinc-50 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                <cat.icon className="w-5 h-5 text-zinc-600 group-hover:text-[#F5B700] transition-colors duration-300" />
-              </div>
-              <span className="text-sm font-bold text-zinc-700 group-hover:text-[#F5B700] transition-colors duration-300 drop-shadow-sm">
-                {cat.name}
-              </span>
-            </Link>
-          ))}
-        </div>
+        {!loading && categories.length > 0 && (
+          <div className="mt-5 flex flex-wrap justify-center gap-6 sm:gap-10">
+            {categories.map((cat) => {
+              const Icon = getCategoryIcon(cat.slug);
+              return (
+                <Link 
+                  href={`/salons?q=${encodeURIComponent(cat.name)}`} 
+                  key={cat.id} 
+                  className="group flex flex-col items-center gap-2 cursor-pointer transition-all duration-300"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border-2 border-transparent group-hover:border-[#F5B700] group-hover:bg-zinc-50 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                    <Icon className="w-5 h-5 text-zinc-600 group-hover:text-[#F5B700] transition-colors duration-300" />
+                  </div>
+                  <span className="text-sm font-bold text-zinc-700 group-hover:text-[#F5B700] transition-colors duration-300 drop-shadow-sm">
+                    {cat.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
