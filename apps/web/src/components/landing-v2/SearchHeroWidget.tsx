@@ -4,7 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, MapPin, Calendar } from "lucide-react";
+import { Search, MapPin, Calendar, Scissors, Sparkles, Flower2, Hand, Droplets } from "lucide-react";
+
+const POPULAR_CATEGORIES = [
+  { name: "Hair", icon: Scissors },
+  { name: "Nails", icon: Sparkles },
+  { name: "Facial", icon: Droplets },
+  { name: "Spa", icon: Flower2 },
+  { name: "Massage", icon: Hand },
+];
 
 export function SearchHeroWidget() {
   const router = useRouter();
@@ -18,7 +26,7 @@ export function SearchHeroWidget() {
   };
 
   return (
-    <section className="relative pt-10 sm:pt-12 pb-24 sm:pb-32 bg-[#0B0B0B] mb-12 sm:mb-16">
+    <section className="relative pt-10 sm:pt-12 pb-24 sm:pb-32 bg-[#0B0B0B] mb-20 sm:mb-24">
       {/* Background Hero Image */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <Image 
@@ -60,11 +68,11 @@ export function SearchHeroWidget() {
         </div>
       </div>
 
-      {/* The Search Widget - overlapping the bottom edge */}
-      <div className="absolute bottom-0 left-0 right-0 w-full translate-y-1/2 z-20 px-4 sm:px-6">
+      {/* The Search Widget & Categories - overlapping the bottom edge */}
+      <div className="absolute bottom-0 left-0 right-0 w-full translate-y-1/2 z-20 px-4 sm:px-6 flex flex-col items-center">
         <form
           onSubmit={handleSearch}
-          className="bg-[#F5B700] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-2xl max-w-5xl mx-auto flex flex-col md:flex-row gap-3 md:gap-1.5 border-[4px] border-white dark:border-[#0B0B0B]"
+          className="bg-[#F5B700] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-2xl w-full max-w-5xl flex flex-col md:flex-row gap-3 md:gap-1.5 border-[4px] border-white dark:border-[#0B0B0B]"
         >
           {/* Location */}
           <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#F5B700] transition-colors shadow-sm md:shadow-none">
@@ -109,6 +117,24 @@ export function SearchHeroWidget() {
             Search
           </button>
         </form>
+
+        {/* Categories */}
+        <div className="mt-5 flex flex-wrap justify-center gap-6 sm:gap-10">
+          {POPULAR_CATEGORIES.map((cat) => (
+            <Link 
+              href={`/salons?q=${encodeURIComponent(cat.name)}`} 
+              key={cat.name} 
+              className="group flex flex-col items-center gap-2 cursor-pointer transition-all duration-300"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border-2 border-transparent group-hover:border-[#F5B700] group-hover:bg-zinc-50 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                <cat.icon className="w-5 h-5 text-zinc-600 group-hover:text-[#F5B700] transition-colors duration-300" />
+              </div>
+              <span className="text-sm font-bold text-zinc-700 group-hover:text-[#F5B700] transition-colors duration-300 drop-shadow-sm">
+                {cat.name}
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );
