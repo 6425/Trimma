@@ -79,9 +79,9 @@ export default function SignupPage() {
           <img
             src={SIGNUP_HERO_IMAGE}
             alt=""
-            className="h-full w-full object-cover object-center grayscale opacity-40 mix-blend-multiply scale-105"
+            className="h-full w-full object-cover object-center grayscale opacity-15 mix-blend-multiply scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#F5B700]/60 via-[#F5B700]/70 to-[#F5B700]/90" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#F5B700]/40 via-[#F5B700]/70 to-[#F5B700]/95" />
         </div>
 
         <Link
