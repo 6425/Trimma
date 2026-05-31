@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
+import { getAgentEmailFast } from "@/lib/client-auth";
 import { createAgentLeadData } from "../../../actions/agent-leads-update";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
 
@@ -41,9 +42,9 @@ export default function AgentNewLeadPage() {
   useEffect(() => {
     void Promise.resolve().then(async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email) {
-          setAgentEmail(session.user.email);
+        const email = getAgentEmailFast();
+        if (email) {
+          setAgentEmail(email);
         }
 
         const [svcRes, staffRes, amenitiesRes] = await Promise.all([
@@ -292,7 +293,7 @@ export default function AgentNewLeadPage() {
               {globalServices.length === 0 && (
                 <span className="text-[10px] text-zinc-400 font-medium p-1">No services available. Loading...</span>
               )}
-              {globalServices.map(s => {
+              {globalServices.filter(s => selectedCategories.length === 0 || (s.category && selectedCategories.includes(s.category))).map(s => {
                 const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
                 return (
                   <div 
@@ -313,7 +314,7 @@ export default function AgentNewLeadPage() {
                     {config.enabled && (
                       <div className="flex gap-3 pl-6 mt-2">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-zinc-400 uppercase">Price</label>
+                          <label className="text-[9px] font-bold text-zinc-400 uppercase">Price (LKR)</label>
                           <Input 
                             type="number" 
                             value={config.price} 

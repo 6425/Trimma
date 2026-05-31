@@ -481,7 +481,7 @@
   .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
     h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
   ):not([class*="text-brand"]):not([class*="text-[#F5B700]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-red"]) {
-    color: inherit;
+    color: var(--text-dark) !important;
   }
 
   .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
