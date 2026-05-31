@@ -92,7 +92,7 @@ export default function SignupPage() {
         </Link>
 
         <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center pt-14 sm:pt-16 lg:pt-0">
-          <h1 className="font-serif text-[1.65rem] font-bold leading-[1.25] tracking-tight text-black sm:text-3xl lg:text-[2.15rem] xl:text-[2.45rem]">
+          <h1 className="font-heading text-[1.65rem] font-bold leading-[1.25] tracking-tight text-black sm:text-3xl lg:text-[2.15rem] xl:text-[2.45rem]">
             Join the premium beauty marketplace.
           </h1>
           <p className="mt-6 max-w-md text-sm font-medium leading-relaxed text-black/80 sm:text-base sm:leading-relaxed">
