@@ -169,9 +169,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
         
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
+        <div className="h-20 flex items-center justify-between px-6 border-b border-white/8 shrink-0 py-4">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo iconSize={40} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
+            <Logo inverse iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
           </Link>
           <button
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -273,7 +273,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Left: Logo on mobile / Search on desktop */}
           <div className="flex items-center gap-3">
             <div className="lg:hidden">
-              <Logo iconSize={32} title="Trimma" />
+              <Logo inverse iconSize={32} title="Trimma" />
             </div>
             <div className="relative hidden lg:block w-64">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600" />

@@ -178,9 +178,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-slate-50 border-r border-slate-200 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
         
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-200 shrink-0">
+        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 shrink-0 py-4">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo iconSize={40} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
+            <Logo iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
           </Link>
           <button
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-slate-100 transition-colors"
