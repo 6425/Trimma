@@ -130,16 +130,14 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
                         <Navigation className="w-3 h-3 mr-1.5" /> Navigate
                       </Button>
                     </div>
-                    {biz.status === 'google_lead' && (
-                      <Button 
-                        size="sm" 
-                        onClick={(e) => { e.stopPropagation(); handleCreateLead(biz); }}
-                        disabled={creatingId === biz.id}
-                        className="w-full h-9 text-[11px] font-black rounded-lg bg-[#FFC107] text-black hover:bg-[#FFC107]/90 shadow-none mt-1"
-                      >
-                        {creatingId === biz.id ? "Creating Lead..." : "+ Create Manual Lead"}
-                      </Button>
-                    )}
+                    <Button 
+                      size="sm" 
+                      onClick={(e) => { e.stopPropagation(); handleCreateLead(biz); }}
+                      disabled={creatingId === biz.id}
+                      className="w-full h-9 text-[11px] font-black rounded-lg bg-[#FFC107] text-black hover:bg-[#FFC107]/90 shadow-none mt-1"
+                    >
+                      {creatingId === biz.id ? "Creating Lead..." : "+ Create Manual Lead"}
+                    </Button>
                   </div>
                 )}
               </div>
