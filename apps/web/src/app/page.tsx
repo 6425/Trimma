@@ -11,10 +11,7 @@ const BrowseByService = dynamic(
   () => import("../components/landing-v2/BrowseByService").then((m) => ({ default: m.BrowseByService })),
   { loading: () => <SectionSkeleton /> }
 );
-const TrendingLocations = dynamic(
-  () => import("../components/landing-v2/TrendingLocations").then((m) => ({ default: m.TrendingLocations })),
-  { loading: () => <SectionSkeleton /> }
-);
+import { TrendingLocations } from "../components/landing-v2/TrendingLocations";
 const TopRatedSalons = dynamic(
   () => import("../components/landing-v2/TopRatedSalons").then((m) => ({ default: m.TopRatedSalons })),
   { loading: () => <SectionSkeleton /> }
