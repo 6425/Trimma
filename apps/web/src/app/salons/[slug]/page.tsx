@@ -577,6 +577,86 @@ export default function SalonPage() {
   const displayRating = reviewSummary.totalReviews > 0 ? reviewSummary.averageRating : (salon.rating || 0);
   const displayReviewCount = reviewSummary.totalReviews > 0 ? reviewSummary.totalReviews : (salon.review_count || 0);
 
+  // --- Dynamic Working Hours & Status Calculation ---
+  let parsedWorkingHours = mockExtraData.hours;
+  let currentStatus = "Closed";
+
+  if (salon) {
+    try {
+      const hoursStr = salon.working_hours;
+      if (hoursStr) {
+        const parsed = typeof hoursStr === 'string' ? JSON.parse(hoursStr) : hoursStr;
+        if (parsed && !Array.isArray(parsed) && (parsed.monday || parsed.tuesday || parsed.sunday)) {
+          const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+          parsedWorkingHours = days.map(d => {
+            const dayKey = d.toLowerCase();
+            const schedule = parsed[dayKey];
+            if (schedule && schedule.isWorking) {
+               const startParts = schedule.start.split(":");
+               const endParts = schedule.end.split(":");
+               const formatAMPM = (h: number, m: string) => {
+                 const ampm = h >= 12 ? 'PM' : 'AM';
+                 const hours = h % 12 || 12;
+                 return `${hours.toString().padStart(2, '0')}:${m} ${ampm}`;
+               };
+               const startStr = formatAMPM(parseInt(startParts[0]), startParts[1]);
+               const endStr = formatAMPM(parseInt(endParts[0]), endParts[1]);
+               return { day: d, time: `${startStr} - ${endStr}` };
+            } else {
+               return { day: d, time: "Closed" };
+            }
+          });
+          // Rotate so Monday is first
+          const sunday = parsedWorkingHours.shift();
+          if(sunday) parsedWorkingHours.push(sunday);
+        } else if (Array.isArray(parsed) && parsed.length > 0) {
+          if (parsed[0].day && parsed[0].time) {
+            parsedWorkingHours = parsed;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing working hours", e);
+    }
+
+    if (salon.status !== 'active') {
+      currentStatus = "Closed";
+    } else {
+      const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      const todaySchedule = parsedWorkingHours.find((h: any) => h.day === todayStr);
+
+      if (!todaySchedule || todaySchedule.time.toLowerCase().includes('closed')) {
+        currentStatus = "Closed";
+      } else {
+        try {
+          const timeParts = todaySchedule.time.split(" - ");
+          if (timeParts.length === 2) {
+            const parseTime = (timeStr: string) => {
+               const [time, modifier] = timeStr.split(' ');
+               let [hours, minutes] = time.split(':');
+               let h = parseInt(hours, 10);
+               if (h === 12) h = 0;
+               if (modifier === 'PM') h += 12;
+               const d = new Date();
+               d.setHours(h, parseInt(minutes, 10), 0, 0);
+               return d;
+            };
+            const start = parseTime(timeParts[0]);
+            const end = parseTime(timeParts[1]);
+            const now = new Date();
+            if (now >= start && now <= end) {
+              currentStatus = "Open Now";
+            } else {
+              currentStatus = "Closed";
+            }
+          }
+        } catch(e) {
+          console.error("Error parsing time for status", e);
+        }
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans">
       
@@ -627,9 +707,9 @@ export default function SalonPage() {
                             Unverified
                           </Badge>
                         )}
-                        <div className="flex items-center text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
-                          {mockExtraData.status}
+                        <div className={`flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'Open Now' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${currentStatus === 'Open Now' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-500'}`} />
+                          {currentStatus}
                         </div>
                       </div>
                     </div>
@@ -691,7 +771,7 @@ export default function SalonPage() {
                     <Clock className="w-3.5 h-3.5" /> Working Hours
                   </h3>
                   <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">
-                    {(salon.working_hours || mockExtraData.hours).map((h: any, i: number) => {
+                    {parsedWorkingHours.map((h: any, i: number) => {
                       const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === h.day;
                       const isClosed = h.time.toLowerCase().includes('closed');
                       return (
