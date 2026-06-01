@@ -58,9 +58,6 @@ function TerritoryExplorerContent() {
       if (res.success) {
         setTerritories(res.territories || []);
         setCategories(res.categories || []);
-        if (res.categories && res.categories.length > 0 && selectedCategory === "") {
-          setSelectedCategory("all");
-        }
       } else {
         if (res.error?.includes("Not authenticated")) {
           router.replace("/login?redirectTo=/agent/territory");
@@ -137,6 +134,12 @@ function TerritoryExplorerContent() {
     }
   };
 
+  const displayedTerritories = React.useMemo(() => {
+    return selectedTerritoryId === "all" 
+      ? territories 
+      : territories.filter(t => t.id === selectedTerritoryId);
+  }, [territories, selectedTerritoryId]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -148,12 +151,6 @@ function TerritoryExplorerContent() {
 
   const verifiedCount = businesses.filter(b => b.is_verified).length;
   const leadsCount = businesses.filter(b => !b.is_verified || b.status === 'pending').length;
-
-  const displayedTerritories = React.useMemo(() => {
-    return selectedTerritoryId === "all" 
-      ? territories 
-      : territories.filter(t => t.id === selectedTerritoryId);
-  }, [territories, selectedTerritoryId]);
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
