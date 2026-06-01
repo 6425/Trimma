@@ -58,6 +58,7 @@ export default function AdminAgents() {
   const [territoryCatalog, setTerritoryCatalog] = useState<any[]>([]);
   const [ledger, setLedger] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [pendingPayouts, setPendingPayouts] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   
   // Filtering & Modal States
@@ -142,6 +143,7 @@ export default function AdminAgents() {
       setTerritoryCatalog(result.territoryCatalog || []);
       setLedger(result.ledger || []);
       setActivityLogs(result.activityLogs || []);
+      setPendingPayouts(result.totalPendingPayouts || 0);
     } catch (error: any) {
       toast.error("Failed to load agents: " + error.message);
     } finally {
@@ -276,16 +278,7 @@ export default function AdminAgents() {
       setUpdating(true);
 
       const agent = agents.find(a => a.email === newTerritoryEmail);
-      if (agent && !agent.agent_exists) {
-        // Automatically create missing agent profile before syncing territories
-        const saveRes = await saveAdminAgentProfile({
-          user_email: newTerritoryEmail,
-          status: "active",
-          commission_rate: 10, // Default 10% for new agents
-          createIfMissing: true,
-        });
-        if (saveRes.success === false) throw new Error(saveRes.error);
-      }
+
       const targetIds = getDeepestSelectedTerritories(
         territoryCatalog,
         selectedProvinceIds,
@@ -294,13 +287,23 @@ export default function AdminAgents() {
       );
       const finalIds = Array.from(new Set([...newTerritoryIds, ...targetIds]));
 
-      const syncResult = await syncAgentTerritories(newTerritoryEmail, finalIds);
-      if (syncResult.success === false) throw new Error(syncResult.error);
-
       const assignedNames = territoryCatalog
         .filter((t) => finalIds.includes(t.id))
         .map((t) => t.name)
         .join(", ");
+
+      // Always sync the legacy territory string column to mirror the exact hierarchical assignments
+      const saveRes = await saveAdminAgentProfile({
+        user_email: newTerritoryEmail,
+        status: agent?.status && agent.status !== "inactive" ? agent.status : "active",
+        commission_rate: agent?.commission_rate || 10,
+        territory: assignedNames,
+        createIfMissing: true,
+      });
+      if (saveRes.success === false) throw new Error(saveRes.error);
+
+      const syncResult = await syncAgentTerritories(newTerritoryEmail, finalIds);
+      if (syncResult.success === false) throw new Error(syncResult.error);
 
       await logAgentActivity(
         newTerritoryEmail,
@@ -378,7 +381,6 @@ export default function AdminAgents() {
     : 0;
 
   // Ledger stats
-  const pendingPayouts = ledger.filter(l => l.status === 'PENDING').reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
   const approvedPayouts = ledger.filter(l => l.status === 'APPROVED').reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
   const paidPayouts = ledger.filter(l => l.status === 'PAID').reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
 

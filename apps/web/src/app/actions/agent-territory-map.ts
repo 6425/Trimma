@@ -37,20 +37,24 @@ export async function getAgentMapData() {
     .select("territory_id, territories ( id, name, type, slug )")
     .eq("agent_id", agentData.id);
 
-  const territories = [];
+  const territories: any[] = [];
   
-  if (primaryTerritoryName) {
-    territories.push({
-      id: "primary-" + primaryTerritoryName,
-      name: primaryTerritoryName,
-      type: "primary"
-    });
-  }
-
   if (territoryData && territoryData.length > 0) {
     territoryData.forEach((t: any) => {
       if (t.territories && !territories.find(existing => existing.name === t.territories.name)) {
         territories.push(t.territories);
+      }
+    });
+  } else if (primaryTerritoryName) {
+    // Legacy fallback: split comma-separated string
+    const names = primaryTerritoryName.split(",").map((n: string) => n.trim()).filter(Boolean);
+    names.forEach((name: string) => {
+      if (!territories.find(existing => existing.name === name)) {
+        territories.push({
+          id: "primary-" + name,
+          name: name,
+          type: "primary"
+        });
       }
     });
   }

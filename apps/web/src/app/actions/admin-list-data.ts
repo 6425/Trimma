@@ -105,8 +105,7 @@ export async function fetchAdminCommissionsPage() {
 
 export async function fetchAdminAgentsPage() {
   const result = await withAdminDb(async (supabase) => {
-    const [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes] =
-      await Promise.all([
+    const [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes, pendingLedgerRes] = await Promise.all([
         supabase.from("users").select("*").order("email"),
         supabase.from("agents").select("*"),
         supabase.from("salon_leads").select("*").order("created_at", { ascending: false }),
@@ -119,10 +118,14 @@ export async function fetchAdminAgentsPage() {
         supabase.from("territories").select("id, name, type, slug, parent_id").order("name"),
         supabase.from("commission_ledger").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("agent_activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("commission_ledger").select("amount").eq("status", "PENDING")
       ]);
-    for (const res of [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes]) {
+    for (const res of [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes, pendingLedgerRes]) {
       if (res.error) throw new Error(res.error.message);
     }
+
+    const totalPending = (pendingLedgerRes.data || []).reduce((sum, l) => sum + parseFloat(l.amount || 0), 0);
+
     return {
       users: usersRes.data || [],
       agents: agentsRes.data || [],
@@ -131,6 +134,7 @@ export async function fetchAdminAgentsPage() {
       territoryCatalog: catalogRes.data || [],
       ledger: ledgerRes.data || [],
       activityLogs: logsRes.data || [],
+      totalPendingPayouts: totalPending,
     };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
