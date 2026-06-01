@@ -662,20 +662,8 @@ export default function SalonPage() {
                   </div>
                   <div className="flex items-center hover:text-white transition-colors cursor-pointer" title={salon.address}>
                     <MapPin className="w-4 h-4 mr-1.5 text-brand" />
-                    <span>{salon.address || salon.district || salon.city || "Address not provided"}</span>
+                    <span>{salon.district || salon.city || salon.address || "Address not provided"}</span>
                   </div>
-                  {salon.phone && (
-                    <div className="flex items-center hover:text-white transition-colors">
-                      <Phone className="w-4 h-4 mr-1.5 text-brand" />
-                      <span>{salon.phone}</span>
-                    </div>
-                  )}
-                  {salon.owner_email && !salon.owner_email.includes("draft-") && (
-                    <div className="flex items-center hover:text-white transition-colors">
-                      <Mail className="w-4 h-4 mr-1.5 text-brand" />
-                      <span>{salon.owner_email}</span>
-                    </div>
-                  )}
                   <button
                     className="flex items-center text-white bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1 rounded-lg border border-white/5 cursor-pointer"
                     onClick={() => {
@@ -1032,8 +1020,26 @@ export default function SalonPage() {
             {/* Mobile / tablet: map in main column */}
             <section className="lg:hidden">
               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">Find us</h2>
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
                 <SalonLocationMap salon={salon} />
+                <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-brand mt-0.5 shrink-0" />
+                    <span className="text-sm text-zinc-700 leading-snug">{salon.address || salon.district || salon.city || "Address not provided"}</span>
+                  </div>
+                  {salon.phone && (
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-4 h-4 text-brand shrink-0" />
+                      <span className="text-sm text-zinc-700">{salon.phone}</span>
+                    </div>
+                  )}
+                  {salon.owner_email && !salon.owner_email.includes("draft-") && (
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-brand shrink-0" />
+                      <span className="text-sm text-zinc-700">{salon.owner_email}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </section>
           </div>
@@ -1204,8 +1210,26 @@ export default function SalonPage() {
                   </Button>
                 </div>
 
-               <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5">
+               <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 space-y-4">
                  <SalonLocationMap salon={salon} />
+                 <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-brand mt-0.5 shrink-0" />
+                    <span className="text-sm text-zinc-700 leading-snug">{salon.address || salon.district || salon.city || "Address not provided"}</span>
+                  </div>
+                  {salon.phone && (
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-4 h-4 text-brand shrink-0" />
+                      <span className="text-sm text-zinc-700">{salon.phone}</span>
+                    </div>
+                  )}
+                  {salon.owner_email && !salon.owner_email.includes("draft-") && (
+                    <div className="flex items-center gap-3">
+                      <Mail className="w-4 h-4 text-brand shrink-0" />
+                      <span className="text-sm text-zinc-700">{salon.owner_email}</span>
+                    </div>
+                  )}
+                 </div>
                </div>
             </div>
           </div>
