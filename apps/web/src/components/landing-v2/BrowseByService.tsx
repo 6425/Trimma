@@ -33,7 +33,7 @@ export function BrowseByService() {
   return (
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-8 lg:px-12">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-1">Browse by beauty service</h2>
+        <h2 className="mb-1">Browse by beauty service</h2>
         <p className="text-zinc-500 mb-6">Find exactly what you need from our extensive range of specialized treatments.</p>
         
         {loading ? (

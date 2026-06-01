@@ -12,7 +12,7 @@ export function B2BCTA() {
           <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-black/50">
             <Building2 className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-4">
+          <h2 className="text-white mb-4">
             Power your salon with Trimma.
           </h2>
           <p className="text-xl text-zinc-300 mb-8 max-w-lg">

@@ -299,7 +299,7 @@ export function WhyTrimmaSection() {
       <div className="absolute inset-0 bg-gradient-to-tr from-brand-pink/5 via-transparent to-brand-purple/5 opacity-40" />
       
       <div className="relative z-10 text-center max-w-2xl mx-auto mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-2">Why Book with Trimma?</h2>
+        <h2 className="mb-2">Why Book with Trimma?</h2>
         <p className="text-zinc-500 text-sm font-medium">
           Sri Lanka&apos;s leading digital directory and instant booking engine built for luxury wellness and grooming.
         </p>
