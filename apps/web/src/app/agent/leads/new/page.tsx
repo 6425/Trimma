@@ -349,7 +349,8 @@ export default function AgentNewLeadPage() {
                     )}
                   </div>
                 );
-              })}
+              })
+            )}
             </div>
           </div>
 
