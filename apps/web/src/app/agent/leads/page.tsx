@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
-import { saveAgentLeadData } from "../../actions/agent-leads-update";
+import { saveAgentLeadData, fetchAgentGlobals } from "../../actions/agent-leads-update";
 
 
 const DAYS_OF_WEEK = [
@@ -263,14 +263,12 @@ function AgentLeads() {
 
   const fetchGlobals = async () => {
     try {
-      const [svcRes, staffRes, amenitiesRes] = await Promise.all([
-        supabase.from("global_services").select("*").eq("is_active", true),
-        supabase.from("global_staff_roles").select("*").eq("is_active", true),
-        supabase.from("global_amenities").select("*").order("name")
-      ]);
-      setGlobalServices(svcRes.data || []);
-      setGlobalStaffRoles(staffRes.data || []);
-      setGlobalAmenities(amenitiesRes.data || []);
+      const res = await fetchAgentGlobals();
+      if (res.success) {
+        setGlobalServices(res.services);
+        setGlobalStaffRoles(res.staffRoles);
+        setGlobalAmenities(res.amenities);
+      }
     } catch (e) {
       console.error("Failed to load globals:", e);
     }

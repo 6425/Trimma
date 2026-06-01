@@ -223,7 +223,7 @@ export default function AgentNewLeadPage() {
                 <CategoryMultiSelect
                   value={selectedCategories}
                   onChange={setSelectedCategories}
-                  maxCategories={999}
+                  maxCategories={2}
                   theme="light"
                   showUpgradeLink={false}
                 />
@@ -288,29 +288,43 @@ export default function AgentNewLeadPage() {
               <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[8px]">2</span> 
               Included Services
             </h4>
-            <p className="text-[10px] text-zinc-500 font-medium mb-2">Select services below to include them in the salon. You can customize the price and duration.</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
+              <span className="text-[10px] font-bold text-zinc-400">
+                {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
+              </span>
+            </div>
             <div className="flex flex-col gap-2 max-h-80 overflow-y-auto p-2 bg-white rounded-xl border border-zinc-200 custom-scrollbar">
-              {globalServices.length === 0 && (
-                <span className="text-[10px] text-zinc-400 font-medium p-1">No services available. Loading...</span>
-              )}
-              {globalServices.filter(s => selectedCategories.length === 0 || (s.category && selectedCategories.includes(s.category))).map(s => {
-                const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
-                return (
-                  <div 
-                    key={s.id}
-                    className={`p-3 rounded-xl border transition-colors ${
-                      config.enabled ? 'bg-white border-emerald-200 shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <label className="flex items-center gap-2 cursor-pointer mb-2">
-                      <input 
-                        type="checkbox"
-                        checked={config.enabled}
-                        onChange={(e) => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }))}
-                        className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-                      />
-                      <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
-                    </label>
+              {selectedCategories.length === 0 ? (
+                <span className="text-[10px] text-zinc-400 font-medium p-1">Please select a category first to view available services.</span>
+              ) : globalServices.filter(s => s.category && selectedCategories.includes(s.category)).length === 0 ? (
+                <span className="text-[10px] text-zinc-400 font-medium p-1">No services available for the selected categories.</span>
+              ) : (
+                globalServices.filter(s => s.category && selectedCategories.includes(s.category)).map(s => {
+                  const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
+                  return (
+                    <div 
+                      key={s.id}
+                      className={`p-3 rounded-xl border transition-colors ${
+                        config.enabled ? 'bg-white border-emerald-200 shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <input 
+                          type="checkbox"
+                          checked={config.enabled}
+                          onChange={(e) => {
+                            const currentlySelected = Object.values(selectedServices).filter(svc => svc.enabled).length;
+                            if (e.target.checked && currentlySelected >= 6) {
+                              toast.error("You can only select up to 6 services. Owners can upgrade later to add more.");
+                              return;
+                            }
+                            setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }));
+                          }}
+                          className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                        />
+                        <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
+                      </label>
                     {config.enabled && (
                       <div className="flex gap-3 pl-6 mt-2">
                         <div className="space-y-1">
