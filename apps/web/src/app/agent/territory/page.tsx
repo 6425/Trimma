@@ -31,7 +31,7 @@ function TerritoryExplorerContent() {
   const [businesses, setBusinesses] = useState<BusinessResult[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string>("all");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
 
@@ -58,8 +58,8 @@ function TerritoryExplorerContent() {
       if (res.success) {
         setTerritories(res.territories || []);
         setCategories(res.categories || []);
-        if (res.categories && res.categories.length > 0 && !selectedCategory) {
-          setSelectedCategory(res.categories[0]);
+        if (res.categories && res.categories.length > 0 && selectedCategory === "") {
+          setSelectedCategory("all");
         }
       } else {
         if (res.error?.includes("Not authenticated")) {
@@ -89,7 +89,7 @@ function TerritoryExplorerContent() {
     setSelectedBusinessId(null);
     try {
       const terrIds = selectedTerritoryId === "all" ? territories.map(t => t.id) : [selectedTerritoryId];
-      const catsToSearch = selectedCategory ? [selectedCategory] : categories;
+      const catsToSearch = (selectedCategory && selectedCategory !== "all") ? [selectedCategory] : categories;
       const res = await searchBusinessesInTerritories(catsToSearch, terrIds);
       
       if (!res.success) throw new Error(res.error);
@@ -189,6 +189,7 @@ function TerritoryExplorerContent() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
             >
+              <option value="all">All Categories</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
