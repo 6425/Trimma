@@ -18,6 +18,37 @@ import {
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 
+const getDeepestSelectedTerritories = (
+  catalog: any[],
+  provIds: string[],
+  distIds: string[],
+  cityIds: string[]
+) => {
+  const result: string[] = [];
+  provIds.forEach(pId => {
+    const childDistricts = distIds.filter(dId => {
+      const dist = catalog.find(c => c.id === dId);
+      return dist?.parent_id === pId;
+    });
+    if (childDistricts.length === 0) {
+      result.push(pId);
+    } else {
+      childDistricts.forEach(dId => {
+        const childCities = cityIds.filter(cId => {
+          const city = catalog.find(c => c.id === cId);
+          return city?.parent_id === dId;
+        });
+        if (childCities.length === 0) {
+          result.push(dId);
+        } else {
+          result.push(...childCities);
+        }
+      });
+    }
+  });
+  return result;
+};
+
 export default function AdminAgents() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'directory' | 'territories' | 'ledger' | 'logs'>('dashboard');
   
@@ -240,6 +271,9 @@ export default function AdminAgents() {
 
       toast.success(`Successfully assigned ${newTerritoryIds.length} territories!`);
       setNewTerritoryIds([]);
+      setSelectedProvinceIds([]);
+      setSelectedDistrictIds([]);
+      setSelectedCityIds([]);
       await refreshTerritoryAssignments();
     } catch (error: any) {
       toast.error("Territory assignment failed: " + error.message);
@@ -742,7 +776,12 @@ export default function AdminAgents() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const targetIds = [...selectedCityIds, ...selectedDistrictIds, ...selectedProvinceIds];
+                        const targetIds = getDeepestSelectedTerritories(
+                          territoryCatalog,
+                          selectedProvinceIds,
+                          selectedDistrictIds,
+                          selectedCityIds
+                        );
                         const uniqueIds = Array.from(new Set([...newTerritoryIds, ...targetIds]));
                         setNewTerritoryIds(uniqueIds);
                         setSelectedProvinceIds([]);
@@ -1153,7 +1192,12 @@ export default function AdminAgents() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const targetIds = [...modalCityIds, ...modalDistrictIds, ...modalProvinceIds];
+                    const targetIds = getDeepestSelectedTerritories(
+                      territoryCatalog,
+                      modalProvinceIds,
+                      modalDistrictIds,
+                      modalCityIds
+                    );
                     const uniqueIds = Array.from(new Set([...editTerritoryIds, ...targetIds]));
                     setEditTerritoryIds(uniqueIds);
                     setModalProvinceIds([]);
