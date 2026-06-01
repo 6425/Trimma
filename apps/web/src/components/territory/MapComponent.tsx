@@ -47,7 +47,13 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
         
         // 1. Try Nominatim first for exact polygons
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`, {
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
           const data = await res.json();
           
           if (!isActive) break;
