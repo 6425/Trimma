@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
-import { assignAgentTerritory, removeAgentTerritory } from "@/app/actions/agent-territories";
+import { assignAgentTerritory, removeAgentTerritory, syncAgentTerritories } from "@/app/actions/agent-territories";
 import {
   saveAdminAgentProfile,
   demoteAdminAgent,
