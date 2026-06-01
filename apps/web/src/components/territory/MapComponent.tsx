@@ -52,8 +52,8 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
             bounds.union(vp);
             geocodedCount++;
             
-            // 1. Exact map demarcation using OpenStreetMap Nominatim GeoJSON (Does not require GCP Map ID configuration)
-            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1`)
+            // 1. Exact map demarcation using OpenStreetMap Nominatim GeoJSON
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`)
               .then(res => res.json())
               .then(data => {
                 if (!isActive || !data || !data[0] || !data[0].geojson) return;
@@ -66,10 +66,10 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
                   });
                   map.data.setStyle({
                     fillColor: "#F5B700",
-                    fillOpacity: 0.25, // Light yellow gradient fill
+                    fillOpacity: 0.25, 
                     strokeColor: "#F5B700",
                     strokeWeight: 2,
-                    clickable: false // Prevent blocking clicks
+                    clickable: false 
                   });
                 } catch (e) {
                   console.warn("Could not parse GeoJSON for territory:", t.name);
@@ -78,11 +78,11 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
               .catch(err => console.log("Nominatim fetch failed", err));
 
             
-            // 2. Fallback visual bounds (very subtle rectangle) just in case Data-Driven styling is not enabled in GCP Console
+            // 2. Fallback visual bounds
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
               strokeColor: "#F5B700",
-              strokeOpacity: 0.3, // made subtle so it doesn't overpower the exact boundary
+              strokeOpacity: 0.3,
               strokeWeight: 1,
               fillColor: "#F5B700",
               fillOpacity: 0.05,
@@ -121,6 +121,12 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       isActive = false;
       overlaysRef.current.forEach(overlay => overlay.setMap(null));
       overlaysRef.current = [];
+      // Clear data layer to prevent duplicate polygons on strict mode re-renders
+      if (map && map.data) {
+        map.data.forEach((feature) => {
+          map.data.remove(feature);
+        });
+      }
     };
   }, [map, territories]);
 
@@ -150,7 +156,7 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
   return (
-    <div id="territory-map-container" className="w-full h-[600px] bg-zinc-100 rounded-2xl overflow-hidden border border-slate-200 relative">
+    <div id="territory-map-container" className="w-full h-[400px] lg:h-[600px] bg-zinc-100 rounded-2xl overflow-hidden border border-slate-200 relative">
       <APIProvider apiKey={apiKey}>
         <Map
           defaultCenter={center}

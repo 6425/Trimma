@@ -258,7 +258,7 @@ function TerritoryExplorerContent() {
       )}
 
       {/* MAP & SIDEBAR */}
-      <div className="flex flex-col lg:flex-row gap-6 min-h-[600px]">
+      <div className="flex flex-col lg:flex-row gap-6 min-h-[400px] lg:min-h-[600px]">
         {/* MAP */}
         <div className="flex-1 lg:w-[70%]">
           <MapComponent 
@@ -270,7 +270,7 @@ function TerritoryExplorerContent() {
         </div>
         
         {/* SIDEBAR */}
-        <div className="w-full lg:w-[30%] h-[600px] lg:h-auto">
+        <div className="w-full lg:w-[30%] h-[400px] lg:h-auto overflow-y-auto">
           <BusinessResultsSidebar 
             businesses={businesses} 
             selectedBusinessId={selectedBusinessId}
