@@ -87,6 +87,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
               strokeWeight: 1,
               fillColor: "#F5B700",
               fillOpacity: 0.05,
+              clickable: false,
               map
             });
             
@@ -158,7 +159,7 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
           mapId="trimma_territory_map"
           className="w-full h-full"
           disableDefaultUI={false}
-          gestureHandling="auto"
+          gestureHandling="greedy"
         >
           {businesses.map((biz) => {
             if (!biz.latitude || !biz.longitude) return null;
