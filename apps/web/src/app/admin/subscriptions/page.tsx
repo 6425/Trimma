@@ -96,6 +96,7 @@ export default function SubscriptionPlanManagement() {
 
   useEffect(() => {
     void Promise.resolve().then(() => fetchPlans());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleResetDefaults = async () => {

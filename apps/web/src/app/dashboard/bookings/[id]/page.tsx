@@ -77,6 +77,7 @@ export default function BookingDetailPage() {
     void Promise.resolve().then(() => {
       if (bookingId) fetchBooking();
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
   const handleAction = async (action: string) => {

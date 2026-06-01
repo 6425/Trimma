@@ -1,1 +1,0 @@
-import { createClient } from '@supabase/supabase-js'; import dotenv from 'dotenv'; dotenv.config({ path: '.env' }); const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); sb.from('information_schema.tables').select('table_name').eq('table_schema', 'public').then((res) = 

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format, addDays } from "date-fns";
@@ -510,6 +511,7 @@ export function BookingSheet({
       const container = document.getElementById("paypal-button-container");
       if (container) container.innerHTML = "";
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, paymentMethod, selectedDate, selectedTimeSlot, selectedStaffId, selectedServiceIds, customerDetails, reservationFee]);
 
   // Fetch availability via server action (client Supabase hangs on production)

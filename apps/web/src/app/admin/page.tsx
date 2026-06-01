@@ -142,6 +142,7 @@ export default function AdminDashboard() {
       setAuthorized(true);
       await fetchStats();
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSyncData = async () => {

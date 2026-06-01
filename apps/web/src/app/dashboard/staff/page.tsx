@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -94,6 +95,7 @@ export default function DashboardStaff() {
     void Promise.resolve().then(() => {
       fetchStaff();
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchStaff() {

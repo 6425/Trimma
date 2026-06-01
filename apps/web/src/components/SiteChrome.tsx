@@ -5,6 +5,7 @@ import GlobalHeader from "./GlobalHeader";
 import GlobalFooter from "./GlobalFooter";
 import { SalonFavoritesProvider } from "@/hooks/useSalonFavorites";
 import { SavedStylesProvider } from "@/hooks/useSavedStyles";
+import { AuthProvider } from "@/providers/AuthProvider";
 
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,32 +20,31 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
     pathname === "/forgot-password" ||
     pathname === "/reset-password";
 
-  if (isCheckout) {
-    return <main className="min-h-screen">{children}</main>;
-  }
-
-  if (usesDashboardShell) {
-    if (pathname?.startsWith("/customer")) {
-      return (
+  return (
+    <AuthProvider>
+      {isCheckout ? (
+        <main className="min-h-screen">{children}</main>
+      ) : usesDashboardShell ? (
+        pathname?.startsWith("/customer") ? (
+          <SalonFavoritesProvider>
+            <SavedStylesProvider>
+              <main className="min-h-screen">{children}</main>
+            </SavedStylesProvider>
+          </SalonFavoritesProvider>
+        ) : (
+          <main className="min-h-screen">{children}</main>
+        )
+      ) : (
         <SalonFavoritesProvider>
           <SavedStylesProvider>
-            <main className="min-h-screen">{children}</main>
+            <div className="trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900">
+              <GlobalHeader />
+              <main className="flex-1">{children}</main>
+              <GlobalFooter />
+            </div>
           </SavedStylesProvider>
         </SalonFavoritesProvider>
-      );
-    }
-    return <main className="min-h-screen">{children}</main>;
-  }
-
-  return (
-    <SalonFavoritesProvider>
-      <SavedStylesProvider>
-        <div className="trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900">
-          <GlobalHeader />
-          <main className="flex-1">{children}</main>
-          <GlobalFooter />
-        </div>
-      </SavedStylesProvider>
-    </SalonFavoritesProvider>
+      )}
+    </AuthProvider>
   );
 }

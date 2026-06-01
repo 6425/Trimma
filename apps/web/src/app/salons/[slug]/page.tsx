@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -258,6 +259,7 @@ export default function SalonPage() {
         setLoadingSlots(false);
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedServiceId, selectedStaffId, selectedDate, salon, services, staff, selectedPromotionPackage]);
 
   const handleInlineBookSubmit = async () => {

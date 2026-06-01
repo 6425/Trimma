@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useCallback, Suspense, useRef } from "react";
@@ -187,136 +188,145 @@ function ProfileFormContent() {
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8 animate-in fade-in duration-500">
           
           {/* PROFILE CARD */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             
-            {/* AVATAR UPLOAD BANNER */}
-            <div className="flex items-center gap-6 border-b border-slate-100 pb-6">
-              <div className="relative group">
-                <div className="w-20 h-20 rounded-full bg-[#F5B700] text-black font-black text-2xl flex items-center justify-center shadow-md overflow-hidden ring-4 ring-white">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    fullName[0]?.toUpperCase() || "A"
-                  )}
+            {/* COVER BANNER */}
+            <div className="h-32 md:h-40 bg-[#1A1C29] relative w-full overflow-hidden">
+              <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1A1C29]/80 to-transparent" />
+            </div>
+
+            {/* CONTENT AREA */}
+            <div className="px-6 md:px-10 pb-8 relative">
+              
+              {/* AVATAR & NAME SECTION */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 -mt-12 md:-mt-16 mb-8 relative z-10">
+                <div className="flex flex-col md:flex-row items-center md:items-end gap-5">
+                  <div className="relative group">
+                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-[#F5B700] text-black font-black text-4xl flex items-center justify-center shadow-lg overflow-hidden ring-4 ring-white">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        fullName[0]?.toUpperCase() || "A"
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100 backdrop-blur-sm"
+                    >
+                      {uploadingAvatar ? (
+                        <RefreshCw className="w-8 h-8 text-white animate-spin" />
+                      ) : (
+                        <Upload className="w-8 h-8 text-white" />
+                      )}
+                    </button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleAvatarChange}
+                    />
+                  </div>
+                  <div className="text-center md:text-left mb-1 md:mb-2">
+                    <h3 className="font-black text-zinc-900 text-2xl tracking-tight">
+                      {fullName || "Trimma Agent"}
+                    </h3>
+                    <p className="text-sm font-semibold text-amber-500 flex items-center justify-center md:justify-start gap-1.5 mt-0.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" /> Field Agent
+                    </p>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-100"
+
+                <Button 
+                  onClick={handleSaveProfile} 
+                  disabled={isSaving}
+                  className="bg-[#1A1C29] hover:bg-zinc-800 text-white font-bold rounded-xl px-8 h-12 shadow-sm transition-all"
                 >
-                  {uploadingAvatar ? (
-                    <RefreshCw className="w-6 h-6 text-white animate-spin" />
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
                   ) : (
-                    <Upload className="w-6 h-6 text-white" />
+                    "Save Changes"
                   )}
-                </button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={handleAvatarChange}
-                />
+                </Button>
               </div>
-              <div>
-                <h3 className="font-extrabold text-zinc-900 text-lg">
-                  {fullName || "Trimma Agent"}
-                </h3>
-                <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 mt-1">
-                  Click on the avatar to upload a new profile image.
-                </span>
-              </div>
-            </div>
 
-            {/* INPUT FIELDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* FULL NAME */}
-              <div className="space-y-2">
-                <Label htmlFor="full_name" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Full Name</Label>
-                <div className="relative">
-                  <Input 
-                    id="full_name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="h-11 shadow-none"
-                  />
+              {/* INPUT FIELDS GRID */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pt-4 border-t border-slate-100">
+                
+                {/* FULL NAME */}
+                <div className="space-y-2.5">
+                  <Label htmlFor="full_name" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Full Name</Label>
+                  <div className="relative group">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 transition-colors" />
+                    <Input 
+                      id="full_name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="h-12 pl-10 bg-zinc-50/50 border-slate-200 text-zinc-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl font-medium shadow-none transition-all"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* PHONE */}
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Phone Number</Label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-3 text-zinc-900 dark:text-zinc-100 font-medium text-sm">+947</span>
-                  <Input
-                    id="phone"
-                    value={phone.replace(/^\+?947?/, '')}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "").slice(0, 8);
-                      setPhone(`+947${val}`);
-                    }}
-                    placeholder="7123456"
-                    className="h-11 shadow-none pl-[3.25rem]"
-                    type="tel"
-                    inputMode="numeric"
-                  />
+                {/* PHONE */}
+                <div className="space-y-2.5">
+                  <Label htmlFor="phone" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Phone Number</Label>
+                  <div className="relative flex items-center group">
+                    <span className="absolute left-3.5 text-zinc-500 font-bold text-sm">+947</span>
+                    <Input
+                      id="phone"
+                      value={phone.replace(/^\+?947?/, '')}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        setPhone(`+947${val}`);
+                      }}
+                      placeholder="7123456"
+                      className="h-12 pl-[3.5rem] bg-zinc-50/50 border-slate-200 text-zinc-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl font-medium shadow-none transition-all"
+                      type="tel"
+                      inputMode="numeric"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* EMAIL */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Email Address</Label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3 w-5 h-5 text-zinc-400" />
-                  <Input 
-                    id="email"
-                    value={email}
-                    disabled
-                    className="h-11 bg-zinc-50 border-zinc-200 pl-11 rounded-xl cursor-not-allowed text-zinc-500 shadow-none"
-                  />
+                {/* EMAIL */}
+                <div className="space-y-2.5">
+                  <Label htmlFor="email" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Email Address <span className="text-[9px] text-zinc-400 normal-case">(Locked)</span></Label>
+                  <div className="relative flex items-center">
+                    <Mail className="absolute left-3.5 w-4 h-4 text-zinc-400" />
+                    <Input 
+                      id="email"
+                      value={email}
+                      disabled
+                      className="h-12 pl-10 bg-slate-50 border-slate-100 text-zinc-500 rounded-xl cursor-not-allowed font-medium shadow-none opacity-80"
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              {/* TERRITORY */}
-              <div className="space-y-2">
-                <Label htmlFor="territory" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Assigned Territory</Label>
-                <div className="relative flex items-center">
-                  <MapPin className="absolute left-3 w-5 h-5 text-zinc-400" />
-                  <Input 
-                    id="territory"
-                    value={territory}
-                    disabled
-                    className="h-11 bg-zinc-50 border-zinc-200 pl-11 rounded-xl cursor-not-allowed text-zinc-500 shadow-none"
-                  />
+                
+                {/* TERRITORY */}
+                <div className="space-y-2.5">
+                  <Label htmlFor="territory" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Assigned Territory <span className="text-[9px] text-zinc-400 normal-case">(Locked)</span></Label>
+                  <div className="relative flex items-center">
+                    <MapPin className="absolute left-3.5 w-4 h-4 text-zinc-400" />
+                    <Input 
+                      id="territory"
+                      value={territory}
+                      disabled
+                      className="h-12 pl-10 bg-slate-50 border-slate-100 text-zinc-500 rounded-xl cursor-not-allowed font-medium shadow-none opacity-80"
+                    />
+                  </div>
                 </div>
-                <p className="text-[10px] text-zinc-500 leading-normal">
-                  Your details and territory are managed by the admin. Please contact an administrator if you need them updated.
-                </p>
+
               </div>
 
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-slate-100">
-              <Button 
-                onClick={handleSaveProfile} 
-                disabled={isSaving}
-                className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold rounded-xl px-8"
-              >
-                {isSaving ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
             </div>
           </div>
         </div>

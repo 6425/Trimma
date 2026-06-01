@@ -65,7 +65,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
               strokeOpacity: 0.8,
               strokeWeight: 3,
               fillColor: "#FFC107",
-              fillOpacity: 0.25, // Increased opacity so it's clearly visible in production
+              fillOpacity: 0.1, // Lighter locking color
               map
             });
             polygonsRef.current.push(polygon);
@@ -88,6 +88,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       // Cleanup polygons on unmount or when territories change
       polygonsRef.current.forEach(p => p.setMap(null));
       polygonsRef.current = [];
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       geocodedRef.current.clear();
     };
   }, [map, territories]);

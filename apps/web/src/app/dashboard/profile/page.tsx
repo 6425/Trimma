@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -210,6 +211,7 @@ export default function SalonProfilePage() {
 
   useEffect(() => {
     void Promise.resolve().then(() => fetchSalonProfile());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Helper function to upload image file to Supabase storage bucket

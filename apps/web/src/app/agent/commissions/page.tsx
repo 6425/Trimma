@@ -270,7 +270,7 @@ export default function AgentCommissions() {
         </div>
 
         {/* Agent Commissions Earned */}
-        <div className="bg-gradient-to-br from-emerald-650 to-teal-800 rounded-3xl p-5 shadow-xl text-white space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all">
+        <div className="bg-black dark:bg-zinc-950 rounded-3xl p-5 shadow-xl text-white space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Referrer Commissions</span>
             <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white">

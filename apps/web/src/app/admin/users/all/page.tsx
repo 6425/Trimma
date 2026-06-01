@@ -69,6 +69,7 @@ function AdminUserList() {
 
   useEffect(() => {
     void Promise.resolve().then(() => fetchUsers());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter]);
 
   const handleEditClick = (user: any) => {

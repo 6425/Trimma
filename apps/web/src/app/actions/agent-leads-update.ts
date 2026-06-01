@@ -164,14 +164,22 @@ export async function createAgentLeadData(
 export async function fetchAgentGlobals() {
   const supabaseAdmin = createSupabaseAdminClient();
   const [svcRes, staffRes, amenitiesRes] = await Promise.all([
-    supabaseAdmin.from("global_services").select("*").eq("is_active", true),
+    supabaseAdmin.from("global_services").select("*, categories(name)").eq("is_active", true),
     supabaseAdmin.from("global_staff_roles").select("*").eq("is_active", true),
     supabaseAdmin.from("global_amenities").select("*").order("name")
   ]);
   
+  const services = (svcRes.data || []).map((s: any) => ({
+    ...s,
+    category: s.categories?.name || null,
+    default_price: s.suggested_price || 0,
+    default_duration: s.suggested_duration_minutes || 30,
+    icon_image_url: s.icon || null
+  }));
+
   return {
     success: true as const,
-    services: svcRes.data || [],
+    services: services,
     staffRoles: staffRes.data || [],
     amenities: amenitiesRes.data || []
   };

@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/config/supabase";
+import { useAuth } from "@/providers/AuthProvider";
 
 type SavedStylesContextValue = {
   savedStyleIds: Set<string>;
@@ -26,6 +27,7 @@ const SavedStylesContext = createContext<SavedStylesContextValue | null>(null);
 
 export function SavedStylesProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [savedStyleIds, setSavedStyleIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -46,23 +48,21 @@ export function SavedStylesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshSavedStyles = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await loadSavedStyles(session.user.id);
+    if (user?.id) {
+      await loadSavedStyles(user.id);
     } else {
       setSavedStyleIds(new Set());
     }
-  }, [loadSavedStyles]);
+  }, [user, loadSavedStyles]);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth provider to determine state
+
     let mounted = true;
-
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
-
-      if (session?.user) {
-        await loadSavedStyles(session.user.id);
+      if (user?.id) {
+        await loadSavedStyles(user.id);
       } else {
         setSavedStyleIds(new Set());
       }
@@ -71,21 +71,10 @@ export function SavedStylesProvider({ children }: { children: ReactNode }) {
 
     void init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-
-      if (session?.user) {
-        await loadSavedStyles(session.user.id);
-      } else {
-        setSavedStyleIds(new Set());
-      }
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
-  }, [loadSavedStyles]);
+  }, [user, authLoading, loadSavedStyles]);
 
   const isSaved = useCallback(
     (styleId: string) => savedStyleIds.has(styleId),
@@ -94,8 +83,7 @@ export function SavedStylesProvider({ children }: { children: ReactNode }) {
 
   const toggleSavedStyle = useCallback(
     async (styleId: string, styleTitle?: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!user) {
         const redirectTo = encodeURIComponent(
           typeof window !== "undefined"
             ? window.location.pathname + window.location.search
@@ -105,7 +93,7 @@ export function SavedStylesProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const uid = session.user.id;
+      const uid = user.id;
       const wasSaved = savedStyleIds.has(styleId);
 
       setTogglingId(styleId);
@@ -146,19 +134,19 @@ export function SavedStylesProvider({ children }: { children: ReactNode }) {
         setTogglingId(null);
       }
     },
-    [savedStyleIds, router]
+    [savedStyleIds, router, user]
   );
 
   const value = useMemo(
     () => ({
       savedStyleIds,
-      loading,
+      loading: loading || authLoading,
       togglingId,
       isSaved,
       toggleSavedStyle,
       refreshSavedStyles,
     }),
-    [savedStyleIds, loading, togglingId, isSaved, toggleSavedStyle, refreshSavedStyles]
+    [savedStyleIds, loading, authLoading, togglingId, isSaved, toggleSavedStyle, refreshSavedStyles]
   );
 
   return (

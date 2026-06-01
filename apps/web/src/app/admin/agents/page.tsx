@@ -109,6 +109,8 @@ export default function AdminAgents() {
 
   useEffect(() => {
     void Promise.resolve().then(() => fetchInitialData());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOpenEditModal = (agent: any) => {

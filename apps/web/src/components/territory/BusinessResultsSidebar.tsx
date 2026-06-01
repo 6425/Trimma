@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState } from "react";
@@ -91,11 +92,11 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
                 `}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 shrink-0 overflow-hidden flex items-center justify-center border border-slate-200">
-                    {biz.logo_url ? (
+                  <div className="w-10 h-10 rounded-lg shrink-0 overflow-hidden flex items-center justify-center border border-slate-200 bg-zinc-900">
+                    {biz.logo_url && !biz.logo_url.includes('maps.gstatic.com') ? (
                       <img src={biz.logo_url} alt={biz.name} className="w-full h-full object-cover" />
                     ) : (
-                      <Building2 className="w-5 h-5 text-zinc-400" />
+                      <Building2 className="w-5 h-5 text-white" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

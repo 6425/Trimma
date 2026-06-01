@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/config/supabase";
+import { useAuth } from "@/providers/AuthProvider";
 
 type SalonFavoritesContextValue = {
   favoriteIds: Set<string>;
@@ -26,6 +27,7 @@ const SalonFavoritesContext = createContext<SalonFavoritesContextValue | null>(n
 
 export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -46,47 +48,33 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshFavorites = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await loadFavorites(session.user.id);
+    if (user?.id) {
+      await loadFavorites(user.id);
     } else {
       setFavoriteIds(new Set());
     }
-  }, [loadFavorites]);
+  }, [user, loadFavorites]);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth provider to determine state
+
     let mounted = true;
-
     const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
       if (!mounted) return;
-
-      if (session?.user) {
-        await loadFavorites(session.user.id);
+      if (user?.id) {
+        await loadFavorites(user.id);
       } else {
         setFavoriteIds(new Set());
       }
       setLoading(false);
     };
 
-    const timer = window.setTimeout(() => void init(), 0);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!mounted) return;
-
-      if (session?.user) {
-        await loadFavorites(session.user.id);
-      } else {
-        setFavoriteIds(new Set());
-      }
-    });
+    void init();
 
     return () => {
       mounted = false;
-      window.clearTimeout(timer);
-      subscription.unsubscribe();
     };
-  }, [loadFavorites]);
+  }, [user, authLoading, loadFavorites]);
 
   const isFavorite = useCallback(
     (salonId: string) => favoriteIds.has(salonId),
@@ -95,8 +83,7 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
 
   const toggleFavorite = useCallback(
     async (salonId: string, salonName?: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!user) {
         const redirectTo = encodeURIComponent(
           typeof window !== "undefined"
             ? window.location.pathname + window.location.search
@@ -106,7 +93,7 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      const uid = session.user.id;
+      const uid = user.id;
       const wasFavorite = favoriteIds.has(salonId);
 
       setTogglingId(salonId);
@@ -147,19 +134,19 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
         setTogglingId(null);
       }
     },
-    [favoriteIds, router]
+    [favoriteIds, router, user]
   );
 
   const value = useMemo(
     () => ({
       favoriteIds,
-      loading,
+      loading: loading || authLoading,
       togglingId,
       isFavorite,
       toggleFavorite,
       refreshFavorites,
     }),
-    [favoriteIds, loading, togglingId, isFavorite, toggleFavorite, refreshFavorites]
+    [favoriteIds, loading, authLoading, togglingId, isFavorite, toggleFavorite, refreshFavorites]
   );
 
   return (

@@ -94,6 +94,7 @@ export default function AgentDashboard() {
 
   useEffect(() => {
     setTimeout(() => loadAgentData(), 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalEarnings = stats.subscriptionCommissions + stats.bookingCommissions;
@@ -280,18 +281,18 @@ export default function AgentDashboard() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-zinc-900 text-white rounded-2xl shadow-sm p-6 relative overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Map className="w-24 h-24" />
+              <Map className="w-24 h-24 text-brand" />
             </div>
             <div className="relative z-10">
-              <Badge className="bg-white/20 hover:bg-white/30 text-white mb-4 border-none font-bold uppercase text-[9px] tracking-wider">
+              <Badge className="bg-brand/10 hover:bg-brand/20 text-brand mb-4 border-none font-bold uppercase text-[9px] tracking-wider">
                 Sales Territory
               </Badge>
-              <h3 className="font-bold text-xl mb-1">Assigned Region</h3>
-              <p className="text-zinc-400 text-sm mb-6">{territoryLabel}</p>
+              <h3 className="font-bold text-zinc-900 text-xl mb-1">Assigned Region</h3>
+              <p className="text-zinc-500 text-sm mb-6">{territoryLabel}</p>
 
-              <Button onClick={() => router.push("/agent/leads")} className="w-full bg-white text-zinc-900 hover:bg-zinc-100 font-bold h-11 rounded-xl">
+              <Button onClick={() => router.push("/agent/leads")} className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl">
                 <Navigation2 className="w-4 h-4 mr-2" /> Start Prospecting
               </Button>
             </div>
