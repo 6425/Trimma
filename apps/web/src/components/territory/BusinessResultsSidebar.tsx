@@ -16,9 +16,10 @@ type SidebarProps = {
   businesses: BusinessResult[];
   selectedBusinessId: string | null;
   onBusinessSelect: (id: string | null) => void;
+  onBusinessRemove?: (id: string) => void;
 };
 
-export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusinessSelect }: SidebarProps) {
+export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusinessSelect, onBusinessRemove }: SidebarProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const router = useRouter();
@@ -48,6 +49,9 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
       }
 
       toast.success("Lead created successfully!");
+      if (onBusinessRemove) {
+        onBusinessRemove(biz.id);
+      }
       router.push(`/agent/leads?open=${res.salonId}`);
     } catch (err: any) {
       toast.error(err.message || "Failed to create lead.");

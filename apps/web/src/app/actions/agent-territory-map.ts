@@ -79,6 +79,10 @@ export async function searchBusinessesInTerritories(categories: string[], territ
     .from("salons")
     .select("id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status");
 
+  let leadsQuery = supabase
+    .from("salon_leads")
+    .select("name, address");
+
   if (territoryIds.length > 0) {
     const realIds = territoryIds.filter(id => !id.startsWith("primary-"));
     const primaryNames = territoryIds.filter(id => id.startsWith("primary-")).map(id => id.replace("primary-", ""));
@@ -162,8 +166,13 @@ export async function searchBusinessesInTerritories(categories: string[], territ
     const googleResultsArray = await Promise.all(googlePromises);
     const googleBusinesses = googleResultsArray.flat();
 
-    // Merge Google results, avoiding duplicates by name (simple heuristic)
-    const existingNames = new Set(businesses.map(b => b.name.toLowerCase()));
+    const { data: localLeads } = await leadsQuery;
+
+    // Merge Google results, avoiding duplicates by name across BOTH salons and salon_leads
+    const existingNames = new Set([
+      ...businesses.map(b => b.name.toLowerCase()),
+      ...(localLeads || []).map(l => l.name.toLowerCase())
+    ]);
     
     for (const gb of googleBusinesses) {
       if (!existingNames.has(gb.name.toLowerCase())) {

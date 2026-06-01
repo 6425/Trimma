@@ -275,6 +275,7 @@ function TerritoryExplorerContent() {
             businesses={businesses} 
             selectedBusinessId={selectedBusinessId}
             onBusinessSelect={setSelectedBusinessId}
+            onBusinessRemove={(id) => setBusinesses(prev => prev.filter(b => b.id !== id))}
           />
         </div>
       </div>
