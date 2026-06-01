@@ -1162,7 +1162,7 @@ export default function SalonPage() {
 
                   {/* 5. CUSTOMER CONTACT DETAILS */}
                   <div className="space-y-2.5 pt-3 border-t border-slate-100">
-                    <label className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider block">Contact Information</label>
+                    <label className="text-[10px] font-bold text-zinc-900 uppercase tracking-wider block">Your Details (For Booking)</label>
                     <input 
                       type="text" 
                       placeholder="Full Name" 
