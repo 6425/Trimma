@@ -32,6 +32,7 @@ function TerritoryExplorerContent() {
   const [categories, setCategories] = useState<string[]>([]);
   
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedTerritoryId, setSelectedTerritoryId] = useState<string>("all");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
 
   const loadInitialData = useCallback(async () => {
@@ -41,12 +42,16 @@ function TerritoryExplorerContent() {
       // Attempt to load cached search state
       const cachedBusinesses = sessionStorage.getItem("trimma_territory_businesses");
       const cachedCategory = sessionStorage.getItem("trimma_territory_category");
+      const cachedTerritory = sessionStorage.getItem("trimma_territory_id");
       
       if (cachedBusinesses) {
         setBusinesses(JSON.parse(cachedBusinesses));
       }
       if (cachedCategory) {
         setSelectedCategory(cachedCategory);
+      }
+      if (cachedTerritory) {
+        setSelectedTerritoryId(cachedTerritory);
       }
 
       const res = await getAgentMapData();
@@ -83,7 +88,7 @@ function TerritoryExplorerContent() {
     setSearching(true);
     setSelectedBusinessId(null);
     try {
-      const terrIds = territories.map(t => t.id);
+      const terrIds = selectedTerritoryId === "all" ? territories.map(t => t.id) : [selectedTerritoryId];
       const catsToSearch = selectedCategory ? [selectedCategory] : categories;
       const res = await searchBusinessesInTerritories(catsToSearch, terrIds);
       
@@ -92,6 +97,7 @@ function TerritoryExplorerContent() {
       setBusinesses(res.businesses);
       sessionStorage.setItem("trimma_territory_businesses", JSON.stringify(res.businesses));
       sessionStorage.setItem("trimma_territory_category", selectedCategory);
+      sessionStorage.setItem("trimma_territory_id", selectedTerritoryId);
       
       toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
     } catch (err: any) {
@@ -191,11 +197,15 @@ function TerritoryExplorerContent() {
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5" /> Assigned Territories
             </label>
-            <div className="h-11 px-3 border border-slate-100 bg-zinc-50 rounded-xl flex items-center text-sm font-semibold text-zinc-600 overflow-x-auto custom-scrollbar whitespace-nowrap">
-              {territories.length > 0 
-                ? territories.map(t => t.name).join(", ") 
-                : "No territories assigned"}
-            </div>
+            <select
+              value={selectedTerritoryId}
+              onChange={(e) => setSelectedTerritoryId(e.target.value)}
+              className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
+              disabled={territories.length === 0}
+            >
+              <option value="all">All Assigned Territories</option>
+              {territories.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
           </div>
 
           <Button 
