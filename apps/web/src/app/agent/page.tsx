@@ -141,19 +141,12 @@ export default function AgentDashboard() {
             Welcome back, <span className="text-brand">{agentName}</span>! Convert your assigned leads into active subscriptions.
           </p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="w-full sm:w-auto">
           <Button
             onClick={() => router.push("/agent/leads")}
-            variant="outline"
-            className="flex-1 sm:flex-none h-10 rounded-lg text-zinc-700 font-semibold border-slate-200"
+            className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-extrabold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4 mr-2" /> View Lead Sheet
-          </Button>
-          <Button
-            onClick={() => router.push("/agent/leads")}
-            className="flex-1 sm:flex-none h-10 rounded-lg bg-brand hover:bg-brand/90 text-zinc-900 font-bold"
-          >
-            <PhoneCall className="w-4 h-4 mr-2" /> Start Calls
           </Button>
         </div>
       </div>
