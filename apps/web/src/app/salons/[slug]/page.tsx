@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag } from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -634,7 +634,6 @@ export default function SalonPage() {
                       </div>
                     </div>
                   </div>
-
                   {/* Quick Actions Panel */}
                   <div className="flex gap-2 w-full sm:w-auto">
                     <SalonFavoriteButton
@@ -643,12 +642,6 @@ export default function SalonPage() {
                       variant="hero"
                       className="h-11 w-11 shrink-0"
                     />
-                    <Button size="icon" variant="outline" className="h-11 w-11 shrink-0 rounded-xl bg-white/5 border-white/10 text-white hover:bg-white/10">
-                      <Phone className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" variant="outline" className="h-11 w-11 shrink-0 rounded-xl bg-[#25D366]/5 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/10">
-                      <MessageCircle className="w-4 h-4" />
-                    </Button>
                     <Button
                       className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                       onClick={() => handleBookService()}
@@ -669,8 +662,20 @@ export default function SalonPage() {
                   </div>
                   <div className="flex items-center hover:text-white transition-colors cursor-pointer" title={salon.address}>
                     <MapPin className="w-4 h-4 mr-1.5 text-brand" />
-                    <span>{salon.district || salon.city || salon.address || "Colombo District"}</span>
+                    <span>{salon.address || salon.district || salon.city || "Address not provided"}</span>
                   </div>
+                  {salon.phone && (
+                    <div className="flex items-center hover:text-white transition-colors">
+                      <Phone className="w-4 h-4 mr-1.5 text-brand" />
+                      <span>{salon.phone}</span>
+                    </div>
+                  )}
+                  {salon.owner_email && !salon.owner_email.includes("draft-") && (
+                    <div className="flex items-center hover:text-white transition-colors">
+                      <Mail className="w-4 h-4 mr-1.5 text-brand" />
+                      <span>{salon.owner_email}</span>
+                    </div>
+                  )}
                   <button
                     className="flex items-center text-white bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1 rounded-lg border border-white/5 cursor-pointer"
                     onClick={() => {
