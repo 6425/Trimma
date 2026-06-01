@@ -65,6 +65,7 @@ export default function AdminAgents() {
   const [updating, setUpdating] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [initialSyncDone, setInitialSyncDone] = useState(false);
 
   // Form edit states
   const [editCommission, setEditCommission] = useState("10");
@@ -147,6 +148,19 @@ export default function AdminAgents() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!initialSyncDone && newTerritoryEmail && agentTerritories.length > 0 && agents.length > 0) {
+      const agent = agents.find(a => a.email === newTerritoryEmail);
+      if (agent) {
+        const assignedIds = agentTerritories
+          .filter((t) => t.agent_id === agent.id || t.agents?.user_email === newTerritoryEmail)
+          .map((t) => t.territory_id);
+        setNewTerritoryIds(assignedIds);
+        setInitialSyncDone(true);
+      }
+    }
+  }, [newTerritoryEmail, agentTerritories, agents, initialSyncDone]);
 
   useEffect(() => {
     void Promise.resolve().then(() => fetchInitialData());
@@ -243,21 +257,28 @@ export default function AdminAgents() {
   };
 
   const handleAssignTerritory = async () => {
-    if (!newTerritoryEmail || newTerritoryIds.length === 0) {
-      toast.error("Please select an agent and at least one territory.");
+    if (!newTerritoryEmail) {
+      toast.error("Please select an agent.");
       return;
     }
 
     try {
       setUpdating(true);
-      
-      for (const id of newTerritoryIds) {
-        const result = await assignAgentTerritory(newTerritoryEmail, id);
-        if (result.success === false) {
-           console.error("Failed to assign", id, result.error);
-           // We continue with others even if one fails (e.g., already assigned)
-        }
+
+      const agent = agents.find(a => a.email === newTerritoryEmail);
+      if (agent && !agent.agent_exists) {
+        // Automatically create missing agent profile before syncing territories
+        const saveRes = await saveAdminAgentProfile({
+          user_email: newTerritoryEmail,
+          status: "active",
+          commission_rate: 10, // Default 10% for new agents
+          createIfMissing: true,
+        });
+        if (saveRes.success === false) throw new Error(saveRes.error);
       }
+      
+      const syncResult = await syncAgentTerritories(newTerritoryEmail, newTerritoryIds);
+      if (syncResult.success === false) throw new Error(syncResult.error);
 
       const assignedNames = territoryCatalog
         .filter((t) => newTerritoryIds.includes(t.id))
@@ -728,7 +749,20 @@ export default function AdminAgents() {
                     <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Sales Agent</label>
                     <select
                       value={newTerritoryEmail}
-                      onChange={(e) => setNewTerritoryEmail(e.target.value)}
+                      onChange={(e) => {
+                        const email = e.target.value;
+                        setNewTerritoryEmail(email);
+                        const agent = agents.find(a => a.email === email);
+                        if (agent) {
+                          const assignedIds = agentTerritories
+                            .filter((t) => t.agent_id === agent.id || t.agents?.user_email === email)
+                            .map((t) => t.territory_id);
+                          setNewTerritoryIds(assignedIds);
+                          setSelectedProvinceIds([]);
+                          setSelectedDistrictIds([]);
+                          setSelectedCityIds([]);
+                        }
+                      }}
                       className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-brand/20"
                     >
                       {agents.map(a => (
@@ -824,7 +858,7 @@ export default function AdminAgents() {
                     disabled={updating}
                     className="w-full bg-brand hover:bg-brand/90 text-zinc-900 h-11 rounded-xl font-bold gap-2 text-xs"
                   >
-                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Assign Coverage Zone</>}
+                    {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4" /> Save Coverage Zone</>}
                   </Button>
                 </div>
               </Card>
