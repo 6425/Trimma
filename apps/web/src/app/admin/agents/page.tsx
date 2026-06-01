@@ -199,9 +199,17 @@ export default function AdminAgents() {
       setUpdating(true);
       const parsedRate = parseFloat(editCommission) || 0;
 
+      const targetIds = getDeepestSelectedTerritories(
+        territoryCatalog,
+        modalProvinceIds,
+        modalDistrictIds,
+        modalCityIds
+      );
+      const finalIds = Array.from(new Set([...editTerritoryIds, ...targetIds]));
+
       // Create a comma-separated string of territory names for the legacy string column
       const assignedNames = territoryCatalog
-        .filter((t) => editTerritoryIds.includes(t.id))
+        .filter((t) => finalIds.includes(t.id))
         .map((t) => t.name)
         .join(", ");
 
@@ -215,7 +223,7 @@ export default function AdminAgents() {
       if (result.success === false) throw new Error(result.error);
 
       // Sync the exact territory IDs using the sync function
-      const syncResult = await syncAgentTerritories(selectedAgent.email, editTerritoryIds);
+      const syncResult = await syncAgentTerritories(selectedAgent.email, finalIds);
       if (syncResult.success === false) throw new Error(syncResult.error);
 
       await logAgentActivity(
