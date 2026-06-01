@@ -156,8 +156,10 @@ export default function AdminAgents() {
         const assignedIds = agentTerritories
           .filter((t) => t.agent_id === agent.id || t.agents?.user_email === newTerritoryEmail)
           .map((t) => t.territory_id);
-        setNewTerritoryIds(assignedIds);
-        setInitialSyncDone(true);
+        setTimeout(() => {
+          setNewTerritoryIds(assignedIds);
+          setInitialSyncDone(true);
+        }, 0);
       }
     }
   }, [newTerritoryEmail, agentTerritories, agents, initialSyncDone]);
@@ -402,51 +404,8 @@ export default function AdminAgents() {
         </Card>
       ) : (
         <>
-          {/* TAB 1: INTELLIGENCE DASHBOARD */}
-          {activeTab === 'dashboard' && (
-            <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-300">
-          {/* KPI metrics cards - Globally Visible */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
-            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <UserCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Active Agents</p>
-                <p className="text-xl font-black text-zinc-900">{activeCount}</p>
-              </div>
-            </Card>
-            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
-                <ClipboardList className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Leads Generated</p>
-                <p className="text-xl font-black text-zinc-900">{totalLeadsGenerated}</p>
-              </div>
-            </Card>
-            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Converted Salons</p>
-                <p className="text-xl font-black text-zinc-900">{totalConvertedSalons}</p>
-              </div>
-            </Card>
-            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Pending Payouts</p>
-                <p className="text-xl font-black text-zinc-900">LKR {pendingPayouts.toLocaleString()}</p>
-              </div>
-            </Card>
-          </div>
-
-          {/* HEADER WITH TABS - Moved here just above the specific tab content */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-6">
+          {/* HEADER WITH TABS - Globally Visible */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-zinc-900 mb-1">CRM Agent Operating Intelligence</h1>
               <p className="text-zinc-500 font-semibold text-sm">Assign territories, calculate tiered commissions, and monitor agent performance funnels.</p>
@@ -497,6 +456,49 @@ export default function AdminAgents() {
             </div>
           </div>
 
+          {/* KPI metrics cards - Globally Visible */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Active Agents</p>
+                <p className="text-xl font-black text-zinc-900">{activeCount}</p>
+              </div>
+            </Card>
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Leads Generated</p>
+                <p className="text-xl font-black text-zinc-900">{totalLeadsGenerated}</p>
+              </div>
+            </Card>
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Converted Salons</p>
+                <p className="text-xl font-black text-zinc-900">{totalConvertedSalons}</p>
+              </div>
+            </Card>
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Pending Payouts</p>
+                <p className="text-xl font-black text-zinc-900">LKR {pendingPayouts.toLocaleString()}</p>
+              </div>
+            </Card>
+          </div>
+
+          {/* TAB 1: INTELLIGENCE DASHBOARD */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-300">
               {/* Leaderboard and conversion funnels */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
