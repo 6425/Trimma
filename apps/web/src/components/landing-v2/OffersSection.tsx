@@ -11,7 +11,7 @@ export function OffersSection() {
   return (
     <section className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-8 lg:px-12">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-1">Offers</h2>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-1">Offers</h2>
         <p className="text-zinc-500 mb-6">Promotions, deals, and special discounts for you.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

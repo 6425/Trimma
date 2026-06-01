@@ -82,7 +82,7 @@ export function DealsDiscountSection() {
             <Gift className="w-3.5 h-3.5" />
             Exclusive Special Deals
           </div>
-          <h2 className="text-2xl md:text-3xl font-black tracking-tight text-zinc-900">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900">
             Deals &amp; Discounts
           </h2>
           <p className="text-zinc-500 text-sm font-medium mt-1">
