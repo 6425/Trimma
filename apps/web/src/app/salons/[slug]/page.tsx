@@ -57,7 +57,7 @@ const mockExtraData = {
   rating: 4.9,
   reviews: 234,
   status: "Open Now",
-  logo: "https://api.dicebear.com/7.x/initials/svg?seed=Trimma&backgroundColor=18181b",
+  logo: "https://api.dicebear.com/7.x/initials/svg?seed=Trimma&backgroundColor=ffc107&textColor=000000",
   featuredImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2940&auto=format&fit=crop",
   gallery: [
     "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=1000&auto=format&fit=crop",
@@ -573,7 +573,7 @@ export default function SalonPage() {
   const galleryImage1 = (salon.featured_images && salon.featured_images.length > 0)
     ? salon.featured_images[0]
     : mockExtraData.gallery[1];
-  const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=18181b`;
+  const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=ffc107&textColor=000000`;
   const displayRating = reviewSummary.totalReviews > 0 ? reviewSummary.averageRating : (salon.rating || 0);
   const displayReviewCount = reviewSummary.totalReviews > 0 ? reviewSummary.totalReviews : (salon.review_count || 0);
 
@@ -678,7 +678,7 @@ export default function SalonPage() {
             <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">              {/* Logo Frame */}
               <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white/10 shadow-2xl shrink-0 bg-zinc-900 hidden sm:block">
                 <AvatarImage src={logoImage} className="object-cover" />
-                <AvatarFallback className="bg-zinc-900 text-white font-bold">S</AvatarFallback>
+                <AvatarFallback className="bg-[#FFC107] text-black font-bold">S</AvatarFallback>
               </Avatar>
               
               <div className="space-y-3 w-full">
@@ -686,7 +686,7 @@ export default function SalonPage() {
                   <div className="flex items-center gap-3">
                     <Avatar className="w-16 h-16 rounded-xl border-2 border-white/10 shadow-xl shrink-0 bg-zinc-900 sm:hidden">
                       <AvatarImage src={logoImage} className="object-cover" />
-                      <AvatarFallback className="bg-zinc-900 text-white font-bold">S</AvatarFallback>
+                      <AvatarFallback className="bg-[#FFC107] text-black font-bold">S</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
