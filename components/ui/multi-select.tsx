@@ -63,8 +63,12 @@ export function MultiSelect({ label, options, selectedIds, onChange, disabled }:
               {options.map(option => {
                 const isSelected = selectedIds.includes(option.id);
                 return (
-                  <label 
+                  <div 
                     key={option.id} 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleOption(option.id);
+                    }}
                     className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-colors text-xs font-bold
                       ${isSelected ? "bg-brand/10 text-brand" : "hover:bg-slate-50 text-zinc-700"}
                     `}
@@ -75,7 +79,7 @@ export function MultiSelect({ label, options, selectedIds, onChange, disabled }:
                       {isSelected && <Check className="w-3 h-3" />}
                     </div>
                     {option.name}
-                  </label>
+                  </div>
                 );
               })}
             </div>
