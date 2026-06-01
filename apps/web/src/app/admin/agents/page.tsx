@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
 import { assignAgentTerritory, removeAgentTerritory, syncAgentTerritories } from "@/app/actions/agent-territories";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   saveAdminAgentProfile,
   demoteAdminAgent,
@@ -39,17 +40,17 @@ export default function AdminAgents() {
   const [editStatus, setEditStatus] = useState("active");
   const [editTerritoryIds, setEditTerritoryIds] = useState<string[]>([]);
   
-  const [modalProvinceId, setModalProvinceId] = useState<string>("");
-  const [modalDistrictId, setModalDistrictId] = useState<string>("");
-  const [modalCityId, setModalCityId] = useState<string>("");
+  const [modalProvinceIds, setModalProvinceIds] = useState<string[]>([]);
+  const [modalDistrictIds, setModalDistrictIds] = useState<string[]>([]);
+  const [modalCityIds, setModalCityIds] = useState<string[]>([]);
 
   // Territory Creation states
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
   const [newTerritoryIds, setNewTerritoryIds] = useState<string[]>([]);
 
-  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>("");
-  const [selectedCityId, setSelectedCityId] = useState<string>("");
+  const [selectedProvinceIds, setSelectedProvinceIds] = useState<string[]>([]);
+  const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
+  const [selectedCityIds, setSelectedCityIds] = useState<string[]>([]);
 
   const refreshTerritoryAssignments = async () => {
     try {
@@ -118,7 +119,6 @@ export default function AdminAgents() {
   useEffect(() => {
     void Promise.resolve().then(() => fetchInitialData());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOpenEditModal = (agent: any) => {
@@ -132,9 +132,9 @@ export default function AdminAgents() {
       .map((t: any) => t.territory_id);
     setEditTerritoryIds(assignedIds);
     
-    setModalProvinceId("");
-    setModalDistrictId("");
-    setModalCityId("");
+    setModalProvinceIds([]);
+    setModalDistrictIds([]);
+    setModalCityIds([]);
     setIsEditModalOpen(true);
   };
 
@@ -705,59 +705,49 @@ export default function AdminAgents() {
                     
                     {/* Cascading Dropdowns */}
                     <div className="grid grid-cols-1 gap-2">
-                      <select
-                        value={selectedProvinceId}
-                        onChange={(e) => {
-                          setSelectedProvinceId(e.target.value);
-                          setSelectedDistrictId("");
-                          setSelectedCityId("");
+                      <MultiSelect
+                        label="-- Select Provinces --"
+                        options={territoryCatalog.filter(t => t.type === "province")}
+                        selectedIds={selectedProvinceIds}
+                        onChange={(ids) => {
+                          setSelectedProvinceIds(ids);
+                          setSelectedDistrictIds([]);
+                          setSelectedCityIds([]);
                         }}
-                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold bg-slate-50 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                      >
-                        <option value="">-- Select Province --</option>
-                        {territoryCatalog.filter(t => t.type === "province").map(p => (
-                          <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                      </select>
+                      />
 
-                      <select
-                        value={selectedDistrictId}
-                        onChange={(e) => {
-                          setSelectedDistrictId(e.target.value);
-                          setSelectedCityId("");
+                      <MultiSelect
+                        label="-- Select Districts --"
+                        options={territoryCatalog.filter(t => t.type === "district" && t.parent_id && selectedProvinceIds.includes(t.parent_id))}
+                        selectedIds={selectedDistrictIds}
+                        onChange={(ids) => {
+                          setSelectedDistrictIds(ids);
+                          setSelectedCityIds([]);
                         }}
-                        disabled={!selectedProvinceId}
-                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                      >
-                        <option value="">-- Select District --</option>
-                        {territoryCatalog.filter(t => t.type === "district" && t.parent_id === selectedProvinceId).map(d => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
+                        disabled={selectedProvinceIds.length === 0}
+                      />
 
-                      <select
-                        value={selectedCityId}
-                        onChange={(e) => setSelectedCityId(e.target.value)}
-                        disabled={!selectedDistrictId}
-                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                      >
-                        <option value="">-- Select City --</option>
-                        {territoryCatalog.filter(t => t.type === "city" && t.parent_id === selectedDistrictId).map(c => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </select>
+                      <MultiSelect
+                        label="-- Select Cities --"
+                        options={territoryCatalog.filter(t => t.type === "city" && t.parent_id && selectedDistrictIds.includes(t.parent_id))}
+                        selectedIds={selectedCityIds}
+                        onChange={(ids) => setSelectedCityIds(ids)}
+                        disabled={selectedDistrictIds.length === 0}
+                      />
                     </div>
 
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const targetId = selectedCityId || selectedDistrictId || selectedProvinceId;
-                        if (targetId && !newTerritoryIds.includes(targetId)) {
-                          setNewTerritoryIds([...newTerritoryIds, targetId]);
-                        }
+                        const targetIds = [...selectedCityIds, ...selectedDistrictIds, ...selectedProvinceIds];
+                        const uniqueIds = Array.from(new Set([...newTerritoryIds, ...targetIds]));
+                        setNewTerritoryIds(uniqueIds);
+                        setSelectedProvinceIds([]);
+                        setSelectedDistrictIds([]);
+                        setSelectedCityIds([]);
                       }}
-                      disabled={!selectedProvinceId}
+                      disabled={selectedProvinceIds.length === 0}
                       className="w-full text-xs font-bold h-9"
                     >
                       <Plus className="w-3 h-3 mr-1" /> Add to Selection
@@ -1126,62 +1116,52 @@ export default function AdminAgents() {
                 <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Primary Territory Assignment</label>
                 
                 <div className="grid grid-cols-1 gap-2">
-                  <select
-                    value={modalProvinceId}
-                    onChange={(e) => {
-                      setModalProvinceId(e.target.value);
-                      setModalDistrictId("");
-                      setModalCityId("");
+                  <MultiSelect
+                    label="-- Select Provinces --"
+                    options={territoryCatalog.filter(t => t.type === "province")}
+                    selectedIds={modalProvinceIds}
+                    onChange={(ids) => {
+                      setModalProvinceIds(ids);
+                      setModalDistrictIds([]);
+                      setModalCityIds([]);
                     }}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  >
-                    <option value="">-- Select Province --</option>
-                    {territoryCatalog.filter(t => t.type === "province").map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                  />
 
-                  <select
-                    value={modalDistrictId}
-                    onChange={(e) => {
-                      setModalDistrictId(e.target.value);
-                      setModalCityId("");
+                  <MultiSelect
+                    label="-- Select Districts --"
+                    options={territoryCatalog.filter(t => t.type === "district" && t.parent_id && modalProvinceIds.includes(t.parent_id))}
+                    selectedIds={modalDistrictIds}
+                    onChange={(ids) => {
+                      setModalDistrictIds(ids);
+                      setModalCityIds([]);
                     }}
-                    disabled={!modalProvinceId}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  >
-                    <option value="">-- Select District --</option>
-                    {territoryCatalog.filter(t => t.type === "district" && t.parent_id === modalProvinceId).map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
+                    disabled={modalProvinceIds.length === 0}
+                  />
 
-                  <select
-                    value={modalCityId}
-                    onChange={(e) => setModalCityId(e.target.value)}
-                    disabled={!modalDistrictId}
-                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  >
-                    <option value="">-- Select City --</option>
-                    {territoryCatalog.filter(t => t.type === "city" && t.parent_id === modalDistrictId).map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  <MultiSelect
+                    label="-- Select Cities --"
+                    options={territoryCatalog.filter(t => t.type === "city" && t.parent_id && modalDistrictIds.includes(t.parent_id))}
+                    selectedIds={modalCityIds}
+                    onChange={(ids) => setModalCityIds(ids)}
+                    disabled={modalDistrictIds.length === 0}
+                  />
                 </div>
 
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const targetId = modalCityId || modalDistrictId || modalProvinceId;
-                    if (targetId && !editTerritoryIds.includes(targetId)) {
-                      setEditTerritoryIds([...editTerritoryIds, targetId]);
-                    }
+                    const targetIds = [...modalCityIds, ...modalDistrictIds, ...modalProvinceIds];
+                    const uniqueIds = Array.from(new Set([...editTerritoryIds, ...targetIds]));
+                    setEditTerritoryIds(uniqueIds);
+                    setModalProvinceIds([]);
+                    setModalDistrictIds([]);
+                    setModalCityIds([]);
                   }}
-                  disabled={!modalProvinceId}
+                  disabled={modalProvinceIds.length === 0}
                   className="w-full text-xs font-bold h-10 rounded-xl"
                 >
-                  <Plus className="w-3 h-3 mr-1" /> Add Territory
+                  <Plus className="w-3 h-3 mr-1" /> Add Territories
                 </Button>
 
                 {/* Staged Territories */}
