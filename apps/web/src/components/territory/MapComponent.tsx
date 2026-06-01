@@ -29,6 +29,7 @@ export type Territory = {
 function TerritoryBounds({ territories }: { territories: Territory[] }) {
   const map = useMap();
   const overlaysRef = useRef<any[]>([]);
+  const styledLayersRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!map || territories.length === 0) return;
@@ -48,10 +49,47 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
           const response = await geocoder.geocode({ address: t.name + ", Sri Lanka" });
           if (response.results && response.results[0]) {
             const vp = response.results[0].geometry.viewport;
-            const loc = response.results[0].geometry.location;
+            const placeId = response.results[0].place_id;
+            
             if (vp) bounds.union(vp);
             geocodedCount++;
             
+            // 1. Try to use Google Maps Data-Driven Styling (Exact Boundaries)
+            if (placeId && map.getFeatureLayer) {
+              const featureLayerNames = [
+                "ADMINISTRATIVE_AREA_LEVEL_1",
+                "ADMINISTRATIVE_AREA_LEVEL_2",
+                "LOCALITY",
+                "POSTAL_CODE"
+              ];
+              
+              featureLayerNames.forEach(featureTypeName => {
+                try {
+                  const featureType = (google.maps.FeatureType as any)[featureTypeName];
+                  if (featureType) {
+                    const layer = map.getFeatureLayer(featureType);
+                    if (layer) {
+                      layer.style = (options: any) => {
+                        if (options.feature.placeId === placeId) {
+                          return {
+                            fillColor: '#F5B700',
+                            fillOpacity: 0.25,
+                            strokeColor: '#F5B700',
+                            strokeWeight: 2,
+                          };
+                        }
+                        return null; // keep default style for others
+                      };
+                      styledLayersRef.current.push(layer);
+                    }
+                  }
+                } catch(e) {
+                  // Ignore if feature layers are not supported on this map
+                }
+              });
+            }
+
+            // 2. Fallback to drawing a Rectangle if exact boundaries aren't visible
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
               strokeColor: "#F5B700",
@@ -84,6 +122,12 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       isActive = false;
       overlaysRef.current.forEach(overlay => overlay.setMap(null));
       overlaysRef.current = [];
+      
+      styledLayersRef.current.forEach(layer => {
+        try { layer.style = null; } catch(e) {}
+      });
+      styledLayersRef.current = [];
+      
       if (map && map.data) {
         map.data.forEach((feature) => {
           map.data.remove(feature);
