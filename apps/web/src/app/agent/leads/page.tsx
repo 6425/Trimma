@@ -844,7 +844,7 @@ function AgentLeads() {
                         setSelectedCategories(cats);
                         setFormData({ ...formData, category: cats.join(", ") });
                       }}
-                      maxCategories={999}
+                      maxCategories={2}
                       theme="light"
                       showUpgradeLink={false}
                     />
@@ -921,7 +921,7 @@ function AgentLeads() {
                     <Input
                       value={formData.price_level}
                       onChange={(e) => setFormData({...formData, price_level: e.target.value})}
-                      placeholder="$, $$, $$$"
+                      placeholder="LKR, LKR LKR, LKR LKR LKR"
                       className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
                     />
                   </div>
@@ -992,54 +992,69 @@ function AgentLeads() {
                     <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
                       <Tag className="w-3.5 h-3.5" /> 3. Included Services
                     </h4>
-                    <p className="text-[10px] text-zinc-500 font-medium">Select services below to include them in the salon. You can customize the price and duration.</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
+                      <span className="text-[10px] font-bold text-zinc-400">
+                        {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
+                      </span>
+                    </div>
                     <div className="flex flex-col gap-2 max-h-60 overflow-y-auto p-2 bg-zinc-50 rounded-xl border border-zinc-100 custom-scrollbar">
-                      {globalServices.length === 0 && (
-                        <span className="text-[10px] text-zinc-400 font-medium p-1">No services available.</span>
+                      {selectedCategories.length === 0 ? (
+                        <span className="text-[10px] text-zinc-400 font-medium p-1">Please select a category first to view available services.</span>
+                      ) : globalServices.filter(s => selectedCategories.includes(s.category)).length === 0 ? (
+                        <span className="text-[10px] text-zinc-400 font-medium p-1">No services available for the selected categories.</span>
+                      ) : (
+                        globalServices.filter(s => selectedCategories.includes(s.category)).map(s => {
+                          const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
+                          return (
+                            <div 
+                              key={s.id}
+                              className={`p-3 rounded-xl border transition-colors ${
+                                config.enabled ? 'bg-white border-emerald-200 shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
+                              }`}
+                            >
+                              <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                <input 
+                                  type="checkbox"
+                                  checked={config.enabled}
+                                  onChange={(e) => {
+                                    const currentlySelected = Object.values(selectedServices).filter(svc => svc.enabled).length;
+                                    if (e.target.checked && currentlySelected >= 6) {
+                                      toast.error("You can only select up to 6 services. Owners can upgrade later to add more.");
+                                      return;
+                                    }
+                                    setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }));
+                                  }}
+                                  className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                                />
+                                <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
+                              </label>
+                              {config.enabled && (
+                                <div className="flex gap-3 pl-6 mt-2">
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-bold text-zinc-400 uppercase">Price</label>
+                                    <input 
+                                      type="number" 
+                                      value={config.price} 
+                                      onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
+                                      className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[9px] font-bold text-zinc-400 uppercase">Duration (m)</label>
+                                    <input 
+                                      type="number" 
+                                      value={config.duration} 
+                                      onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
+                                      className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
                       )}
-                      {globalServices.map(s => {
-                        const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
-                        return (
-                          <div 
-                            key={s.id}
-                            className={`p-3 rounded-xl border transition-colors ${
-                              config.enabled ? 'bg-white border-emerald-200 shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
-                            }`}
-                          >
-                            <label className="flex items-center gap-2 cursor-pointer mb-2">
-                              <input 
-                                type="checkbox"
-                                checked={config.enabled}
-                                onChange={(e) => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }))}
-                                className="rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
-                              />
-                              <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
-                            </label>
-                            {config.enabled && (
-                              <div className="flex gap-3 pl-6 mt-2">
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold text-zinc-400 uppercase">Price</label>
-                                  <input 
-                                    type="number" 
-                                    value={config.price} 
-                                    onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
-                                    className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold text-zinc-400 uppercase">Duration (m)</label>
-                                  <input 
-                                    type="number" 
-                                    value={config.duration} 
-                                    onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
-                                    className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
                     </div>
                   </div>
                   
@@ -1070,7 +1085,13 @@ function AgentLeads() {
                     <Button 
                       type="button" 
                       variant="outline" 
-                      onClick={() => setIsStaffModalOpen(true)}
+                      onClick={() => {
+                        if (staffToAdd.length >= 2) {
+                          toast.error("You can only add up to 2 staff members. Owners can upgrade later to add more.");
+                          return;
+                        }
+                        setIsStaffModalOpen(true);
+                      }}
                       className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-12"
                     >
                       <Plus className="w-4 h-4 mr-2" /> Add Professional
@@ -1185,7 +1206,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleCompleteVerification}
                       disabled={updating}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Draft Salon Created & Send for Review
                     </Button>
