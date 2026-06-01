@@ -321,57 +321,7 @@ export default function AdminAgents() {
   return (
     <div className="space-y-6 lg:space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
       
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-zinc-900 mb-1">CRM Agent Operating Intelligence</h1>
-          <p className="text-zinc-500 font-semibold text-sm">Assign territories, calculate tiered commissions, and monitor agent performance funnels.</p>
-        </div>
-        
-        {/* Workspace Tab Triggers */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
-          <button 
-            onClick={() => setActiveTab('dashboard')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'dashboard' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Dashboard
-          </button>
-          <button 
-            onClick={() => setActiveTab('directory')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'directory' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5 inline mr-1" /> Directory
-          </button>
-          <button 
-            onClick={() => setActiveTab('territories')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'territories' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <MapPin className="w-3.5 h-3.5 inline mr-1" /> Territories
-          </button>
-          <button 
-            onClick={() => setActiveTab('ledger')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'ledger' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <Landmark className="w-3.5 h-3.5 inline mr-1" /> Ledger
-          </button>
-          <button 
-            onClick={() => setActiveTab('logs')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-              activeTab === 'logs' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
-            }`}
-          >
-            <History className="w-3.5 h-3.5 inline mr-1" /> Audit Trail
-          </button>
-        </div>
-      </div>
+
 
       {loading ? (
         <Card className="p-20 border-none shadow-sm rounded-3xl bg-white text-center border border-slate-100/50">
@@ -384,45 +334,97 @@ export default function AdminAgents() {
           {/* TAB 1: INTELLIGENCE DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-300">
-              {/* KPI metrics cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                    <UserCheck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Active Agents</p>
-                    <p className="text-xl font-black text-zinc-900">{activeCount}</p>
-                  </div>
-                </Card>
-                <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
-                    <ClipboardList className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Leads Generated</p>
-                    <p className="text-xl font-black text-zinc-900">{totalLeadsGenerated}</p>
-                  </div>
-                </Card>
-                <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Converted Salons</p>
-                    <p className="text-xl font-black text-zinc-900">{totalConvertedSalons}</p>
-                  </div>
-                </Card>
-                <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                    <DollarSign className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Pending Payouts</p>
-                    <p className="text-xl font-black text-zinc-900">LKR {pendingPayouts.toLocaleString()}</p>
-                  </div>
-                </Card>
+          {/* KPI metrics cards - Globally Visible */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <UserCheck className="w-5 h-5" />
               </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Active Agents</p>
+                <p className="text-xl font-black text-zinc-900">{activeCount}</p>
+              </div>
+            </Card>
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-brand/5 flex items-center justify-center text-brand">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Leads Generated</p>
+                <p className="text-xl font-black text-zinc-900">{totalLeadsGenerated}</p>
+              </div>
+            </Card>
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Converted Salons</p>
+                <p className="text-xl font-black text-zinc-900">{totalConvertedSalons}</p>
+              </div>
+            </Card>
+            <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl border border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-0.5">Pending Payouts</p>
+                <p className="text-xl font-black text-zinc-900">LKR {pendingPayouts.toLocaleString()}</p>
+              </div>
+            </Card>
+          </div>
+
+          {/* HEADER WITH TABS - Moved here just above the specific tab content */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mt-6">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-zinc-900 mb-1">CRM Agent Operating Intelligence</h1>
+              <p className="text-zinc-500 font-semibold text-sm">Assign territories, calculate tiered commissions, and monitor agent performance funnels.</p>
+            </div>
+            
+            {/* Workspace Tab Triggers */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
+              <button 
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === 'dashboard' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
+                }`}
+              >
+                <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Dashboard
+              </button>
+              <button 
+                onClick={() => setActiveTab('directory')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === 'directory' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 inline mr-1" /> Directory
+              </button>
+              <button 
+                onClick={() => setActiveTab('territories')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === 'territories' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 inline mr-1" /> Territories
+              </button>
+              <button 
+                onClick={() => setActiveTab('ledger')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === 'ledger' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
+                }`}
+              >
+                <Landmark className="w-3.5 h-3.5 inline mr-1" /> Ledger
+              </button>
+              <button 
+                onClick={() => setActiveTab('logs')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === 'logs' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
+                }`}
+              >
+                <History className="w-3.5 h-3.5 inline mr-1" /> Audit Trail
+              </button>
+            </div>
+          </div>
 
               {/* Leaderboard and conversion funnels */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
