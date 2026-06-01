@@ -52,32 +52,31 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
             bounds.union(vp);
             geocodedCount++;
             
-            // 1. Give it to Google: Use Data-Driven Styling for exact map demarcation
-            try {
-              const localityLayer = map.getFeatureLayer(google.maps.FeatureType.LOCALITY);
-              const adminArea1Layer = map.getFeatureLayer(google.maps.FeatureType.ADMINISTRATIVE_AREA_LEVEL_1);
-              const adminArea2Layer = map.getFeatureLayer(google.maps.FeatureType.ADMINISTRATIVE_AREA_LEVEL_2);
-              const postalCodeLayer = map.getFeatureLayer(google.maps.FeatureType.POSTAL_CODE);
-              
-              const styleFunction = (params: any) => {
-                if (params.feature.placeId === placeId) {
-                  return {
+            // 1. Exact map demarcation using OpenStreetMap Nominatim GeoJSON (Does not require GCP Map ID configuration)
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1`)
+              .then(res => res.json())
+              .then(data => {
+                if (!isActive || !data || !data[0] || !data[0].geojson) return;
+                
+                try {
+                  map.data.addGeoJson({
+                    type: "Feature",
+                    geometry: data[0].geojson,
+                    properties: { name: t.name }
+                  });
+                  map.data.setStyle({
                     fillColor: "#F5B700",
                     fillOpacity: 0.25, // Light yellow gradient fill
                     strokeColor: "#F5B700",
-                    strokeWeight: 3,
-                  };
+                    strokeWeight: 2,
+                    clickable: false // Prevent blocking clicks
+                  });
+                } catch (e) {
+                  console.warn("Could not parse GeoJSON for territory:", t.name);
                 }
-                return null;
-              };
+              })
+              .catch(err => console.log("Nominatim fetch failed", err));
 
-              if (localityLayer) localityLayer.style = styleFunction;
-              if (adminArea1Layer) adminArea1Layer.style = styleFunction;
-              if (adminArea2Layer) adminArea2Layer.style = styleFunction;
-              if (postalCodeLayer) postalCodeLayer.style = styleFunction;
-            } catch (err) {
-              console.warn("Data-driven styling not fully supported on this map");
-            }
             
             // 2. Fallback visual bounds (very subtle rectangle) just in case Data-Driven styling is not enabled in GCP Console
             const rectangle = new google.maps.Rectangle({
