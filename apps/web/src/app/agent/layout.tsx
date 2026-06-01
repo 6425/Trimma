@@ -114,7 +114,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">
           {menuSections.map((section, idx) => (
             <div key={idx} className="space-y-0.5">
-              <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-1.5">
+              <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-1.5">
                 {section.title}
               </div>
               {section.items.map((item) => {
@@ -133,10 +133,10 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
                         ? "bg-[#F5B700] text-black font-semibold"
-                        : "text-zinc-400 hover:bg-white/6 hover:text-white"
+                        : "text-white hover:bg-white/10 hover:text-[#F5B700]"
                     }`}
                   >
-                    <span className={isActive ? "text-black" : "text-zinc-500"}>{item.icon}</span>
+                    <span className={isActive ? "text-black" : "text-white"}>{item.icon}</span>
                     {item.name}
                   </Link>
                 );
