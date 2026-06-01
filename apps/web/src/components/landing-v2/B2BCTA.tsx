@@ -33,26 +33,17 @@ export function B2BCTA() {
             </Link>
           </div>
         </div>
-        <div className="flex-1 relative">
-          <div className="relative aspect-[16/10] rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-[#0B0B0B] group hover:scale-[1.02] transition-transform duration-500">
-            {/* macOS Titlebar Mockup */}
-            <div className="bg-[#151515] border-b border-white/5 px-4 py-3 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-rose-500/80" />
-              <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-              <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-            </div>
-            {/* Screenshot */}
-            <div className="relative h-[calc(100%-2.75rem)] w-full">
-              <Image 
-                src="/assets/dashboard_mockup.jpg" 
-                alt="Trimma Dashboard Mockup" 
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover object-top"
-              />
-              {/* Optional glare effect */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
+        <div className="flex-1 relative w-full mt-10 md:mt-0">
+          <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden shadow-2xl group hover:scale-[1.02] transition-transform duration-500 border border-white/10">
+            <Image 
+              src="/assets/dashboard_mockup.jpg" 
+              alt="Trimma Dashboard Mockup" 
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover object-center"
+            />
+            {/* Optional glare effect */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           </div>
         </div>
       </div>
