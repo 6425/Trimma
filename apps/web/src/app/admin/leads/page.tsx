@@ -217,7 +217,7 @@ export default function Leads() {
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [discoveryCategories, setDiscoveryCategories] = useState<{value: string, label: string}[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("Barber Salon");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [fetchLimit, setFetchLimit] = useState(15);
   const [discovering, setDiscovering] = useState(false);
 
@@ -310,7 +310,7 @@ export default function Leads() {
 
       if (result.categories) {
         setDiscoveryCategories(result.categories.map((c: string) => ({ value: c, label: c })));
-        if (result.categories.length > 0 && selectedCategory === "Barber Salon") {
+        if (result.categories.length > 0 && selectedCategory === "") {
           setSelectedCategory(result.categories[0]);
         }
       }

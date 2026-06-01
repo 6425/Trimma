@@ -29,9 +29,9 @@ function TerritoryExplorerContent() {
   const [searching, setSearching] = useState(false);
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [businesses, setBusinesses] = useState<BusinessResult[]>([]);
-  const [categories, setCategories] = useState<string[]>(["All Categories"]);
+  const [categories, setCategories] = useState<string[]>([]);
   
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
 
   const loadInitialData = useCallback(async () => {
@@ -52,7 +52,10 @@ function TerritoryExplorerContent() {
       const res = await getAgentMapData();
       if (res.success) {
         setTerritories(res.territories || []);
-        setCategories(["All Categories", ...(res.categories || [])]);
+        setCategories(res.categories || []);
+        if (res.categories && res.categories.length > 0 && !selectedCategory) {
+          setSelectedCategory(res.categories[0]);
+        }
       } else {
         if (res.error?.includes("Not authenticated")) {
           router.replace("/login?redirectTo=/agent/territory");
@@ -81,9 +84,7 @@ function TerritoryExplorerContent() {
     setSelectedBusinessId(null);
     try {
       const terrIds = territories.map(t => t.id);
-      const catsToSearch = selectedCategory === "All Categories" 
-        ? categories.filter(c => c !== "All Categories") 
-        : [selectedCategory];
+      const catsToSearch = selectedCategory ? [selectedCategory] : categories;
       const res = await searchBusinessesInTerritories(catsToSearch, terrIds);
       
       if (!res.success) throw new Error(res.error);

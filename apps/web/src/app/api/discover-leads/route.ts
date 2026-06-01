@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         phone: details.formatted_phone_number || null,
         website: details.website || null,
         map_url: details.url || null,
-        category: category || "Barber Salon",
+        category: category || null,
         working_hours: details.opening_hours ? details.opening_hours.periods || [] : [],
         latitude: details.geometry?.location?.lat || place.geometry?.location?.lat || null,
         longitude: details.geometry?.location?.lng || place.geometry?.location?.lng || null,
