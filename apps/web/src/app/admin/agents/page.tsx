@@ -43,6 +43,10 @@ export default function AdminAgents() {
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
   const [newTerritoryIds, setNewTerritoryIds] = useState<string[]>([]);
 
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>("");
+  const [selectedCityId, setSelectedCityId] = useState<string>("");
+
   const refreshTerritoryAssignments = async () => {
     try {
       const result = await fetchAdminAgentsPage();
@@ -673,32 +677,91 @@ export default function AdminAgents() {
                     </select>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-3">
                     <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Territories</label>
-                    <div className="w-full max-h-[200px] overflow-y-auto border border-slate-200 rounded-xl bg-white p-2 space-y-1 custom-scrollbar">
-                      {territoryCatalog.length === 0 && (
-                        <p className="text-zinc-500 text-xs p-2">No territories available.</p>
-                      )}
-                      {territoryCatalog.map((t) => (
-                        <label key={t.id} className="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded-lg cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={newTerritoryIds.includes(t.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNewTerritoryIds([...newTerritoryIds, t.id]);
-                              } else {
-                                setNewTerritoryIds(newTerritoryIds.filter(id => id !== t.id));
-                              }
-                            }}
-                            className="rounded border-slate-300 text-brand focus:ring-brand/20"
-                          />
-                          <span className="text-xs font-bold text-zinc-700">
-                            {t.name} <span className="text-[10px] font-normal text-zinc-500">({t.type})</span>
-                          </span>
-                        </label>
-                      ))}
+                    
+                    {/* Cascading Dropdowns */}
+                    <div className="grid grid-cols-1 gap-2">
+                      <select
+                        value={selectedProvinceId}
+                        onChange={(e) => {
+                          setSelectedProvinceId(e.target.value);
+                          setSelectedDistrictId("");
+                          setSelectedCityId("");
+                        }}
+                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold bg-slate-50 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      >
+                        <option value="">-- Select Province --</option>
+                        {territoryCatalog.filter(t => t.type === "province").map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={selectedDistrictId}
+                        onChange={(e) => {
+                          setSelectedDistrictId(e.target.value);
+                          setSelectedCityId("");
+                        }}
+                        disabled={!selectedProvinceId}
+                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      >
+                        <option value="">-- Select District --</option>
+                        {territoryCatalog.filter(t => t.type === "district" && t.parent_id === selectedProvinceId).map(d => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={selectedCityId}
+                        onChange={(e) => setSelectedCityId(e.target.value)}
+                        disabled={!selectedDistrictId}
+                        className="w-full h-9 px-3 border border-slate-200 rounded-lg text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      >
+                        <option value="">-- Select City --</option>
+                        {territoryCatalog.filter(t => t.type === "city" && t.parent_id === selectedDistrictId).map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
                     </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const targetId = selectedCityId || selectedDistrictId || selectedProvinceId;
+                        if (targetId && !newTerritoryIds.includes(targetId)) {
+                          setNewTerritoryIds([...newTerritoryIds, targetId]);
+                        }
+                      }}
+                      disabled={!selectedProvinceId}
+                      className="w-full text-xs font-bold h-9"
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add to Selection
+                    </Button>
+
+                    {/* Staged Territories */}
+                    {newTerritoryIds.length > 0 && (
+                      <div className="w-full max-h-[120px] overflow-y-auto border border-slate-200 rounded-xl bg-white p-2 space-y-1 custom-scrollbar">
+                        {newTerritoryIds.map((id) => {
+                          const t = territoryCatalog.find(tc => tc.id === id);
+                          if (!t) return null;
+                          return (
+                            <div key={id} className="flex items-center justify-between p-1.5 bg-slate-50 rounded-lg">
+                              <span className="text-xs font-bold text-zinc-700">
+                                {t.name} <span className="text-[10px] font-normal text-zinc-500">({t.type})</span>
+                              </span>
+                              <button
+                                onClick={() => setNewTerritoryIds(newTerritoryIds.filter(tid => tid !== id))}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <Button

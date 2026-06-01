@@ -87,29 +87,112 @@ export async function runSeedMarketplaceData(supabase: SupabaseClient) {
 
   // 4. SEED CITIES (Map to District IDs)
   const cityData = [
+    // Western Province
     { dName: "Colombo", name: "Colombo 01 - Fort", slug: "colombo-fort" },
     { dName: "Colombo", name: "Colombo 03 - Colpetty", slug: "colombo-colpetty" },
     { dName: "Colombo", name: "Colombo 07 - Cinnamon Gardens", slug: "colombo-cinnamon-gardens" },
+    { dName: "Colombo", name: "Dehiwala", slug: "dehiwala" },
     { dName: "Colombo", name: "Mount Lavinia", slug: "mount-lavinia" },
+    { dName: "Colombo", name: "Moratuwa", slug: "moratuwa" },
     { dName: "Colombo", name: "Nugegoda", slug: "nugegoda" },
     { dName: "Colombo", name: "Maharagama", slug: "maharagama" },
     { dName: "Colombo", name: "Kotte", slug: "kotte" },
     { dName: "Colombo", name: "Malabe", slug: "malabe" },
-    { dName: "Gampaha", name: "Negombo", slug: "negombo" },
+    { dName: "Colombo", name: "Homagama", slug: "homagama" },
     { dName: "Gampaha", name: "Gampaha Town", slug: "gampaha-town" },
-    { dName: "Gampaha", name: "Kiribathgoda", slug: "kiribathgoda" },
+    { dName: "Gampaha", name: "Negombo", slug: "negombo" },
     { dName: "Gampaha", name: "Wattala", slug: "wattala" },
+    { dName: "Gampaha", name: "Kelaniya", slug: "kelaniya" },
+    { dName: "Gampaha", name: "Kiribathgoda", slug: "kiribathgoda" },
+    { dName: "Gampaha", name: "Kadawatha", slug: "kadawatha" },
     { dName: "Gampaha", name: "Ja-Ela", slug: "ja-ela" },
+    { dName: "Gampaha", name: "Minuwangoda", slug: "minuwangoda" },
+    { dName: "Kalutara", name: "Kalutara Town", slug: "kalutara-town" },
+    { dName: "Kalutara", name: "Panadura", slug: "panadura" },
+    { dName: "Kalutara", name: "Horana", slug: "horana" },
+    { dName: "Kalutara", name: "Beruwala", slug: "beruwala" },
+    { dName: "Kalutara", name: "Aluthgama", slug: "aluthgama" },
+    
+    // Central Province
     { dName: "Kandy", name: "Kandy City", slug: "kandy-city" },
     { dName: "Kandy", name: "Peradeniya", slug: "peradeniya" },
     { dName: "Kandy", name: "Katugastota", slug: "katugastota" },
+    { dName: "Kandy", name: "Gampola", slug: "gampola" },
+    { dName: "Kandy", name: "Nawalapitiya", slug: "nawalapitiya" },
+    { dName: "Matale", name: "Matale Town", slug: "matale-town" },
+    { dName: "Matale", name: "Dambulla", slug: "dambulla" },
+    { dName: "Matale", name: "Sigiriya", slug: "sigiriya" },
+    { dName: "Nuwara Eliya", name: "Nuwara Eliya Town", slug: "nuwara-eliya-town" },
+    { dName: "Nuwara Eliya", name: "Hatton", slug: "hatton" },
+    { dName: "Nuwara Eliya", name: "Talawakele", slug: "talawakele" },
+
+    // Southern Province
     { dName: "Galle", name: "Galle Fort", slug: "galle-fort" },
+    { dName: "Galle", name: "Karapitiya", slug: "karapitiya" },
     { dName: "Galle", name: "Hikkaduwa", slug: "hikkaduwa" },
     { dName: "Galle", name: "Unawatuna", slug: "unawatuna" },
+    { dName: "Galle", name: "Ambalangoda", slug: "ambalangoda" },
+    { dName: "Matara", name: "Matara Town", slug: "matara-town" },
+    { dName: "Matara", name: "Weligama", slug: "weligama" },
+    { dName: "Matara", name: "Dickwella", slug: "dickwella" },
+    { dName: "Hambantota", name: "Hambantota Town", slug: "hambantota-town" },
+    { dName: "Hambantota", name: "Tangalle", slug: "tangalle" },
+    { dName: "Hambantota", name: "Tissamaharama", slug: "tissamaharama" },
+
+    // Northern Province
     { dName: "Jaffna", name: "Jaffna Town", slug: "jaffna-town" },
+    { dName: "Jaffna", name: "Nallur", slug: "nallur" },
     { dName: "Jaffna", name: "Chunnakam", slug: "chunnakam" },
+    { dName: "Jaffna", name: "Point Pedro", slug: "point-pedro" },
+    { dName: "Kilinochchi", name: "Kilinochchi Town", slug: "kilinochchi-town" },
+    { dName: "Mannar", name: "Mannar Town", slug: "mannar-town" },
+    { dName: "Vavuniya", name: "Vavuniya Town", slug: "vavuniya-town" },
+    { dName: "Mullaitivu", name: "Mullaitivu Town", slug: "mullaitivu-town" },
+
+    // Eastern Province
+    { dName: "Trincomalee", name: "Trincomalee Town", slug: "trincomalee-town" },
+    { dName: "Trincomalee", name: "Kinniya", slug: "kinniya" },
+    { dName: "Batticaloa", name: "Batticaloa Town", slug: "batticaloa-town" },
+    { dName: "Batticaloa", name: "Kattankudy", slug: "kattankudy" },
+    { dName: "Batticaloa", name: "Eravur", slug: "eravur" },
+    { dName: "Ampara", name: "Ampara Town", slug: "ampara-town" },
+    { dName: "Ampara", name: "Kalmunai", slug: "kalmunai" },
+    { dName: "Ampara", name: "Akkaraipattu", slug: "akkaraipattu" },
+    
+    // North Western Province
     { dName: "Kurunegala", name: "Kurunegala Town", slug: "kurunegala-town" },
     { dName: "Kurunegala", name: "Kuliyapitiya", slug: "kuliyapitiya" },
+    { dName: "Kurunegala", name: "Narammala", slug: "narammala" },
+    { dName: "Kurunegala", name: "Wariyapola", slug: "wariyapola" },
+    { dName: "Puttalam", name: "Puttalam Town", slug: "puttalam-town" },
+    { dName: "Puttalam", name: "Chilaw", slug: "chilaw" },
+    { dName: "Puttalam", name: "Wennappuwa", slug: "wennappuwa" },
+
+    // North Central Province
+    { dName: "Anuradhapura", name: "Anuradhapura Town", slug: "anuradhapura-town" },
+    { dName: "Anuradhapura", name: "Kekirawa", slug: "kekirawa" },
+    { dName: "Anuradhapura", name: "Medawachchiya", slug: "medawachchiya" },
+    { dName: "Polonnaruwa", name: "Polonnaruwa Town", slug: "polonnaruwa-town" },
+    { dName: "Polonnaruwa", name: "Kaduruwela", slug: "kaduruwela" },
+    { dName: "Polonnaruwa", name: "Hingurakgoda", slug: "hingurakgoda" },
+
+    // Uva Province
+    { dName: "Badulla", name: "Badulla Town", slug: "badulla-town" },
+    { dName: "Badulla", name: "Bandarawela", slug: "bandarawela" },
+    { dName: "Badulla", name: "Haputale", slug: "haputale" },
+    { dName: "Badulla", name: "Mahiyanganaya", slug: "mahiyanganaya" },
+    { dName: "Monaragala", name: "Monaragala Town", slug: "monaragala-town" },
+    { dName: "Monaragala", name: "Wellawaya", slug: "wellawaya" },
+    { dName: "Monaragala", name: "Kataragama", slug: "kataragama" },
+
+    // Sabaragamuwa Province
+    { dName: "Ratnapura", name: "Ratnapura Town", slug: "ratnapura-town" },
+    { dName: "Ratnapura", name: "Pelmadulla", slug: "pelmadulla" },
+    { dName: "Ratnapura", name: "Balangoda", slug: "balangoda" },
+    { dName: "Ratnapura", name: "Embilipitiya", slug: "embilipitiya" },
+    { dName: "Kegalle", name: "Kegalle Town", slug: "kegalle-town" },
+    { dName: "Kegalle", name: "Mawanella", slug: "mawanella" },
+    { dName: "Kegalle", name: "Warakapola", slug: "warakapola" }
   ];
 
   const citiesWithIds = cityData.map((c) => {
