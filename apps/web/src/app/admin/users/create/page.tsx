@@ -179,16 +179,16 @@ function AdminUserCreateInner() {
                     onValueChange={(val) => setFormData({ ...formData, territory: val })}
                     defaultValue="Colombo"
                   >
-                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
+                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-black shadow-none">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl border-none shadow-2xl p-1 max-h-[300px]">
                       {ALL_DISTRICTS.map((district) => (
-                        <SelectItem key={district} value={district} className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">
+                        <SelectItem key={district} value={district} className="font-medium rounded-lg py-2.5 px-3 cursor-pointer text-black focus:text-black data-[state=checked]:text-black">
                           {district}
                         </SelectItem>
                       ))}
-                      <SelectItem value="Remote" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer border-t mt-1">Remote (Global)</SelectItem>
+                      <SelectItem value="Remote" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer border-t mt-1 text-black focus:text-black data-[state=checked]:text-black">Remote (Global)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
