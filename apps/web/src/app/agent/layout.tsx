@@ -18,6 +18,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [agentName, setAgentName] = useState("Agent");
   const [agentAvatar, setAgentAvatar] = useState("");
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -175,7 +176,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           
           {/* Left: Title on desktop / Logo badge on mobile */}
           <div className="flex items-center gap-3">
-            <div className="hidden lg:block text-sm font-bold text-zinc-400">Sales Operating System</div>
+            <div className="hidden lg:block text-sm font-bold text-white">Sales Operating System</div>
             <div className="lg:hidden">
               <Logo iconSize={28} inverse />
             </div>
@@ -183,11 +184,11 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
           {/* Center: Search (desktop only) */}
           <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#F5B700]/50 focus-within:ring-1 focus-within:ring-[#F5B700]/30 transition-all">
-            <Search className="w-4 h-4 text-zinc-600 mr-2 shrink-0" />
+            <Search className="w-4 h-4 text-white/80 mr-2 shrink-0" />
             <input
               type="text"
               placeholder="Search leads, salons..."
-              className="bg-transparent border-none outline-none text-sm text-white placeholder:text-zinc-600 w-full"
+              className="bg-transparent border-none outline-none text-sm text-white placeholder:text-white/60 w-full"
             />
           </div>
 
@@ -195,16 +196,18 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-1.5">
             {/* Hamburger — mobile only, before bell */}
             <button
-              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/8 transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
             </button>
             {/* Bell */}
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors">
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/8 transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
+              {hasUnreadNotifications && (
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
+              )}
             </button>
           </div>
         </header>
