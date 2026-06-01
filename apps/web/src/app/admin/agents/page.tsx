@@ -102,6 +102,7 @@ export default function AdminAgents() {
       const convertedCount = agentLeads.filter((l: any) => l.onboarding_stage === "CONVERTED").length;
 
       return {
+        id: agentMeta.id,
         email: u.email,
         full_name: u.full_name || "New Agent",
         phone: u.phone || "No Phone",
@@ -597,7 +598,7 @@ export default function AdminAgents() {
                       ) : (
                         filteredAgents.map((agent, i) => {
                           const matchingTerritories = agentTerritories.filter(
-                            (t) => t.agents?.user_email === agent.email
+                            (t) => (agent.id && t.agent_id === agent.id) || t.agents?.user_email === agent.email
                           );
                           return (
                             <tr key={agent.email} className="hover:bg-zinc-50/50 transition-colors h-14">
