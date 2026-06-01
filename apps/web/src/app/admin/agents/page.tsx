@@ -37,7 +37,11 @@ export default function AdminAgents() {
   // Form edit states
   const [editCommission, setEditCommission] = useState("10");
   const [editStatus, setEditStatus] = useState("active");
-  const [editTerritory, setEditTerritory] = useState("");
+  const [editTerritoryIds, setEditTerritoryIds] = useState<string[]>([]);
+  
+  const [modalProvinceId, setModalProvinceId] = useState<string>("");
+  const [modalDistrictId, setModalDistrictId] = useState<string>("");
+  const [modalCityId, setModalCityId] = useState<string>("");
 
   // Territory Creation states
   const [newTerritoryEmail, setNewTerritoryEmail] = useState("");
@@ -121,7 +125,16 @@ export default function AdminAgents() {
     setSelectedAgent(agent);
     setEditCommission(String(agent.commission_rate));
     setEditStatus(agent.status);
-    setEditTerritory(agent.territory || "");
+    
+    // Find assigned territories for this agent
+    const assignedIds = agentTerritories
+      .filter((t: any) => t.agents?.user_email === agent.email)
+      .map((t: any) => t.territory_id);
+    setEditTerritoryIds(assignedIds);
+    
+    setModalProvinceId("");
+    setModalDistrictId("");
+    setModalCityId("");
     setIsEditModalOpen(true);
   };
 
@@ -140,19 +153,29 @@ export default function AdminAgents() {
       setUpdating(true);
       const parsedRate = parseFloat(editCommission) || 0;
 
+      // Create a comma-separated string of territory names for the legacy string column
+      const assignedNames = territoryCatalog
+        .filter((t) => editTerritoryIds.includes(t.id))
+        .map((t) => t.name)
+        .join(", ");
+
       const result = await saveAdminAgentProfile({
         user_email: selectedAgent.email,
         status: editStatus,
         commission_rate: parsedRate,
-        territory: editTerritory,
+        territory: assignedNames,
         createIfMissing: !selectedAgent.agent_exists,
       });
       if (result.success === false) throw new Error(result.error);
 
+      // Sync the exact territory IDs using the sync function
+      const syncResult = await syncAgentTerritories(selectedAgent.email, editTerritoryIds);
+      if (syncResult.success === false) throw new Error(syncResult.error);
+
       await logAgentActivity(
         selectedAgent.email,
         "CREDENTIALS_OVERRIDE",
-        `Commission rate set to ${parsedRate}% and status set to ${editStatus.toUpperCase()}.`
+        `Commission rate set to ${parsedRate}%, status set to ${editStatus.toUpperCase()}, and territories synced.`
       );
 
       toast.success(`Successfully updated ${selectedAgent.full_name}!`);
@@ -1098,15 +1121,91 @@ export default function AdminAgents() {
                 </select>
               </div>
 
-              {/* Territory Text Field */}
-              <div className="space-y-1">
+              {/* Cascading Territory Assignment */}
+              <div className="space-y-3">
                 <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Primary Territory Assignment</label>
-                <Input 
-                  value={editTerritory}
-                  onChange={(e) => setEditTerritory(e.target.value)}
-                  placeholder="e.g. Western Province"
-                  className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-[#F5B700]/20 rounded-xl"
-                />
+                
+                <div className="grid grid-cols-1 gap-2">
+                  <select
+                    value={modalProvinceId}
+                    onChange={(e) => {
+                      setModalProvinceId(e.target.value);
+                      setModalDistrictId("");
+                      setModalCityId("");
+                    }}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    <option value="">-- Select Province --</option>
+                    {territoryCatalog.filter(t => t.type === "province").map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={modalDistrictId}
+                    onChange={(e) => {
+                      setModalDistrictId(e.target.value);
+                      setModalCityId("");
+                    }}
+                    disabled={!modalProvinceId}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    <option value="">-- Select District --</option>
+                    {territoryCatalog.filter(t => t.type === "district" && t.parent_id === modalProvinceId).map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={modalCityId}
+                    onChange={(e) => setModalCityId(e.target.value)}
+                    disabled={!modalDistrictId}
+                    className="w-full h-10 px-3 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-zinc-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    <option value="">-- Select City --</option>
+                    {territoryCatalog.filter(t => t.type === "city" && t.parent_id === modalDistrictId).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const targetId = modalCityId || modalDistrictId || modalProvinceId;
+                    if (targetId && !editTerritoryIds.includes(targetId)) {
+                      setEditTerritoryIds([...editTerritoryIds, targetId]);
+                    }
+                  }}
+                  disabled={!modalProvinceId}
+                  className="w-full text-xs font-bold h-10 rounded-xl"
+                >
+                  <Plus className="w-3 h-3 mr-1" /> Add Territory
+                </Button>
+
+                {/* Staged Territories */}
+                {editTerritoryIds.length > 0 && (
+                  <div className="w-full max-h-[120px] overflow-y-auto border border-slate-200 rounded-xl bg-slate-50 p-2 space-y-1 custom-scrollbar">
+                    {editTerritoryIds.map((id) => {
+                      const t = territoryCatalog.find(tc => tc.id === id);
+                      if (!t) return null;
+                      return (
+                        <div key={id} className="flex items-center justify-between p-1.5 bg-white border border-slate-100 shadow-sm rounded-lg">
+                          <span className="text-xs font-bold text-zinc-700">
+                            {t.name} <span className="text-[10px] font-normal text-zinc-500">({t.type})</span>
+                          </span>
+                          <button
+                            onClick={() => setEditTerritoryIds(editTerritoryIds.filter(tid => tid !== id))}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
