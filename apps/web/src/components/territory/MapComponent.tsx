@@ -43,74 +43,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       for (const t of territories) {
         if (!isActive) break;
 
-        let success = false;
-        
-        // 1. Try Nominatim first for exact polygons
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
-          
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`, {
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-          const data = await res.json();
-          
-          if (!isActive) break;
-
-          if (data && data[0]) {
-            const loc = new google.maps.LatLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
-            const vp = data[0].boundingbox; // [latMin, latMax, lonMin, lonMax]
-            
-            bounds.extend(new google.maps.LatLng(parseFloat(vp[0]), parseFloat(vp[2])));
-            bounds.extend(new google.maps.LatLng(parseFloat(vp[1]), parseFloat(vp[3])));
-            geocodedCount++;
-            success = true;
-
-            if (data[0].geojson) {
-              try {
-                map.data.addGeoJson({
-                  type: "Feature",
-                  geometry: data[0].geojson,
-                  properties: { name: t.name }
-                });
-                map.data.setStyle({
-                  fillColor: "#F5B700",
-                  fillOpacity: 0.25, 
-                  strokeColor: "#F5B700",
-                  strokeWeight: 2,
-                  clickable: false 
-                });
-              } catch (e) {
-                console.warn("GeoJSON parse failed", e);
-              }
-            }
-            
-            const labelMarker = new google.maps.Marker({
-              position: loc,
-              map,
-              label: {
-                text: t.name.toUpperCase() + " TERRITORY",
-                color: "#000000",
-                fontWeight: "900",
-                fontSize: "14px",
-                className: "bg-[#F5B700] px-2 py-1 rounded shadow font-sans"
-              },
-              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
-            });
-            overlaysRef.current.push(labelMarker);
-
-            // Sleep to respect Nominatim rate limits (1 req/sec)
-            await new Promise(r => setTimeout(r, 1000));
-          }
-        } catch (err) {
-          console.warn("Nominatim failed for " + t.name, err);
-        }
-
-        if (success) continue;
-        if (!isActive) break;
-
-        // 2. Fallback to Google Geocoder
+        // Use Google Geocoder to find the territory bounds
         try {
           const response = await geocoder.geocode({ address: t.name + ", Sri Lanka" });
           if (response.results && response.results[0]) {
@@ -130,20 +63,10 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
               map
             });
             
-            const labelMarker = new google.maps.Marker({
-              position: loc,
-              map,
-              label: {
-                text: t.name.toUpperCase() + " TERRITORY",
-                color: "#000000",
-                fontWeight: "900",
-                fontSize: "14px",
-                className: "bg-[#F5B700] px-2 py-1 rounded shadow font-sans"
-              },
-              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
-            });
+            // Wait a small amount of time to avoid geocoder rate limits
+            await new Promise(r => setTimeout(r, 300));
 
-            overlaysRef.current.push(rectangle, labelMarker);
+            overlaysRef.current.push(rectangle);
           }
         } catch (err) {
           console.error("Google Geocoder failed for " + t.name, err);
