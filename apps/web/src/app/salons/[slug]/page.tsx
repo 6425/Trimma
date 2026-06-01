@@ -814,13 +814,17 @@ export default function SalonPage() {
                 </div>
 
                 {/* UNVERIFIED / BOOKING UNAVAILABLE NOTICE */}
-                {!salon.is_verified && (
+                {!isBookable && (
                   <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 backdrop-blur-md max-w-2xl">
                     <Shield className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-amber-500 font-extrabold text-sm uppercase tracking-wide">Verification in Progress</h4>
+                      <h4 className="text-amber-500 font-extrabold text-sm uppercase tracking-wide">
+                        {!salon.is_verified ? "Verification in Progress" : "Missing Contact Details"}
+                      </h4>
                       <p className="text-amber-500/90 text-xs mt-1.5 font-medium leading-relaxed">
-                        {salon.booking_disabled_message || "This salon is currently completing our verification process to ensure the highest quality standards. Online bookings will be automatically enabled once the owner's verification is complete."}
+                        {!salon.is_verified 
+                          ? (salon.booking_disabled_message || "This salon is currently completing our verification process to ensure the highest quality standards. Online bookings will be automatically enabled once the owner's verification is complete.")
+                          : "This salon is verified but is missing an email address or WhatsApp number. Online booking will be enabled once the owner updates their business profile."}
                       </p>
                     </div>
                   </div>
@@ -832,8 +836,8 @@ export default function SalonPage() {
             <div className="hidden sm:flex md:w-[280px] shrink-0 pt-4">
               <Button
                 size="lg" 
-                disabled={!salon.is_verified}
-                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-brand/20' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                disabled={!isBookable}
+                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${isBookable ? 'bg-brand hover:bg-[#c21b52] text-white shadow-brand/20' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                 onClick={() => handleBookService()}
               >
                 {!isBookable ? "Booking Unavailable" : "Book Appointment Now"}
