@@ -36,49 +36,83 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
     let isActive = true;
     const geocoder = new google.maps.Geocoder();
     const bounds = new google.maps.LatLngBounds();
-    let geocodedCount = 0;
 
-    territories.forEach(t => {
-      const query = t.name + ", Sri Lanka";
-      geocoder.geocode({ address: query }, (results, status) => {
-        if (!isActive) return;
+    const processTerritories = async () => {
+      let geocodedCount = 0;
+
+      for (const t of territories) {
+        if (!isActive) break;
+
+        let success = false;
         
-        if (status === 'OK' && results && results[0]) {
-          const vp = results[0].geometry.viewport;
-          const loc = results[0].geometry.location;
-          const placeId = results[0].place_id;
+        // 1. Try Nominatim first for exact polygons
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`);
+          const data = await res.json();
           
-          if (vp) {
-            bounds.union(vp);
+          if (!isActive) break;
+
+          if (data && data[0]) {
+            const loc = new google.maps.LatLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+            const vp = data[0].boundingbox; // [latMin, latMax, lonMin, lonMax]
+            
+            bounds.extend(new google.maps.LatLng(parseFloat(vp[0]), parseFloat(vp[2])));
+            bounds.extend(new google.maps.LatLng(parseFloat(vp[1]), parseFloat(vp[3])));
+            geocodedCount++;
+            success = true;
+
+            if (data[0].geojson) {
+              try {
+                map.data.addGeoJson({
+                  type: "Feature",
+                  geometry: data[0].geojson,
+                  properties: { name: t.name }
+                });
+                map.data.setStyle({
+                  fillColor: "#F5B700",
+                  fillOpacity: 0.25, 
+                  strokeColor: "#F5B700",
+                  strokeWeight: 2,
+                  clickable: false 
+                });
+              } catch (e) {
+                console.warn("GeoJSON parse failed", e);
+              }
+            }
+            
+            const labelMarker = new google.maps.Marker({
+              position: loc,
+              map,
+              label: {
+                text: t.name.toUpperCase() + " TERRITORY",
+                color: "#000000",
+                fontWeight: "900",
+                fontSize: "14px",
+                className: "bg-[#F5B700] px-2 py-1 rounded shadow font-sans"
+              },
+              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
+            });
+            overlaysRef.current.push(labelMarker);
+
+            // Sleep to respect Nominatim rate limits (1 req/sec)
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        } catch (err) {
+          console.warn("Nominatim failed for " + t.name, err);
+        }
+
+        if (success) continue;
+        if (!isActive) break;
+
+        // 2. Fallback to Google Geocoder
+        try {
+          const response = await geocoder.geocode({ address: t.name + ", Sri Lanka" });
+          if (response.results && response.results[0]) {
+            const vp = response.results[0].geometry.viewport;
+            const loc = response.results[0].geometry.location;
+            if (vp) bounds.union(vp);
             geocodedCount++;
             
-            // 1. Exact map demarcation using OpenStreetMap Nominatim GeoJSON
-            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`)
-              .then(res => res.json())
-              .then(data => {
-                if (!isActive || !data || !data[0] || !data[0].geojson) return;
-                
-                try {
-                  map.data.addGeoJson({
-                    type: "Feature",
-                    geometry: data[0].geojson,
-                    properties: { name: t.name }
-                  });
-                  map.data.setStyle({
-                    fillColor: "#F5B700",
-                    fillOpacity: 0.25, 
-                    strokeColor: "#F5B700",
-                    strokeWeight: 2,
-                    clickable: false 
-                  });
-                } catch (e) {
-                  console.warn("Could not parse GeoJSON for territory:", t.name);
-                }
-              })
-              .catch(err => console.log("Nominatim fetch failed", err));
-
-            
-            // 2. Fallback visual bounds
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
               strokeColor: "#F5B700",
@@ -90,7 +124,6 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
               map
             });
             
-            // Add a text label in the center of the territory
             const labelMarker = new google.maps.Marker({
               position: loc,
               map,
@@ -99,29 +132,29 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
                 color: "#000000",
                 fontWeight: "900",
                 fontSize: "14px",
-                className: "bg-[#F5B700] px-2 py-1 rounded shadow"
+                className: "bg-[#F5B700] px-2 py-1 rounded shadow font-sans"
               },
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 0
-              }
+              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
             });
 
             overlaysRef.current.push(rectangle, labelMarker);
-            
-            if (geocodedCount === territories.length || geocodedCount > 0) {
-              map.fitBounds(bounds);
-            }
           }
+        } catch (err) {
+          console.error("Google Geocoder failed for " + t.name, err);
         }
-      });
-    });
+      }
+
+      if (isActive && geocodedCount > 0) {
+        map.fitBounds(bounds);
+      }
+    };
+
+    processTerritories();
 
     return () => {
       isActive = false;
       overlaysRef.current.forEach(overlay => overlay.setMap(null));
       overlaysRef.current = [];
-      // Clear data layer to prevent duplicate polygons on strict mode re-renders
       if (map && map.data) {
         map.data.forEach((feature) => {
           map.data.remove(feature);
