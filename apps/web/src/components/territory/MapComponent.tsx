@@ -127,7 +127,7 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
           mapId="trimma_territory_map"
           className="w-full h-full"
           disableDefaultUI={false}
-          gestureHandling="greedy"
+          gestureHandling="auto"
         >
           {businesses.map((biz) => {
             if (!biz.latitude || !biz.longitude) return null;

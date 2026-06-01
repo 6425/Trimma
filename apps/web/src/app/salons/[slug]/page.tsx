@@ -595,27 +595,68 @@ export default function SalonPage() {
         {/* Content Container (Full Width Spacing aligned to standard limits but padding spreads nicely) */}
         <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-              {/* Logo Frame */}
-              <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white/10 shadow-2xl shrink-0 bg-zinc-900">
+            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">              {/* Logo Frame */}
+              <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white/10 shadow-2xl shrink-0 bg-zinc-900 hidden sm:block">
                 <AvatarImage src={logoImage} className="object-cover" />
                 <AvatarFallback className="bg-zinc-900 text-white font-bold">S</AvatarFallback>
               </Avatar>
               
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
-                    {salon.name}
-                  </h1>
-                  {salon.is_verified ? (
-                    <Badge className="bg-brand/20 text-brand border border-brand/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5 text-brand" /> Verified Partner
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-amber-500/20 text-amber-500 border border-amber-500/30 font-bold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1" title="Owner needs to activate profile">
-                      <Clock className="w-3.5 h-3.5 text-amber-500" /> Unverified
-                    </Badge>
-                  )}
+              <div className="space-y-3 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-16 h-16 rounded-xl border-2 border-white/10 shadow-xl shrink-0 bg-zinc-900 sm:hidden">
+                      <AvatarImage src={logoImage} className="object-cover" />
+                      <AvatarFallback className="bg-zinc-900 text-white font-bold">S</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                          {salon.name}
+                        </h1>
+                        {salon.is_verified && (
+                          <ShieldCheck className="w-5 h-5 text-brand" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {salon.is_verified ? (
+                          <Badge className="bg-brand/20 text-brand border border-brand/30 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                            Verified
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-amber-500/20 text-amber-500 border border-amber-500/30 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                            Unverified
+                          </Badge>
+                        )}
+                        <div className="flex items-center text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
+                          {mockExtraData.status}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions Panel */}
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <SalonFavoriteButton
+                      salonId={salon.id}
+                      salonName={salon.name}
+                      variant="hero"
+                      className="h-11 w-11 shrink-0"
+                    />
+                    <Button size="icon" variant="outline" className="h-11 w-11 shrink-0 rounded-xl bg-white/5 border-white/10 text-white hover:bg-white/10">
+                      <Phone className="w-4 h-4" />
+                    </Button>
+                    <Button size="icon" variant="outline" className="h-11 w-11 shrink-0 rounded-xl bg-[#25D366]/5 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/10">
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                      onClick={() => handleBookService()}
+                      disabled={!salon.is_verified}
+                    >
+                      {salon.is_verified ? "Book" : "Unavailable"}
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-300">
@@ -630,10 +671,17 @@ export default function SalonPage() {
                     <MapPin className="w-4 h-4 mr-1.5 text-brand" />
                     <span>{salon.district || salon.city || salon.address || "Colombo District"}</span>
                   </div>
-                  <div className="flex items-center text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 mr-2 animate-pulse" />
-                    {mockExtraData.status}
-                  </div>
+                  <button
+                    className="flex items-center text-white bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1 rounded-lg border border-white/5 cursor-pointer"
+                    onClick={() => {
+                      const url = getSalonDirectionsUrl(salon);
+                      if (url) window.open(url, "_blank", "noopener,noreferrer");
+                      else toast.message("Directions are not available for this salon yet.");
+                    }}
+                  >
+                    <Navigation2 className="w-4 h-4 mr-1.5 text-blue-400" />
+                    Get Directions
+                  </button>
                 </div>
                 
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -643,42 +691,68 @@ export default function SalonPage() {
                     </Badge>
                   ))}
                 </div>
+
+                {/* WORKING HOURS ROW */}
+                <div className="pt-4 pb-2">
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5" /> Working Hours
+                  </h3>
+                  <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">
+                    {(salon.working_hours || mockExtraData.hours).map((h: any, i: number) => {
+                      const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === h.day;
+                      const isClosed = h.time.toLowerCase().includes('closed');
+                      return (
+                        <div 
+                          key={i} 
+                          className={`flex flex-col shrink-0 px-3.5 py-2.5 rounded-xl border snap-start min-w-[120px] backdrop-blur-md transition-all ${
+                            isToday 
+                              ? 'bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+                              : isClosed
+                                ? 'bg-zinc-900/60 border-zinc-800 opacity-60'
+                                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                          }`}
+                        >
+                          <span className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 ${
+                            isToday ? 'text-emerald-400' : isClosed ? 'text-zinc-500' : 'text-zinc-400'
+                          }`}>
+                            {h.day}
+                            {isToday && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                          </span>
+                          <span className={`text-xs font-semibold whitespace-nowrap ${
+                            isToday ? 'text-emerald-50' : isClosed ? 'text-zinc-500 line-through decoration-zinc-600/50' : 'text-zinc-200'
+                          }`}>
+                            {h.time}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* UNVERIFIED / BOOKING UNAVAILABLE NOTICE */}
+                {!salon.is_verified && (
+                  <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 backdrop-blur-md max-w-2xl">
+                    <Shield className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-amber-500 font-extrabold text-sm uppercase tracking-wide">Verification in Progress</h4>
+                      <p className="text-amber-500/90 text-xs mt-1.5 font-medium leading-relaxed">
+                        {salon.booking_disabled_message || "This salon is currently completing our verification process to ensure the highest quality standards. Online bookings will be automatically enabled once the owner's verification is complete."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
               </div>
             </div>
 
-            {/* Quick Actions Panel */}
-            <div className="flex flex-wrap sm:flex-nowrap md:flex-col lg:flex-row gap-3 min-w-[280px]">
-              <SalonFavoriteButton
-                salonId={salon.id}
-                salonName={salon.name}
-                variant="hero"
-                className="h-12 w-12 shrink-0"
-              />
+            <div className="hidden sm:flex md:w-[280px] shrink-0 pt-4">
               <Button
                 size="lg" 
                 disabled={!salon.is_verified}
-                className={`flex-1 md:flex-none hidden md:flex rounded-xl font-bold transition-all active:scale-[0.98] text-xs h-12 px-6 ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-brand/20' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                 onClick={() => handleBookService()}
               >
-                {!salon.is_verified ? "Booking Unavailable" : "Book Appointment"}
-              </Button>
-              <Button size="lg" variant="outline" className="flex-1 md:flex-none rounded-xl gap-2 font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white text-xs h-12 px-5">
-                <Phone className="w-4 h-4" /> Call
-              </Button>
-              <Button size="lg" variant="outline" className="flex-1 md:flex-none rounded-xl gap-2 font-bold border-[#25D366]/40 text-[#25D366] bg-[#25D366]/5 hover:bg-[#25D366]/10 hover:text-[#25D366] text-xs h-12 px-5">
-                <MessageCircle className="w-4 h-4" /> WhatsApp
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="flex-1 md:flex-none rounded-xl gap-2 font-bold bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white hidden md:flex text-xs h-12 px-5"
-                onClick={() => {
-                  const url = getSalonDirectionsUrl(salon);
-                  if (url) window.open(url, "_blank", "noopener,noreferrer");
-                  else toast.message("Directions are not available for this salon yet.");
-                }}
-              >
-                <Navigation2 className="w-4 h-4" /> Directions
+                {!salon.is_verified ? "Booking Unavailable" : "Book Appointment Now"}
               </Button>
             </div>
           </div>
