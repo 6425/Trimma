@@ -507,8 +507,12 @@ export default function SalonPage() {
     : services.filter(s => s.category === selectedCategory);
 
   const handleBookService = (serviceName?: string) => {
-    if (!salon.is_verified) {
-      toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
+    if (!isBookable) {
+      if (!salon.is_verified) {
+        toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
+      } else {
+        toast.error("Booking is unavailable because the salon has not provided a valid email address and WhatsApp number.");
+      }
       return;
     }
 
@@ -538,8 +542,12 @@ export default function SalonPage() {
   };
 
   const handleBookPromotion = (promotion: SalonPromotionPackage) => {
-    if (!salon.is_verified) {
-      toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
+    if (!isBookable) {
+      if (!salon.is_verified) {
+        toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
+      } else {
+        toast.error("Booking is unavailable because the salon has not provided a valid email address and WhatsApp number.");
+      }
       return;
     }
 
@@ -576,6 +584,9 @@ export default function SalonPage() {
   const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=ffc107&textColor=000000`;
   const displayRating = reviewSummary.totalReviews > 0 ? reviewSummary.averageRating : (salon.rating || 0);
   const displayReviewCount = reviewSummary.totalReviews > 0 ? reviewSummary.totalReviews : (salon.review_count || 0);
+
+  const hasContactInfo = Boolean(salon.phone && salon.owner_email && !salon.owner_email.includes("draft-"));
+  const isBookable = salon.is_verified && hasContactInfo;
 
   // --- Dynamic Working Hours & Status Calculation ---
   let parsedWorkingHours = mockExtraData.hours;
@@ -723,7 +734,7 @@ export default function SalonPage() {
                       className="h-11 w-11 shrink-0"
                     />
                     <Button
-                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? 'bg-brand hover:bg-[#c21b52] text-white shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                       onClick={() => handleBookService()}
                       disabled={!salon.is_verified}
                     >
@@ -825,7 +836,7 @@ export default function SalonPage() {
                 className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${salon.is_verified ? 'bg-brand hover:bg-[#c21b52] text-white shadow-brand/20' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                 onClick={() => handleBookService()}
               >
-                {!salon.is_verified ? "Booking Unavailable" : "Book Appointment Now"}
+                {!isBookable ? "Booking Unavailable" : "Book Appointment Now"}
               </Button>
             </div>
           </div>
