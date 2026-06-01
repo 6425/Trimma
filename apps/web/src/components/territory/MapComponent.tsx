@@ -55,10 +55,10 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
               strokeColor: "#F5B700",
-              strokeOpacity: 0.3,
-              strokeWeight: 1,
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
               fillColor: "#F5B700",
-              fillOpacity: 0.05,
+              fillOpacity: 0.15,
               clickable: false,
               map
             });
