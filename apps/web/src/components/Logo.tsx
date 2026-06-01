@@ -105,7 +105,8 @@ export default function Logo({
 
   return (
     <div className={`flex flex-col select-none ${className}`}>
-      <img
+      <div className="flex items-start">
+        <img
         src={logoSrc}
         alt="Trimma Logo"
         style={{ height: logoHeight }}
@@ -113,6 +114,10 @@ export default function Logo({
         fetchPriority="high"
         draggable={false}
       />
+        <span className={`ml-1.5 mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${inverse ? 'bg-white/10 text-white/90 border-white/20' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+          Beta
+        </span>
+      </div>
       {displayTagline ? (
         <span
           className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
