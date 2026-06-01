@@ -276,12 +276,19 @@ export default function AdminAgents() {
         });
         if (saveRes.success === false) throw new Error(saveRes.error);
       }
-      
-      const syncResult = await syncAgentTerritories(newTerritoryEmail, newTerritoryIds);
+      const targetIds = getDeepestSelectedTerritories(
+        territoryCatalog,
+        selectedProvinceIds,
+        selectedDistrictIds,
+        selectedCityIds
+      );
+      const finalIds = Array.from(new Set([...newTerritoryIds, ...targetIds]));
+
+      const syncResult = await syncAgentTerritories(newTerritoryEmail, finalIds);
       if (syncResult.success === false) throw new Error(syncResult.error);
 
       const assignedNames = territoryCatalog
-        .filter((t) => newTerritoryIds.includes(t.id))
+        .filter((t) => finalIds.includes(t.id))
         .map((t) => t.name)
         .join(", ");
 
@@ -296,7 +303,7 @@ export default function AdminAgents() {
       setSelectedProvinceIds([]);
       setSelectedDistrictIds([]);
       setSelectedCityIds([]);
-      await refreshTerritoryAssignments();
+      await fetchInitialData();
     } catch (error: any) {
       toast.error("Territory assignment failed: " + error.message);
     } finally {
