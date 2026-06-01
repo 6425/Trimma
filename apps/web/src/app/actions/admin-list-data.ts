@@ -143,13 +143,14 @@ export async function fetchAdminAgentsPage() {
 
 export async function fetchAdminLeadsPage() {
   const result = await withAdminDb(async (supabase) => {
-    const [salonsRes, usersRes, rolesRes, plansRes] = await Promise.all([
+    const [salonsRes, usersRes, rolesRes, plansRes, catRes] = await Promise.all([
       supabase.from("salons").select("*").order("created_at", { ascending: false }),
       supabase.from("users").select("*"),
       supabase.from("global_staff_roles").select("*"),
       supabase.from("subscription_plans").select("*"),
+      supabase.from("categories").select("name").order("name"),
     ]);
-    for (const res of [salonsRes, usersRes, rolesRes, plansRes]) {
+    for (const res of [salonsRes, usersRes, rolesRes, plansRes, catRes]) {
       if (res.error) throw new Error(res.error.message);
     }
     return {
@@ -157,6 +158,7 @@ export async function fetchAdminLeadsPage() {
       users: usersRes.data || [],
       staffRoles: rolesRes.data || [],
       subscriptionPlans: plansRes.data || [],
+      categories: catRes.data?.map(c => c.name) || [],
     };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

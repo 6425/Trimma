@@ -21,18 +21,7 @@ import { getAgentMapData, searchBusinessesInTerritories } from "../../actions/ag
 import { MapComponent, BusinessResult, Territory } from "../../../components/territory/MapComponent";
 import { BusinessResultsSidebar } from "../../../components/territory/BusinessResultsSidebar";
 
-const CATEGORIES = [
-  "All Categories",
-  "Hair Salon",
-  "Beauty Salon",
-  "Spa",
-  "Nail Salon",
-  "Barber Shop",
-  "Makeup Studio",
-  "Wellness Center",
-  "Massage Center",
-  "Bridal Studio"
-];
+
 
 function TerritoryExplorerContent() {
   const router = useRouter();
@@ -40,6 +29,7 @@ function TerritoryExplorerContent() {
   const [searching, setSearching] = useState(false);
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [businesses, setBusinesses] = useState<BusinessResult[]>([]);
+  const [categories, setCategories] = useState<string[]>(["All Categories"]);
   
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
@@ -60,14 +50,16 @@ function TerritoryExplorerContent() {
       }
 
       const res = await getAgentMapData();
-      if (!res.success) {
+      if (res.success) {
+        setTerritories(res.territories || []);
+        setCategories(["All Categories", ...(res.categories || [])]);
+      } else {
         if (res.error?.includes("Not authenticated")) {
           router.replace("/login?redirectTo=/agent/territory");
           return;
         }
         throw new Error(res.error);
       }
-      setTerritories(res.territories);
     } catch (err: any) {
       toast.error(err.message || "Failed to load territories");
     } finally {
@@ -89,8 +81,10 @@ function TerritoryExplorerContent() {
     setSelectedBusinessId(null);
     try {
       const terrIds = territories.map(t => t.id);
-      const cats = selectedCategory === "All Categories" ? [] : [selectedCategory];
-      const res = await searchBusinessesInTerritories(cats, terrIds);
+      const catsToSearch = selectedCategory === "All Categories" 
+        ? categories.filter(c => c !== "All Categories") 
+        : [selectedCategory];
+      const res = await searchBusinessesInTerritories(catsToSearch, terrIds);
       
       if (!res.success) throw new Error(res.error);
       
@@ -188,7 +182,7 @@ function TerritoryExplorerContent() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
             >
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 

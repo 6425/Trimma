@@ -60,9 +60,14 @@ export async function getAgentMapData() {
   }
 
   // Return the data
+  const { data: catData } = await supabase.from("categories").select("name").order("name");
+  const categoryNames = catData?.map(c => c.name) || [];
+
   return {
     success: true as const,
+    agentId: agentData.id,
     territories,
+    categories: categoryNames
   };
 }
 

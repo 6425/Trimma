@@ -86,18 +86,7 @@ const SRI_LANKA_GEOGRAPHY: any = {
   }
 };
 
-const DISCOVERY_CATEGORIES = [
-  { value: "Barber Salon", label: "Barber Salon" },
-  { value: "Beauty Parlours", label: "Beauty Parlours" },
-  { value: "Bridal & Beauty", label: "Bridal & Beauty" },
-  { value: "Nail Studio", label: "Nail Studio" },
-  { value: "Skincare Clinics", label: "Skincare Clinics" },
-  { value: "Spa & Wellness", label: "Spa & Wellness" },
-  { value: "Yoga Studio", label: "Yoga Studio" },
-  { value: "Men's Grooming", label: "Men's Grooming" },
-  { value: "Kids & Family", label: "Kids & Family" },
-  { value: "Tattoo Studio", label: "Tattoo Studio" }
-];
+
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },
@@ -227,6 +216,7 @@ export default function Leads() {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
+  const [discoveryCategories, setDiscoveryCategories] = useState<{value: string, label: string}[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Barber Salon");
   const [fetchLimit, setFetchLimit] = useState(15);
   const [discovering, setDiscovering] = useState(false);
@@ -316,6 +306,13 @@ export default function Leads() {
 
       if (result.success === false) {
         throw new Error(result.error);
+      }
+
+      if (result.categories) {
+        setDiscoveryCategories(result.categories.map((c: string) => ({ value: c, label: c })));
+        if (result.categories.length > 0 && selectedCategory === "Barber Salon") {
+          setSelectedCategory(result.categories[0]);
+        }
       }
 
       applyLeadsFromSalons(result.salons || [], limit);
@@ -1235,7 +1232,7 @@ export default function Leads() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 text-xs font-light text-zinc-800 shadow-sm"
             >
-              {DISCOVERY_CATEGORIES.map((cat) => (
+              {discoveryCategories.map((cat) => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
             </select>
@@ -2041,7 +2038,7 @@ export default function Leads() {
                           className="w-full h-12 px-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand/20 text-sm font-medium text-zinc-800 shadow-sm"
                         >
                           <option value="">Select Category...</option>
-                          {DISCOVERY_CATEGORIES.map((cat) => (
+                          {discoveryCategories.map((cat) => (
                             <option key={cat.value} value={cat.value}>{cat.label}</option>
                           ))}
                         </select>
