@@ -28,68 +28,78 @@ export type Territory = {
 
 function TerritoryBounds({ territories }: { territories: Territory[] }) {
   const map = useMap();
-  const geocodedRef = useRef<Set<string>>(new Set());
-  const polygonsRef = useRef<google.maps.Polygon[]>([]);
+  const overlaysRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!map || territories.length === 0) return;
-
+    
+    let isActive = true;
     const geocoder = new google.maps.Geocoder();
     const bounds = new google.maps.LatLngBounds();
     let geocodedCount = 0;
 
     territories.forEach(t => {
-      if (geocodedRef.current.has(t.name)) return;
-      geocodedRef.current.add(t.name); // Prevent duplicate requests immediately
-      
       const query = t.name + ", Sri Lanka";
       geocoder.geocode({ address: query }, (results, status) => {
+        if (!isActive) return;
+        
         if (status === 'OK' && results && results[0]) {
-          bounds.union(results[0].geometry.viewport);
-          geocodedCount++;
-          
-          // Draw a light polygon for the viewport as a boundary
           const vp = results[0].geometry.viewport;
+          const loc = results[0].geometry.location;
+          
           if (vp) {
-            const ne = vp.getNorthEast();
-            const sw = vp.getSouthWest();
-            const paths = [
-              { lat: ne.lat(), lng: ne.lng() },
-              { lat: ne.lat(), lng: sw.lng() },
-              { lat: sw.lat(), lng: sw.lng() },
-              { lat: sw.lat(), lng: ne.lng() },
-            ];
-            const polygon = new google.maps.Polygon({
-              paths,
-              strokeColor: "#FFC107",
-              strokeOpacity: 0.8,
-              strokeWeight: 3,
-              fillColor: "#FFC107",
-              fillOpacity: 0.1, // Lighter locking color
+            bounds.union(vp);
+            geocodedCount++;
+            
+            // Draw a prominent rectangle for the territory bounds
+            const rectangle = new google.maps.Rectangle({
+              bounds: vp,
+              strokeColor: "#F5B700", // Solid brand yellow
+              strokeOpacity: 1.0,
+              strokeWeight: 4,
+              fillColor: "#F5B700",
+              fillOpacity: 0.15,
               map
             });
-            polygonsRef.current.push(polygon);
-          }
-          
-          if (geocodedCount > 0) {
-            map.fitBounds(bounds);
-            map.setOptions({
-              restriction: {
-                latLngBounds: bounds,
-                strictBounds: false,
+            
+            // Add a text label in the center of the territory
+            const labelMarker = new google.maps.Marker({
+              position: loc,
+              map,
+              label: {
+                text: t.name.toUpperCase() + " TERRITORY",
+                color: "#000000",
+                fontWeight: "900",
+                fontSize: "14px",
+                className: "bg-[#F5B700] px-2 py-1 rounded shadow"
+              },
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 0 // hidden icon, just show label
               }
             });
+
+            overlaysRef.current.push(rectangle, labelMarker);
+            
+            if (geocodedCount === territories.length || geocodedCount > 0) {
+              map.fitBounds(bounds);
+              // Set a restriction so the agent focuses purely on their assigned area
+              map.setOptions({
+                restriction: {
+                  latLngBounds: bounds,
+                  strictBounds: false,
+                }
+              });
+            }
           }
         }
       });
     });
 
     return () => {
-      // Cleanup polygons on unmount or when territories change
-      polygonsRef.current.forEach(p => p.setMap(null));
-      polygonsRef.current = [];
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      geocodedRef.current.clear();
+      isActive = false;
+      overlaysRef.current.forEach(overlay => overlay.setMap(null));
+      overlaysRef.current = [];
     };
   }, [map, territories]);
 
