@@ -125,6 +125,17 @@ function TerritoryExplorerContent() {
     document.body.removeChild(link);
   };
 
+  const handleMaximize = () => {
+    const mapContainer = document.getElementById("territory-map-container");
+    if (!mapContainer) return;
+    
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(err => console.error(err));
+    } else {
+      mapContainer.requestFullscreen().catch(err => console.error(err));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -158,7 +169,7 @@ function TerritoryExplorerContent() {
           <Button onClick={handleExport} variant="outline" size="sm" className="h-9 rounded-xl font-bold text-xs text-zinc-700 border-zinc-200 hover:bg-zinc-50">
             <Download className="w-3.5 h-3.5 mr-2" /> Export Results
           </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 hover:bg-zinc-50 text-zinc-700">
+          <Button onClick={handleMaximize} variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 hover:bg-zinc-50 text-zinc-700">
             <Maximize className="w-4 h-4" />
           </Button>
         </div>

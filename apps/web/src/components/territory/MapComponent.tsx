@@ -46,19 +46,47 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
         if (status === 'OK' && results && results[0]) {
           const vp = results[0].geometry.viewport;
           const loc = results[0].geometry.location;
+          const placeId = results[0].place_id;
           
           if (vp) {
             bounds.union(vp);
             geocodedCount++;
             
-            // Draw a prominent rectangle for the territory bounds
+            // 1. Give it to Google: Use Data-Driven Styling for exact map demarcation
+            try {
+              const localityLayer = map.getFeatureLayer(google.maps.FeatureType.LOCALITY);
+              const adminArea1Layer = map.getFeatureLayer(google.maps.FeatureType.ADMINISTRATIVE_AREA_LEVEL_1);
+              const adminArea2Layer = map.getFeatureLayer(google.maps.FeatureType.ADMINISTRATIVE_AREA_LEVEL_2);
+              const postalCodeLayer = map.getFeatureLayer(google.maps.FeatureType.POSTAL_CODE);
+              
+              const styleFunction = (params: any) => {
+                if (params.feature.placeId === placeId) {
+                  return {
+                    fillColor: "#F5B700",
+                    fillOpacity: 0.25, // Light yellow gradient fill
+                    strokeColor: "#F5B700",
+                    strokeWeight: 3,
+                  };
+                }
+                return null;
+              };
+
+              if (localityLayer) localityLayer.style = styleFunction;
+              if (adminArea1Layer) adminArea1Layer.style = styleFunction;
+              if (adminArea2Layer) adminArea2Layer.style = styleFunction;
+              if (postalCodeLayer) postalCodeLayer.style = styleFunction;
+            } catch (err) {
+              console.warn("Data-driven styling not fully supported on this map");
+            }
+            
+            // 2. Fallback visual bounds (very subtle rectangle) just in case Data-Driven styling is not enabled in GCP Console
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
-              strokeColor: "#F5B700", // Solid brand yellow
-              strokeOpacity: 1.0,
-              strokeWeight: 4,
+              strokeColor: "#F5B700",
+              strokeOpacity: 0.3, // made subtle so it doesn't overpower the exact boundary
+              strokeWeight: 1,
               fillColor: "#F5B700",
-              fillOpacity: 0.15,
+              fillOpacity: 0.05,
               map
             });
             
@@ -75,7 +103,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
               },
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: 0 // hidden icon, just show label
+                scale: 0
               }
             });
 
@@ -83,13 +111,6 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
             
             if (geocodedCount === territories.length || geocodedCount > 0) {
               map.fitBounds(bounds);
-              // Set a restriction so the agent focuses purely on their assigned area
-              map.setOptions({
-                restriction: {
-                  latLngBounds: bounds,
-                  strictBounds: false,
-                }
-              });
             }
           }
         }
@@ -129,7 +150,7 @@ export function MapComponent({ businesses, territories, selectedBusinessId, onBu
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
   return (
-    <div className="w-full h-[600px] bg-zinc-100 rounded-2xl overflow-hidden border border-slate-200 relative">
+    <div id="territory-map-container" className="w-full h-[600px] bg-zinc-100 rounded-2xl overflow-hidden border border-slate-200 relative">
       <APIProvider apiKey={apiKey}>
         <Map
           defaultCenter={center}
