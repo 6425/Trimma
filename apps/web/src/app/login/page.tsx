@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,17 @@ function LoginForm() {
       searchParams.get("redirect") ||
       searchParams.get("next")
   );
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const callbackPath = redirectTo
+          ? `/auth/callback?next=${encodeURIComponent(redirectTo)}`
+          : "/auth/callback";
+        router.replace(callbackPath);
+      }
+    });
+  }, [router, redirectTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "../../../components/Logo";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,17 @@ import { verifyAdminLoginSession } from "@/app/actions/admin-auth";
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const isAdmin = await verifyAdminLoginSession(session.access_token);
+        if (isAdmin.success) {
+          redirectAfterAuth("/admin");
+        }
+      }
+    });
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
