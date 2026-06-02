@@ -5,21 +5,22 @@ import { revalidatePath } from "next/cache";
 
 export async function fetchAdminStaffRolesAndGrades() {
   const result = await withAdminDb(async (supabase) => {
-    const [rolesRes, gradesRes] = await Promise.all([
-      supabase.from("global_staff_roles").select("*").order("category"),
-      supabase.from("global_skill_grades").select("*").order("created_at"),
-    ]);
+    const rolesRes = await supabase.from("global_staff_roles").select("*").order("category");
 
     if (rolesRes.error) {
       throw new Error(rolesRes.error.message);
     }
     
-    // Ignore error for grades if table doesn't exist yet in case migration hasn't run
-    const gradesData = gradesRes.error ? [] : gradesRes.data || [];
+    const allRoles = rolesRes.data || [];
+    const roles = allRoles.filter(r => r.category !== 'Grade');
+    const grades = allRoles.filter(r => r.category === 'Grade').map(g => ({
+      id: g.id,
+      name: g.role_name
+    }));
 
     return {
-      roles: rolesRes.data || [],
-      grades: gradesData,
+      roles,
+      grades,
     };
   });
 
@@ -59,13 +60,13 @@ export async function deleteAdminStaffRole(id: string) {
 export async function createAdminSkillGrade(name: string) {
   const result = await withAdminDb(async (supabase) => {
     const res = await supabase
-      .from("global_skill_grades")
-      .insert([{ name }])
+      .from("global_staff_roles")
+      .insert([{ category: 'Grade', role_name: name }])
       .select()
       .single();
 
     if (res.error) throw new Error(res.error.message);
-    return { grade: res.data };
+    return { grade: { id: res.data.id, name: res.data.role_name } };
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
@@ -75,7 +76,7 @@ export async function createAdminSkillGrade(name: string) {
 
 export async function deleteAdminSkillGrade(id: string) {
   const result = await withAdminDb(async (supabase) => {
-    const res = await supabase.from("global_skill_grades").delete().eq("id", id);
+    const res = await supabase.from("global_staff_roles").delete().eq("id", id).eq("category", "Grade");
     if (res.error) throw new Error(res.error.message);
     return true;
   });

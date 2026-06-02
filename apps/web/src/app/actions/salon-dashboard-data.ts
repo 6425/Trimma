@@ -167,23 +167,29 @@ export async function fetchSalonStaffPage() {
       ctx.salon.subscription_plan_id as string | null | undefined
     );
 
-    const [staffRes, servicesRes, rolesRes, gradesRes] = await Promise.all([
+    const [staffRes, servicesRes, rolesRes] = await Promise.all([
       supabase.from("salon_staff").select("*").eq("salon_id", ctx.salonId),
       supabase.from("services").select("*").eq("salon_id", ctx.salonId).eq("status", "active"),
       supabase.from("global_staff_roles").select("*").order("category"),
-      supabase.from("global_skill_grades").select("*").order("created_at"),
     ]);
 
     for (const res of [staffRes, servicesRes, rolesRes]) {
       if (res.error) throw new Error(res.error.message);
     }
 
+    const allRoles = rolesRes.data || [];
+    const globalStaffRoles = allRoles.filter(r => r.category !== 'Grade');
+    const globalSkillGrades = allRoles.filter(r => r.category === 'Grade').map(g => ({
+      id: g.id,
+      name: g.role_name
+    }));
+
     return {
       salon: ctx.salon,
       staff: staffRes.data || [],
       salonServices: servicesRes.data || [],
-      globalStaffRoles: rolesRes.data || [],
-      globalSkillGrades: gradesRes.data || [],
+      globalStaffRoles,
+      globalSkillGrades,
       subscriptionPlan: plan ? { name: plan.name, max_staff: plan.max_staff } : null,
     };
   });

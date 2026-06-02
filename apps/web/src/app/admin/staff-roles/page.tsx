@@ -185,9 +185,6 @@ export default function StaffRolesGradesPage() {
           <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
             <Sparkles className="w-5 h-5 text-amber-500" />
             <h2 className="text-lg font-bold text-zinc-900">Skill Grades</h2>
-            {!loading && grades.length === 0 && (
-              <Badge variant="outline" className="ml-auto bg-amber-50 text-amber-600 border-none">Migration Needed</Badge>
-            )}
           </div>
           
           <form onSubmit={handleCreateGrade} className="flex gap-2">
@@ -210,7 +207,6 @@ export default function StaffRolesGradesPage() {
             ) : grades.length === 0 ? (
               <div className="py-8 text-center text-sm text-zinc-400 font-medium bg-zinc-50 rounded-xl">
                 No skill grades defined.
-                <br/><span className="text-xs">Have you run the GLOBAL_SKILL_GRADES_PATCH.sql migration?</span>
               </div>
             ) : (
               grades.map(g => (
