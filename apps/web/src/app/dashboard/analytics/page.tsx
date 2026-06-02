@@ -10,7 +10,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any[]>([]);
   const [stylistSales, setStylistSales] = useState<any[]>([]);
-  const [stats, setStats] = useState({ revenue: 0, bookings: 0 });
+  const [stats, setStats] = useState({ revenue: 0, bookings: 0, aov: 0, utilization: 0 });
 
   useEffect(() => {
     void fetchSalonDashboardPage().then((res) => {
@@ -71,9 +71,19 @@ export default function AnalyticsPage() {
         
         setStylistSales(sortedStylists);
 
+        const totalRevenue = res.bookings.reduce((sum, b) => sum + getBookingAmount(b), 0);
+        const totalBookings = res.bookings.length;
+        const aov = totalBookings > 0 ? totalRevenue / totalBookings : 0;
+        
+        const staffWithBookings = new Set(res.bookings.map((b: any) => b.staff_id).filter(Boolean)).size;
+        const totalStaff = res.staff ? res.staff.length : 0;
+        const utilization = totalStaff > 0 ? Math.round((staffWithBookings / totalStaff) * 100) : 0;
+
         setStats({
-          revenue: res.bookings.reduce((sum, b) => sum + getBookingAmount(b), 0),
-          bookings: res.bookings.length
+          revenue: totalRevenue,
+          bookings: totalBookings,
+          aov: aov,
+          utilization: utilization
         });
       }
       setLoading(false);
@@ -117,14 +127,14 @@ export default function AnalyticsPage() {
           <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Actual</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Stylist Occupancy</span>
-          <h3 className="text-xl font-black text-[#1A1C29] mt-1">82.4% Hours</h3>
-          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Optimal busy rate</span>
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Staff Utilization</span>
+          <h3 className="text-xl font-black text-[#1A1C29] mt-1">{stats.utilization}% Active</h3>
+          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Staff with bookings</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Average Order Value</span>
-          <h3 className="text-xl font-black text-zinc-800 mt-1">LKR 4,120</h3>
-          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">+4% basket size</span>
+          <h3 className="text-xl font-black text-zinc-800 mt-1">LKR {formatLkr(stats.aov)}</h3>
+          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Actual</span>
         </div>
       </div>
 
