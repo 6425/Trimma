@@ -307,8 +307,8 @@ export async function fetchSalonCustomersPage() {
       if (!customersMap.has(email)) {
         customersMap.set(email, {
           email: email,
-          name: b.users?.full_name || "Guest",
-          phone: b.users?.phone || "-",
+          name: Array.isArray(b.users) ? (b.users[0] as any)?.full_name || "Guest" : (b.users as any)?.full_name || "Guest",
+          phone: Array.isArray(b.users) ? (b.users[0] as any)?.phone || "-" : (b.users as any)?.phone || "-",
           bookings: 0,
           spent: 0,
           rating: 5, // We don't have per-customer ratings aggregated easily right now
