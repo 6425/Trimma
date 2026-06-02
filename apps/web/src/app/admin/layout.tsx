@@ -101,13 +101,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: 'All Users', href: '/admin/users/all' },
         { name: 'Create User', href: '/admin/users/create' },
         { name: 'Roles', href: '/admin/users/roles' },
-        { name: 'Staff Roles & Grades', href: '/admin/staff-roles' },
         { name: 'Customers', href: '/admin/users/all?role=customer' },
         { name: 'Salon Owners', href: '/admin/users/all?role=salon_owner' },
         { name: 'Agents', href: '/admin/users/agents' },
         { name: 'Admins', href: '/admin/users/all?role=admin' },
       ]
     },
+    { name: "Global Staff Categories", href: "/admin/staff-roles", icon: <UserPlus className="w-4 h-4" /> },
     { name: "Salon Mgmt", href: "/admin/salons", icon: <Store className="w-4 h-4" /> },
     { name: "Booking Mgmt", href: "/admin/bookings", icon: <Calendar className="w-4 h-4" /> },
     { 

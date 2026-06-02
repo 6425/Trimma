@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
-export default function StaffRolesGradesPage() {
+export default function AdminStaffRolesAndGrades() {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<any[]>([]);
   const [grades, setGrades] = useState<any[]>([]);
@@ -119,23 +119,21 @@ export default function StaffRolesGradesPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center">
-          <Users className="w-6 h-6 text-white" />
-        </div>
+    <div className="p-6 max-w-6xl mx-auto space-y-6">
+      <div className="flex justify-between items-end mb-6">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900">Staff Roles & Grades</h1>
-          <p className="text-sm text-zinc-500 font-medium">Manage the global dictionaries for staff assignments.</p>
+          <h1 className="text-2xl font-black text-zinc-900 tracking-tight">Global Staff Categories</h1>
+          <p className="text-zinc-500 text-sm mt-1">
+            Manage the master list of Role Types and Skill Grades that salons can choose from when adding staff.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Role Types Section */}
-        <div className="space-y-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ROLES PANEL */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col h-[600px]">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
-            <BookOpen className="w-5 h-5 text-brand" />
+            <Users className="w-5 h-5 text-indigo-500" />
             <h2 className="text-lg font-bold text-zinc-900">Role Types</h2>
           </div>
           
