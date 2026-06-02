@@ -12,6 +12,13 @@ function clearAuthCookies(response: NextResponse) {
     response.cookies.set(name, "", { path: "/", maxAge: 0 });
     response.cookies.set(name, "", { path: "/", maxAge: 0, sameSite: "lax" });
     response.cookies.set(name, "", { path: "/", maxAge: 0, sameSite: "lax", secure: true });
+    
+    // Clear chunked cookies
+    for (let i = 0; i < 5; i++) {
+      response.cookies.set(`${name}.${i}`, "", { path: "/", maxAge: 0 });
+      response.cookies.set(`${name}.${i}`, "", { path: "/", maxAge: 0, sameSite: "lax" });
+      response.cookies.set(`${name}.${i}`, "", { path: "/", maxAge: 0, sameSite: "lax", secure: true });
+    }
   }
 }
 

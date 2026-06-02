@@ -46,6 +46,7 @@ function clearSupabaseAuthStorage() {
   keysToRemove.forEach((key) => localStorage.removeItem(key));
 
   deleteCookie("sb-access-token");
+  for (let i = 0; i < 5; i++) deleteCookie(`sb-access-token.${i}`);
   deleteCookie("user-role");
   deleteCookie("supabase-auth-token");
 

@@ -59,7 +59,16 @@ export async function middleware(req: NextRequest) {
   // 3. Check Authentication
   // In a real Supabase App Router setup, you would use createServerClient from @supabase/ssr here.
   // For this generic setup, we check for a session token cookie.
-  const sessionCookie = req.cookies.get('sb-access-token') || req.cookies.get('supabase-auth-token');
+  // Reassemble chunked cookies if they exist
+  let chunkedToken = "";
+  for (let i = 0; i < 5; i++) {
+    const chunk = req.cookies.get(`sb-access-token.${i}`);
+    if (chunk?.value) {
+      chunkedToken += chunk.value; // The chunks are URL encoded, but middleware only checks for existence
+    }
+  }
+
+  const sessionCookie = chunkedToken ? { value: chunkedToken } : (req.cookies.get('sb-access-token') || req.cookies.get('supabase-auth-token'));
   const roleCookie = req.cookies.get('user-role'); // Assume the user role is stored in a cookie upon login
 
   if (!sessionCookie) {

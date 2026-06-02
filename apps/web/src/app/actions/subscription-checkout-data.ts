@@ -19,7 +19,13 @@ function resolvePlan(planParam: string, row: Record<string, unknown> | null) {
 
 async function readCustomerPrefill() {
   const cookieStore = await cookies();
-  const raw = cookieStore.get("sb-access-token")?.value;
+  let chunkedToken = "";
+  for (let i = 0; i < 5; i++) {
+    const chunk = cookieStore.get(`sb-access-token.${i}`)?.value;
+    if (chunk) chunkedToken += chunk;
+  }
+  
+  const raw = chunkedToken || cookieStore.get("sb-access-token")?.value;
   if (!raw) return null;
 
   try {

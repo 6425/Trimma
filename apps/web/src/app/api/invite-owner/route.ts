@@ -18,8 +18,16 @@ const supabaseAdmin = createClient(
 
 function getAccessTokenFromCookie(request: Request) {
   const cookieHeader = request.headers.get("cookie") || "";
+  
+  let chunkedToken = "";
+  for (let i = 0; i < 5; i++) {
+    const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)sb-access-token\\.${i}=([^;]+)`));
+    if (match) chunkedToken += match[1];
+  }
+  if (chunkedToken) return decodeURIComponent(chunkedToken);
+
   const match = cookieHeader.match(/(?:^|;\s*)sb-access-token=([^;]+)/);
-  return match?.[1] || null;
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
 async function getRequestUserEmail(request: Request): Promise<string | null> {

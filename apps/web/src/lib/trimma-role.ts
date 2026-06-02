@@ -44,8 +44,24 @@ export async function resolveAdminAccess(
 export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
   const secure =
     typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  
+  // Try to set the full token for backward compatibility, but it might fail if > 4KB
   const encodedToken = encodeURIComponent(accessToken);
   document.cookie = `sb-access-token=${encodedToken}; path=/; max-age=86400; SameSite=Lax${secure}`;
+
+  // Chunk the unencoded token into safe pieces
+  const maxChunkSize = 2500;
+  let chunkCount = 0;
+  for (let i = 0; i < accessToken.length; i += maxChunkSize) {
+    const chunk = encodeURIComponent(accessToken.slice(i, i + maxChunkSize));
+    document.cookie = `sb-access-token.${chunkCount}=${chunk}; path=/; max-age=86400; SameSite=Lax${secure}`;
+    chunkCount++;
+  }
+  // Clear any old extra chunks
+  for (let i = chunkCount; i < 5; i++) {
+    document.cookie = `sb-access-token.${i}=; path=/; max-age=0; SameSite=Lax${secure}`;
+  }
+
   document.cookie = `user-role=${encodeURIComponent(role)}; path=/; max-age=86400; SameSite=Lax${secure}`;
 }
 
