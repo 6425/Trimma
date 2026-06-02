@@ -53,6 +53,7 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
   // ADD FORM STATES
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newCategory, setNewCategory] = useState("");
   const [newRole, setNewRole] = useState("");
   const [newCommission, setNewCommission] = useState("10");
   const [newSchedule, setNewSchedule] = useState(defaultSchedule);
@@ -235,32 +236,33 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Type</label>
+                <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Category</label>
                 <select 
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value)}
+                  value={newCategory}
+                  onChange={(e) => { setNewCategory(e.target.value); setNewRole(""); }}
                   className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                   required
                 >
-                  <option value="" disabled>Select Role Type</option>
-                  <optgroup label="Operational">
-                    {effectiveRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
-                      const name = r.name || r.role_name;
-                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                    })}
-                  </optgroup>
-                  <optgroup label="Admin">
-                    {effectiveRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => {
-                      const name = r.name || r.role_name;
-                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                    })}
-                  </optgroup>
-                  <optgroup label="Other">
-                    {effectiveRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => {
-                      const name = r.name || r.role_name;
-                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                    })}
-                  </optgroup>
+                  <option value="" disabled>Select Category</option>
+                  {Array.from(new Set(effectiveRoles.map(r => r.category || 'Other'))).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Name</label>
+                <select 
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value)}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:opacity-50"
+                  required
+                  disabled={!newCategory}
+                >
+                  <option value="" disabled>Select Role Name</option>
+                  {effectiveRoles.filter(r => (r.category || 'Other') === newCategory).map(r => (
+                    <option key={r.id || r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
+                  ))}
                 </select>
               </div>
             </div>

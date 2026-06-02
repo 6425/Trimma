@@ -61,6 +61,7 @@ export default function DashboardStaff() {
   // ADD FORM STATES
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newCategory, setNewCategory] = useState("");
   const [newRole, setNewRole] = useState("");
   const [newCommission, setNewCommission] = useState("10");
   const defaultSchedule = {
@@ -81,6 +82,7 @@ export default function DashboardStaff() {
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editCategory, setEditCategory] = useState("");
   const [editRole, setEditRole] = useState("stylist");
   const [editCommission, setEditCommission] = useState("10");
   const [editSchedule, setEditSchedule] = useState(defaultSchedule);
@@ -268,6 +270,8 @@ export default function DashboardStaff() {
     setEditingStaffId(member.id);
     setEditName(member.name || "");
     setEditEmail(member.email || "");
+    const foundCategory = globalRoles.find(r => r.role_name?.toLowerCase() === (member.role || "stylist").toLowerCase())?.category || "";
+    setEditCategory(foundCategory);
     setEditRole(member.role || "stylist");
     setEditCommission(member.commission_rate?.toString() || "10");
     setEditBufferTime(member.working_hours?.general_buffer_time?.toString() || "15");
@@ -385,6 +389,7 @@ export default function DashboardStaff() {
       setIsAddModalOpen(false);
       setNewName("");
       setNewEmail("");
+      setNewCategory("");
       setNewRole("");
       setNewCommission("10");
       setNewSchedule(defaultSchedule);
@@ -805,33 +810,33 @@ export default function DashboardStaff() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Type</label>
+                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Category</label>
                     <select 
-                      value={newRole}
-                      onChange={(e) => setNewRole(e.target.value)}
+                      value={newCategory}
+                      onChange={(e) => { setNewCategory(e.target.value); setNewRole(""); }}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                       required
                     >
-                  <option value="" disabled>Select Role Type</option>
-                  <optgroup label="Operational">
-                    {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
-                      const name = r.name || r.role_name;
-                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                    })}
-                  </optgroup>
-                  <optgroup label="Admin">
-                    {globalRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => {
-                      const name = r.name || r.role_name;
-                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                    })}
-                  </optgroup>
-                  {/* Fallback for roles that don't match operational/admin */}
-                  <optgroup label="Other">
-                    {globalRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => {
-                      const name = r.name || r.role_name;
-                      return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                    })}
-                  </optgroup>
+                      <option value="" disabled>Select Category</option>
+                      {Array.from(new Set(globalRoles.map(r => r.category || 'Other'))).map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Name</label>
+                    <select 
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:opacity-50"
+                      required
+                      disabled={!newCategory}
+                    >
+                      <option value="" disabled>Select Role Name</option>
+                      {globalRoles.filter(r => (r.category || 'Other') === newCategory).map(r => (
+                        <option key={r.id || r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1071,32 +1076,33 @@ export default function DashboardStaff() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Type</label>
+                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Category</label>
                     <select 
-                      value={editRole}
-                      onChange={(e) => setEditRole(e.target.value)}
+                      value={editCategory}
+                      onChange={(e) => { setEditCategory(e.target.value); setEditRole(""); }}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                       required
                     >
-                      <option value="" disabled>Select Role Type</option>
-                      <optgroup label="Operational">
-                        {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
-                          const name = r.name || r.role_name;
-                          return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                        })}
-                      </optgroup>
-                      <optgroup label="Admin">
-                        {globalRoles.filter(r => r.category?.toLowerCase() === 'admin').map(r => {
-                          const name = r.name || r.role_name;
-                          return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                        })}
-                      </optgroup>
-                      <optgroup label="Other">
-                        {globalRoles.filter(r => r.category?.toLowerCase() !== 'operational' && r.category?.toLowerCase() !== 'admin').map(r => {
-                          const name = r.name || r.role_name;
-                          return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
-                        })}
-                      </optgroup>
+                      <option value="" disabled>Select Category</option>
+                      {Array.from(new Set(globalRoles.map(r => r.category || 'Other'))).map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Name</label>
+                    <select 
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:opacity-50"
+                      required
+                      disabled={!editCategory}
+                    >
+                      <option value="" disabled>Select Role Name</option>
+                      {globalRoles.filter(r => (r.category || 'Other') === editCategory).map(r => (
+                        <option key={r.id || r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
