@@ -42,7 +42,10 @@ export default function StaffRolesGradesPage() {
   };
 
   useEffect(() => {
-    loadData();
+    void Promise.resolve().then(() => {
+      loadData();
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateRole = async (e: React.FormEvent) => {
