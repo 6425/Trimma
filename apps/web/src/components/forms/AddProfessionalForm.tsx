@@ -34,11 +34,12 @@ export interface AddProfessionalFormProps {
   onCancel: () => void;
   onSubmit: (data: any) => void;
   globalRoles: any[];
+  globalSkillGrades?: any[];
   salonServices: any[];
   adding?: boolean;
 }
 
-export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, salonServices, adding }: AddProfessionalFormProps) {
+export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSkillGrades, salonServices, adding }: AddProfessionalFormProps) {
   // Avatar Upload & Crop States
   const [imgSrc, setImgSrc] = useState('');
   const imgRef = useRef<HTMLImageElement>(null);
@@ -270,10 +271,18 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, salonServ
                   onChange={(e) => setNewSkill(e.target.value)}
                   className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                 >
-                  <option value="Junior Stylist">Junior Stylist</option>
-                  <option value="Senior Stylist">Senior Stylist</option>
-                  <option value="Stylist Partner">Stylist Partner</option>
-                  <option value="Master Barber">Master Barber</option>
+                  {globalSkillGrades && globalSkillGrades.length > 0 ? (
+                    globalSkillGrades.map((grade) => (
+                      <option key={grade.id} value={grade.name}>{grade.name}</option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="Junior Stylist">Junior Stylist</option>
+                      <option value="Senior Stylist">Senior Stylist</option>
+                      <option value="Stylist Partner">Stylist Partner</option>
+                      <option value="Master Barber">Master Barber</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>

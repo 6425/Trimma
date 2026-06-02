@@ -1,0 +1,231 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Users, Tag, Loader2, Sparkles, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  fetchAdminStaffRolesAndGrades,
+  createAdminStaffRole,
+  deleteAdminStaffRole,
+  createAdminSkillGrade,
+  deleteAdminSkillGrade
+} from "@/app/actions/admin-staff-management";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+
+export default function StaffRolesGradesPage() {
+  const [loading, setLoading] = useState(true);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
+  
+  // Forms state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newRoleCategory, setNewRoleCategory] = useState("Operational");
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newGradeName, setNewGradeName] = useState("");
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchAdminStaffRolesAndGrades();
+      if (res.success) {
+        setRoles((res as any).roles || []);
+        setGrades((res as any).grades || []);
+      } else {
+        toast.error("Failed to load staff data: " + (res as any).error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load staff data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleCreateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRoleName) return;
+    try {
+      setIsSubmitting(true);
+      const res = await createAdminStaffRole(newRoleCategory, newRoleName);
+      if (res.success) {
+        toast.success("Role created successfully");
+        setNewRoleName("");
+        loadData();
+      } else {
+        toast.error("Failed to create role: " + (res as any).error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create role");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateGrade = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGradeName) return;
+    try {
+      setIsSubmitting(true);
+      const res = await createAdminSkillGrade(newGradeName);
+      if (res.success) {
+        toast.success("Skill Grade created successfully");
+        setNewGradeName("");
+        loadData();
+      } else {
+        toast.error("Failed to create grade: " + (res as any).error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create grade");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteRole = async (id: string) => {
+    if (!confirm("Delete this role? This cannot be undone.")) return;
+    try {
+      const res = await deleteAdminStaffRole(id);
+      if (res.success) {
+        toast.success("Role deleted");
+        loadData();
+      } else {
+        toast.error("Failed to delete role: " + (res as any).error);
+      }
+    } catch (err: any) {
+      toast.error("Failed to delete role");
+    }
+  };
+
+  const handleDeleteGrade = async (id: string) => {
+    if (!confirm("Delete this skill grade? This cannot be undone.")) return;
+    try {
+      const res = await deleteAdminSkillGrade(id);
+      if (res.success) {
+        toast.success("Skill Grade deleted");
+        loadData();
+      } else {
+        toast.error("Failed to delete grade: " + (res as any).error);
+      }
+    } catch (err: any) {
+      toast.error("Failed to delete grade");
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center">
+          <Users className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-black text-zinc-900">Staff Roles & Grades</h1>
+          <p className="text-sm text-zinc-500 font-medium">Manage the global dictionaries for staff assignments.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        {/* Role Types Section */}
+        <div className="space-y-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
+            <BookOpen className="w-5 h-5 text-brand" />
+            <h2 className="text-lg font-bold text-zinc-900">Role Types</h2>
+          </div>
+          
+          <form onSubmit={handleCreateRole} className="flex gap-2">
+            <select 
+              value={newRoleCategory}
+              onChange={e => setNewRoleCategory(e.target.value)}
+              className="h-10 px-3 border border-slate-200 rounded-lg text-sm bg-zinc-50 focus:outline-none focus:border-zinc-900"
+            >
+              <option value="Operational">Operational</option>
+              <option value="Admin">Admin</option>
+              <option value="Other">Other</option>
+            </select>
+            <input 
+              type="text" 
+              placeholder="e.g. Master Stylist"
+              value={newRoleName}
+              onChange={e => setNewRoleName(e.target.value)}
+              className="flex-1 h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-zinc-900"
+              required
+            />
+            <Button type="submit" disabled={isSubmitting} className="h-10 bg-zinc-900 hover:bg-black text-white font-bold rounded-lg px-4">
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            </Button>
+          </form>
+
+          <div className="space-y-2 mt-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            {loading ? (
+              <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-400" /></div>
+            ) : roles.length === 0 ? (
+              <div className="py-8 text-center text-sm text-zinc-400 font-medium bg-zinc-50 rounded-xl">No roles defined</div>
+            ) : (
+              roles.map(r => (
+                <div key={r.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-zinc-300 transition-colors bg-white group">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-zinc-900">{r.role_name}</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{r.category}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteRole(r.id)} className="h-8 w-8 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Skill Grades Section */}
+        <div className="space-y-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold text-zinc-900">Skill Grades</h2>
+            {!loading && grades.length === 0 && (
+              <Badge variant="outline" className="ml-auto bg-amber-50 text-amber-600 border-none">Migration Needed</Badge>
+            )}
+          </div>
+          
+          <form onSubmit={handleCreateGrade} className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="e.g. Master Barber"
+              value={newGradeName}
+              onChange={e => setNewGradeName(e.target.value)}
+              className="flex-1 h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-zinc-900"
+              required
+            />
+            <Button type="submit" disabled={isSubmitting} className="h-10 bg-zinc-900 hover:bg-black text-white font-bold rounded-lg px-4">
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            </Button>
+          </form>
+
+          <div className="space-y-2 mt-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+            {loading ? (
+              <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-400" /></div>
+            ) : grades.length === 0 ? (
+              <div className="py-8 text-center text-sm text-zinc-400 font-medium bg-zinc-50 rounded-xl">
+                No skill grades defined.
+                <br/><span className="text-xs">Have you run the GLOBAL_SKILL_GRADES_PATCH.sql migration?</span>
+              </div>
+            ) : (
+              grades.map(g => (
+                <div key={g.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-zinc-300 transition-colors bg-white group">
+                  <span className="text-sm font-bold text-zinc-900">{g.name}</span>
+                  <Button variant="ghost" size="icon" onClick={() => handleDeleteGrade(g.id)} className="h-8 w-8 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

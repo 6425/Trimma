@@ -46,6 +46,7 @@ export default function DashboardStaff() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [globalRoles, setGlobalRoles] = useState<any[]>([]);
+  const [globalSkillGrades, setGlobalSkillGrades] = useState<any[]>([]);
 
   // Avatar Upload & Crop States
   const [imgSrc, setImgSrc] = useState('');
@@ -170,6 +171,8 @@ export default function DashboardStaff() {
           { role_name: "Reception", category: "Admin" },
         ]);
       }
+
+      setGlobalSkillGrades(result.globalSkillGrades || []);
     } catch (err) {
       console.error("Failed to fetch staff:", err);
     } finally {
@@ -846,10 +849,18 @@ export default function DashboardStaff() {
                       onChange={(e) => setNewSkill(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                     >
-                      <option value="Junior Stylist">Junior Stylist</option>
-                      <option value="Senior Stylist">Senior Stylist</option>
-                      <option value="Stylist Partner">Stylist Partner</option>
-                      <option value="Master Barber">Master Barber</option>
+                      {globalSkillGrades && globalSkillGrades.length > 0 ? (
+                        globalSkillGrades.map(g => (
+                          <option key={g.id} value={g.name}>{g.name}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="Junior Stylist">Junior Stylist</option>
+                          <option value="Senior Stylist">Senior Stylist</option>
+                          <option value="Stylist Partner">Stylist Partner</option>
+                          <option value="Master Barber">Master Barber</option>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -1123,10 +1134,18 @@ export default function DashboardStaff() {
                       onChange={(e) => setEditSkill(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                     >
-                      <option value="Junior Stylist">Junior Stylist</option>
-                      <option value="Senior Stylist">Senior Stylist</option>
-                      <option value="Stylist Partner">Stylist Partner</option>
-                      <option value="Master Barber">Master Barber</option>
+                      {globalSkillGrades && globalSkillGrades.length > 0 ? (
+                        globalSkillGrades.map(g => (
+                          <option key={g.id} value={g.name}>{g.name}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="Junior Stylist">Junior Stylist</option>
+                          <option value="Senior Stylist">Senior Stylist</option>
+                          <option value="Stylist Partner">Stylist Partner</option>
+                          <option value="Master Barber">Master Barber</option>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
