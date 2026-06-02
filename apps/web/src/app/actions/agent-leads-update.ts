@@ -165,7 +165,7 @@ export async function fetchAgentGlobals() {
   const supabaseAdmin = createSupabaseAdminClient();
   const [svcRes, staffRes, amenitiesRes] = await Promise.all([
     supabaseAdmin.from("global_services").select("*, categories(name)").eq("is_active", true),
-    supabaseAdmin.from("global_staff_roles").select("*").eq("is_active", true),
+    supabaseAdmin.from("global_staff_roles").select("*").order("category"),
     supabaseAdmin.from("global_amenities").select("*").order("name")
   ]);
   
