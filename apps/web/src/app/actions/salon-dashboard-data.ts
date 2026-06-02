@@ -288,3 +288,65 @@ export async function fetchSalonProfilePage() {
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const, ...result.data };
 }
+
+export async function fetchSalonCustomersPage() {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: bookings, error } = await supabase
+      .from("bookings")
+      .select("customer_email, amount, status, created_at, booking_date, users(full_name, phone)")
+      .eq("salon_id", ctx.salonId);
+
+    if (error) throw new Error(error.message);
+
+    const customersMap = new Map();
+
+    for (const b of bookings || []) {
+      if (!b.customer_email) continue;
+      
+      const email = b.customer_email.toLowerCase();
+      if (!customersMap.has(email)) {
+        customersMap.set(email, {
+          email: email,
+          name: b.users?.full_name || "Guest",
+          phone: b.users?.phone || "-",
+          bookings: 0,
+          spent: 0,
+          rating: 5, // We don't have per-customer ratings aggregated easily right now
+          lastVisit: b.booking_date || b.created_at,
+          lastVisitDate: new Date(b.created_at).getTime()
+        });
+      }
+
+      const c = customersMap.get(email);
+      c.bookings += 1;
+      if (b.status === "completed" || b.status === "confirmed") {
+        c.spent += Number(b.amount || 0);
+      }
+      
+      const bDate = new Date(b.created_at).getTime();
+      if (bDate > c.lastVisitDate) {
+        c.lastVisitDate = bDate;
+        c.lastVisit = b.booking_date || b.created_at;
+      }
+    }
+
+    const customersList = Array.from(customersMap.values())
+      .sort((a, b) => b.lastVisitDate - a.lastVisitDate)
+      .map(c => ({
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        bookings: c.bookings,
+        spent: "LKR " + c.spent.toLocaleString(),
+        rating: 5,
+        lastVisit: new Date(c.lastVisitDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      }));
+
+    return {
+      salon: ctx.salon,
+      customers: customersList,
+    };
+  });
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return { success: true as const, ...result.data };
+}
