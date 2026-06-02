@@ -258,7 +258,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {commissions.map((row, i) => (
+            {commissions.filter(c => c.entity_type !== 'agent').map((row, i) => (
               <CommissionCard key={i} row={row} />
             ))}
           </div>
