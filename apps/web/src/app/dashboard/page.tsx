@@ -143,13 +143,6 @@ export default function Dashboard() {
               description: "Platform fee from latest booking",
             });
           }
-          if (agentShare > 0) {
-            fetchedCommissions.push({
-              entity_type: "agent",
-              amount: agentShare,
-              description: "Agent referral from latest booking",
-            });
-          }
         } else {
           const total = Number(latestBooking.amount ?? 0);
           fetchedCommissions = [
