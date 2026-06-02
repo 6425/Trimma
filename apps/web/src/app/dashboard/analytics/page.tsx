@@ -1,23 +1,93 @@
 "use client";
 
-import React from "react";
-import { BarChart3, TrendingUp, Award } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { BarChart3, TrendingUp, Award, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchSalonDashboardPage } from "@/app/actions/salon-dashboard-data";
+import { getBookingAmount, formatLkr, groupBookingsByMonth } from "@/lib/dashboard-stats";
 
 export default function AnalyticsPage() {
-  const chartData = [
-    { month: "Jan", revenue: 45000, height: "h-24", bookings: 120 },
-    { month: "Feb", revenue: 58000, height: "h-32", bookings: 142 },
-    { month: "Mar", revenue: 72000, height: "h-40", bookings: 184 },
-    { month: "Apr", revenue: 95000, height: "h-48", bookings: 210 },
-    { month: "May", revenue: 125000, height: "h-60", bookings: 288 }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [stylistSales, setStylistSales] = useState<any[]>([]);
+  const [stats, setStats] = useState({ revenue: 0, bookings: 0 });
 
-  const stylistSales = [
-    { name: "Dilshan Fernando", role: "Master Barber", services: 114, total: "LKR 148,000" },
-    { name: "Ruvini Jayasekara", role: "Nail Artist", services: 82, total: "LKR 92,000" },
-    { name: "Nimesh Perera", role: "Hair Stylist", services: 56, total: "LKR 78,000" }
-  ];
+  useEffect(() => {
+    void fetchSalonDashboardPage().then((res) => {
+      if (res.success && res.bookings) {
+        const monthly = groupBookingsByMonth(res.bookings, 5);
+        
+        // Map MonthlyPoint to the expected chart format
+        const maxRev = Math.max(...monthly.map(m => m.revenue), 1);
+        const mappedChartData = monthly.map(m => {
+          const percentage = (m.revenue / maxRev) * 100;
+          let heightClass = "h-16";
+          if (percentage > 80) heightClass = "h-60";
+          else if (percentage > 60) heightClass = "h-48";
+          else if (percentage > 40) heightClass = "h-40";
+          else if (percentage > 20) heightClass = "h-32";
+          else heightClass = "h-24";
+          
+          return {
+            month: m.label,
+            revenue: m.revenue,
+            height: heightClass,
+            bookings: m.bookings
+          };
+        });
+        setChartData(mappedChartData);
+
+        // Aggregate Stylist Sales
+        const stylistMap = new Map<string, { name: string, services: number, total: number }>();
+        for (const b of res.bookings) {
+          if (b.status === "cancelled") continue;
+          const staffId = (b as any).staff_id || "Unassigned";
+          const current = stylistMap.get(staffId) || { name: `Staff ${staffId}`, services: 0, total: 0 };
+          current.services += 1;
+          current.total += getBookingAmount(b);
+          stylistMap.set(staffId, current);
+        }
+        
+        // Match names if possible
+        if (res.staff) {
+          for (const s of res.staff) {
+            const current = stylistMap.get(s.id);
+            if (current) {
+              current.name = s.name;
+              stylistMap.set(s.id, current);
+            }
+          }
+        }
+
+        const sortedStylists = [...stylistMap.values()]
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 3)
+          .map(s => ({
+            name: s.name.replace("Staff Unassigned", "Unassigned"),
+            role: "Professional",
+            services: s.services,
+            total: `LKR ${formatLkr(s.total)}`
+          }));
+        
+        setStylistSales(sortedStylists);
+
+        setStats({
+          revenue: res.bookings.reduce((sum, b) => sum + getBookingAmount(b), 0),
+          bookings: res.bookings.length
+        });
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
+        <p className="text-zinc-500 font-medium">Loading analytics...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -38,13 +108,13 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Gross Sales Revenue</span>
-          <h3 className="text-xl font-black text-brand mt-1">LKR 388,500</h3>
-          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">+14.2% MoM</span>
+          <h3 className="text-xl font-black text-brand mt-1">LKR {formatLkr(stats.revenue)}</h3>
+          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Actual</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Appointments Completed</span>
-          <h3 className="text-xl font-black text-[#1A1C29] mt-1">944 Bookings</h3>
-          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">98.2% fulfillment</span>
+          <h3 className="text-xl font-black text-[#1A1C29] mt-1">{stats.bookings} Bookings</h3>
+          <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">Actual</span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Stylist Occupancy</span>
