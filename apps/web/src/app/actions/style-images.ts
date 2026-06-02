@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
 
 function extensionForMime(mime: string) {
   if (mime.includes("png")) return "png";
@@ -13,12 +14,20 @@ function extensionForMime(mime: string) {
 async function uploadPublicAssetImage(
   formData: FormData,
   folder: string,
-  filePrefix: string
+  filePrefix: string,
+  requireAdmin = true
 ) {
   try {
-    const auth = await requirePlatformAdminFromCookies();
-    if ("error" in auth) {
-      return { success: false as const, error: auth.error };
+    if (requireAdmin) {
+      const auth = await requirePlatformAdminFromCookies();
+      if ("error" in auth) {
+        return { success: false as const, error: auth.error };
+      }
+    } else {
+      const auth = await requireSalonOwnerFromCookies();
+      if ("error" in auth) {
+        return { success: false as const, error: auth.error };
+      }
     }
 
     const file = formData.get("file");
@@ -84,5 +93,5 @@ export async function uploadSalonServiceImage(formData: FormData, salonId: strin
   if (!salonId) {
     return { success: false as const, error: "Salon ID is required for service image upload." };
   }
-  return uploadPublicAssetImage(formData, `salon-services/${salonId}`, "svc");
+  return uploadPublicAssetImage(formData, `salon-services/${salonId}`, "svc", false);
 }
