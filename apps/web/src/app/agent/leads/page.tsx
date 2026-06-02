@@ -343,7 +343,6 @@ function AgentLeads() {
           name: st.name,
           email: st.email || null,
           role: st.role,
-          skill_level: st.skill_level,
           commission_rate: st.commission_rate,
           status: 'active',
           avatar_url: finalAvatarUrl,
@@ -1070,7 +1069,7 @@ function AgentLeads() {
                               </div>
                               <div>
                                 <h5 className="text-xs font-bold text-indigo-900">{st.name}</h5>
-                                <p className="text-[10px] text-indigo-600 font-medium">{st.role} • {st.skill_level}</p>
+                                <p className="text-[10px] text-indigo-600 font-medium">{st.role}</p>
                               </div>
                             </div>
                             <button onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-indigo-400 hover:text-red-500 p-1">

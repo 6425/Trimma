@@ -181,47 +181,6 @@ export default function AdminStaffRolesAndGrades() {
           </div>
         </div>
 
-        {/* Skill Grades Section */}
-        <div className="space-y-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
-            <Sparkles className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold text-zinc-900">Skill Grades</h2>
-          </div>
-          
-          <form onSubmit={handleCreateGrade} className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="e.g. Master Barber"
-              value={newGradeName}
-              onChange={e => setNewGradeName(e.target.value)}
-              className="flex-1 h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-zinc-900"
-              required
-            />
-            <Button type="submit" disabled={isSubmitting} className="h-10 bg-zinc-900 hover:bg-black text-white font-bold rounded-lg px-4">
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            </Button>
-          </form>
-
-          <div className="space-y-2 mt-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-            {loading ? (
-              <div className="py-8 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-zinc-400" /></div>
-            ) : grades.length === 0 ? (
-              <div className="py-8 text-center text-sm text-zinc-400 font-medium bg-zinc-50 rounded-xl">
-                No skill grades defined.
-              </div>
-            ) : (
-              grades.map(g => (
-                <div key={g.id} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-zinc-300 transition-colors bg-white group">
-                  <span className="text-sm font-bold text-zinc-900">{g.name}</span>
-                  <Button variant="ghost" size="icon" onClick={() => handleDeleteGrade(g.id)} className="h-8 w-8 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
       </div>
     </div>
   );

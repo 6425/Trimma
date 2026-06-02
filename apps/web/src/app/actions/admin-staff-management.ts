@@ -13,14 +13,9 @@ export async function fetchAdminStaffRolesAndGrades() {
     
     const allRoles = rolesRes.data || [];
     const roles = allRoles.filter(r => r.category !== 'Grade');
-    const grades = allRoles.filter(r => r.category === 'Grade').map(g => ({
-      id: g.id,
-      name: g.role_name
-    }));
 
     return {
-      roles,
-      grades,
+      roles
     };
   });
 
@@ -48,35 +43,6 @@ export async function createAdminStaffRole(category: string, role_name: string) 
 export async function deleteAdminStaffRole(id: string) {
   const result = await withAdminDb(async (supabase) => {
     const res = await supabase.from("global_staff_roles").delete().eq("id", id);
-    if (res.error) throw new Error(res.error.message);
-    return true;
-  });
-
-  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
-  revalidatePath("/admin/staff-roles");
-  return { success: true as const };
-}
-
-export async function createAdminSkillGrade(name: string) {
-  const result = await withAdminDb(async (supabase) => {
-    const res = await supabase
-      .from("global_staff_roles")
-      .insert([{ category: 'Grade', role_name: name }])
-      .select()
-      .single();
-
-    if (res.error) throw new Error(res.error.message);
-    return { grade: { id: res.data.id, name: res.data.role_name } };
-  });
-
-  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
-  revalidatePath("/admin/staff-roles");
-  return { success: true as const, grade: result.data.grade };
-}
-
-export async function deleteAdminSkillGrade(id: string) {
-  const result = await withAdminDb(async (supabase) => {
-    const res = await supabase.from("global_staff_roles").delete().eq("id", id).eq("category", "Grade");
     if (res.error) throw new Error(res.error.message);
     return true;
   });

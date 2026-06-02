@@ -450,7 +450,7 @@ export async function deleteAdminSalonStaff(staffId: string) {
 
 export async function updateAdminSalonStaff(
   staffId: string,
-  input: { name?: string; role?: string; skill_level?: string }
+  input: { name?: string; role?: string }
 ) {
   const result = await withAdminDb(async (supabase) => {
     const { error } = await supabase.from("salon_staff").update(input).eq("id", staffId);

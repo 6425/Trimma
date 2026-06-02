@@ -161,16 +161,10 @@ export async function POST(request: Request) {
       // Derive a mock name for dummy staff based on role
       const dummyName = `${selectedRole} Staff ${idx + 1}`;
       
-      // We can map skill levels generically or leave it blank as requested
-      let skill_level = "Professional";
-      if (selectedRole.includes("Senior") || selectedRole.includes("Master")) skill_level = "Senior";
-      else if (selectedRole.includes("Junior") || selectedRole.includes("Trainee")) skill_level = "Junior";
-
       return {
         salon_id: salonId,
         name: dummyName,
         role: selectedRole,
-        skill_level: skill_level,
         commission_rate: 0,
         status: "active",
         working_hours: defaultWorkingHours

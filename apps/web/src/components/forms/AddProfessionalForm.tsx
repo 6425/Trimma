@@ -54,7 +54,6 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState("stylist");
-  const [newSkill, setNewSkill] = useState("Senior Stylist");
   const [newCommission, setNewCommission] = useState("10");
   const [newSchedule, setNewSchedule] = useState(defaultSchedule);
   const [generalBufferTime, setGeneralBufferTime] = useState("15");
@@ -158,7 +157,6 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
       name: newName,
       email: newEmail,
       role: newRole,
-      skill_level: newSkill,
       commission_rate: parseFloat(newCommission) || 0,
       general_buffer_time: parseFloat(generalBufferTime) || 0,
       schedule: newSchedule,
@@ -261,28 +259,6 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
                       return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
                     })}
                   </optgroup>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Skill Grade</label>
-                <select 
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                >
-                  {globalSkillGrades && globalSkillGrades.length > 0 ? (
-                    globalSkillGrades.map((grade) => (
-                      <option key={grade.id} value={grade.name}>{grade.name}</option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="Junior Stylist">Junior Stylist</option>
-                      <option value="Senior Stylist">Senior Stylist</option>
-                      <option value="Stylist Partner">Stylist Partner</option>
-                      <option value="Master Barber">Master Barber</option>
-                    </>
-                  )}
                 </select>
               </div>
             </div>

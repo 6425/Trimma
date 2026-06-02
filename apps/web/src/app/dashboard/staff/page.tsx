@@ -46,7 +46,6 @@ export default function DashboardStaff() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [globalRoles, setGlobalRoles] = useState<any[]>([]);
-  const [globalSkillGrades, setGlobalSkillGrades] = useState<any[]>([]);
 
   // Avatar Upload & Crop States
   const [imgSrc, setImgSrc] = useState('');
@@ -63,7 +62,6 @@ export default function DashboardStaff() {
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState("stylist");
-  const [newSkill, setNewSkill] = useState("Senior Stylist");
   const [newCommission, setNewCommission] = useState("10");
   const defaultSchedule = {
     monday: { isWorking: true, start: "09:00", end: "18:00" },
@@ -84,7 +82,6 @@ export default function DashboardStaff() {
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("stylist");
-  const [editSkill, setEditSkill] = useState("Senior Stylist");
   const [editCommission, setEditCommission] = useState("10");
   const [editSchedule, setEditSchedule] = useState(defaultSchedule);
   const [editBufferTime, setEditBufferTime] = useState("15");
@@ -171,8 +168,6 @@ export default function DashboardStaff() {
           { role_name: "Reception", category: "Admin" },
         ]);
       }
-
-      setGlobalSkillGrades(result.globalSkillGrades || []);
     } catch (err) {
       console.error("Failed to fetch staff:", err);
     } finally {
@@ -274,7 +269,6 @@ export default function DashboardStaff() {
     setEditName(member.name || "");
     setEditEmail(member.email || "");
     setEditRole(member.role || "stylist");
-    setEditSkill(member.skill_level || "Senior Stylist");
     setEditCommission(member.commission_rate?.toString() || "10");
     setEditBufferTime(member.working_hours?.general_buffer_time?.toString() || "15");
     
@@ -368,7 +362,6 @@ export default function DashboardStaff() {
           name: newName,
           email: newEmail || null,
           role: newRole,
-          skill_level: newSkill,
           commission_rate: parseFloat(newCommission) || 0,
           working_hours: workingHoursPayload,
           status: "active",
@@ -393,7 +386,6 @@ export default function DashboardStaff() {
       setNewName("");
       setNewEmail("");
       setNewRole("stylist");
-      setNewSkill("Senior Stylist");
       setNewCommission("10");
       setNewSchedule(defaultSchedule);
       setGeneralBufferTime("15");
@@ -475,7 +467,6 @@ export default function DashboardStaff() {
           name: editName,
           email: editEmail || null,
           role: editRole,
-          skill_level: editSkill,
           commission_rate: parseFloat(editCommission) || 0,
           working_hours: workingHoursPayload,
           avatar_url: updatedAvatarUrl || null,
@@ -673,7 +664,7 @@ export default function DashboardStaff() {
                            {member.status === 'active' ? 'Active' : 'Inactive'}
                          </Badge>
                        </h3>
-                       <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{member.role} • {member.skill_level || 'Junior'}</p>
+                       <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{member.role}</p>
                        
                        {/* Display certified services and commissions */}
                        {member.working_hours?.assigned_services && member.working_hours.assigned_services.length > 0 && (
@@ -839,28 +830,6 @@ export default function DashboardStaff() {
                       return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
                     })}
                   </optgroup>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Skill Grade</label>
-                    <select 
-                      value={newSkill}
-                      onChange={(e) => setNewSkill(e.target.value)}
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                    >
-                      {globalSkillGrades && globalSkillGrades.length > 0 ? (
-                        globalSkillGrades.map(g => (
-                          <option key={g.id} value={g.name}>{g.name}</option>
-                        ))
-                      ) : (
-                        <>
-                          <option value="Junior Stylist">Junior Stylist</option>
-                          <option value="Senior Stylist">Senior Stylist</option>
-                          <option value="Stylist Partner">Stylist Partner</option>
-                          <option value="Master Barber">Master Barber</option>
-                        </>
-                      )}
                     </select>
                   </div>
                 </div>
@@ -1124,28 +1093,6 @@ export default function DashboardStaff() {
                           return <option key={r.id || name} value={name.toLowerCase()}>{name}</option>;
                         })}
                       </optgroup>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Skill Grade</label>
-                    <select 
-                      value={editSkill}
-                      onChange={(e) => setEditSkill(e.target.value)}
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                    >
-                      {globalSkillGrades && globalSkillGrades.length > 0 ? (
-                        globalSkillGrades.map(g => (
-                          <option key={g.id} value={g.name}>{g.name}</option>
-                        ))
-                      ) : (
-                        <>
-                          <option value="Junior Stylist">Junior Stylist</option>
-                          <option value="Senior Stylist">Senior Stylist</option>
-                          <option value="Stylist Partner">Stylist Partner</option>
-                          <option value="Master Barber">Master Barber</option>
-                        </>
-                      )}
                     </select>
                   </div>
                 </div>

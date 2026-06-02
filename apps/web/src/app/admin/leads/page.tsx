@@ -433,8 +433,7 @@ export default function Leads() {
     setEditingStaffId(staff.id);
     setStaffEditData({
       name: staff.name || '',
-      role: staff.role || '',
-      skill_level: staff.skill_level || ''
+      role: staff.role || ''
     });
   };
 
@@ -443,8 +442,7 @@ export default function Leads() {
     try {
       const result = await updateAdminSalonStaff(editingStaffId, {
           name: staffEditData.name,
-          role: staffEditData.role,
-          skill_level: staffEditData.skill_level
+          role: staffEditData.role
         });
       if (result.success === false) throw new Error(result.error);
       
@@ -2241,14 +2239,6 @@ export default function Leads() {
                                         </optgroup>
                                       </select>
                                     </td>
-                                    <td className="px-6 py-4">
-                                      <input 
-                                        type="text" 
-                                        className="w-32 text-sm border-zinc-200 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-brand"
-                                        value={staffEditData.skill_level || ''} 
-                                        onChange={e => setStaffEditData({...staffEditData, skill_level: e.target.value})} 
-                                      />
-                                    </td>
                                     <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                                       <button onClick={handleSaveModalStaff} className="text-brand hover:text-brand-hover p-2 rounded-xl hover:bg-brand/10 transition-colors">
                                         <Check className="w-4 h-4" />
@@ -2262,9 +2252,6 @@ export default function Leads() {
                                   <>
                                     <td className="px-6 py-4 font-bold text-zinc-900">{staff.name}</td>
                                     <td className="px-6 py-4 capitalize">{staff.role}</td>
-                                    <td className="px-6 py-4">
-                                      <Badge variant="outline" className="text-zinc-500 border-zinc-200">{staff.skill_level}</Badge>
-                                    </td>
                                     <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
                                       <button onClick={() => handleEditModalStaff(staff)} className="text-zinc-500 hover:text-brand p-2 rounded-xl hover:bg-brand/10 transition-colors">
                                         <Pencil className="w-4 h-4" />
