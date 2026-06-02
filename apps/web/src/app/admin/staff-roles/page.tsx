@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { 
   fetchAdminStaffRolesAndGrades,
   createAdminStaffRole,
-  deleteAdminStaffRole,
-  createAdminSkillGrade,
-  deleteAdminSkillGrade
+  deleteAdminStaffRole
 } from "@/app/actions/admin-staff-management";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -16,13 +14,11 @@ import { Badge } from "@/components/ui/badge";
 export default function AdminStaffRolesAndGrades() {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<any[]>([]);
-  const [grades, setGrades] = useState<any[]>([]);
   
   // Forms state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newRoleCategory, setNewRoleCategory] = useState("Operational");
   const [newRoleName, setNewRoleName] = useState("");
-  const [newGradeName, setNewGradeName] = useState("");
 
   const loadData = async () => {
     try {
@@ -30,7 +26,6 @@ export default function AdminStaffRolesAndGrades() {
       const res = await fetchAdminStaffRolesAndGrades();
       if (res.success) {
         setRoles((res as any).roles || []);
-        setGrades((res as any).grades || []);
       } else {
         toast.error("Failed to load staff data: " + (res as any).error);
       }
@@ -68,25 +63,7 @@ export default function AdminStaffRolesAndGrades() {
     }
   };
 
-  const handleCreateGrade = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newGradeName) return;
-    try {
-      setIsSubmitting(true);
-      const res = await createAdminSkillGrade(newGradeName);
-      if (res.success) {
-        toast.success("Skill Grade created successfully");
-        setNewGradeName("");
-        loadData();
-      } else {
-        toast.error("Failed to create grade: " + (res as any).error);
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create grade");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+
 
   const handleDeleteRole = async (id: string) => {
     if (!confirm("Delete this role? This cannot be undone.")) return;
@@ -103,20 +80,7 @@ export default function AdminStaffRolesAndGrades() {
     }
   };
 
-  const handleDeleteGrade = async (id: string) => {
-    if (!confirm("Delete this skill grade? This cannot be undone.")) return;
-    try {
-      const res = await deleteAdminSkillGrade(id);
-      if (res.success) {
-        toast.success("Skill Grade deleted");
-        loadData();
-      } else {
-        toast.error("Failed to delete grade: " + (res as any).error);
-      }
-    } catch (err: any) {
-      toast.error("Failed to delete grade");
-    }
-  };
+
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
