@@ -243,7 +243,7 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
                   className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                   required
                 >
-                  <option value="" disabled>Select Category</option>
+                  <option value="" disabled>Select Category (Optional Filter)</option>
                   {Array.from(new Set(effectiveRoles.map(r => r.category || 'Other'))).map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
@@ -254,14 +254,20 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
                 <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Name</label>
                 <select 
                   value={newRole}
-                  onChange={(e) => setNewRole(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:opacity-50"
+                  onChange={(e) => {
+                    const selectedRole = e.target.value;
+                    setNewRole(selectedRole);
+                    const foundCat = effectiveRoles.find(r => r.role_name === selectedRole)?.category;
+                    if (foundCat) setNewCategory(foundCat);
+                  }}
+                  className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
                   required
-                  disabled={!newCategory}
                 >
                   <option value="" disabled>Select Role Name</option>
-                  {effectiveRoles.filter(r => (r.category || 'Other') === newCategory).map(r => (
-                    <option key={r.id || r.role_name} value={r.role_name.toLowerCase()}>{r.role_name}</option>
+                  {effectiveRoles
+                    .filter(r => !newCategory || (r.category || 'Other') === newCategory)
+                    .map(r => (
+                    <option key={r.id || r.role_name} value={r.role_name}>{r.role_name}</option>
                   ))}
                 </select>
               </div>
