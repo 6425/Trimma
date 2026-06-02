@@ -53,7 +53,7 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
   // ADD FORM STATES
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState("stylist");
+  const [newRole, setNewRole] = useState("");
   const [newCommission, setNewCommission] = useState("10");
   const [newSchedule, setNewSchedule] = useState(defaultSchedule);
   const [generalBufferTime, setGeneralBufferTime] = useState("15");
@@ -240,7 +240,9 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                   className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
+                  required
                 >
+                  <option value="" disabled>Select Role Type</option>
                   <optgroup label="Operational">
                     {effectiveRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
                       const name = r.name || r.role_name;

@@ -61,7 +61,7 @@ export default function DashboardStaff() {
   // ADD FORM STATES
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState("stylist");
+  const [newRole, setNewRole] = useState("");
   const [newCommission, setNewCommission] = useState("10");
   const defaultSchedule = {
     monday: { isWorking: true, start: "09:00", end: "18:00" },
@@ -385,7 +385,7 @@ export default function DashboardStaff() {
       setIsAddModalOpen(false);
       setNewName("");
       setNewEmail("");
-      setNewRole("stylist");
+      setNewRole("");
       setNewCommission("10");
       setNewSchedule(defaultSchedule);
       setGeneralBufferTime("15");
@@ -810,7 +810,9 @@ export default function DashboardStaff() {
                       value={newRole}
                       onChange={(e) => setNewRole(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
+                      required
                     >
+                  <option value="" disabled>Select Role Type</option>
                   <optgroup label="Operational">
                     {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
                       const name = r.name || r.role_name;
@@ -1074,7 +1076,9 @@ export default function DashboardStaff() {
                       value={editRole}
                       onChange={(e) => setEditRole(e.target.value)}
                       className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
+                      required
                     >
+                      <option value="" disabled>Select Role Type</option>
                       <optgroup label="Operational">
                         {globalRoles.filter(r => r.category?.toLowerCase() === 'operational').map(r => {
                           const name = r.name || r.role_name;
