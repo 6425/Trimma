@@ -29,7 +29,6 @@ export type Territory = {
 function TerritoryBounds({ territories }: { territories: Territory[] }) {
   const map = useMap();
   const overlaysRef = useRef<any[]>([]);
-  const styledLayersRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!map || territories.length === 0) return;
@@ -44,67 +43,101 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       for (const t of territories) {
         if (!isActive) break;
 
-        // Use Google Geocoder to find the territory bounds
+        let success = false;
+        
+        // 1. Try Nominatim first for exact polygons
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(t.name + ", Sri Lanka")}&format=json&polygon_geojson=1&limit=1&email=admin@trimma.ai`);
+          const data = await res.json();
+          
+          if (!isActive) break;
+
+          if (data && data[0]) {
+            const loc = new google.maps.LatLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+            const vp = data[0].boundingbox; // [latMin, latMax, lonMin, lonMax]
+            
+            bounds.extend(new google.maps.LatLng(parseFloat(vp[0]), parseFloat(vp[2])));
+            bounds.extend(new google.maps.LatLng(parseFloat(vp[1]), parseFloat(vp[3])));
+            geocodedCount++;
+            success = true;
+
+            if (data[0].geojson) {
+              try {
+                map.data.addGeoJson({
+                  type: "Feature",
+                  geometry: data[0].geojson,
+                  properties: { name: t.name }
+                });
+                map.data.setStyle({
+                  fillColor: "#F5B700",
+                  fillOpacity: 0.25, 
+                  strokeColor: "#F5B700",
+                  strokeWeight: 2,
+                  clickable: false 
+                });
+              } catch (e) {
+                console.warn("GeoJSON parse failed", e);
+              }
+            }
+            
+            const labelMarker = new google.maps.Marker({
+              position: loc,
+              map,
+              label: {
+                text: t.name.toUpperCase() + " TERRITORY",
+                color: "#000000",
+                fontWeight: "900",
+                fontSize: "14px",
+                className: "bg-[#F5B700] px-2 py-1 rounded shadow font-sans"
+              },
+              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
+            });
+            overlaysRef.current.push(labelMarker);
+
+            // Sleep to respect Nominatim rate limits (1 req/sec)
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        } catch (err) {
+          console.warn("Nominatim failed for " + t.name, err);
+        }
+
+        if (success) continue;
+        if (!isActive) break;
+
+        // 2. Fallback to Google Geocoder
         try {
           const response = await geocoder.geocode({ address: t.name + ", Sri Lanka" });
           if (response.results && response.results[0]) {
             const vp = response.results[0].geometry.viewport;
-            const placeId = response.results[0].place_id;
-            
+            const loc = response.results[0].geometry.location;
             if (vp) bounds.union(vp);
             geocodedCount++;
             
-            // 1. Try to use Google Maps Data-Driven Styling (Exact Boundaries)
-            if (placeId && map.getFeatureLayer) {
-              const featureLayerNames = [
-                "ADMINISTRATIVE_AREA_LEVEL_1",
-                "ADMINISTRATIVE_AREA_LEVEL_2",
-                "LOCALITY",
-                "POSTAL_CODE"
-              ];
-              
-              featureLayerNames.forEach(featureTypeName => {
-                try {
-                  const featureType = (google.maps.FeatureType as any)[featureTypeName];
-                  if (featureType) {
-                    const layer = map.getFeatureLayer(featureType);
-                    if (layer) {
-                      layer.style = (options: any) => {
-                        if (options.feature.placeId === placeId) {
-                          return {
-                            fillColor: '#F5B700',
-                            fillOpacity: 0.25,
-                            strokeColor: '#F5B700',
-                            strokeWeight: 2,
-                          };
-                        }
-                        return null; // keep default style for others
-                      };
-                      styledLayersRef.current.push(layer);
-                    }
-                  }
-                } catch(e) {
-                  // Ignore if feature layers are not supported on this map
-                }
-              });
-            }
-
-            // 2. Fallback to drawing a Rectangle if exact boundaries aren't visible
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
               strokeColor: "#F5B700",
-              strokeOpacity: 0.8,
-              strokeWeight: 2,
+              strokeOpacity: 0.3,
+              strokeWeight: 1,
               fillColor: "#F5B700",
-              fillOpacity: 0.15,
+              fillOpacity: 0.05,
               clickable: false,
               map
             });
             
-            // Wait a small amount of time to avoid geocoder rate limits
-            await new Promise(r => setTimeout(r, 300));
+            const labelMarker = new google.maps.Marker({
+              position: loc,
+              map,
+              label: {
+                text: t.name.toUpperCase() + " TERRITORY",
+                color: "#000000",
+                fontWeight: "900",
+                fontSize: "14px",
+                className: "bg-[#F5B700] px-2 py-1 rounded shadow font-sans"
+              },
+              icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
+            });
 
-            overlaysRef.current.push(rectangle);
+            overlaysRef.current.push(rectangle, labelMarker);
           }
         } catch (err) {
           console.error("Google Geocoder failed for " + t.name, err);
@@ -122,12 +155,6 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
       isActive = false;
       overlaysRef.current.forEach(overlay => overlay.setMap(null));
       overlaysRef.current = [];
-      
-      styledLayersRef.current.forEach(layer => {
-        try { layer.style = null; } catch(e) {}
-      });
-      styledLayersRef.current = [];
-      
       if (map && map.data) {
         map.data.forEach((feature) => {
           map.data.remove(feature);
