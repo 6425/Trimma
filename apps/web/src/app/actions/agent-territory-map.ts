@@ -65,8 +65,8 @@ export async function getAgentMapData() {
 }
 
 export async function searchBusinessesInTerritories(categories: string[], territoryIds: string[]) {
-  const user = await getAuthedUser();
-  if (!user) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabase = createSupabaseAdminClient();
   
