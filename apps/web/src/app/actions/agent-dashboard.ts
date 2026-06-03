@@ -74,8 +74,12 @@ export async function getAgentDashboardData() {
 
         if (!territoryError && territoryData?.length) {
           const labels = territoryData
-            .map((t: { territories?: { name?: string } | null }) => t.territories?.name)
-            .filter(Boolean);
+            .map((row) => {
+              const joined = row.territories as { name?: string } | { name?: string }[] | null;
+              if (Array.isArray(joined)) return joined[0]?.name;
+              return joined?.name;
+            })
+            .filter((name): name is string => Boolean(name));
           if (labels.length > 0) {
             territoryLabel = labels.join(" · ");
           }
