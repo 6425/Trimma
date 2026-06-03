@@ -19,6 +19,20 @@ const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> =
   }
 };
 
+function readRoleCookie(value: string | undefined): UserRole | null {
+  if (!value) return null;
+  try {
+    const decoded = decodeURIComponent(value).toLowerCase();
+    if (decoded === "superadmin" || decoded === "regional_admin") return "admin";
+    if (decoded === "admin" || decoded === "salon_owner" || decoded === "agent" || decoded === "customer") {
+      return decoded;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 const hasPermission = (userRole: UserRole | null | undefined, route: string): boolean => {
   if (!userRole) return false;
   return RolePermissions[userRole]?.canAccess(route) || false;
@@ -94,19 +108,18 @@ export async function middleware(req: NextRequest) {
   }
 
   // 4. Role Validation (RBAC)
-  const userRole = (roleCookie?.value as UserRole) || null;
+  const userRole = readRoleCookie(roleCookie?.value);
+
+  // Agent routes: any signed-in user may load the shell; server actions enforce agent/admin role.
+  if (pathname.startsWith("/agent")) {
+    return NextResponse.next();
+  }
 
   if (!hasPermission(userRole, pathname)) {
     if (pathname.startsWith("/admin")) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("redirectTo", pathname);
       return NextResponse.redirect(loginUrl);
-    }
-    // Signed-in users hitting /agent with stale or missing role cookie: refresh session cookies
-    if (pathname.startsWith("/agent")) {
-      const refreshUrl = new URL("/auth/callback", req.url);
-      refreshUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(refreshUrl);
     }
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }

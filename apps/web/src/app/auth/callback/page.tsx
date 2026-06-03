@@ -6,11 +6,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
-import {
-  redirectAfterAuth,
-  resolveTrimmaUserRole,
-  setTrimmaMiddlewareCookies,
-} from "@/lib/trimma-role";
+import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 
 function AuthCallbackContent() {
@@ -81,13 +77,24 @@ function AuthCallbackContent() {
           console.error("Owner link step failed:", err);
         }
 
-        let role: TrimmaUserRole | null = await resolveTrimmaUserRole(
-          session.user.id,
-          session.user.email
-        );
+        let role: TrimmaUserRole = "customer";
 
-        if (!role) {
-          role = "customer";
+        const sessionRes = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          credentials: "include",
+        });
+
+        if (sessionRes.ok) {
+          const sessionData = (await sessionRes.json()) as { role?: TrimmaUserRole };
+          if (sessionData.role) {
+            role = sessionData.role;
+          }
+        } else {
+          console.warn("Session API failed; continuing with default customer role.");
         }
 
         setTrimmaMiddlewareCookies(session.access_token, role);

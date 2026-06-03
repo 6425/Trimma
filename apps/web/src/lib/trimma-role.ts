@@ -4,11 +4,19 @@ import { normalizeEmail } from "@/lib/normalize-email";
 
 const ROLE_PRIORITY: TrimmaUserRole[] = ["admin", "salon_owner", "agent", "customer"];
 
+function normalizeRoleValue(role: string | null | undefined): string | null {
+  if (!role) return null;
+  const value = role.toLowerCase();
+  if (value === "superadmin" || value === "regional_admin") return "admin";
+  return value;
+}
+
 function pickHighestRole(
   ...roles: (string | null | undefined)[]
 ): TrimmaUserRole | null {
+  const normalized = roles.map(normalizeRoleValue).filter(Boolean) as string[];
   for (const priority of ROLE_PRIORITY) {
-    if (roles.some((role) => role === priority)) {
+    if (normalized.some((role) => role === priority)) {
       return priority;
     }
   }

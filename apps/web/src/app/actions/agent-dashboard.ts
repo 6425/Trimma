@@ -66,17 +66,22 @@ export async function getAgentDashboardData() {
     let territoryLabel = "No territory assigned";
 
     if (agentProfileRes.data?.id) {
-      const { data: territoryData } = await supabase
-        .from("agent_territories")
-        .select("territories ( name, type )")
-        .eq("agent_id", agentProfileRes.data.id);
-        
-      const territories = territoryData || [];
-      if (territories.length > 0) {
-        const labels = territories
-          .map((t: any) => t.territories?.name)
-          .filter(Boolean);
-        territoryLabel = labels.length > 0 ? labels.join(" · ") : "No territory assigned";
+      try {
+        const { data: territoryData, error: territoryError } = await supabase
+          .from("agent_territories")
+          .select("territories ( name, type )")
+          .eq("agent_id", agentProfileRes.data.id);
+
+        if (!territoryError && territoryData?.length) {
+          const labels = territoryData
+            .map((t: { territories?: { name?: string } | null }) => t.territories?.name)
+            .filter(Boolean);
+          if (labels.length > 0) {
+            territoryLabel = labels.join(" · ");
+          }
+        }
+      } catch {
+        // territory join optional — do not fail dashboard
       }
     }
 
