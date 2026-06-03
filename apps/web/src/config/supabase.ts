@@ -11,6 +11,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 const FORCE_CLEAR_KEY = 'sb-force-clear';
 
+function isAuthPath(pathname: string): boolean {
+  return (
+    pathname === '/login' ||
+    pathname.startsWith('/auth/') ||
+    pathname === '/signup' ||
+    pathname.startsWith('/admin/login')
+  );
+}
+
 function isInvalidRefreshTokenError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   const authError = error as AuthError;
@@ -49,17 +58,34 @@ function clearSupabaseAuthStorage() {
   for (let i = 0; i < 5; i++) deleteCookie(`sb-access-token.${i}`);
   deleteCookie("user-role");
   deleteCookie("supabase-auth-token");
+  deleteCookie("trimma-session");
 
   document.cookie.split(";").forEach((cookie) => {
     const name = cookie.trim().split("=")[0];
-    if (name.startsWith("sb-") || name === "user-role" || name === "supabase-auth-token") {
+    if (
+      name.startsWith("sb-") ||
+      name === "user-role" ||
+      name === "supabase-auth-token" ||
+      name === "trimma-session"
+    ) {
       deleteCookie(name);
     }
   });
 }
 
-/** Full sign-out: clears Supabase session, middleware cookies, then reloads. */
-export async function signOutTrimmaSession(redirectTo = "/") {
+/** Clear client auth only (no navigation). Safe during login/OAuth. */
+export async function clearLocalTrimmaAuth() {
+  if (typeof window === "undefined") return;
+  clearSupabaseAuthStorage();
+  try {
+    await supabase.auth.signOut({ scope: "local" });
+  } catch {
+    // Ignore errors for already-revoked tokens.
+  }
+}
+
+/** Full sign-out: clears Supabase session, server cookies, then navigates to login. */
+export async function signOutTrimmaSession(redirectTo = "/login") {
   if (typeof window === "undefined") return;
 
   sessionStorage.setItem(FORCE_CLEAR_KEY, "1");
@@ -75,11 +101,18 @@ export async function signOutTrimmaSession(redirectTo = "/") {
 
   clearSupabaseAuthStorage();
 
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Still navigate away even if the API call fails.
+  }
+
   const safeRedirect =
-    redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/";
-  window.location.replace(
-    `/api/auth/logout?redirect=${encodeURIComponent(safeRedirect)}`
-  );
+    redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/login";
+  window.location.replace(safeRedirect);
 }
 
 // Clear storage before the client boots so it never attempts a doomed refresh.
@@ -130,6 +163,13 @@ if (typeof window !== 'undefined') {
 
   const handleAuthError = (error: unknown) => {
     if (!isInvalidRefreshTokenError(error)) return;
+
+    const path = window.location.pathname;
+    if (isAuthPath(path)) {
+      void clearLocalTrimmaAuth();
+      return;
+    }
+
     void clearStaleSession();
   };
 
@@ -144,12 +184,4 @@ if (typeof window !== 'undefined') {
       sessionStorage.removeItem('sb-auth-reloaded');
     }
   });
-
-  // supabase.auth.getSession().then(({ error }) => {
-  //   if (error) {
-  //     handleAuthError(error);
-  //     return;
-  //   }
-  //   sessionStorage.removeItem('sb-auth-reloaded');
-  // });
 }

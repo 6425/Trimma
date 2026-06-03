@@ -4,11 +4,16 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
-import { redirectAfterAuth } from "@/lib/trimma-role";
+import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
 
 function RehydrateContent() {
   const searchParams = useSearchParams();
-  const nextPath = sanitizeNextPath(searchParams.get("next")) || "/";
+  const nextPath =
+    sanitizeNextPath(
+      searchParams.get("next") ||
+        searchParams.get("redirectTo") ||
+        searchParams.get("redirect")
+    ) || "/";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,6 +41,12 @@ function RehydrateContent() {
 
         if (!res.ok) {
           throw new Error("Could not refresh your secure session.");
+        }
+
+        const sessionData = (await res.json()) as { role?: string };
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession?.access_token && sessionData.role) {
+          setTrimmaMiddlewareCookies(currentSession.access_token, sessionData.role);
         }
 
         if (!cancelled) {

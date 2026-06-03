@@ -65,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   const handleLogout = () => {
-    void signOutTrimmaSession("/");
+    void signOutTrimmaSession();
   };
   
   const isAd = true;

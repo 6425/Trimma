@@ -15,6 +15,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/agent") ||
     pathname?.startsWith("/customer") ||
+    pathname?.startsWith("/auth/") ||
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/forgot-password" ||

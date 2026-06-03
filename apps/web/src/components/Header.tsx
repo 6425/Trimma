@@ -73,7 +73,7 @@ export default function Header() {
                 </Link>
                 <div className={`h-4 w-px ${isScrolled ? 'bg-zinc-300' : 'bg-white/30'}`}></div>
                 <button 
-                  onClick={() => { void signOutTrimmaSession("/"); }} 
+                  onClick={() => { void signOutTrimmaSession(); }} 
                   className={`text-sm font-medium flex items-center gap-1 ${isScrolled ? 'text-zinc-500 hover:text-red-500' : 'text-white/70 hover:text-red-300'}`}
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -131,7 +131,7 @@ export default function Header() {
               <Link href={getDashboardLink()} onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full justify-center h-10 rounded-lg font-bold bg-primary-gradient text-white border-none">My Dashboard</Button>
               </Link>
-              <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); void signOutTrimmaSession("/"); }} className="w-full justify-center h-10 rounded-lg font-medium text-red-500 hover:text-red-600 hover:bg-red-50">Sign Out</Button>
+              <Button variant="ghost" onClick={() => { setMobileMenuOpen(false); void signOutTrimmaSession(); }} className="w-full justify-center h-10 rounded-lg font-medium text-red-500 hover:text-red-600 hover:bg-red-50">Sign Out</Button>
             </div>
           ) : (
             <>

@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   const handleLogout = () => {
-    void signOutTrimmaSession("/");
+    void signOutTrimmaSession();
   };
   
   const isAd = pathname?.startsWith('/admin') ?? false;

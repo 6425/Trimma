@@ -41,12 +41,13 @@ function LoginForm() {
   );
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) return;
       if (session) {
-        const callbackPath = redirectTo
-          ? `/auth/callback?next=${encodeURIComponent(redirectTo)}`
-          : "/auth/callback";
-        router.replace(callbackPath);
+        const rehydratePath = redirectTo
+          ? `/auth/rehydrate?next=${encodeURIComponent(redirectTo)}`
+          : "/auth/rehydrate";
+        router.replace(rehydratePath);
       }
     });
   }, [router, redirectTo]);
@@ -69,10 +70,10 @@ function LoginForm() {
       return;
     }
 
-    const callbackPath = redirectTo
-      ? `/auth/callback?next=${encodeURIComponent(redirectTo)}`
-      : "/auth/callback";
-    router.push(callbackPath);
+    const rehydratePath = redirectTo
+      ? `/auth/rehydrate?next=${encodeURIComponent(redirectTo)}`
+      : "/auth/rehydrate";
+    router.push(rehydratePath);
   };
 
   const handleGoogleLogin = async () => {

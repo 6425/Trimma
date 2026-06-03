@@ -22,7 +22,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   }, [pathname]);
 
   const handleLogout = () => {
-    void signOutTrimmaSession("/");
+    void signOutTrimmaSession();
   };
 
   const navItems = [

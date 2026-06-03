@@ -88,13 +88,18 @@ function AuthCallbackContent() {
           credentials: "include",
         });
 
-        if (sessionRes.ok) {
-          const sessionData = (await sessionRes.json()) as { role?: TrimmaUserRole };
-          if (sessionData.role) {
-            role = sessionData.role;
-          }
-        } else {
-          console.warn("Session API failed; continuing with default customer role.");
+        if (!sessionRes.ok) {
+          const detail = await sessionRes.text().catch(() => "");
+          console.error("Session API failed:", sessionRes.status, detail);
+          setErrorMessage("Could not complete sign-in. Please try again.");
+          const loginNext = nextPath ? `?redirectTo=${encodeURIComponent(nextPath)}` : "";
+          window.setTimeout(() => redirectAfterAuth(`/login${loginNext}`), 2000);
+          return;
+        }
+
+        const sessionData = (await sessionRes.json()) as { role?: TrimmaUserRole };
+        if (sessionData.role) {
+          role = sessionData.role;
         }
 
         setTrimmaMiddlewareCookies(session.access_token, role);
