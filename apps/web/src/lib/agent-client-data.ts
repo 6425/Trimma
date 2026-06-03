@@ -1,0 +1,529 @@
+import { supabase } from "@/config/supabase";
+import { getAgentEmailFast } from "@/lib/client-auth";
+import { isAgentSalonLive, getAgentSalonStatusLabel } from "@/lib/agent-salons";
+import { formatRelativeTime } from "@/lib/dashboard-stats";
+import { normalizeEmail } from "@/lib/normalize-email";
+import { resolveTrimmaUserRole } from "@/lib/trimma-role";
+import type { TrimmaUserRole } from "@/lib/auth-routes";
+import type { WorkItem } from "@/app/actions/agent-work-queue";
+
+/** Prefer server action; on failure use client Supabase (app-managed). */
+export async function tryAgentData<T extends { success: boolean }>(
+  serverFn: () => Promise<T>,
+  clientFn: () => Promise<T>
+): Promise<T> {
+  try {
+    const res = await serverFn();
+    if (res.success) return res;
+  } catch {
+    // Server action unavailable (e.g. functions down on preview).
+  }
+  return clientFn();
+}
+
+export async function getAgentEmailFromClient(): Promise<string | null> {
+  const fast = getAgentEmailFast();
+  if (fast) return normalizeEmail(fast);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return normalizeEmail(session?.user?.email) || null;
+}
+
+async function requireAgentEmailClient(): Promise<
+  { success: true; email: string; userId: string; role: TrimmaUserRole } | { success: false; error: string }
+> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user?.email) {
+    return { success: false, error: "Not authenticated" };
+  }
+  const role = await resolveTrimmaUserRole(session.user.id, session.user.email);
+  if (role !== "agent" && role !== "admin") {
+    return { success: false, error: "Unauthorized access" };
+  }
+  return {
+    success: true,
+    email: normalizeEmail(session.user.email)!,
+    userId: session.user.id,
+    role,
+  };
+}
+
+// --- Dashboard (re-exported for page-client) ---
+
+export async function loadAgentDashboardFromClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const email = auth.email;
+  const { data: userData } = await supabase
+    .from("users")
+    .select("full_name")
+    .eq("email", email)
+    .maybeSingle();
+
+  const agentName = userData?.full_name || email.split("@")[0];
+
+  const [
+    { data: salonRows },
+    { data: agentProfile },
+    { data: bookingRows },
+    { data: ledgerRows },
+  ] = await Promise.all([
+    supabase
+      .from("salons")
+      .select("id, name, address, phone, rating, onboarding_status, created_at")
+      .eq("assign_to", email)
+      .order("created_at", { ascending: false }),
+    supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
+    supabase.from("bookings").select("agent_commission_amount").eq("agent_email", email),
+    supabase.from("commission_ledger").select("amount, status").eq("agent_email", email),
+  ]);
+
+  let territoryLabel = "No territory assigned";
+  if (agentProfile?.id) {
+    const { data: territoryData } = await supabase
+      .from("agent_territories")
+      .select("territories ( name, type )")
+      .eq("agent_id", agentProfile.id);
+    if (territoryData?.length) {
+      const labels = territoryData
+        .map((row) => {
+          const joined = row.territories as { name?: string } | { name?: string }[] | null;
+          if (Array.isArray(joined)) return joined[0]?.name;
+          return joined?.name;
+        })
+        .filter((name): name is string => Boolean(name));
+      if (labels.length > 0) territoryLabel = labels.join(" · ");
+    }
+  }
+
+  const salons = salonRows || [];
+  const hotLeads = salons.slice(0, 3);
+  const pendingSalons = salons
+    .filter((s) => !isAgentSalonLive(s.onboarding_status) && s.onboarding_status !== "REJECTED")
+    .slice(0, 5);
+
+  return {
+    success: true as const,
+    data: {
+      agentEmail: email,
+      agentName,
+      territoryLabel,
+      stats: {
+        assignedCount: salons.length,
+        convertedCount: salons.filter((s) => isAgentSalonLive(s.onboarding_status)).length,
+        commissionRate: agentProfile?.commission_rate || 10,
+        bookingCommissions: (bookingRows || []).reduce(
+          (sum, b) => sum + (Number(b.agent_commission_amount) || 0),
+          0
+        ),
+        subscriptionCommissions: (ledgerRows || []).reduce(
+          (sum, e) => sum + (Number(e.amount) || 0),
+          0
+        ),
+        hotLeads,
+        upcomingTasks: pendingSalons.map((salon) => {
+          const status = salon.onboarding_status || "ASSIGNED_TO_AGENT";
+          let type: "call" | "msg" | "visit" = "call";
+          if (status === "OWNER_INVITED") type = "msg";
+          if (status === "AGENT_VERIFIED" || status === "OWNER_ACTIVATED") type = "visit";
+          return {
+            id: salon.id,
+            task: `${salon.name} · ${getAgentSalonStatusLabel(status)}`,
+            time: formatRelativeTime(salon.created_at),
+            type,
+            status,
+          };
+        }),
+      },
+    },
+  };
+}
+
+// --- Profile ---
+
+export async function fetchAgentProfileClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("full_name, email, phone, avatar_url")
+    .eq("email", auth.email)
+    .maybeSingle();
+
+  if (error) return { success: false as const, error: error.message };
+
+  let territory = "Unassigned";
+  const { data: agentData } = await supabase
+    .from("agents")
+    .select("id, territory")
+    .eq("user_email", auth.email)
+    .maybeSingle();
+
+  if (agentData?.id) {
+    const { data: territoryData } = await supabase
+      .from("agent_territories")
+      .select("territories ( name )")
+      .eq("agent_id", agentData.id);
+    if (territoryData?.length) {
+      territory =
+        territoryData
+          .map((t) => {
+            const joined = t.territories as { name?: string } | { name?: string }[] | null;
+            if (Array.isArray(joined)) return joined[0]?.name;
+            return joined?.name;
+          })
+          .filter(Boolean)
+          .join(" · ") || "Unassigned";
+    }
+  } else if (agentData?.territory) {
+    territory = agentData.territory;
+  }
+
+  return {
+    success: true as const,
+    profile: {
+      fullName: data?.full_name || "",
+      email: data?.email || auth.email,
+      phone: data?.phone || "",
+      avatarUrl: data?.avatar_url || "",
+      territory,
+    },
+  };
+}
+
+// --- Salons list ---
+
+export async function fetchAgentSalonsListClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const { data, error } = await supabase
+    .from("salons")
+    .select(
+      "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at"
+    )
+    .eq("assign_to", auth.email)
+    .order("created_at", { ascending: false });
+
+  if (error) return { success: false as const, error: error.message };
+  return { success: true as const, salons: data || [], agentEmail: auth.email };
+}
+
+// --- Leads ---
+
+export async function fetchAgentAssignedLeadsClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const { data, error } = await supabase
+    .from("salons")
+    .select("*")
+    .eq("assign_to", auth.email)
+    .not("onboarding_status", "in", '("VERIFIED","REJECTED")')
+    .order("created_at", { ascending: false });
+
+  if (error) return { success: false as const, error: error.message };
+  return {
+    success: true as const,
+    leads: data || [],
+    agentEmail: auth.email,
+    agentName: auth.email.split("@")[0],
+  };
+}
+
+export async function fetchAgentLeadEditorDataClient(salonId: string) {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+  if (!salonId) return { success: false as const, error: "Salon ID is required." };
+
+  const { data: salon, error: salonError } = await supabase
+    .from("salons")
+    .select("id, assign_to")
+    .eq("id", salonId)
+    .maybeSingle();
+
+  if (salonError || !salon) {
+    return { success: false as const, error: salonError?.message || "Salon not found." };
+  }
+  if (salon.assign_to && salon.assign_to !== auth.email) {
+    return { success: false as const, error: "You do not have access to this lead." };
+  }
+
+  const [servicesRes, amenitiesRes] = await Promise.all([
+    supabase
+      .from("services")
+      .select("global_service_id, price, duration, category")
+      .eq("salon_id", salonId),
+    supabase.from("salon_amenities").select("*").eq("salon_id", salonId),
+  ]);
+
+  if (servicesRes.error) return { success: false as const, error: servicesRes.error.message };
+  if (amenitiesRes.error) return { success: false as const, error: amenitiesRes.error.message };
+
+  return {
+    success: true as const,
+    services: servicesRes.data || [],
+    amenities: amenitiesRes.data || [],
+  };
+}
+
+// --- Globals (services, staff roles, amenities) ---
+
+export async function fetchAgentGlobalsClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const [svcRes, staffRes, amenitiesRes] = await Promise.all([
+    supabase.from("global_services").select("*, categories(name)").eq("is_active", true),
+    supabase.from("global_staff_roles").select("*").order("category"),
+    supabase.from("global_amenities").select("*").order("name"),
+  ]);
+
+  const services = (svcRes.data || []).map((s: Record<string, unknown>) => ({
+    ...s,
+    category: (s.categories as { name?: string } | null)?.name || null,
+    default_price: (s.suggested_price as number) || 0,
+    default_duration: (s.suggested_duration_minutes as number) || 30,
+    icon_image_url: (s.icon as string) || null,
+  }));
+
+  return {
+    success: true as const,
+    services,
+    staffRoles: staffRes.data || [],
+    amenities: amenitiesRes.data || [],
+  };
+}
+
+// --- Territory map ---
+
+export async function getAgentMapDataClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const { data: agentData, error: agentError } = await supabase
+    .from("agents")
+    .select("id, territory")
+    .eq("user_email", auth.email)
+    .maybeSingle();
+
+  if (agentError || !agentData?.id) {
+    return { success: false as const, error: "Agent not found" };
+  }
+
+  const territories: { id: string; name: string; type?: string; slug?: string }[] = [];
+  const { data: territoryData } = await supabase
+    .from("agent_territories")
+    .select("territory_id, territories ( id, name, type, slug )")
+    .eq("agent_id", agentData.id);
+
+  if (territoryData?.length) {
+    territoryData.forEach((t) => {
+      const terr = t.territories as { id?: string; name?: string; type?: string; slug?: string } | null;
+      if (terr?.name && !territories.find((x) => x.name === terr.name)) {
+        territories.push({
+          id: terr.id || `t-${terr.name}`,
+          name: terr.name,
+          type: terr.type,
+          slug: terr.slug,
+        });
+      }
+    });
+  } else if (agentData.territory) {
+    agentData.territory
+      .split(",")
+      .map((n: string) => n.trim())
+      .filter(Boolean)
+      .forEach((name: string) => {
+        if (!territories.find((x) => x.name === name)) {
+          territories.push({ id: `primary-${name}`, name, type: "primary" });
+        }
+      });
+  }
+
+  const { data: catData } = await supabase.from("categories").select("name").order("name");
+
+  return {
+    success: true as const,
+    agentId: agentData.id,
+    territories,
+    categories: catData?.map((c) => c.name) || [],
+  };
+}
+
+export async function searchBusinessesInTerritoriesClient(
+  categories: string[],
+  territoryIds: string[]
+) {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  let terrNames: string[] = [];
+  let query = supabase
+    .from("salons")
+    .select(
+      "id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status"
+    );
+
+  if (territoryIds.length > 0) {
+    const realIds = territoryIds.filter((id) => !id.startsWith("primary-"));
+    const primaryNames = territoryIds
+      .filter((id) => id.startsWith("primary-"))
+      .map((id) => id.replace("primary-", ""));
+    terrNames = [...primaryNames];
+
+    if (realIds.length > 0) {
+      const { data: terrs } = await supabase.from("territories").select("name").in("id", realIds);
+      if (terrs?.length) terrNames = [...terrNames, ...terrs.map((t) => t.name)];
+    }
+
+    if (terrNames.length > 0) {
+      const orClauses = terrNames.map((name) => `city.ilike.%${name}%,address.ilike.%${name}%`).join(",");
+      if (orClauses) query = query.or(orClauses);
+    }
+  }
+
+  if (categories.length > 0 && !categories.includes("All Categories")) {
+    const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
+    query = query.or(orClauses);
+  }
+
+  const { data, error } = await query;
+  if (error) return { success: false as const, error: error.message };
+
+  return { success: true as const, businesses: data || [] };
+}
+
+// --- Work queue ---
+
+export async function fetchAgentWorkQueueClient(agentEmail: string) {
+  if (!agentEmail) throw new Error("Agent email is required");
+
+  const workItems: WorkItem[] = [];
+
+  const { data: leads } = await supabase
+    .from("salons")
+    .select("id, name, onboarding_status, created_at, updated_at")
+    .eq("assign_to", agentEmail)
+    .not("onboarding_status", "in", '("VERIFIED","REJECTED","COMPLETED")');
+
+  (leads || []).forEach((lead) => {
+    let priority: "HIGH" | "MEDIUM" | "LOW" = "MEDIUM";
+    let action = "Follow up";
+    if (lead.onboarding_status === "ASSIGNED_TO_AGENT" || lead.onboarding_status === "UNVERIFIED") {
+      priority = "HIGH";
+      action = lead.onboarding_status === "ASSIGNED_TO_AGENT" ? "Verify Lead Details" : "Verify Profile Data";
+    }
+    const daysSince =
+      (Date.now() - new Date(lead.updated_at || lead.created_at).getTime()) / (1000 * 3600 * 24);
+    if (daysSince > 3) priority = "HIGH";
+
+    workItems.push({
+      id: `lead-${lead.id}`,
+      type: "LEAD",
+      businessName: lead.name,
+      businessId: lead.id,
+      currentStatus: lead.onboarding_status || "NEW",
+      lastActivityDate: lead.updated_at || lead.created_at,
+      priority,
+      recommendedAction: action,
+      actionUrl: `/agent/leads?open=${lead.id}`,
+    });
+  });
+
+  const { data: salons } = await supabase
+    .from("salons")
+    .select("id, name, onboarding_status, activation_status, updated_at")
+    .eq("assign_to", agentEmail)
+    .eq("onboarding_status", "VERIFIED");
+
+  (salons || []).forEach((salon) => {
+    workItems.push({
+      id: `salon-${salon.id}`,
+      type: "SALON",
+      businessName: salon.name,
+      businessId: salon.id,
+      currentStatus: salon.activation_status === "ACTIVE" ? "Active" : "Awaiting Owner Activation",
+      lastActivityDate: salon.updated_at || new Date().toISOString(),
+      priority: salon.activation_status === "ACTIVE" ? "LOW" : "HIGH",
+      recommendedAction:
+        salon.activation_status === "ACTIVE" ? "Review Performance" : "Assist Owner Activation",
+      actionUrl: `/salons/${salon.id}`,
+    });
+  });
+
+  const { data: commissions } = await supabase
+    .from("commission_ledger")
+    .select("id, amount, status, created_at, salon_id")
+    .eq("agent_email", agentEmail)
+    .eq("status", "pending");
+
+  (commissions || []).forEach((comm) => {
+    workItems.push({
+      id: `comm-${comm.id}`,
+      type: "COMMISSION",
+      businessName: `Commission: LKR ${comm.amount}`,
+      businessId: comm.salon_id || "N/A",
+      currentStatus: "Pending Payout",
+      lastActivityDate: comm.created_at,
+      priority: "MEDIUM",
+      recommendedAction: "Review Payout",
+      actionUrl: `/agent`,
+    });
+  });
+
+  const staleDate = new Date();
+  staleDate.setDate(staleDate.getDate() - 7);
+  (leads || []).forEach((lead) => {
+    if (new Date(lead.updated_at || lead.created_at) < staleDate) {
+      workItems.push({
+        id: `alert-${lead.id}`,
+        type: "ALERT",
+        businessName: lead.name,
+        businessId: lead.id,
+        currentStatus: "Stale / No Activity",
+        lastActivityDate: lead.updated_at || lead.created_at,
+        priority: "HIGH",
+        recommendedAction: "Reach Out Immediately",
+        actionUrl: `/agent/leads?open=${lead.id}`,
+      });
+    }
+  });
+
+  const { data: activityLogs } = await supabase
+    .from("agent_activity_logs")
+    .select("*")
+    .eq("agent_email", agentEmail)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const priorityWeight = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+  return {
+    workItems: workItems.sort((a, b) => {
+      if (priorityWeight[a.priority] !== priorityWeight[b.priority]) {
+        return priorityWeight[b.priority] - priorityWeight[a.priority];
+      }
+      return new Date(b.lastActivityDate).getTime() - new Date(a.lastActivityDate).getTime();
+    }),
+    metrics: {
+      totalAssignedLeads: leads?.length || 0,
+      verifiedSalons: salons?.length || 0,
+      pendingCommissionsCount: commissions?.length || 0,
+      totalCommissionAmount: (commissions || []).reduce(
+        (acc, c) => acc + (Number(c.amount) || 0),
+        0
+      ),
+      performanceScore:
+        (leads?.length || 0) + (salons?.length || 0) === 0
+          ? 0
+          : Math.round(((salons?.length || 0) / ((leads?.length || 0) + (salons?.length || 0))) * 100),
+    },
+    activityLogs: activityLogs || [],
+  };
+}

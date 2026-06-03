@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getAgentProfile, uploadAgentAvatar } from "@/app/actions/agent-profile";
+import { tryAgentData, fetchAgentProfileClient } from "@/lib/agent-client-data";
 
 function ProfileFormContent() {
   const router = useRouter();
@@ -28,7 +29,7 @@ function ProfileFormContent() {
   const loadProfile = useCallback(async () => {
     setLoadError(null);
     try {
-      const result = await getAgentProfile();
+      const result = await tryAgentData(getAgentProfile, fetchAgentProfileClient);
 
       if (!result.success) {
         if (result.error?.includes("Not authenticated")) {

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/config/supabase";
 import { getAgentEmailFast } from "@/lib/client-auth";
 import { fetchAgentWorkQueue, WorkItem } from "@/app/actions/agent-work-queue";
+import { fetchAgentWorkQueueClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { 
   CheckCircle2, AlertCircle, Clock, Search, Filter, Briefcase, 
   Store, Banknote, Target, Bell, ArrowRight, Activity, Zap, History
@@ -37,12 +38,17 @@ export default function AgentTasksQueue() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const email = getAgentEmailFast();
+      const email = (await getAgentEmailFromClient()) || getAgentEmailFast();
       if (!email) {
         toast.error("Not authenticated");
         return;
       }
-      const data = await fetchAgentWorkQueue(email);
+      let data;
+      try {
+        data = await fetchAgentWorkQueue(email);
+      } catch {
+        data = await fetchAgentWorkQueueClient(email);
+      }
       setWorkItems(data.workItems);
       setMetrics(data.metrics);
       setActivityLogs(data.activityLogs);

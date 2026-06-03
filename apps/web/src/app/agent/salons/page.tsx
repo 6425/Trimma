@@ -16,6 +16,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { fetchAgentSalonsList } from "@/app/actions/agent-lead-editor-data";
+import { tryAgentData, fetchAgentSalonsListClient } from "@/lib/agent-client-data";
 import {
   getAgentSalonStatusClass,
   getAgentSalonStatusLabel,
@@ -50,7 +51,7 @@ export default function AgentSalons() {
   const fetchSalons = async () => {
     try {
       setLoading(true);
-      const res = await fetchAgentSalonsList();
+      const res = await tryAgentData(fetchAgentSalonsList, fetchAgentSalonsListClient);
       if (!res.success) {
         toast.error(res.error || "Please log in as an agent.");
         return;

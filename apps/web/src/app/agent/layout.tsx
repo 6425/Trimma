@@ -12,6 +12,7 @@ import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "../../components/Logo";
 import { getAgentProfile } from "@/app/actions/agent-profile";
+import { tryAgentData, fetchAgentProfileClient } from "@/lib/agent-client-data";
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,7 +29,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     void (async () => {
-      const result = await getAgentProfile();
+      const result = await tryAgentData(getAgentProfile, fetchAgentProfileClient);
       if (result.success && result.profile) {
         setAgentName(result.profile.fullName || "Agent");
         setAgentAvatar(result.profile.avatarUrl || "");

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { getAgentEmailFast } from "@/lib/client-auth";
 import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-leads-update";
+import { tryAgentData, fetchAgentGlobalsClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
 
 export default function AgentNewLeadPage() {
@@ -42,12 +43,12 @@ export default function AgentNewLeadPage() {
   useEffect(() => {
     void Promise.resolve().then(async () => {
       try {
-        const email = getAgentEmailFast();
+        const email = (await getAgentEmailFromClient()) || getAgentEmailFast();
         if (email) {
           setAgentEmail(email);
         }
 
-        const res = await fetchAgentGlobals();
+        const res = await tryAgentData(fetchAgentGlobals, fetchAgentGlobalsClient);
         if (res.success) {
           setGlobalServices(res.services);
           setGlobalStaffRoles(res.staffRoles);

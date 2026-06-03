@@ -18,6 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { getAgentMapData, searchBusinessesInTerritories } from "../../actions/agent-territory-map";
+import {
+  tryAgentData,
+  getAgentMapDataClient,
+  searchBusinessesInTerritoriesClient,
+} from "@/lib/agent-client-data";
 import { MapComponent, BusinessResult, Territory } from "../../../components/territory/MapComponent";
 import { BusinessResultsSidebar } from "../../../components/territory/BusinessResultsSidebar";
 
@@ -54,7 +59,7 @@ function TerritoryExplorerContent() {
         setSelectedTerritoryId(cachedTerritory);
       }
 
-      const res = await getAgentMapData();
+      const res = await tryAgentData(getAgentMapData, getAgentMapDataClient);
       if (res.success) {
         setTerritories(res.territories || []);
         setCategories(res.categories || []);
@@ -87,7 +92,10 @@ function TerritoryExplorerContent() {
     try {
       const terrIds = selectedTerritoryId === "all" ? territories.map(t => t.id) : [selectedTerritoryId];
       const catsToSearch = (selectedCategory && selectedCategory !== "all") ? [selectedCategory] : categories;
-      const res = await searchBusinessesInTerritories(catsToSearch, terrIds);
+      const res = await tryAgentData(
+        () => searchBusinessesInTerritories(catsToSearch, terrIds),
+        () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds)
+      );
       
       if (!res.success) throw new Error(res.error);
       

@@ -22,6 +22,12 @@ import {
   fetchAgentLeadEditorData,
   fetchAgentSalonServiceIds,
 } from "../../actions/agent-lead-editor-data";
+import {
+  tryAgentData,
+  fetchAgentAssignedLeadsClient,
+  fetchAgentLeadEditorDataClient,
+  fetchAgentGlobalsClient,
+} from "@/lib/agent-client-data";
 
 
 const DAYS_OF_WEEK = [
@@ -186,7 +192,7 @@ function AgentLeads() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const res = await fetchAgentAssignedLeads();
+      const res = await tryAgentData(fetchAgentAssignedLeads, fetchAgentAssignedLeadsClient);
       if (!res.success) {
         toast.error(res.error || "Failed to load leads.");
         return;
@@ -229,7 +235,10 @@ function AgentLeads() {
     setIsModalOpen(true);
 
     try {
-      const editorRes = await fetchAgentLeadEditorData(lead.id);
+      const editorRes = await tryAgentData(
+        () => fetchAgentLeadEditorData(lead.id),
+        () => fetchAgentLeadEditorDataClient(lead.id)
+      );
       if (!editorRes.success) {
         toast.error(editorRes.error);
         return;
@@ -259,7 +268,7 @@ function AgentLeads() {
 
   const fetchGlobals = async () => {
     try {
-      const res = await fetchAgentGlobals();
+      const res = await tryAgentData(fetchAgentGlobals, fetchAgentGlobalsClient);
       if (res.success) {
         setGlobalServices(res.services);
         setGlobalStaffRoles(res.staffRoles);
