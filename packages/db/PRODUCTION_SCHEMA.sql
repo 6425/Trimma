@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
   max_staff INT DEFAULT 1,
   max_services INT DEFAULT 10,
   max_images INT DEFAULT 5,
-  max_branches INT DEFAULT 1,
   feature_flags JSONB DEFAULT '{}'::jsonb
 );
 

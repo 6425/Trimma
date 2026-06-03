@@ -75,7 +75,6 @@ export async function saveAdminSubscriptionPlan(input: {
   max_staff?: number;
   max_services?: number;
   max_images?: number;
-  max_branches?: number;
   max_promotion_packages?: number;
   feature_flags?: Record<string, unknown>;
   list_monthly_price?: number;
@@ -88,7 +87,6 @@ export async function saveAdminSubscriptionPlan(input: {
     max_staff: input.max_staff ?? 2,
     max_services: input.max_services ?? 6,
     max_images: input.max_images ?? 4,
-    max_branches: input.max_branches ?? 0,
     max_promotion_packages: input.max_promotion_packages ?? 2,
     feature_flags: input.feature_flags ?? {},
     ...(input.list_monthly_price != null ? { list_monthly_price: input.list_monthly_price } : {}),
@@ -128,7 +126,6 @@ export async function seedAdminSubscriptionPlans() {
     max_staff: plan.max_staff,
     max_services: plan.max_services,
     max_images: plan.max_images,
-    max_branches: plan.max_branches,
     max_promotion_packages: plan.max_promotion_packages,
     feature_flags: plan.feature_flags,
   }));

@@ -13,7 +13,6 @@ export type PublicSubscriptionPlan = {
   max_staff: number | null;
   max_services: number | null;
   max_images: number | null;
-  max_branches: number | null;
   max_promotion_packages: number | null;
   feature_flags: {
     allowed_categories_limit?: number;

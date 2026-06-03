@@ -10,8 +10,7 @@ export function SalonGrowth() {
     "Reduce missed appointments with automated reminders",
     "Increase repeat customers through smart CRM",
     "Manage staff schedules and commissions efficiently",
-    "Track revenue in real-time with advanced analytics",
-    "Scale multiple branches from a single dashboard"
+    "Track revenue in real-time with advanced analytics"
   ];
 
   return (

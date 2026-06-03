@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, Scissors, Users, GitBranch, ShieldCheck, HelpCircle, Image as ImageIcon, Tag } from "lucide-react";
+import { Check, Scissors, Users, ShieldCheck, HelpCircle, Image as ImageIcon, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -173,11 +173,6 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
                       value: maxServices >= 9999 ? "Unlimited" : maxServices,
                     },
                     { icon: ImageIcon, label: "Images", value: plan.max_images },
-                    {
-                      icon: GitBranch,
-                      label: "Branches",
-                      value: plan.max_branches === 0 ? "None" : plan.max_branches,
-                    },
                     {
                       icon: Tag,
                       label: "Discounts & Promotions",

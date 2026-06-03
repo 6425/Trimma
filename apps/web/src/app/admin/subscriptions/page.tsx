@@ -29,7 +29,6 @@ export default function SubscriptionPlanManagement() {
     max_staff: "",
     max_services: "",
     max_images: "",
-    max_branches: "",
     max_promotion_packages: "",
     allowed_categories_limit: "",
     features: ""
@@ -41,7 +40,6 @@ export default function SubscriptionPlanManagement() {
     max_staff: "",
     max_services: "",
     max_images: "",
-    max_branches: "",
     max_promotion_packages: "",
     allowed_categories_limit: "",
     features: "",
@@ -133,7 +131,6 @@ export default function SubscriptionPlanManagement() {
         max_staff: formData.max_staff ? parseInt(formData.max_staff) : 2,
         max_services: formData.max_services ? parseInt(formData.max_services) : 6,
         max_images: formData.max_images ? parseInt(formData.max_images) : 4,
-        max_branches: formData.max_branches ? parseInt(formData.max_branches) : 0,
         max_promotion_packages: formData.max_promotion_packages
           ? parseInt(formData.max_promotion_packages)
           : 2,
@@ -178,7 +175,6 @@ export default function SubscriptionPlanManagement() {
       max_staff: plan.max_staff?.toString() || "2",
       max_services: plan.max_services?.toString() || "6",
       max_images: plan.max_images?.toString() || "4",
-      max_branches: plan.max_branches?.toString() || "0",
       max_promotion_packages: plan.max_promotion_packages?.toString() || "2",
       allowed_categories_limit: flags.allowed_categories_limit?.toString() || "2",
       features: Array.isArray(flags.features) ? flags.features.join(", ") : ""
@@ -285,10 +281,6 @@ export default function SubscriptionPlanManagement() {
                         <Image className="w-3.5 h-3.5 text-zinc-500" />
                         <span>Images: {plan.max_images}</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <GitBranch className="w-3.5 h-3.5 text-zinc-500" />
-                        <span>Branches: {plan.max_branches === 0 ? "No" : plan.max_branches}</span>
-                      </div>
                       <div className="flex items-center gap-1.5 col-span-2">
                         <Tag className="w-3.5 h-3.5 text-zinc-500" />
                         <span>
@@ -387,16 +379,6 @@ export default function SubscriptionPlanManagement() {
                     onChange={(e) => setFormData({ ...formData, max_images: e.target.value })}
                     className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
                     placeholder="6" 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Branch Limit</label>
-                  <Input 
-                    type="number" 
-                    value={formData.max_branches}
-                    onChange={(e) => setFormData({ ...formData, max_branches: e.target.value })}
-                    className="bg-slate-100 border-slate-200 text-zinc-900 h-11 rounded-xl" 
-                    placeholder="2" 
                   />
                 </div>
                 <div className="space-y-2 col-span-2">

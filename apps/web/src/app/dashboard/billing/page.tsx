@@ -8,7 +8,6 @@ import {
   FileText,
   ArrowRight,
   Loader2,
-  GitBranch,
   Image as ImageIcon,
   Scissors,
   Tag,
@@ -137,7 +136,7 @@ export default function BillingPage() {
             <p className="text-white/70 text-xs">
               Supports up to {activePlan.max_staff} staff,{" "}
               {activePlan.max_services >= 9999 ? "unlimited" : activePlan.max_services} services,{" "}
-              {activePlan.max_images} images, {activePlan.max_branches || 0} branches, and{" "}
+              {activePlan.max_images} images, and{" "}
               {formatPromotionPackageLimit(activePlan.max_promotion_packages)} discounts & promotions.
             </p>
           </div>
@@ -215,11 +214,6 @@ export default function BillingPage() {
                         value: plan.max_services >= 9999 ? "Unlimited" : plan.max_services,
                       },
                       { icon: ImageIcon, label: "Images", value: plan.max_images },
-                      {
-                        icon: GitBranch,
-                        label: "Branches",
-                        value: plan.max_branches === 0 ? "None" : plan.max_branches,
-                      },
                       {
                         icon: Tag,
                         label: "Discounts & Promotions",

@@ -101,7 +101,6 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_staff: 2,
     max_services: 6,
     max_images: 3,
-    max_branches: 0,
     max_promotion_packages: 2,
     feature_flags: {
       allowed_categories_limit: 2,
@@ -127,7 +126,6 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_staff: 5,
     max_services: 12,
     max_images: 6,
-    max_branches: 2,
     max_promotion_packages: 4,
     feature_flags: {
       allowed_categories_limit: 5,
@@ -154,7 +152,6 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_staff: 10,
     max_services: 20,
     max_images: 12,
-    max_branches: 3,
     max_promotion_packages: 6,
     feature_flags: {
       allowed_categories_limit: 999,
@@ -183,7 +180,6 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     max_staff: 30,
     max_services: 9999,
     max_images: 30,
-    max_branches: 15,
     max_promotion_packages: 12,
     feature_flags: {
       allowed_categories_limit: 999,

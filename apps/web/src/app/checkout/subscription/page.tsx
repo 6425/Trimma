@@ -25,7 +25,6 @@ import {
 } from "@/lib/subscription-pricing";
 import {
   ArrowLeft,
-  GitBranch,
   Image as ImageIcon,
   Loader2,
   Scissors,
@@ -297,11 +296,6 @@ function SubscriptionCheckoutForm() {
                       planDetails.max_services >= 9999 ? "Unlimited" : planDetails.max_services,
                   },
                   { icon: ImageIcon, label: "Images", value: planDetails.max_images },
-                  {
-                    icon: GitBranch,
-                    label: "Branches",
-                    value: planDetails.max_branches === 0 ? "None" : planDetails.max_branches,
-                  },
                   {
                     icon: Tag,
                     label: "Discounts & Promotions",
