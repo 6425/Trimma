@@ -4,16 +4,17 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
-import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
+import type { TrimmaUserRole } from "@/lib/auth-routes";
+import { redirectAfterAuth, setTrimmaMiddlewareCookies, resolveTrimmaUserRole } from "@/lib/trimma-role";
+import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 
 function RehydrateContent() {
   const searchParams = useSearchParams();
-  const nextPath =
-    sanitizeNextPath(
-      searchParams.get("next") ||
-        searchParams.get("redirectTo") ||
-        searchParams.get("redirect")
-    ) || "/";
+  const nextPath = sanitizeNextPath(
+    searchParams.get("next") ||
+      searchParams.get("redirectTo") ||
+      searchParams.get("redirect")
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,39 +27,53 @@ function RehydrateContent() {
         } = await supabase.auth.getSession();
 
         if (!session?.access_token) {
-          redirectAfterAuth(`/login?redirect=${encodeURIComponent(nextPath)}`);
+          // No client session at all — go to login and stop (no loop).
+          const loginNext = nextPath ? `?redirectTo=${encodeURIComponent(nextPath)}` : "";
+          redirectAfterAuth(`/login${loginNext}`);
           return;
         }
 
-        const res = await fetch("/api/auth/session", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
+        let role: TrimmaUserRole | null = null;
 
-        if (!res.ok) {
-          throw new Error("Could not refresh your secure session.");
+        // Preferred path: server resolves role + sets HttpOnly cookies.
+        try {
+          const res = await fetch("/api/auth/session", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+
+          if (res.ok) {
+            const data = (await res.json()) as { role?: TrimmaUserRole };
+            role = data.role ?? null;
+          } else {
+            console.error("Session API failed:", res.status, await res.text().catch(() => ""));
+          }
+        } catch (apiErr) {
+          console.error("Session API request failed:", apiErr);
         }
 
-        const sessionData = (await res.json()) as { role?: string };
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (currentSession?.access_token && sessionData.role) {
-          setTrimmaMiddlewareCookies(currentSession.access_token, sessionData.role);
+        // Fallback: resolve role client-side so a server hiccup can't lock the user out.
+        if (!role) {
+          role =
+            (await resolveTrimmaUserRole(session.user.id, session.user.email)) ?? "customer";
         }
+
+        // Always set the middleware cookies from the live client session.
+        setTrimmaMiddlewareCookies(session.access_token, role);
 
         if (!cancelled) {
-          redirectAfterAuth(nextPath);
+          const destination = resolveAuthenticatedDestination({ role, nextPath });
+          redirectAfterAuth(destination);
         }
       } catch (err) {
         if (!cancelled) {
           setErrorMessage(err instanceof Error ? err.message : "Session refresh failed.");
-          window.setTimeout(
-            () => redirectAfterAuth(`/login?redirect=${encodeURIComponent(nextPath)}`),
-            2000
-          );
+          const loginNext = nextPath ? `?redirectTo=${encodeURIComponent(nextPath)}` : "";
+          window.setTimeout(() => redirectAfterAuth(`/login${loginNext}`), 2500);
         }
       }
     }
