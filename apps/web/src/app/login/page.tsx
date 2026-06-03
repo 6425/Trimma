@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,37 @@ function LoginForm() {
       searchParams.get("next")
   );
 
+  /**
+   * App-managed role resolution + redirect. Prefers the server action (used when
+   * functions are healthy); falls back to a client-side Supabase role read so
+   * agents/admins can still sign in if server functions are unavailable.
+   */
+  const completeSignIn = useCallback(
+    async (session: Session, isCancelled: () => boolean) => {
+      let role: TrimmaUserRole | null = null;
+
+      try {
+        const result = await resolveLoginRole(session.access_token);
+        if (result.success) {
+          role = result.role;
+        }
+      } catch (err) {
+        console.warn("Server role resolution unavailable; using client fallback.", err);
+      }
+
+      if (!role) {
+        role =
+          (await resolveTrimmaUserRole(session.user.id, session.user.email)) ?? "customer";
+      }
+
+      if (isCancelled()) return;
+
+      setTrimmaMiddlewareCookies(session.access_token, role);
+      redirectAfterAuth(resolveAuthenticatedDestination({ role, nextPath: redirectTo }));
+    },
+    [redirectTo]
+  );
+
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
@@ -57,36 +88,7 @@ function LoginForm() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [redirectTo]);
-
-  /**
-   * App-managed role resolution + redirect. Prefers the server action (used when
-   * functions are healthy); falls back to a client-side Supabase role read so
-   * agents/admins can still sign in if server functions are unavailable.
-   */
-  const completeSignIn = async (session: Session, isCancelled: () => boolean) => {
-    let role: TrimmaUserRole | null = null;
-
-    try {
-      const result = await resolveLoginRole(session.access_token);
-      if (result.success) {
-        role = result.role;
-      }
-    } catch (err) {
-      console.warn("Server role resolution unavailable; using client fallback.", err);
-    }
-
-    if (!role) {
-      role =
-        (await resolveTrimmaUserRole(session.user.id, session.user.email)) ?? "customer";
-    }
-
-    if (isCancelled()) return;
-
-    setTrimmaMiddlewareCookies(session.access_token, role);
-    redirectAfterAuth(resolveAuthenticatedDestination({ role, nextPath: redirectTo }));
-  };
+  }, [completeSignIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
