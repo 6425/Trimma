@@ -11,9 +11,15 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { sanitizeNextPath } from "@/lib/auth-routes";
-import { setTrimmaMiddlewareCookies, redirectAfterAuth } from "@/lib/trimma-role";
+import {
+  setTrimmaMiddlewareCookies,
+  redirectAfterAuth,
+  resolveTrimmaUserRole,
+} from "@/lib/trimma-role";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { resolveLoginRole } from "@/app/actions/login-session";
+import type { Session } from "@supabase/supabase-js";
+import type { TrimmaUserRole } from "@/lib/auth-routes";
 
 const LOGIN_HERO_IMAGE =
   "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=2400&auto=format&fit=crop";
@@ -46,17 +52,41 @@ function LoginForm() {
     let cancelled = false;
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error || !session?.access_token || cancelled) return;
-      const result = await resolveLoginRole(session.access_token);
-      if (cancelled || !result.success) return;
-      setTrimmaMiddlewareCookies(session.access_token, result.role);
-      redirectAfterAuth(
-        resolveAuthenticatedDestination({ role: result.role, nextPath: redirectTo })
-      );
+      await completeSignIn(session, () => cancelled);
     });
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [redirectTo]);
+
+  /**
+   * App-managed role resolution + redirect. Prefers the server action (used when
+   * functions are healthy); falls back to a client-side Supabase role read so
+   * agents/admins can still sign in if server functions are unavailable.
+   */
+  const completeSignIn = async (session: Session, isCancelled: () => boolean) => {
+    let role: TrimmaUserRole | null = null;
+
+    try {
+      const result = await resolveLoginRole(session.access_token);
+      if (result.success) {
+        role = result.role;
+      }
+    } catch (err) {
+      console.warn("Server role resolution unavailable; using client fallback.", err);
+    }
+
+    if (!role) {
+      role =
+        (await resolveTrimmaUserRole(session.user.id, session.user.email)) ?? "customer";
+    }
+
+    if (isCancelled()) return;
+
+    setTrimmaMiddlewareCookies(session.access_token, role);
+    redirectAfterAuth(resolveAuthenticatedDestination({ role, nextPath: redirectTo }));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,17 +113,13 @@ function LoginForm() {
       return;
     }
 
-    const result = await resolveLoginRole(session.access_token);
-    if (!result.success) {
+    try {
+      await completeSignIn(session, () => false);
+    } catch (err) {
       setLoading(false);
-      alert(result.error);
-      return;
+      console.error("Sign-in completion failed:", err);
+      alert("Could not complete sign-in. Please try again.");
     }
-
-    setTrimmaMiddlewareCookies(session.access_token, result.role);
-    redirectAfterAuth(
-      resolveAuthenticatedDestination({ role: result.role, nextPath: redirectTo })
-    );
   };
 
   const handleGoogleLogin = async () => {
