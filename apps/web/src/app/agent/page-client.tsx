@@ -12,6 +12,7 @@ import { formatRelativeTime } from "@/lib/dashboard-stats";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { toast } from "sonner";
 import { getAgentDashboardData } from "@/app/actions/agent-dashboard";
+import { loadAgentDashboardFromClient } from "@/lib/load-agent-dashboard-client";
 
 type AssignedSalon = {
   id: string;
@@ -52,8 +53,12 @@ export default function AgentDashboard() {
     let isRedirecting = false;
     try {
       setLoading(true);
-      const res = await getAgentDashboardData();
-      
+
+      let res = await getAgentDashboardData().catch(() => null);
+      if (!res?.success) {
+        res = await loadAgentDashboardFromClient();
+      }
+
       if (!res.success) {
         isRedirecting = true;
         if (res.error === "Unauthorized access") {
