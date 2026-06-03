@@ -7,7 +7,7 @@ import { supabase } from "../../../config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
-import type { TrimmaUserRole } from "@/lib/auth-routes";
+import { completeOAuthLogin } from "@/app/actions/login-session";
 
 function AuthCallbackContent() {
   const searchParams = useSearchParams();
@@ -58,59 +58,25 @@ function AuthCallbackContent() {
           return;
         }
 
-        let onboardingStatus: string | null = null;
+        const result = await completeOAuthLogin(session.access_token);
+        if (cancelled) return;
 
-        try {
-          const linkRes = await fetch("/api/auth/link-owner", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            credentials: "include",
+        if (result.success) {
+          setTrimmaMiddlewareCookies(session.access_token, result.role);
+
+          const destination = resolveAuthenticatedDestination({
+            role: result.role,
+            nextPath,
+            onboardingStatus: result.onboardingStatus,
           });
 
-          if (linkRes.ok) {
-            const linkData = await linkRes.json();
-            onboardingStatus = linkData.onboardingStatus ?? null;
-          }
-        } catch (err) {
-          console.error("Owner link step failed:", err);
-        }
-
-        let role: TrimmaUserRole = "customer";
-
-        const sessionRes = await fetch("/api/auth/session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          credentials: "include",
-        });
-
-        if (!sessionRes.ok) {
-          const detail = await sessionRes.text().catch(() => "");
-          console.error("Session API failed:", sessionRes.status, detail);
+          redirectAfterAuth(destination);
+        } else {
+          console.error("OAuth completion failed:", result.error);
           setErrorMessage("Could not complete sign-in. Please try again.");
           const loginNext = nextPath ? `?redirectTo=${encodeURIComponent(nextPath)}` : "";
           window.setTimeout(() => redirectAfterAuth(`/login${loginNext}`), 2000);
-          return;
         }
-
-        const sessionData = (await sessionRes.json()) as { role?: TrimmaUserRole };
-        if (sessionData.role) {
-          role = sessionData.role;
-        }
-
-        setTrimmaMiddlewareCookies(session.access_token, role);
-
-        const destination = resolveAuthenticatedDestination({
-          role,
-          nextPath,
-          onboardingStatus,
-        });
-
-        redirectAfterAuth(destination);
       } catch (err) {
         console.error("Auth callback failed:", err);
         if (!cancelled) {

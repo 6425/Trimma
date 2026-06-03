@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { Suspense, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { sanitizeNextPath } from "@/lib/auth-routes";
+import { setTrimmaMiddlewareCookies, redirectAfterAuth } from "@/lib/trimma-role";
+import { resolveAuthenticatedDestination } from "@/lib/post-auth";
+import { resolveLoginRole } from "@/app/actions/login-session";
 
 const LOGIN_HERO_IMAGE =
   "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=2400&auto=format&fit=crop";
@@ -31,7 +34,6 @@ export default function LoginPage() {
 
 function LoginForm() {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const invitedEmail = normalizeEmail(searchParams.get("email"));
   const redirectTo = sanitizeNextPath(
@@ -41,16 +43,20 @@ function LoginForm() {
   );
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) return;
-      if (session) {
-        const rehydratePath = redirectTo
-          ? `/auth/rehydrate?next=${encodeURIComponent(redirectTo)}`
-          : "/auth/rehydrate";
-        router.replace(rehydratePath);
-      }
+    let cancelled = false;
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error || !session?.access_token || cancelled) return;
+      const result = await resolveLoginRole(session.access_token);
+      if (cancelled || !result.success) return;
+      setTrimmaMiddlewareCookies(session.access_token, result.role);
+      redirectAfterAuth(
+        resolveAuthenticatedDestination({ role: result.role, nextPath: redirectTo })
+      );
     });
-  }, [router, redirectTo]);
+    return () => {
+      cancelled = true;
+    };
+  }, [redirectTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +64,7 @@ function LoginForm() {
     const email = normalizeEmail((document.getElementById("email") as HTMLInputElement).value);
     const password = (document.getElementById("password") as HTMLInputElement).value;
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -70,10 +76,24 @@ function LoginForm() {
       return;
     }
 
-    const rehydratePath = redirectTo
-      ? `/auth/rehydrate?next=${encodeURIComponent(redirectTo)}`
-      : "/auth/rehydrate";
-    router.push(rehydratePath);
+    const session = data.session;
+    if (!session?.access_token) {
+      setLoading(false);
+      alert("Sign-in succeeded but no session was returned. Please try again.");
+      return;
+    }
+
+    const result = await resolveLoginRole(session.access_token);
+    if (!result.success) {
+      setLoading(false);
+      alert(result.error);
+      return;
+    }
+
+    setTrimmaMiddlewareCookies(session.access_token, result.role);
+    redirectAfterAuth(
+      resolveAuthenticatedDestination({ role: result.role, nextPath: redirectTo })
+    );
   };
 
   const handleGoogleLogin = async () => {

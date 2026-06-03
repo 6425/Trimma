@@ -101,15 +101,6 @@ export async function signOutTrimmaSession(redirectTo = "/login") {
 
   clearSupabaseAuthStorage();
 
-  try {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch {
-    // Still navigate away even if the API call fails.
-  }
-
   const safeRedirect =
     redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/login";
   window.location.replace(safeRedirect);
