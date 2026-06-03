@@ -12,6 +12,7 @@ import { formatRelativeTime } from "@/lib/dashboard-stats";
 import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { toast } from "sonner";
+import { getAgentDashboardData } from "@/app/actions/agent-dashboard";
 
 type AssignedSalon = {
   id: string;
@@ -49,13 +50,13 @@ export default function AgentDashboard() {
   });
 
   const loadAgentData = async () => {
+    let isRedirecting = false;
     try {
       setLoading(true);
-      const { getAgentDashboardData } = await import("@/app/actions/agent-dashboard");
-      
       const res = await getAgentDashboardData();
       
       if (!res.success) {
+        isRedirecting = true;
         if (res.error === "Unauthorized access") {
           const role = res.role;
           if (role === "salon_owner") {
@@ -88,7 +89,9 @@ export default function AgentDashboard() {
       console.error("Failed to load agent data:", error);
       toast.error("Failed to load dashboard data: " + (error.message || "Unknown error"));
     } finally {
-      setLoading(false);
+      if (!isRedirecting) {
+        setLoading(false);
+      }
     }
   };
 
