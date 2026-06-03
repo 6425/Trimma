@@ -12,12 +12,16 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
-import { getAgentEmailFast } from "@/lib/client-auth";
 import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { saveAgentLeadData, fetchAgentGlobals } from "../../actions/agent-leads-update";
+import {
+  fetchAgentAssignedLeads,
+  fetchAgentLeadEditorData,
+  fetchAgentSalonServiceIds,
+} from "../../actions/agent-lead-editor-data";
 
 
 const DAYS_OF_WEEK = [
@@ -182,28 +186,14 @@ function AgentLeads() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const email = getAgentEmailFast();
-      if (!email) {
-        toast.error("No active session found. Please log in.");
+      const res = await fetchAgentAssignedLeads();
+      if (!res.success) {
+        toast.error(res.error || "Failed to load leads.");
         return;
       }
-      setAgentEmail(email);
-      setAgentName(email.split("@")[0]);
-
-      if (!email) {
-        toast.error("No active session found. Please log in.");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("salons")
-        .select(`*`)
-        .eq("assign_to", email)
-        .not("onboarding_status", "in", '("VERIFIED","REJECTED")')
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      setLeads(data || []);
+      setAgentEmail(res.agentEmail);
+      setAgentName(res.agentName);
+      setLeads(res.leads);
     } catch (error: any) {
       toast.error("Failed to load your assigned salons: " + error.message);
     } finally {
@@ -239,20 +229,26 @@ function AgentLeads() {
     setIsModalOpen(true);
 
     try {
-      const [svcRes, amenitiesRes] = await Promise.all([
-        supabase.from("services").select("global_service_id, price, duration, category").eq("salon_id", lead.id),
-        supabase.from("salon_amenities").select("*").eq("salon_id", lead.id)
-      ]);
+      const editorRes = await fetchAgentLeadEditorData(lead.id);
+      if (!editorRes.success) {
+        toast.error(editorRes.error);
+        return;
+      }
       const svcMap: any = {};
-      (svcRes.data || []).forEach(s => {
+      (editorRes.services || []).forEach((s) => {
         if (s.global_service_id) {
-          svcMap[s.global_service_id] = { enabled: true, price: s.price?.toString() || "0", duration: s.duration?.toString() || "30", category: s.category || "" };
+          svcMap[s.global_service_id] = {
+            enabled: true,
+            price: s.price?.toString() || "0",
+            duration: s.duration?.toString() || "30",
+            category: s.category || "",
+          };
         }
       });
       setSelectedServices(svcMap);
 
       const amMap: any = {};
-      (amenitiesRes.data || []).forEach(sa => {
+      (editorRes.amenities || []).forEach((sa) => {
         amMap[sa.amenity_id] = { has_amenity: true, quantity: sa.quantity };
       });
       setSalonAmenities(amMap);
@@ -294,10 +290,11 @@ function AgentLeads() {
 
 
   const prepareServicesAndStaff = async (salonId: string) => {
-    const [existingSvcRes] = await Promise.all([
-      supabase.from("services").select("id, global_service_id").eq("salon_id", salonId)
-    ]);
-    const existingSvc = existingSvcRes.data || [];
+    const existingSvcRes = await fetchAgentSalonServiceIds(salonId);
+    if (!existingSvcRes.success) {
+      throw new Error(existingSvcRes.error);
+    }
+    const existingSvc = existingSvcRes.services || [];
     
     const existingSvcIds = existingSvc.map(s => s.global_service_id).filter(Boolean);
     const selectedSvcIds = Object.keys(selectedServices).filter(id => selectedServices[id].enabled);

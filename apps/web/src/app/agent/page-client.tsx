@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAgentSalonStatusClass, getAgentSalonStatusLabel, isAgentSalonLive } from "@/lib/agent-salons";
 import { formatRelativeTime } from "@/lib/dashboard-stats";
-import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { toast } from "sonner";
 import { getAgentDashboardData } from "@/app/actions/agent-dashboard";

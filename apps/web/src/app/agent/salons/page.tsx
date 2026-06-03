@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
+import { fetchAgentSalonsList } from "@/app/actions/agent-lead-editor-data";
 import {
   getAgentSalonStatusClass,
   getAgentSalonStatusLabel,
@@ -23,7 +23,6 @@ import {
   isAgentSalonLive,
 } from "@/lib/agent-salons";
 import { useRouter } from "next/navigation";
-import { getAgentEmailFast } from "@/lib/client-auth";
 
 type AgentSalon = {
   id: string;
@@ -51,25 +50,13 @@ export default function AgentSalons() {
   const fetchSalons = async () => {
     try {
       setLoading(true);
-      const email = getAgentEmailFast();
-
-      if (!email) {
-        toast.error("Please log in as an agent.");
+      const res = await fetchAgentSalonsList();
+      if (!res.success) {
+        toast.error(res.error || "Please log in as an agent.");
         return;
       }
-
-      setAgentEmail(email);
-
-      const { data, error } = await supabase
-        .from("salons")
-        .select(
-          "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at"
-        )
-        .eq("assign_to", email)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setSalons(data || []);
+      setAgentEmail(res.agentEmail);
+      setSalons(res.salons);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to load salons.";
       toast.error(message);

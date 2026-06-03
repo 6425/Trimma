@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import { createClient } from "@supabase/supabase-js";
+import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
 // Initialize Supabase Client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -9,8 +10,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(req: Request) {
   try {
+    const adminAuth = await requirePlatformAdminFromCookies();
+    if ("error" in adminAuth) {
+      return NextResponse.json({ error: adminAuth.error }, { status: 401 });
+    }
+
     const { province, district, city, category, limit } = await req.json();
-    const apiKey = process.env.GOOGLE_API || "AIzaSyAyiQbm46o6YH8m_vidvcw_FMan_jA56MQ";
+    const apiKey = process.env.GOOGLE_API;
 
     if (!apiKey) {
       return NextResponse.json({ error: "Google API key is not configured" }, { status: 500 });

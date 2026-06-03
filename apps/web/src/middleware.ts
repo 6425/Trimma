@@ -81,7 +81,7 @@ export async function middleware(req: NextRequest) {
     }
 
     const loginUrl = new URL(loginPath, req.url);
-    loginUrl.searchParams.set("redirect", pathname);
+    loginUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -95,12 +95,18 @@ export async function middleware(req: NextRequest) {
 
   // 4. Role Validation (RBAC)
   const userRole = (roleCookie?.value as UserRole) || null;
-  
+
   if (!hasPermission(userRole, pathname)) {
     if (pathname.startsWith("/admin")) {
       const loginUrl = new URL("/admin/login", req.url);
-      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("redirectTo", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+    // Signed-in users hitting /agent with stale or missing role cookie: refresh session cookies
+    if (pathname.startsWith("/agent")) {
+      const refreshUrl = new URL("/auth/callback", req.url);
+      refreshUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(refreshUrl);
     }
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }

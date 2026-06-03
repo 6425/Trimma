@@ -1,10 +1,9 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import { isAgentSalonLive, getAgentSalonStatusLabel } from "@/lib/agent-salons";
 import { formatRelativeTime } from "@/lib/dashboard-stats";
-import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 
 type AssignedSalon = {
   id: string;
@@ -27,37 +26,25 @@ type AgentTask = {
 
 export async function getAgentDashboardData() {
   try {
-    const accessToken = await getSalonAccessTokenFromCookies();
-    if (!accessToken) {
-      return { success: false, error: "Not authenticated" };
+    const auth = await requireAgentFromCookies();
+    if ("error" in auth) {
+      return {
+        success: false,
+        error: auth.error,
+        role: "role" in auth ? auth.role : undefined,
+      };
     }
 
     const supabase = createSupabaseAdminClient();
-    const { data: authData } = await supabase.auth.getUser(accessToken);
-    const user = authData.user;
-    
-    if (!user || !user.email) {
-      return { success: false, error: "Not authenticated" };
-    }
+    const email = auth.email;
 
-    const email = user.email;
-    const userId = user.id;
-
-    // Fetch user name
     const { data: userData } = await supabase
       .from("users")
       .select("full_name")
       .eq("email", email)
       .maybeSingle();
 
-    const agentName = userData?.full_name || user.user_metadata?.full_name || email.split("@")[0];
-
-    const role = await resolveTrimmaUserRole(user.id, email);
-    const isAllowedAgent = role === "agent" || role === "admin";
-
-    if (!isAllowedAgent) {
-      return { success: false, error: "Unauthorized access", role };
-    }
+    const agentName = userData?.full_name || email.split("@")[0];
 
     // Fetch parallel data
     const [

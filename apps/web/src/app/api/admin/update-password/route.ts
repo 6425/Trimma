@@ -1,8 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
 export async function POST(request: Request) {
   try {
+    const adminAuth = await requirePlatformAdminFromCookies();
+    if ("error" in adminAuth) {
+      return NextResponse.json({ error: adminAuth.error }, { status: 401 });
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {

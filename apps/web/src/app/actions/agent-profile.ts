@@ -1,19 +1,12 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
-
-async function getAuthedUser() {
-  const accessToken = await getSalonAccessTokenFromCookies();
-  if (!accessToken) return null;
-  const supabase = createSupabaseAdminClient();
-  const { data } = await supabase.auth.getUser(accessToken);
-  return data.user || null;
-}
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 
 export async function getAgentProfile() {
-  const user = await getAuthedUser();
-  if (!user) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
+  const user = { email: auth.email, id: auth.userId };
 
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
@@ -66,8 +59,9 @@ export async function getAgentProfile() {
 }
 
 export async function updateAgentProfile(input: { fullName: string; phone: string }) {
-  const user = await getAuthedUser();
-  if (!user) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
+  const user = { email: auth.email };
 
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
@@ -91,11 +85,11 @@ export async function uploadAgentAvatar(formData: FormData) {
     return { success: false as const, error: "No file provided" };
   }
 
-  const user = await getAuthedUser();
-  if (!user) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
 
   const fileExt = file.name.split(".").pop();
-  const fileName = `agent-avatars/${user.id}-${Date.now()}.${fileExt}`;
+  const fileName = `agent-avatars/${auth.userId}-${Date.now()}.${fileExt}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const supabase = createSupabaseAdminClient();
@@ -120,7 +114,7 @@ export async function uploadAgentAvatar(formData: FormData) {
   const { error: updateError } = await supabase
     .from("users")
     .update({ avatar_url: avatarUrl })
-    .eq("email", user.email);
+    .eq("email", auth.email);
 
   if (updateError) {
     return { success: false as const, error: updateError.message };

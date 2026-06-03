@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requirePlatformAdminFromCookies } from '@/lib/server-admin-auth';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -42,6 +43,11 @@ const FALLBACK_SERVICES = [
 
 export async function POST(request: Request) {
   try {
+    const adminAuth = await requirePlatformAdminFromCookies();
+    if ("error" in adminAuth) {
+      return NextResponse.json({ error: adminAuth.error }, { status: 401 });
+    }
+
     const { salonId, category, actorEmail } = await request.json();
 
     if (!salonId) {

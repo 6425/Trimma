@@ -1,7 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 
 export async function saveAgentLeadData(
   salonId: string,
@@ -15,8 +15,8 @@ export async function saveAgentLeadData(
   newStatus: string | null,
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null
 ) {
-  const accessToken = await getSalonAccessTokenFromCookies();
-  if (!accessToken) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabaseAdmin = createSupabaseAdminClient();
 
@@ -98,8 +98,8 @@ export async function createAgentLeadData(
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null,
   agentEmail: string
 ) {
-  const accessToken = await getSalonAccessTokenFromCookies();
-  if (!accessToken) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabaseAdmin = createSupabaseAdminClient();
 
@@ -162,6 +162,11 @@ export async function createAgentLeadData(
 }
 
 export async function fetchAgentGlobals() {
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) {
+    return { success: false as const, error: auth.error };
+  }
+
   const supabaseAdmin = createSupabaseAdminClient();
   const [svcRes, staffRes, amenitiesRes] = await Promise.all([
     supabaseAdmin.from("global_services").select("*, categories(name)").eq("is_active", true),

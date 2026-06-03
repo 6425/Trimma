@@ -1,7 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 
 function slugify(value: string) {
   const base = value
@@ -23,13 +23,11 @@ export async function createLeadFromGooglePlaces(businessData: {
   logo_url: string | null;
   phone: string | null;
 }) {
-  const accessToken = await getSalonAccessTokenFromCookies();
-  if (!accessToken) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: authData } = await supabaseAdmin.auth.getUser(accessToken);
-  const user = authData.user;
-  if (!user?.email) return { success: false as const, error: "Agent email not found" };
+  const user = { email: auth.email };
 
   try {
     // 1. Check if place_id already exists to prevent duplicates

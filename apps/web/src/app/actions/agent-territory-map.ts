@@ -1,19 +1,12 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
-
-async function getAuthedUser() {
-  const accessToken = await getSalonAccessTokenFromCookies();
-  if (!accessToken) return null;
-  const supabase = createSupabaseAdminClient();
-  const { data } = await supabase.auth.getUser(accessToken);
-  return data.user || null;
-}
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 
 export async function getAgentMapData() {
-  const user = await getAuthedUser();
-  if (!user) return { success: false as const, error: "Not authenticated" };
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
+  const user = { email: auth.email };
 
   const supabase = createSupabaseAdminClient();
   
