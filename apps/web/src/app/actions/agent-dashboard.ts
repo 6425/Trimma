@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
 import { isAgentSalonLive, getAgentSalonStatusLabel } from "@/lib/agent-salons";
 import { formatRelativeTime } from "@/lib/dashboard-stats";
+import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 
 type AssignedSalon = {
   id: string;
@@ -11,6 +12,7 @@ type AssignedSalon = {
   address: string | null;
   phone: string | null;
   rating: number | null;
+
   onboarding_status: string | null;
   created_at: string;
 };
@@ -50,7 +52,6 @@ export async function getAgentDashboardData() {
 
     const agentName = userData?.full_name || user.user_metadata?.full_name || email.split("@")[0];
 
-    const { resolveTrimmaUserRole } = await import("@/lib/trimma-role");
     const role = await resolveTrimmaUserRole(user.id, email);
     const isAllowedAgent = role === "agent" || role === "admin";
 
