@@ -28,7 +28,7 @@ import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
-import { Plus, Users, Globe, ClipboardList } from "lucide-react";
+import { Plus, Users, Globe, ClipboardList, Tag } from "lucide-react";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -868,10 +868,124 @@ export default function SalonProfilePage() {
               </div>
             </div>
 
-            {/* Section 3: Salon Amenities */}
+            {/* Section 3: Included Services */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">3</span>
+                Included Services
+              </h3>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
+                <span className="text-xs font-bold text-zinc-400">
+                  {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
+                </span>
+              </div>
+              <div className="flex flex-col gap-2 max-h-80 overflow-y-auto p-4 bg-zinc-50 rounded-2xl border border-zinc-100 custom-scrollbar">
+                {selectedCategories.length === 0 ? (
+                  <span className="text-xs text-zinc-400 font-medium p-1">Please select a category first to view available services.</span>
+                ) : globalServices.filter(s => selectedCategories.includes(s.category)).length === 0 ? (
+                  <span className="text-xs text-zinc-400 font-medium p-1">No services available for the selected categories.</span>
+                ) : (
+                  globalServices.filter(s => selectedCategories.includes(s.category)).map(s => {
+                    const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
+                    return (
+                      <div 
+                        key={s.id}
+                        className={`p-4 rounded-xl border transition-colors ${
+                          config.enabled ? 'bg-white border-brand shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <label className="flex items-center gap-3 cursor-pointer mb-2">
+                          <input 
+                            type="checkbox"
+                            checked={config.enabled}
+                            onChange={(e) => {
+                              const currentlySelected = Object.values(selectedServices).filter(svc => svc.enabled).length;
+                              if (e.target.checked && currentlySelected >= 6) {
+                                toast.error("You can only select up to 6 services. Upgrade to a premium plan to add more.");
+                                return;
+                              }
+                              setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }));
+                            }}
+                            className="rounded border-zinc-300 text-brand focus:ring-brand w-5 h-5"
+                          />
+                          <span className="text-sm font-bold text-zinc-900">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
+                        </label>
+                        {config.enabled && (
+                          <div className="flex gap-4 pl-8 mt-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Price</label>
+                              <Input 
+                                type="number" 
+                                value={config.price} 
+                                onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
+                                className="h-9 w-28 px-3 text-sm font-bold border-zinc-200 rounded-xl"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Duration (m)</label>
+                              <Input 
+                                type="number" 
+                                value={config.duration} 
+                                onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
+                                className="h-9 w-28 px-3 text-sm font-bold border-zinc-200 rounded-xl"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Section 4: Add Staff */}
+            <div className="space-y-6 pt-4">
+              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">4</span>
+                Add Staff
+              </h3>
+              {staffToAdd.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  {staffToAdd.map((st, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 bg-zinc-50 border border-zinc-200 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-white font-black text-sm uppercase">
+                          {st.name.substring(0,2)}
+                        </div>
+                        <div>
+                          <h5 className="text-sm font-bold text-zinc-900">{st.name}</h5>
+                          <p className="text-xs text-zinc-500 font-medium">{st.role}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-zinc-400 hover:text-red-500 p-2">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  if (staffToAdd.length >= 2) {
+                    toast.error("You can only add up to 2 staff members. Upgrade to a premium plan to add more.");
+                    return;
+                  }
+                  setIsStaffModalOpen(true);
+                }}
+                className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-14 rounded-2xl"
+              >
+                <Plus className="w-5 h-5 mr-2 text-zinc-400" /> Add Professional
+              </Button>
+            </div>
+
+            {/* Section 5: Salon Amenities */}
+            <div className="space-y-6 pt-4">
+              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">5</span>
                 Available Amenities
               </h3>
               <div className="bg-zinc-50/50 border border-slate-100 rounded-2xl p-6">
@@ -930,10 +1044,10 @@ export default function SalonProfilePage() {
               </div>
             </div>
 
-            {/* Section 4: Store Operational Status */}
+            {/* Section 6: Store Operational Status */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">4</span>
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">6</span>
                 Operational Open Status
               </h3>
               <div className="flex items-center justify-between bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
