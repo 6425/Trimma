@@ -514,11 +514,10 @@ export default function SalonProfilePage() {
 
             {/* Hidden File Inputs */}
             <input type="file" ref={logoInputRef} onChange={(e) => handleFileChange(e, "logo")} accept="image/*" className="hidden" />
-            <input type="file" ref={coverInputRef} onChange={(e) => handleFileChange(e, "cover")} accept="image/*" className="hidden" />
             <input type="file" ref={heroInputRef} onChange={(e) => handleFileChange(e, "hero")} accept="image/*" className="hidden" />
             <input type="file" ref={galleryInputRef} onChange={(e) => handleFileChange(e, "gallery")} accept="image/*" className="hidden" />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Card 1: Logo Uploader */}
               <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group">
@@ -528,7 +527,7 @@ export default function SalonProfilePage() {
                   </span>
                   
                   {/* Preview / Placeholder */}
-                  <div className="w-24 h-24 mx-auto rounded-full bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
+                  <div className="w-32 h-32 mx-auto rounded-full bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
                     {logoUrl ? (
                       <>
                         <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
@@ -563,48 +562,7 @@ export default function SalonProfilePage() {
                 </Button>
               </div>
 
-              {/* Card 2: Cover Banner Uploader */}
-              <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group">
-                <div className="space-y-3 w-full">
-                  <span className="inline-flex bg-zinc-100 text-zinc-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    {SIZING_INFO.cover.label}
-                  </span>
-                  
-                  {/* Preview / Placeholder */}
-                  <div className="h-24 w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
-                    {coverUrl ? (
-                      <>
-                        <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
-                        <button 
-                          type="button"
-                          onClick={() => removeImage("cover")}
-                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </>
-                    ) : (
-                      <ImageIcon className="w-8 h-8 text-zinc-300" />
-                    )}
-                  </div>
 
-                  <div className="text-[11px] text-zinc-400 space-y-0.5">
-                    <p className="font-bold text-zinc-600">{SIZING_INFO.cover.resolution}</p>
-                    <p>{SIZING_INFO.cover.sizeText}</p>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => coverInputRef.current?.click()}
-                  disabled={uploadingType === "cover"}
-                  className="mt-4 w-full rounded-xl h-10 border-zinc-200 text-zinc-700 font-bold text-xs flex items-center justify-center gap-1.5"
-                >
-                  {uploadingType === "cover" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} 
-                  Upload Cover
-                </Button>
-              </div>
 
               {/* Card 3: Hero Header Uploader */}
               <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group">
