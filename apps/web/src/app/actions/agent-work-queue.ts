@@ -39,13 +39,19 @@ export async function fetchAgentWorkQueue(agentEmail: string) {
 
       if (lead.onboarding_status === "ASSIGNED_TO_AGENT") {
         priority = "HIGH";
-        action = "Verify Lead Details";
-      } else if (lead.onboarding_status === "UNVERIFIED") {
+        action = "Publish Lead & Disable Booking";
+      } else if (lead.onboarding_status === "PUBLISHED_UNBOOKABLE") {
         priority = "HIGH";
-        action = "Verify Profile Data";
-      } else if (lead.onboarding_status === "CONTACTED") {
+        action = "Send Owner Invitation";
+      } else if (lead.onboarding_status === "OWNER_INVITED") {
         priority = "LOW";
-        action = "Schedule Follow-up";
+        action = "Wait for Owner Activation";
+      } else if (lead.onboarding_status === "OWNER_ACTIVATED") {
+        priority = "HIGH";
+        action = "Approve & Enable Booking";
+      } else if (lead.onboarding_status === "PENDING_ADMIN_VERIFICATION") {
+        priority = "LOW";
+        action = "Wait for Admin Verification";
       }
 
       const daysSinceUpdate = (new Date().getTime() - new Date(lead.updated_at || lead.created_at).getTime()) / (1000 * 3600 * 24);

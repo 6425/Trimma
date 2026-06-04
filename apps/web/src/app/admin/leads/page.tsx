@@ -1086,7 +1086,7 @@ export default function Leads() {
     } else if (activeTab === "draft") {
       return ["AUTO_PROVISIONED", "DRAFT_REVIEW"].includes(status);
     } else if (activeTab === "pipeline") {
-      return ["ASSIGNED_TO_AGENT", "AGENT_VERIFIED", "OWNER_INVITED", "OWNER_ACTIVATED"].includes(status);
+      return ["ASSIGNED_TO_AGENT", "PUBLISHED_UNBOOKABLE", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(status);
     } else if (activeTab === "archived") {
       return ["VERIFIED", "REJECTED", "ON_HOLD"].includes(status);
     }
@@ -1306,7 +1306,7 @@ export default function Leads() {
                   : "text-zinc-500 hover:text-zinc-950"
               }`}
             >
-              3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "AGENT_VERIFIED", "OWNER_INVITED", "OWNER_ACTIVATED"].includes(l.onboarding_status || "DISCOVERED")).length})
+              3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "PUBLISHED_UNBOOKABLE", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(l.onboarding_status || "DISCOVERED")).length})
             </button>
             <button
               onClick={() => setActiveTab("archived")}
@@ -1857,7 +1857,7 @@ export default function Leads() {
                             </Button>
                           </>
                         )}
-                        {lead.onboarding_status === "OWNER_ACTIVATED" && (
+                        {lead.onboarding_status === "PENDING_ADMIN_VERIFICATION" && (
                           <>
                             <Button
                               onClick={() => handleVerifySalon(lead)}

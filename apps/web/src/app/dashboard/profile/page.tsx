@@ -14,6 +14,7 @@ import {
   saveSalonProfile,
   updateSalonMediaFields,
   uploadSalonProfileImage,
+  saveOwnerVerificationData
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
@@ -217,7 +218,6 @@ export default function SalonProfilePage() {
             globalAmenity?.type ?? "boolean",
             sa.value
           );
-        });
         });
         setSalonAmenities(amenitiesMap);
       }
@@ -458,7 +458,7 @@ export default function SalonProfilePage() {
         salonAmenities
       );
 
-      if (!result.success) throw new Error(result.error);
+      if (!result.success) throw new Error("error" in result ? (result as any).error : "Failed to verify salon");
       
       toast.success("Salon Profile sent for verification successfully!");
       setOnboardingStatus("OWNER_ACTIVATED");
@@ -504,7 +504,8 @@ export default function SalonProfilePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">{name || "Salon Profile Studio"}</h1>
+            <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">{name || "Salon Profile Studio"}</h1>
+          </div>
           <p className="text-zinc-500 text-sm mt-1">Manage your salon&apos;s public presence, images, and branding.</p>
         </div>
         
@@ -536,7 +537,6 @@ export default function SalonProfilePage() {
             )}
           </Button>
         </div>
-      </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1054,30 +1054,29 @@ export default function SalonProfilePage() {
               </div>
             </div>
           </div>
-
         </div>
+
+        {isStaffModalOpen && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
+            <AddProfessionalForm
+              onCancel={() => setIsStaffModalOpen(false)}
+              onSubmit={(staffData) => {
+                setStaffToAdd(prev => [...prev, staffData]);
+                setIsStaffModalOpen(false);
+              }}
+              globalRoles={globalStaffRoles}
+              salonServices={Object.keys(selectedServices).filter(id => selectedServices[id].enabled).map(id => {
+                const gs = globalServices.find(g => g.id === id);
+                return {
+                  id,
+                  name: gs?.name || "",
+                  category: gs?.category || ""
+                };
+              })}
+            />
+          </div>
+        )}
       </div>
     </div>
-    
-            {isStaffModalOpen && (
-              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-                <AddProfessionalForm
-                  onCancel={() => setIsStaffModalOpen(false)}
-                  onSubmit={(staffData) => {
-                    setStaffToAdd(prev => [...prev, staffData]);
-                    setIsStaffModalOpen(false);
-                  }}
-                  globalRoles={globalStaffRoles}
-                  salonServices={Object.keys(selectedServices).filter(id => selectedServices[id].enabled).map(id => {
-                    const gs = globalServices.find(g => g.id === id);
-                    return {
-                      id,
-                      name: gs?.name || "",
-                      category: gs?.category || ""
-                    };
-                  })}
-                />
-              </div>
-            )}
   );
 }

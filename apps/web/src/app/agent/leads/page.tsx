@@ -148,7 +148,7 @@ function AgentLeads() {
   const [updating, setUpdating] = useState(false);
   const [agentEmail, setAgentEmail] = useState("");
   const [agentName, setAgentName] = useState("");
-  const [activeTab, setActiveTab] = useState<'assigned' | 'field_verified' | 'completed'>('assigned');
+  const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'verified' | 'invited'>('all');
   const openedSalonRef = useRef<string | null>(null);
 
   const [formData, setFormData] = useState<any>({
@@ -445,13 +445,8 @@ function AgentLeads() {
     }
   };
 
-  const handleCompleteVerification = async () => {
+  const handlePublish = async () => {
     if (!selectedLead) return;
-    if (!formData.owner_gmail || !formData.phone) {
-      toast.error("Owner Gmail and Phone number are required to send an invite!");
-      return;
-    }
-    
     try {
       setUpdating(true);
       
@@ -475,8 +470,12 @@ function AgentLeads() {
         price_level: formData.price_level || null,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
-        owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
-        agent_notes: formData.agent_notes || null
+        owner_gmail: formData.owner_gmail ? formData.owner_gmail.toLowerCase().trim() : null,
+        agent_notes: formData.agent_notes || null,
+        onboarding_status: "PUBLISHED_UNBOOKABLE",
+        public_visibility: true,
+        booking_enabled: false,
+        status: "active"
       };
 
       const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
@@ -487,10 +486,46 @@ function AgentLeads() {
         servicesData,
         finalStaffToAdd,
         agentEmail,
-        "AGENT_VERIFIED",
+        "PUBLISHED_UNBOOKABLE",
         salonAmenities
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
+
+      toast.success("Salon published successfully (Booking disabled).");
+      setIsModalOpen(false);
+      setSelectedLead(null);
+      fetchLeads();
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleSendInvitation = async () => {
+    if (!selectedLead) return;
+    if (!formData.owner_gmail) {
+      toast.error("Owner Gmail is required to send an invitation.");
+      return;
+    }
+    
+    try {
+      setUpdating(true);
+
+      const updatePayload: any = {
+        onboarding_status: "OWNER_INVITED",
+      };
+
+      const { success, error } = await saveAgentLeadData(
+        selectedLead.id,
+        updatePayload,
+        null,
+        null,
+        agentEmail,
+        "OWNER_INVITED",
+        salonAmenities
+      );
+      if (!success) throw new Error(error || "Failed to update status");
 
       const res = await fetch("/api/invite-owner", {
         method: "POST",
@@ -507,8 +542,7 @@ function AgentLeads() {
         throw new Error(err.error || "Failed to send email invite");
       }
 
-      // Dispatch WhatsApp message
-      if (formData.phone && formData.owner_gmail) {
+      if (formData.phone) {
         const waRes = await sendOnboardingInviteAlert(
           selectedLead.id, 
           formData.phone, 
@@ -521,7 +555,7 @@ function AgentLeads() {
         }
       }
       
-      toast.success("Verification complete! Invites sent to owner.");
+      toast.success("Invites sent to owner!");
       setIsModalOpen(false);
       setSelectedLead(null);
       fetchLeads();
@@ -538,7 +572,7 @@ function AgentLeads() {
       setUpdating(true);
       
       const updatePayload: any = {
-        onboarding_status: "AGENT_APPROVED",
+        onboarding_status: "PENDING_ADMIN_VERIFICATION",
         booking_enabled: true
       };
 
@@ -548,7 +582,7 @@ function AgentLeads() {
         null,
         null,
         agentEmail,
-        "AGENT_APPROVED",
+        "PENDING_ADMIN_VERIFICATION",
         salonAmenities
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
@@ -564,7 +598,7 @@ function AgentLeads() {
         }
       }
       
-      toast.success("Salon approved and is now live!");
+      toast.success("Salon approved and sent to Admin for Verification! (Booking enabled)");
       setIsModalOpen(false);
       setSelectedLead(null);
       fetchLeads();
@@ -576,10 +610,10 @@ function AgentLeads() {
   };
 
   const tabLeads = leads.filter(l => {
-    const status = l.onboarding_status || "ASSIGNED_TO_AGENT";
-    if (activeTab === "assigned") return status === "ASSIGNED_TO_AGENT";
-    if (activeTab === "field_verified") return status === "AGENT_VERIFIED";
-    if (activeTab === "completed") return ["OWNER_INVITED", "OWNER_ACTIVATED", "AGENT_APPROVED", "VERIFIED"].includes(status);
+    if (activeTab === "all") return true;
+    if (activeTab === "assigned") return l.onboarding_status === "ASSIGNED_TO_AGENT";
+    if (activeTab === "verified") return l.onboarding_status === "PUBLISHED_UNBOOKABLE";
+    if (activeTab === "invited") return ["OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(l.onboarding_status);
     return true;
   });
 
@@ -618,7 +652,7 @@ function AgentLeads() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Field Verification Editor</h1>
+          <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Salon Creation</h1>
           <p className="text-zinc-500 text-sm mt-1">Verify salon details, set owner Gmail, and send invites. See all assigned salons in <Link href="/agent/salons" className="text-brand font-semibold hover:underline">My Salons</Link>.</p>
         </div>
       </div>
@@ -639,7 +673,7 @@ function AgentLeads() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Verified</p>
-            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["AGENT_VERIFIED","OWNER_INVITED","OWNER_ACTIVATED","AGENT_APPROVED","VERIFIED"].includes(l.onboarding_status)).length}</p>
+            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["PUBLISHED_UNBOOKABLE","OWNER_INVITED","OWNER_ACTIVATED","PENDING_ADMIN_VERIFICATION","VERIFIED"].includes(l.onboarding_status)).length}</p>
           </div>
         </Card>
         <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl">
@@ -648,7 +682,7 @@ function AgentLeads() {
           </div>
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Owner Invited</p>
-            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","AGENT_APPROVED","VERIFIED"].includes(l.onboarding_status)).length}</p>
+            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","PENDING_ADMIN_VERIFICATION","VERIFIED"].includes(l.onboarding_status)).length}</p>
           </div>
         </Card>
         <div className="relative">
@@ -679,20 +713,22 @@ function AgentLeads() {
               Assigned ({leads.filter(l => l.onboarding_status === "ASSIGNED_TO_AGENT").length})
             </button>
             <button
-              onClick={() => setActiveTab("field_verified")}
+              onClick={() => setActiveTab("verified")}
               className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                activeTab === "field_verified" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
+                // @ts-ignore
+                activeTab === "verified" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
               }`}
             >
-              Verified ({leads.filter(l => l.onboarding_status === "AGENT_VERIFIED").length})
+              Published
             </button>
             <button
-              onClick={() => setActiveTab("completed")}
+              onClick={() => setActiveTab("invited")}
               className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                activeTab === "completed" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
+                // @ts-ignore
+                activeTab === "invited" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
               }`}
             >
-              Invited/Activated ({leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","AGENT_APPROVED","VERIFIED"].includes(l.onboarding_status)).length})
+              Invited/Owner Action
             </button>
           </div>
         </div>
@@ -1205,24 +1241,33 @@ function AgentLeads() {
                     {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                   </Button>
 
-                  {["ASSIGNED_TO_AGENT", "AGENT_VERIFIED"].includes(formData.onboarding_status) && (
+                  {["ASSIGNED_TO_AGENT", "DISCOVERED"].includes(formData.onboarding_status) && (
                     <Button
-                      onClick={handleCompleteVerification}
+                      onClick={handlePublish}
                       disabled={updating}
-                      className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-zinc-800 hover:bg-black text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Draft Salon Created & Send for Review
+                      <CheckCircle2 className="w-4 h-4" /> Save & Publish
+                    </Button>
+                  )}
+                  
+                  {["PUBLISHED_UNBOOKABLE"].includes(formData.onboarding_status) && (
+                    <Button
+                      onClick={handleSendInvitation}
+                      disabled={updating || !formData.phone || !formData.owner_gmail}
+                      className="bg-brand hover:bg-emerald-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Send Invitation
                     </Button>
                   )}
 
-                  {/* Agent Approval Button — only if OWNER_ACTIVATED */}
                   {formData.onboarding_status === "OWNER_ACTIVATED" && (
                     <Button
                       onClick={handleAgentApproval}
                       disabled={updating}
                       className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Approve & Go Live
+                      <CheckCircle2 className="w-4 h-4" /> Enable Booking & Send to Admin
                     </Button>
                   )}
 
@@ -1233,9 +1278,9 @@ function AgentLeads() {
                     </Badge>
                   )}
 
-                  {["AGENT_APPROVED", "VERIFIED"].includes(formData.onboarding_status) && (
+                  {["PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(formData.onboarding_status) && (
                     <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-[10px] px-3 py-2">
-                      ✅ Salon Live
+                      ✅ Booking Enabled
                     </Badge>
                   )}
                 </div>
