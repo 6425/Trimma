@@ -572,7 +572,7 @@ export default function SalonProfilePage() {
                   </span>
                   
                   {/* Preview / Placeholder */}
-                  <div className="h-24 w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
+                  <div className="h-32 w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
                     {heroUrl ? (
                       <>
                         <img src={heroUrl} alt="Hero" className="w-full h-full object-cover" />
