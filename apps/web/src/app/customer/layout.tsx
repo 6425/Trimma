@@ -41,7 +41,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   ];
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] flex font-sans trimma-dark-context">
+    <div className="min-h-screen bg-zinc-50 flex font-sans">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -52,17 +52,17 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       )}
 
       {/* ── SIDEBAR (Desktop in-flow | Mobile sliding drawer) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
-        mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full lg:translate-x-0'
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-zinc-50 border-r border-black/10 flex flex-col transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
+        mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0'
       }`}>
 
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
+        <div className="h-16 flex items-center justify-between px-5 border-b border-black/10 shrink-0">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo iconSize={32} inverse />
+            <Logo iconSize={32} />
           </Link>
           <button
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close menu"
           >
@@ -81,7 +81,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
                     ? "bg-[#F5B700] text-black font-semibold"
-                    : "text-zinc-400 hover:bg-white/6 hover:text-white"
+                    : "text-zinc-500 hover:bg-black/5 hover:text-black"
                 }`}
               >
                 <span className={isActive ? "text-black" : "text-zinc-500"}>{item.icon}</span>
@@ -103,7 +103,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
                       ? "bg-[#F5B700] text-black font-semibold"
-                      : "text-zinc-400 hover:bg-white/6 hover:text-white"
+                      : "text-zinc-500 hover:bg-black/5 hover:text-black"
                   }`}
                 >
                   <span className={isActive ? "text-black" : "text-zinc-500"}>{item.icon}</span>
@@ -115,7 +115,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-white/8">
+        <div className="p-3 border-t border-black/10">
           <button
             type="button"
             onClick={handleLogout}
@@ -131,21 +131,21 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       <main className="flex-1 min-h-screen pb-20 lg:pb-0 flex flex-col min-w-0">
 
         {/* Mobile Top Header */}
-        <header className="h-16 bg-[#0B0B0B] border-b border-white/8 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
+        <header className="h-16 bg-zinc-50 border-b border-black/10 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo iconSize={32} inverse />
+            <Logo iconSize={32} />
           </Link>
           <div className="flex items-center gap-1.5">
             {/* Hamburger before bell */}
             <button
-              className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
             </button>
             {/* Bell */}
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors">
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
             </button>
@@ -159,7 +159,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       </main>
 
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-2 py-2 z-30">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-50 border-t border-black/10 flex justify-around items-center px-2 py-2 z-30">
         {bottomNavItems.map((item) => {
           const isActive = pathname === item.path || (item.path !== '/customer' && pathname.startsWith(item.path));
           return (
