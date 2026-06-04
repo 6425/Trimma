@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Users, Search, Percent, Trash2, Phone, Loader2, Edit, CheckCircle2, UserCheck, MapPin, TrendingUp, Plus, Award, DollarSign, ClipboardList, Check, X, Lock, AlertTriangle, History, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +84,20 @@ export default function AdminAgents() {
   const [selectedProvinceIds, setSelectedProvinceIds] = useState<string[]>([]);
   const [selectedDistrictIds, setSelectedDistrictIds] = useState<string[]>([]);
   const [selectedCityIds, setSelectedCityIds] = useState<string[]>([]);
+  const [assignedTerritoryFilter, setAssignedTerritoryFilter] = useState("all");
+
+  const filteredRegistryTerritories = useMemo(
+    () =>
+      agentTerritories.filter((t) => {
+        if (assignedTerritoryFilter !== "all" && t.territory_id !== assignedTerritoryFilter) {
+          return false;
+        }
+        if (!newTerritoryEmail) return true;
+        const agentEmail = t.agents?.user_email || "";
+        return agentEmail === newTerritoryEmail;
+      }),
+    [agentTerritories, assignedTerritoryFilter, newTerritoryEmail]
+  );
 
   const refreshTerritoryAssignments = async () => {
     try {
@@ -476,7 +490,7 @@ export default function AdminAgents() {
                   activeTab === 'territories' ? 'bg-white shadow-sm text-brand' : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5 inline mr-1" /> Territories
+                <MapPin className="w-3.5 h-3.5 inline mr-1" /> Territory Explorer
               </button>
               <button 
                 onClick={() => setActiveTab('ledger')}
@@ -790,15 +804,22 @@ export default function AdminAgents() {
 
           {/* TAB 3: TERRITORY CONTROLS */}
           {activeTab === 'territories' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+            <div className="space-y-4 animate-in fade-in duration-300">
+              <div>
+                <h2 className="text-lg font-black text-zinc-900 tracking-tight">Agent Territory Explorer</h2>
+                <p className="text-xs text-zinc-500 font-medium mt-0.5">
+                  Manage assigned territories per agent — same coverage agents see in their Assigned Territories dropdown.
+                </p>
+              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* Territory Assignment Creator */}
               <Card className="p-5 border border-slate-100 shadow-sm rounded-2xl bg-white h-fit">
                 <div className="pb-4 border-b border-slate-50 mb-4">
                   <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-brand" /> Map Coverage Allocation
+                    <MapPin className="w-4 h-4 text-brand" /> Coverage Allocation
                   </h3>
-                  <p className="text-[11px] text-zinc-500">Assign territories from the platform catalog to sales agents.</p>
+                  <p className="text-[11px] text-zinc-500">Add provinces, districts, or cities from the catalog to an agent&apos;s assigned list.</p>
                 </div>
 
                 <div className="space-y-4 text-xs font-semibold text-zinc-500">
@@ -810,6 +831,7 @@ export default function AdminAgents() {
                       onChange={(e) => {
                         const email = e.target.value;
                         setNewTerritoryEmail(email);
+                        setAssignedTerritoryFilter("all");
                         const agent = agents.find(a => a.email === email);
                         if (agent) {
                           const assignedIds = agentTerritories
@@ -829,8 +851,30 @@ export default function AdminAgents() {
                     </select>
                   </div>
 
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-1.5">
+                      <MapPin className="w-3 h-3" /> Assigned Territories
+                    </label>
+                    <select
+                      value={assignedTerritoryFilter}
+                      onChange={(e) => setAssignedTerritoryFilter(e.target.value)}
+                      disabled={newTerritoryIds.length === 0}
+                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
+                    >
+                      <option value="all">All Assigned Territories</option>
+                      {newTerritoryIds.map((id) => {
+                        const t = territoryCatalog.find((tc) => tc.id === id);
+                        return (
+                          <option key={id} value={id}>
+                            {t?.name || id}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
                   <div className="space-y-3">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Select Territories</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Add from Catalog</label>
                     
                     {/* Cascading Dropdowns */}
                     <div className="grid grid-cols-1 gap-2">
@@ -925,8 +969,8 @@ export default function AdminAgents() {
               <Card className="md:col-span-2 p-5 border border-slate-100 shadow-sm rounded-2xl bg-white flex flex-col">
                 <div className="pb-4 border-b border-slate-50 mb-4 flex items-center justify-between">
                   <div>
-                    <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight">Active Map Territory Coverage</h3>
-                    <p className="text-[11px] text-zinc-500">List of geographic zones currently allocated to discoverers.</p>
+                    <h3 className="font-extrabold text-zinc-900 text-sm tracking-tight">Assigned Territories Registry</h3>
+                    <p className="text-[11px] text-zinc-500">All territory rows synced to each agent&apos;s Territory Explorer dropdown.</p>
                   </div>
                   
                   {/* Conflict model alert callout */}
@@ -947,14 +991,16 @@ export default function AdminAgents() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-50 font-semibold text-zinc-600">
-                      {agentTerritories.length === 0 ? (
+                      {filteredRegistryTerritories.length === 0 ? (
                         <tr>
                           <td colSpan={5} className="text-center py-14 text-zinc-700 italic">
-                            No boundaries assigned yet.
+                            {agentTerritories.length === 0
+                              ? "No boundaries assigned yet."
+                              : "No territories match this agent or filter."}
                           </td>
                         </tr>
                       ) : (
-                        agentTerritories.map((t) => {
+                        filteredRegistryTerritories.map((t) => {
                           const agentEmail = t.agents?.user_email || "";
                           const ag = agents.find((a) => a.email === agentEmail);
                           const territoryName = t.territories?.name || t.territory_id;
@@ -989,6 +1035,7 @@ export default function AdminAgents() {
                 </div>
               </Card>
 
+            </div>
             </div>
           )}
 

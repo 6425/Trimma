@@ -314,7 +314,7 @@ function ProfileFormContent() {
                 
                 {/* TERRITORY */}
                 <div className="space-y-2.5">
-                  <Label htmlFor="territory" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Assigned Territory <span className="text-[9px] text-zinc-400 normal-case">(Locked)</span></Label>
+                  <Label htmlFor="territory" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Assigned Territories <span className="text-[9px] text-zinc-400 normal-case">(Locked)</span></Label>
                   <div className="relative flex items-center">
                     <MapPin className="absolute left-3.5 w-4 h-4 text-zinc-400" />
                     <Input 

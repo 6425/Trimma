@@ -2,6 +2,11 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import {
+  buildAgentTerritories,
+  findAgentRecord,
+  formatAgentTerritoryLabel,
+} from "@/lib/agent-territory-resolve";
 
 export async function getAgentProfile() {
   const auth = await requireAgentFromCookies();
@@ -24,27 +29,9 @@ export async function getAgentProfile() {
     return { success: false as const, error: error.message };
   }
 
-  // Get agent's territory
-  let territory = "Unassigned";
-  const { data: agentData } = await supabase
-    .from("agents")
-    .select("id")
-    .eq("user_email", data.email)
-    .maybeSingle();
-
-  if (agentData?.id) {
-    const { data: territoryData } = await supabase
-      .from("agent_territories")
-      .select("territories ( name )")
-      .eq("agent_id", agentData.id);
-
-    if (territoryData && territoryData.length > 0) {
-      territory = territoryData
-        .map((t: any) => t.territories?.name)
-        .filter(Boolean)
-        .join(" · ") || "Unassigned";
-    }
-  }
+  const agentRow = await findAgentRecord(supabase, data.email, auth.userId);
+  const territoryList = await buildAgentTerritories(supabase, data.email, agentRow);
+  const territory = formatAgentTerritoryLabel(territoryList);
 
   return {
     success: true as const,

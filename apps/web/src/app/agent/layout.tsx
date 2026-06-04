@@ -62,7 +62,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       title: "Salons",
       items: [
         { name: "My Salons", path: "/agent/salons", icon: <Building2 className="w-4 h-4" /> },
-        { name: "My Territory", path: "/agent/territory", icon: <MapPin className="w-4 h-4" /> },
+        { name: "Territory Explorer", path: "/agent/territory", icon: <MapPin className="w-4 h-4" /> },
         { name: "Add Manual Lead", path: "/agent/leads/new", icon: <UserPlus className="w-4 h-4" /> },
         { name: "AI Leads", path: "/agent/leads", icon: <KanbanSquare className="w-4 h-4" /> },
       ]

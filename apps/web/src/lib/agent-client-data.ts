@@ -9,6 +9,7 @@ import type { WorkItem } from "@/app/actions/agent-work-queue";
 import {
   buildAgentTerritories,
   findAgentRecord,
+  formatAgentTerritoryLabel,
   resolveAgentMapAgentId,
   territorySearchOrClause,
 } from "@/lib/agent-territory-resolve";
@@ -103,23 +104,10 @@ export async function loadAgentDashboardFromClient() {
     supabase.from("commission_ledger").select("amount, status").eq("agent_email", email),
   ]);
 
-  let territoryLabel = "No territory assigned";
-  if (agentProfile?.id) {
-    const { data: territoryData } = await supabase
-      .from("agent_territories")
-      .select("territories ( name, type )")
-      .eq("agent_id", agentProfile.id);
-    if (territoryData?.length) {
-      const labels = territoryData
-        .map((row) => {
-          const joined = row.territories as { name?: string } | { name?: string }[] | null;
-          if (Array.isArray(joined)) return joined[0]?.name;
-          return joined?.name;
-        })
-        .filter((name): name is string => Boolean(name));
-      if (labels.length > 0) territoryLabel = labels.join(" · ");
-    }
-  }
+  const agentRow = await findAgentRecord(supabase, email, auth.userId);
+  const territoryLabel = formatAgentTerritoryLabel(
+    await buildAgentTerritories(supabase, email, agentRow ?? agentProfile)
+  );
 
   const salons = salonRows || [];
   const hotLeads = salons.slice(0, 3);
@@ -178,32 +166,10 @@ export async function fetchAgentProfileClient() {
 
   if (error) return { success: false as const, error: error.message };
 
-  let territory = "Unassigned";
-  const { data: agentData } = await supabase
-    .from("agents")
-    .select("id, territory")
-    .eq("user_email", auth.email)
-    .maybeSingle();
-
-  if (agentData?.id) {
-    const { data: territoryData } = await supabase
-      .from("agent_territories")
-      .select("territories ( name )")
-      .eq("agent_id", agentData.id);
-    if (territoryData?.length) {
-      territory =
-        territoryData
-          .map((t) => {
-            const joined = t.territories as { name?: string } | { name?: string }[] | null;
-            if (Array.isArray(joined)) return joined[0]?.name;
-            return joined?.name;
-          })
-          .filter(Boolean)
-          .join(" · ") || "Unassigned";
-    }
-  } else if (agentData?.territory) {
-    territory = agentData.territory;
-  }
+  const agentRow = await findAgentRecord(supabase, auth.email, auth.userId);
+  const territory = formatAgentTerritoryLabel(
+    await buildAgentTerritories(supabase, auth.email, agentRow)
+  );
 
   return {
     success: true as const,

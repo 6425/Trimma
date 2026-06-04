@@ -353,7 +353,7 @@ export default function AdminAgentManagement() {
                                className="font-bold text-zinc-500 border-slate-200 hover:text-brand hover:bg-slate-50 h-8 px-2.5 rounded-lg text-[10px] gap-1"
                                onClick={() => handleEditAgent(agent)}
                              >
-                               <MapPin className="w-3.5 h-3.5" /> Territories
+                               <MapPin className="w-3.5 h-3.5" /> Assigned Territories
                              </Button>
                              <Button 
                                variant="outline" 
@@ -476,7 +476,7 @@ export default function AdminAgentManagement() {
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-black">
-              Edit Territories — {editingAgent?.users?.full_name}
+              Assigned Territories — {editingAgent?.users?.full_name}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-64 overflow-y-auto py-2">

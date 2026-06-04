@@ -60,7 +60,7 @@ function TerritoryExplorerContent() {
       }
 
       const res = await tryAgentData(getAgentMapData, getAgentMapDataClient, {
-        clientFirst: true,
+        clientFirst: false,
       });
       if (res.success) {
         setTerritories(
@@ -104,7 +104,7 @@ function TerritoryExplorerContent() {
       const res = await tryAgentData(
         () => searchBusinessesInTerritories(catsToSearch, terrIds),
         () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds),
-        { clientFirst: true }
+        { clientFirst: false }
       );
       
       if (!res.success) throw new Error(res.error);

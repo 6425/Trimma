@@ -139,6 +139,11 @@ export async function buildAgentTerritories(
   return territories;
 }
 
+export function formatAgentTerritoryLabel(territories: AgentTerritoryItem[]): string {
+  if (!territories.length) return "No territory assigned";
+  return territories.map((t) => t.name).join(" · ");
+}
+
 export function resolveAgentMapAgentId(email: string, agentRow: AgentRow): string {
   return agentRow?.id || `virtual-${email}`;
 }

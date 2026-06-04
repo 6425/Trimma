@@ -284,13 +284,13 @@ export default function AgentDashboard() {
             </div>
             <div className="relative z-10">
               <Badge className="bg-brand/10 hover:bg-brand/20 text-brand mb-4 border-none font-bold uppercase text-[9px] tracking-wider">
-                Sales Territory
+                Agent Territory Explorer
               </Badge>
-              <h3 className="font-bold text-zinc-900 text-xl mb-1">Assigned Region</h3>
+              <h3 className="font-bold text-zinc-900 text-xl mb-1">Assigned Territories</h3>
               <p className="text-zinc-500 text-sm mb-6">{territoryLabel}</p>
 
-              <Button onClick={() => router.push("/agent/leads")} className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl">
-                <Navigation2 className="w-4 h-4 mr-2" /> Start Prospecting
+              <Button onClick={() => router.push("/agent/territory")} className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl">
+                <Map className="w-4 h-4 mr-2" /> Open Territory Explorer
               </Button>
             </div>
           </div>

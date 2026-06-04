@@ -31,6 +31,9 @@ ON public.agent_territories
 FOR SELECT 
 USING (
   agent_id IN (
-    SELECT id FROM public.agents WHERE user_email = (SELECT email FROM public.users WHERE id = auth.uid())
+    SELECT id FROM public.agents
+    WHERE user_id = auth.uid()
+       OR lower(user_email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+       OR user_email = (SELECT email FROM public.users WHERE id = auth.uid())
   )
 );
