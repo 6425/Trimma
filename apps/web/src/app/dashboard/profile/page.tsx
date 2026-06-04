@@ -707,127 +707,10 @@ export default function SalonProfilePage() {
 
           <form onSubmit={handleSave} className="space-y-8 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
             
-            {/* Section 1: Business Identity */}
+            {/* Section 3: Store Location Details */}
             <div className="space-y-6">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">1</span>
-                Storefront Identity & Contact
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="font-bold text-xs text-zinc-500">Salon Name</Label>
-                  <Input 
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="rounded-xl h-11"
-                    placeholder="e.g. Crown Comb Salon"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Contact Number</Label>
-                  <LkPhoneInput
-                    value={contact}
-                    onChange={setContact}
-                    className="rounded-xl h-11"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Price Level</Label>
-                  <Input 
-                    value={priceLevel}
-                    onChange={(e) => setPriceLevel(e.target.value)}
-                    className="rounded-xl h-11"
-                    placeholder="e.g. LKR, LKR LKR"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Rating</Label>
-                  <Input 
-                    type="number" step="0.1" min="0" max="5"
-                    value={rating}
-                    onChange={(e) => setRating(e.target.value)}
-                    className="rounded-xl h-11"
-                    placeholder="e.g. 4.5"
-                  />
-                </div>
-                <div className="space-y-4 md:col-span-2 bg-zinc-50/50 p-6 rounded-2xl border border-zinc-100">
-                  <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                     <Clock className="w-4 h-4 text-brand" /> Operational Scheduling
-                  </h3>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-2">7-Day Schedule</label>
-                    {Object.entries(salonSchedule).map(([day, scheduleObj]: [string, any]) => (
-                      <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-slate-100 rounded-xl p-3">
-                        <div className="w-full sm:w-24">
-                          <span className="text-xs font-bold text-zinc-800 capitalize">{day}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], isWorking: !prev[day as keyof typeof defaultSchedule].isWorking } }))}
-                          className={`h-9 w-16 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
-                        >
-                          {scheduleObj.isWorking ? 'OPEN' : 'CLOSED'}
-                        </Button>
-                        <div className="flex flex-1 items-center gap-2">
-                          <input 
-                            type="time" 
-                            disabled={!scheduleObj.isWorking}
-                            value={scheduleObj.start}
-                            onChange={(e) => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], start: e.target.value } }))}
-                            className="h-9 w-full px-3 rounded-lg border border-slate-200 text-xs font-medium focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
-                          />
-                          <span className="text-zinc-300 text-xs font-bold">-</span>
-                          <input 
-                            type="time" 
-                            disabled={!scheduleObj.isWorking}
-                            value={scheduleObj.end}
-                            onChange={(e) => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], end: e.target.value } }))}
-                            className="h-9 w-full px-3 rounded-lg border border-slate-200 text-xs font-medium focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="font-bold text-xs text-zinc-500">Business Bio / Tagline</Label>
-                  <textarea 
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full border border-slate-200 bg-white p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-all"
-                    placeholder="Describe your salon style, values, and luxury standards..."
-                    rows={4}
-                  />
-                </div>
-
-                {/* Category Multi-Select */}
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="font-bold text-xs text-zinc-500 flex items-center justify-between">
-                    <span>Salon Categories</span>
-                    <span className="text-[10px] font-normal text-zinc-400 normal-case">
-                      Select up to {allowedCategoriesCount >= 999 ? "unlimited" : allowedCategoriesCount} — based on your {subscriptionName} plan
-                    </span>
-                  </Label>
-                  <CategoryMultiSelect
-                    value={selectedCategories}
-                    onChange={setSelectedCategories}
-                    maxCategories={allowedCategoriesCount}
-                    planName={subscriptionName}
-                    theme="light"
-                    showUpgradeLink={true}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Location Details */}
-            <div className="space-y-6 pt-4">
-              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">2</span>
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">3</span>
                 Store Location Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -868,124 +751,237 @@ export default function SalonProfilePage() {
               </div>
             </div>
 
-            {/* Section 3: Included Services */}
-            <div className="space-y-6 pt-4">
-              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">3</span>
-                Included Services
-              </h3>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
-                <span className="text-xs font-bold text-zinc-400">
-                  {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
-                </span>
-              </div>
-              <div className="flex flex-col gap-2 max-h-80 overflow-y-auto p-4 bg-zinc-50 rounded-2xl border border-zinc-100 custom-scrollbar">
-                {selectedCategories.length === 0 ? (
-                  <span className="text-xs text-zinc-400 font-medium p-1">Please select a category first to view available services.</span>
-                ) : globalServices.filter(s => selectedCategories.includes(s.category)).length === 0 ? (
-                  <span className="text-xs text-zinc-400 font-medium p-1">No services available for the selected categories.</span>
-                ) : (
-                  globalServices.filter(s => selectedCategories.includes(s.category)).map(s => {
-                    const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
-                    return (
-                      <div 
-                        key={s.id}
-                        className={`p-4 rounded-xl border transition-colors ${
-                          config.enabled ? 'bg-white border-brand shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
-                        }`}
-                      >
-                        <label className="flex items-center gap-3 cursor-pointer mb-2">
-                          <input 
-                            type="checkbox"
-                            checked={config.enabled}
-                            onChange={(e) => {
-                              const currentlySelected = Object.values(selectedServices).filter(svc => svc.enabled).length;
-                              if (e.target.checked && currentlySelected >= 6) {
-                                toast.error("You can only select up to 6 services. Upgrade to a premium plan to add more.");
-                                return;
-                              }
-                              setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }));
-                            }}
-                            className="rounded border-zinc-300 text-brand focus:ring-brand w-5 h-5"
-                          />
-                          <span className="text-sm font-bold text-zinc-900">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
-                        </label>
-                        {config.enabled && (
-                          <div className="flex gap-4 pl-8 mt-3">
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Price</label>
-                              <Input 
-                                type="number" 
-                                value={config.price} 
-                                onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
-                                className="h-9 w-28 px-3 text-sm font-bold border-zinc-200 rounded-xl"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Duration (m)</label>
-                              <Input 
-                                type="number" 
-                                value={config.duration} 
-                                onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
-                                className="h-9 w-28 px-3 text-sm font-bold border-zinc-200 rounded-xl"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* Section 4: Add Staff */}
+            {/* Section 4: Storefront Identity & Contact */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">4</span>
-                Add Staff
+                Storefront Identity & Contact
               </h3>
-              {staffToAdd.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  {staffToAdd.map((st, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-zinc-50 border border-zinc-200 rounded-2xl">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center text-white font-black text-sm uppercase">
-                          {st.name.substring(0,2)}
-                        </div>
-                        <div>
-                          <h5 className="text-sm font-bold text-zinc-900">{st.name}</h5>
-                          <p className="text-xs text-zinc-500 font-medium">{st.role}</p>
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-zinc-400 hover:text-red-500 p-2">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="font-bold text-xs text-zinc-500">Salon Name</Label>
+                  <Input 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="rounded-xl h-11"
+                    placeholder="e.g. Crown Comb Salon"
+                    required
+                  />
                 </div>
-              )}
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  if (staffToAdd.length >= 2) {
-                    toast.error("You can only add up to 2 staff members. Upgrade to a premium plan to add more.");
-                    return;
-                  }
-                  setIsStaffModalOpen(true);
-                }}
-                className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-14 rounded-2xl"
-              >
-                <Plus className="w-5 h-5 mr-2 text-zinc-400" /> Add Professional
-              </Button>
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs text-zinc-500">Contact Number</Label>
+                  <LkPhoneInput
+                    value={contact}
+                    onChange={setContact}
+                    className="rounded-xl h-11"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs text-zinc-500">Rating</Label>
+                  <Input 
+                    type="number" step="0.1" min="0" max="5"
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
+                    className="rounded-xl h-11"
+                    placeholder="e.g. 4.5"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Section 5: Salon Amenities */}
+            {/* Section 5: Salon Operations & Staff */}
             <div className="space-y-6 pt-4">
               <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">5</span>
+                Operations, Services & Staff
+              </h3>
+              
+              <div className="space-y-2">
+                <Label className="font-bold text-xs text-zinc-500">Business Bio / Tagline</Label>
+                <textarea 
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full border border-slate-200 bg-white p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-zinc-950 focus:border-zinc-950 transition-all"
+                  placeholder="Describe your salon style, values, and luxury standards..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-4 bg-zinc-50/50 p-6 rounded-2xl border border-zinc-100">
+                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                   <Clock className="w-4 h-4 text-brand" /> Operational Scheduling
+                </h3>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-2">7-Day Schedule</label>
+                  {Object.entries(salonSchedule).map(([day, scheduleObj]: [string, any]) => (
+                    <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-slate-100 rounded-xl p-3">
+                      <div className="w-full sm:w-24">
+                        <span className="text-xs font-bold text-zinc-800 capitalize">{day}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], isWorking: !prev[day as keyof typeof defaultSchedule].isWorking } }))}
+                        className={`h-9 w-16 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
+                      >
+                        {scheduleObj.isWorking ? 'OPEN' : 'CLOSED'}
+                      </Button>
+                      <div className="flex flex-1 items-center gap-2">
+                        <input 
+                          type="time" 
+                          disabled={!scheduleObj.isWorking}
+                          value={scheduleObj.start}
+                          onChange={(e) => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], start: e.target.value } }))}
+                          className="h-9 w-full px-3 rounded-lg border border-slate-200 text-xs font-medium focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
+                        />
+                        <span className="text-zinc-300 text-xs font-bold">-</span>
+                        <input 
+                          type="time" 
+                          disabled={!scheduleObj.isWorking}
+                          value={scheduleObj.end}
+                          onChange={(e) => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], end: e.target.value } }))}
+                          className="h-9 w-full px-3 rounded-lg border border-slate-200 text-xs font-medium focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-bold text-xs text-zinc-500 flex items-center justify-between">
+                  <span>Salon Categories</span>
+                  <span className="text-[10px] font-normal text-zinc-400 normal-case">
+                    Select up to {allowedCategoriesCount >= 999 ? "unlimited" : allowedCategoriesCount} — based on your {subscriptionName} plan
+                  </span>
+                </Label>
+                <CategoryMultiSelect
+                  value={selectedCategories}
+                  onChange={setSelectedCategories}
+                  maxCategories={allowedCategoriesCount}
+                  planName={subscriptionName}
+                  theme="light"
+                  showUpgradeLink={true}
+                />
+              </div>
+              
+              <div className="space-y-3 pt-2">
+                <h4 className="font-extrabold uppercase tracking-widest text-brand text-[10px] border-b border-rose-100 pb-1 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5" /> Included Services
+                </h4>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
+                  <span className="text-[10px] font-bold text-zinc-400">
+                    {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2 max-h-80 overflow-y-auto p-3 bg-zinc-50 rounded-xl border border-zinc-100 custom-scrollbar">
+                  {selectedCategories.length === 0 ? (
+                    <span className="text-[10px] text-zinc-400 font-medium p-1">Please select a category first to view available services.</span>
+                  ) : globalServices.filter(s => selectedCategories.includes(s.category)).length === 0 ? (
+                    <span className="text-[10px] text-zinc-400 font-medium p-1">No services available for the selected categories.</span>
+                  ) : (
+                    globalServices.filter(s => selectedCategories.includes(s.category)).map(s => {
+                      const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
+                      return (
+                        <div 
+                          key={s.id}
+                          className={`p-3 rounded-xl border transition-colors ${
+                            config.enabled ? 'bg-white border-brand shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
+                          }`}
+                        >
+                          <label className="flex items-center gap-2 cursor-pointer mb-2">
+                            <input 
+                              type="checkbox"
+                              checked={config.enabled}
+                              onChange={(e) => {
+                                const currentlySelected = Object.values(selectedServices).filter(svc => svc.enabled).length;
+                                if (e.target.checked && currentlySelected >= 6) {
+                                  toast.error("You can only select up to 6 services. Upgrade to a premium plan to add more.");
+                                  return;
+                                }
+                                setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }));
+                              }}
+                              className="rounded border-zinc-300 text-brand focus:ring-brand w-4 h-4"
+                            />
+                            <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
+                          </label>
+                          {config.enabled && (
+                            <div className="flex gap-3 pl-6 mt-2">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Price</label>
+                                <Input 
+                                  type="number" 
+                                  value={config.price} 
+                                  onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
+                                  className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-brand"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Duration (m)</label>
+                                <Input 
+                                  type="number" 
+                                  value={config.duration} 
+                                  onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
+                                  className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-brand"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-3 pt-2">
+                <h4 className="font-extrabold uppercase tracking-widest text-brand text-[10px] border-b border-rose-100 pb-1 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5" /> Add Staff
+                </h4>
+                {staffToAdd.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                    {staffToAdd.map((st, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-white font-bold text-xs uppercase">
+                            {st.name.substring(0,2)}
+                          </div>
+                          <div>
+                            <h5 className="text-xs font-bold text-zinc-900">{st.name}</h5>
+                            <p className="text-[10px] text-zinc-500 font-medium">{st.role}</p>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-zinc-400 hover:text-red-500 p-1">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    if (staffToAdd.length >= 2) {
+                      toast.error("You can only add up to 2 staff members. Upgrade to a premium plan to add more.");
+                      return;
+                    }
+                    setIsStaffModalOpen(true);
+                  }}
+                  className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-12 rounded-xl"
+                >
+                  <Plus className="w-4 h-4 mr-2 text-zinc-400" /> Add Professional
+                </Button>
+              </div>
+
+            </div>
+
+            {/* Section 6: Salon Amenities */}
+            <div className="space-y-6 pt-4">
+              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">6</span>
                 Available Amenities
               </h3>
               <div className="bg-zinc-50/50 border border-slate-100 rounded-2xl p-6">
@@ -1040,35 +1036,6 @@ export default function SalonProfilePage() {
                       </div>
                     );
                   })}
-                </div>
-              </div>
-            </div>
-
-            {/* Section 6: Store Operational Status */}
-            <div className="space-y-6 pt-4">
-              <h3 className="text-lg font-bold text-zinc-900 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-rose-50 text-brand flex items-center justify-center text-xs font-black">6</span>
-                Operational Open Status
-              </h3>
-              <div className="flex items-center justify-between bg-zinc-50 p-6 rounded-2xl border border-zinc-100">
-                <div>
-                  <h4 className="text-sm font-bold text-zinc-900">Show Online Storefront</h4>
-                  <p className="text-xs text-zinc-500 mt-1">If active, your salon is visible on the marketplace search directory.</p>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className={`rounded-xl font-bold px-4 h-10 ${status === "active" ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                    onClick={() => setStatus("active")}
-                  >  Active / Open
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setStatus("pending")}
-                    className={`rounded-xl font-bold px-4 h-10 ${status !== "active" ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    Pending / Hidden
-                  </Button>
                 </div>
               </div>
             </div>
