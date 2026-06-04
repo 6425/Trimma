@@ -896,7 +896,7 @@
   }
 
   /* Absolute Safeguard: Dark backgrounds flip foreground variables to light */
-  .bg-black, .bg-zinc-950, .bg-zinc-900, .bg-slate-950, .bg-slate-900, .bg-gray-950, .bg-gray-900, .bg-[#0B0B0B], .bg-[#151515] {
+  .bg-black, .bg-zinc-950, .bg-zinc-900, .bg-slate-950, .bg-slate-900, .bg-gray-950, .bg-gray-900, .bg-\[\#0B0B0B\], .bg-\[\#151515\] {
     --foreground: #FFFFFF;
     --card-foreground: #FFFFFF;
     --popover-foreground: #FFFFFF;
@@ -922,8 +922,8 @@
   [style*="background-color: black"].text-black,
   .bg-black .text-black,
   .bg-black [class*="text-black"]:not([class*="bg-"]),
-  .bg-[#0B0B0B] [class*="text-black"]:not([class*="bg-"]),
-  .bg-[#151515] [class*="text-black"]:not([class*="bg-"]) {
+  .bg-\[\#0B0B0B\] [class*="text-black"]:not([class*="bg-"]),
+  .bg-\[\#151515\] [class*="text-black"]:not([class*="bg-"]) {
     color: #FFFFFF !important;
   }
 }
