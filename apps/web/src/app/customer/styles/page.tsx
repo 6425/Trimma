@@ -76,10 +76,10 @@ function SavedStylesContent() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Saved Styles</h1>
-          <p className="text-sm text-zinc-400 mt-1">Your bookmarked looks from the Trimma style gallery.</p>
+          <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">Saved Styles</h1>
+          <p className="text-sm text-zinc-500 mt-1">Your bookmarked looks from the Trimma style gallery.</p>
         </div>
 
         <Link
@@ -105,10 +105,10 @@ function SavedStylesContent() {
           </div>
         </div>
       ) : saved.length === 0 ? (
-        <div className="bg-zinc-900/50 rounded-3xl border border-white/10 p-10 md:p-16 text-center max-w-xl mx-auto mt-8 backdrop-blur-sm">
-          <Bookmark className="w-16 h-16 mx-auto mb-4 text-zinc-600 stroke-[1.5]" />
-          <h3 className="text-lg font-bold text-white">No saved styles yet</h3>
-          <p className="text-sm text-zinc-400 mt-2 max-w-sm mx-auto leading-relaxed">
+        <div className="bg-white rounded-3xl border border-zinc-200 p-10 md:p-16 text-center max-w-xl mx-auto mt-8 shadow-sm">
+          <Bookmark className="w-16 h-16 mx-auto mb-4 text-zinc-400 stroke-[1.5]" />
+          <h3 className="text-lg font-bold text-zinc-900">No saved styles yet</h3>
+          <p className="text-sm text-zinc-500 mt-2 max-w-sm mx-auto leading-relaxed">
             Explore the style lookbook and bookmark cuts you love for your next appointment.
           </p>
           <Link
@@ -127,9 +127,9 @@ function SavedStylesContent() {
             return (
               <div
                 key={row.id}
-                className="bg-zinc-900/50 rounded-2xl border border-white/10 overflow-hidden hover:border-[#F5B700]/30 transition-all backdrop-blur-sm"
+                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#F5B700]/50 transition-all shadow-sm"
               >
-                <div className="relative aspect-[3/4] bg-zinc-800">
+                <div className="relative aspect-[3/4] bg-zinc-100">
                   <Image
                     src={style.image_url}
                     alt={style.title}
@@ -141,19 +141,19 @@ function SavedStylesContent() {
                     type="button"
                     disabled={removingId === row.id}
                     onClick={() => handleRemove(row.id, style.id, style.title)}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-black/40 backdrop-blur-md text-[#F5B700] hover:bg-black/60 border border-white/10 transition-colors disabled:opacity-50"
+                    className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md text-[#F5B700] hover:bg-white border border-white transition-colors disabled:opacity-50"
                     aria-label={`Remove ${style.title} from saved styles`}
                   >
                     <Bookmark className="w-5 h-5 fill-current" />
                   </button>
                 </div>
                 <div className="p-4 space-y-1">
-                  <h3 className="font-extrabold text-white text-sm line-clamp-1">{style.title}</h3>
+                  <h3 className="font-extrabold text-zinc-900 text-sm line-clamp-1">{style.title}</h3>
                   {style.categories?.name && (
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide">{style.categories.name}</p>
+                    <p className="text-[10px] text-zinc-600 font-medium uppercase tracking-wide">{style.categories.name}</p>
                   )}
                   {style.description && (
-                    <p className="text-xs text-zinc-400 line-clamp-2 mt-1">{style.description}</p>
+                    <p className="text-xs text-zinc-500 line-clamp-2 mt-1">{style.description}</p>
                   )}
                 </div>
               </div>

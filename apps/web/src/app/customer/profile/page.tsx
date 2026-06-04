@@ -82,12 +82,12 @@ function ProfileFormContent() {
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
       
       {/* HEADER */}
-      <div className="border-b border-white/10 pb-6">
-        <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
-          <User className="w-8 h-8 text-zinc-400" />
+      <div className="border-b border-zinc-200 pb-6">
+        <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
+          <User className="w-8 h-8 text-zinc-500" />
           My Profile
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">Manage your account information and contact preferences.</p>
+        <p className="text-sm text-zinc-500 mt-1">Manage your account information and contact preferences.</p>
       </div>
 
       {loading ? (
@@ -114,15 +114,15 @@ function ProfileFormContent() {
         <form onSubmit={handleSaveProfile} className="space-y-6">
           
           {/* PROFILE CARD */}
-          <div className="bg-zinc-900/50 rounded-2xl border border-white/10 p-6 space-y-6 shadow-sm backdrop-blur-sm">
+          <div className="bg-white rounded-2xl border border-zinc-200 p-6 space-y-6 shadow-sm">
             
             {/* AVATAR BANNER */}
-            <div className="flex items-center gap-4 border-b border-white/10 pb-6">
+            <div className="flex items-center gap-4 border-b border-zinc-200 pb-6">
               <div className="w-16 h-16 rounded-full bg-[#F5B700] text-black font-black text-xl flex items-center justify-center shadow-md">
                 {firstName[0] || "U"}{lastName[0] || ""}
               </div>
               <div>
-                <h3 className="font-extrabold text-white text-lg">
+                <h3 className="font-extrabold text-zinc-900 text-lg">
                   {firstName && lastName ? `${firstName} ${lastName}` : "Trimma Member"}
                 </h3>
                 <span className="inline-flex items-center gap-1.5 text-xs text-[#F5B700] bg-[#F5B700]/10 px-2.5 py-0.5 rounded-full font-bold mt-1">
@@ -136,42 +136,42 @@ function ProfileFormContent() {
               
               {/* FIRST NAME */}
               <div className="space-y-2">
-                <Label htmlFor="first_name" className="text-xs font-bold uppercase tracking-wider text-zinc-400">First Name</Label>
+                <Label htmlFor="first_name" className="text-xs font-bold uppercase tracking-wider text-zinc-500">First Name</Label>
                 <div className="relative">
                   <Input 
                     id="first_name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="h-11 bg-zinc-950 border-white/10 text-white focus:border-[#F5B700] rounded-xl"
+                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#F5B700] rounded-xl"
                   />
                 </div>
               </div>
 
               {/* LAST NAME */}
               <div className="space-y-2">
-                <Label htmlFor="last_name" className="text-xs font-bold uppercase tracking-wider text-zinc-400">Last Name</Label>
+                <Label htmlFor="last_name" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Last Name</Label>
                 <div className="relative">
                   <Input 
                     id="last_name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="h-11 bg-zinc-950 border-white/10 text-white focus:border-[#F5B700] rounded-xl"
+                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#F5B700] rounded-xl"
                   />
                 </div>
               </div>
 
               {/* EMAIL */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-400">Email Address</Label>
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Email Address</Label>
                 <div className="relative flex items-center">
-                  <Mail className="absolute left-3 w-5 h-5 text-zinc-500" />
+                  <Mail className="absolute left-3 w-5 h-5 text-zinc-400" />
                   <Input 
                     id="email"
                     value={email}
                     disabled
-                    className="h-11 bg-zinc-950/50 border-white/10 pl-11 rounded-xl cursor-not-allowed text-zinc-500"
+                    className="h-11 bg-zinc-100 border-zinc-200 pl-11 rounded-xl cursor-not-allowed text-zinc-500"
                   />
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-normal">
@@ -181,13 +181,13 @@ function ProfileFormContent() {
 
               {/* PHONE */}
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-400">WhatsApp No.</Label>
+                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-500">WhatsApp No.</Label>
                 <LkPhoneInput
                   id="phone"
                   value={phone}
                   onChange={setPhone}
                   required
-                  className="h-11 bg-zinc-950 border-white/10 text-white focus-within:border-[#F5B700] rounded-xl"
+                  className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus-within:border-[#F5B700] rounded-xl"
                 />
                 <p className="text-[10px] text-zinc-500 leading-normal">
                   Your WhatsApp number will be used to send your automated booking updates.
