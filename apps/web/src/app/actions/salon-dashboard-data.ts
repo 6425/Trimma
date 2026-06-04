@@ -31,6 +31,7 @@ export async function fetchSalonLayoutShell() {
     role: "salon_owner",
     salonName: (salon.name as string) || "My Salon",
     avatarUrl: (salon.logo_url as string | null) || null,
+    onboardingStatus: (salon.onboarding_status as string | null) || null,
   };
 }
 

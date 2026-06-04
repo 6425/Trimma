@@ -18,9 +18,6 @@ export function resolveAuthenticatedDestination({
     return "/admin";
   }
 
-  if (role === "salon_owner" && needsOwnerActivationWizard(onboardingStatus)) {
-    return "/dashboard/profile";
-  }
 
   return resolvePostAuthRedirect(role, sanitizeNextPath(nextPath));
 }

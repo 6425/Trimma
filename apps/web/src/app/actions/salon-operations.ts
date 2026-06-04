@@ -389,7 +389,7 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       .from("salons")
       .update({
         onboarding_status: "OWNER_ACTIVATED",
-        status: "pending_verification",
+        status: "pending",
         owner_activated_at: new Date().toISOString(),
         owner_email: ownerEmail || ctx.email,
       })

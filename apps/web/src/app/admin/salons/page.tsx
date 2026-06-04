@@ -556,7 +556,6 @@ export default function Salons() {
                       className="w-full h-10 px-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
                     >
                       <option value="active">ACTIVE</option>
-                      <option value="pending_verification">PENDING VERIFICATION</option>
                       <option value="pending">PENDING APPROVAL</option>
                       <option value="rejected">REJECTED</option>
                     </select>

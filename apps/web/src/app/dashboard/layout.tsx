@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { readRoleFromCookie } from "@/lib/client-auth-cookie";
+import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { fetchSalonLayoutShell } from "@/app/actions/salon-dashboard-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [role] = useState<string | null>(() => readRoleFromCookie() || "salon_owner");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [salonName, setSalonName] = useState<string>("My Salon");
+  const [onboardingStatus, setOnboardingStatus] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (result.success && result.salonName) {
         setSalonName(result.salonName);
         if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
+        if (result.onboardingStatus) setOnboardingStatus(result.onboardingStatus);
       }
     });
 
@@ -332,6 +335,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
         </header>
+
+        {/* Global Activation Banner */}
+        {role === "salon_owner" && needsOwnerActivationWizard(onboardingStatus) && (
+          <div className="bg-emerald-600 text-white px-4 py-3 flex flex-col sm:flex-row items-center justify-between text-sm shadow-md z-30 relative">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="font-medium">
+                Your salon is currently in Draft mode. Please review your services, staff, and profile.
+              </span>
+            </div>
+            <Link href="/dashboard/profile" className="mt-2 sm:mt-0 font-bold underline hover:text-emerald-100 whitespace-nowrap">
+              Go to Profile to Activate &rarr;
+            </Link>
+          </div>
+        )}
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto bg-slate-50 text-zinc-900 trimma-page-shell">

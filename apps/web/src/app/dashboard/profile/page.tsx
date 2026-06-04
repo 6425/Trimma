@@ -462,75 +462,6 @@ export default function SalonProfilePage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-20 relative">
 
-      {/* OWNER ONBOARDING WIZARD OVERLAY */}
-      {needsOwnerActivationWizard(onboardingStatus) && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-4 duration-500 overflow-y-auto">
-          <div className="flex-1 max-w-3xl mx-auto w-full py-12 px-6 flex flex-col justify-center">
-            <div className="text-center mb-10">
-              <div className="w-16 h-16 bg-brand/10 text-brand rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-8 h-8" />
-              </div>
-              <h1 className="text-4xl font-black text-zinc-900 tracking-tight">Welcome to Trimma!</h1>
-              <p className="text-lg text-zinc-500 mt-3 max-w-lg mx-auto">
-                We&apos;ve auto-provisioned your digital storefront. Please review your details and set up your password to activate your account.
-              </p>
-            </div>
-
-            <div className="border border-slate-100 shadow-xl rounded-3xl p-8 bg-white">
-              {wizardStep === 1 && (
-                <div className="space-y-6 animate-in slide-in-from-right-4">
-                  <h2 className="text-2xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">1. Review Salon Details</h2>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Salon Name</Label>
-                      <Input value={name} onChange={(e) => setName(e.target.value)} className="h-12 rounded-xl mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Contact Number</Label>
-                      <LkPhoneInput value={contact} onChange={setContact} className="h-12 rounded-xl mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Address</Label>
-                      <Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 rounded-xl mt-1" />
-                    </div>
-                  </div>
-
-                  <div className="pt-4 flex justify-end">
-                    <Button onClick={() => setWizardStep(2)} className="h-12 px-8 rounded-xl bg-brand hover:bg-[#b01849] text-white font-bold">
-                      Next Step <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {wizardStep === 2 && (
-                <div className="space-y-6 animate-in slide-in-from-right-4">
-                  <h2 className="text-2xl font-bold text-zinc-900 border-b border-zinc-100 pb-4">2. Secure Your Account</h2>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 text-amber-800">
-                      <ShieldCheck className="w-5 h-5 shrink-0 text-amber-600" />
-                      <p className="text-sm font-medium">Please set a secure password for your new Trimma account. (In this demo, simply proceed to finish activation).</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 flex justify-between">
-                    <Button variant="ghost" onClick={() => setWizardStep(1)} className="h-12 px-6 rounded-xl font-bold text-zinc-500">
-                      Back
-                    </Button>
-                    <Button onClick={handleCompleteOnboarding} disabled={saving} className="h-12 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
-                      Activate Salon
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header & Verification Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -539,7 +470,16 @@ export default function SalonProfilePage() {
           <p className="text-zinc-500 text-sm mt-1">Manage your salon&apos;s public presence, images, and branding.</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+          {needsOwnerActivationWizard(onboardingStatus) && (
+            <Button
+              onClick={handleCompleteOnboarding}
+              disabled={saving}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+            >
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} Activate Salon
+            </Button>
+          )}
           {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
             <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 h-auto text-xs font-bold uppercase tracking-widest gap-1.5">
               <Clock className="w-3.5 h-3.5" />
@@ -549,7 +489,7 @@ export default function SalonProfilePage() {
           <Button 
             onClick={handleSave} 
             disabled={saving}
-            className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all"
+            className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
           >
             {saving ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>

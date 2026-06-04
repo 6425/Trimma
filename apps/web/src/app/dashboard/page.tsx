@@ -104,10 +104,7 @@ export default function Dashboard() {
 
       const { salon: salonData, bookings, services, staff } = result;
 
-      if (needsOwnerActivationWizard(salonData.onboarding_status as string)) {
-        router.replace("/dashboard/profile");
-        return;
-      }
+
 
       setSalonName((salonData.name as string) || "your salon");
 
