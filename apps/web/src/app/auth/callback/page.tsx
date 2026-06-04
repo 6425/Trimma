@@ -62,6 +62,20 @@ function AuthCallbackContent() {
         if (cancelled) return;
 
         if (result.success) {
+          // Google OAuth: customers and salon owners only — not admin or agent portals.
+          if (result.role === "admin") {
+            await supabase.auth.signOut();
+            setErrorMessage("Admins must sign in at /admin/login with email and password.");
+            window.setTimeout(() => redirectAfterAuth("/admin/login"), 2500);
+            return;
+          }
+          if (result.role === "agent") {
+            await supabase.auth.signOut();
+            setErrorMessage("Agents must sign in at /login with email and password.");
+            window.setTimeout(() => redirectAfterAuth("/login"), 2500);
+            return;
+          }
+
           setTrimmaMiddlewareCookies(session.access_token, result.role);
 
           const destination = resolveAuthenticatedDestination({

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "../../../components/Logo";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,10 @@ import {
 import { normalizeEmail } from "@/lib/normalize-email";
 import type { Session } from "@supabase/supabase-js";
 
+/**
+ * Admin portal: email + password only (no Google OAuth).
+ * Customers/salon owners use /login (+ Google). Agents use /login (password).
+ */
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,30 +39,10 @@ export default function AdminLogin() {
       throw new Error(gate.error || "You are not allowed to access the admin dashboard.");
     }
 
-    setTrimmaMiddlewareCookies(session.access_token, gate.role);
-    setStatusMessage("Redirecting to admin dashboard…");
+    setTrimmaMiddlewareCookies(session.access_token, "admin");
+    setStatusMessage("Opening admin dashboard…");
     redirectAfterAuth("/admin");
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session || cancelled) return;
-      setLoading(true);
-      try {
-        await completeAdminSignIn(session);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Could not complete admin sign-in.");
-          setLoading(false);
-          setStatusMessage(null);
-        }
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [completeAdminSignIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +93,8 @@ export default function AdminLogin() {
             <div>
               <h2 className="text-zinc-900 text-xl font-bold">Restricted Access</h2>
               <p className="text-zinc-800 text-sm mt-1 font-medium">
-                Authorized personnel only. Please sign in to access the command center.
+                Admins sign in here with email and password. Google sign-in is not used for admin
+                accounts.
               </p>
             </div>
           </div>
@@ -138,17 +123,15 @@ export default function AdminLogin() {
                   type="email"
                   placeholder="admin@trimma.io"
                   required
+                  autoComplete="email"
                   className="h-12 bg-white/90 border-transparent focus:border-zinc-900 text-zinc-900 pl-4 font-medium"
                 />
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="password" className="text-zinc-900 font-bold">
-                    Authorization Key
+                    Password
                   </Label>
-                  <a href="#" className="text-xs text-zinc-800 hover:text-zinc-900 font-bold">
-                    Reset Key
-                  </a>
                 </div>
                 <div className="relative">
                   <Input
@@ -156,6 +139,7 @@ export default function AdminLogin() {
                     type="password"
                     placeholder="••••••••"
                     required
+                    autoComplete="current-password"
                     className="h-12 bg-white/90 border-transparent focus:border-zinc-900 text-zinc-900 pl-4 font-medium"
                   />
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500">
@@ -186,7 +170,7 @@ export default function AdminLogin() {
               href="/login"
               className="text-xs text-zinc-800 hover:text-zinc-900 font-bold flex items-center gap-1"
             >
-              User Login
+              Customer / Salon / Agent login
             </Link>
             <p className="text-[10px] text-zinc-800 font-mono uppercase tracking-widest font-bold">
               Trimma OS v1.0

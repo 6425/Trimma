@@ -12,7 +12,7 @@ import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
 import { fetchAdminDashboard } from "@/app/actions/admin-list-data";
 import { fetchAdminDashboardClient } from "@/lib/admin-dashboard-client";
-import { resolveAdminAccess } from "@/lib/trimma-role";
+import { isAdminForSession } from "@/lib/admin-session-gate";
 import { withTimeout } from "@/lib/promise-timeout";
 import {
   ActivityItem,
@@ -61,17 +61,29 @@ export default function AdminDashboard() {
       }
 
       if (result.success === false) {
-        if (
+        const authLike =
           result.error.includes("sign in") ||
           result.error.includes("Admin access") ||
-          result.error.includes("SUPABASE_SERVICE_ROLE_KEY")
-        ) {
-          router.replace("/admin/login?redirect=/admin");
-          return;
+          result.error.includes("SUPABASE_SERVICE_ROLE_KEY");
+
+        if (authLike) {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          const stillAdmin =
+            session?.user &&
+            (await isAdminForSession(session.user.id, session.user.email));
+          if (!stillAdmin) {
+            router.replace("/admin/login?redirect=/admin");
+            return;
+          }
         }
+
         result = await fetchAdminDashboardClient();
         setLoadWarning(
-          "Using client data fallback. Add SUPABASE_SERVICE_ROLE_KEY on Vercel for full metrics."
+          authLike
+            ? "Loaded in limited mode (server admin API unavailable). Add SUPABASE_SERVICE_ROLE_KEY on Vercel preview."
+            : "Using client data fallback."
         );
       } else if ("clientFallback" in result && result.clientFallback) {
         setLoadWarning(
@@ -170,9 +182,11 @@ export default function AdminDashboard() {
         return;
       }
 
-      const isAdmin = await resolveAdminAccess(session.user.id, session.user.email);
+      const isAdmin = await isAdminForSession(session.user.id, session.user.email);
       if (!isAdmin) {
-        toast.error("You are not allowed to access the admin dashboard.");
+        toast.error(
+          "You are not allowed to access the admin dashboard. Sign in at /admin/login with an admin account."
+        );
         router.replace("/admin/login?redirect=/admin");
         return;
       }

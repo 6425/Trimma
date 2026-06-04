@@ -39,14 +39,22 @@ export async function resolveAdminAccess(
   }
 }
 
-const ADMIN_VERIFY_TIMEOUT_MS = 10_000;
+const ADMIN_VERIFY_TIMEOUT_MS = 4_000;
 
-/** Prefer server verify; fall back to client DB reads (beta / broken serverless). */
+/**
+ * App-managed admin login (email/password only — not Google OAuth).
+ * Client DB check first; optional server verify when service role is available.
+ */
 export async function confirmAdminAccessForSession(
   accessToken: string,
   userId: string,
   email: string | null | undefined
 ): Promise<{ allowed: boolean; role: string; error?: string }> {
+  const allowedClient = await resolveAdminAccess(userId, email);
+  if (allowedClient) {
+    return { allowed: true, role: "admin" };
+  }
+
   try {
     const { verifyAdminLoginSession } = await import("@/app/actions/admin-auth");
     const verified = await Promise.race([
@@ -59,28 +67,30 @@ export async function confirmAdminAccessForSession(
       ),
     ]);
     if (verified.success) {
-      return { allowed: true, role: verified.role || "admin" };
+      return { allowed: true, role: "admin" };
     }
   } catch (err) {
     console.warn("Admin server verification unavailable.", err);
   }
 
-  const allowed = await resolveAdminAccess(userId, email);
-  if (!allowed) {
-    return {
-      allowed: false,
-      role: "customer",
-      error:
-        "Admin access required. Ensure your account has admin in user_roles (with your auth user_id) or users.global_role.",
-    };
-  }
-
-  return { allowed: true, role: "admin" };
+  return {
+    allowed: false,
+    role: "customer",
+    error:
+      "Admin access required. Use /admin/login with your admin email and password. Ensure user_roles (your auth user_id) or users.global_role is admin.",
+  };
 }
 
 export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
   const secure =
     typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  const middlewareRole = isPlatformAdminRole(role)
+    ? "admin"
+    : role.toLowerCase() === "agent"
+      ? "agent"
+      : role.toLowerCase() === "salon_owner"
+        ? "salon_owner"
+        : "customer";
   
   // Try to set the full token for backward compatibility, but it might fail if > 4KB
   const encodedToken = encodeURIComponent(accessToken);
@@ -99,7 +109,7 @@ export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
     document.cookie = `sb-access-token.${i}=; path=/; max-age=0; SameSite=Lax${secure}`;
   }
 
-  document.cookie = `user-role=${encodeURIComponent(role)}; path=/; max-age=86400; SameSite=Lax${secure}`;
+  document.cookie = `user-role=${encodeURIComponent(middlewareRole)}; path=/; max-age=86400; SameSite=Lax${secure}`;
 }
 
 /** Hard navigation so middleware receives freshly written auth cookies. */
