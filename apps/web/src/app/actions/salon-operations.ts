@@ -399,3 +399,63 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
 }
+
+export async function saveOwnerVerificationData(
+  updatePayload: any,
+  servicesData: {
+    svcsToAdd: any[];
+    svcsToRemoveIds: string[];
+  } | null,
+  staffToAdd: any[] | null,
+  amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null
+) {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    // 1. Update Salon Data
+    const finalPayload = { ...updatePayload, onboarding_status: "OWNER_ACTIVATED", owner_activated_at: new Date().toISOString() };
+    const { error: updateError } = await supabase
+      .from("salons")
+      .update(finalPayload)
+      .eq("id", ctx.salonId);
+
+    if (updateError) throw new Error(updateError.message);
+
+    // 2. Sync Services
+    if (servicesData) {
+      if (servicesData.svcsToAdd.length > 0) {
+        const { error: s1 } = await supabase.from("services").insert(servicesData.svcsToAdd.map(s => ({...s, salon_id: ctx.salonId})));
+        if (s1) throw new Error(s1.message);
+      }
+      if (servicesData.svcsToRemoveIds.length > 0) {
+        const { error: s2 } = await supabase.from("services").delete().in("id", servicesData.svcsToRemoveIds).eq("salon_id", ctx.salonId);
+        if (s2) throw new Error(s2.message);
+      }
+    }
+
+    // 3. Add Staff
+    if (staffToAdd && staffToAdd.length > 0) {
+      const { error: staffErr } = await supabase.from("salon_staff").insert(staffToAdd.map(s => ({...s, salon_id: ctx.salonId})));
+      if (staffErr) throw new Error(staffErr.message);
+    }
+
+    // 4. Sync Amenities
+    if (amenitiesData) {
+      await supabase.from("salon_amenities").delete().eq("salon_id", ctx.salonId);
+      
+      const amenityInserts = Object.keys(amenitiesData)
+        .filter((amenityId) => amenitiesData[amenityId].has_amenity)
+        .map((amenityId) => ({
+          salon_id: ctx.salonId,
+          amenity_id: amenityId,
+          quantity: amenitiesData[amenityId].quantity || null,
+        }));
+      
+      if (amenityInserts.length > 0) {
+        const { error: amErr } = await supabase.from("salon_amenities").insert(amenityInserts);
+        if (amErr) throw new Error(amErr.message);
+      }
+    }
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return { success: true as const };
+}

@@ -262,10 +262,22 @@ export async function fetchSalonProfilePage() {
     const salon =
       updatedSalon && planId ? { ...ctx.salon, subscription_plan_id: planId } : ctx.salon;
 
-    const [amenitiesRes, salonAmenitiesRes, categoriesRes] = await Promise.all([
+    const [
+      amenitiesRes,
+      salonAmenitiesRes,
+      categoriesRes,
+      globalServicesRes,
+      servicesRes,
+      globalStaffRolesRes,
+      staffRes
+    ] = await Promise.all([
       supabase.from("global_amenities").select("*").order("name"),
       supabase.from("salon_amenities").select("*").eq("salon_id", ctx.salonId),
       supabase.from("categories").select("id, name, slug").order("name"),
+      supabase.from("global_services").select("*, categories(name)").eq("is_active", true),
+      supabase.from("services").select("*").eq("salon_id", ctx.salonId),
+      supabase.from("global_staff_roles").select("*").order("category"),
+      supabase.from("salon_staff").select("*").eq("salon_id", ctx.salonId)
     ]);
 
     const amenitiesMissing =
@@ -292,6 +304,16 @@ export async function fetchSalonProfilePage() {
       salonAmenities: amenitiesMissing ? [] : salonAmenitiesRes.data || [],
       categories: categoriesRes.data || [],
       allowedCategoriesCount,
+      globalServices: (globalServicesRes.data || []).map((s: any) => ({
+        ...s,
+        category: s.categories?.name || null,
+        default_price: s.suggested_price || 0,
+        default_duration: s.suggested_duration_minutes || 30,
+        icon_image_url: s.icon || null
+      })),
+      services: servicesRes.data || [],
+      globalStaffRoles: globalStaffRolesRes.data || [],
+      staff: staffRes.data || [],
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
