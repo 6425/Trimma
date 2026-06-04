@@ -905,25 +905,4 @@
     color: #FFFFFF;
   }
 
-  /* Hard Fallbacks for specific utility classes to prevent invisible text */
-  .bg-white.text-white, .bg-zinc-50.text-white, .bg-slate-50.text-white, .bg-gray-50.text-white, .bg-neutral-50.text-white, .bg-stone-50.text-white,
-  .bg-white.text-zinc-50, .bg-zinc-50.text-zinc-50,
-  [style*="background-color: white"].text-white,
-  .bg-white .text-white, .bg-zinc-50 .text-white, .bg-slate-50 .text-white, .bg-gray-50 .text-white, .bg-neutral-50 .text-white, .bg-stone-50 .text-white,
-  .bg-white [class*="text-white"]:not([class*="bg-"]), .bg-zinc-50 [class*="text-white"]:not([class*="bg-"]),
-  .bg-white .text-popover-foreground, .bg-zinc-50 .text-popover-foreground,
-  .bg-white .text-card-foreground, .bg-zinc-50 .text-card-foreground {
-    color: #000000 !important;
-  }
-
-  .bg-black.text-black, .bg-zinc-950.text-black, .bg-zinc-900.text-black, .bg-slate-950.text-black, .bg-slate-900.text-black, .bg-gray-950.text-black, .bg-gray-900.text-black,
-  .bg-zinc-950.text-zinc-950,
-  .bg-zinc-900.text-zinc-900,
-  [style*="background-color: black"].text-black,
-  .bg-black .text-black, .bg-zinc-950 .text-black, .bg-zinc-900 .text-black, .bg-slate-950 .text-black, .bg-slate-900 .text-black, .bg-gray-950 .text-black, .bg-gray-900 .text-black,
-  .bg-black [class*="text-black"]:not([class*="bg-"]), .bg-zinc-950 [class*="text-black"]:not([class*="bg-"]), .bg-zinc-900 [class*="text-black"]:not([class*="bg-"]),
-  .bg-\[\#0B0B0B\] [class*="text-black"]:not([class*="bg-"]),
-  .bg-\[\#151515\] [class*="text-black"]:not([class*="bg-"]) {
-    color: #FFFFFF !important;
-  }
 }
