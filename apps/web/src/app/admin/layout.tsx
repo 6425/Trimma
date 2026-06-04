@@ -152,6 +152,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = adminItems;
 
+  const navItemClass = (active: boolean) =>
+    `trimma-admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+      active ? "is-active font-semibold" : ""
+    }`;
+
+  const navParentTriggerClass = (active: boolean) =>
+    `trimma-admin-nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+      active ? "is-active" : ""
+    }`;
+
+  const navChildClass = (active: boolean) =>
+    `trimma-admin-nav-child flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
+      active ? "is-active font-semibold" : ""
+    }`;
+
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === "/dashboard" || href === "/admin") {
@@ -165,7 +180,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row trimma-light-context">
+    <div className="trimma-admin-shell min-h-screen bg-slate-50 flex flex-col lg:flex-row trimma-light-context">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -176,7 +191,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-slate-50 border-r border-slate-200 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
+      <aside className={`trimma-admin-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-slate-50 border-r border-slate-200 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
         
         {/* Sidebar Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 shrink-0 py-4">
@@ -184,7 +199,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Logo iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
           </Link>
           <button
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-slate-100 transition-colors"
+            type="button"
+            className="trimma-admin-icon-btn lg:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
             onClick={() => setMobileMenuOpen(false)}
             aria-label="Close menu"
           >
@@ -194,7 +210,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Nav Items */}
         <div className="p-3 flex-1 overflow-y-auto scrollbar-none">
-          <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-2 px-3 pt-1">
+          <div className="trimma-admin-nav-label text-[10px] font-bold uppercase tracking-widest mb-2 px-3 pt-1">
             {isAd ? 'Administration' : 'Workspace'}
           </div>
           <nav className="space-y-0.5">
@@ -207,11 +223,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     className="space-y-0.5"
                   >
                     <CollapsibleTrigger
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        pathname?.startsWith(item.href)
-                          ? "bg-[#F5B700] text-black"
-                          : "text-zinc-500 hover:bg-slate-100 hover:text-zinc-900"
-                      }`}
+                      className={navParentTriggerClass(Boolean(pathname?.startsWith(item.href)))}
                     >
                       <div className="flex items-center gap-3">
                         {item.icon}
@@ -223,11 +235,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       {item.children.map((child: any) => (
                         <Link key={child.name}
                           href={child.href}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                            isActive(child.href)
-                              ? "text-[#F5B700] bg-[#F5B700]/10"
-                              : "text-zinc-500 hover:text-zinc-900 hover:bg-slate-100"
-                          }`}
+                          className={navChildClass(isActive(child.href))}
                         >
                           {child.name}
                         </Link>
@@ -236,11 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </Collapsible>
                 ) : (
                   <Link href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isActive(item.href)
-                        ? "bg-[#F5B700] text-black font-semibold"
-                        : "text-zinc-500 hover:bg-slate-100 hover:text-zinc-900"
-                    }`}
+                    className={navItemClass(isActive(item.href))}
                   >
                     {item.icon}
                     {item.name}
@@ -253,12 +257,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-200 space-y-0.5">
-          <Link href="/dashboard/settings"
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              pathname === "/dashboard/settings"
-                ? "bg-[#F5B700] text-black font-semibold"
-                : "text-zinc-500 hover:bg-slate-100 hover:text-zinc-900"
-            }`}
+          <Link href="/admin/settings"
+            className={navItemClass(pathname === "/admin/settings")}
           >
             <Settings className="w-4 h-4" />
             {role === 'admin' ? 'Global Settings' : 'Settings'}
@@ -266,7 +266,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
+            className="trimma-admin-nav-logout trimma-admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             <LogOut className="w-4 h-4" />
             Logout
@@ -299,7 +299,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-2">
             {/* Dashboard navigation — mobile & tablet */}
             <button
-              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-slate-100 transition-colors"
+              type="button"
+              className="trimma-admin-icon-btn lg:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors"
               onClick={() => {
                 window.dispatchEvent(new Event("trimma:close-site-menu"));
                 setMobileMenuOpen(true);
@@ -311,7 +312,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
 
             {/* Bell */}
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-slate-100 transition-colors">
+            <button type="button" className="trimma-admin-icon-btn relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
             </button>
@@ -338,7 +339,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               type="button"
               onClick={handleLogout}
-              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className="trimma-admin-nav-logout trimma-admin-icon-btn hidden lg:flex w-8 h-8 items-center justify-center rounded-lg transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>

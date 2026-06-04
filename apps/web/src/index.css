@@ -730,6 +730,85 @@
     }
   }
 
+  /*
+   * Admin light sidebar — explicit contrast on default, hover, focus, and active
+   * (mobile drawer + desktop fixed nav).
+   */
+  .trimma-admin-sidebar {
+    background-color: #f8fafc;
+    color: #18181b;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-label {
+    color: #52525b;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]) {
+    color: #3f3f46;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]):is(
+    :hover,
+    :focus,
+    :focus-visible
+  ):not(.is-active) {
+    background-color: #f1f5f9 !important;
+    color: #18181b !important;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]).is-active,
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]).is-active:is(
+    :hover,
+    :focus,
+    :focus-visible
+  ) {
+    background-color: #f5b700 !important;
+    color: #18181b !important;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-child.is-active {
+    background-color: #f1f5f9 !important;
+    color: #18181b !important;
+    box-shadow: inset 3px 0 0 #f5b700;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-child.is-active:is(:hover, :focus, :focus-visible) {
+    background-color: #e2e8f0 !important;
+    color: #18181b !important;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"])
+    :is(svg, [class*="text-white"], [class*="text-black"]) {
+    color: currentColor;
+  }
+
+  .trimma-admin-sidebar :is(a, button, [data-slot="collapsible-trigger"]):not(.is-active)[class*="text-white"] {
+    color: #3f3f46 !important;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-logout {
+    color: #dc2626 !important;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-logout:is(:hover, :focus, :focus-visible) {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+  }
+
+  .trimma-admin-shell :is(.trimma-admin-sidebar, header) .trimma-admin-icon-btn {
+    color: #52525b;
+  }
+
+  .trimma-admin-shell :is(.trimma-admin-sidebar, header) .trimma-admin-icon-btn:is(:hover, :focus, :focus-visible) {
+    background-color: #f1f5f9 !important;
+    color: #18181b !important;
+  }
+
+  .trimma-admin-shell header .trimma-admin-nav-logout:is(:hover, :focus, :focus-visible) {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+  }
+
   .trimma-card-standard {
     padding: var(--trimma-card-padding);
     border-radius: var(--radius-lg);
