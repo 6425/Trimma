@@ -70,7 +70,9 @@ export default function AdminDashboard() {
           return;
         }
         result = await fetchAdminDashboardClient();
-        setLoadWarning(result.clientFallback ? "Using client data fallback." : null);
+        setLoadWarning(
+          "Using client data fallback. Add SUPABASE_SERVICE_ROLE_KEY on Vercel for full metrics."
+        );
       } else if ("clientFallback" in result && result.clientFallback) {
         setLoadWarning(
           "Limited dashboard data — configure SUPABASE_SERVICE_ROLE_KEY on beta for full metrics."
