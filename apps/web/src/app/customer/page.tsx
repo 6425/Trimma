@@ -137,13 +137,13 @@ function DashboardContent() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 md:space-y-12">
-      <section className="bg-zinc-900 rounded-3xl p-6 md:p-10 text-white relative overflow-hidden shadow-xl border border-white/10">
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 to-[#1A1608] z-0"></div>
+      <section className="bg-white rounded-3xl p-6 md:p-10 text-zinc-900 relative overflow-hidden shadow-sm border border-zinc-200">
+        <div className="absolute inset-0 bg-gradient-to-r from-white to-zinc-50 z-0"></div>
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#F5B700]/10 blur-3xl rounded-full z-0"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <Avatar className="w-16 h-16 md:w-20 md:h-20 border-2 border-white/20">
+            <Avatar className="w-16 h-16 md:w-20 md:h-20 border-2 border-zinc-200">
               <AvatarImage src={avatarUrl || undefined} />
               <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
@@ -151,7 +151,7 @@ function DashboardContent() {
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
                 {getGreeting()}, {userName} 👋
               </h1>
-              <div className="flex items-center gap-3 text-sm text-zinc-300">
+              <div className="flex items-center gap-3 text-sm text-zinc-600">
                 <Badge variant="secondary" className="bg-[#F5B700]/10 text-[#F5B700] border border-[#F5B700]/20 font-semibold text-xs px-2.5 py-0.5">
                   {userRole}
                 </Badge>
@@ -161,16 +161,16 @@ function DashboardContent() {
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
             Book Now
           </Link>
-          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
             Find Salons
           </Link>
-          <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
             Saved Styles
           </Link>
-          <Link href="/customer/bookings" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-white/5 border border-white/10 text-white hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/bookings" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
             History
           </Link>
         </div>
@@ -182,15 +182,15 @@ function DashboardContent() {
           { label: "Upcoming", value: bookingStats.upcoming },
           { label: "Completed", value: bookingStats.completed },
         ].map((stat) => (
-          <div key={stat.label} className="bg-zinc-900/50 rounded-2xl p-4 border border-white/10 text-center">
-            <p className="text-2xl font-black text-white">{stat.value}</p>
-            <p className="text-xs text-zinc-400 font-semibold uppercase tracking-wide mt-1">{stat.label}</p>
+          <div key={stat.label} className="bg-white rounded-2xl p-4 border border-zinc-200 text-center shadow-sm">
+            <p className="text-2xl font-black text-zinc-900">{stat.value}</p>
+            <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wide mt-1">{stat.label}</p>
           </div>
         ))}
       </div>
 
-      <section className="bg-zinc-900/50 rounded-2xl p-6 border border-white/10 backdrop-blur-sm">
-        <h2 className="text-xl font-bold mb-4 text-white">Upcoming Bookings</h2>
+      <section className="bg-white rounded-2xl p-6 border border-zinc-200 shadow-sm">
+        <h2 className="text-xl font-bold mb-4 text-zinc-900">Upcoming Bookings</h2>
         {upcomingBookings.length === 0 ? (
           <div className="text-center py-12 text-zinc-500">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
@@ -209,11 +209,11 @@ function DashboardContent() {
               return (
                 <div
                   key={booking.id}
-                  className="p-4 rounded-xl border border-white/10 bg-zinc-900 hover:border-[#F5B700]/30 hover:bg-[#F5B700]/5 transition-all flex justify-between items-center gap-4"
+                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#F5B700]/50 hover:bg-[#F5B700]/5 transition-all flex justify-between items-center gap-4"
                 >
                   <div>
-                    <h3 className="font-semibold text-zinc-100">{booking.salons?.name || "Trimma Partner Salon"}</h3>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-zinc-400">
+                    <h3 className="font-semibold text-zinc-900">{booking.salons?.name || "Trimma Partner Salon"}</h3>
+                    <div className="flex items-center gap-2 mt-1 text-sm text-zinc-600">
                       <CalendarDays className="w-4 h-4 text-[#F5B700]/80" />
                       <span>
                         {booking.booking_date} at {booking.booking_time}
@@ -222,7 +222,7 @@ function DashboardContent() {
                     {booking.salons?.city ? <p className="text-xs text-zinc-500 mt-1">{booking.salons.city}</p> : null}
                   </div>
                   <div className="text-right flex flex-col items-end gap-1.5 max-w-[240px]">
-                    <span className="font-bold text-white">Total: Rs. {formatLkr(total)}</span>
+                    <span className="font-bold text-zinc-900">Total: Rs. {formatLkr(total)}</span>
 
                     {["confirmed", "pending", "reservation_paid"].includes(String(booking.status || "").toLowerCase()) ? (
                       <>
@@ -234,7 +234,7 @@ function DashboardContent() {
                         </span>
                       </>
                     ) : (
-                      <Badge variant="outline" className="text-[9px] uppercase border-white/20 text-zinc-300">
+                      <Badge variant="outline" className="text-[9px] uppercase border-zinc-200 text-zinc-500">
                         {booking.status}
                       </Badge>
                     )}
