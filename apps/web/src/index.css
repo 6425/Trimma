@@ -885,31 +885,43 @@
     margin-top: var(--trimma-field-gap);
   }
 
-  /* Absolute Safeguard: No White on White */
+  /* Absolute Safeguard: Light backgrounds flip foreground variables to dark */
+  .bg-white, .bg-zinc-50, .bg-slate-50, .bg-gray-50, .bg-neutral-50, .bg-stone-50 {
+    --foreground: #000000;
+    --card-foreground: #000000;
+    --popover-foreground: #000000;
+    --sidebar-foreground: #000000;
+    --muted-foreground: #52525b; /* Darker grey for light bg */
+    color: #000000;
+  }
+
+  /* Absolute Safeguard: Dark backgrounds flip foreground variables to light */
+  .bg-black, .bg-zinc-950, .bg-zinc-900, .bg-slate-950, .bg-slate-900, .bg-gray-950, .bg-gray-900, .bg-[#0B0B0B], .bg-[#151515] {
+    --foreground: #FFFFFF;
+    --card-foreground: #FFFFFF;
+    --popover-foreground: #FFFFFF;
+    --sidebar-foreground: #FFFFFF;
+    --muted-foreground: #a1a1aa; /* Lighter grey for dark bg */
+    color: #FFFFFF;
+  }
+
+  /* Hard Fallbacks for specific utility classes to prevent invisible text */
   .bg-white.text-white,
   .bg-white.text-zinc-50,
-  .bg-white.text-gray-50,
   [style*="background-color: white"].text-white,
-  [style*="background-color: #ffffff"].text-white,
-  [style*="background-color: #fff"].text-white,
-  [class*="bg-white"][class*="text-white"],
+  .bg-white .text-white,
   .bg-white [class*="text-white"]:not([class*="bg-"]),
-  .bg-white .text-white {
+  .bg-white .text-popover-foreground,
+  .bg-white .text-card-foreground {
     color: #000000 !important;
   }
 
-  /* Absolute Safeguard: No Black on Black */
   .bg-black.text-black,
   .bg-zinc-950.text-zinc-950,
   .bg-zinc-900.text-zinc-900,
   [style*="background-color: black"].text-black,
-  [style*="background-color: #000000"].text-black,
-  [style*="background-color: #000"].text-black,
-  .bg-[#0B0B0B].text-[#0B0B0B],
-  .bg-[#151515].text-[#151515],
-  [class*="bg-black"][class*="text-black"],
-  .bg-black [class*="text-black"]:not([class*="bg-"]),
   .bg-black .text-black,
+  .bg-black [class*="text-black"]:not([class*="bg-"]),
   .bg-[#0B0B0B] [class*="text-black"]:not([class*="bg-"]),
   .bg-[#151515] [class*="text-black"]:not([class*="bg-"]) {
     color: #FFFFFF !important;
