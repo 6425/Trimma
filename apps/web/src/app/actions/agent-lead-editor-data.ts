@@ -64,7 +64,7 @@ export async function fetchAgentLeadEditorData(salonId: string) {
     const [servicesRes, amenitiesRes] = await Promise.all([
       supabase
         .from("services")
-        .select("global_service_id, price, duration, category")
+        .select("global_service_id, price, duration_min, category")
         .eq("salon_id", salonId),
       supabase.from("salon_amenities").select("*").eq("salon_id", salonId),
     ]);

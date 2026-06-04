@@ -249,7 +249,7 @@ function AgentLeads() {
           svcMap[s.global_service_id] = {
             enabled: true,
             price: s.price?.toString() || "0",
-            duration: s.duration?.toString() || "30",
+            duration: s.duration_min?.toString() || "30",
             category: s.category || "",
           };
         }
