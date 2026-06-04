@@ -13,7 +13,7 @@ export function B2BCTA() {
             <Building2 className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-white mb-4">
-            Power your salon with Trimma.
+            Power Your Salon With Trimma.
           </h2>
           <p className="text-xl text-zinc-300 mb-8 max-w-lg">
             Join thousands of salons using The Salon Engine to manage appointments, process payments, and fill empty seats.
