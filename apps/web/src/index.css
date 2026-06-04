@@ -292,16 +292,7 @@
     @apply font-sans scroll-smooth;
   }
   
-  /* Global safeguard: Light backgrounds should default to dark text */
-  .bg-white, .bg-slate-50, .bg-zinc-50, .bg-gray-50, .bg-stone-50, .bg-neutral-50, .bg-red-50, .bg-orange-50, .bg-amber-50, .bg-yellow-50, .bg-lime-50, .bg-green-50, .bg-emerald-50, .bg-teal-50, .bg-cyan-50, .bg-sky-50, .bg-blue-50, .bg-indigo-50, .bg-violet-50, .bg-purple-50, .bg-fuchsia-50, .bg-pink-50, .bg-rose-50,
-  .bg-slate-100, .bg-zinc-100, .bg-gray-100, .bg-neutral-100, .bg-stone-100 {
-    color: var(--text-dark);
-  }
 
-  /* Global safeguard: Dark backgrounds should default to white text */
-  .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950, .bg-slate-800, .bg-slate-900, .bg-slate-950, .bg-gray-800, .bg-gray-900, .bg-gray-950, .bg-neutral-800, .bg-neutral-900, .bg-neutral-950, .bg-stone-900, .bg-stone-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\] {
-    color: var(--text-light);
-  }
 
   /* Dark gradient panels (admin KPI cards, hero sections, etc.) */
   [class*="bg-gradient-to"][class*="from-[#1A1C29]"],
@@ -473,28 +464,6 @@
     color: var(--text-dark) !important;
   }
 
-  /* White cards inside dark dashboards — dark text on light panels */
-  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50, .bg-neutral-50, .bg-rose-50, .bg-amber-50, .bg-yellow-50) {
-    color: var(--text-dark);
-  }
-
-  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
-    h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
-  ):not([class*="text-brand"]):not([class*="text-[#F5B700]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-rose"]):not([class*="text-red"]):not(.text-white):not([class*="text-white"]) {
-    color: var(--text-dark) !important;
-  }
-
-  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
-    button, a, [role="button"], [data-slot="button"]
-  ):not([class*="bg-brand"]):not([class*="bg-[#F5B700]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-red"]):not([class*="bg-rose-5"]):not([class*="bg-emerald"]):not([class*="bg-[#1A1C29]"]):not([class*="bg-blue"]) {
-    color: var(--text-dark);
-  }
-
-  .trimma-dark-context :is(.bg-white, .bg-zinc-50, .bg-slate-50) :is(
-    button, a, [role="button"], [data-slot="button"]
-  ):is([class*="hover:bg-rose-50"]:hover, [class*="hover:bg-zinc-50"]:hover, [class*="hover:bg-zinc-100"]:hover) {
-    color: var(--text-dark) !important;
-  }
 
   h1 {
     @apply font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-tight;
