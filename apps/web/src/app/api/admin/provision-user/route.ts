@@ -144,12 +144,15 @@ export async function POST(request: Request) {
         .eq("user_email", normalizedEmail)
         .maybeSingle();
 
+      const agentPayload = {
+        user_id: createdUser.user.id,
+        user_email: normalizedEmail,
+        status: "active",
+        commission_rate: 0,
+      };
+
       if (!existingAgent) {
-        const { error: agentError } = await supabaseAdmin.from("agents").insert({
-          user_email: normalizedEmail,
-          status: "active",
-          commission_rate: 0,
-        });
+        const { error: agentError } = await supabaseAdmin.from("agents").insert(agentPayload);
 
         if (agentError) {
           return NextResponse.json(
@@ -157,6 +160,11 @@ export async function POST(request: Request) {
             { status: 500 }
           );
         }
+      } else {
+        await supabaseAdmin
+          .from("agents")
+          .update({ user_id: createdUser.user.id, user_email: normalizedEmail })
+          .eq("id", existingAgent.id);
       }
     }
 

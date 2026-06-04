@@ -3,8 +3,10 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { assertPlatformAdmin } from "@/lib/platform-admin";
 import { normalizeEmail } from "@/lib/normalize-email";
-
-const PLATFORM_ADMIN_ROLES = new Set(["admin", "superadmin"]);
+import {
+  fetchGlobalRolesForEmail,
+  isPlatformAdminRole,
+} from "@/lib/trimma-role-core";
 
 export async function verifyAdminLoginSession(accessToken: string) {
   if (!accessToken?.trim()) {
@@ -25,13 +27,13 @@ export async function verifyAdminLoginSession(accessToken: string) {
     }
 
     const email = normalizeEmail(user.email);
-    const [{ data: profile }, { data: roleRows }] = await Promise.all([
-      supabase.from("users").select("global_role").ilike("email", email).maybeSingle(),
+    const [{ data: roleRows }, globalRoles] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", user.id),
+      fetchGlobalRolesForEmail(supabase, email),
     ]);
 
-    const roles = [profile?.global_role, ...(roleRows || []).map((row) => row.role)].filter(Boolean);
-    const role = roles.find((value) => PLATFORM_ADMIN_ROLES.has(String(value))) || "admin";
+    const roles = [...globalRoles, ...(roleRows || []).map((row) => row.role)].filter(Boolean);
+    const role = roles.find((value) => isPlatformAdminRole(String(value))) || "admin";
 
     return { success: true as const, role: String(role) };
   } catch (err) {

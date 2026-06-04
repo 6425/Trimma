@@ -96,10 +96,42 @@ export default function AdminAgents() {
     }
   };
 
-  const mapAgentsFromPageData = (usersData: any[], agentsData: any[], leadsData: any[]) => {
-    const agentUsers = (usersData || []).filter((u) => u.global_role === "agent");
+  const mapAgentsFromPageData = (
+    usersData: any[],
+    agentsData: any[],
+    leadsData: any[],
+    userRolesData: { user_id: string | null; role: string }[] = []
+  ) => {
+    const agentUserIds = new Set(
+      userRolesData
+        .filter((r) => r.role === "agent" && r.user_id)
+        .map((r) => r.user_id as string)
+    );
+    const agentEmailsFromRoles = new Set(
+      (agentsData || [])
+        .filter((a) => a.user_id && agentUserIds.has(a.user_id))
+        .map((a) => String(a.user_email || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    const isAgentUser = (u: { email?: string; global_role?: string }) => {
+      const email = String(u.email || "").trim().toLowerCase();
+      return (
+        String(u.global_role || "").toLowerCase() === "agent" ||
+        agentEmailsFromRoles.has(email) ||
+        (agentsData || []).some(
+          (a) => String(a.user_email || "").trim().toLowerCase() === email
+        )
+      );
+    };
+
+    const agentUsers = (usersData || []).filter(isAgentUser);
     const flattened = agentUsers.map((u: any) => {
-      const agentMeta: any = (agentsData || []).find((a: any) => a.user_email === u.email) || {};
+      const emailKey = String(u.email || "").trim().toLowerCase();
+      const agentMeta: any =
+        (agentsData || []).find(
+          (a: any) => String(a.user_email || "").trim().toLowerCase() === emailKey
+        ) || {};
       const agentLeads = (leadsData || []).filter((l: any) => l.assign_to === u.email);
       const convertedCount = agentLeads.filter((l: any) => l.onboarding_stage === "CONVERTED").length;
 
@@ -138,7 +170,12 @@ export default function AdminAgents() {
         throw new Error(result.error);
       }
 
-      mapAgentsFromPageData(result.users || [], result.agents || [], result.leads || []);
+      mapAgentsFromPageData(
+        result.users || [],
+        result.agents || [],
+        result.leads || [],
+        result.userRoles || []
+      );
       setAgentTerritories(result.agentTerritories || []);
       setTerritoryCatalog(result.territoryCatalog || []);
       setLedger(result.ledger || []);
@@ -222,6 +259,7 @@ export default function AdminAgents() {
         status: editStatus,
         commission_rate: parsedRate,
         territory: assignedNames,
+        territory_id: finalIds[0] ?? null,
         createIfMissing: !selectedAgent.agent_exists,
       });
       if (result.success === false) throw new Error(result.error);
@@ -298,6 +336,7 @@ export default function AdminAgents() {
         status: agent?.status && agent.status !== "inactive" ? agent.status : "active",
         commission_rate: agent?.commission_rate || 10,
         territory: assignedNames,
+        territory_id: finalIds[0] ?? null,
         createIfMissing: true,
       });
       if (saveRes.success === false) throw new Error(saveRes.error);

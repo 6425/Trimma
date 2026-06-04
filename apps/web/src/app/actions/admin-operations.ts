@@ -4,7 +4,8 @@ import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-
 import { saveAdminSalonRecord } from "@/lib/admin-salon-save-core";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
-import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
+import { normalizeEmail } from "@/lib/normalize-email";
+import { findAuthUserIdByEmail, syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import { saveBookingCommissionMaster } from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 
@@ -271,29 +272,41 @@ export async function saveAdminAgentProfile(input: {
   status: string;
   commission_rate: number;
   territory?: string;
+  territory_id?: string | null;
   createIfMissing?: boolean;
 }) {
   const result = await withAdminDb(async (supabase) => {
+    const normalized = normalizeEmail(input.user_email);
+    if (!normalized) throw new Error("Agent email is required.");
+
     const { data: existing } = await supabase
       .from("agents")
       .select("id")
-      .eq("user_email", input.user_email)
+      .eq("user_email", normalized)
       .maybeSingle();
 
-    const payload: any = {
+    const authUserId = await findAuthUserIdByEmail(supabase, normalized);
+
+    const payload: Record<string, unknown> = {
       status: input.status,
       commission_rate: input.commission_rate,
+      user_email: normalized,
     };
-    
+
+    if (authUserId) payload.user_id = authUserId;
+
     if (input.territory !== undefined) {
       payload.territory = input.territory;
     }
+    if (input.territory_id !== undefined) {
+      payload.territory_id = input.territory_id;
+    }
 
     if (existing?.id) {
-      const { error } = await supabase.from("agents").update(payload).eq("user_email", input.user_email);
+      const { error } = await supabase.from("agents").update(payload).eq("id", existing.id);
       if (error) throw new Error(error.message);
     } else if (input.createIfMissing) {
-      const { error } = await supabase.from("agents").insert([{ user_email: input.user_email, ...payload }]);
+      const { error } = await supabase.from("agents").insert([payload]);
       if (error) throw new Error(error.message);
     } else {
       throw new Error("Agent profile not found.");

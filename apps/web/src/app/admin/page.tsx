@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
 import { fetchAdminDashboard } from "@/app/actions/admin-list-data";
+import { fetchAdminDashboardClient } from "@/lib/admin-dashboard-client";
+import { resolveAdminAccess } from "@/lib/trimma-role";
 import { withTimeout } from "@/lib/promise-timeout";
 import {
   ActivityItem,
@@ -33,17 +35,30 @@ export default function AdminDashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [diagResults, setDiagResults] = useState<any[]>([]);
   const [runningDiag, setRunningDiag] = useState(false);
 
   const fetchStats = async () => {
     try {
-      const result = await withTimeout(
-        fetchAdminDashboard(),
-        25000,
-        "Dashboard load timed out. Check Vercel SUPABASE_SERVICE_ROLE_KEY and refresh."
-      );
+      setLoadWarning(null);
+      let result: Awaited<ReturnType<typeof fetchAdminDashboard>> | Awaited<
+        ReturnType<typeof fetchAdminDashboardClient>
+      >;
+
+      try {
+        result = await withTimeout(
+          fetchAdminDashboard(),
+          12000,
+          "Server dashboard load timed out."
+        );
+      } catch {
+        result = await fetchAdminDashboardClient();
+        setLoadWarning(
+          "Loaded in limited mode (server actions unavailable). Add SUPABASE_SERVICE_ROLE_KEY on Vercel for full admin data."
+        );
+      }
 
       if (result.success === false) {
         if (
@@ -54,7 +69,12 @@ export default function AdminDashboard() {
           router.replace("/admin/login?redirect=/admin");
           return;
         }
-        throw new Error(result.error);
+        result = await fetchAdminDashboardClient();
+        setLoadWarning(result.clientFallback ? "Using client data fallback." : null);
+      } else if ("clientFallback" in result && result.clientFallback) {
+        setLoadWarning(
+          "Limited dashboard data — configure SUPABASE_SERVICE_ROLE_KEY on beta for full metrics."
+        );
       }
 
       const bookingGmv = (result.bookingRows || [])
@@ -139,6 +159,22 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     void Promise.resolve().then(async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        router.replace("/admin/login?redirect=/admin");
+        return;
+      }
+
+      const isAdmin = await resolveAdminAccess(session.user.id, session.user.email);
+      if (!isAdmin) {
+        toast.error("You are not allowed to access the admin dashboard.");
+        router.replace("/admin/login?redirect=/admin");
+        return;
+      }
+
       setAuthorized(true);
       await fetchStats();
     });
@@ -356,13 +392,18 @@ export default function AdminDashboard() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
          <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
-         <p className="text-zinc-500 font-medium">Verifying administrator credentials...</p>
+         <p className="text-zinc-500 font-medium">Verifying administrator credentials…</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-screen-2xl mx-auto">
+      {loadWarning ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+          {loadWarning}
+        </div>
+      ) : null}
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

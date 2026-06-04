@@ -105,9 +105,10 @@ export async function fetchAdminCommissionsPage() {
 
 export async function fetchAdminAgentsPage() {
   const result = await withAdminDb(async (supabase) => {
-    const [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes, pendingLedgerRes] = await Promise.all([
+    const [usersRes, agentsRes, userRolesRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes, pendingLedgerRes] = await Promise.all([
         supabase.from("users").select("*").order("email"),
         supabase.from("agents").select("*"),
+        supabase.from("user_roles").select("user_id, role"),
         supabase.from("salon_leads").select("*").order("created_at", { ascending: false }),
         supabase
           .from("agent_territories")
@@ -120,7 +121,7 @@ export async function fetchAdminAgentsPage() {
         supabase.from("agent_activity_logs").select("*").order("created_at", { ascending: false }).limit(50),
         supabase.from("commission_ledger").select("amount").eq("status", "PENDING")
       ]);
-    for (const res of [usersRes, agentsRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes, pendingLedgerRes]) {
+    for (const res of [usersRes, agentsRes, userRolesRes, leadsRes, assignmentsRes, catalogRes, ledgerRes, logsRes, pendingLedgerRes]) {
       if (res.error) throw new Error(res.error.message);
     }
 
@@ -129,6 +130,7 @@ export async function fetchAdminAgentsPage() {
     return {
       users: usersRes.data || [],
       agents: agentsRes.data || [],
+      userRoles: userRolesRes.data || [],
       leads: leadsRes.data || [],
       agentTerritories: assignmentsRes.data || [],
       territoryCatalog: catalogRes.data || [],

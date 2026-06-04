@@ -6,15 +6,36 @@ import { normalizeEmail } from "@/lib/normalize-email";
 import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import type { WorkItem } from "@/app/actions/agent-work-queue";
+import {
+  buildAgentTerritories,
+  findAgentRecord,
+  resolveAgentMapAgentId,
+  territorySearchOrClause,
+} from "@/lib/agent-territory-resolve";
+
+const AGENT_SERVER_FALLBACK_ERRORS = /agent not found|agent profile not found|unexpected response/i;
 
 /** Prefer server action; on failure use client Supabase (app-managed). */
-export async function tryAgentData<T extends { success: boolean }>(
+export async function tryAgentData<T extends { success: boolean; error?: string }>(
   serverFn: () => Promise<T>,
-  clientFn: () => Promise<T>
+  clientFn: () => Promise<T>,
+  options?: { clientFirst?: boolean }
 ): Promise<T> {
+  if (options?.clientFirst) {
+    try {
+      const clientRes = await clientFn();
+      if (clientRes.success) return clientRes;
+    } catch {
+      // fall through to server
+    }
+  }
+
   try {
     const res = await serverFn();
     if (res.success) return res;
+    if (AGENT_SERVER_FALLBACK_ERRORS.test(res.error || "")) {
+      return clientFn();
+    }
   } catch {
     // Server action unavailable (e.g. functions down on preview).
   }
@@ -306,54 +327,21 @@ export async function getAgentMapDataClient() {
   const auth = await requireAgentEmailClient();
   if (auth.success === false) return { success: false as const, error: auth.error };
 
-  const { data: agentData, error: agentError } = await supabase
-    .from("agents")
-    .select("id, territory")
-    .eq("user_email", auth.email)
-    .maybeSingle();
+  try {
+    const agentRow = await findAgentRecord(supabase, auth.email, auth.userId);
+    const territories = await buildAgentTerritories(supabase, auth.email, agentRow);
+    const { data: catData } = await supabase.from("categories").select("name").order("name");
 
-  if (agentError || !agentData?.id) {
-    return { success: false as const, error: "Agent not found" };
+    return {
+      success: true as const,
+      agentId: resolveAgentMapAgentId(auth.email, agentRow),
+      territories,
+      categories: catData?.map((c) => c.name) || [],
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load territory data";
+    return { success: false as const, error: message };
   }
-
-  const territories: { id: string; name: string; type?: string; slug?: string }[] = [];
-  const { data: territoryData } = await supabase
-    .from("agent_territories")
-    .select("territory_id, territories ( id, name, type, slug )")
-    .eq("agent_id", agentData.id);
-
-  if (territoryData?.length) {
-    territoryData.forEach((t) => {
-      const terr = t.territories as { id?: string; name?: string; type?: string; slug?: string } | null;
-      if (terr?.name && !territories.find((x) => x.name === terr.name)) {
-        territories.push({
-          id: terr.id || `t-${terr.name}`,
-          name: terr.name,
-          type: terr.type,
-          slug: terr.slug,
-        });
-      }
-    });
-  } else if (agentData.territory) {
-    agentData.territory
-      .split(",")
-      .map((n: string) => n.trim())
-      .filter(Boolean)
-      .forEach((name: string) => {
-        if (!territories.find((x) => x.name === name)) {
-          territories.push({ id: `primary-${name}`, name, type: "primary" });
-        }
-      });
-  }
-
-  const { data: catData } = await supabase.from("categories").select("name").order("name");
-
-  return {
-    success: true as const,
-    agentId: agentData.id,
-    territories,
-    categories: catData?.map((c) => c.name) || [],
-  };
 }
 
 export async function searchBusinessesInTerritoriesClient(
@@ -383,14 +371,18 @@ export async function searchBusinessesInTerritoriesClient(
     }
 
     if (terrNames.length > 0) {
-      const orClauses = terrNames.map((name) => `city.ilike.%${name}%,address.ilike.%${name}%`).join(",");
-      if (orClauses) query = query.or(orClauses);
+      const orClause = territorySearchOrClause(terrNames);
+      if (orClause) query = query.or(orClause);
     }
   }
 
   if (categories.length > 0 && !categories.includes("All Categories")) {
     const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
     query = query.or(orClauses);
+  }
+
+  if (terrNames.length === 0) {
+    query = query.or(`assign_to.eq.${auth.email},assign_to.ilike.${auth.email}`);
   }
 
   const { data, error } = await query;

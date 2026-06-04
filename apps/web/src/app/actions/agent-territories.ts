@@ -1,6 +1,10 @@
 "use server";
 
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
+import {
+  denormalizeAgentTerritoryFields,
+  resolveAgentIdByEmail,
+} from "@/lib/agent-territory-admin-sync";
 
 export async function fetchTerritoriesCatalog() {
   const result = await withAdminDb(async (supabase) => {
@@ -16,31 +20,13 @@ export async function fetchTerritoriesCatalog() {
   return { success: true as const, territories: result.data.territories };
 }
 
-async function resolveAgentId(
-  supabase: Parameters<Parameters<typeof withAdminDb>[0]>[0],
-  agentEmail: string
-) {
-  const { data, error } = await supabase
-    .from("agents")
-    .select("id")
-    .eq("user_email", agentEmail)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data?.id) {
-    throw new Error(`No agent profile found for ${agentEmail}. Save agent credentials first.`);
-  }
-
-  return data.id as string;
-}
-
 export async function assignAgentTerritory(agentEmail: string, territoryId: string) {
   if (!agentEmail?.trim() || !territoryId) {
     return { success: false as const, error: "Agent email and territory are required." };
   }
 
   const result = await withAdminDb(async (supabase) => {
-    const agentId = await resolveAgentId(supabase, agentEmail.trim());
+    const agentId = await resolveAgentIdByEmail(supabase, agentEmail.trim());
     const { error } = await supabase.from("agent_territories").insert({
       agent_id: agentId,
       territory_id: territoryId,
@@ -51,6 +37,7 @@ export async function assignAgentTerritory(agentEmail: string, territoryId: stri
       }
       throw new Error(error.message);
     }
+    await denormalizeAgentTerritoryFields(supabase, agentId);
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
@@ -63,13 +50,14 @@ export async function removeAgentTerritory(agentEmail: string, territoryId: stri
   }
 
   const result = await withAdminDb(async (supabase) => {
-    const agentId = await resolveAgentId(supabase, agentEmail.trim());
+    const agentId = await resolveAgentIdByEmail(supabase, agentEmail.trim());
     const { error } = await supabase
       .from("agent_territories")
       .delete()
       .eq("agent_id", agentId)
       .eq("territory_id", territoryId);
     if (error) throw new Error(error.message);
+    await denormalizeAgentTerritoryFields(supabase, agentId);
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
@@ -84,7 +72,7 @@ export async function syncAgentTerritories(agentEmail: string, territoryIds: str
   const uniqueIds = [...new Set((territoryIds || []).filter(Boolean))];
 
   const result = await withAdminDb(async (supabase) => {
-    const agentId = await resolveAgentId(supabase, agentEmail.trim());
+    const agentId = await resolveAgentIdByEmail(supabase, agentEmail.trim());
 
     const { data: currentRows, error: fetchError } = await supabase
       .from("agent_territories")
@@ -117,6 +105,8 @@ export async function syncAgentTerritories(agentEmail: string, territoryIds: str
       );
       if (error) throw new Error(error.message);
     }
+
+    await denormalizeAgentTerritoryFields(supabase, agentId);
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

@@ -59,16 +59,30 @@ function TerritoryExplorerContent() {
         setSelectedTerritoryId(cachedTerritory);
       }
 
-      const res = await tryAgentData(getAgentMapData, getAgentMapDataClient);
+      const res = await tryAgentData(getAgentMapData, getAgentMapDataClient, {
+        clientFirst: true,
+      });
       if (res.success) {
-        setTerritories(res.territories || []);
+        setTerritories(
+          (res.territories || []).map((t) => ({
+            id: t.id,
+            name: t.name,
+            type: t.type || "assigned",
+          }))
+        );
         setCategories(res.categories || []);
       } else {
         if (res.error?.includes("Not authenticated")) {
           router.replace("/login?redirectTo=/agent/territory");
           return;
         }
-        throw new Error(res.error);
+        const msg = res.error || "Failed to load territories";
+        if (/agent not found/i.test(msg)) {
+          throw new Error(
+            "Could not load your agent profile. Try signing out and back in, or ask admin to confirm your agents row and territory assignments."
+          );
+        }
+        throw new Error(msg);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to load territories");
@@ -82,11 +96,6 @@ function TerritoryExplorerContent() {
   }, [loadInitialData]);
 
   const handleSearch = async () => {
-    if (territories.length === 0) {
-      toast.error("No territories assigned to your account.");
-      return;
-    }
-    
     setSearching(true);
     setSelectedBusinessId(null);
     try {
@@ -94,7 +103,8 @@ function TerritoryExplorerContent() {
       const catsToSearch = (selectedCategory && selectedCategory !== "all") ? [selectedCategory] : categories;
       const res = await tryAgentData(
         () => searchBusinessesInTerritories(catsToSearch, terrIds),
-        () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds)
+        () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds),
+        { clientFirst: true }
       );
       
       if (!res.success) throw new Error(res.error);

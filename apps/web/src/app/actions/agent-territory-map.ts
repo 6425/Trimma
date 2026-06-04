@@ -2,65 +2,36 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import {
+  buildAgentTerritories,
+  ensureAgentRecord,
+  findAgentRecord,
+  resolveAgentMapAgentId,
+  territorySearchOrClause,
+} from "@/lib/agent-territory-resolve";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export async function getAgentMapData() {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
-  const user = { email: auth.email };
 
   const supabase = createSupabaseAdminClient();
-  
-  // 1. Find the agent's ID and territory
-  const { data: agentData, error: agentError } = await supabase
-    .from("agents")
-    .select("id, territory")
-    .eq("user_email", user.email)
-    .maybeSingle();
 
-  if (agentError || !agentData?.id) {
-    return { success: false as const, error: "Agent not found" };
+  let agentRow = await findAgentRecord(supabase, auth.email, auth.userId);
+  try {
+    agentRow = (await ensureAgentRecord(supabase, auth.email, auth.userId)) || agentRow;
+  } catch {
+    // Still serve map data from agent_territories / assigned salons without blocking the page.
   }
 
-  // Use the territory string from the agent profile directly
-  const primaryTerritoryName = agentData.territory;
-
-  // We can also fetch from agent_territories as a fallback or addition
-  const { data: territoryData } = await supabase
-    .from("agent_territories")
-    .select("territory_id, territories ( id, name, type, slug )")
-    .eq("agent_id", agentData.id);
-
-  const territories: any[] = [];
-  
-  if (territoryData && territoryData.length > 0) {
-    territoryData.forEach((t: any) => {
-      if (t.territories && !territories.find(existing => existing.name === t.territories.name)) {
-        territories.push(t.territories);
-      }
-    });
-  } else if (primaryTerritoryName) {
-    // Legacy fallback: split comma-separated string
-    const names = primaryTerritoryName.split(",").map((n: string) => n.trim()).filter(Boolean);
-    names.forEach((name: string) => {
-      if (!territories.find(existing => existing.name === name)) {
-        territories.push({
-          id: "primary-" + name,
-          name: name,
-          type: "primary"
-        });
-      }
-    });
-  }
-
-  // Return the data
+  const territories = await buildAgentTerritories(supabase, auth.email, agentRow);
   const { data: catData } = await supabase.from("categories").select("name").order("name");
-  const categoryNames = catData?.map(c => c.name) || [];
 
   return {
     success: true as const,
-    agentId: agentData.id,
+    agentId: resolveAgentMapAgentId(auth.email, agentRow),
     territories,
-    categories: categoryNames
+    categories: catData?.map((c) => c.name) || [],
   };
 }
 
@@ -95,11 +66,14 @@ export async function searchBusinessesInTerritories(categories: string[], territ
     }
 
     if (terrNames.length > 0) {
-      const orClauses = terrNames.map(name => `city.ilike.%${name}%,address.ilike.%${name}%`).join(",");
-      if (orClauses) {
-        query = query.or(orClauses);
-      }
+      const orClause = territorySearchOrClause(terrNames);
+      if (orClause) query = query.or(orClause);
     }
+  }
+
+  if (terrNames.length === 0) {
+    const email = normalizeEmail(auth.email) || auth.email;
+    query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
   }
 
   if (categories.length > 0 && !categories.includes("All Categories")) {

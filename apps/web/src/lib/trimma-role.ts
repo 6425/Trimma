@@ -1,52 +1,81 @@
 import { supabase } from "@/config/supabase";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
+import {
+  resolveTrimmaRoleFromDb,
+  pickHighestRole,
+  fetchGlobalRolesForEmail,
+  isPlatformAdminRole,
+} from "@/lib/trimma-role-core";
 import { normalizeEmail } from "@/lib/normalize-email";
 
-const ROLE_PRIORITY: TrimmaUserRole[] = ["admin", "salon_owner", "agent", "customer"];
-
-function normalizeRoleValue(role: string | null | undefined): string | null {
-  if (!role) return null;
-  const value = role.toLowerCase();
-  if (value === "superadmin" || value === "regional_admin") return "admin";
-  return value;
-}
-
-function pickHighestRole(
-  ...roles: (string | null | undefined)[]
-): TrimmaUserRole | null {
-  const normalized = roles.map(normalizeRoleValue).filter(Boolean) as string[];
-  for (const priority of ROLE_PRIORITY) {
-    if (normalized.some((role) => role === priority)) {
-      return priority;
-    }
-  }
-  return null;
-}
-
-/** Resolve the effective Trimma role from user_roles + users.global_role (DB is authoritative). */
+/** Resolve role: user_roles.user_id first, then all users.global_role rows for email (ilike). */
 export async function resolveTrimmaUserRole(
   userId: string,
   email: string | null | undefined
 ): Promise<TrimmaUserRole | null> {
-  const normalizedEmail = normalizeEmail(email);
-
-  const [{ data: roleRows }, { data: userData }] = await Promise.all([
-    supabase.from("user_roles").select("role").eq("user_id", userId),
-    normalizedEmail
-      ? supabase.from("users").select("global_role").eq("email", normalizedEmail).maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-  ]);
-
-  const tableRoles = (roleRows || []).map((row) => row.role);
-  return pickHighestRole(...tableRoles, userData?.global_role);
+  return resolveTrimmaRoleFromDb(supabase, userId, email);
 }
 
+/** Client-side admin gate (works when RLS allows reads; falls back to users.global_role only). */
 export async function resolveAdminAccess(
   userId: string,
   email: string | null | undefined
 ): Promise<boolean> {
-  const role = await resolveTrimmaUserRole(userId, email);
-  return role === "admin";
+  try {
+    const role = await resolveTrimmaUserRole(userId, email);
+    if (role === "admin") return true;
+  } catch (err) {
+    console.warn("Full role resolve failed; trying users.global_role only.", err);
+  }
+
+  const normalized = normalizeEmail(email);
+  if (!normalized) return false;
+
+  try {
+    const globalRoles = await fetchGlobalRolesForEmail(supabase, normalized);
+    return globalRoles.some((r) => isPlatformAdminRole(r));
+  } catch {
+    return false;
+  }
+}
+
+const ADMIN_VERIFY_TIMEOUT_MS = 10_000;
+
+/** Prefer server verify; fall back to client DB reads (beta / broken serverless). */
+export async function confirmAdminAccessForSession(
+  accessToken: string,
+  userId: string,
+  email: string | null | undefined
+): Promise<{ allowed: boolean; role: string; error?: string }> {
+  try {
+    const { verifyAdminLoginSession } = await import("@/app/actions/admin-auth");
+    const verified = await Promise.race([
+      verifyAdminLoginSession(accessToken),
+      new Promise<{ success: false; error: string }>((resolve) =>
+        setTimeout(
+          () => resolve({ success: false, error: "Server verification timed out." }),
+          ADMIN_VERIFY_TIMEOUT_MS
+        )
+      ),
+    ]);
+    if (verified.success) {
+      return { allowed: true, role: verified.role || "admin" };
+    }
+  } catch (err) {
+    console.warn("Admin server verification unavailable.", err);
+  }
+
+  const allowed = await resolveAdminAccess(userId, email);
+  if (!allowed) {
+    return {
+      allowed: false,
+      role: "customer",
+      error:
+        "Admin access required. Ensure your account has admin in user_roles (with your auth user_id) or users.global_role.",
+    };
+  }
+
+  return { allowed: true, role: "admin" };
 }
 
 export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
@@ -78,4 +107,4 @@ export function redirectAfterAuth(destination: string) {
   window.location.replace(destination);
 }
 
-export { pickHighestRole, ROLE_PRIORITY };
+export { pickHighestRole } from "@/lib/trimma-role-core";
