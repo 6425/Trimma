@@ -62,6 +62,10 @@ export default function SalonProfilePage() {
   const [province, setProvince] = useState("Western Province");
   const [district, setDistrict] = useState("Colombo");
   const [description, setDescription] = useState("");
+  const [priceLevel, setPriceLevel] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+  const [rating, setRating] = useState("");
   const [status, setStatus] = useState("pending");
   const [onboardingStatus, setOnboardingStatus] = useState("DISCOVERED");
   const [isVerified, setIsVerified] = useState(false);
@@ -134,6 +138,11 @@ export default function SalonProfilePage() {
       setOnboardingStatus(salonData.onboarding_status || "DISCOVERED");
       setIsVerified(salonData.is_verified || false);
       
+      setPriceLevel(salonData.price_level || "");
+      setLatitude(salonData.latitude !== null && salonData.latitude !== undefined ? String(salonData.latitude) : "");
+      setLongitude(salonData.longitude !== null && salonData.longitude !== undefined ? String(salonData.longitude) : "");
+      setRating(salonData.rating !== null && salonData.rating !== undefined ? String(salonData.rating) : "");
+
       // Set visual assets — prefer dedicated URL columns, fall back to Google Places hero_image
       setLogoUrl(salonData.logo_url || "");
       setCoverUrl(salonData.cover_url || "");
@@ -400,6 +409,10 @@ export default function SalonProfilePage() {
         featured_images: featuredImages,
         status: status,
         category: selectedCategories.join(", ") || null,
+        price_level: priceLevel || null,
+        latitude: latitude === "" ? null : parseFloat(latitude),
+        longitude: longitude === "" ? null : parseFloat(longitude),
+        rating: rating === "" ? null : parseFloat(rating),
       };
 
       const amenityInserts = Object.keys(salonAmenities)
@@ -475,9 +488,9 @@ export default function SalonProfilePage() {
             <Button
               onClick={handleCompleteOnboarding}
               disabled={saving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+              className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black shadow-md shadow-[#F5B700]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
             >
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} Activate Salon
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} Send For Verification
             </Button>
           )}
           {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
@@ -695,6 +708,25 @@ export default function SalonProfilePage() {
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs text-zinc-500">Price Level</Label>
+                  <Input 
+                    value={priceLevel}
+                    onChange={(e) => setPriceLevel(e.target.value)}
+                    className="rounded-xl h-11"
+                    placeholder="e.g. LKR, LKR LKR"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs text-zinc-500">Rating</Label>
+                  <Input 
+                    type="number" step="0.1" min="0" max="5"
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
+                    className="rounded-xl h-11"
+                    placeholder="e.g. 4.5"
+                  />
+                </div>
                 <div className="space-y-4 md:col-span-2 bg-zinc-50/50 p-6 rounded-2xl border border-zinc-100">
                   <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                      <Clock className="w-4 h-4 text-brand" /> Operational Scheduling
@@ -711,7 +743,7 @@ export default function SalonProfilePage() {
                           type="button"
                           variant="outline"
                           onClick={() => setSalonSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], isWorking: !prev[day as keyof typeof defaultSchedule].isWorking } }))}
-                          className={`h-9 w-16 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
+                          className={`h-9 w-16 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
                         >
                           {scheduleObj.isWorking ? 'OPEN' : 'CLOSED'}
                         </Button>
@@ -790,6 +822,24 @@ export default function SalonProfilePage() {
                   onProvinceChange={setProvince}
                   onDistrictChange={setDistrict}
                 />
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs text-zinc-500">Latitude</Label>
+                  <Input 
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="rounded-xl h-11"
+                    placeholder="e.g. 6.9271"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs text-zinc-500">Longitude</Label>
+                  <Input 
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="rounded-xl h-11"
+                    placeholder="e.g. 79.8612"
+                  />
+                </div>
               </div>
             </div>
 
@@ -867,12 +917,11 @@ export default function SalonProfilePage() {
                   <p className="text-xs text-zinc-500 mt-1">If active, your salon is visible on the marketplace search directory.</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
+                  <Button 
+                    variant="outline" 
+                    className={`rounded-xl font-bold px-4 h-10 ${status === "active" ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
                     onClick={() => setStatus("active")}
-                    className={`rounded-xl font-bold px-4 h-10 ${status === "active" ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50"}`}
-                  >
-                    Active / Open
+                  >  Active / Open
                   </Button>
                   <Button
                     type="button"
@@ -906,8 +955,8 @@ export default function SalonProfilePage() {
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-zinc-900 shadow-sm flex items-center gap-1">
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> 4.9 (184)
                 </div>
-                <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold text-white uppercase tracking-wider ${status === 'active' ? 'bg-emerald-600' : 'bg-amber-600'}`}>
-                   {status === 'active' ? 'Open Now' : 'Closed'}
+                <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${status === 'active' ? 'bg-[#F5B700] text-black' : 'bg-amber-600 text-white'}`}>
+                  {status === 'active' ? 'LIVE NOW' : 'DRAFT'}
                 </div>
               </div>
               

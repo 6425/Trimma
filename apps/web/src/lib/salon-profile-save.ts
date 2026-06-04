@@ -14,6 +14,11 @@ export const SALON_PROFILE_UPDATE_FIELDS = [
   "hero_url",
   "featured_images",
   "status",
+  "category",
+  "price_level",
+  "latitude",
+  "longitude",
+  "rating",
 ] as const;
 
 export type SalonScheduleDay = {
