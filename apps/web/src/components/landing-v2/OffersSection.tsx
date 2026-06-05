@@ -21,10 +21,10 @@ export function OffersSection() {
             className="text-left bg-white border border-zinc-200 rounded-lg p-6 shadow-sm flex flex-col sm:flex-row gap-6 relative overflow-hidden hover:border-[#F5B700]/40 hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex-1 z-10">
-              <h3 className="text-xl font-bold text-zinc-900 mb-2">New User Discount!</h3>
-              <p className="text-zinc-600 mb-6 max-w-sm">Save 15% on your first booking through Trimma.</p>
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">Special Offers & Promotions</h3>
+              <p className="text-zinc-600 mb-6 max-w-sm">Discover exclusive salon deals, seasonal campaigns, service bundles, and limited-time offers from trusted professionals.</p>
               <span className="inline-block bg-[#F5B700] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
-                Grab deal
+                View Offers
               </span>
             </div>
             <div className="hidden sm:block absolute right-0 top-0 bottom-0 w-1/3 bg-[#F5B700]/8 rounded-l-[100px] border-l border-[#F5B700]/20" />
@@ -40,10 +40,10 @@ export function OffersSection() {
             className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-lg p-6 shadow-sm flex flex-col sm:flex-row gap-6 relative overflow-hidden hover:border-emerald-200 hover:shadow-md transition-all"
           >
             <div className="flex-1 z-10">
-              <h3 className="text-xl font-bold text-zinc-900 mb-2">Weekend Glow-Up</h3>
-              <p className="text-zinc-600 mb-6 max-w-sm">Flash sales on manicures and pedicures this Saturday.</p>
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">Deals & Discounts</h3>
+              <p className="text-zinc-600 mb-6 max-w-sm">Browse all active promotions, savings opportunities, and featured salon offers available through Trimma.</p>
               <span className="inline-block bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
-                Explore deals
+                Explore Deals
               </span>
             </div>
             <div className="hidden sm:flex items-center justify-center absolute right-12 top-1/2 -translate-y-1/2 z-10">

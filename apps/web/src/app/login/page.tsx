@@ -83,6 +83,14 @@ function LoginForm() {
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (session?.user?.email && invitedEmail && normalizeEmail(session.user.email) !== invitedEmail) {
+        // If the user clicked a login link for a specific email but is already signed in 
+        // as someone else (e.g. an agent testing the flow), sign them out first.
+        await supabase.auth.signOut();
+        if (!cancelled) setIsCheckingSession(false);
+        return;
+      }
+
       if (error || !session?.access_token || cancelled) {
         if (!cancelled) setIsCheckingSession(false);
         return;
@@ -196,7 +204,7 @@ function LoginForm() {
           <div className="text-center md:text-left">
             <h2 className="text-2xl font-bold tracking-tight text-white">Welcome back</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Sign in for customers, salon owners, and agents. Use email/password or Google.
+              Email login is exclusively for Trimma Agents. Customers and Salon owners please use Google auth.
             </p>
           </div>
 
@@ -250,7 +258,7 @@ function LoginForm() {
                 <div className="w-full border-t border-zinc-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-[#121212] px-2 text-zinc-500">Or continue with</span>
+                <span className="bg-[#121212] px-2 text-zinc-500">Customers and Salon Owners continue with</span>
               </div>
             </div>
 

@@ -162,37 +162,7 @@ function ProfileFormContent() {
                 </div>
               </div>
 
-              {/* EMAIL */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Email Address</Label>
-                <div className="relative flex items-center">
-                  <Mail className="absolute left-3 w-5 h-5 text-zinc-400" />
-                  <Input 
-                    id="email"
-                    value={email}
-                    disabled
-                    className="h-11 bg-zinc-100 border-zinc-200 pl-11 rounded-xl cursor-not-allowed text-zinc-500"
-                  />
-                </div>
-                <p className="text-[10px] text-zinc-500 leading-normal">
-                  Email addresses are linked directly to your secure authentication provider.
-                </p>
-              </div>
 
-              {/* PHONE */}
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-500">WhatsApp No.</Label>
-                <LkPhoneInput
-                  id="phone"
-                  value={phone}
-                  onChange={setPhone}
-                  required
-                  className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus-within:border-[#F5B700] rounded-xl"
-                />
-                <p className="text-[10px] text-zinc-500 leading-normal">
-                  Your WhatsApp number will be used to send your automated booking updates.
-                </p>
-              </div>
 
             </div>
           </div>

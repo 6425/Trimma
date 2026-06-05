@@ -1007,28 +1007,7 @@ export function BookingSheet({
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email Address</label>
-                    <input 
-                      type="email" 
-                      required
-                      placeholder="john@example.com" 
-                      value={customerDetails.email}
-                      onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800" 
-                    />
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">WhatsApp No.</label>
-                    <LkPhoneInput
-                      required
-                      value={customerDetails.phone}
-                      onChange={(phone) => setCustomerDetails(prev => ({ ...prev, phone }))}
-                      className="h-11 rounded-xl border-slate-200"
-                      inputClassName="font-semibold text-zinc-800"
-                    />
-                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
