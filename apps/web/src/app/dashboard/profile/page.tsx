@@ -586,7 +586,7 @@ export default function SalonProfilePage() {
                   toast.success("Business info saved successfully!");
                   await fetchSalonProfile();
                 } else {
-                  toast.error(res.error || "Failed to save business info");
+                  toast.error((res as any).error || "Failed to save business info");
                 }
               } catch(e: any) {
                 toast.error(e.message || "Error saving");
@@ -605,7 +605,7 @@ export default function SalonProfilePage() {
                   toast.success("Bank info saved successfully!");
                   await fetchSalonProfile();
                 } else {
-                  toast.error(res.error || "Failed to save bank info");
+                  toast.error((res as any).error || "Failed to save bank info");
                 }
               } catch(e: any) {
                 toast.error(e.message || "Error saving");
