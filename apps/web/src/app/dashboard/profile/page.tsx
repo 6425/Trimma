@@ -659,14 +659,14 @@ export default function SalonProfilePage() {
                   <ImageIcon className="w-5 h-5 text-brand" />
                   Featured Showcase Gallery
                 </h3>
-                <p className="text-xs text-zinc-500 mt-1">Upload high-density images representing your workspace, stylists, or past makeovers.</p>
+                <p className="text-xs text-zinc-500 mt-1">Upload up to {maxImagesLimit >= 999 ? "unlimited" : maxImagesLimit} images based on your {subscriptionName} plan.</p>
               </div>
 
               {/* Progress counter cap indicator */}
               <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-2 text-right">
                 <div className="text-xs font-bold text-zinc-700">Gallery Capacity</div>
                 <div className="text-sm font-black text-brand mt-0.5">
-                   {featuredImages.length} / {maxImagesLimit} <span className="text-xs text-zinc-400 font-normal">Images</span>
+                   {featuredImages.length} / {maxImagesLimit >= 999 ? "∞" : maxImagesLimit} <span className="text-xs text-zinc-400 font-normal">Images</span>
                 </div>
               </div>
             </div>
