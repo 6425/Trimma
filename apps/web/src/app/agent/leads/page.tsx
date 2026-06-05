@@ -96,7 +96,7 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
             <button 
               type="button"
               onClick={() => handleUpdate(d.value, openTime, closeTime, isOpen)}
-              className={`text-[10px] font-extrabold px-4 py-1.5 rounded-full border transition-all ${isOpen ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200' : 'bg-white text-zinc-400 border-zinc-200 hover:bg-zinc-100'}`}
+              className={`text-[10px] font-bold px-4 py-1.5 rounded-lg transition-all ${isOpen ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
             >
               {isOpen ? 'OPEN' : 'CLOSED'}
             </button>
