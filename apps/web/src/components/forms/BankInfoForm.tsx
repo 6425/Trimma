@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Loader2, CheckCircle2, Landmark, ShieldCheck, Mail, FileText, Upload, Building2, CreditCard, Smartphone, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,10 +31,7 @@ export function BankInfoForm({
   const [settlementFreq, setSettlementFreq] = useState(ext.settlement_frequency || "Weekly");
   const [settlementEmail, setSettlementEmail] = useState(ext.settlement_email || salon?.email || "");
 
-  // Section C
-  const [walletNumber, setWalletNumber] = useState(ext.mobile_wallet_number || "");
-  const [walletProvider, setWalletProvider] = useState(ext.wallet_provider || "");
-  const [receiverName, setReceiverName] = useState(ext.payment_receiver_name || "");
+
 
   // Section D
   const [tinNumber, setTinNumber] = useState(ext.tin_number || "");
@@ -53,9 +50,7 @@ export function BankInfoForm({
     setPaymentMethod(newExt.preferred_payment_method || "");
     setSettlementFreq(newExt.settlement_frequency || "Weekly");
     setSettlementEmail(newExt.settlement_email || salon.email || "");
-    setWalletNumber(newExt.mobile_wallet_number || "");
-    setWalletProvider(newExt.wallet_provider || "");
-    setReceiverName(newExt.payment_receiver_name || "");
+
     setTinNumber(newExt.tin_number || "");
     setVatRegistered(newExt.vat_registered || "No");
     setVatNumber(newExt.vat_number || "");
@@ -65,6 +60,15 @@ export function BankInfoForm({
   // Bank verification doc upload usually handles by supabase storage, we will store a URL or reference.
   const [verificationDocUrl, setVerificationDocUrl] = useState(ext.verification_document_url || "");
   const bankVerifiedStatus = ext.bank_verified_status || "Pending";
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // In a real implementation, upload to Supabase storage here.
+    // Simulating upload for now.
+    setVerificationDocUrl(URL.createObjectURL(file));
+  };
 
   const bankOptions = [
     "Commercial Bank",
@@ -77,16 +81,6 @@ export function BankInfoForm({
     "Nations Trust Bank (NTB)",
     "Pan Asia Bank",
     "DFCC Bank",
-    "Other"
-  ];
-
-  const walletProviders = [
-    "eZ Cash",
-    "mCash",
-    "FriMi",
-    "Genie",
-    "iPay",
-    "Upay",
     "Other"
   ];
 
@@ -105,9 +99,6 @@ export function BankInfoForm({
           preferred_payment_method: paymentMethod,
           settlement_frequency: settlementFreq,
           settlement_email: settlementEmail,
-          mobile_wallet_number: walletNumber,
-          wallet_provider: walletProvider,
-          payment_receiver_name: receiverName,
           tin_number: tinNumber,
           vat_registered: vatRegistered,
           vat_number: vatRegistered === "Yes" ? vatNumber : "",
@@ -188,28 +179,7 @@ export function BankInfoForm({
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
-        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-4">
-          <Smartphone className="w-5 h-5 text-emerald-500" /> Section C: Mobile & Digital Payments
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Wallet Provider</Label>
-            <select disabled={readOnly} value={walletProvider} onChange={e => setWalletProvider(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:bg-slate-50 disabled:opacity-50">
-              <option value="">Select Provider</option>
-              {walletProviders.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Mobile Wallet Number</Label>
-            <Input disabled={readOnly} value={walletNumber} onChange={e => setWalletNumber(e.target.value)} placeholder="07..." className="h-11 rounded-xl" />
-          </div>
-          <div className="space-y-1.5 md:col-span-2">
-            <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Registered Name for Wallet</Label>
-            <Input disabled={readOnly} value={receiverName} onChange={e => setReceiverName(e.target.value)} placeholder="John Doe" className="h-11 rounded-xl" />
-          </div>
-        </div>
-      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
