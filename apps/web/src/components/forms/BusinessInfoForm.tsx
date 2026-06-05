@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Loader2, CheckCircle2, User, Building, MapPin, Store, Globe, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,39 @@ export function BusinessInfoForm({
   const [whatsapp, setWhatsapp] = useState(ext.whatsapp_number || "");
   const [addressLine2, setAddressLine2] = useState(ext.address_line_2 || "");
   const [postalCode, setPostalCode] = useState(ext.postal_code || "");
+
+  useEffect(() => {
+    if (!salon) return;
+    setName(salon.name || "");
+    setCategory(salon.category || "");
+    setEmail(salon.email || "");
+    setPhone(salon.phone || "");
+    setAddress(salon.address || "");
+    setCity(salon.city || "");
+    setDistrict(salon.district || "");
+    setProvince(salon.province || "");
+    setMapUrl(salon.map_url || "");
+    setLatitude(salon.latitude?.toString() || "");
+    setLongitude(salon.longitude?.toString() || "");
+    setDescription(salon.description || "");
+    setWebsite(salon.website || "");
+
+    const newExt = salon.business_info_extended || {};
+    setLegalName(newExt.legal_business_name || "");
+    setRegNumber(newExt.business_registration_number || "");
+    setBusinessType(newExt.business_type || "");
+    setOwnerName(newExt.owner_full_name || "");
+    setNic(newExt.nic || "");
+    setEstablishedYear(newExt.established_year || "");
+    setStaffCount(newExt.number_of_staff || "");
+    setBranchCount(newExt.number_of_branches || "");
+    setFacebook(newExt.facebook_url || "");
+    setInstagram(newExt.instagram_url || "");
+    setTiktok(newExt.tiktok_url || "");
+    setWhatsapp(newExt.whatsapp_number || "");
+    setAddressLine2(newExt.address_line_2 || "");
+    setPostalCode(newExt.postal_code || "");
+  }, [salon]);
 
   const businessTypes = [
     "Sole Proprietorship",

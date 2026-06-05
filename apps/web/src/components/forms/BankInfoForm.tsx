@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Loader2, CheckCircle2, Building2, CreditCard, Smartphone, ShieldCheck, FileCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Loader2, CheckCircle2, Landmark, ShieldCheck, Mail, FileText, Upload, Building2, CreditCard, Smartphone, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,25 @@ export function BankInfoForm({
   const [tinNumber, setTinNumber] = useState(ext.tin_number || "");
   const [vatRegistered, setVatRegistered] = useState(ext.vat_registered || "No");
   const [vatNumber, setVatNumber] = useState(ext.vat_number || "");
+
+  useEffect(() => {
+    if (!salon) return;
+    const newExt = salon.bank_info || {};
+    setAccName(newExt.account_holder_name || "");
+    setBankName(newExt.bank_name || "");
+    setBranchName(newExt.branch_name || "");
+    setAccNumber(newExt.account_number || "");
+    setAccType(newExt.account_type || "");
+    setPaymentMethod(newExt.preferred_payment_method || "");
+    setSettlementFreq(newExt.settlement_frequency || "Weekly");
+    setSettlementEmail(newExt.settlement_email || salon.email || "");
+    setWalletNumber(newExt.mobile_wallet_number || "");
+    setWalletProvider(newExt.wallet_provider || "");
+    setReceiverName(newExt.payment_receiver_name || "");
+    setTinNumber(newExt.tin_number || "");
+    setVatRegistered(newExt.vat_registered || "No");
+    setVatNumber(newExt.vat_number || "");
+  }, [salon]);
 
   // Section E
   // Bank verification doc upload usually handles by supabase storage, we will store a URL or reference.
