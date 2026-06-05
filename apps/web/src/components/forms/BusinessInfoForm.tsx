@@ -14,6 +14,7 @@ export function BusinessInfoForm({
   salon: any;
   onSave: (payload: any) => Promise<void>;
   readOnly?: boolean;
+  children?: React.ReactNode;
 }) {
   const [loading, setLoading] = useState(false);
   
@@ -306,7 +307,8 @@ export function BusinessInfoForm({
       </div>
 
       {!readOnly && (
-        <div className="flex justify-end mt-8">
+        <div className="flex justify-end gap-3 mt-8">
+          {children}
           <Button 
             type="submit" 
             disabled={loading}

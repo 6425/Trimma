@@ -261,6 +261,41 @@ export default function SalonProfilePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const calculateCompletion = () => {
+    let completed = 0;
+    let total = 8;
+    if (name) completed++;
+    if (contact) completed++;
+    if (address) completed++;
+    if (description) completed++;
+    if (logoUrl) completed++;
+    if (coverUrl) completed++;
+    if (salon?.bank_info?.account_number) completed++;
+    if (salon?.ext?.business_type) completed++;
+    return Math.round((completed / total) * 100);
+  };
+  const completionPercentage = calculateCompletion();
+
+  const renderApprovalAction = () => (
+    <div className="flex items-center gap-3">
+      {needsOwnerActivationWizard(onboardingStatus) && (
+        <Button
+          onClick={handleCompleteOnboarding}
+          disabled={saving}
+          className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black shadow-md shadow-[#F5B700]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+        >
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} Send For Approval
+        </Button>
+      )}
+      {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
+        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 h-auto text-xs font-bold uppercase tracking-widest gap-1.5">
+          <Clock className="w-3.5 h-3.5" />
+          Awaiting Verification
+        </Badge>
+      )}
+    </div>
+  );
+
   // Helper function to upload image file to Supabase storage bucket
   const processImageFile = async (file: File, type: "logo" | "cover" | "hero" | "gallery"): Promise<string | null> => {
     try {
@@ -515,24 +550,16 @@ export default function SalonProfilePage() {
             <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">{name || "Salon Profile Studio"}</h1>
           </div>
           <p className="text-zinc-500 text-sm mt-1">Manage your salon&apos;s public presence, images, and branding.</p>
+          <div className="mt-4 flex items-center gap-3 max-w-sm">
+            <div className="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${completionPercentage}%` }} />
+            </div>
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{completionPercentage}% Complete</span>
+          </div>
         </div>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
-          {needsOwnerActivationWizard(onboardingStatus) && (
-            <Button
-              onClick={handleCompleteOnboarding}
-              disabled={saving}
-              className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black shadow-md shadow-[#F5B700]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
-            >
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} Send For Verification
-            </Button>
-          )}
-          {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
-            <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 h-auto text-xs font-bold uppercase tracking-widest gap-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              Awaiting Verification
-            </Badge>
-          )}
+          {renderApprovalAction()}
           {activeTab === "operations" && (
             <Button 
               onClick={handleSave} 
@@ -592,7 +619,9 @@ export default function SalonProfilePage() {
                 toast.error(e.message || "Error saving");
               }
             }} 
-          />
+          >
+            {renderApprovalAction()}
+          </BusinessInfoForm>
         )}
 
         {activeTab === "bank" && (
@@ -611,7 +640,9 @@ export default function SalonProfilePage() {
                 toast.error(e.message || "Error saving");
               }
             }} 
-          />
+          >
+            {renderApprovalAction()}
+          </BankInfoForm>
         )}
 
         {activeTab === "operations" && (
@@ -1244,6 +1275,24 @@ export default function SalonProfilePage() {
       </div>
           </div>
         )}
+        
+        {activeTab === "operations" && (
+          <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 pt-6">
+            {renderApprovalAction()}
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+            >
+              {saving ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+              ) : (
+                <><Save className="w-4 h-4 mr-2" /> Save Operations</>
+              )}
+            </Button>
+          </div>
+        )}
+
       </div>
     </div>
   );
