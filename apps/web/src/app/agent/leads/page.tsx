@@ -428,7 +428,8 @@ function AgentLeads() {
         finalStaffToAdd,
         agentEmail,
         null,
-        salonAmenities
+        salonAmenities,
+        "DRAFT"
       );
       
       if (!success) throw new Error(error || "Failed to save via Server Action");
@@ -445,8 +446,12 @@ function AgentLeads() {
     }
   };
 
-  const handlePublish = async () => {
+  const handleSendToOwner = async () => {
     if (!selectedLead) return;
+    if (!formData.owner_gmail?.trim()) {
+      toast.error("Owner Gmail is required to send for review. They need it to claim the salon.");
+      return;
+    }
     try {
       setUpdating(true);
       
@@ -470,12 +475,8 @@ function AgentLeads() {
         price_level: formData.price_level || null,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
-        owner_gmail: formData.owner_gmail ? formData.owner_gmail.toLowerCase().trim() : null,
-        agent_notes: formData.agent_notes || null,
-        onboarding_status: "PUBLISHED_UNBOOKABLE",
-        public_visibility: true,
-        booking_enabled: false,
-        status: "active"
+        owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
+        agent_notes: formData.agent_notes || null
       };
 
       const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
@@ -486,21 +487,25 @@ function AgentLeads() {
         servicesData,
         finalStaffToAdd,
         agentEmail,
-        "PUBLISHED_UNBOOKABLE",
-        salonAmenities
+        null,
+        salonAmenities,
+        "REVIEW"
       );
-      if (!success) throw new Error(error || "Failed to save via Server Action");
+      
+      if (!success) throw new Error(error || "Failed to send to owner");
 
-      toast.success("Salon published successfully (Booking disabled).");
+      toast.success("Sent to Salon Owner for review!");
+
       setIsModalOpen(false);
       setSelectedLead(null);
       fetchLeads();
     } catch (error: any) {
-      toast.error("Error: " + error.message);
+      toast.error("Failed to send: " + error.message);
     } finally {
       setUpdating(false);
     }
   };
+
 
   const handleSendInvitation = async () => {
     if (!selectedLead) return;
@@ -1243,11 +1248,11 @@ function AgentLeads() {
 
                   {["ASSIGNED_TO_AGENT", "DISCOVERED"].includes(formData.onboarding_status) && (
                     <Button
-                      onClick={handlePublish}
-                      disabled={updating}
-                      className="bg-zinc-800 hover:bg-black text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      onClick={handleSendToOwner}
+                      disabled={updating || !formData.phone || !formData.owner_gmail}
+                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Save & Publish
+                      <Send className="w-4 h-4" /> Send to Salon Owner for Review
                     </Button>
                   )}
                   

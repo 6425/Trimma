@@ -13,7 +13,8 @@ export async function saveAgentLeadData(
   staffToAdd: any[] | null,
   agentEmail: string,
   newStatus: string | null,
-  amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null
+  amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null,
+  actionType: "DRAFT" | "REVIEW" = "DRAFT"
 ) {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -22,7 +23,18 @@ export async function saveAgentLeadData(
 
   try {
     const finalPayload = { ...updatePayload };
-    if (newStatus) {
+    
+    // Explicitly set visibility and booking status to false for leads
+    finalPayload.public_visibility = false;
+    finalPayload.booking_enabled = false;
+    finalPayload.activation_status = "INACTIVE";
+
+    if (actionType === "REVIEW") {
+      finalPayload.onboarding_status = "ASSIGNED_TO_OWNER";
+      if (finalPayload.owner_gmail) {
+        finalPayload.owner_email = finalPayload.owner_gmail;
+      }
+    } else if (newStatus) {
       finalPayload.onboarding_status = newStatus;
     }
 
@@ -96,7 +108,8 @@ export async function createAgentLeadData(
   servicesData: { svcsToAdd: any[] } | null,
   staffToAdd: any[] | null,
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null,
-  agentEmail: string
+  agentEmail: string,
+  actionType: "DRAFT" | "REVIEW" = "DRAFT"
 ) {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -110,8 +123,11 @@ export async function createAgentLeadData(
       .insert({
         ...payload,
         assign_to: agentEmail,
-        onboarding_status: "ASSIGNED_TO_AGENT",
-        activation_status: "INACTIVE"
+        onboarding_status: actionType === "REVIEW" ? "ASSIGNED_TO_OWNER" : "ASSIGNED_TO_AGENT",
+        activation_status: "INACTIVE",
+        public_visibility: false,
+        booking_enabled: false,
+        owner_email: actionType === "REVIEW" && payload.owner_gmail ? payload.owner_gmail : `draft-${payload.slug}@trimma.io`
       })
       .select("id")
       .single();

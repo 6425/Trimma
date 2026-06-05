@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Building2, Loader2, UserPlus, Tag, Users, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Building2, Loader2, UserPlus, Tag, Users, Trash2, Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -123,6 +123,8 @@ export default function AgentNewLeadPage() {
     };
   };
 
+  const [submitAction, setSubmitAction] = useState<"DRAFT" | "REVIEW">("DRAFT");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -132,6 +134,10 @@ export default function AgentNewLeadPage() {
     }
     if (!agentEmail) {
       toast.error("Please log in as an agent.");
+      return;
+    }
+    if (submitAction === "REVIEW" && (!form.owner_gmail?.trim() || !form.phone?.trim())) {
+      toast.error("Both Owner Gmail and WhatsApp number (Phone) are required to send for review.");
       return;
     }
 
@@ -150,7 +156,8 @@ export default function AgentNewLeadPage() {
         servicesData,
         finalStaffToAdd,
         salonAmenities,
-        agentEmail
+        agentEmail,
+        submitAction
       );
 
       if (!success) {
@@ -457,19 +464,32 @@ export default function AgentNewLeadPage() {
             <Button
               type="submit"
               disabled={saving}
+              onClick={() => setSubmitAction("DRAFT")}
+              className="h-12 flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold rounded-xl text-sm border border-zinc-200"
+            >
+              {saving && submitAction === "DRAFT" ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+              ) : (
+                <><Building2 className="w-4 h-4 mr-2 text-zinc-500" /> Save as Draft</>
+              )}
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving}
+              onClick={() => setSubmitAction("REVIEW")}
               className="h-12 flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm"
             >
-              {saving ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...</>
+              {saving && submitAction === "REVIEW" ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
               ) : (
-                <><Building2 className="w-4 h-4 mr-2" /> Create & Save Full Lead</>
+                <><Send className="w-4 h-4 mr-2" /> Send to Salon Owner for Review</>
               )}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => router.push("/agent/leads")}
-              className="h-12 px-8 border-zinc-200 text-zinc-600 hover:bg-zinc-50 rounded-xl font-bold text-sm"
+              className="h-12 px-6 border-zinc-200 text-zinc-600 hover:bg-zinc-50 rounded-xl font-bold text-sm"
             >
               Cancel
             </Button>
