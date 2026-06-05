@@ -40,6 +40,7 @@ export default function LoginPage() {
 
 function LoginForm() {
   const [loading, setLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const searchParams = useSearchParams();
   const invitedEmail = normalizeEmail(searchParams.get("email"));
   const redirectTo = sanitizeNextPath(
@@ -82,7 +83,12 @@ function LoginForm() {
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error || !session?.access_token || cancelled) return;
+      if (error || !session?.access_token || cancelled) {
+        if (!cancelled) setIsCheckingSession(false);
+        return;
+      }
+      // If we have a session, we proceed to completeSignIn.
+      // We do not set isCheckingSession(false) because we are navigating away.
       await completeSignIn(session, () => cancelled);
     });
     return () => {
@@ -142,6 +148,17 @@ function LoginForm() {
       alert("Google sign-in failed: " + error.message);
     }
   };
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-[#121212] text-zinc-400">
+        <div className="flex flex-col items-center">
+          <div className="w-8 h-8 border-4 border-[#F5B700] border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm font-semibold text-white/70">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#121212]">
