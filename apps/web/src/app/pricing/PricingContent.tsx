@@ -124,9 +124,9 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
                     {plan.name} Tier
                   </h3>
 
-                  {!isFree && !isAnnual && listMonthly > introMonthly && (
+                  {(!isAnnual && (isFree || listMonthly > introMonthly)) && (
                     <p className={`text-sm line-through mt-3 ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>
-                      {formatLkr(listMonthly)}/mo
+                      {isFree ? "LKR 3,000/mo" : `${formatLkr(listMonthly)}/mo`}
                     </p>
                   )}
 
@@ -134,14 +134,12 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
                     <span className="text-3xl font-black">
                       {isFree ? "Free" : formatLkr(displayMonthly)}
                     </span>
-                    {!isFree && (
-                      <span className={`text-xs font-semibold ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>/month</span>
-                    )}
+                    <span className={`text-xs font-semibold ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>/month</span>
                   </div>
 
-                  {!isFree && !isAnnual && (
+                  {!isAnnual && (
                     <Badge className="mt-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold text-[9px] uppercase tracking-wider">
-                      Intro price — {INTRO_DISCOUNT_PERCENT}% off
+                      {isFree ? "Standard value — 100% off" : `Intro price — ${INTRO_DISCOUNT_PERCENT}% off`}
                     </Badge>
                   )}
 

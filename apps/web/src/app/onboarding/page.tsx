@@ -1,338 +1,143 @@
-/* eslint-disable @next/next/no-img-element */
-"use client";
+import { Metadata } from "next";
+import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
+import { PricingContent } from "../pricing/PricingContent";
+import OnboardingClient from "./OnboardingClient";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "../../config/supabase";
-import { toast } from "sonner";
-import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
-import { resolveTrimmaUserRole } from "@/lib/trimma-role";
-import { resolveAuthenticatedDestination } from "@/lib/post-auth";
-import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
-import { normalizeEmail } from "@/lib/normalize-email";
+export const metadata: Metadata = {
+  title: "List Your Salon | Trimma",
+  description: "Join Sri Lanka's next-generation salon discovery and booking platform.",
+};
 
-export default function OnboardingPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [registering, setRegistering] = useState(false);
-  const [session, setSession] = useState<any>(null);
-
-  // Form States
-  const [salonName, setSalonName] = useState("");
-  const [contactNumber, setContactNumber] = useState("");
-  const [address, setAddress] = useState("");
-  const [province, setProvince] = useState("Western Province");
-  const [district, setDistrict] = useState("Colombo");
-  const [ownerName, setOwnerName] = useState("");
-  const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      const checkRole = async () => {
-      try {
-      const { data: { session: activeSession } } = await supabase.auth.getSession();
-      if (activeSession) {
-      setSession(activeSession);
-      setEmail(activeSession.user.email || "");
-
-      const { data: { session: linkSession } } = await supabase.auth.getSession();
-      if (linkSession?.access_token) {
-        try {
-          await fetch("/api/auth/link-owner", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${linkSession.access_token}` },
-            credentials: "include",
-          });
-        } catch (linkErr) {
-          console.error("Owner link during onboarding failed:", linkErr);
-        }
-      }
-      
-      // Check if already registered
-      const effectiveRole = await resolveTrimmaUserRole(
-        activeSession.user.id,
-        activeSession.user.email
-      );
-
-      if (effectiveRole === "admin") {
-      router.push("/admin");
-      return;
-      }
-      
-      if (effectiveRole === "salon_owner") {
-      const { data: ownerSalon } = await supabase
-        .from('salons')
-        .select('onboarding_status')
-        .or(`owner_email.eq.${activeSession.user.email},owner_gmail.eq.${activeSession.user.email}`)
-        .maybeSingle();
-
-      router.push(
-        resolveAuthenticatedDestination({
-          role: "salon_owner",
-          onboardingStatus: ownerSalon?.onboarding_status,
-        })
-      );
-      return;
-      }
-      
-      // Double check: if they already have an onboarded salon record using the foreign key
-      const { data: existingSalon } = await supabase
-      .from('salons')
-      .select('id')
-      .eq('owner_email', activeSession.user.email)
-      .limit(1)
-      .maybeSingle();
-      
-      if (existingSalon) {
-      document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
-      router.push("/dashboard");
-      return;
-      }
-      
-      // MAGIC LINK FIX: Check if the agent verified them using owner_gmail
-      const { data: preVerifiedSalon } = await supabase
-      .from('salons')
-      .select('id, onboarding_status')
-      .ilike('owner_gmail', normalizeEmail(activeSession.user.email))
-      .limit(1)
-      .maybeSingle();
-      
-      if (preVerifiedSalon) {
-      await supabase.from('salons').update({ owner_email: normalizeEmail(activeSession.user.email) }).eq('id', preVerifiedSalon.id);
-      await supabase.from('user_roles').upsert({ user_id: activeSession.user.id, role: 'salon_owner' });
-      await supabase.from('users').update({ global_role: 'salon_owner' }).eq('email', activeSession.user.email);
-      
-      document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
-      toast.success("Welcome! Your salon profile has been linked successfully.");
-      router.push(
-        resolveAuthenticatedDestination({
-          role: "salon_owner",
-          onboardingStatus: preVerifiedSalon.onboarding_status,
-        })
-      );
-      return;
-      }
-      }
-      } catch (err) {
-      console.error("Session check failed:", err);
-      } finally {
-      setLoading(false);
-      }
-      };
-      checkRole();
-    });
-  }, [router]);
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!salonName || !contactNumber || !address) {
-      return toast.error("Please fill in all required salon details.");
-    }
-
-    try {
-      setRegistering(true);
-      
-      // 1. Resolve user ID/session
-      const { data: { session: activeSession } } = await supabase.auth.getSession();
-      const currentUserId = activeSession?.user?.id;
-      const currentUserEmail = activeSession?.user?.email || email;
-
-      if (!currentUserId) {
-        throw new Error("You must be logged in to onboard a salon.");
-      }
-
-      // 2. Fetch the "Free" subscription plan ID
-      const { data: freePlan, error: planError } = await supabase
-        .from("subscription_plans")
-        .select("id")
-        .eq("name", "Free")
-        .maybeSingle();
-
-      if (planError) throw planError;
-      
-      let freePlanId = freePlan?.id;
-
-      // Fallback: If no plan was found, query any plan or create a stub reference
-      if (!freePlanId) {
-        const { data: anyPlan } = await supabase
-          .from("subscription_plans")
-          .select("id")
-          .limit(1)
-          .maybeSingle();
-        freePlanId = anyPlan?.id;
-      }
-
-      // 3. Insert the new Salon record linked to the owner email and assign the Free Plan!
-      const slug = salonName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
-
-      const { data: newSalon, error: salonError } = await supabase
-        .from("salons")
-        .insert({
-          name: salonName,
-          slug: slug,
-          owner_email: currentUserEmail,
-          province: province,
-          district: district,
-          city: address, // Map address to city column as text representation
-          subscription_plan_id: freePlanId || null
-        })
-        .select()
-        .single();
-
-      if (salonError) throw salonError;
-
-      // 4. Upsert/set role to salon_owner inside user_roles
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .upsert({
-          user_id: currentUserId,
-          role: "salon_owner"
-        });
-
-      if (roleError) throw roleError;
-
-      // 5. Update global_role and full_name in users table to keep tables synchronized
-      await supabase
-        .from("users")
-        .update({
-          global_role: "salon_owner",
-          full_name: ownerName
-        })
-        .eq("email", currentUserEmail);
-
-      toast.success("Welcome to Trimma! Your salon has been onboarded on the Free Plan! 🚀");
-      
-      // Update the user-role cookie so middleware allows access to the dashboard
-      document.cookie = `user-role=salon_owner; path=/; max-age=86400; SameSite=Lax`;
-
-      // Redirect to salon dashboard
-      router.push("/dashboard");
-    } catch (err: any) {
-      toast.error("Onboarding failed: " + err.message);
-    } finally {
-      setRegistering(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-zinc-500 gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-pink" />
-        <span className="font-semibold text-sm">Verifying session status...</span>
-      </div>
-    );
-  }
+export default async function OnboardingPage() {
+  const result = await getPublicSubscriptionPlans();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-dark-gradient p-8 text-white text-center relative overflow-hidden">
-          <Sparkles className="absolute -right-8 -bottom-8 w-32 h-32 text-white/5 rotate-12" />
-          <div className="inline-flex bg-white p-3 rounded-2xl mb-4 shadow-md w-16 h-16 items-center justify-center">
-            <img src="/favicon.svg" className="w-10 h-10 object-contain animate-pulse" alt="Trimma Icon" />
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Register Your Salon</h1>
-          <p className="text-zinc-400 mt-2 text-sm">Join Trimma and start accepting bookings today.</p>
-        </div>
-        
-        <form onSubmit={handleRegister} className="p-8 space-y-8">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-zinc-900 mb-4 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-brand-pink/10 text-brand-pink flex items-center justify-center text-xs font-black">1</span>
-                Salon Details
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="font-bold text-xs text-zinc-500">Salon Name</Label>
-                  <Input 
-                    value={salonName}
-                    onChange={(e) => setSalonName(e.target.value)}
-                    placeholder="E.g. Crown Comb Salon" 
-                    required 
-                    className="rounded-xl h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Contact Number</Label>
-                  <Input 
-                    value={contactNumber}
-                    onChange={(e) => setContactNumber(e.target.value)}
-                    placeholder="077 123 4567" 
-                    required 
-                    className="rounded-xl h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs text-zinc-500">Address / City</Label>
-                  <Input 
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="E.g. 100 Galle Road, Colombo 3" 
-                    required 
-                    className="rounded-xl h-11"
-                  />
-                </div>
-                <LocationHierarchySelect
-                  province={province}
-                  district={district}
-                  onProvinceChange={setProvince}
-                  onDistrictChange={setDistrict}
-                />
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-bold text-zinc-900 mb-4 border-b pb-2 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-lg bg-brand-pink/10 text-brand-pink flex items-center justify-center text-xs font-black">2</span>
-                Owner Details
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="font-bold text-xs text-zinc-500">Full Name</Label>
-                  <Input 
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    placeholder="E.g. Thusitha Jayalath" 
-                    required 
-                    className="rounded-xl h-11"
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label className="font-bold text-xs text-zinc-500">Owner Email</Label>
-                  <Input 
-                    type="email" 
-                    value={email}
-                    disabled={!!session}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your-email@example.com" 
-                    required 
-                    className="rounded-xl h-11 bg-zinc-50 text-zinc-500 cursor-not-allowed"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Hero Section */}
+      <section className="bg-dark-gradient py-20 px-4 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+            Grow Your Salon with Trimma
+          </h1>
+          <p className="text-xl text-zinc-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Join Sri Lanka&apos;s next-generation salon discovery and booking platform.
+            <br className="hidden md:block" />
+            Our regional onboarding specialists work directly with salon owners to ensure every salon profile is complete, accurate, and optimized for customer bookings.
+          </p>
           
-          <div className="pt-4 flex items-center justify-between border-t border-slate-100">
-            <Button type="button" variant="ghost" onClick={() => router.push("/")} className="rounded-xl font-bold h-11">Cancel</Button>
-            <Button 
-              disabled={registering}
-              type="submit" 
-              className="bg-primary-gradient text-white hover:opacity-95 rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand-pink/20 border-none"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <a 
+              href="#onboarding-form"
+              className="px-8 py-4 bg-brand-pink text-white rounded-xl font-bold text-lg hover:bg-brand-pink/90 transition-all shadow-lg shadow-brand-pink/20 w-full sm:w-auto"
             >
-              {registering ? <Loader2 className="w-5 h-5 animate-spin" /> : "Complete Registration"}
-            </Button>
+              Start Your Onboarding
+            </a>
           </div>
-        </form>
-      </div>
+
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-zinc-400">
+            <span className="flex items-center gap-2">✓ No setup fees</span>
+            <span className="flex items-center gap-2">✓ No technical knowledge required</span>
+            <span className="flex items-center gap-2">✓ Personal assistance from Trimma</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Join Trimma Section */}
+      <section className="py-24 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C29]">Why Join Trimma?</h2>
+            <p className="text-zinc-500 mt-4 max-w-2xl mx-auto">Discover the benefits of listing your salon on the fastest-growing booking platform.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { title: "Get More Customers", desc: "Increase your salon visibility and attract new customers actively searching for beauty services." },
+              { title: "Online Booking", desc: "Manage appointments efficiently and reduce booking errors with a centralized platform." },
+              { title: "Salon Profile", desc: "Showcase your services, pricing, staff, photos, and business information professionally." },
+              { title: "Customer Reviews", desc: "Build credibility through verified customer reviews and ratings." },
+              { title: "Staff Management", desc: "Manage staff availability and optimize appointment scheduling." },
+              { title: "Marketing & Promos", desc: "Promote special offers, discounts, and seasonal campaigns." },
+              { title: "Business Insights", desc: "Track bookings, customer trends, and performance metrics." },
+              { title: "Dedicated Support", desc: "Receive onboarding assistance and ongoing support from Trimma regional agents." }
+            ].map((feature, i) => (
+              <div key={i} className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-brand-pink/30 transition-all group">
+                <div className="w-12 h-12 rounded-xl bg-brand-pink/10 flex items-center justify-center text-brand-pink font-black text-xl mb-4 group-hover:scale-110 transition-transform">
+                  {i + 1}
+                </div>
+                <h3 className="text-lg font-bold text-zinc-900 mb-2">{feature.title}</h3>
+                <p className="text-sm text-zinc-500 leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Supported Service Areas Section */}
+      <section className="py-24 px-4 bg-slate-50 border-y border-slate-200">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C29] mb-4">Currently Onboarding Salons In</h2>
+          <p className="text-zinc-500 mb-12">We are rolling out our managed onboarding process district by district.</p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            {["Colombo", "Gampaha", "Kandy", "Anuradhapura"].map((district) => (
+              <div key={district} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                <span className="font-bold text-lg text-zinc-900 mb-1">{district}</span>
+                <span className="text-xs font-semibold text-brand-pink px-2 py-1 bg-brand-pink/10 rounded-full">Supported</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl text-sm max-w-3xl mx-auto">
+            <strong>Notice:</strong> We are currently providing dedicated onboarding support only in the above districts to ensure a high-quality experience. Additional districts will be added soon. You may still apply, and you will be added to our waiting list.
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-24 bg-white border-b border-slate-200">
+        <PricingContent
+          initialPlans={result.plans}
+          loadError={result.success ? null : result.error}
+        />
+      </section>
+
+      {/* Why We Use Regional Onboarding Agents */}
+      <section className="py-24 px-4 bg-slate-900 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-6">Quality-Verified Salon Information</h2>
+          <p className="text-lg text-slate-300 mb-10 leading-relaxed">
+            Unlike open self-registration platforms, Trimma uses trained regional onboarding specialists to work directly with salon owners.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
+            <ul className="space-y-4 text-slate-300">
+              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Verify business authenticity</li>
+              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Ensure accurate service information</li>
+              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Maintain updated pricing</li>
+            </ul>
+            <ul className="space-y-4 text-slate-300">
+              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Improve customer trust</li>
+              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Provide personalized support</li>
+              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Add online visibility to your salon</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Salon Lead Submission Form */}
+      <section id="onboarding-form" className="py-24 px-4 bg-slate-50">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200">
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Request Salon Onboarding</h2>
+              <p className="text-zinc-500">Submit your salon information below and a regional Trimma specialist will contact you shortly.</p>
+            </div>
+            
+            <OnboardingClient />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
