@@ -221,12 +221,6 @@ export default function GlobalHeader() {
               ) : (
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
-                    href="/signup"
-                    className="text-xs sm:text-sm font-medium text-black bg-[#F5B700] hover:bg-[#E6AC00] transition-colors px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-md whitespace-nowrap"
-                  >
-                    Register
-                  </Link>
-                  <Link
                     href="/login"
                     className="text-xs sm:text-sm font-normal text-zinc-600 hover:text-zinc-900 bg-transparent hover:bg-zinc-100 transition-colors px-2 sm:px-3 py-1.5 sm:py-2 rounded-md whitespace-nowrap"
                   >

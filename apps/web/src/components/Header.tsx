@@ -87,11 +87,6 @@ export default function Header() {
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/signup">
-                  <Button className={`rounded-xl px-6 font-bold shadow-md bg-primary-gradient hover:opacity-95 text-white border-none`}>
-                    Sign Up
-                  </Button>
-                </Link>
               </>
             )}
           </div>
@@ -137,9 +132,6 @@ export default function Header() {
             <>
               <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="outline" className="w-full justify-center h-12 rounded-xl font-bold">Sign In</Button>
-              </Link>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full justify-center h-12 rounded-xl font-bold bg-primary-gradient text-white border-none">Sign Up</Button>
               </Link>
             </>
           )}
