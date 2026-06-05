@@ -80,6 +80,16 @@ export function BankInfoForm({
     "Other"
   ];
 
+  const walletProviders = [
+    "eZ Cash",
+    "mCash",
+    "FriMi",
+    "Genie",
+    "iPay",
+    "Upay",
+    "Other"
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (readOnly) return;
