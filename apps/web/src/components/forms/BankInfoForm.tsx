@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 export function BankInfoForm({
   salon,
   onSave,
-  readOnly = false
+  readOnly = false,
+  children
 }: {
   salon: any;
   onSave: (payload: any) => Promise<void>;
