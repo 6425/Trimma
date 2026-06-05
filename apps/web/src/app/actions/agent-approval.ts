@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerClient } from "@/config/supabase-server";
+import { createServerSupabaseClient } from "@/config/supabase-server";
 
 // Helper to simulate sending notifications since infrastructure is not present
 async function mockSendNotification(type: "WhatsApp" | "Email", contact: string, message: string) {
@@ -9,7 +9,7 @@ async function mockSendNotification(type: "WhatsApp" | "Email", contact: string,
 
 export async function approveSalon(salonId: string) {
   try {
-    const supabase = await createServerClient();
+    const supabase = await createServerSupabaseClient();
     
     // Update salon status
     const { error: updateError, data: salon } = await supabase
@@ -54,7 +54,7 @@ export async function approveSalon(salonId: string) {
 
 export async function rejectSalon(salonId: string, reason: string) {
   try {
-    const supabase = await createServerClient();
+    const supabase = await createServerSupabaseClient();
     
     // Update salon status
     const { error: updateError, data: salon } = await supabase
