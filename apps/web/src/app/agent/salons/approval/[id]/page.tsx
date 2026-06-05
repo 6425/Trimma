@@ -23,25 +23,24 @@ export default function AgentSalonApprovalReview() {
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    fetchSalon();
-  }, [id]);
+    async function fetchSalon() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("salons")
+        .select("*, bank_info:bank_info_id(*), ext:ext_info_id(*)") // Note: you might need to adjust joins based on actual schema for bank info if not embedded in `salon`
+        .eq("id", id)
+        .single();
 
-  const fetchSalon = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("salons")
-      .select("*, bank_info:bank_info_id(*), ext:ext_info_id(*)") // Note: you might need to adjust joins based on actual schema for bank info if not embedded in `salon`
-      .eq("id", id)
-      .single();
-
-    if (data && !error) {
-      setSalon(data);
-    } else {
-      toast.error("Salon not found");
-      router.push("/agent/salons/approval");
+      if (data && !error) {
+        setSalon(data);
+      } else {
+        toast.error("Salon not found");
+        router.push("/agent/salons/approval");
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  };
+    fetchSalon();
+  }, [id, router]);;
 
   const handleApprove = async () => {
     setActionLoading(true);

@@ -233,7 +233,7 @@ export function SalonOwnerNotificationBell() {
               <Bell className="h-8 w-8 text-zinc-600 mb-3" />
               <p className="text-sm font-bold text-zinc-300">No notifications yet</p>
               <p className="text-[11px] text-zinc-500 mt-1">
-                You're all caught up!
+                No notifications right now. We&apos;ll notify you when there&apos;s activity.
               </p>
             </div>
           ) : (

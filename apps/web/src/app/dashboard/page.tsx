@@ -201,7 +201,7 @@ export default function Dashboard() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     void Promise.resolve().then(() => {

@@ -11,23 +11,22 @@ export default function AgentSalonApprovalList() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    async function fetchSalons() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("salons")
+        .select("id, name, city, owner_email, phone, onboarding_status, created_at, status")
+        // OWNER_ACTIVATED means they finished the profile and submitted.
+        .eq("onboarding_status", "OWNER_ACTIVATED")
+        .order("created_at", { ascending: false });
+
+      if (data && !error) {
+        setSalons(data);
+      }
+      setLoading(false);
+    }
     fetchSalons();
   }, []);
-
-  const fetchSalons = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("salons")
-      .select("id, name, city, owner_email, phone, onboarding_status, created_at, status")
-      // OWNER_ACTIVATED means they finished the profile and submitted.
-      .eq("onboarding_status", "OWNER_ACTIVATED")
-      .order("created_at", { ascending: false });
-
-    if (data && !error) {
-      setSalons(data);
-    }
-    setLoading(false);
-  };
 
   const filtered = salons.filter(s => 
     (s.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
