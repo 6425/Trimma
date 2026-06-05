@@ -324,7 +324,17 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
                   required
                   placeholder="15"
                   value={generalBufferTime}
-                  onChange={(e) => setGeneralBufferTime(e.target.value)}
+                  onChange={(e) => {
+                    const newBuf = e.target.value;
+                    setGeneralBufferTime(newBuf);
+                    setSelectedServices((prev: any) => {
+                      const updated = { ...prev };
+                      Object.keys(updated).forEach(k => {
+                        updated[k].buffer = newBuf;
+                      });
+                      return updated;
+                    });
+                  }}
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
                 />
               </div>
@@ -336,7 +346,17 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
                   required
                   placeholder="10"
                   value={newCommission}
-                  onChange={(e) => setNewCommission(e.target.value)}
+                  onChange={(e) => {
+                    const newComm = e.target.value;
+                    setNewCommission(newComm);
+                    setSelectedServices((prev: any) => {
+                      const updated = { ...prev };
+                      Object.keys(updated).forEach(k => {
+                        updated[k].commission = newComm;
+                      });
+                      return updated;
+                    });
+                  }}
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
                 />
               </div>

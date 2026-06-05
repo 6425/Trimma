@@ -219,7 +219,7 @@ function AgentLeads() {
       website: lead.website || "",
       map_url: lead.map_url || "",
       category: lead.category || "",
-      working_hours: lead.working_hours ? JSON.stringify(lead.working_hours, null, 2) : "[]",
+      working_hours: typeof lead.working_hours === 'string' ? lead.working_hours : (lead.working_hours ? JSON.stringify(lead.working_hours, null, 2) : "[]"),
       latitude: lead.latitude !== null && lead.latitude !== undefined ? String(lead.latitude) : "",
       longitude: lead.longitude !== null && lead.longitude !== undefined ? String(lead.longitude) : "",
       price_level: lead.price_level || "",
