@@ -902,7 +902,7 @@ function AgentLeads() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Phone <span className="text-rose-500">*</span></label>
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">WhatsApp Number <span className="text-rose-500">*</span></label>
                     <LkPhoneInput
                       value={formData.phone}
                       onChange={(phone) => setFormData({...formData, phone})}
@@ -912,7 +912,7 @@ function AgentLeads() {
                   </div>
                   <div className="space-y-1 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1.5">
-                      <Mail className="w-3 h-3 text-emerald-600" /> Owner Gmail (Creates Invite)
+                      <Mail className="w-3 h-3 text-emerald-600" /> Owner Email (Creates Invite)
                       <span className="text-rose-500">*</span>
                     </label>
                     <Input
