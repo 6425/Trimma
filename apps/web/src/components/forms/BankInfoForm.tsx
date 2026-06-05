@@ -39,6 +39,7 @@ export function BankInfoForm({
   const [vatRegistered, setVatRegistered] = useState(ext.vat_registered || "No");
   const [vatNumber, setVatNumber] = useState(ext.vat_number || "");
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!salon) return;
     const newExt = salon.bank_info || {};

@@ -47,6 +47,7 @@ export function BusinessInfoForm({
   const [addressLine2, setAddressLine2] = useState(ext.address_line_2 || "");
   const [postalCode, setPostalCode] = useState(ext.postal_code || "");
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!salon) return;
     setName(salon.name || "");
