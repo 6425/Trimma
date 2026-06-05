@@ -138,6 +138,7 @@ export default function OnboardingClient() {
               district={district}
               onProvinceChange={setProvince}
               onDistrictChange={setDistrict}
+              availableDistricts={["colombo", "gampaha", "kandy", "anuradhapura"]}
             />
           </div>
         </div>

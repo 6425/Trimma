@@ -137,3 +137,33 @@ export async function fetchAgentSalonServiceIds(salonId: string) {
     return { success: false as const, error: message };
   }
 }
+
+export async function fetchAgentManualLeads() {
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) {
+    return { success: false as const, error: auth.error };
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("salon_leads")
+      .select("*")
+      .eq("assign_to", auth.email)
+      .neq("lead_status", "CONVERTED")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return { success: false as const, error: error.message };
+    }
+
+    return {
+      success: true as const,
+      leads: data || [],
+      agentEmail: auth.email,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load manual leads.";
+    return { success: false as const, error: message };
+  }
+}

@@ -223,6 +223,25 @@ export async function fetchAgentAssignedLeadsClient() {
   };
 }
 
+export async function fetchAgentManualLeadsClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const { data, error } = await supabase
+    .from("salon_leads")
+    .select("*")
+    .eq("assign_to", auth.email)
+    .neq("lead_status", "CONVERTED")
+    .order("created_at", { ascending: false });
+
+  if (error) return { success: false as const, error: error.message };
+  return {
+    success: true as const,
+    leads: data || [],
+    agentEmail: auth.email,
+  };
+}
+
 export async function fetchAgentLeadEditorDataClient(salonId: string) {
   const auth = await requireAgentEmailClient();
   if (auth.success === false) return { success: false as const, error: auth.error };

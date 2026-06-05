@@ -16,15 +16,17 @@ import { toast } from "sonner";
 import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
-import { saveAgentLeadData, fetchAgentGlobals } from "../../actions/agent-leads-update";
+import { saveAgentLeadData, convertManualLeadToSalon, fetchAgentGlobals } from "../../actions/agent-leads-update";
 import {
   fetchAgentAssignedLeads,
+  fetchAgentManualLeads,
   fetchAgentLeadEditorData,
   fetchAgentSalonServiceIds,
 } from "../../actions/agent-lead-editor-data";
 import {
   tryAgentData,
   fetchAgentAssignedLeadsClient,
+  fetchAgentManualLeadsClient,
   fetchAgentLeadEditorDataClient,
   fetchAgentGlobalsClient,
 } from "@/lib/agent-client-data";
@@ -151,6 +153,10 @@ function AgentLeads() {
   const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'verified' | 'invited'>('all');
   const openedSalonRef = useRef<string | null>(null);
 
+  const [manualLeads, setManualLeads] = useState<any[]>([]);
+  const [mainTab, setMainTab] = useState<'google' | 'manual'>('google');
+  const [isManualLead, setIsManualLead] = useState(false);
+
   const [formData, setFormData] = useState<any>({
     id: "",
     place_id: "",
@@ -192,7 +198,11 @@ function AgentLeads() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const res = await tryAgentData(fetchAgentAssignedLeads, fetchAgentAssignedLeadsClient);
+      const [res, manualRes] = await Promise.all([
+        tryAgentData(fetchAgentAssignedLeads, fetchAgentAssignedLeadsClient),
+        tryAgentData(fetchAgentManualLeads, fetchAgentManualLeadsClient)
+      ]);
+
       if (!res.success) {
         toast.error(res.error || "Failed to load leads.");
         return;
@@ -200,6 +210,10 @@ function AgentLeads() {
       setAgentEmail(res.agentEmail);
       setAgentName(res.agentName);
       setLeads(res.leads);
+
+      if (manualRes.success) {
+        setManualLeads(manualRes.leads);
+      }
     } catch (error: any) {
       toast.error("Failed to load your assigned salons: " + error.message);
     } finally {
@@ -207,15 +221,23 @@ function AgentLeads() {
     }
   };
 
-  const handleOpenModal = async (lead: any) => {
+  const handleOpenModal = async (lead: any, isManual = false) => {
+    setIsManualLead(isManual);
     setSelectedLead(lead);
+
+    let mappedAddress = lead.address || "";
+    if (isManual) {
+      const parts = [lead.address, lead.city, lead.district, lead.province].filter(Boolean);
+      mappedAddress = parts.join(", ");
+    }
+
     setFormData({
       id: lead.id || "",
       place_id: lead.place_id || "",
       name: lead.name || "",
-      address: lead.address || "",
+      address: mappedAddress,
       rating: lead.rating !== null && lead.rating !== undefined ? String(lead.rating) : "",
-      phone: lead.phone || "",
+      phone: lead.whatsapp_number || lead.phone || "",
       website: lead.website || "",
       map_url: lead.map_url || "",
       category: lead.category || "",
@@ -227,12 +249,18 @@ function AgentLeads() {
       hero_url: lead.hero_url || "",
       onboarding_status: lead.onboarding_status || "ASSIGNED_TO_AGENT",
       activation_status: lead.activation_status || "INACTIVE",
-      owner_gmail: lead.owner_gmail || "",
-      agent_notes: lead.agent_notes || "",
+      owner_gmail: lead.owner_email || lead.owner_gmail || "",
+      agent_notes: lead.agent_notes || (isManual && lead.owner_name ? `Owner Name: ${lead.owner_name}` : ""),
       admin_notes: lead.admin_notes || ""
     });
     setSelectedCategories((lead.category || "").split(",").map((s: string) => s.trim()).filter(Boolean));
     setIsModalOpen(true);
+
+    if (isManual) {
+      setSelectedServices({});
+      setSalonAmenities({});
+      return;
+    }
 
     try {
       const editorRes = await tryAgentData(
@@ -421,16 +449,33 @@ function AgentLeads() {
 
       const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
       
-      const { success, error } = await saveAgentLeadData(
-        selectedLead.id,
-        updatePayload,
-        servicesData,
-        finalStaffToAdd,
-        agentEmail,
-        null,
-        salonAmenities,
-        "DRAFT"
-      );
+      let success = false, error = null;
+      if (isManualLead) {
+        const res = await convertManualLeadToSalon(
+          selectedLead.id,
+          updatePayload,
+          servicesData,
+          finalStaffToAdd,
+          salonAmenities,
+          agentEmail,
+          "DRAFT"
+        );
+        success = res.success;
+        error = res.error;
+      } else {
+        const res = await saveAgentLeadData(
+          selectedLead.id,
+          updatePayload,
+          servicesData,
+          finalStaffToAdd,
+          agentEmail,
+          null,
+          salonAmenities,
+          "DRAFT"
+        );
+        success = res.success;
+        error = res.error;
+      }
       
       if (!success) throw new Error(error || "Failed to save via Server Action");
 
@@ -481,40 +526,59 @@ function AgentLeads() {
 
       const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
       
-      const { success, error } = await saveAgentLeadData(
-        selectedLead.id,
-        updatePayload,
-        servicesData,
-        finalStaffToAdd,
-        agentEmail,
-        null,
-        salonAmenities,
-        "REVIEW"
-      );
+      let success = false, error = null, targetSalonId = selectedLead.id;
+      if (isManualLead) {
+        const res = await convertManualLeadToSalon(
+          selectedLead.id,
+          updatePayload,
+          servicesData,
+          finalStaffToAdd,
+          salonAmenities,
+          agentEmail,
+          "REVIEW"
+        );
+        success = res.success;
+        error = res.error;
+        if (res.success && res.salonId) targetSalonId = res.salonId;
+      } else {
+        const res = await saveAgentLeadData(
+          selectedLead.id,
+          updatePayload,
+          servicesData,
+          finalStaffToAdd,
+          agentEmail,
+          null,
+          salonAmenities,
+          "REVIEW"
+        );
+        success = res.success;
+        error = res.error;
+      }
+      
       if (!success) throw new Error(error || "Failed to send to owner");
 
-      const res = await fetch("/api/invite-owner", {
+      const apiRes = await fetch("/api/invite-owner", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          salonId: selectedLead.id,
+          salonId: targetSalonId,
           ownerEmail: formData.owner_gmail,
           actorEmail: agentEmail,
         }),
       });
       
-      if (!res.ok) {
-        const err = await res.json();
+      if (!apiRes.ok) {
+        const err = await apiRes.json();
         throw new Error(err.error || "Failed to send email invite");
       }
 
       if (formData.phone) {
         const waRes = await sendOnboardingInviteAlert(
-          selectedLead.id, 
+          targetSalonId, 
           formData.phone, 
           formData.owner_gmail, 
           formData.name || selectedLead.name,
-          selectedLead.slug
+          selectedLead.slug || "salon"
         );
         if (!waRes.success) {
           console.warn("WhatsApp notification failed:", waRes.error);
@@ -729,133 +793,211 @@ function AgentLeads() {
         </div>
       </div>
 
-      <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
-        <div className="p-5 border-b border-zinc-50 flex items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-[#1A1C29] text-base">My Assigned Salons</h3>
-            <p className="text-zinc-400 text-xs mt-0.5">Click a salon name to open the Field Editor. Double-click cells to edit inline.</p>
-          </div>
-          <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl shrink-0">
-            <button
-              onClick={() => setActiveTab("assigned")}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                activeTab === "assigned" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
-              }`}
-            >
-              Assigned ({leads.filter(l => l.onboarding_status === "ASSIGNED_TO_AGENT").length})
-            </button>
-            <button
-              onClick={() => setActiveTab("verified")}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                // @ts-ignore
-                activeTab === "verified" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
-              }`}
-            >
-              Published
-            </button>
-            <button
-              onClick={() => setActiveTab("invited")}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                // @ts-ignore
-                activeTab === "invited" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
-              }`}
-            >
-              Invited/Owner Action
-            </button>
-          </div>
-        </div>
-
-        <div className="p-5">
-          {loading ? (
-            <div className="flex items-center justify-center py-20 text-zinc-400">
-              <Loader2 className="w-6 h-6 animate-spin mr-3" />
-              <span className="text-sm font-medium">Loading your assigned salons...</span>
-            </div>
-          ) : filteredLeads.length === 0 ? (
-            <div className="text-center py-20 text-zinc-300">
-              <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm font-medium">No salons in this category yet.</p>
-              <p className="text-xs mt-1">Salons assigned by the Admin will appear here.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredLeads.map((lead) => {
-                const score = completionScore(lead);
-                return (
-                  <div
-                    key={lead.id}
-                    className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer group"
-                    onClick={() => handleOpenModal(lead)}
-                  >
-                    {lead.hero_url ? (
-                      <div className="w-full h-32 rounded-xl overflow-hidden mb-3 bg-zinc-200">
-                        <img src={lead.hero_url} alt={lead.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-32 rounded-xl mb-3 bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center">
-                        <Building2 className="w-10 h-10 text-zinc-300" />
-                      </div>
-                    )}
-
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-sm text-[#1A1C29] leading-tight">{lead.name}</h3>
-                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusBadge(lead.onboarding_status)}`}>
-                        {(lead.onboarding_status || "ASSIGNED_TO_AGENT").replace(/_/g, " ")}
-                      </span>
-                    </div>
-
-                    {lead.category && (
-                      <p className="text-xs text-zinc-400 font-medium mb-1">{lead.category}</p>
-                    )}
-                    {lead.address && (
-                      <p className="text-xs text-zinc-400 flex items-center gap-1 mb-2 truncate">
-                        <MapPin className="w-3 h-3 shrink-0" /> {lead.address}
-                      </p>
-                    )}
-
-                    {lead.admin_notes && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-2 mb-2">
-                        <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Admin Notes</p>
-                        <p className="text-xs text-amber-800">{lead.admin_notes}</p>
-                      </div>
-                    )}
-
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Completion</span>
-                        <span className={`text-[10px] font-bold ${score >= 80 ? 'text-emerald-600' : score >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>{score}%</span>
-                      </div>
-                      <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-400' : 'bg-rose-400'}`}
-                          style={{ width: `${score}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-                      {lead.phone && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-zinc-200 text-[10px] text-zinc-500 font-medium">
-                          <Phone className="w-2.5 h-2.5" /> {lead.phone}
-                        </span>
-                      )}
-                      {lead.rating && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[10px] text-amber-600 font-bold">
-                          <Star className="w-2.5 h-2.5 fill-amber-400 stroke-amber-400" /> {lead.rating}
-                        </span>
-                      )}
-                      {lead.owner_gmail && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-700 font-medium">
-                          <Mail className="w-2.5 h-2.5" /> Gmail Set
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      <div className="flex items-center gap-4 mb-4">
+        <button
+          onClick={() => setMainTab("google")}
+          className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
+            mainTab === "google" ? "bg-[#1A1C29] text-white shadow-md" : "bg-white text-zinc-500 hover:text-zinc-900 border border-zinc-200"
+          }`}
+        >
+          Google Leads
+        </button>
+        <button
+          onClick={() => setMainTab("manual")}
+          className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
+            mainTab === "manual" ? "bg-[#1A1C29] text-white shadow-md" : "bg-white text-zinc-500 hover:text-zinc-900 border border-zinc-200"
+          }`}
+        >
+          Salon Leads (Manual)
+          {manualLeads.length > 0 && (
+            <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${mainTab === "manual" ? "bg-white text-[#1A1C29]" : "bg-brand-pink text-white"}`}>{manualLeads.length}</span>
           )}
-        </div>
+        </button>
+      </div>
+
+      <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
+        {mainTab === 'google' ? (
+          <>
+            <div className="p-5 border-b border-zinc-50 flex items-center justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-[#1A1C29] text-base">My Assigned Salons</h3>
+                <p className="text-zinc-400 text-xs mt-0.5">Click a salon name to open the Field Editor. Double-click cells to edit inline.</p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl shrink-0">
+                <button
+                  onClick={() => setActiveTab("assigned")}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                    activeTab === "assigned" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
+                  }`}
+                >
+                  Assigned ({leads.filter(l => l.onboarding_status === "ASSIGNED_TO_AGENT").length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("verified")}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                    // @ts-ignore
+                    activeTab === "verified" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
+                  }`}
+                >
+                  Published
+                </button>
+                <button
+                  onClick={() => setActiveTab("invited")}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                    // @ts-ignore
+                    activeTab === "invited" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
+                  }`}
+                >
+                  Invited/Owner Action
+                </button>
+              </div>
+            </div>
+
+            <div className="p-5">
+              {loading ? (
+                <div className="flex items-center justify-center py-20 text-zinc-400">
+                  <Loader2 className="w-6 h-6 animate-spin mr-3" />
+                  <span className="text-sm font-medium">Loading your assigned salons...</span>
+                </div>
+              ) : filteredLeads.length === 0 ? (
+                <div className="text-center py-20 text-zinc-300">
+                  <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">No salons in this category yet.</p>
+                  <p className="text-xs mt-1">Salons assigned by the Admin will appear here.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredLeads.map((lead) => {
+                    const score = completionScore(lead);
+                    return (
+                      <div
+                        key={lead.id}
+                        className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer group"
+                        onClick={() => handleOpenModal(lead)}
+                      >
+                        {lead.hero_url ? (
+                          <div className="w-full h-32 rounded-xl overflow-hidden mb-3 bg-zinc-200">
+                            <img src={lead.hero_url} alt={lead.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-32 rounded-xl mb-3 bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center">
+                            <Building2 className="w-10 h-10 text-zinc-300" />
+                          </div>
+                        )}
+
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-bold text-sm text-[#1A1C29] leading-tight">{lead.name}</h3>
+                          <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusBadge(lead.onboarding_status)}`}>
+                            {(lead.onboarding_status || "ASSIGNED_TO_AGENT").replace(/_/g, " ")}
+                          </span>
+                        </div>
+
+                        {lead.category && (
+                          <p className="text-xs text-zinc-400 font-medium mb-1">{lead.category}</p>
+                        )}
+                        {lead.address && (
+                          <p className="text-xs text-zinc-400 flex items-center gap-1 mb-2 truncate">
+                            <MapPin className="w-3 h-3 shrink-0" /> {lead.address}
+                          </p>
+                        )}
+
+                        {lead.admin_notes && (
+                          <div className="bg-amber-50 border border-amber-200 rounded-xl p-2 mb-2">
+                            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wide mb-0.5">Admin Notes</p>
+                            <p className="text-xs text-amber-800">{lead.admin_notes}</p>
+                          </div>
+                        )}
+
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Completion</span>
+                            <span className={`text-[10px] font-bold ${score >= 80 ? 'text-emerald-600' : score >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>{score}%</span>
+                          </div>
+                          <div className="w-full bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${score >= 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-amber-400' : 'bg-rose-400'}`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+                          {lead.phone && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-zinc-200 text-[10px] text-zinc-500 font-medium">
+                              <Phone className="w-2.5 h-2.5" /> {lead.phone}
+                            </span>
+                          )}
+                          {lead.rating && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-[10px] text-amber-600 font-bold">
+                              <Star className="w-2.5 h-2.5 fill-amber-400 stroke-amber-400" /> {lead.rating}
+                            </span>
+                          )}
+                          {lead.owner_gmail && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] text-emerald-700 font-medium">
+                              <Mail className="w-2.5 h-2.5" /> Gmail Set
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-[#1A1C29] text-base">Manual Salon Leads</h3>
+                <p className="text-zinc-400 text-xs mt-0.5">These are leads captured from the onboarding form. Click Edit to process and convert them to Salons.</p>
+              </div>
+            </div>
+            {manualLeads.length === 0 ? (
+              <div className="text-center py-20 text-zinc-300">
+                <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">No manual salon leads pending.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-zinc-100 shadow-sm">
+                <table className="w-full text-left text-sm text-zinc-600">
+                  <thead className="text-xs text-zinc-400 uppercase bg-zinc-50">
+                    <tr>
+                      <th className="px-4 py-4 font-medium">Business Name</th>
+                      <th className="px-4 py-4 font-medium">Owner</th>
+                      <th className="px-4 py-4 font-medium">Location</th>
+                      <th className="px-4 py-4 font-medium">Contact</th>
+                      <th className="px-4 py-4 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {manualLeads.map(lead => (
+                      <tr key={lead.id} className="hover:bg-zinc-50/50 transition-colors bg-white">
+                        <td className="px-4 py-4 font-medium text-zinc-900">{lead.name}</td>
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-zinc-800">{lead.owner_name}</div>
+                          <div className="text-xs text-zinc-400">{lead.owner_email}</div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-zinc-800">{lead.city}, {lead.district}</div>
+                          <div className="text-xs text-zinc-400 truncate max-w-[200px]">{lead.address}</div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-zinc-800">{lead.whatsapp_number || lead.phone}</div>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <Button size="sm" className="text-xs h-8 bg-brand hover:bg-brand/90 text-white shadow-sm font-bold" onClick={() => handleOpenModal(lead, true)}>
+                            Edit / Process
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {isModalOpen && selectedLead && (

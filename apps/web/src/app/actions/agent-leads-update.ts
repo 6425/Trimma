@@ -205,3 +205,95 @@ export async function fetchAgentGlobals() {
     amenities: amenitiesRes.data || []
   };
 }
+
+export async function convertManualLeadToSalon(
+  leadId: string,
+  payload: any,
+  servicesData: { svcsToAdd: any[] } | null,
+  staffToAdd: any[] | null,
+  amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null,
+  agentEmail: string,
+  actionType: "DRAFT" | "REVIEW" = "DRAFT"
+) {
+  const auth = await requireAgentFromCookies();
+  if ("error" in auth) return { success: false as const, error: auth.error };
+
+  const supabaseAdmin = createSupabaseAdminClient();
+
+  try {
+    // 1. Generate a slug
+    const slug = (payload.name || "salon")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "") + "-" + Math.random().toString(36).substring(2, 6);
+      
+    payload.slug = slug;
+
+    // 2. Create the Salon record using existing logic (inline to keep it transactional-ish)
+    const { data: salon, error: createError } = await supabaseAdmin
+      .from("salons")
+      .insert({
+        ...payload,
+        assign_to: agentEmail,
+        onboarding_status: actionType === "REVIEW" ? "ASSIGNED_TO_OWNER" : "ASSIGNED_TO_AGENT",
+        activation_status: "INACTIVE",
+        public_visibility: false,
+        booking_enabled: false,
+        owner_email: actionType === "REVIEW" && payload.owner_gmail ? payload.owner_gmail : `draft-${slug}@trimma.io`
+      })
+      .select("id")
+      .single();
+
+    if (createError) throw createError;
+    const salonId = salon.id;
+
+    // 3. Sync Services
+    if (servicesData && servicesData.svcsToAdd.length > 0) {
+      const svcsToAdd = servicesData.svcsToAdd.map(s => ({ ...s, salon_id: salonId }));
+      await supabaseAdmin.from("services").insert(svcsToAdd);
+    }
+
+    // 4. Add Staff
+    if (staffToAdd && staffToAdd.length > 0) {
+      const staff = staffToAdd.map(s => ({ ...s, salon_id: salonId }));
+      await supabaseAdmin.from("salon_staff").insert(staff);
+    }
+
+    // 5. Sync Amenities
+    if (amenitiesData) {
+      const amenityInserts = Object.keys(amenitiesData)
+        .filter((amenityId) => amenitiesData[amenityId].has_amenity)
+        .map((amenityId) => ({
+          salon_id: salonId,
+          amenity_id: amenityId,
+          quantity: amenitiesData[amenityId].quantity || null,
+        }));
+      
+      if (amenityInserts.length > 0) {
+        await supabaseAdmin.from("salon_amenities").insert(amenityInserts);
+      }
+    }
+
+    // 6. Log Activity
+    await supabaseAdmin.from("onboarding_logs").insert({
+      salon_id: salonId,
+      actor_email: agentEmail,
+      action: "LEAD_CREATED",
+      notes: "Agent converted a manual lead from onboarding form to a Salon."
+    });
+
+    // 7. Update original salon_leads record to CONVERTED
+    await supabaseAdmin
+      .from("salon_leads")
+      .update({
+        lead_status: "CONVERTED",
+        status: "processed"
+      })
+      .eq("id", leadId);
+
+    return { success: true as const, salonId };
+  } catch (err: any) {
+    console.error("Agent lead conversion failed:", err);
+    return { success: false as const, error: err.message || "Failed to convert lead." };
+  }
+}
