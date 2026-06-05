@@ -491,10 +491,37 @@ function AgentLeads() {
         salonAmenities,
         "REVIEW"
       );
-      
       if (!success) throw new Error(error || "Failed to send to owner");
 
-      toast.success("Sent to Salon Owner for review!");
+      const res = await fetch("/api/invite-owner", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          salonId: selectedLead.id,
+          ownerEmail: formData.owner_gmail,
+          actorEmail: agentEmail,
+        }),
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to send email invite");
+      }
+
+      if (formData.phone) {
+        const waRes = await sendOnboardingInviteAlert(
+          selectedLead.id, 
+          formData.phone, 
+          formData.owner_gmail, 
+          formData.name || selectedLead.name,
+          selectedLead.slug
+        );
+        if (!waRes.success) {
+          console.warn("WhatsApp notification failed:", waRes.error);
+        }
+      }
+
+      toast.success("Sent to Salon Owner and Invites Delivered!");
 
       setIsModalOpen(false);
       setSelectedLead(null);

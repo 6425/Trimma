@@ -15,6 +15,7 @@ import { getAgentEmailFast } from "@/lib/client-auth";
 import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-leads-update";
 import { tryAgentData, fetchAgentGlobalsClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
+import { sendOnboardingInviteAlert } from "../../../actions/whatsapp";
 
 export default function AgentNewLeadPage() {
   const router = useRouter();
@@ -164,7 +165,39 @@ export default function AgentNewLeadPage() {
         throw new Error(error || "Failed to create lead.");
       }
 
-      toast.success("Manual lead created successfully.");
+      if (submitAction === "REVIEW") {
+        const res = await fetch("/api/invite-owner", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            salonId,
+            ownerEmail: form.owner_gmail,
+            actorEmail: agentEmail,
+          }),
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to send email invite");
+        }
+
+        if (form.phone) {
+          const waRes = await sendOnboardingInviteAlert(
+            salonId, 
+            form.phone, 
+            form.owner_gmail, 
+            form.name,
+            salonId // Note: We might not have the slug immediately available here, so salonId is used
+          );
+          if (!waRes.success) {
+            console.warn("WhatsApp notification failed:", waRes.error);
+          }
+        }
+        toast.success("Lead created, Salon Owner sent review invites!");
+      } else {
+        toast.success("Manual lead saved as draft successfully.");
+      }
+
       router.push(`/agent/leads?open=${salonId}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create lead.";
