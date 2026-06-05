@@ -35,12 +35,13 @@ function NotificationCard({
   onConfirm: (item: SalonOwnerNotificationItem) => void;
   onDismiss: (item: SalonOwnerNotificationItem) => void;
 }) {
-  const meta = item.metadata;
-  const isPending =
+  const meta = item.metadata || {};
+  const isPendingBooking =
     item.notificationType === "booking_pending_confirm" &&
     (item.bookingStatus || meta.booking_status) === "pending" &&
     item.bookingId;
   const isProcessing = processingId === item.id;
+  const isGeneric = item.notificationType !== "booking_pending_confirm";
 
   return (
     <div
@@ -56,30 +57,34 @@ function NotificationCard({
         {!item.readAt && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#F5B700]" />}
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
-        <div className="flex items-center gap-1.5 text-zinc-400">
-          <User className="h-3 w-3 shrink-0" />
-          <span className="truncate font-semibold text-zinc-300">
-            {meta.customer_name || meta.customer_email || "Customer"}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 text-zinc-400">
-          <Calendar className="h-3 w-3 shrink-0" />
-          <span className="font-semibold text-zinc-300">
-            {meta.booking_date} · {formatTimeLabel(meta.booking_time)}
-          </span>
-        </div>
-      </div>
+      {!isGeneric && (
+        <>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
+            <div className="flex items-center gap-1.5 text-zinc-400">
+              <User className="h-3 w-3 shrink-0" />
+              <span className="truncate font-semibold text-zinc-300">
+                {meta.customer_name || meta.customer_email || "Customer"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-zinc-400">
+              <Calendar className="h-3 w-3 shrink-0" />
+              <span className="font-semibold text-zinc-300">
+                {meta.booking_date} · {formatTimeLabel(meta.booking_time as string)}
+              </span>
+            </div>
+          </div>
 
-      {meta.service_name && (
-        <p className="mt-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-          {meta.service_name}
-          {meta.amount ? ` · LKR ${Number(meta.amount).toLocaleString()}` : ""}
-        </p>
+          {meta.service_name && (
+            <p className="mt-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+              {meta.service_name as string}
+              {meta.amount ? ` · LKR ${Number(meta.amount).toLocaleString()}` : ""}
+            </p>
+          )}
+        </>
       )}
 
       <div className="mt-3 flex items-center gap-2">
-        {isPending ? (
+        {isPendingBooking ? (
           <Button
             size="sm"
             disabled={isProcessing}
@@ -96,7 +101,7 @@ function NotificationCard({
           <button
             type="button"
             onClick={() => onDismiss(item)}
-            className="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="text-[10px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors ml-auto"
           >
             Dismiss
           </button>
@@ -204,7 +209,7 @@ export function SalonOwnerNotificationBell() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
           <div>
             <p className="text-sm font-bold text-white">Notifications</p>
-            <p className="text-[11px] text-zinc-500">Paid bookings waiting for your approval</p>
+            <p className="text-[11px] text-zinc-500">Your recent updates</p>
           </div>
           {unreadCount > 0 && (
             <button
@@ -228,7 +233,7 @@ export function SalonOwnerNotificationBell() {
               <Bell className="h-8 w-8 text-zinc-600 mb-3" />
               <p className="text-sm font-bold text-zinc-300">No notifications yet</p>
               <p className="text-[11px] text-zinc-500 mt-1">
-                New paid reservations will appear here for quick approval.
+                You're all caught up!
               </p>
             </div>
           ) : (

@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 
 export function BusinessInfoForm({
   salon,
-  onSave
+  onSave,
+  readOnly = false
 }: {
   salon: any;
   onSave: (payload: any) => Promise<void>;
+  readOnly?: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   
@@ -105,6 +107,7 @@ export function BusinessInfoForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     setLoading(true);
     try {
       const payload = {
@@ -157,26 +160,26 @@ export function BusinessInfoForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Salon / Business Name *</Label>
-            <Input required value={name} onChange={e => setName(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} value={name} onChange={e => setName(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Legal Business Name</Label>
-            <Input value={legalName} onChange={e => setLegalName(e.target.value)} placeholder="If different from trading name" className="h-11 rounded-xl" />
+            <Input disabled={readOnly} value={legalName} onChange={e => setLegalName(e.target.value)} placeholder="If different from trading name" className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Business Registration Number</Label>
-            <Input value={regNumber} onChange={e => setRegNumber(e.target.value)} className="h-11 rounded-xl" />
+            <Input disabled={readOnly} value={regNumber} onChange={e => setRegNumber(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Business Type *</Label>
-            <select required value={businessType} onChange={e => setBusinessType(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white">
+            <select required disabled={readOnly} value={businessType} onChange={e => setBusinessType(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:bg-slate-50 disabled:opacity-50">
               <option value="" disabled>Select Type</option>
               {businessTypes.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Business Category *</Label>
-            <select required value={category} onChange={e => setCategory(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white">
+            <select required disabled={readOnly} value={category} onChange={e => setCategory(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white disabled:bg-slate-50 disabled:opacity-50">
               <option value="" disabled>Select Category</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -192,19 +195,19 @@ export function BusinessInfoForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Owner Full Name *</Label>
-            <Input required value={ownerName} onChange={e => setOwnerName(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} value={ownerName} onChange={e => setOwnerName(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">NIC / National ID *</Label>
-            <Input required value={nic} onChange={e => setNic(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} value={nic} onChange={e => setNic(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Contact Number *</Label>
-            <Input required value={phone} onChange={e => setPhone(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} value={phone} onChange={e => setPhone(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Email Address *</Label>
-            <Input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} type="email" value={email} onChange={e => setEmail(e.target.value)} className="h-11 rounded-xl" />
           </div>
         </div>
       </div>
@@ -217,32 +220,32 @@ export function BusinessInfoForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5 md:col-span-2">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Address Line 1 *</Label>
-            <Input required value={address} onChange={e => setAddress(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} value={address} onChange={e => setAddress(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Address Line 2</Label>
-            <Input value={addressLine2} onChange={e => setAddressLine2(e.target.value)} className="h-11 rounded-xl" />
+            <Input disabled={readOnly} value={addressLine2} onChange={e => setAddressLine2(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">City *</Label>
-            <Input required value={city} onChange={e => setCity(e.target.value)} className="h-11 rounded-xl" />
+            <Input required disabled={readOnly} value={city} onChange={e => setCity(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Postal Code</Label>
-            <Input value={postalCode} onChange={e => setPostalCode(e.target.value)} className="h-11 rounded-xl" />
+            <Input disabled={readOnly} value={postalCode} onChange={e => setPostalCode(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Google Maps Link</Label>
-            <Input value={mapUrl} onChange={e => setMapUrl(e.target.value)} placeholder="https://maps.google.com/..." className="h-11 rounded-xl" />
+            <Input disabled={readOnly} value={mapUrl} onChange={e => setMapUrl(e.target.value)} placeholder="https://maps.google.com/..." className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5 flex gap-2">
             <div className="flex-1">
               <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Latitude</Label>
-              <Input value={latitude} onChange={e => setLatitude(e.target.value)} className="h-11 rounded-xl" />
+              <Input disabled={readOnly} value={latitude} onChange={e => setLatitude(e.target.value)} className="h-11 rounded-xl" />
             </div>
             <div className="flex-1">
               <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Longitude</Label>
-              <Input value={longitude} onChange={e => setLongitude(e.target.value)} className="h-11 rounded-xl" />
+              <Input disabled={readOnly} value={longitude} onChange={e => setLongitude(e.target.value)} className="h-11 rounded-xl" />
             </div>
           </div>
         </div>
@@ -256,19 +259,19 @@ export function BusinessInfoForm({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1.5 md:col-span-3">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Business Description</Label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm" />
+            <textarea disabled={readOnly} value={description} onChange={e => setDescription(e.target.value)} rows={4} className="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Established Year</Label>
-            <Input type="number" value={establishedYear} onChange={e => setEstablishedYear(e.target.value)} className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="number" value={establishedYear} onChange={e => setEstablishedYear(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Number of Staff</Label>
-            <Input type="number" value={staffCount} onChange={e => setStaffCount(e.target.value)} className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="number" value={staffCount} onChange={e => setStaffCount(e.target.value)} className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Number of Branches</Label>
-            <Input type="number" value={branchCount} onChange={e => setBranchCount(e.target.value)} className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="number" value={branchCount} onChange={e => setBranchCount(e.target.value)} className="h-11 rounded-xl" />
           </div>
         </div>
       </div>
@@ -281,36 +284,38 @@ export function BusinessInfoForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Website URL</Label>
-            <Input type="url" value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="url" value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">WhatsApp Number</Label>
-            <Input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+94..." className="h-11 rounded-xl" />
+            <Input disabled={readOnly} value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+94..." className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Facebook URL</Label>
-            <Input type="url" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="https://facebook.com/..." className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="url" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="https://facebook.com/..." className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Instagram URL</Label>
-            <Input type="url" value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="https://instagram.com/..." className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="url" value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="https://instagram.com/..." className="h-11 rounded-xl" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">TikTok URL</Label>
-            <Input type="url" value={tiktok} onChange={e => setTiktok(e.target.value)} placeholder="https://tiktok.com/..." className="h-11 rounded-xl" />
+            <Input disabled={readOnly} type="url" value={tiktok} onChange={e => setTiktok(e.target.value)} placeholder="https://tiktok.com/..." className="h-11 rounded-xl" />
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end mt-8">
-        <Button 
-          type="submit" 
-          disabled={loading}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-8 font-black text-sm w-full md:w-auto flex items-center justify-center gap-2"
-        >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Save Business Info</>}
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="flex justify-end mt-8">
+          <Button 
+            type="submit" 
+            disabled={loading}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-8 font-black text-sm w-full md:w-auto flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Save Business Info</>}
+          </Button>
+        </div>
+      )}
 
     </form>
   );

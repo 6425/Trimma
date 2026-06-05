@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { 
   Home, Map, UserPlus, Building2,
   Wallet, MapPin, PhoneCall, User, LogOut, Search,
-  KanbanSquare, Menu, X, Bell
+  KanbanSquare, Menu, X, Bell, CheckCircle2
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -65,6 +65,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         { name: "Territory Explorer", path: "/agent/territory", icon: <MapPin className="w-4 h-4" /> },
         { name: "Add Manual Lead", path: "/agent/leads/new", icon: <UserPlus className="w-4 h-4" /> },
         { name: "Salon Creation", path: "/agent/leads", icon: <KanbanSquare className="w-4 h-4" /> },
+        { name: "Salon Approval", path: "/agent/salons/approval", icon: <CheckCircle2 className="w-4 h-4" /> },
       ]
     },
 
