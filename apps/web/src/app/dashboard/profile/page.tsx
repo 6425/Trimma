@@ -97,6 +97,7 @@ export default function SalonProfilePage() {
   const [maxImagesLimit, setMaxImagesLimit] = useState(3); // Default Free Plan Limit
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [allowedCategoriesCount, setAllowedCategoriesCount] = useState(2);
+  const [allowedStaffCount, setAllowedStaffCount] = useState(2);
 
   // Amenities States
   const [globalAmenities, setGlobalAmenities] = useState<any[]>([]);
@@ -191,9 +192,11 @@ export default function SalonProfilePage() {
       if (planData) {
         setSubscriptionName(planData.name || "Free");
         setMaxImagesLimit(planData.max_images !== undefined && planData.max_images !== null ? planData.max_images : 3);
+        setAllowedStaffCount(planData.max_staff !== undefined && planData.max_staff !== null ? planData.max_staff : 2);
       } else {
         setSubscriptionName("Free");
         setMaxImagesLimit(3);
+        setAllowedStaffCount(2);
       }
 
       // Set allowed categories count from server
@@ -940,6 +943,12 @@ export default function SalonProfilePage() {
                 <h4 className="font-extrabold uppercase tracking-widest text-brand text-[10px] border-b border-rose-100 pb-1 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" /> Add Staff
                 </h4>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] text-zinc-500 font-medium">Add up to {allowedStaffCount >= 999 ? "unlimited" : allowedStaffCount} staff members based on your {subscriptionName} plan.</p>
+                  <span className="text-[10px] font-bold text-zinc-400">
+                    {staffToAdd.length} / {allowedStaffCount >= 999 ? "∞" : allowedStaffCount} ADDED
+                  </span>
+                </div>
                 {staffToAdd.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                     {staffToAdd.map((st, idx) => (
@@ -964,8 +973,8 @@ export default function SalonProfilePage() {
                   type="button" 
                   variant="outline" 
                   onClick={() => {
-                    if (staffToAdd.length >= 2) {
-                      toast.error("You can only add up to 2 staff members. Upgrade to a premium plan to add more.");
+                    if (staffToAdd.length >= allowedStaffCount) {
+                      toast.error(`You can only add up to ${allowedStaffCount} staff members. Upgrade to a premium plan to add more.`);
                       return;
                     }
                     setIsStaffModalOpen(true);
