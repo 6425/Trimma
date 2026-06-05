@@ -3,20 +3,26 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, Filter, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { addDays, subDays, format, startOfWeek, isSameDay } from "date-fns";
 
 export default function CalendarPage() {
-  const [currentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   
+  const handlePreviousWeek = () => setCurrentDate(prev => subDays(prev, 7));
+  const handleNextWeek = () => setCurrentDate(prev => addDays(prev, 7));
+
+  const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+
   const hours = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"];
-  const days = [
-    { name: "Mon", date: "18", isToday: false },
-    { name: "Tue", date: "19", isToday: true },
-    { name: "Wed", date: "20", isToday: false },
-    { name: "Thu", date: "21", isToday: false },
-    { name: "Fri", date: "22", isToday: false },
-    { name: "Sat", date: "23", isToday: false },
-    { name: "Sun", date: "24", isToday: false }
-  ];
+  
+  const days = Array.from({ length: 7 }).map((_, i) => {
+    const date = addDays(startDate, i);
+    return {
+      name: format(date, "EEE"),
+      date: format(date, "dd"),
+      isToday: isSameDay(date, new Date())
+    };
+  });
 
   const mockBookings = [
     { hour: "10:00 AM", day: "19", client: "Amara Perera", service: "Premium Haircut", color: "bg-rose-50 border-rose-200 text-brand" },
@@ -54,10 +60,10 @@ export default function CalendarPage() {
         {/* Navigation Bar */}
         <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="text-base font-extrabold text-[#1A1C29]">May 2026</h2>
+            <h2 className="text-base font-extrabold text-[#1A1C29]">{format(currentDate, "MMMM yyyy")}</h2>
             <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200"><ChevronLeft className="w-4 h-4" /></Button>
-              <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200"><ChevronRight className="w-4 h-4" /></Button>
+              <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200" onClick={handlePreviousWeek}><ChevronLeft className="w-4 h-4" /></Button>
+              <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200" onClick={handleNextWeek}><ChevronRight className="w-4 h-4" /></Button>
             </div>
           </div>
           <span className="bg-rose-50 text-brand font-bold text-[10px] px-3.5 py-1 rounded-full uppercase tracking-wider">Weekly View</span>
