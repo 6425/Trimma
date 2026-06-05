@@ -235,7 +235,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-2xl bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="bg-dark-gradient p-8 text-white text-center relative overflow-hidden">
           <Sparkles className="absolute -right-8 -bottom-8 w-32 h-32 text-white/5 rotate-12" />
-          <div className="inline-flex bg-white/10 p-3 rounded-2xl mb-4 border border-white/20 w-16 h-16 items-center justify-center">
+          <div className="inline-flex bg-white p-3 rounded-2xl mb-4 shadow-md w-16 h-16 items-center justify-center">
             <img src="/favicon.svg" className="w-10 h-10 object-contain animate-pulse" alt="Trimma Icon" />
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight">Register Your Salon</h1>
