@@ -44,9 +44,9 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 text-zinc-400">
             <Scissors className="w-3.5 h-3.5 text-rose-500 animate-spin-slow" /> Introduction Pricing — {INTRO_DISCOUNT_PERCENT}% Off Monthly
           </div>
-          <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight mb-6 bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6 bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
             Choose the Perfect Plan for <br className="hidden md:inline" /> Your Salon&apos;s Growth
-          </h1>
+          </h2>
           <p className="text-lg md:text-xl text-zinc-400 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
             Introduction rates apply to monthly billing. Annual plans use a lower monthly equivalent billed once per year.
           </p>
