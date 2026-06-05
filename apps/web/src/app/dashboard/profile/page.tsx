@@ -28,7 +28,9 @@ import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
-import { Plus, Users, Globe, ClipboardList, Tag } from "lucide-react";
+import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
+import { BankInfoForm } from "../../../components/forms/BankInfoForm";
+import { Plus, Users, Globe, ClipboardList, Tag, FileText, Landmark } from "lucide-react";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -56,6 +58,9 @@ export default function SalonProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
+  
+  // Tab State
+  const [activeTab, setActiveTab] = useState<"operations" | "business" | "bank">("operations");
 
   // Form States
   const [name, setName] = useState("");
@@ -528,20 +533,90 @@ export default function SalonProfilePage() {
               Awaiting Verification
             </Badge>
           )}
-          <Button 
-            onClick={handleSave} 
-            disabled={saving}
-            className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
-          >
-            {saving ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
-            ) : (
-              <><Save className="w-4 h-4 mr-2" /> Save Changes</>
-            )}
-          </Button>
+          {activeTab === "operations" && (
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+            >
+              {saving ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+              ) : (
+                <><Save className="w-4 h-4 mr-2" /> Save Operations</>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-20">
+        
+        {/* TABS NAVIGATION */}
+        <div className="flex space-x-1 bg-slate-100/80 p-1.5 rounded-2xl mb-8 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("operations")}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === "operations" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700 hover:bg-slate-200/50"}`}
+          >
+            <Store className="w-4 h-4" />
+            Business Operations
+          </button>
+          <button
+            onClick={() => setActiveTab("business")}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === "business" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700 hover:bg-slate-200/50"}`}
+          >
+            <FileText className="w-4 h-4" />
+            Business Info
+          </button>
+          <button
+            onClick={() => setActiveTab("bank")}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${activeTab === "bank" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700 hover:bg-slate-200/50"}`}
+          >
+            <Landmark className="w-4 h-4" />
+            Bank Info
+          </button>
+        </div>
+
+        {activeTab === "business" && (
+          <BusinessInfoForm 
+            salon={salon} 
+            onSave={async (payload) => {
+              try {
+                const res = await saveSalonProfile({ profile: payload, amenityRows: [] });
+                if (res.success) {
+                  toast.success("Business info saved successfully!");
+                  await fetchSalonProfile();
+                } else {
+                  toast.error(res.error || "Failed to save business info");
+                }
+              } catch(e: any) {
+                toast.error(e.message || "Error saving");
+              }
+            }} 
+          />
+        )}
+
+        {activeTab === "bank" && (
+          <BankInfoForm 
+            salon={salon} 
+            onSave={async (payload) => {
+              try {
+                const res = await saveSalonProfile({ profile: payload, amenityRows: [] });
+                if (res.success) {
+                  toast.success("Bank info saved successfully!");
+                  await fetchSalonProfile();
+                } else {
+                  toast.error(res.error || "Failed to save bank info");
+                }
+              } catch(e: any) {
+                toast.error(e.message || "Error saving");
+              }
+            }} 
+          />
+        )}
+
+        {activeTab === "operations" && (
+          <div className="space-y-6">
+            
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Columns: Forms & Image Uploaders */}
         <div className="lg:col-span-2 space-y-8">
@@ -1164,6 +1239,9 @@ export default function SalonProfilePage() {
                 };
               })}
             />
+          </div>
+        )}
+      </div>
           </div>
         )}
       </div>

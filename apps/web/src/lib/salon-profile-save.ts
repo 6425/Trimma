@@ -2,6 +2,7 @@ export const SALON_PROFILE_UPDATE_FIELDS = [
   "name",
   "slug",
   "phone",
+  "email",
   "address",
   "city",
   "province",
@@ -19,6 +20,10 @@ export const SALON_PROFILE_UPDATE_FIELDS = [
   "latitude",
   "longitude",
   "rating",
+  "map_url",
+  "website",
+  "business_info_extended",
+  "bank_info"
 ] as const;
 
 export type SalonScheduleDay = {
