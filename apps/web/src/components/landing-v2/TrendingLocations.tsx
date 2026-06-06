@@ -48,15 +48,22 @@ export function TrendingLocations() {
       }
       });
       
+      const AGENT_DISTRICTS = ["colombo", "gampaha", "kandy", "anuradhapura"];
+
       if (provData) {
       const enriched = provData.map(p => ({
       ...p,
       img: p.image_url || DEFAULT_IMG,
-      count: counts[p.name] || 0
+      count: counts[p.name] || 0,
+      hasAgent: AGENT_DISTRICTS.includes(p.slug)
       }));
       
-      // Sort by salon count descending
-      enriched.sort((a, b) => b.count - a.count);
+      // Sort by agent available first, then salon count descending
+      enriched.sort((a, b) => {
+        if (a.hasAgent && !b.hasAgent) return -1;
+        if (!a.hasAgent && b.hasAgent) return 1;
+        return b.count - a.count;
+      });
       
       // Take all districts
       setLocations(enriched);
@@ -110,6 +117,13 @@ export function TrendingLocations() {
                   className="object-cover transition-transform duration-700 group-hover:scale-105 bg-zinc-200"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                
+                {!loc.hasAgent && (
+                  <div className="absolute top-4 right-4 z-10 bg-white/90 backdrop-blur text-zinc-900 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg">
+                    Coming Soon
+                  </div>
+                )}
+
                 <div className="absolute bottom-4 left-4 z-10 !text-white">
                   <h3 className="font-bold text-2xl !text-white flex items-center gap-2 drop-shadow-md">
                     {loc.name} <span className="opacity-0 group-hover:opacity-100 transition-opacity !text-white">→</span>
