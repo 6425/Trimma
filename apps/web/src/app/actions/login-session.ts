@@ -4,6 +4,8 @@ import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
 import { linkInvitedOwnerAccount } from "@/lib/link-owner-account";
+import { sendWelcomeCustomerAlert } from "@/app/actions/whatsapp";
+import { sendWelcomeCustomerEmail } from "@/app/actions/email-settings";
 
 /**
  * App-managed login role resolution (server action, NOT an /api route).
@@ -51,12 +53,24 @@ export async function completeOAuthLogin(accessToken: string) {
     let onboardingStatus: string | null = null;
     let linkedRole: TrimmaUserRole | null = null;
 
+    let isNewUser = false;
+
     try {
       const linkResult = await linkInvitedOwnerAccount(verified.userId, verified.email);
       onboardingStatus = linkResult.onboardingStatus;
       linkedRole = linkResult.role;
+      isNewUser = linkResult.isNewUser;
     } catch (linkErr) {
       console.error("Owner link step failed:", linkErr);
+    }
+
+    if (isNewUser && verified.email) {
+      const fullName = verified.userMetadata?.full_name || verified.userMetadata?.first_name || verified.email.split("@")[0];
+      const phone = verified.userMetadata?.phone || verified.phone || null;
+      if (phone) {
+        await sendWelcomeCustomerAlert(phone, fullName);
+      }
+      await sendWelcomeCustomerEmail(fullName, verified.email);
     }
 
     const role =

@@ -441,3 +441,101 @@ export async function sendAdminAlertEmail(
     idempotencyKey,
   });
 }
+
+export async function sendBookingRescheduledEmail(bookingNo: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: booking } = await supabase.from("bookings").select("customer_email, booking_date, booking_time, salons(name, address, location)").eq("booking_no", bookingNo).maybeSingle();
+  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+  const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+  const { data: customer } = await supabase.from("users").select("full_name").eq("email", booking.customer_email).maybeSingle();
+  
+  return sendTriggeredEmail({
+    triggerId: "rescheduled",
+    to: booking.customer_email,
+    variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", booking_date: booking.booking_date || "", booking_time: booking.booking_time || "", service_name: "Salon service", salon_address: salon?.address || "", maps_link: APP_BASE_URL },
+    rateLimitKey: `rescheduled:${bookingNo}`
+  });
+}
+
+export async function sendBookingCancelledEmail(bookingNo: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: booking } = await supabase.from("bookings").select("customer_email, booking_date, booking_time, salons(name)").eq("booking_no", bookingNo).maybeSingle();
+  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+  const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+  const { data: customer } = await supabase.from("users").select("full_name").eq("email", booking.customer_email).maybeSingle();
+
+  return sendTriggeredEmail({
+    triggerId: "cancelled",
+    to: booking.customer_email,
+    variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", booking_date: booking.booking_date || "", booking_time: booking.booking_time || "", service_name: "Salon service" },
+    rateLimitKey: `cancelled:${bookingNo}`
+  });
+}
+
+export async function sendReviewRequestEmail(bookingNo: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: booking } = await supabase.from("bookings").select("customer_email, salons(name, slug)").eq("booking_no", bookingNo).maybeSingle();
+  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+  const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+  const { data: customer } = await supabase.from("users").select("full_name").eq("email", booking.customer_email).maybeSingle();
+
+  return sendTriggeredEmail({
+    triggerId: "review",
+    to: booking.customer_email,
+    variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", review_link: salon?.slug ? `${APP_BASE_URL}/salons/${salon.slug}` : APP_BASE_URL },
+    rateLimitKey: `review:${bookingNo}`
+  });
+}
+
+export async function sendBookingCreatedCustomerEmail(bookingNo: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: booking } = await supabase.from("bookings").select("customer_email, booking_date, booking_time, salons(name)").eq("booking_no", bookingNo).maybeSingle();
+  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+  const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+  const { data: customer } = await supabase.from("users").select("full_name").eq("email", booking.customer_email).maybeSingle();
+
+  return sendTriggeredEmail({
+    triggerId: "booking-created-customer",
+    to: booking.customer_email,
+    variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", service_name: "Salon service", booking_date: booking.booking_date || "", booking_time: booking.booking_time || "" },
+    rateLimitKey: `booking-created-cust:${bookingNo}`
+  });
+}
+
+export async function sendBookingCreatedOwnerEmail(bookingNo: string, ownerEmail: string, paymentStatus: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: booking } = await supabase.from("bookings").select("customer_email, booking_date, booking_time, salons(name)").eq("booking_no", bookingNo).maybeSingle();
+  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+  const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+  const { data: customer } = await supabase.from("users").select("full_name").eq("email", booking.customer_email).maybeSingle();
+
+  return sendTriggeredEmail({
+    triggerId: "booking-created-owner",
+    to: ownerEmail,
+    variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", service_name: "Salon service", booking_date: booking.booking_date || "", booking_time: booking.booking_time || "", payment_status: paymentStatus, dashboard_link: `${APP_BASE_URL}/dashboard/bookings` },
+    rateLimitKey: `booking-created-own:${bookingNo}`
+  });
+}
+
+export async function sendAgentApprovalEmail(salonName: string, ownerEmail: string) {
+  if (ownerEmail) {
+    await sendTriggeredEmail({ triggerId: "agent-approval-owner", to: ownerEmail, variables: { salon_name: salonName }, rateLimitKey: `agent-app-own:${ownerEmail}` });
+  }
+  return sendAdminAlertEmail("agent-approval-admin", { salon_name: salonName }, `agent-app-adm:${salonName}`);
+}
+
+export async function sendAdminApprovalEmail(salonName: string, ownerEmail: string) {
+  if (ownerEmail) {
+    await sendTriggeredEmail({ triggerId: "admin-approval-owner", to: ownerEmail, variables: { salon_name: salonName }, rateLimitKey: `admin-app-own:${ownerEmail}` });
+  }
+  return sendAdminAlertEmail("admin-approval-admin", { salon_name: salonName }, `admin-app-adm:${salonName}`);
+}
+
+export async function sendWelcomeCustomerEmail(customerName: string, customerEmail: string) {
+  return sendTriggeredEmail({
+    triggerId: "welcome-customer",
+    to: customerEmail,
+    variables: { customer_name: customerName, dashboard_link: APP_BASE_URL },
+    rateLimitKey: `welcome:${customerEmail}`
+  });
+}

@@ -11,6 +11,7 @@ export type LinkOwnerResult = {
   onboardingStatus: string | null;
   salonId: string | null;
   salonName: string | null;
+  isNewUser: boolean;
 };
 
 function getAdminClient() {
@@ -45,12 +46,12 @@ export async function linkInvitedOwnerAccount(
   const fallbackRole: TrimmaUserRole = "customer";
 
   if (!normalizedEmail) {
-    return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null };
+    return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null, isNewUser: false };
   }
 
   const admin = getAdminClient();
   if (!admin) {
-    return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null };
+    return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null, isNewUser: false };
   }
 
   const { data: userRow } = await admin
@@ -58,6 +59,8 @@ export async function linkInvitedOwnerAccount(
     .select("global_role, full_name")
     .eq("email", normalizedEmail)
     .maybeSingle();
+
+  const isNewUser = !userRow;
 
   let role = (await resolveDbRole(admin, authUserId, normalizedEmail)) || fallbackRole;
 
@@ -97,5 +100,6 @@ export async function linkInvitedOwnerAccount(
     onboardingStatus: linkedSalon?.onboarding_status ?? null,
     salonId: linkedSalon?.id ?? null,
     salonName: linkedSalon?.name ?? null,
+    isNewUser,
   };
 }

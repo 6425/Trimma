@@ -10,6 +10,7 @@ export type PublicSubscriptionPlan = {
   list_monthly_price: number | null;
   intro_monthly_price: number | null;
   annual_price: number | null;
+  discount_percentage: number | null;
   max_staff: number | null;
   max_services: number | null;
   max_images: number | null;

@@ -4,6 +4,8 @@ export type VerifiedAccessToken = {
   accessToken: string;
   userId: string;
   email: string | null;
+  phone: string | null;
+  userMetadata: Record<string, any> | null;
 };
 
 export async function verifyAccessToken(
@@ -30,5 +32,7 @@ export async function verifyAccessToken(
     accessToken,
     userId: user.id,
     email: user.email ?? null,
+    phone: user.phone ?? null,
+    userMetadata: user.user_metadata ?? null,
   };
 }

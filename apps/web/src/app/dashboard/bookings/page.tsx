@@ -15,6 +15,10 @@ import {
   sendWhatsAppCancellationNotification, 
   sendReviewRequestAlert 
 } from "@/app/actions/whatsapp";
+import {
+  sendBookingCancelledEmail,
+  sendReviewRequestEmail
+} from "@/app/actions/email-settings";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
@@ -231,14 +235,20 @@ export default function DashboardBookings() {
           break;
         case 'complete': 
           updatePayload.status = 'completed'; 
-          if (bookingNo) await sendReviewRequestAlert(bookingNo);
+          if (bookingNo) {
+            await sendReviewRequestAlert(bookingNo);
+            await sendReviewRequestEmail(bookingNo);
+          }
           break;
         case 'no_show': 
           updatePayload.status = 'no_show'; 
           break;
         case 'cancel': 
           updatePayload.status = 'canceled'; 
-          if (bookingNo) await sendWhatsAppCancellationNotification(bookingNo);
+          if (bookingNo) {
+            await sendWhatsAppCancellationNotification(bookingNo);
+            await sendBookingCancelledEmail(bookingNo);
+          }
           void markBookingNotificationsReadForOwner(bookingId);
           break;
         case 'reservation_paid': 

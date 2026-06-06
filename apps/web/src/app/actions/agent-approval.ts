@@ -2,10 +2,8 @@
 
 import { createServerSupabaseClient } from "@/config/supabase-server";
 
-// Helper to simulate sending notifications since infrastructure is not present
-async function mockSendNotification(type: "WhatsApp" | "Email", contact: string, message: string) {
-  console.log(`[MOCK NOTIFICATION - ${type}] To: ${contact} | Message: ${message}`);
-}
+import { sendAgentApprovalAlert, sendAgentRejectionAlert } from "@/app/actions/whatsapp";
+import { sendAgentApprovalEmail, sendAgentRejectionEmail } from "@/app/actions/email-settings";
 
 export async function approveSalon(salonId: string) {
   try {
@@ -37,12 +35,12 @@ export async function approveSalon(salonId: string) {
       });
     }
 
-    // Mock WhatsApp & Email
+    // Trigger real WhatsApp & Email
     if (salon?.phone) {
-      await mockSendNotification("WhatsApp", salon.phone, `Hi! Your salon ${salon.name} is now approved on Trimma.`);
+      await sendAgentApprovalAlert(salonId, salon.phone, salon.name || "your salon", salon.owner_email || "");
     }
     if (salon?.owner_email) {
-      await mockSendNotification("Email", salon.owner_email, `Hi! Your salon ${salon.name} is now approved on Trimma.`);
+      await sendAgentApprovalEmail(salonId, salon.owner_email, salon.name || "your salon");
     }
 
     return { success: true };
@@ -81,12 +79,12 @@ export async function rejectSalon(salonId: string, reason: string) {
       });
     }
 
-    // Mock WhatsApp & Email
+    // Trigger real WhatsApp & Email
     if (salon?.phone) {
-      await mockSendNotification("WhatsApp", salon.phone, `Hi, your salon profile requires updates. Reason: ${reason}`);
+      await sendAgentRejectionAlert(salonId, salon.phone, salon.name || "your salon", salon.owner_email || "", reason);
     }
     if (salon?.owner_email) {
-      await mockSendNotification("Email", salon.owner_email, `Hi, your salon profile requires updates. Reason: ${reason}`);
+      await sendAgentRejectionEmail(salonId, salon.owner_email, salon.name || "your salon", reason);
     }
 
     return { success: true };

@@ -14,6 +14,7 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
 import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
+import { sendBookingCreatedCustomerEmail, sendBookingCreatedOwnerEmail } from "@/app/actions/email-settings";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 
@@ -384,11 +385,15 @@ export function BookingSheet({
                   let agentCommissionPct = 0;
                   let agentCommissionAmount = 0;
 
-                  const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email').eq('id', salonId).single();
-                  if (salonData?.onboarding_agent_email) {
-                    agentEmail = salonData.onboarding_agent_email;
-                    agentCommissionPct = globalRates.agent;
-                    agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
+                  let ownerEmail = null;
+                  const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, owner_email').eq('id', salonId).single();
+                  if (salonData) {
+                    if (salonData.onboarding_agent_email) {
+                      agentEmail = salonData.onboarding_agent_email;
+                      agentCommissionPct = globalRates.agent;
+                      agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
+                    }
+                    ownerEmail = salonData.owner_email;
                   }
 
                   // 1. Create Confirmed Booking row
@@ -474,6 +479,8 @@ export function BookingSheet({
 
                   // 6. Trigger WhatsApp Alerts (Since PayPal is instantly confirmed)
                   await sendWhatsAppReservationPaidNotification(bookingNo);
+                  await sendBookingCreatedCustomerEmail(bookingNo);
+                  if (ownerEmail) await sendBookingCreatedOwnerEmail(bookingNo, ownerEmail, "reservation_paid");
 
                   setConfirmedBookingId(bookingNo);
                   setStep(6);
@@ -657,11 +664,15 @@ export function BookingSheet({
       let agentCommissionPct = 0;
       let agentCommissionAmount = 0;
 
-      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email').eq('id', salonId).single();
-      if (salonData?.onboarding_agent_email) {
-        agentEmail = salonData.onboarding_agent_email;
-        agentCommissionPct = globalRates.agent;
-        agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
+      let ownerEmail = null;
+      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, owner_email').eq('id', salonId).single();
+      if (salonData) {
+        if (salonData.onboarding_agent_email) {
+          agentEmail = salonData.onboarding_agent_email;
+          agentCommissionPct = globalRates.agent;
+          agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
+        }
+        ownerEmail = salonData.owner_email;
       }
 
       // 1. Write master booking row directly into Supabase database (with backward compatibility fallback)
@@ -747,6 +758,8 @@ export function BookingSheet({
 
       // Trigger WhatsApp Alert for direct confirmation
       await sendBookingCreatedAlert(bookingNo);
+      await sendBookingCreatedCustomerEmail(bookingNo);
+      if (ownerEmail) await sendBookingCreatedOwnerEmail(bookingNo, ownerEmail, paymentMethod === 'payhere' ? "unpaid" : "reservation_paid");
 
       setConfirmedBookingId(bookingNo);
       setStep(6); // Advance to ticket screen!

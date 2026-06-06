@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
+import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
 import { isEmailSendFailure } from "@/lib/email/result";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
 
     const { data: salon, error: salonError } = await supabaseAdmin
       .from("salons")
-      .select("id, name, slug")
+      .select("id, name, slug, phone")
       .eq("id", salonId)
       .maybeSingle();
 
@@ -106,6 +107,16 @@ export async function POST(request: Request) {
             ? { "Retry-After": String(emailResult.retryAfterSec) }
             : undefined,
         }
+      );
+    }
+
+    if (salon.phone) {
+      await sendOnboardingInviteAlert(
+        salonId,
+        salon.phone,
+        normalizedOwnerEmail,
+        salon.name || "your salon",
+        salon.slug
       );
     }
 

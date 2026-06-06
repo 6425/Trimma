@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { withTimeout } from "@/lib/promise-timeout";
 import { sendWhatsAppNotification, sendWhatsAppCancellationNotification, sendWhatsAppRescheduleNotification } from "../../actions/whatsapp";
+import { sendBookingCancelledEmail, sendBookingRescheduledEmail } from "../../actions/email-settings";
 import { fetchAdminBookings } from "@/app/actions/admin-list-data";
 import { updateAdminBookingStatus, rescheduleAdminBooking } from "@/app/actions/admin-operations";
 
@@ -63,6 +64,7 @@ export default function AdminBookings() {
           sendWhatsAppNotification(bookingNo);
         } else if (newStatus === "cancelled") {
           sendWhatsAppCancellationNotification(bookingNo);
+          sendBookingCancelledEmail(bookingNo);
         }
       }
       
@@ -90,6 +92,7 @@ export default function AdminBookings() {
 
       // 3. Dispatch Live WhatsApp Reschedule Notifier
       sendWhatsAppRescheduleNotification(reschedulingBooking.booking_no);
+      sendBookingRescheduledEmail(reschedulingBooking.booking_no);
 
       // 4. Hot-reload local state
       setBookings(prev => prev.map(b => 

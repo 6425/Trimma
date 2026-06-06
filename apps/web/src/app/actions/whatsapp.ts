@@ -1314,3 +1314,66 @@ export async function sendAdminApprovalAlerts(salonId: string, ownerPhone: strin
     return { success: false, error: err.message };
   }
 }
+
+export async function sendWelcomeCustomerWhatsApp(customerName: string, rawPhone: string) {
+  const { enabled, phoneId, accessToken, welcomeCustomerEnabled, templateWelcomeCustomer } = await getWhatsAppMessagingConfig();
+  if (!enabled || !welcomeCustomerEnabled || !phoneId || !accessToken) return { success: false };
+
+  try {
+    const cleanPhone = cleanPhoneNumber(rawPhone);
+    if (!cleanPhone) return { success: false, error: "No phone number" };
+
+    const msg = parseTemplate(templateWelcomeCustomer || D.welcomeCustomer, {
+      customer_name: customerName,
+      dashboard_link: APP_BASE_URL,
+    });
+
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "text",
+        text: { body: msg },
+      }),
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function sendAgentLeadAssignedWhatsApp(agentName: string, rawAgentPhone: string, salonName: string) {
+  const { enabled, phoneId, accessToken, agentLeadAssignedEnabled, templateAgentLeadAssigned } = await getWhatsAppMessagingConfig();
+  if (!enabled || !agentLeadAssignedEnabled || !phoneId || !accessToken) return { success: false };
+
+  try {
+    const cleanPhone = cleanPhoneNumber(rawAgentPhone);
+    if (!cleanPhone) return { success: false, error: "No phone number" };
+
+    const msg = parseTemplate(templateAgentLeadAssigned || D.agentLeadAssigned, {
+      agent_name: agentName,
+      salon_name: salonName,
+      salon_address: "",
+      onboarding_status: "Pending",
+      dashboard_link: APP_BASE_URL,
+    });
+
+    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "text",
+        text: { body: msg },
+      }),
+    });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}

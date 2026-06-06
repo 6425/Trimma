@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
+import { sendAdminApprovalEmail } from "@/app/actions/email-settings";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -155,8 +156,14 @@ export default function Salons() {
         if (result.success === false) {
           toast.error("Verified, but WhatsApp alert failed: " + result.error);
         }
+        if (salon.owner_email || salon.owner_gmail || salon.email) {
+          await sendAdminApprovalEmail(salon.name, salon.owner_email || salon.owner_gmail || salon.email);
+        }
       } else {
         toast.warning("Verified, but WhatsApp alert skipped (missing phone).");
+        if (salon?.owner_email || salon?.owner_gmail || salon?.email) {
+          await sendAdminApprovalEmail(salon.name, salon.owner_email || salon.owner_gmail || salon.email);
+        }
       }
 
       toast.dismiss();
