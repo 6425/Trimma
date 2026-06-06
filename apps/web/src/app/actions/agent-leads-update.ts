@@ -2,6 +2,8 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import { assignSalonOwnerRoleByAdminClient } from "./admin-operations";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export async function saveAgentLeadData(
   salonId: string,
@@ -36,6 +38,22 @@ export async function saveAgentLeadData(
       }
     } else if (newStatus) {
       finalPayload.onboarding_status = newStatus;
+    }
+
+    if (finalPayload.owner_gmail) {
+      const normEmail = normalizeEmail(finalPayload.owner_gmail);
+      if (normEmail) {
+        try {
+          await assignSalonOwnerRoleByAdminClient(
+            supabaseAdmin,
+            normEmail,
+            (finalPayload.name || "Salon") + " Owner",
+            finalPayload.phone || ""
+          );
+        } catch (roleErr) {
+          console.error("Failed to pre-assign salon owner role during lead update:", roleErr);
+        }
+      }
     }
 
     // Assign Free Plan and update Subscriptions table if Agent Approves
@@ -278,6 +296,22 @@ export async function convertManualLeadToSalon(
 
     if (createError) throw createError;
     const salonId = salon.id;
+
+    if (payload.owner_gmail) {
+      const normEmail = normalizeEmail(payload.owner_gmail);
+      if (normEmail) {
+        try {
+          await assignSalonOwnerRoleByAdminClient(
+            supabaseAdmin,
+            normEmail,
+            (payload.name || "Salon") + " Owner",
+            payload.phone || ""
+          );
+        } catch (roleErr) {
+          console.error("Failed to pre-assign salon owner role during manual lead create:", roleErr);
+        }
+      }
+    }
 
     // 3. Sync Services
     if (servicesData && servicesData.svcsToAdd.length > 0) {

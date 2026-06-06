@@ -73,8 +73,9 @@ export async function POST(request: Request) {
 
     try {
       await assignSalonOwnerRoleByAdminClient(supabaseAdmin, normalizedOwnerEmail, (salon.name || "Salon") + " Owner", salon.phone || "");
-    } catch (roleErr) {
+    } catch (roleErr: any) {
       console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
+      return NextResponse.json({ error: "Failed to assign salon owner role: " + roleErr.message }, { status: 500 });
     }
 
     const sessionEmail = await getRequestUserEmail(request);

@@ -1134,8 +1134,9 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
   if (normalizedGmail) {
     try {
       await assignSalonOwnerRoleByAdminClient(supabaseAdmin, normalizedGmail, salonName + " Owner", cleanPhone || "");
-    } catch (roleErr) {
+    } catch (roleErr: any) {
       console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
+      return { success: false, error: "Failed to assign salon owner role: " + roleErr.message };
     }
   }
 
