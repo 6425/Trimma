@@ -411,7 +411,7 @@ export async function saveOwnerVerificationData(
 ) {
   const result = await withSalonDb(async (supabase, ctx) => {
     // 1. Resolve Slug Collisions
-    const finalPayload = { ...updatePayload, onboarding_status: "OWNER_ACTIVATED", owner_activated_at: new Date().toISOString() };
+    const finalPayload = { ...updatePayload };
     
     if (typeof finalPayload.name === "string" && finalPayload.name.trim()) {
       const nextSlug = slugifySalonName(finalPayload.name);

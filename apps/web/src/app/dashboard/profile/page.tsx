@@ -503,8 +503,7 @@ export default function SalonProfilePage() {
 
       if (!result.success) throw new Error("error" in result ? (result as any).error : "Failed to verify salon");
       
-      toast.success("Salon Profile sent for verification successfully!");
-      setOnboardingStatus("OWNER_ACTIVATED");
+      toast.success("Salon Operations saved successfully as draft.");
     } catch (err: any) {
       toast.error("Failed to save: " + err.message);
     } finally {
