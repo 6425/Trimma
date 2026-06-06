@@ -594,23 +594,32 @@ export async function adminResetUserPassword(email: string, newPassword: string)
   return { success: true as const };
 }
 
+export async function assignSalonOwnerRoleByAdminClient(
+  supabaseAdmin: any,
+  email: string,
+  fullName: string,
+  phone: string
+) {
+  const { error: upsertError } = await supabaseAdmin
+    .from('users')
+    .upsert(
+      {
+        email: email.trim().toLowerCase(),
+        full_name: fullName,
+        phone: phone,
+        global_role: 'salon_owner',
+      },
+      { onConflict: 'email' }
+    );
+  if (upsertError) throw new Error(upsertError.message);
+
+  await syncUserRolesForGlobalRole(supabaseAdmin, email, 'salon_owner');
+  await ensureSalonOwnerAccess(supabaseAdmin, email);
+}
+
 export async function preAssignSalonOwnerRole(email: string, fullName: string, phone: string) {
   const result = await withAdminDb(async (supabase) => {
-    const { error: upsertError } = await supabase
-      .from('users')
-      .upsert(
-        {
-          email: email.trim().toLowerCase(),
-          full_name: fullName,
-          phone: phone,
-          global_role: 'salon_owner',
-        },
-        { onConflict: 'email' }
-      );
-    if (upsertError) throw new Error(upsertError.message);
-
-    await syncUserRolesForGlobalRole(supabase, email, 'salon_owner');
-    await ensureSalonOwnerAccess(supabase, email);
+    await assignSalonOwnerRoleByAdminClient(supabase, email, fullName, phone);
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

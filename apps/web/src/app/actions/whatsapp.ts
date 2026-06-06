@@ -3,7 +3,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
-import { preAssignSalonOwnerRole } from "./admin-operations";
+import { preAssignSalonOwnerRole, assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 import {
@@ -1133,7 +1133,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
 
   if (normalizedGmail) {
     try {
-      await preAssignSalonOwnerRole(normalizedGmail, salonName + " Owner", cleanPhone || "");
+      await assignSalonOwnerRoleByAdminClient(supabaseAdmin, normalizedGmail, salonName + " Owner", cleanPhone || "");
     } catch (roleErr) {
       console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
     }
