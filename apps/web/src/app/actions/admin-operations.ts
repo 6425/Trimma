@@ -578,3 +578,15 @@ export async function publishAdminLead(lead: {
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const, slug };
 }
+
+export async function adminResetUserPassword(userId: string, newPassword: string) {
+  const result = await withAdminDb(async (supabase) => {
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    });
+    if (error) throw new Error(error.message);
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const };
+}
