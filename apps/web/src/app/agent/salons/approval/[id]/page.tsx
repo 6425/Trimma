@@ -195,7 +195,7 @@ export default function AgentSalonApprovalReview() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Operations Summary</h3>
-                <p className="text-xs text-zinc-500 font-medium">Quick overview of the salon's operational scale.</p>
+                <p className="text-xs text-zinc-500 font-medium">Quick overview of the salon&apos;s operational scale.</p>
               </div>
             </div>
             
