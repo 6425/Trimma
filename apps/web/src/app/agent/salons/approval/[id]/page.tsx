@@ -27,7 +27,7 @@ export default function AgentSalonApprovalReview() {
       setLoading(true);
       const { data, error } = await supabase
         .from("salons")
-        .select("*, bank_info:bank_info_id(*), ext:ext_info_id(*)") // Note: you might need to adjust joins based on actual schema for bank info if not embedded in `salon`
+        .select("*")
         .eq("id", id)
         .single();
 
