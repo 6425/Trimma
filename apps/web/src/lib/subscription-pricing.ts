@@ -11,6 +11,7 @@ export type SubscriptionPlanPricing = {
   list_monthly_price?: number | string | null;
   intro_monthly_price?: number | string | null;
   annual_price?: number | string | null;
+  discount_percentage?: number | string | null;
 };
 
 export const INTRO_DISCOUNT_PERCENT = 25;
@@ -29,14 +30,19 @@ export function getListMonthlyPrice(plan: SubscriptionPlanPricing): number {
   return 0;
 }
 
+export function getDiscountPercentage(plan: SubscriptionPlanPricing): number {
+  return toNumber(plan.discount_percentage);
+}
+
 export function getIntroMonthlyPrice(plan: SubscriptionPlanPricing): number {
   const intro = toNumber(plan.intro_monthly_price);
   if (intro > 0) return intro;
   const monthly = toNumber(plan.monthly_price);
   if (monthly > 0) return monthly;
   const list = getListMonthlyPrice(plan);
-  if (list > 0) return Math.round(list * (1 - INTRO_DISCOUNT_PERCENT / 100));
-  return 0;
+  const discount = getDiscountPercentage(plan);
+  if (list > 0 && discount > 0) return Math.round(list * (1 - discount / 100));
+  return list;
 }
 
 /** Monthly equivalent when billed annually (annual_price ÷ 12). */
@@ -98,6 +104,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     intro_monthly_price: 0,
     monthly_price: 0,
     annual_price: 0,
+    discount_percentage: 0,
     max_staff: 2,
     max_services: 6,
     max_images: 3,
@@ -122,6 +129,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     intro_monthly_price: 3750,
     monthly_price: 3750,
     annual_price: 36000,
+    discount_percentage: 25,
     max_staff: 5,
     max_services: 12,
     max_images: 6,
@@ -146,12 +154,13 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     intro_monthly_price: 7500,
     monthly_price: 7500,
     annual_price: 60000,
+    discount_percentage: 25,
     max_staff: 10,
     max_services: 20,
-    max_images: 12,
+    max_images: 10,
     max_promotion_packages: 6,
     feature_flags: {
-      allowed_categories_limit: 999,
+      allowed_categories_limit: 10,
       allowed_promotion_types_limit: 6,
       features: [
         "Staff Management",

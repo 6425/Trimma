@@ -13,7 +13,7 @@ import {
   getListMonthlyPrice,
   formatLkr,
   formatPromotionPackageLimit,
-  INTRO_DISCOUNT_PERCENT,
+  getDiscountPercentage,
 } from "@/lib/subscription-pricing";
 import type { PublicSubscriptionPlan } from "../actions/subscription-plans";
 
@@ -42,7 +42,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
 
         <div className="relative z-10 max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 text-zinc-400">
-            <Scissors className="w-3.5 h-3.5 text-rose-500 animate-spin-slow" /> Introduction Pricing — {INTRO_DISCOUNT_PERCENT}% Off Monthly
+            <Scissors className="w-3.5 h-3.5 text-rose-500 animate-spin-slow" /> Introductory Discounts Available Now
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6 bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
             Choose the Perfect Plan for <br className="hidden md:inline" /> Your Salon&apos;s Growth
@@ -97,6 +97,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
             const listMonthly = getListMonthlyPrice(plan);
             const introMonthly = getIntroMonthlyPrice(plan);
             const displayMonthly = getDisplayMonthlyPrice(plan, isAnnual ? "annual" : "monthly");
+            const discountPercent = getDiscountPercentage(plan);
             const annualTotal = getAnnualTotal(plan);
             const isFree = listMonthly === 0 && introMonthly === 0;
             const isPro = plan.name.toLowerCase() === "pro";
@@ -137,9 +138,15 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
                     <span className={`text-xs font-semibold ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>/month</span>
                   </div>
 
-                  {!isAnnual && (
+                  {!isFree && !isAnnual && discountPercent > 0 && (
                     <Badge className="mt-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold text-[9px] uppercase tracking-wider">
-                      {isFree ? "Standard value — 100% off" : `Intro price — ${INTRO_DISCOUNT_PERCENT}% off`}
+                      Intro price — {discountPercent}% off
+                    </Badge>
+                  )}
+
+                  {isFree && !isAnnual && (
+                    <Badge className="mt-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold text-[9px] uppercase tracking-wider">
+                      Standard value — 100% off
                     </Badge>
                   )}
 

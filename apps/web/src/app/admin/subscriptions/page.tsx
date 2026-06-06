@@ -25,7 +25,8 @@ export default function SubscriptionPlanManagement() {
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ 
     name: "", 
-    monthly_price: "",
+    list_monthly_price: "",
+    discount_percentage: "",
     max_staff: "",
     max_services: "",
     max_images: "",
@@ -36,7 +37,8 @@ export default function SubscriptionPlanManagement() {
 
   const emptyFormData = {
     name: "",
-    monthly_price: "",
+    list_monthly_price: "",
+    discount_percentage: "",
     max_staff: "",
     max_services: "",
     max_images: "",
@@ -114,20 +116,27 @@ export default function SubscriptionPlanManagement() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || formData.monthly_price === "") return toast.error("Name and Monthly Price are required");
+    if (!formData.name || formData.list_monthly_price === "") return toast.error("Name and Base Price are required");
     
     // Parse features from comma separated string
     const featuresArray = formData.features
       .split(",")
       .map(f => f.trim())
       .filter(f => f);
+      
+    const basePrice = parseFloat(formData.list_monthly_price);
+    const discount = formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0;
+    const calculatedMonthlyPrice = Math.round(basePrice * (1 - discount / 100));
     
     try {
       setSaving(true);
       const payload = {
         id: editId || undefined,
         name: formData.name,
-        monthly_price: parseFloat(formData.monthly_price),
+        list_monthly_price: basePrice,
+        discount_percentage: discount,
+        monthly_price: calculatedMonthlyPrice,
+        intro_monthly_price: calculatedMonthlyPrice,
         max_staff: formData.max_staff ? parseInt(formData.max_staff) : 2,
         max_services: formData.max_services ? parseInt(formData.max_services) : 6,
         max_images: formData.max_images ? parseInt(formData.max_images) : 4,
@@ -171,7 +180,8 @@ export default function SubscriptionPlanManagement() {
     const flags = plan.feature_flags || {};
     setFormData({ 
       name: plan.name, 
-      monthly_price: plan.monthly_price.toString(), 
+      list_monthly_price: (plan.list_monthly_price || plan.monthly_price).toString(), 
+      discount_percentage: plan.discount_percentage?.toString() || "0",
       max_staff: plan.max_staff?.toString() || "2",
       max_services: plan.max_services?.toString() || "6",
       max_images: plan.max_images?.toString() || "4",
@@ -265,6 +275,16 @@ export default function SubscriptionPlanManagement() {
                           </span>
                           {plan.monthly_price > 0 && <span className="text-zinc-500 text-xs font-medium">/ month</span>}
                       </div>
+                      {(plan.discount_percentage > 0) && (
+                        <div className="mt-2">
+                          <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            {plan.discount_percentage}% OFF
+                          </Badge>
+                          <span className="text-xs text-zinc-400 line-through ml-2">
+                            LKR {(plan.list_monthly_price || plan.monthly_price).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Numeric Specifications & Limits */}
@@ -338,16 +358,37 @@ export default function SubscriptionPlanManagement() {
                    required
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Monthly Cost (LKR)</label>
-                <Input 
-                  type="number" 
-                  value={formData.monthly_price}
-                  onChange={(e) => setFormData({ ...formData, monthly_price: e.target.value })}
-                  className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
-                  placeholder="3500" 
-                  required
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Base Monthly Price (LKR)</label>
+                  <Input 
+                    type="number" 
+                    value={formData.list_monthly_price}
+                    onChange={(e) => setFormData({ ...formData, list_monthly_price: e.target.value })}
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
+                    placeholder="5000" 
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Discount %</label>
+                  <Input 
+                    type="number" 
+                    value={formData.discount_percentage}
+                    onChange={(e) => setFormData({ ...formData, discount_percentage: e.target.value })}
+                    className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
+                    placeholder="25" 
+                  />
+                </div>
+              </div>
+
+              <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 flex justify-between items-center">
+                <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Final Monthly Cost</span>
+                <span className="text-lg font-black text-brand">
+                  {formData.list_monthly_price 
+                    ? `LKR ${Math.round(parseFloat(formData.list_monthly_price || "0") * (1 - parseFloat(formData.discount_percentage || "0") / 100)).toLocaleString()}`
+                    : "LKR 0"}
+                </span>
               </div>
               
               <div className="grid grid-cols-2 gap-3">

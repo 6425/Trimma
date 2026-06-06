@@ -82,6 +82,7 @@ export async function saveAdminSubscriptionPlan(input: {
   feature_flags?: Record<string, unknown>;
   list_monthly_price?: number;
   intro_monthly_price?: number;
+  discount_percentage?: number;
 }) {
   const payload = {
     name: input.name,
@@ -94,6 +95,7 @@ export async function saveAdminSubscriptionPlan(input: {
     feature_flags: input.feature_flags ?? {},
     ...(input.list_monthly_price != null ? { list_monthly_price: input.list_monthly_price } : {}),
     ...(input.intro_monthly_price != null ? { intro_monthly_price: input.intro_monthly_price } : {}),
+    ...(input.discount_percentage != null ? { discount_percentage: input.discount_percentage } : {}),
   };
 
   const result = await withAdminDb(async (supabase) => {
@@ -130,6 +132,7 @@ export async function seedAdminSubscriptionPlans() {
     intro_monthly_price: plan.intro_monthly_price,
     monthly_price: plan.intro_monthly_price ?? plan.monthly_price,
     annual_price: plan.annual_price,
+    discount_percentage: plan.discount_percentage,
     max_staff: plan.max_staff,
     max_services: plan.max_services,
     max_images: plan.max_images,
