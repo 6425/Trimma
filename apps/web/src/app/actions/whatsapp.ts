@@ -1133,6 +1133,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
 
   if (normalizedGmail) {
     try {
+      const supabaseAdmin = createSupabaseAdminClient();
       await assignSalonOwnerRoleByAdminClient(supabaseAdmin, normalizedGmail, salonName + " Owner", cleanPhone || "");
     } catch (roleErr: any) {
       console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
