@@ -124,6 +124,7 @@ export async function saveDistrict(input: {
     name: input.name.trim(),
     slug: (input.slug || input.name).toLowerCase().replace(/\s+/g, "-"),
     province_id: input.province_id,
+    image_url: input.image_url || null,
   };
 
   const result = await withAdminDb(async (supabase) => {
