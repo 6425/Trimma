@@ -4,7 +4,7 @@ import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
 import { linkInvitedOwnerAccount } from "@/lib/link-owner-account";
-import { sendWelcomeCustomerAlert } from "@/app/actions/whatsapp";
+import { sendWelcomeCustomerWhatsApp } from "@/app/actions/whatsapp";
 import { sendWelcomeCustomerEmail } from "@/app/actions/email-settings";
 
 /**
@@ -68,7 +68,7 @@ export async function completeOAuthLogin(accessToken: string) {
       const fullName = verified.userMetadata?.full_name || verified.userMetadata?.first_name || verified.email.split("@")[0];
       const phone = verified.userMetadata?.phone || verified.phone || null;
       if (phone) {
-        await sendWelcomeCustomerAlert(phone, fullName);
+        await sendWelcomeCustomerWhatsApp(fullName, phone);
       }
       await sendWelcomeCustomerEmail(fullName, verified.email);
     }

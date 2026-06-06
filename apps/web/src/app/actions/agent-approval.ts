@@ -2,8 +2,8 @@
 
 import { createServerSupabaseClient } from "@/config/supabase-server";
 
-import { sendAgentApprovalAlert, sendAgentRejectionAlert } from "@/app/actions/whatsapp";
-import { sendAgentApprovalEmail, sendAgentRejectionEmail } from "@/app/actions/email-settings";
+import { sendAgentApprovalAlerts } from "@/app/actions/whatsapp";
+import { sendAgentApprovalEmail } from "@/app/actions/email-settings";
 
 export async function approveSalon(salonId: string) {
   try {
@@ -37,10 +37,10 @@ export async function approveSalon(salonId: string) {
 
     // Trigger real WhatsApp & Email
     if (salon?.phone) {
-      await sendAgentApprovalAlert(salonId, salon.phone, salon.name || "your salon", salon.owner_email || "");
+      await sendAgentApprovalAlerts(salonId, salon.phone, salon.name || "your salon");
     }
     if (salon?.owner_email) {
-      await sendAgentApprovalEmail(salonId, salon.owner_email, salon.name || "your salon");
+      await sendAgentApprovalEmail(salon.name || "your salon", salon.owner_email);
     }
 
     return { success: true };
@@ -79,13 +79,8 @@ export async function rejectSalon(salonId: string, reason: string) {
       });
     }
 
-    // Trigger real WhatsApp & Email
-    if (salon?.phone) {
-      await sendAgentRejectionAlert(salonId, salon.phone, salon.name || "your salon", salon.owner_email || "", reason);
-    }
-    if (salon?.owner_email) {
-      await sendAgentRejectionEmail(salonId, salon.owner_email, salon.name || "your salon", reason);
-    }
+    // Note: Rejection alerts are currently only sent via in-app notifications above.
+    // There is no WhatsApp or Email trigger template defined for rejections.
 
     return { success: true };
   } catch (error: any) {
