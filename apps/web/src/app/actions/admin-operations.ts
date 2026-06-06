@@ -66,6 +66,8 @@ export async function rejectAdminSalon(salonId: string, rejectionReason: string)
   });
 }
 
+import { revalidatePath } from "next/cache";
+
 // ─── Subscription plans ─────────────────────────────────────────────────────
 
 export async function saveAdminSubscriptionPlan(input: {
@@ -104,6 +106,8 @@ export async function saveAdminSubscriptionPlan(input: {
     if (error) throw new Error(error.message);
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  
+  revalidatePath("/", "layout");
   return { success: true as const };
 }
 
@@ -113,6 +117,8 @@ export async function deleteAdminSubscriptionPlan(id: string) {
     if (error) throw new Error(error.message);
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  
+  revalidatePath("/", "layout");
   return { success: true as const };
 }
 
@@ -136,6 +142,8 @@ export async function seedAdminSubscriptionPlans() {
     if (error) throw new Error(error.message);
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  
+  revalidatePath("/", "layout");
   return { success: true as const };
 }
 
