@@ -579,9 +579,12 @@ export async function publishAdminLead(lead: {
   return { success: true as const, slug };
 }
 
-export async function adminResetUserPassword(userId: string, newPassword: string) {
+export async function adminResetUserPassword(email: string, newPassword: string) {
   const result = await withAdminDb(async (supabase) => {
-    const { error } = await supabase.auth.admin.updateUserById(userId, {
+    const authId = await findAuthUserIdByEmail(supabase, email);
+    if (!authId) throw new Error("Could not find auth user for this email.");
+
+    const { error } = await supabase.auth.admin.updateUserById(authId, {
       password: newPassword,
     });
     if (error) throw new Error(error.message);

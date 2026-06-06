@@ -118,7 +118,7 @@ function AdminUserList() {
     setIsResetting(true);
     try {
       const { adminResetUserPassword } = await import("@/app/actions/admin-operations");
-      const result = await adminResetUserPassword(resettingUser.id, newPassword);
+      const result = await adminResetUserPassword(resettingUser.email, newPassword);
       if (result.success === false) throw new Error((result as any).error);
       
       toast.success(`Password updated for ${resettingUser.email}`);
