@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/config/supabase";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
-import { normalizeProvinceSlug } from "@/lib/sri-lanka-locations";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const DEFAULT_IMG = "https://images.unsplash.com/photo-1625723041935-7c01b1fcb4e7?q=80&w=600&fm=webp&fit=crop";
@@ -27,25 +26,25 @@ export function TrendingLocations() {
     void Promise.resolve().then(() => {
       async function fetchTrendingProvinces() {
       try {
-      // Fetch all provinces
+      // Fetch all districts
       const { data: provData, error: provError } = await supabase
-      .from('provinces')
+      .from('districts')
       .select('id, name, slug, image_url');
       
       if (provError) throw provError;
       
-      // Fetch salons and their associated provinces
+      // Fetch salons and their associated districts
       const { data: salonData, error: salonError } = await supabase
       .from('salons')
-      .select('province, name');
+      .select('district, name');
       
       if (salonError) throw salonError;
       
-      // Count salons per province name
+      // Count salons per district name
       const counts: Record<string, number> = {};
       filterPublicSalons(salonData || []).forEach(salon => {
-      if (salon.province) {
-      counts[salon.province] = (counts[salon.province] || 0) + 1;
+      if (salon.district) {
+      counts[salon.district] = (counts[salon.district] || 0) + 1;
       }
       });
       
@@ -59,7 +58,7 @@ export function TrendingLocations() {
       // Sort by salon count descending
       enriched.sort((a, b) => b.count - a.count);
       
-      // Take all provinces instead of Top 3
+      // Take all districts
       setLocations(enriched);
       }
       } catch (err) {
@@ -77,7 +76,7 @@ export function TrendingLocations() {
     <section className="py-10 bg-white">
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
         <h2 className="mb-2">Trending Beauty Spots Near You</h2>
-        <p className="text-zinc-500 mb-6">Most popular provinces for salon bookings right now.</p>
+        <p className="text-zinc-500 mb-6">Most popular districts for salon bookings right now.</p>
         
         {loading ? (
           <div className="relative group">
@@ -99,7 +98,7 @@ export function TrendingLocations() {
             {locations.map((loc, i) => (
               <Link 
                 key={i}
-                href={`/locations/${normalizeProvinceSlug(loc.slug)}`}
+                href={`/salons?l=${loc.slug}`}
                 className="snap-start shrink-0 group relative h-64 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-sm !text-white block"
               >
                 <Image 
