@@ -147,6 +147,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Finance & Commission", href: "/admin/finance", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Branding Settings", href: "/admin/branding", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Admin Profile", href: "/admin/profile", icon: <User className="w-4 h-4" /> },
+    { name: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" /> },
   ];
 
   const navItems = adminItems;
@@ -256,6 +257,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-200 space-y-0.5">
+          <Link href="/admin/settings"
+            className={navItemClass(pathname === "/admin/settings")}
+          >
+            <Settings className="w-4 h-4" />
+            {role === 'admin' ? 'Global Settings' : 'Settings'}
+          </Link>
           <button
             type="button"
             onClick={handleLogout}
