@@ -38,6 +38,38 @@ export async function saveAgentLeadData(
       finalPayload.onboarding_status = newStatus;
     }
 
+    // Assign Free Plan and update Subscriptions table if Agent Approves
+    if (newStatus === "AGENT_APPROVED") {
+      const { data: freePlan } = await supabaseAdmin
+        .from("subscription_plans")
+        .select("id")
+        .eq("name", "Free")
+        .maybeSingle();
+
+      let freePlanId = freePlan?.id;
+      if (!freePlanId) {
+        const { data: anyPlan } = await supabaseAdmin.from("subscription_plans").select("id").limit(1).maybeSingle();
+        freePlanId = anyPlan?.id;
+      }
+
+      if (freePlanId) {
+        finalPayload.subscription_plan_id = freePlanId;
+        
+        // Also add an entry to the subscriptions table
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 10); // 10 years validity for Free plan
+
+        await supabaseAdmin.from("subscriptions").insert({
+          salon_id: salonId,
+          plan_id: freePlanId,
+          status: "active",
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        });
+      }
+    }
+
     // 1. Update Salon Data
     const { error: updateError } = await supabaseAdmin
       .from("salons")

@@ -536,7 +536,7 @@ export async function publishAdminLead(lead: {
       freePlanId = anyPlan?.id;
     }
 
-    const { error: salonError } = await supabase.from("salons").insert({
+    const { data: salonData, error: salonError } = await supabase.from("salons").insert({
       name: lead.name,
       slug,
       owner_email: `owner-${slug}@trimma.io`,
@@ -545,8 +545,21 @@ export async function publishAdminLead(lead: {
       city: lead.address || lead.city || "Colombo",
       subscription_plan_id: freePlanId || null,
       status: "DRAFT",
-    });
+    }).select("id").single();
     if (salonError) throw new Error(salonError.message);
+
+    if (freePlanId && salonData?.id) {
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 10);
+      await supabase.from("subscriptions").insert({
+        salon_id: salonData.id,
+        plan_id: freePlanId,
+        status: "active",
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
+    }
 
     const { error: statusError } = await supabase
       .from("salon_leads")
