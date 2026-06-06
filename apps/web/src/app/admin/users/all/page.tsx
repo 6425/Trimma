@@ -45,6 +45,10 @@ function AdminUserList() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [resettingUser, setResettingUser] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -96,6 +100,33 @@ function AdminUserList() {
       toast.error("Update failed: " + error.message);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePasswordResetClick = (user: any) => {
+    setResettingUser(user);
+    setNewPassword("");
+    setIsPasswordDialogOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resettingUser || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const { adminResetUserPassword } = await import("@/app/actions/admin-operations");
+      const result = await adminResetUserPassword(resettingUser.id, newPassword);
+      if (result.success === false) throw new Error((result as any).error);
+      
+      toast.success(`Password updated for ${resettingUser.email}`);
+      setIsPasswordDialogOpen(false);
+    } catch (error: any) {
+      toast.error("Password reset failed: " + error.message);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -253,7 +284,10 @@ function AdminUserList() {
                           >
                              <Edit2 className="w-4 h-4 text-zinc-500" /> Edit Metadata
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="rounded-lg gap-2 font-medium cursor-pointer py-2 px-3">
+                          <DropdownMenuItem 
+                            onClick={() => handlePasswordResetClick(user)}
+                            className="rounded-lg gap-2 font-medium cursor-pointer py-2 px-3"
+                          >
                              <Key className="w-4 h-4 text-zinc-500" /> Reset Password
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-zinc-100 my-1.5" />
@@ -352,6 +386,51 @@ function AdminUserList() {
                 className="flex-[2] bg-brand hover:bg-brand-hover text-zinc-900 h-12 rounded-xl font-bold shadow-lg shadow-brand/20"
               >
                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Reset Dialog */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-white p-8 text-zinc-900 relative">
+            <Key className="absolute -right-4 -bottom-4 w-32 h-32 opacity-5 rotate-12" />
+            <DialogHeader className="relative z-10">
+              <DialogTitle className="text-2xl font-bold tracking-tight">Reset Password</DialogTitle>
+              <DialogDescription className="text-zinc-500 font-medium mt-1">
+                Set a new password for <span className="font-bold text-zinc-900">{resettingUser?.email}</span>.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          
+          <div className="p-8 space-y-6 bg-white border-t border-zinc-100">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">New Password</label>
+              <Input 
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+                className="h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
+
+            <DialogFooter className="pt-4 flex items-center justify-between gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsPasswordDialogOpen(false)}
+                className="flex-1 h-12 rounded-xl font-bold text-zinc-500 hover:text-zinc-600 hover:bg-zinc-50"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleResetPassword}
+                disabled={isResetting || !newPassword}
+                className="flex-[2] bg-zinc-900 hover:bg-black text-white h-12 rounded-xl font-bold shadow-lg"
+              >
+                {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Update Password"}
               </Button>
             </DialogFooter>
           </div>
