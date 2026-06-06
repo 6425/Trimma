@@ -608,15 +608,38 @@ function AgentLeads() {
     try {
       setUpdating(true);
 
+      let parsedHours: any = [];
+      try {
+        parsedHours = JSON.parse(formData.working_hours || "[]");
+      } catch (e) {
+        parsedHours = formData.working_hours;
+      }
+
       const updatePayload: any = {
+        name: formData.name || selectedLead.name,
+        address: formData.address || null,
+        phone: formData.phone || null,
+        website: formData.website || null,
+        map_url: formData.map_url || null,
+        category: selectedCategories.join(", ") || null,
+        working_hours: parsedHours,
+        latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
+        longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
+        price_level: formData.price_level || null,
+        summary: formData.summary || null,
+        hero_url: formData.hero_url || null,
+        owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
+        agent_notes: formData.agent_notes || null,
         onboarding_status: "OWNER_INVITED",
       };
+
+      const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
 
       const { success, error } = await saveAgentLeadData(
         selectedLead.id,
         updatePayload,
-        null,
-        null,
+        servicesData,
+        finalStaffToAdd,
         agentEmail,
         "OWNER_INVITED",
         salonAmenities
@@ -1447,9 +1470,19 @@ function AgentLeads() {
 
                   {/* Pending status display */}
                   {["OWNER_INVITED"].includes(formData.onboarding_status) && (
-                    <Badge className="bg-amber-50 text-amber-600 border border-amber-200 font-bold text-[10px] px-3 py-2">
-                      ⏳ Owner Invited
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-amber-50 text-amber-600 border border-amber-200 font-bold text-[10px] px-3 py-2">
+                        ⏳ Owner Invited
+                      </Badge>
+                      <Button
+                        onClick={handleSendInvitation}
+                        disabled={updating || !formData.phone || !formData.owner_gmail}
+                        variant="outline"
+                        className="text-amber-600 border-amber-200 hover:bg-amber-50 rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Resend Invitation
+                      </Button>
+                    </div>
                   )}
 
                   {["PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(formData.onboarding_status) && (
