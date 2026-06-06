@@ -278,13 +278,14 @@ export default function SalonProfilePage() {
 
   const renderApprovalAction = () => (
     <div className="flex items-center gap-3">
-      {needsOwnerActivationWizard(onboardingStatus) && (
+      {(needsOwnerActivationWizard(onboardingStatus) || onboardingStatus === "OWNER_ACTIVATED") && (
         <Button
           onClick={handleCompleteOnboarding}
           disabled={saving}
           className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black shadow-md shadow-[#F5B700]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
         >
-          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} Send For Approval
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} 
+          {onboardingStatus === "OWNER_ACTIVATED" ? "Resend For Approval" : "Send For Approval"}
         </Button>
       )}
       {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
