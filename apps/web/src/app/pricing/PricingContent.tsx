@@ -245,7 +245,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
               How does introduction pricing work?
             </h4>
             <p className="text-sm text-zinc-500 leading-relaxed">
-              Monthly plans show a {INTRO_DISCOUNT_PERCENT}% discounted introduction rate (e.g. Starter LKR 3,750 instead of LKR 5,000). Annual plans are billed as a single yearly total based on a lower monthly equivalent.
+              Monthly plans show their discounted introduction rate (e.g. Starter LKR 3,750 instead of LKR 5,000). Annual plans are billed as a single yearly total based on a lower monthly equivalent.
             </p>
           </div>
 
