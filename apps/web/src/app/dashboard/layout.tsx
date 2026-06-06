@@ -255,7 +255,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }`}
           >
             <Settings className="w-4 h-4" />
-            {role === 'admin' ? 'Global Settings' : 'Settings'}
+            Settings
           </Link>
           <button
             type="button"

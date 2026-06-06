@@ -257,12 +257,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-200 space-y-0.5">
-          <Link href="/admin/settings"
-            className={navItemClass(pathname === "/admin/settings")}
-          >
-            <Settings className="w-4 h-4" />
-            {role === 'admin' ? 'Global Settings' : 'Settings'}
-          </Link>
           <button
             type="button"
             onClick={handleLogout}
