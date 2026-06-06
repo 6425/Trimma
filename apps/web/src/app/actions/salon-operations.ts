@@ -410,8 +410,26 @@ export async function saveOwnerVerificationData(
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null
 ) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    // 1. Update Salon Data
+    // 1. Resolve Slug Collisions
     const finalPayload = { ...updatePayload, onboarding_status: "OWNER_ACTIVATED", owner_activated_at: new Date().toISOString() };
+    
+    if (typeof finalPayload.name === "string" && finalPayload.name.trim()) {
+      const nextSlug = slugifySalonName(finalPayload.name);
+      if (nextSlug) {
+        const { data: slugOwner, error: slugError } = await supabase
+          .from("salons")
+          .select("id")
+          .eq("slug", nextSlug)
+          .maybeSingle();
+        if (slugError) throw new Error(slugError.message);
+        finalPayload.slug =
+          !slugOwner || slugOwner.id === ctx.salonId
+            ? nextSlug
+            : `${nextSlug}-${String(ctx.salonId).slice(0, 8)}`;
+      }
+    }
+
+    // 2. Update Salon Data
     const { error: updateError } = await supabase
       .from("salons")
       .update(finalPayload)
