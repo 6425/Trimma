@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Store, Clock, CalendarDays, XCircle, ChevronLeft } from "lucide-react";
+import { Loader2, CheckCircle2, Store, Clock, CalendarDays, XCircle, ChevronLeft, Users, Scissors, Armchair, Tag, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/config/supabase";
 import { BusinessInfoForm } from "../../../../../components/forms/BusinessInfoForm";
@@ -17,6 +17,7 @@ export default function AgentSalonApprovalReview() {
   const [salon, setSalon] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"operations" | "business" | "bank">("operations");
+  const [counts, setCounts] = useState({ staff: 0, services: 0, seats: 0, photos: 0, promotions: 0 });
   
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -25,14 +26,30 @@ export default function AgentSalonApprovalReview() {
   useEffect(() => {
     async function fetchSalon() {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("salons")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const [salonRes, staffRes, servicesRes, amenitiesRes, promotionsRes] = await Promise.all([
+        supabase.from("salons").select("*").eq("id", id).single(),
+        supabase.from("salon_staff").select("id", { count: "exact", head: true }).eq("salon_id", id),
+        supabase.from("services").select("id", { count: "exact", head: true }).eq("salon_id", id),
+        // Join with amenities to get the name
+        supabase.from("salon_amenities").select("quantity, amenities!inner(name)").eq("salon_id", id).eq("amenities.name", "Number of Chairs").maybeSingle(),
+        supabase.from("salon_promotion_packages").select("id", { count: "exact", head: true }).eq("salon_id", id)
+      ]);
 
-      if (data && !error) {
-        setSalon(data);
+      if (salonRes.data && !salonRes.error) {
+        setSalon(salonRes.data);
+        
+        let seatsCount = 0;
+        if (amenitiesRes.data) {
+          seatsCount = amenitiesRes.data.quantity || 0;
+        }
+
+        setCounts({
+          staff: staffRes.count || 0,
+          services: servicesRes.count || 0,
+          seats: seatsCount,
+          photos: Array.isArray(salonRes.data.featured_images) ? salonRes.data.featured_images.length : 0,
+          promotions: promotionsRes.count || 0,
+        });
       } else {
         toast.error("Salon not found");
         router.push("/agent/salons/approval");
@@ -171,12 +188,48 @@ export default function AgentSalonApprovalReview() {
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === "operations" && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm text-center py-20">
-            <Store className="w-12 h-12 text-zinc-200 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-zinc-800">Operations Overview</h3>
-            <p className="text-sm text-zinc-500 mt-2 max-w-md mx-auto">
-              This section usually contains the schedule and amenities. For Agent approval, the most critical verification points are the Business Identity and Bank Information in the other tabs.
-            </p>
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                <Store className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-zinc-900 tracking-tight">Operations Summary</h3>
+                <p className="text-xs text-zinc-500 font-medium">Quick overview of the salon's operational scale.</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="bg-zinc-50 rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-zinc-100">
+                <Armchair className="w-6 h-6 text-emerald-500 mb-2" />
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Seats</p>
+                <p className="text-2xl font-black text-zinc-800">{counts.seats}</p>
+              </div>
+              
+              <div className="bg-zinc-50 rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-zinc-100">
+                <Users className="w-6 h-6 text-blue-500 mb-2" />
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Staff</p>
+                <p className="text-2xl font-black text-zinc-800">{counts.staff}</p>
+              </div>
+              
+              <div className="bg-zinc-50 rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-zinc-100">
+                <Scissors className="w-6 h-6 text-rose-500 mb-2" />
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Services</p>
+                <p className="text-2xl font-black text-zinc-800">{counts.services}</p>
+              </div>
+              
+              <div className="bg-zinc-50 rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-zinc-100">
+                <ImageIcon className="w-6 h-6 text-purple-500 mb-2" />
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Images</p>
+                <p className="text-2xl font-black text-zinc-800">{counts.photos}</p>
+              </div>
+
+              <div className="bg-zinc-50 rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-zinc-100">
+                <Tag className="w-6 h-6 text-amber-500 mb-2" />
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Promotions</p>
+                <p className="text-2xl font-black text-zinc-800">{counts.promotions}</p>
+              </div>
+            </div>
           </div>
         )}
         
