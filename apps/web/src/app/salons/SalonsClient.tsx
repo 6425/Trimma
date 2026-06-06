@@ -243,9 +243,9 @@ export default function SalonsClient({ categories }: Props) {
               >
                 <option value="">Any Location</option>
                 <option value="colombo">Colombo</option>
-                <option value="negombo">Negombo</option>
+                <option value="gampaha">Gampaha</option>
                 <option value="kandy">Kandy</option>
-                <option value="galle">Galle</option>
+                <option value="anuradhapura">Anuradhapura</option>
               </select>
             </div>
             <Button

@@ -171,8 +171,9 @@ export default function CategoryPage() {
                >
                  <option value="" className="text-zinc-900">Any Location</option>
                  <option value="colombo" className="text-zinc-900">Colombo</option>
-                 <option value="negombo" className="text-zinc-900">Negombo</option>
+                 <option value="gampaha" className="text-zinc-900">Gampaha</option>
                  <option value="kandy" className="text-zinc-900">Kandy</option>
+                 <option value="anuradhapura" className="text-zinc-900">Anuradhapura</option>
                </select>
              </div>
              
