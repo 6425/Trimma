@@ -145,7 +145,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Finance & Commission", href: "/admin/finance", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Branding Settings", href: "/admin/branding", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Admin Profile", href: "/admin/profile", icon: <User className="w-4 h-4" /> },
-    { name: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" /> },
   ];
 
   const navItems = isAd ? adminItems : salonItems;
@@ -255,7 +254,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }`}
           >
             <Settings className="w-4 h-4" />
-            {role === 'admin' ? 'Global Settings' : 'Settings'}
+            Settings
           </Link>
           <button
             type="button"
