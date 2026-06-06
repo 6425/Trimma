@@ -1128,6 +1128,17 @@ export async function sendReviewRequestAlert(bookingNo: string) {
  * Triggers an instant WhatsApp alert to invite a Salon Owner when onboarding is completed.
  */
 export async function sendOnboardingInviteAlert(salonId: string, phone: string, ownerGmail: string, salonName: string, slug?: string | null) {
+  const normalizedGmail = normalizeEmail(ownerGmail);
+  const cleanPhone = cleanPhoneNumber(phone);
+
+  if (normalizedGmail) {
+    try {
+      await preAssignSalonOwnerRole(normalizedGmail, salonName + " Owner", cleanPhone || "");
+    } catch (roleErr) {
+      console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
+    }
+  }
+
   const { 
     enabled, 
     phoneId, 
@@ -1147,17 +1158,6 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
   }
 
   try {
-    const cleanPhone = cleanPhoneNumber(phone);
-    const normalizedGmail = normalizeEmail(ownerGmail);
-
-    if (normalizedGmail) {
-      try {
-        await preAssignSalonOwnerRole(normalizedGmail, salonName + " Owner", cleanPhone);
-      } catch (roleErr) {
-        console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
-      }
-    }
-
     const loginLink = normalizedGmail
       ? `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedGmail)}&next=${encodeURIComponent("/dashboard/profile")}`
       : `${APP_BASE_URL}/login?next=${encodeURIComponent("/onboarding")}`;

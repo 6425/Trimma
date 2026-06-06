@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
+import { preAssignSalonOwnerRole } from "@/app/actions/admin-operations";
 import { isEmailSendFailure } from "@/lib/email/result";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
@@ -68,6 +69,12 @@ export async function POST(request: Request) {
     if (salonError) throw salonError;
     if (!salon) {
       return NextResponse.json({ error: "Salon not found." }, { status: 404 });
+    }
+
+    try {
+      await preAssignSalonOwnerRole(normalizedOwnerEmail, (salon.name || "Salon") + " Owner", salon.phone || "");
+    } catch (roleErr) {
+      console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
     }
 
     const sessionEmail = await getRequestUserEmail(request);
