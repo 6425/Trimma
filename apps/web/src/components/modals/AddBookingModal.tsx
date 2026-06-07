@@ -35,13 +35,16 @@ export function AddBookingModal({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(prev => ({
-        ...prev,
-        booking_date: selectedSlot?.date || "",
-        booking_time: selectedSlot?.time || ""
-      }));
+      setTimeout(() => {
+        setFormData(prev => ({
+          ...prev,
+          booking_date: selectedSlot?.date || "",
+          booking_time: selectedSlot?.time || ""
+        }));
+      }, 0);
       loadServices();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, selectedSlot]);
 
   async function loadServices() {

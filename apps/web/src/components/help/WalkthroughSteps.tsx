@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Search, CalendarCheck, Sparkles, Star, MapPin, Scissors, CreditCard, MessageCircle, CheckCircle2 } from "lucide-react";
 
 // --- MOCKUPS ---
@@ -9,7 +10,7 @@ const LandingMockup = () => (
   <div className="w-full h-[400px] bg-[#0B0B0B] rounded-2xl shadow-xl overflow-hidden border border-zinc-800 flex flex-col relative mx-auto font-sans">
     <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B] via-[#0B0B0B]/90 to-[#F5B700]/30" />
     <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-white relative z-10 pt-8">
-      <h3 className="text-xl font-bold mb-2">Sri Lanka's Beauty & Wellness Marketplace</h3>
+      <h3 className="text-xl font-bold mb-2">Sri Lanka&apos;s Beauty & Wellness Marketplace</h3>
       <p className="text-zinc-300 text-[10px] mb-4 max-w-[250px] leading-relaxed">Book salon, spa, barber, nail, skincare, and wellness appointments instantly.</p>
       
       <div className="flex gap-2 mb-8">
@@ -252,7 +253,7 @@ const WhatsAppPendingMockup = () => (
         <div className="text-xs text-zinc-800 leading-relaxed">
           👋 Hi there!<br/><br/>
           Your booking request for a <b>Premium Haircut</b> at <b>Sampath Salon</b> is <span className="text-[#F5B700] font-bold">Pending Confirmation</span> by the salon owner.<br/><br/>
-          We'll notify you as soon as they accept!
+          We&apos;ll notify you as soon as they accept!
         </div>
         <div className="text-[9px] text-zinc-400 text-right mt-1">10:42 AM</div>
       </div>
@@ -464,12 +465,12 @@ export function WalkthroughSteps() {
                Next Step
              </button>
            ) : (
-             <a 
+             <Link 
                href="/" 
-               className="bg-zinc-900 text-[#F5B700] font-bold hover:opacity-90 px-6 py-3 rounded-xl transition-opacity shadow-sm"
+               className="bg-zinc-900 text-[#F5B700] font-bold hover:opacity-90 px-6 py-3 rounded-xl transition-opacity shadow-sm inline-block"
              >
                Find your Salon
-             </a>
+             </Link>
            )}
         </div>
       </div>
