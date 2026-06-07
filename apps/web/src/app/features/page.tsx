@@ -1,39 +1,39 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { SearchHeroWidget } from "../components/landing-v2/SearchHeroWidget";
+import { SearchHeroWidget } from "../../components/landing-v2/SearchHeroWidget";
 
 const OffersSection = dynamic(
-  () => import("../components/landing-v2/OffersSection").then((m) => ({ default: m.OffersSection })),
+  () => import("../../components/landing-v2/OffersSection").then((m) => ({ default: m.OffersSection })),
   { loading: () => <SectionSkeleton /> }
 );
 const BrowseByService = dynamic(
-  () => import("../components/landing-v2/BrowseByService").then((m) => ({ default: m.BrowseByService })),
+  () => import("../../components/landing-v2/BrowseByService").then((m) => ({ default: m.BrowseByService })),
   { loading: () => <SectionSkeleton /> }
 );
-import { TrendingLocations } from "../components/landing-v2/TrendingLocations";
+import { TrendingLocations } from "../../components/landing-v2/TrendingLocations";
 const TopRatedSalons = dynamic(
-  () => import("../components/landing-v2/TopRatedSalons").then((m) => ({ default: m.TopRatedSalons })),
+  () => import("../../components/landing-v2/TopRatedSalons").then((m) => ({ default: m.TopRatedSalons })),
   { loading: () => <SectionSkeleton /> }
 );
 const TrustBadges = dynamic(
-  () => import("../components/landing-v2/TrustBadges").then((m) => ({ default: m.TrustBadges })),
+  () => import("../../components/landing-v2/TrustBadges").then((m) => ({ default: m.TrustBadges })),
   { loading: () => <SectionSkeleton height="h-24" /> }
 );
 const B2BCTA = dynamic(
-  () => import("../components/landing-v2/B2BCTA").then((m) => ({ default: m.B2BCTA })),
+  () => import("../../components/landing-v2/B2BCTA").then((m) => ({ default: m.B2BCTA })),
   { loading: () => <SectionSkeleton height="h-40" /> }
 );
 const DealsDiscountSection = dynamic(
   () =>
-    import("../components/landing-v2/DealsDiscountSection").then((m) => ({
+    import("../../components/landing-v2/DealsDiscountSection").then((m) => ({
       default: m.DealsDiscountSection,
     })),
   { loading: () => <SectionSkeleton /> }
 );
 const WhyTrimmaSection = dynamic(
   () =>
-    import("../components/marketplace/MarketplaceSections").then((m) => ({
+    import("../../components/marketplace/MarketplaceSections").then((m) => ({
       default: m.WhyTrimmaSection,
     })),
   { loading: () => <SectionSkeleton /> }
