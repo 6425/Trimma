@@ -389,22 +389,38 @@ export async function fetchSalonCustomersPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: bookings, error } = await supabase
       .from("bookings")
-      .select("customer_email, amount, status, created_at, booking_date, users(full_name, phone)")
+      .select("customer_email, amount, status, created_at, booking_date")
       .eq("salon_id", ctx.salonId);
 
     if (error) throw new Error(error.message);
 
     const customersMap = new Map();
 
+    const emails = [...new Set((bookings || []).map(b => b.customer_email).filter(Boolean))];
+    let usersData: any[] = [];
+    if (emails.length > 0) {
+      const { data } = await supabase
+        .from("users")
+        .select("email, full_name, phone")
+        .in("email", emails);
+      if (data) usersData = data;
+    }
+    
+    const usersByEmail = new Map();
+    usersData.forEach(u => {
+      if (u.email) usersByEmail.set(u.email.toLowerCase(), u);
+    });
+
     for (const b of bookings || []) {
       if (!b.customer_email) continue;
       
       const email = b.customer_email.toLowerCase();
       if (!customersMap.has(email)) {
+        const user = usersByEmail.get(email);
         customersMap.set(email, {
           email: email,
-          name: Array.isArray(b.users) ? (b.users[0] as any)?.full_name || "Guest" : (b.users as any)?.full_name || "Guest",
-          phone: Array.isArray(b.users) ? (b.users[0] as any)?.phone || "-" : (b.users as any)?.phone || "-",
+          name: user?.full_name || "Guest",
+          phone: user?.phone || "-",
           bookings: 0,
           spent: 0,
           rating: 5, // We don't have per-customer ratings aggregated easily right now
