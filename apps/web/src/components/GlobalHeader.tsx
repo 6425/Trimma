@@ -11,12 +11,28 @@ const IconMap: Record<string, any> = {
   Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
 };
 
+const PROVINCES = [
+  { name: "Western Province", districts: ["Colombo", "Gampaha", "Kalutara"] },
+  { name: "Central Province", districts: ["Kandy", "Matale", "Nuwara Eliya"] },
+  { name: "Southern Province", districts: ["Galle", "Matara", "Hambantota"] },
+  { name: "Northern Province", districts: ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"] },
+  { name: "Eastern Province", districts: ["Trincomalee", "Batticaloa", "Ampara"] },
+  { name: "North Western Province", districts: ["Kurunegala", "Puttalam"] },
+  { name: "North Central Province", districts: ["Anuradhapura", "Polonnaruwa"] },
+  { name: "Uva Province", districts: ["Badulla", "Moneragala"] },
+  { name: "Sabaragamuwa Province", districts: ["Ratnapura", "Kegalle"] },
+];
+
 export default function GlobalHeader() {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("customer");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [mobileLocationsOpen, setMobileLocationsOpen] = useState(false);
+  const [mobileActiveProvince, setMobileActiveProvince] = useState<string | null>(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [locationsOpen, setLocationsOpen] = useState(false);
+  const [activeProvince, setActiveProvince] = useState<string | null>(null);
   const [navCategories, setNavCategories] = useState<any[]>([]);
   const pathname = usePathname();
 
@@ -163,9 +179,69 @@ export default function GlobalHeader() {
                 )}
               </div>
 
-              <Link href="/locations" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors">
-                Locations
-              </Link>
+              <div
+                className="relative"
+                onMouseEnter={() => setLocationsOpen(true)}
+                onMouseLeave={() => {
+                  setLocationsOpen(false);
+                  setActiveProvince(null);
+                }}
+              >
+                <button
+                  type="button"
+                  aria-haspopup="true"
+                  aria-expanded={locationsOpen}
+                  className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
+                    locationsOpen ? 'text-zinc-900 bg-zinc-100' : 'text-zinc-700 hover:bg-zinc-100'
+                  }`}
+                >
+                  Locations
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${locationsOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {locationsOpen && (
+                  <div className="absolute top-full left-0 pt-1 z-50">
+                    <div className="flex bg-white rounded-xl border border-zinc-200 shadow-xl overflow-hidden max-h-[400px]">
+                      {/* Provinces Column */}
+                      <div className="w-[200px] overflow-y-auto bg-zinc-50/50 py-2 border-r border-zinc-100">
+                        {PROVINCES.map((prov) => (
+                          <div
+                            key={prov.name}
+                            onMouseEnter={() => setActiveProvince(prov.name)}
+                            className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                              activeProvince === prov.name 
+                                ? 'bg-white text-[#F5B700] font-bold shadow-[inset_2px_0_0_#F5B700]' 
+                                : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
+                            }`}
+                          >
+                            <span className="truncate">{prov.name.replace(" Province", "")}</span>
+                            {activeProvince === prov.name && <span className="text-[#F5B700] text-[10px] shrink-0">▶</span>}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Districts Flyout */}
+                      <div className="w-[180px] overflow-y-auto py-2 bg-white">
+                        {activeProvince ? (
+                          PROVINCES.find((p) => p.name === activeProvince)?.districts.map((dist) => (
+                            <Link
+                              key={dist}
+                              href={`/?l=${encodeURIComponent(dist)}`}
+                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#F5B700] transition-colors"
+                            >
+                              {dist}
+                            </Link>
+                          ))
+                        ) : (
+                          <div className="px-5 py-6 text-xs font-medium text-zinc-400 italic text-center leading-relaxed">
+                            Hover a province to view districts.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Link href="/pricing" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors">
                 Pricing
               </Link>
@@ -319,14 +395,48 @@ export default function GlobalHeader() {
                 })}
               </div>
             )}
-            <Link
-              href="/locations"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
+            <button
+              type="button"
+              onClick={() => setMobileLocationsOpen(!mobileLocationsOpen)}
+              className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors w-full"
+              aria-expanded={mobileLocationsOpen}
             >
-              <MapPin className="w-4 h-4 shrink-0" />
-              Locations
-            </Link>
+              <span className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 shrink-0" />
+                Locations
+              </span>
+              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${mobileLocationsOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {mobileLocationsOpen && (
+              <div className="ml-4 pl-3 border-l border-zinc-100 flex flex-col gap-1 mb-1">
+                {PROVINCES.map((prov) => (
+                  <div key={prov.name} className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => setMobileActiveProvince(mobileActiveProvince === prov.name ? null : prov.name)}
+                      className="flex items-center justify-between py-2 pr-3 text-sm font-medium text-zinc-700 hover:text-zinc-900"
+                    >
+                      {prov.name}
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileActiveProvince === prov.name ? 'rotate-180' : ''}`} />
+                    </button>
+                    {mobileActiveProvince === prov.name && (
+                      <div className="pl-3 border-l border-zinc-100 flex flex-col gap-0.5 mt-1 mb-2">
+                        {prov.districts.map((dist) => (
+                          <Link
+                            key={dist}
+                            href={`/?l=${encodeURIComponent(dist)}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="py-1.5 text-sm font-normal text-zinc-500 hover:text-zinc-900"
+                          >
+                            {dist}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             <Link
               href="/pricing"
               onClick={() => setMobileMenuOpen(false)}
