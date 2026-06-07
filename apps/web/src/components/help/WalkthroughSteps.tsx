@@ -244,16 +244,22 @@ const CheckoutMockup = () => (
 
 const WhatsAppPendingMockup = () => (
   <div className="w-full h-[400px] bg-[#efeae2] rounded-2xl shadow-xl overflow-hidden border border-zinc-200 flex flex-col relative mx-auto font-sans">
-    <div className="bg-[#00a884] p-4 flex items-center gap-3 text-white">
+    <div className="bg-[#00a884] p-4 flex items-center gap-3 text-white shrink-0">
       <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><Scissors className="w-4 h-4" /></div>
       <div className="font-bold text-sm">Trimma Alerts</div>
     </div>
-    <div className="p-4 flex-1 flex flex-col justify-end">
+    <div className="p-4 flex-1 flex flex-col justify-end overflow-y-auto custom-scrollbar">
       <div className="bg-white rounded-lg rounded-tl-none p-3 max-w-[85%] shadow-sm relative">
-        <div className="text-xs text-zinc-800 leading-relaxed">
-          👋 Hi there!<br/><br/>
-          Your booking request for a <b>Premium Haircut</b> at <b>Sampath Salon</b> is <span className="text-[#F5B700] font-bold">Pending Confirmation</span> by the salon owner.<br/><br/>
-          We&apos;ll notify you as soon as they accept!
+        <div className="text-[10px] text-zinc-800 leading-snug">
+          Hi Pathum! 🎉<br/><br/>
+          Great news — your <b>20% reservation payment</b> for <b>Sampath Salon</b> went through successfully! Your time slot is now <b>locked</b> 🔒<br/><br/>
+          📋 Ref: #TRM-8921<br/>
+          📅 Tomorrow · ⏰ 11:00 AM<br/>
+          💇 Premium Haircut<br/>
+          ✅ Paid: LKR 300<br/>
+          💵 Balance at salon: LKR 1,200<br/><br/>
+          The salon will confirm your booking soon — we&apos;ll message you once it&apos;s approved! ✨<br/><br/>
+          Thank you for booking with Trimma 💛
         </div>
         <div className="text-[9px] text-zinc-400 text-right mt-1">10:42 AM</div>
       </div>
@@ -263,16 +269,25 @@ const WhatsAppPendingMockup = () => (
 
 const WhatsAppConfirmedMockup = () => (
   <div className="w-full h-[400px] bg-[#efeae2] rounded-2xl shadow-xl overflow-hidden border border-zinc-200 flex flex-col relative mx-auto font-sans">
-    <div className="bg-[#00a884] p-4 flex items-center gap-3 text-white">
+    <div className="bg-[#00a884] p-4 flex items-center gap-3 text-white shrink-0">
       <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><Scissors className="w-4 h-4" /></div>
       <div className="font-bold text-sm">Trimma Alerts</div>
     </div>
-    <div className="p-4 flex-1 flex flex-col justify-end">
+    <div className="p-4 flex-1 flex flex-col justify-end overflow-y-auto custom-scrollbar">
       <div className="bg-white rounded-lg rounded-tl-none p-3 max-w-[85%] shadow-sm relative">
-        <div className="text-xs text-zinc-800 leading-relaxed">
-          ✅ <b>Booking Confirmed!</b><br/><br/>
-          Sampath Salon has accepted your booking for Tomorrow at 11:00 AM.<br/><br/>
-          See you there!
+        <div className="text-[10px] text-zinc-800 leading-snug">
+          Hi Pathum! 🌟<br/><br/>
+          <b>Sampath Salon</b> has <b>confirmed</b> your appointment — you&apos;re all set!<br/><br/>
+          📋 Ref: #TRM-8921<br/>
+          📅 <b>Date:</b> Tomorrow<br/>
+          ⏰ <b>Time:</b> 11:00 AM<br/>
+          💇 <b>Service:</b> Premium Haircut<br/>
+          💰 <b>Total:</b> LKR 1,500<br/>
+          ✅ <b>Deposit paid:</b> LKR 300<br/>
+          💵 <b>Balance at salon:</b> LKR 1,200<br/><br/>
+          📍 <b>Location:</b> Colombo 07<br/>
+          🗺️ <b>Directions:</b> https://maps.app.goo.gl/...<br/><br/>
+          See you soon! ✂️
         </div>
         <div className="text-[9px] text-zinc-400 text-right mt-1">11:15 AM</div>
       </div>
