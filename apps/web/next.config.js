@@ -29,11 +29,20 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
   serverExternalPackages: [],
-  serverActions: {
-    bodySizeLimit: '20mb',
-  },
   experimental: {
-    optimizePackageImports: ["lucide-react", "motion", "date-fns", "recharts"]
+    optimizePackageImports: ["lucide-react", "motion", "date-fns", "recharts"],
+    serverActions: {
+      bodySizeLimit: '20mb',
+    }
+  },
+  async redirects() {
+    return [
+      {
+        source: '/salons',
+        destination: '/',
+        permanent: true,
+      },
+    ]
   },
   images: {
     // Dev: skip _next/image proxy — Supabase image fetches were timing out at 60s and blocking pages.

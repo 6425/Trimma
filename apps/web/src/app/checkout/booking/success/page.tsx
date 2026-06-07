@@ -32,7 +32,7 @@ function BookingSuccessContent() {
         <p className="text-sm text-zinc-500 mb-6">
           If you just completed a booking, check your WhatsApp or email for confirmation.
         </p>
-        <Link href="/salons" className="text-sm font-bold text-zinc-900 underline">
+        <Link href="/" className="text-sm font-bold text-zinc-900 underline">
           Browse salons
         </Link>
       </div>

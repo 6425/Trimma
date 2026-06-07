@@ -161,10 +161,10 @@ function DashboardContent() {
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
             Book Now
           </Link>
-          <Link href="/salons" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
             Find Salons
           </Link>
           <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
@@ -195,7 +195,7 @@ function DashboardContent() {
           <div className="text-center py-12 text-zinc-500">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
             <p>You have no upcoming bookings.</p>
-            <Link href="/salons" className="inline-flex mt-2 text-[#F5B700] hover:text-[#F5B700]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
+            <Link href="/" className="inline-flex mt-2 text-[#F5B700] hover:text-[#F5B700]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
               Browse salons to book
             </Link>
           </div>

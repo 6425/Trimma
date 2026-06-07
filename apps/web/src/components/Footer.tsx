@@ -29,7 +29,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm font-medium">
               <li><Link href="/locations" className="hover:text-emerald-400 transition-colors">Locations</Link></li>
               <li><Link href="/categories" className="hover:text-emerald-400 transition-colors">Services & Categories</Link></li>
-              <li><Link href="/salons" className="hover:text-emerald-400 transition-colors">Advanced Search</Link></li>
+              <li><Link href="/" className="hover:text-emerald-400 transition-colors">Advanced Search</Link></li>
               <li><Link href="/guides" className="hover:text-emerald-400 transition-colors">Style Guides</Link></li>
             </ul>
           </div>

@@ -255,7 +255,7 @@ function BookingCheckoutForm() {
         <p className="text-sm text-zinc-500 mb-6">
           Start from a salon page, choose a service, and continue to checkout.
         </p>
-        <Link href="/salons" className="text-sm font-bold text-zinc-900 underline">
+        <Link href="/" className="text-sm font-bold text-zinc-900 underline">
           Browse salons
         </Link>
       </div>

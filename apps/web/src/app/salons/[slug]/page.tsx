@@ -482,7 +482,7 @@ export default function SalonPage() {
             The salon experience you are trying to reach doesn&apos;t exist or may have been unlinked. Let&apos;s get you back on track to find Sri Lanka&apos;s finest grooming spots!
           </p>
           <div className="w-full space-y-3">
-            <Link href="/salons" className="block w-full">
+            <Link href="/" className="block w-full">
               <Button className="w-full rounded-2xl bg-brand hover:bg-[#c21b52] text-white font-bold h-12 transition-all active:scale-[0.98] border-none">
                 Explore Active Salons
               </Button>

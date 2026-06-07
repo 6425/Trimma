@@ -85,7 +85,7 @@ function FavoritesContent() {
         </div>
 
         <Link
-          href="/salons"
+          href="/"
           className="inline-flex shrink-0 items-center justify-center bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all"
         >
           <Scissors className="w-4 h-4 mr-2" />
@@ -114,7 +114,7 @@ function FavoritesContent() {
             Browse salons and save your favourites here for faster rebooking.
           </p>
           <Link
-            href="/salons"
+            href="/"
             className="inline-flex mt-6 bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all"
           >
             Explore Salons

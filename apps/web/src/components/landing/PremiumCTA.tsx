@@ -50,7 +50,7 @@ export function PremiumCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
-            <Link href="/salons" className="w-full sm:w-auto">
+            <Link href="/" className="w-full sm:w-auto">
               <Button size="lg" className="w-full h-14 px-8 rounded-xl bg-white text-zinc-900 hover:bg-zinc-100 hover:scale-105 transition-all shadow-xl font-bold text-base">
                 Book Appointment
               </Button>

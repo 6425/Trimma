@@ -148,7 +148,7 @@ export default function LocationsHubPage() {
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="flex overflow-x-auto gap-4 pb-2 hide-scrollbar snap-x justify-start md:justify-center">
              <Link
-                href="/salons"
+                href="/"
                 className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
               >
                 <div className="mb-1 text-brand-pink">
