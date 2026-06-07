@@ -86,7 +86,7 @@ export function AddBookingModal({
         });
         onSuccess();
       } else {
-        setError(res.error || "Failed to create booking.");
+        setError("error" in res ? (res as any).error : "Failed to create booking.");
       }
     } catch (err: any) {
       setError(err.message || "An error occurred.");
