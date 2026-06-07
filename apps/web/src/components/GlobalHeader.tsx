@@ -20,7 +20,7 @@ export default function GlobalHeader() {
   const [navCategories, setNavCategories] = useState<any[]>([]);
   const pathname = usePathname();
 
-  const isSalonsActive = pathname === "/salons" || pathname?.startsWith("/salons/");
+  const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isDealsActive = pathname === "/deals";
   const isStylesActive = pathname === "/styles";
@@ -116,12 +116,12 @@ export default function GlobalHeader() {
             {/* Main nav — Categories submenus live here only */}
             <div className="hidden lg:flex items-center gap-1">
               <Link
-                href="/salons"
+                href="/features"
                 className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                  isSalonsActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+                  isFeaturesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
                 }`}
               >
-                Salons
+                Features
               </Link>
               <div
                 className="relative"
@@ -280,14 +280,14 @@ export default function GlobalHeader() {
         <div className="lg:hidden border-t border-zinc-100 bg-white pb-4 max-h-[70vh] overflow-y-auto">
           <nav className="px-4 pt-2 pb-4 flex flex-col gap-1" aria-label="Site navigation">
             <Link
-              href="/salons"
+              href="/features"
               onClick={() => setMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isSalonsActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+                isFeaturesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
               }`}
             >
-              <Scissors className="w-4 h-4 shrink-0" />
-              Salons
+              <Sparkles className="w-4 h-4 shrink-0" />
+              Features
             </Link>
             <button
               type="button"

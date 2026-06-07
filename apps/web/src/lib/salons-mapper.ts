@@ -7,8 +7,9 @@ export function mapSalonRowToUI(s: any, idx: number) {
   ) as string[];
 
   const name = s.name;
-  const city = s.city || "Colombo";
-  const district = s.district || "Western Province";
+  const city = s.city;
+  const district = s.district;
+  const locationString = city && district ? `${city}, ${district}` : city ? city : district ? district : "Location pending";
   const rating = s.rating || (4.7 + (idx % 3) * 0.1);
 
   const fallbackImages = [
@@ -28,7 +29,7 @@ export function mapSalonRowToUI(s: any, idx: number) {
     slug: s.slug,
     rating: parseFloat(Number(rating).toFixed(1)),
     reviews: s.reviews_count || s.review_count || (24 + (idx * 5) % 40),
-    location: `${city}, ${district}`,
+    location: locationString,
     category: s.category || tags[0] || "Beauty Lounge",
     logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
     image,

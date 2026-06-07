@@ -4,7 +4,7 @@ import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 
 export const metadata = {
-  title: 'Trimma OS - Find. Book. Blow.',
+  title: 'Trimma OS - Find. Book. Glow.',
   description: 'The intelligent operating system for a salon marketplace.',
   icons: {
     icon: '/favicon.svg',

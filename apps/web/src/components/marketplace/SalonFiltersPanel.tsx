@@ -9,6 +9,7 @@ export type SalonFilters = {
   verifiedOnly: boolean;
   openNowOnly: boolean;
   selectedCategories: string[];
+  minDiscount: number;
 };
 
 type Category = { slug: string; name: string };
@@ -34,6 +35,13 @@ const RATING_OPTIONS = [
   { label: "3+ stars", value: 3 },
   { label: "4+ stars", value: 4 },
   { label: "4.5+ stars", value: 4.5 },
+];
+
+const DISCOUNT_OPTIONS = [
+  { label: "Any deals", value: 0 },
+  { label: "10%+ off", value: 10 },
+  { label: "20%+ off", value: 20 },
+  { label: "50%+ off", value: 50 },
 ];
 
 export function SalonFiltersPanel({
@@ -110,6 +118,24 @@ export function SalonFiltersPanel({
         </div>
       </div>
 
+      <div className="space-y-3 pb-4 border-b border-slate-100">
+        <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Deals & Discount %</p>
+        <div className="space-y-2">
+          {DISCOUNT_OPTIONS.map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2.5 cursor-pointer text-sm text-zinc-700 hover:text-zinc-900">
+              <input
+                type="radio"
+                name="discount"
+                checked={filters.minDiscount === opt.value}
+                onChange={() => set({ minDiscount: opt.value })}
+                className="accent-brand"
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
       {categories.length > 0 && (
         <div className="space-y-3 pb-4 border-b border-slate-100">
           <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Salon type</p>
@@ -170,6 +196,7 @@ export const defaultSalonFilters: SalonFilters = {
   verifiedOnly: false,
   openNowOnly: false,
   selectedCategories: [],
+  minDiscount: 0,
 };
 
 export function countActiveFilters(filters: SalonFilters): number {
@@ -178,6 +205,7 @@ export function countActiveFilters(filters: SalonFilters): number {
   if (filters.maxPrice != null) n++;
   if (filters.verifiedOnly) n++;
   if (filters.openNowOnly) n++;
+  if (filters.minDiscount > 0) n++;
   n += filters.selectedCategories.length;
   return n;
 }

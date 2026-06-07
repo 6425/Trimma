@@ -80,6 +80,71 @@ export async function fetchSalonBookingsPage() {
   return { success: true as const, ...result.data };
 }
 
+export async function fetchSalonCalendarBookings(startDateStr: string, endDateStr: string) {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    // Note: To join users via customer_email foreign key in Supabase, we can use users!bookings_customer_email_fkey(...) if needed,
+    // but users(full_name) usually works if there's only one FK to users. Let's select what we need.
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(`
+        id, 
+        booking_date, 
+        booking_time, 
+        status, 
+        customer_email,
+        services (name)
+      `)
+      .eq("salon_id", ctx.salonId)
+      .gte("booking_date", startDateStr)
+      .lte("booking_date", endDateStr)
+      .order("booking_date", { ascending: true })
+      .order("booking_time", { ascending: true });
+      
+    if (error) throw new Error(error.message);
+
+    const bookingsList = data || [];
+    
+    // Fetch users separately
+    const emails = [...new Set(bookingsList.map(b => b.customer_email).filter(Boolean))];
+    let usersMap: Record<string, string> = {};
+    if (emails.length > 0) {
+      const { data: usersData } = await supabase
+        .from("users")
+        .select("email, full_name")
+        .in("email", emails);
+        
+      if (usersData) {
+        usersData.forEach(u => {
+          usersMap[u.email] = u.full_name || u.email;
+        });
+      }
+    }
+
+    // Map the returned data to a cleaner format
+    const mappedBookings = bookingsList.map((b: any) => {
+      let clientName = b.customer_email ? (usersMap[b.customer_email] || b.customer_email) : "Guest";
+      
+      let serviceName = "General Booking";
+      if (b.services) {
+        serviceName = Array.isArray(b.services) ? b.services[0]?.name : b.services.name;
+      }
+
+      return {
+        id: b.id,
+        booking_date: b.booking_date,
+        booking_time: b.booking_time,
+        status: b.status,
+        clientName: clientName || b.customer_email || "Guest",
+        serviceName: serviceName || "General Booking"
+      };
+    });
+
+    return { salon: ctx.salon, bookings: mappedBookings };
+  });
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return { success: true as const, ...result.data };
+}
+
 export async function fetchSalonFinancePage() {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data, error } = await supabase

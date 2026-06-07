@@ -1,35 +1,147 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Filter, CalendarIcon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Plus, Filter, CalendarIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { addDays, subDays, format, startOfWeek, isSameDay } from "date-fns";
+import { addDays, subDays, format, startOfWeek, isSameDay, endOfWeek } from "date-fns";
+import { fetchSalonCalendarBookings } from "@/app/actions/salon-dashboard-data";
+import { AddBookingModal } from "../../../components/modals/AddBookingModal";
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [salon, setSalon] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{date: string, time: string} | null>(null);
   
   const handlePreviousWeek = () => setCurrentDate(prev => subDays(prev, 7));
   const handleNextWeek = () => setCurrentDate(prev => addDays(prev, 7));
 
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
 
-  const hours = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"];
-  
+  useEffect(() => {
+    async function loadBookings() {
+      setIsLoading(true);
+      const startStr = format(startDate, "yyyy-MM-dd");
+      const endStr = format(endDate, "yyyy-MM-dd");
+      
+      const res = await fetchSalonCalendarBookings(startStr, endStr);
+      if (res.success && res.bookings) {
+        setBookings(res.bookings);
+        setSalon(res.salon);
+      } else {
+        setBookings([]);
+      }
+      setIsLoading(false);
+    }
+    loadBookings();
+  }, [currentDate]);
+
+  const loadBookingsRef = async () => {
+      setIsLoading(true);
+      const startStr = format(startDate, "yyyy-MM-dd");
+      const endStr = format(endDate, "yyyy-MM-dd");
+      
+      const res = await fetchSalonCalendarBookings(startStr, endStr);
+      if (res.success && res.bookings) {
+        setBookings(res.bookings);
+        setSalon(res.salon);
+      }
+      setIsLoading(false);
+  };
+
   const days = Array.from({ length: 7 }).map((_, i) => {
     const date = addDays(startDate, i);
     return {
       name: format(date, "EEE"),
       date: format(date, "dd"),
+      fullDate: format(date, "yyyy-MM-dd"),
       isToday: isSameDay(date, new Date())
     };
   });
 
-  const mockBookings = [
-    { hour: "10:00 AM", day: "19", client: "Amara Perera", service: "Premium Haircut", color: "bg-rose-50 border-rose-200 text-brand" },
-    { hour: "01:00 PM", day: "19", client: "Kasun Silva", service: "Beard Grooming", color: "bg-amber-50 border-amber-200 text-amber-700" },
-    { hour: "03:00 PM", day: "21", client: "Nisansala De Silva", service: "Nail Art Studio", color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
-    { hour: "05:00 PM", day: "19", client: "Dilan Fernando", service: "Hair Coloring", color: "bg-purple-50 border-purple-200 text-purple-700" }
-  ];
+  // We map the real bookings into a fast-lookup format for the grid.
+  // The grid expects `hour` as "10:00 AM" and `day` as "19" (date string)
+  // Our db format: booking_time "10:00:00", booking_date "2026-06-19"
+  
+  const formattedBookings = bookings.map(b => {
+    // Parse time and snap to the top of the hour for grid matching
+    let hourStr = "12:00 PM";
+    try {
+      const [h] = b.booking_time.split(":");
+      const d = new Date();
+      d.setHours(parseInt(h, 10), 0, 0, 0); // Snap minutes to 0
+      hourStr = format(d, "hh:mm a");
+    } catch (e) {}
+
+    // Parse date exactly
+    let fullDateStr = "";
+    try {
+      const parts = b.booking_date.split("-");
+      if (parts.length === 3) {
+        fullDateStr = `${parts[0]}-${parts[1]}-${parts[2]}`;
+      } else {
+        fullDateStr = format(new Date(b.booking_date), "yyyy-MM-dd");
+      }
+    } catch (e) {}
+
+    let color = "bg-rose-50 border-rose-200 text-brand";
+    if (b.status === "confirmed") color = "bg-emerald-50 border-emerald-200 text-emerald-700";
+    else if (b.status === "completed") color = "bg-blue-50 border-blue-200 text-blue-700";
+    else if (b.status === "cancelled") color = "bg-zinc-100 border-zinc-200 text-zinc-500 line-through opacity-70";
+
+    return {
+      hour: hourStr,
+      fullDate: fullDateStr,
+      client: b.clientName,
+      service: b.serviceName,
+      color: color
+    };
+  });
+
+  // Calculate dynamic hours based on working hours
+  let minHour = 9; // Default 9 AM
+  let maxHour = 18; // Default 6 PM
+  
+  if (salon?.business_info_extended?.working_hours) {
+    try {
+      const scheduleStr = salon.business_info_extended.working_hours;
+      const schedule = typeof scheduleStr === "string" ? JSON.parse(scheduleStr) : scheduleStr;
+      
+      let earliest = 24;
+      let latest = 0;
+      
+      for (const day of Object.values<any>(schedule)) {
+        if (day.isWorking && day.start && day.end) {
+          const [startH] = day.start.split(":");
+          const [endH] = day.end.split(":");
+          const s = parseInt(startH, 10);
+          const e = parseInt(endH, 10);
+          
+          if (!isNaN(s) && s < earliest) earliest = s;
+          if (!isNaN(e) && e > latest) latest = e;
+        }
+      }
+      
+      if (earliest < 24) minHour = earliest;
+      if (latest > 0) maxHour = latest;
+    } catch (e) {
+      console.error("Failed to parse schedule", e);
+    }
+  }
+
+  const hours = [];
+  for (let i = minHour; i <= maxHour; i++) {
+    const d = new Date();
+    d.setHours(i, 0, 0, 0);
+    hours.push({
+      label: format(d, "hh:mm a"),
+      timeStr: format(d, "HH:mm:ss") // Used for booking creation
+    });
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -49,7 +161,13 @@ export default function CalendarPage() {
           <Button variant="outline" className="h-10 rounded-xl font-bold text-xs flex items-center gap-1.5 border-zinc-200">
             <Filter className="w-3.5 h-3.5" /> Filter Stylists
           </Button>
-          <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
+          <Button 
+            onClick={() => {
+              setSelectedSlot({ date: format(new Date(), "yyyy-MM-dd"), time: "09:00:00" });
+              setIsModalOpen(true);
+            }}
+            className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20"
+          >
             <Plus className="w-3.5 h-3.5" /> Book Appointment
           </Button>
         </div>
@@ -60,7 +178,10 @@ export default function CalendarPage() {
         {/* Navigation Bar */}
         <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="text-base font-extrabold text-[#1A1C29]">{format(currentDate, "MMMM yyyy")}</h2>
+            <h2 className="text-base font-extrabold text-[#1A1C29]">
+              {format(currentDate, "MMMM yyyy")}
+              {isLoading && <Loader2 className="inline-block ml-2 w-4 h-4 animate-spin text-brand" />}
+            </h2>
             <div className="flex gap-1">
               <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200" onClick={handlePreviousWeek}><ChevronLeft className="w-4 h-4" /></Button>
               <Button variant="outline" size="icon" className="w-8 h-8 rounded-lg border-zinc-200" onClick={handleNextWeek}><ChevronRight className="w-4 h-4" /></Button>
@@ -85,24 +206,43 @@ export default function CalendarPage() {
 
         {/* Time Grid Rows */}
         <div className="divide-y divide-zinc-100">
-          {hours.map((hour, idx) => (
+          {hours.map((hourObj, idx) => (
             <div key={idx} className="grid grid-cols-8 divide-x divide-zinc-100 min-h-[64px]">
               {/* Hour Column */}
               <div className="p-4 text-[10px] font-black text-zinc-400 flex items-center justify-center bg-zinc-50/20">
-                {hour}
+                {hourObj.label}
               </div>
               {/* Day slots */}
               {days.map((day, dIdx) => {
-                const booking = mockBookings.find(b => b.hour === hour && b.day === day.date);
+                const cellBookings = formattedBookings.filter(b => b.hour === hourObj.label && b.fullDate === day.fullDate);
                 return (
-                  <div key={dIdx} className={`p-1.5 relative ${day.isToday ? "bg-rose-50/5" : ""} group min-h-[64px]`}>
-                    {booking ? (
-                      <div className={`p-2.5 rounded-xl border h-full text-left flex flex-col justify-center transition-all hover:shadow-sm ${booking.color}`}>
-                        <div className="text-[10px] font-black leading-tight truncate">{booking.client}</div>
-                        <div className="text-[9px] font-semibold opacity-80 mt-0.5 truncate">{booking.service}</div>
-                      </div>
+                  <div key={dIdx} className={`p-1.5 relative ${day.isToday ? "bg-rose-50/5" : ""} group min-h-[64px] flex flex-col gap-1`}>
+                    {cellBookings.length > 0 ? (
+                      <>
+                        {cellBookings.map((booking, bIdx) => (
+                          <div key={bIdx} className={`p-2.5 rounded-xl border w-full text-left flex flex-col justify-center transition-all hover:shadow-sm ${booking.color}`}>
+                            <div className="text-[10px] font-black leading-tight truncate">{booking.client}</div>
+                            <div className="text-[9px] font-semibold opacity-80 mt-0.5 truncate">{booking.service}</div>
+                          </div>
+                        ))}
+                        <div 
+                          onClick={() => {
+                            setSelectedSlot({ date: day.fullDate, time: hourObj.timeStr });
+                            setIsModalOpen(true);
+                          }}
+                          className="w-full h-6 rounded-lg hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold text-zinc-400 mt-1 border border-dashed border-zinc-200"
+                        >
+                          +
+                        </div>
+                      </>
                     ) : (
-                      <div className="w-full h-full rounded-xl hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold text-zinc-400">
+                      <div 
+                        onClick={() => {
+                          setSelectedSlot({ date: day.fullDate, time: hourObj.timeStr });
+                          setIsModalOpen(true);
+                        }}
+                        className="w-full h-full rounded-xl hover:bg-slate-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] font-bold text-zinc-400"
+                      >
                         + Add Slot
                       </div>
                     )}
@@ -113,6 +253,17 @@ export default function CalendarPage() {
           ))}
         </div>
       </div>
+
+      <AddBookingModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedSlot={selectedSlot}
+        salonId={salon?.id}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          loadBookingsRef();
+        }}
+      />
     </div>
   );
 }

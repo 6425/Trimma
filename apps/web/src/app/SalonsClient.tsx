@@ -7,13 +7,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SalonListRow } from "../../components/marketplace/SalonListRow";
+import { SalonListRow } from "../components/marketplace/SalonListRow";
 import {
   SalonFiltersPanel,
   countActiveFilters,
   defaultSalonFilters,
   type SalonFilters,
-} from "../../components/marketplace/SalonFiltersPanel";
+} from "../components/marketplace/SalonFiltersPanel";
 
 interface Salon {
   id: string;
@@ -92,7 +92,12 @@ export default function SalonsClient({ categories }: Props) {
         if (reset) {
           setSearchResults(data.salons || []);
         } else {
-          setSearchResults((prev) => [...prev, ...(data.salons || [])]);
+          setSearchResults((prev) => {
+            const newSalons = data.salons || [];
+            const existingIds = new Set(prev.map((s) => s.id));
+            const uniqueNewSalons = newSalons.filter((s) => !existingIds.has(s.id));
+            return [...prev, ...uniqueNewSalons];
+          });
         }
         setHasMore(data.hasMore);
       } catch (err) {
@@ -128,7 +133,7 @@ export default function SalonsClient({ categories }: Props) {
     if (selectedLocation) params.set("l", selectedLocation);
     if (categoryParam) params.set("category", categoryParam);
     setPage(0);
-    router.push(`/salons?${params.toString()}`);
+    router.push(`/?${params.toString()}`);
   };
 
   const applyClientFilters = useCallback(
@@ -228,7 +233,10 @@ export default function SalonsClient({ categories }: Props) {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(0);
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 placeholder="Haircut, color, spa..."
                 className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold"
@@ -238,7 +246,10 @@ export default function SalonsClient({ categories }: Props) {
               <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
               <select
                 value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
+                onChange={(e) => {
+                  setSelectedLocation(e.target.value);
+                  setPage(0);
+                }}
                 className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
               >
                 <option value="">Any Location</option>
@@ -285,7 +296,7 @@ export default function SalonsClient({ categories }: Props) {
       <div className="container mx-auto px-4 max-w-7xl py-6">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left filter sidebar — desktop */}
-          <aside className="hidden lg:block w-[280px] shrink-0">
+          <aside className="hidden lg:block w-[280px] shrink-0 sticky bottom-4 self-end max-h-[calc(100vh-2rem)] overflow-y-auto custom-scrollbar rounded-2xl">
             <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
               <SalonFiltersPanel
                 filters={filters}
@@ -355,6 +366,11 @@ export default function SalonsClient({ categories }: Props) {
                 {filters.minRating > 0 && (
                   <Badge variant="secondary" className="bg-white border border-slate-200 text-zinc-700 font-semibold">
                     {filters.minRating}+ rating
+                  </Badge>
+                )}
+                {filters.minDiscount > 0 && (
+                  <Badge variant="secondary" className="bg-white border border-slate-200 text-zinc-700 font-semibold">
+                    {filters.minDiscount}%+ off
                   </Badge>
                 )}
                 {filters.maxPrice != null && (

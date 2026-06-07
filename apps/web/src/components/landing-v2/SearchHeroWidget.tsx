@@ -48,7 +48,7 @@ export function SearchHeroWidget() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/salons?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`);
+    router.push(`/?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`);
   };
 
   return (
@@ -80,7 +80,7 @@ export function SearchHeroWidget() {
 
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
               <Link
-                href="/salons"
+                href="/"
                 className="bg-[#F5B700] hover:bg-[#E6AC00] active:bg-[#CC9B00] text-black font-bold min-h-[56px] h-14 px-8 rounded-xl transition-colors text-lg flex items-center justify-center shadow-lg hover:scale-105 transform duration-200"
               >
                 Book Now
@@ -153,7 +153,7 @@ export function SearchHeroWidget() {
               const Icon = getCategoryIcon(cat.slug);
               return (
                 <Link 
-                  href={`/salons?q=${encodeURIComponent(cat.name)}`} 
+                  href={`/?q=${encodeURIComponent(cat.name)}`} 
                   key={cat.id} 
                   className="group flex flex-col items-center gap-2 cursor-pointer transition-all duration-300"
                 >

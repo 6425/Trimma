@@ -1,66 +1,32 @@
-"use client";
+// Server Component — no "use client" directive
+// Data is fetched on the server and HTML is sent to the browser pre-populated.
+// This eliminates the client-side loading spinner entirely.
 
-import dynamic from "next/dynamic";
-import { SearchHeroWidget } from "../components/landing-v2/SearchHeroWidget";
+import { Suspense } from "react";
+import { createServerSupabaseClient } from "@/config/supabase-server";
+import SalonsClient from "./SalonsClient";
 
-const OffersSection = dynamic(
-  () => import("../components/landing-v2/OffersSection").then((m) => ({ default: m.OffersSection })),
-  { loading: () => <SectionSkeleton /> }
-);
-const BrowseByService = dynamic(
-  () => import("../components/landing-v2/BrowseByService").then((m) => ({ default: m.BrowseByService })),
-  { loading: () => <SectionSkeleton /> }
-);
-import { TrendingLocations } from "../components/landing-v2/TrendingLocations";
-const TopRatedSalons = dynamic(
-  () => import("../components/landing-v2/TopRatedSalons").then((m) => ({ default: m.TopRatedSalons })),
-  { loading: () => <SectionSkeleton /> }
-);
-const TrustBadges = dynamic(
-  () => import("../components/landing-v2/TrustBadges").then((m) => ({ default: m.TrustBadges })),
-  { loading: () => <SectionSkeleton height="h-24" /> }
-);
-const B2BCTA = dynamic(
-  () => import("../components/landing-v2/B2BCTA").then((m) => ({ default: m.B2BCTA })),
-  { loading: () => <SectionSkeleton height="h-40" /> }
-);
-const DealsDiscountSection = dynamic(
-  () =>
-    import("../components/landing-v2/DealsDiscountSection").then((m) => ({
-      default: m.DealsDiscountSection,
-    })),
-  { loading: () => <SectionSkeleton /> }
-);
-const WhyTrimmaSection = dynamic(
-  () =>
-    import("../components/marketplace/MarketplaceSections").then((m) => ({
-      default: m.WhyTrimmaSection,
-    })),
-  { loading: () => <SectionSkeleton /> }
-);
+export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
 
-function SectionSkeleton({ height = "h-48" }: { height?: string }) {
+export default async function SalonsDirectoryPage() {
+  const supabase = createServerSupabaseClient();
+
+  // Fetch categories on the server; salon list loads via /api/salons/search on the client
+  const categoriesResult = await supabase
+    .from("categories")
+    .select("slug, name, icon")
+    .order("name");
+
+  const categories = categoriesResult.data || [];
+
   return (
-    <div className={`container mx-auto px-4 max-w-7xl py-10`}>
-      <div className={`${height} rounded-2xl bg-zinc-100 animate-pulse`} />
-    </div>
-  );
-}
-
-export default function LandingPage() {
-  return (
-    <div className="flex flex-col min-h-screen bg-zinc-50">
-      <SearchHeroWidget />
-      <OffersSection />
-      <BrowseByService />
-      <TrendingLocations />
-      <TopRatedSalons />
-      <TrustBadges />
-      <B2BCTA />
-      <DealsDiscountSection />
-      <div className="container mx-auto px-4 max-w-7xl pt-16 pb-16">
-        <WhyTrimmaSection />
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-pink"></div>
+        <p className="text-zinc-500 font-bold text-sm">Loading Salons...</p>
       </div>
-    </div>
+    }>
+      <SalonsClient salons={[]} categories={categories} />
+    </Suspense>
   );
 }

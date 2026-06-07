@@ -14,7 +14,8 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/agent") ||
-    pathname?.startsWith("/customer") ||
+    pathname === "/customer" ||
+    pathname?.startsWith("/customer/") ||
     pathname?.startsWith("/auth/") ||
     pathname === "/login" ||
     pathname === "/signup" ||
@@ -26,7 +27,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
       {isCheckout ? (
         <main className="min-h-screen">{children}</main>
       ) : usesDashboardShell ? (
-        pathname?.startsWith("/customer") ? (
+        pathname === "/customer" || pathname?.startsWith("/customer/") ? (
           <SalonFavoritesProvider>
             <SavedStylesProvider>
               <main className="min-h-screen">{children}</main>

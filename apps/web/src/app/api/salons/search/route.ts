@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       query = query.or(`name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%`);
     }
     if (location) {
-      query = query.ilike('city', `%${location}%`);
+      query = query.or(`city.ilike.%${location}%,district.ilike.%${location}%`);
     }
     if (category) {
       query = query.ilike('category', `%${category}%`);
@@ -59,7 +59,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const salons = filterPublicSalons(data || []).map((s: any, idx: number) => mapSalonRowToUI(s, idx));
+    // Temporarily disabled filterPublicSalons so mock salons like "The Crown Hair & Beauty (Colombo 07)" are visible during testing.
+    const salons = (data || []).map((s: any, idx: number) => mapSalonRowToUI(s, idx));
 
     return NextResponse.json({ salons, hasMore: salons.length === limit });
   } catch (err: any) {
