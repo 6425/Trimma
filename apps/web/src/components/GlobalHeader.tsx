@@ -242,9 +242,7 @@ export default function GlobalHeader() {
                   </div>
                 )}
               </div>
-              <Link href="/pricing" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors">
-                Pricing
-              </Link>
+
               <Link
                 href="/styles"
                 className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
@@ -437,14 +435,7 @@ export default function GlobalHeader() {
                 ))}
               </div>
             )}
-            <Link
-              href="/pricing"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
-            >
-              <CreditCard className="w-4 h-4 shrink-0" />
-              Pricing
-            </Link>
+
             <Link
               href="/styles"
               onClick={() => setMobileMenuOpen(false)}
