@@ -69,23 +69,25 @@ export function BankInfoForm({
   useEffect(() => {
     if (!salon) return;
     const newExt = salon.bank_info || {};
-    setAccName(newExt.account_holder_name || "");
-    setBankName(newExt.bank_name || "");
-    setBranchName(newExt.branch_name || "");
-    setAccNumber(newExt.account_number || "");
-    setAccType(newExt.account_type || "");
-    setPaymentMethod(newExt.preferred_payment_method || "");
-    setSettlementFreq(newExt.settlement_frequency || "Weekly");
-    setSettlementEmail(newExt.settlement_email || salon.email || "");
+    queueMicrotask(() => {
+      setAccName(newExt.account_holder_name || "");
+      setBankName(newExt.bank_name || "");
+      setBranchName(newExt.branch_name || "");
+      setAccNumber(newExt.account_number || "");
+      setAccType(newExt.account_type || "");
+      setPaymentMethod(newExt.preferred_payment_method || "");
+      setSettlementFreq(newExt.settlement_frequency || "Weekly");
+      setSettlementEmail(newExt.settlement_email || salon.email || "");
 
-    setTinNumber(newExt.tin_number || "");
-    setVatRegistered(newExt.vat_registered || "No");
-    setVatNumber(newExt.vat_number || "");
+      setTinNumber(newExt.tin_number || "");
+      setVatRegistered(newExt.vat_registered || "No");
+      setVatNumber(newExt.vat_number || "");
 
-    setVerificationDocUrl(newExt.verification_document_url || "");
-    setNicFrontUrl(newExt.owner_nic_front_url || "");
-    setNicBackUrl(newExt.owner_nic_back_url || "");
-    setBizRegUrl(newExt.business_registration_url || "");
+      setVerificationDocUrl(newExt.verification_document_url || "");
+      setNicFrontUrl(newExt.owner_nic_front_url || "");
+      setNicBackUrl(newExt.owner_nic_back_url || "");
+      setBizRegUrl(newExt.business_registration_url || "");
+    });
   }, [salon]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setFile: (f: File | null) => void, setUrl: (u: string) => void) => {

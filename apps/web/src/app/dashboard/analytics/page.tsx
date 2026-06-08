@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { BarChart3, TrendingUp, Award, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSalonDashboardPage } from "@/app/actions/salon-dashboard-data";
@@ -8,95 +8,92 @@ import { getBookingAmount, formatLkr, groupBookingsByDay } from "@/lib/dashboard
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [stylistSales, setStylistSales] = useState<any[]>([]);
   const [stats, setStats] = useState({ revenue: 0, bookings: 0, aov: 0, utilization: 0 });
   const [timeframe, setTimeframe] = useState("Last 30 Days");
   const [offsetWeeks, setOffsetWeeks] = useState(0);
   const [allBookings, setAllBookings] = useState<any[]>([]);
   const [allStaff, setAllStaff] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (allBookings.length > 0) {
-      const daily = groupBookingsByDay(allBookings, 7, offsetWeeks);
-      
-      const maxRev = Math.max(...daily.map(m => m.revenue), 1);
-      const mappedChartData = daily.map(m => {
-        const percentage = (m.revenue / maxRev) * 100;
-        let heightClass = "h-16";
-        if (percentage > 80) heightClass = "h-60";
-        else if (percentage > 60) heightClass = "h-48";
-        else if (percentage > 40) heightClass = "h-40";
-        else if (percentage > 20) heightClass = "h-32";
-        else heightClass = "h-24";
-        
+  const chartData = useMemo(() => {
+    if (allBookings.length === 0) return [];
+
+    const daily = groupBookingsByDay(allBookings, 7, offsetWeeks);
+    const maxRev = Math.max(...daily.map((m) => m.revenue), 1);
+
+    return daily.map((m) => {
+      const percentage = (m.revenue / maxRev) * 100;
+      let heightClass = "h-16";
+      if (percentage > 80) heightClass = "h-60";
+      else if (percentage > 60) heightClass = "h-48";
+      else if (percentage > 40) heightClass = "h-40";
+      else if (percentage > 20) heightClass = "h-32";
+      else heightClass = "h-24";
+
+      return {
+        label: m.label,
+        revenue: m.revenue,
+        height: heightClass,
+        bookings: m.bookings,
+      };
+    });
+  }, [allBookings, offsetWeeks]);
+
+  const stylistSales = useMemo(() => {
+    if (allBookings.length === 0) return [];
+
+    const endDateObj = new Date();
+    endDateObj.setHours(0, 0, 0, 0);
+    endDateObj.setDate(endDateObj.getDate() - offsetWeeks * 7);
+
+    const startDateObj = new Date(endDateObj);
+    startDateObj.setDate(startDateObj.getDate() - 6);
+
+    const startMs = startDateObj.getTime();
+    const endMs = endDateObj.getTime() + 86400000;
+
+    const timeframeBookings = allBookings.filter((b) => {
+      if (!b.booking_date) return false;
+      const d = new Date(b.booking_date).getTime();
+      return d >= startMs && d < endMs;
+    });
+
+    const stylistMap = new Map<string, { name: string; bookings: number; total: number; utilization: number }>();
+
+    if (allStaff.length > 0) {
+      for (const s of allStaff) {
+        stylistMap.set(s.id, { name: s.name, bookings: 0, total: 0, utilization: 0 });
+      }
+    }
+
+    for (const b of timeframeBookings) {
+      if (b.status === "cancelled") continue;
+      const staffId = (b as { staff_id?: string }).staff_id;
+      if (!staffId) continue;
+
+      const current = stylistMap.get(staffId) || { name: `Staff ${staffId}`, bookings: 0, total: 0, utilization: 0 };
+      current.bookings += 1;
+      current.total += Number(b.amount || 0);
+      stylistMap.set(staffId, current);
+    }
+
+    return [...stylistMap.values()]
+      .sort((a, b) => b.bookings - a.bookings)
+      .slice(0, 5)
+      .map((s) => {
+        const availableSlotsPerStaffWeekly = 7 * 8;
+        const utilPercent =
+          availableSlotsPerStaffWeekly > 0
+            ? Math.round((s.bookings / availableSlotsPerStaffWeekly) * 100)
+            : 0;
         return {
-          label: m.label,
-          revenue: m.revenue,
-          height: heightClass,
-          bookings: m.bookings
+          name: s.name,
+          role: "Operation Staff",
+          bookings: s.bookings,
+          utilization: utilPercent,
+          total: `LKR ${formatLkr(s.total)}`,
         };
       });
-      setChartData(mappedChartData);
-
-      // Determine the start and end dates for the currently selected week (7 days)
-      const endDateObj = new Date();
-      endDateObj.setHours(0, 0, 0, 0);
-      endDateObj.setDate(endDateObj.getDate() - (offsetWeeks * 7));
-      
-      const startDateObj = new Date(endDateObj);
-      startDateObj.setDate(startDateObj.getDate() - 6); // 7 day window including end date
-
-      const startMs = startDateObj.getTime();
-      const endMs = endDateObj.getTime() + 86400000; // include the whole end day
-
-      // Filter bookings for the selected 7-day timeframe
-      const timeframeBookings = allBookings.filter(b => {
-        if (!b.booking_date) return false;
-        const d = new Date(b.booking_date).getTime();
-        return d >= startMs && d < endMs;
-      });
-
-      // Aggregate Stylist Sales (All Operation Staff) for this week
-      const stylistMap = new Map<string, { name: string, bookings: number, total: number, utilization: number }>();
-      
-      // Initialize with all operation staff first so even those with 0 bookings show up
-      if (allStaff.length > 0) {
-        for (const s of allStaff) {
-          stylistMap.set(s.id, { name: s.name, bookings: 0, total: 0, utilization: 0 });
-        }
-      }
-
-      for (const b of timeframeBookings) {
-        if (b.status === "cancelled") continue;
-        const staffId = (b as any).staff_id;
-        if (!staffId) continue; // Skip unassigned
-        
-        const current = stylistMap.get(staffId) || { name: `Staff ${staffId}`, bookings: 0, total: 0, utilization: 0 };
-        current.bookings += 1;
-        current.total += Number(b.amount || 0);
-        stylistMap.set(staffId, current);
-      }
-
-      const sortedStylists = [...stylistMap.values()]
-        .sort((a, b) => b.bookings - a.bookings)
-        .slice(0, 5) // Show top 5
-        .map(s => {
-          const availableSlotsPerStaffWeekly = 7 * 8; // approx 56 slots a week
-          const utilPercent = availableSlotsPerStaffWeekly > 0 ? Math.round((s.bookings / availableSlotsPerStaffWeekly) * 100) : 0;
-          return {
-            name: s.name,
-            role: "Operation Staff",
-            bookings: s.bookings,
-            utilization: utilPercent,
-            total: `LKR ${formatLkr(s.total)}`
-          };
-        });
-      
-      setStylistSales(sortedStylists);
-
-    }
-  }, [offsetWeeks, allBookings, allStaff]);
+  }, [allBookings, allStaff, offsetWeeks]);
 
   useEffect(() => {
     void fetchSalonDashboardPage().then((res) => {

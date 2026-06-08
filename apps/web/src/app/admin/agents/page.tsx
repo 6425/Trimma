@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Users, Search, Percent, Trash2, Phone, Loader2, Edit, CheckCircle2, UserCheck, MapPin, TrendingUp, Plus, Award, DollarSign, ClipboardList, Check, X, Lock, AlertTriangle, History, Landmark, CreditCard, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +52,10 @@ const getDeepestSelectedTerritories = (
 };
 
 export default function AdminAgents() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     'dashboard' | 'directory' | 'territories' | 'commissions' | 'ledger' | 'logs'
-  >('dashboard');
+  >(() => (searchParams.get("tab") === "commissions" ? "commissions" : "dashboard"));
 
   const [subscriptionRates, setSubscriptionRates] = useState({ platform: 80, agent: 20 });
   const [activeSubscriptionId, setActiveSubscriptionId] = useState<string | null>(null);
@@ -227,12 +229,6 @@ export default function AdminAgents() {
   useEffect(() => {
     void Promise.resolve().then(() => fetchInitialData());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const tab = new URLSearchParams(window.location.search).get("tab");
-    if (tab === "commissions") setActiveTab("commissions");
   }, []);
 
   useEffect(() => {

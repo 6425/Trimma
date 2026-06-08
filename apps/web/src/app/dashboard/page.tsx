@@ -83,19 +83,18 @@ export default function Dashboard() {
         const cached = sessionStorage.getItem("dashboardCache");
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (!parsed.allStaff) {
-             // Cache is stale (missing allStaff), clear and fetch fresh
-             sessionStorage.removeItem("dashboardCache");
-             return fetchDashboardStats(true);
+          if (parsed.allStaff) {
+            setSalonName(parsed.salonName || "your salon");
+            setStats(parsed.stats);
+            setRecentBookings(parsed.recentBookings || []);
+            setAllStaff(parsed.allStaff || []);
+            setMonthlyPoints(parsed.monthlyPoints || []);
+            setActivity(parsed.activity || []);
+            setLoading(false);
+            return;
           }
-          setSalonName(parsed.salonName || "your salon");
-          setStats(parsed.stats);
-          setRecentBookings(parsed.recentBookings || []);
-          setAllStaff(parsed.allStaff || []);
-          setMonthlyPoints(parsed.monthlyPoints || []);
-          setActivity(parsed.activity || []);
-          setLoading(false);
-          return;
+          // Cache is stale (missing allStaff) — clear and fall through to fetch fresh.
+          sessionStorage.removeItem("dashboardCache");
         }
       }
 
