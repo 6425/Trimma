@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Loader2, CalendarIcon, Clock, User, Phone, Mail, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchSalonServicesList, addManualBooking } from "@/app/actions/calendar-actions";
+import { fetchSalonServicesList, fetchSalonStaffList, addManualBooking } from "@/app/actions/calendar-actions";
 
 export function AddBookingModal({ 
   isOpen, 
@@ -19,6 +19,7 @@ export function AddBookingModal({
   onSuccess: () => void;
 }) {
   const [services, setServices] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -28,6 +29,7 @@ export function AddBookingModal({
     customer_email: "",
     customer_phone: "",
     service_id: "",
+    staff_id: "",
     amount: 0,
     booking_date: "",
     booking_time: ""
@@ -42,20 +44,29 @@ export function AddBookingModal({
           booking_time: selectedSlot?.time || ""
         }));
       }, 0);
-      loadServices();
+      loadData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, selectedSlot]);
 
-  async function loadServices() {
+  async function loadData() {
     setIsLoading(true);
-    const res = await fetchSalonServicesList();
-    if (res.success && res.services) {
-      setServices(res.services);
-      if (res.services.length > 0 && !formData.service_id) {
-        handleServiceChange(res.services[0].id, res.services);
+    const [servicesRes, staffRes] = await Promise.all([
+      fetchSalonServicesList(),
+      fetchSalonStaffList()
+    ]);
+
+    if (servicesRes.success && servicesRes.services) {
+      setServices(servicesRes.services);
+      if (servicesRes.services.length > 0 && !formData.service_id) {
+        handleServiceChange(servicesRes.services[0].id, servicesRes.services);
       }
     }
+
+    if (staffRes.success && staffRes.staff) {
+      setStaffList(staffRes.staff);
+    }
+
     setIsLoading(false);
   }
 
@@ -83,6 +94,7 @@ export function AddBookingModal({
           customer_email: "",
           customer_phone: "",
           service_id: services.length > 0 ? services[0].id : "",
+          staff_id: "",
           amount: 0,
           booking_date: "",
           booking_time: ""
@@ -208,6 +220,22 @@ export function AddBookingModal({
                   <option value="" disabled>Select a service</option>
                   {services.map(s => (
                     <option key={s.id} value={s.id}>{s.name} (LKR {s.price})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <User className="w-3 h-3" /> Professional (Optional)
+                </label>
+                <select 
+                  value={formData.staff_id}
+                  onChange={e => setFormData({...formData, staff_id: e.target.value})}
+                  className="w-full h-10 px-3 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                >
+                  <option value="">Anyone Available</option>
+                  {staffList.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} {s.role ? `(${s.role})` : ""}</option>
                   ))}
                 </select>
               </div>

@@ -230,7 +230,7 @@ function DashboardContent() {
                           Deposit Paid (Rs. {formatLkr(paid)})
                         </Badge>
                         <span className="text-[9px] text-zinc-500 font-medium text-right">
-                          Balance (Rs. {formatLkr(balance)}) paid at salon
+                          Balance (Rs. {formatLkr(balance)}) to be paid at salon
                         </span>
                       </>
                     ) : (

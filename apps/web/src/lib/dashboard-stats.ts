@@ -33,8 +33,6 @@ export function getBookingBalance(booking: {
   total_reservation_fee?: number | string | null;
   salon_upfront_amount?: number | string | null;
 }): number {
-  const upfront = Number(booking.salon_upfront_amount ?? 0);
-  if (upfront > 0) return upfront;
   const total = Number(booking.amount ?? 0);
   const paid = Number(booking.total_reservation_fee ?? 0);
   if (paid > 0 && total > paid) return total - paid;

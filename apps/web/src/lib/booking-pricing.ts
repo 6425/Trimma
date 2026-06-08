@@ -19,21 +19,11 @@ export function calculateCommissionSplit(
   rates: BookingCommissionRates
 ) {
   const reservationFee = calculateReservationFee(serviceTotal);
-  const splitTotal = rates.platform + rates.salon + rates.payhere;
-
-  if (splitTotal <= 0) {
-    return {
-      reservationFee,
-      platformCommission: 0,
-      salonUpfront: 0,
-      payhereFee: 0,
-    };
-  }
 
   return {
     reservationFee,
-    platformCommission: reservationFee * (rates.platform / splitTotal),
-    salonUpfront: reservationFee * (rates.salon / splitTotal),
-    payhereFee: reservationFee * (rates.payhere / splitTotal),
+    platformCommission: serviceTotal * (rates.platform / 100),
+    salonUpfront: serviceTotal * (rates.salon / 100),
+    payhereFee: reservationFee * (rates.payhere / 100),
   };
 }

@@ -10,6 +10,7 @@ export async function addManualBooking(data: {
   booking_date: string;
   booking_time: string;
   amount: number;
+  staff_id?: string;
 }) {
   const result = await withSalonDb(async (supabase, ctx) => {
     // 1. Ensure the user exists or create a dummy user entry
@@ -69,13 +70,22 @@ export async function addManualBooking(data: {
         booking_time: data.booking_time,
         amount: data.amount,
         status: "confirmed",
-        payment_status: "unpaid"
+        payment_status: "unpaid",
+        staff_id: data.staff_id || null
       })
       .select()
       .single();
 
     if (bookingError) {
       throw new Error(bookingError.message);
+    }
+
+    if (data.staff_id) {
+      await supabase.from("booking_staff").insert({
+        booking_id: bookingData.id,
+        staff_id: data.staff_id,
+        service_id: data.service_id
+      });
     }
 
     return { booking: bookingData };
@@ -96,6 +106,23 @@ export async function fetchSalonServicesList() {
       
     if (error) throw new Error(error.message);
     return { services: data || [] };
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return { success: true as const, ...result.data };
+}
+
+export async function fetchSalonStaffList() {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data, error } = await supabase
+      .from("salon_staff")
+      .select("id, name, role")
+      .eq("salon_id", ctx.salonId)
+      .eq("status", "active")
+      .order("name", { ascending: true });
+      
+    if (error) throw new Error(error.message);
+    return { staff: data || [] };
   });
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
