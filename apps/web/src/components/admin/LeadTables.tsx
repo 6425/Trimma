@@ -5,8 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface LeadTablesProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: "discovery" | "draft" | "pipeline" | "archived";
+  setActiveTab: React.Dispatch<React.SetStateAction<"discovery" | "draft" | "pipeline" | "archived">>;
   leads: any[];
   filteredLeads: any[];
   loading: boolean;
