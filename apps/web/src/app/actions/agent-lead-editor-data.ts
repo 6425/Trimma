@@ -3,17 +3,15 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 
-type SalonRow = { id: string } & Record<string, unknown>;
-
 /**
  * Attach the actual amount we charge each salon, taken from the latest
  * successful subscription payment (payments.raw_response.type = 'subscription').
  * Best-effort: if the payments table is unreadable, salons are returned unchanged.
  */
-async function attachSubscriptionCharges(
+async function attachSubscriptionCharges<T extends { id: string }>(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
-  salons: SalonRow[]
-) {
+  salons: T[]
+): Promise<T[]> {
   if (salons.length === 0) return salons;
   const salonIds = salons.map((s) => s.id);
 

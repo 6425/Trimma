@@ -13,6 +13,7 @@ export type AgentRow = {
   id: string;
   territory?: string | null;
   territory_id?: string | null;
+  commission_rate?: number | null;
 } | null;
 
 function pushTerritory(
@@ -38,7 +39,7 @@ export async function findAgentRecord(
   const selectAgent = async (
     filter: { column: "user_id" | "user_email"; value: string; ilike?: boolean }
   ): Promise<AgentRow> => {
-    let query = supabase.from("agents").select("id, territory, territory_id");
+    let query = supabase.from("agents").select("id, territory, territory_id, commission_rate");
     query = filter.ilike
       ? query.ilike(filter.column, filter.value)
       : query.eq(filter.column, filter.value);
