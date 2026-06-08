@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   Home, Map, UserPlus, Building2,
-  Wallet, MapPin, PhoneCall, User, LogOut, Search,
+  Wallet, MapPin, User, LogOut, Search,
   KanbanSquare, Menu, X, Bell, CheckCircle2
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
@@ -81,12 +81,6 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         { name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> },
       ]
     },
-    {
-      title: "Activity",
-      items: [
-        { name: "Tasks & Calls", path: "/agent/tasks", icon: <PhoneCall className="w-4 h-4" /> },
-      ]
-    }
   ];
 
   return (
@@ -232,8 +226,6 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           { name: "Home", path: "/agent", icon: <Home className="w-5 h-5" /> },
           { name: "Salons", path: "/agent/salons", icon: <Building2 className="w-5 h-5" /> },
           { name: "Editor", path: "/agent/leads", icon: <KanbanSquare className="w-5 h-5" /> },
-
-          { name: "Tasks", path: "/agent/tasks", icon: <PhoneCall className="w-5 h-5" /> },
           { name: "Profile", path: "/agent/profile", icon: <User className="w-5 h-5" /> },
         ].map((item) => {
           const isActive = pathname === item.path || (item.path !== '/agent' && pathname.startsWith(item.path));
