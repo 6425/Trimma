@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
-import { WorkingHoursEditor } from "@/components/admin/WorkingHoursEditor";
+import { WorkingHoursEditor } from "./WorkingHoursEditor";
 import { Image as ImageIcon } from "lucide-react";
 
 interface LeadEditorModalProps {

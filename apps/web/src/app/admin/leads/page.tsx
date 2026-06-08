@@ -25,9 +25,9 @@ import {
   createAdminSalonDraft,
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
-import { WorkingHoursEditor } from "@/components/admin/WorkingHoursEditor";
-import { LeadTables } from "@/components/admin/LeadTables";
-import { LeadEditorModal } from "@/components/admin/LeadEditorModal";
+import { WorkingHoursEditor } from "../../../components/admin/WorkingHoursEditor";
+import { LeadTables } from "../../../components/admin/LeadTables";
+import { LeadEditorModal } from "../../../components/admin/LeadEditorModal";
 
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
 
