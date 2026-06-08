@@ -35,35 +35,30 @@ export async function findAgentRecord(
   email: string,
   userId?: string | null
 ): Promise<AgentRow> {
+  const selectAgent = async (
+    filter: { column: "user_id" | "user_email"; value: string; ilike?: boolean }
+  ): Promise<AgentRow> => {
+    let query = supabase.from("agents").select("id, territory, territory_id");
+    query = filter.ilike
+      ? query.ilike(filter.column, filter.value)
+      : query.eq(filter.column, filter.value);
+    const { data, error } = await query.maybeSingle();
+    if (error || !data?.id) return null;
+    return data;
+  };
+
   if (userId) {
-    const { data: byUserId } = await supabase
-      .from("agents")
-      .select("id, territory, territory_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (byUserId?.id) return byUserId;
+    const byUserId = await selectAgent({ column: "user_id", value: userId });
+    if (byUserId) return byUserId;
   }
 
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
-  const { data: byEmail, error } = await supabase
-    .from("agents")
-    .select("id, territory, territory_id")
-    .eq("user_email", normalized)
-    .maybeSingle();
+  const byEmail = await selectAgent({ column: "user_email", value: normalized });
+  if (byEmail) return byEmail;
 
-  if (error) throw new Error(error.message);
-  if (byEmail?.id) return byEmail;
-
-  const { data: byEmailIlike, error: ilikeError } = await supabase
-    .from("agents")
-    .select("id, territory, territory_id")
-    .ilike("user_email", normalized)
-    .maybeSingle();
-
-  if (ilikeError) throw new Error(ilikeError.message);
-  return byEmailIlike?.id ? byEmailIlike : null;
+  return selectAgent({ column: "user_email", value: normalized, ilike: true });
 }
 
 /**

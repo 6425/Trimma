@@ -124,6 +124,7 @@ export default function SalonPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -251,10 +252,12 @@ export default function SalonPage() {
 
         if (result.success === false) throw new Error(result.error);
         setTimeSlots(result.slots);
+        setBookedSlots(result.bookedSlots || []);
         setSelectedTimeSlot((prev) => (prev && result.slots.includes(prev) ? prev : null));
       } catch (e) {
         console.error("Failed to load time slots", e);
         setTimeSlots([]);
+        setBookedSlots([]);
       } finally {
         setLoadingSlots(false);
       }
@@ -348,13 +351,11 @@ export default function SalonPage() {
       const { data: ratesData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
       const platformRate = ratesData?.platform_percentage || 10;
       const salonRate = ratesData?.salon_percentage || 10;
-      const payhereRate = ratesData?.payhere_percentage || 3;
       const agentRate = ratesData?.agent_percentage || 20;
 
       const pricing = calculateCommissionSplit(totalPrice, {
         platform: platformRate,
         salon: salonRate,
-        payhere: payhereRate,
       });
       const reservationFee = pricing.reservationFee;
 
@@ -388,7 +389,6 @@ export default function SalonPage() {
           total_reservation_fee: reservationFee,
           salon_upfront_amount: pricing.salonUpfront,
           platform_commission_amount: pricing.platformCommission,
-          payhere_fee_amount: pricing.payhereFee,
           agent_email: agentEmail,
           agent_commission_percent: agentCommissionPct,
           agent_commission_amount: agentCommissionAmount
@@ -1246,12 +1246,34 @@ export default function SalonPage() {
                         >
                           {!selectedServiceId ? (
                             <option value="">Select Service First</option>
-                          ) : timeSlots.length > 0 ? (
+                          ) : timeSlots.length > 0 || bookedSlots.length > 0 ? (
                             <>
                               <option value="">-- Time --</option>
-                              {timeSlots.map(time => (
-                                <option key={time} value={time}>{time}</option>
-                              ))}
+                              {[
+                                ...timeSlots.map((time) => ({ time, booked: false })),
+                                ...bookedSlots.map((time) => ({ time, booked: true })),
+                              ]
+                                .sort((a, b) => {
+                                  const toMin = (slot: string) => {
+                                    const [t, p] = slot.split(" ");
+                                    let [hh, mm] = t.split(":").map(Number);
+                                    if (p === "PM" && hh < 12) hh += 12;
+                                    if (p === "AM" && hh === 12) hh = 0;
+                                    return hh * 60 + mm;
+                                  };
+                                  return toMin(a.time) - toMin(b.time);
+                                })
+                                .map(({ time, booked }) => (
+                                  <option
+                                    key={time}
+                                    value={booked ? "" : time}
+                                    disabled={booked}
+                                    style={booked ? { color: "#e11d48" } : undefined}
+                                  >
+                                    {time}
+                                    {booked ? " — Booked" : ""}
+                                  </option>
+                                ))}
                             </>
                           ) : (
                             <option value="">No Slots Today</option>

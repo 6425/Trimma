@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, MapPin, Star, Building2, ExternalLink, Navigation } from "lucide-react";
+import { Search, MapPin, Star, Building2, ExternalLink, Navigation, Lock } from "lucide-react";
 import { BusinessResult } from "./MapComponent";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,12 @@ type SidebarProps = {
   onBusinessRemove?: (id: string) => void;
 };
 
+// A business already exists in our system (a manual lead / salon has been created
+// for it) whenever it is flagged taken, or it is NOT a fresh Google Places result.
+function isBusinessTaken(biz: BusinessResult): boolean {
+  return biz.is_taken === true || biz.status !== "google_lead";
+}
+
 export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusinessSelect, onBusinessRemove }: SidebarProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [creatingId, setCreatingId] = useState<string | null>(null);
@@ -30,6 +36,10 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
   );
 
   const handleCreateLead = async (biz: BusinessResult) => {
+    if (isBusinessTaken(biz)) {
+      toast.error("This salon is already taken — a lead has already been created for it.");
+      return;
+    }
     try {
       setCreatingId(biz.id);
       const res = await createLeadFromGooglePlaces({
@@ -86,15 +96,28 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
         ) : (
           filtered.map((biz) => {
             const isSelected = biz.id === selectedBusinessId;
+            const taken = isBusinessTaken(biz);
             return (
               <div 
                 key={biz.id}
                 onClick={() => onBusinessSelect(biz.id)}
                 className={`
                   p-3 rounded-xl border transition-all cursor-pointer hover:border-zinc-300 group
-                  ${isSelected ? 'border-zinc-900 bg-zinc-50 shadow-sm ring-1 ring-zinc-900' : 'border-slate-100 bg-white'}
+                  ${isSelected ? 'border-zinc-900 bg-zinc-50 shadow-sm ring-1 ring-zinc-900' : taken ? 'border-slate-100 bg-zinc-50/60' : 'border-slate-100 bg-white'}
                 `}
               >
+                {taken && (
+                  <div className="mb-2 flex items-center gap-1.5">
+                    <Badge className="px-1.5 py-0 text-[9px] font-black uppercase tracking-wide bg-rose-100 text-rose-700 hover:bg-rose-100 shadow-none border-none flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" /> Already taken
+                    </Badge>
+                    {biz.assign_to && (
+                      <span className="text-[9px] font-bold text-zinc-400 truncate">
+                        by {biz.assign_to}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg shrink-0 overflow-hidden flex items-center justify-center border border-slate-200 bg-zinc-900">
                     {biz.logo_url && !biz.logo_url.includes('maps.gstatic.com') ? (
@@ -134,14 +157,21 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
                         <Navigation className="w-3 h-3 mr-1.5" /> Navigate
                       </Button>
                     </div>
-                    <Button 
-                      size="sm" 
-                      onClick={(e) => { e.stopPropagation(); handleCreateLead(biz); }}
-                      disabled={creatingId === biz.id}
-                      className="w-full h-9 text-[11px] font-black rounded-lg bg-[#FFC107] text-black hover:bg-[#FFC107]/90 shadow-none mt-1"
-                    >
-                      {creatingId === biz.id ? "Creating Lead..." : "+ Create Manual Lead"}
-                    </Button>
+                    {taken ? (
+                      <div className="w-full h-9 mt-1 flex items-center justify-center gap-1.5 rounded-lg bg-zinc-100 text-zinc-500 text-[11px] font-black cursor-not-allowed">
+                        <Lock className="w-3 h-3" />
+                        {biz.assign_to ? `Already taken by ${biz.assign_to}` : "Already taken"}
+                      </div>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); handleCreateLead(biz); }}
+                        disabled={creatingId === biz.id}
+                        className="w-full h-9 text-[11px] font-black rounded-lg bg-[#FFC107] text-black hover:bg-[#FFC107]/90 shadow-none mt-1"
+                      >
+                        {creatingId === biz.id ? "Creating Lead..." : "+ Create Manual Lead"}
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

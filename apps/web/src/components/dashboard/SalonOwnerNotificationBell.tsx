@@ -89,13 +89,13 @@ function NotificationCard({
             size="sm"
             disabled={isProcessing}
             onClick={() => onConfirm(item)}
-            className="h-7 flex-1 rounded-lg bg-emerald-600 text-[10px] font-bold text-white hover:bg-emerald-700"
+            className="h-7 flex-1 rounded-lg bg-[#F5B700] text-[10px] font-bold text-black hover:bg-[#F5B700]/90"
           >
             {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
             Approve Booking
           </Button>
         ) : item.bookingStatus === "confirmed" ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Confirmed</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#F5B700]">Confirmed</span>
         ) : null}
         {!item.readAt && (
           <button

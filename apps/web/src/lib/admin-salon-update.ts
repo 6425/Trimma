@@ -38,6 +38,7 @@ export const ADMIN_SALON_UPDATE_FIELDS = new Set([
   "subscription_plan_id",
   "verification_notes",
   "verified_at",
+  "rejection_reason",
 ]);
 
 export function sanitizeAdminNumeric(value: unknown): number | null {
@@ -130,6 +131,7 @@ export function buildAdminSalonFormPayload(input: {
   status?: string;
   working_hours?: string;
   is_verified?: boolean;
+  assign_to?: string;
 }): Record<string, unknown> {
   const parseOptionalFloat = (value?: string) => {
     const trimmed = (value || "").trim();
@@ -155,5 +157,6 @@ export function buildAdminSalonFormPayload(input: {
     status: input.status || "active",
     working_hours: (input.working_hours || "").trim() || null,
     is_verified: Boolean(input.is_verified),
+    assign_to: input.assign_to?.trim() || null,
   };
 }

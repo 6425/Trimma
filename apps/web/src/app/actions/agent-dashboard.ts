@@ -60,7 +60,7 @@ export async function getAgentDashboardData() {
         .order("created_at", { ascending: false }),
       supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
       supabase.from("bookings").select("agent_commission_amount").eq("agent_email", email),
-      supabase.from("commission_ledger").select("amount, status").eq("agent_email", email),
+      supabase.from("commission_ledger").select("*").eq("agent_email", email),
     ]);
 
     let territoryLabel = "No territory assigned";
@@ -101,10 +101,11 @@ export async function getAgentDashboardData() {
       0
     );
 
-    const subscriptionCommissions = (ledgerRes.data || []).reduce(
-      (sum: number, entry: any) => sum + (Number(entry.amount) || 0),
-      0
-    );
+    // Only subscription-categorized ledger rows count as subscription commission.
+    // Base ledger rows are lead-conversion signup rewards, not subscription payouts.
+    const subscriptionCommissions = (ledgerRes.data || [])
+      .filter((entry: any) => String(entry.commission_category || "").toLowerCase() === "subscription")
+      .reduce((sum: number, entry: any) => sum + (Number(entry.amount) || 0), 0);
 
     const pendingSalons = salonRows
       .filter((salon: any) => !isAgentSalonLive(salon.onboarding_status) && salon.onboarding_status !== "REJECTED")

@@ -196,13 +196,47 @@ export async function fetchAgentSalonsListClient() {
   const { data, error } = await supabase
     .from("salons")
     .select(
-      "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at"
+      "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at, subscription_plan_id, subscription_plans(name, monthly_price, intro_monthly_price)"
     )
     .eq("assign_to", auth.email)
     .order("created_at", { ascending: false });
 
   if (error) return { success: false as const, error: error.message };
-  return { success: true as const, salons: data || [], agentEmail: auth.email };
+
+  const salons = data || [];
+  // Best-effort: attach the actual subscription charge per salon. RLS may block
+  // payments for the agent client; if so we simply return salons unchanged.
+  if (salons.length > 0) {
+    const { data: payments } = await supabase
+      .from("payments")
+      .select("salon_id, amount, currency, raw_response, created_at, status")
+      .in(
+        "salon_id",
+        salons.map((s) => s.id)
+      )
+      .eq("status", "success")
+      .order("created_at", { ascending: false });
+
+    if (payments) {
+      const latestBySalon = new Map<string, (typeof payments)[number]>();
+      for (const p of payments) {
+        const raw = (p.raw_response || {}) as Record<string, unknown>;
+        if (raw.type !== "subscription" || !p.salon_id) continue;
+        if (!latestBySalon.has(p.salon_id)) latestBySalon.set(p.salon_id, p);
+      }
+      for (const salon of salons as Array<Record<string, unknown>>) {
+        const p = latestBySalon.get(salon.id as string);
+        if (!p) continue;
+        const raw = (p.raw_response || {}) as Record<string, unknown>;
+        salon.subscription_charge = p.amount == null ? null : Number(p.amount);
+        salon.subscription_currency = (p.currency as string) || "LKR";
+        salon.subscription_billing_cycle = (raw.billing_cycle as string) || null;
+        salon.subscription_plan_name = (raw.plan_name as string) || null;
+      }
+    }
+  }
+
+  return { success: true as const, salons, agentEmail: auth.email };
 }
 
 // --- Leads ---
@@ -335,7 +369,8 @@ export async function getAgentMapDataClient() {
 
 export async function searchBusinessesInTerritoriesClient(
   categories: string[],
-  territoryIds: string[]
+  territoryIds: string[],
+  limit: number = 0
 ) {
   const auth = await requireAgentEmailClient();
   if (auth.success === false) return { success: false as const, error: auth.error };
@@ -344,8 +379,10 @@ export async function searchBusinessesInTerritoriesClient(
   let query = supabase
     .from("salons")
     .select(
-      "id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status"
+      "id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to"
     );
+
+  if (limit > 0) query = query.limit(limit);
 
   if (territoryIds.length > 0) {
     const realIds = territoryIds.filter((id) => !id.startsWith("primary-"));
@@ -377,7 +414,11 @@ export async function searchBusinessesInTerritoriesClient(
   const { data, error } = await query;
   if (error) return { success: false as const, error: error.message };
 
-  return { success: true as const, businesses: data || [] };
+  const businesses = data || [];
+  return {
+    success: true as const,
+    businesses: limit > 0 ? businesses.slice(0, limit) : businesses,
+  };
 }
 
 // --- Commissions ---
@@ -398,7 +439,7 @@ export async function fetchAgentCommissionsClient() {
     supabase
       .from("bookings")
       .select(
-        "id, salon_id, booking_date, status, amount, customer_email, agent_commission_amount, agent_commission_percent, salons(name)"
+        "id, salon_id, booking_date, status, amount, customer_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
       )
       .eq("agent_email", email)
       .order("booking_date", { ascending: false }),
@@ -433,6 +474,7 @@ export async function fetchAgentCommissionsClient() {
     customer_email: string;
     agent_cut: number;
     agent_percent: number;
+    platform_commission: number;
   }> = [];
 
   const pushBooking = (row: Record<string, unknown>) => {
@@ -443,8 +485,11 @@ export async function fetchAgentCommissionsClient() {
     const amount = Number(row.amount) || 0;
     const storedPct = Number(row.agent_commission_percent);
     const agentPercent = storedPct > 0 ? storedPct : bookingAgentPct;
+    // Platform commission is the base the agent's % is applied to.
+    const platformCommission = Number(row.platform_commission_amount) || 0;
     const storedCut = Number(row.agent_commission_amount);
-    const agentCut = storedCut > 0 ? storedCut : amount * (agentPercent / 100);
+    const agentCut =
+      storedCut > 0 ? storedCut : platformCommission * (agentPercent / 100);
     const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
     const joinedName = Array.isArray(salonsJoin) ? salonsJoin[0]?.name : salonsJoin?.name;
 
@@ -458,6 +503,7 @@ export async function fetchAgentCommissionsClient() {
       customer_email: String(row.customer_email || "—"),
       agent_cut: agentCut,
       agent_percent: agentPercent,
+      platform_commission: platformCommission,
     });
   };
 
@@ -470,7 +516,7 @@ export async function fetchAgentCommissionsClient() {
     const { data: salonBookings } = await supabase
       .from("bookings")
       .select(
-        "id, salon_id, booking_date, status, amount, customer_email, agent_commission_amount, agent_commission_percent, salons(name)"
+        "id, salon_id, booking_date, status, amount, customer_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
       )
       .in("salon_id", salonIds)
       .order("booking_date", { ascending: false });

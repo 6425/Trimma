@@ -1,21 +1,26 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 
 import { sendAgentApprovalAlerts } from "@/app/actions/whatsapp";
 import { sendAgentApprovalEmail } from "@/app/actions/email-settings";
 
 export async function approveSalon(salonId: string) {
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = createSupabaseAdminClient();
     
     // Update salon status
     const { error: updateError, data: salon } = await supabase
       .from("salons")
       .update({ 
-        onboarding_status: "APPROVED",
+        onboarding_status: "AGENT_APPROVED",
         is_verified: true,
-        status: "active" // Assuming 'active' is the approved state for status if applicable
+        status: "active",
+        activation_status: "ACTIVE",
+        booking_enabled: true,
+        public_visibility: true,
+        verified_at: new Date().toISOString()
       })
       .eq("id", salonId)
       .select("owner_id, owner_email, phone, name")
@@ -52,13 +57,13 @@ export async function approveSalon(salonId: string) {
 
 export async function rejectSalon(salonId: string, reason: string) {
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = createSupabaseAdminClient();
     
-    // Update salon status
+    // Update salon status back to ASSIGNED_TO_AGENT so the owner can edit and resubmit
     const { error: updateError, data: salon } = await supabase
       .from("salons")
       .update({ 
-        onboarding_status: "REJECTED",
+        onboarding_status: "ASSIGNED_TO_AGENT",
         rejection_reason: reason
       })
       .eq("id", salonId)

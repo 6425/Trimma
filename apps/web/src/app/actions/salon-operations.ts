@@ -252,6 +252,28 @@ export async function uploadSalonProfileImage(
   return { success: true as const, publicUrl: result.data.publicUrl };
 }
 
+  export async function uploadSalonDocument(
+    documentType: string,
+    base64Data: string,
+    contentType = "application/pdf"
+  ) {
+    const result = await withSalonDb(async (supabase, ctx) => {
+      const ext = contentType.includes("pdf") ? "pdf" : contentType.includes("png") ? "png" : "jpg";
+      // Removed Date.now() so that new uploads overwrite the existing document in storage
+      const fileName = `${ctx.salonId}/${documentType}.${ext}`;
+      const buffer = Buffer.from(base64Data, "base64");
+      const { error } = await supabase.storage
+        .from("salon-documents")
+        .upload(fileName, buffer, { cacheControl: "3600", upsert: true, contentType });
+      if (error) throw new Error(error.message);
+  
+      return { documentUrl: fileName };
+    });
+  
+    if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+    return { success: true as const, documentUrl: result.data.documentUrl };
+  }
+
 export async function updateSalonMediaFields(payload: {
   logo_url?: string | null;
   cover_url?: string | null;

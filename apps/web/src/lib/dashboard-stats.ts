@@ -55,13 +55,163 @@ export function groupBookingsByMonth(
     const label = date.toLocaleDateString(undefined, { month: "short" });
     const current = buckets.get(key) || { label, bookings: 0, revenue: 0 };
     current.bookings += 1;
-    current.revenue += getBookingAmount(booking);
+    current.revenue += Number(booking.amount || 0);
     buckets.set(key, current);
   }
 
   const sorted = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b));
   return sorted.slice(-months).map(([, point]) => point);
 }
+
+export type DailyPoint = { label: string; dateStr: string; bookings: number; revenue: number };
+
+export function groupBookingsByDay(
+  bookings: Array<{ booking_date?: string | null; amount?: number | string | null }>,
+  days = 7,
+  offsetWeeks = 0
+): DailyPoint[] {
+  const buckets = new Map<string, DailyPoint>();
+
+  // Determine the end date based on the offset
+  const endDate = new Date();
+  endDate.setHours(0, 0, 0, 0);
+  endDate.setDate(endDate.getDate() - (offsetWeeks * 7));
+
+  // Initialize the days window ending at endDate
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(endDate);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    const label = d.toLocaleDateString(undefined, { weekday: "short" });
+    buckets.set(dateStr, { label, dateStr, bookings: 0, revenue: 0 });
+  }
+
+  for (const booking of bookings) {
+    if (!booking.booking_date) continue;
+    // ensure we only count if it is within the initialized days
+    if (buckets.has(booking.booking_date)) {
+      const current = buckets.get(booking.booking_date)!;
+      current.bookings += 1;
+      current.revenue += Number(booking.amount || 0);
+    }
+  }
+
+  const sorted = [...buckets.entries()].sort(([a], [b]) => a.localeCompare(b));
+  return sorted.map(([, point]) => point);
+}
+
+export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, allStaff: any[] = []) {
+  // Generate the 7 days for the given week offset
+  const last7Days: string[] = [];
+  const endDate = new Date();
+  endDate.setHours(0, 0, 0, 0); // Normalize to midnight
+  endDate.setDate(endDate.getDate() - (offsetWeeks * 7)); // Shift back by N weeks
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(endDate);
+    d.setDate(d.getDate() - i);
+    // Format as YYYY-MM-DD for easy mapping
+    last7Days.push(d.toISOString().split("T")[0]);
+  }
+
+  // Create a bucket for each day: { date: 'Mon', fullDate: 'YYYY-MM-DD', ...staffCounts }
+  const dataMap = new Map<string, any>();
+  const staffSet = new Set<string>();
+
+  // Prepopulate staffSet with all assigned staff first names
+  allStaff.forEach(staffMem => {
+    if (staffMem?.name) {
+      const firstName = staffMem.name.split(" ")[0];
+      staffSet.add(firstName);
+    }
+  });
+
+  last7Days.forEach(dateStr => {
+    const dateObj = new Date(dateStr);
+    const label = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+    dataMap.set(dateStr, { date: label, fullDate: dateStr });
+  });
+
+  for (const b of bookings) {
+    if (!b.booking_date) continue;
+    // We only care if it falls in our last 7 days bucket
+    if (dataMap.has(b.booking_date)) {
+      const bucket = dataMap.get(b.booking_date)!;
+      let staffName = "Any Staff";
+
+      // Try direct relation first, then fallback to junction table
+      let fullName = b.salon_staff?.name;
+      if (!fullName && b.booking_staff && b.booking_staff.length > 0) {
+        const st = b.booking_staff[0].salon_staff;
+        fullName = Array.isArray(st) ? st[0]?.name : st?.name;
+      }
+
+      if (fullName) {
+        staffName = fullName.split(" ")[0];
+      }
+
+      staffSet.add(staffName);
+      bucket[staffName] = (bucket[staffName] || 0) + 1;
+    }
+  }
+
+  // Fill in 0s for missing staff in each bucket
+  const finalData = Array.from(dataMap.values()).map(bucket => {
+    staffSet.forEach(staff => {
+      if (bucket[staff] === undefined) bucket[staff] = 0;
+    });
+    return bucket;
+  });
+
+  return { data: finalData, staffNames: Array.from(staffSet) };
+}
+
+export function groupRevenueByDay(bookings: any[], offsetWeeks = 0) {
+  const last7Days: string[] = [];
+  const endDate = new Date();
+  
+  if (offsetWeeks > 0) {
+    endDate.setDate(endDate.getDate() - (offsetWeeks * 7));
+  }
+  
+  endDate.setHours(23, 59, 59, 999);
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(endDate);
+    d.setDate(d.getDate() - i);
+    last7Days.push(d.toISOString().split("T")[0]);
+  }
+
+  const dataMap = new Map<string, any>();
+
+  last7Days.forEach(dateStr => {
+    const dateObj = new Date(dateStr);
+    const label = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+    dataMap.set(dateStr, { 
+      date: label, 
+      fullDate: dateStr,
+      "Reservation Income": 0,
+      "Balance Income": 0
+    });
+  });
+
+  for (const b of bookings) {
+    if (!b.booking_date) continue;
+    if (dataMap.has(b.booking_date)) {
+      const bucket = dataMap.get(b.booking_date)!;
+      const amount = Number(b.amount || 0);
+      const totalResFee = Number(b.total_reservation_fee || 0);
+      const salonUpfront = Number(b.salon_upfront_amount || 0);
+      const balanceDue = amount - totalResFee;
+      
+      bucket["Reservation Income"] += salonUpfront;
+      bucket["Balance Income"] += balanceDue;
+    }
+  }
+
+  return Array.from(dataMap.values());
+}
+
 
 export type ActivityItem = {
   id: string;

@@ -16,7 +16,6 @@ export type BookingRecordInput = {
   total_reservation_fee?: number;
   salon_upfront_amount?: number;
   platform_commission_amount?: number;
-  payhere_fee_amount?: number;
   agent_email?: string | null;
   agent_commission_percent?: number;
   agent_commission_amount?: number;

@@ -313,7 +313,7 @@ export function BusinessInfoForm({
           <Button 
             type="submit" 
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-8 font-black text-sm w-full md:w-auto flex items-center justify-center gap-2"
+            className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black shadow-md shadow-[#F5B700]/20 rounded-xl h-12 px-8 font-black text-sm w-full md:w-auto flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Save Business Info</>}
           </Button>

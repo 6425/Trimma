@@ -27,6 +27,7 @@ type CommissionBooking = {
   customer_email: string;
   agent_cut: number;
   agent_percent: number;
+  platform_commission: number;
 };
 
 type CommissionSubscription = {
@@ -260,7 +261,7 @@ export default function AgentCommissions() {
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">{weekRangeLabel}</p>
           <p className="text-[11px] text-zinc-400 mt-1">
-            Customer booking total = sum of completed/confirmed booking amounts in this week. Your commission = {bookingAgentPct}% of each booking (or stored payout).
+            Customer booking total = sum of completed/confirmed booking amounts this week. Your commission = {bookingAgentPct}% of the platform fee on each booking (not {bookingAgentPct}% of the booking value).
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -347,8 +348,9 @@ export default function AgentCommissions() {
                   <div className="text-right">
                     <p className="text-sm font-black text-emerald-600">+{formatLKR(b.agent_cut)}</p>
                     <p className="text-[10px] text-zinc-400">
-                      {b.agent_percent}% of {formatLKR(b.amount)}
+                      {b.agent_percent}% of platform fee {formatLKR(b.platform_commission)}
                     </p>
+                    <p className="text-[9px] text-zinc-300">Booking value {formatLKR(b.amount)}</p>
                   </div>
                 </div>
               ))}

@@ -144,7 +144,7 @@ export default function FinanceDashboard() {
 
           const resolvedBookings = (bookingsData || []).map((b: any) => ({
             ...b,
-            amount: parseFloat(b.total_price || b.amount || 0),
+            amount: parseFloat(b.amount || 0),
             platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
             salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
             agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
@@ -247,7 +247,8 @@ export default function FinanceDashboard() {
       if (statusTab === "settled" && !settled) continue;
       if (statusTab === "pending" && !pending) continue;
 
-      // Stored split columns may be 0 on older bookings; fall back to configured rates.
+      // Platform & salon shares are a fixed % of the booking value, so fall back to
+      // the configured rates only if a (legacy) booking is missing the stored split.
       const platformGross =
         booking.platform_commission_amount > 0
           ? booking.platform_commission_amount
@@ -256,10 +257,10 @@ export default function FinanceDashboard() {
         booking.salon_upfront_amount > 0
           ? booking.salon_upfront_amount
           : booking.amount * (globalRates.salon / 100);
-      const agentBookingCommission =
-        booking.agent_commission_amount > 0
-          ? booking.agent_commission_amount
-          : booking.amount * (globalRates.agent / 100);
+      // Agent commission is a cut of the PLATFORM fee and only exists when a referring
+      // agent is attributed. Use the stored value verbatim — a 0 here means "no agent",
+      // so we must NOT fabricate a commission for non-referred bookings.
+      const agentBookingCommission = booking.agent_commission_amount;
 
       rows.push({
         id: booking.id,

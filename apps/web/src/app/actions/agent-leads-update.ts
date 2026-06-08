@@ -38,6 +38,16 @@ export async function saveAgentLeadData(
       }
     } else if (newStatus) {
       finalPayload.onboarding_status = newStatus;
+      
+      // If the Agent explicitly approves, immediately activate the salon and enable bookings
+      if (newStatus === "AGENT_APPROVED") {
+        finalPayload.public_visibility = true;
+        finalPayload.booking_enabled = true;
+        finalPayload.activation_status = "ACTIVE";
+        finalPayload.status = "active";
+        finalPayload.is_verified = true;
+        finalPayload.verified_at = new Date().toISOString();
+      }
     }
 
     if (finalPayload.owner_gmail) {

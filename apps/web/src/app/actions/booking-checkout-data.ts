@@ -33,7 +33,7 @@ export type CheckoutDataResult =
       staffMember: Record<string, unknown> | null;
       reservationFee: number;
       serviceTotal: number;
-      rates: { platform: number; salon: number; payhere: number; agent: number };
+      rates: { platform: number; salon: number; agent: number };
       resolvedServiceIds: string[];
       payhereEnabled: boolean;
       payhereEnvironment: string;
@@ -143,17 +143,45 @@ export async function fetchBookingCheckoutData(
         supabase.from("salon_staff").select("*").eq("salon_id", draft.salonId),
         supabase
           .from("bookings")
-          .select("booking_time, staff_id, status, created_at")
+          .select("id, booking_time, staff_id, status, created_at")
           .eq("salon_id", draft.salonId)
           .eq("booking_date", draft.bookingDate),
       ]);
+
+      // Fetch per-booking durations for overlap detection
+      const dayBookingIds = (dayBookings || []).map((b) => b.id).filter(Boolean);
+      const bookingDurations = new Map<string, number>();
+      if (dayBookingIds.length > 0) {
+        const { data: bsRows } = await supabase
+          .from("booking_services")
+          .select("booking_id, duration_min")
+          .in("booking_id", dayBookingIds);
+        if (bsRows) {
+          for (const row of bsRows) {
+            const dur = parseInt(String(row.duration_min || 0), 10);
+            bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
+          }
+        }
+      }
+
+      const enrichedBookings: BookingConflictRow[] = (dayBookings || []).map((b) => ({
+        ...b,
+        duration_minutes: bookingDurations.get(b.id) || 30,
+      }));
+
+      // Estimate proposed duration from services
+      const proposedDuration = services.reduce(
+        (sum, s) => sum + parseInt(String(s.duration || s.duration_min || "30"), 10),
+        0
+      ) || 30;
 
       const staffIds = (staffList || []).map((member) => member.id).filter(Boolean);
       const formattedTime = parseDisplayTimeSlot(draft.timeSlot);
       const availableStaffId = resolveAvailableStaffId(
         staffIds,
-        (dayBookings || []) as BookingConflictRow[],
-        formattedTime
+        enrichedBookings,
+        formattedTime,
+        proposedDuration
       );
       staffMember =
         staffList?.find((member) => member.id === availableStaffId) || staffList?.[0] || null;
@@ -162,7 +190,6 @@ export async function fetchBookingCheckoutData(
     const rates = {
       platform: ratesData?.platform_percentage || 10,
       salon: ratesData?.salon_percentage || 10,
-      payhere: ratesData?.payhere_percentage || 3,
       agent: ratesData?.agent_percentage || 20,
     };
 

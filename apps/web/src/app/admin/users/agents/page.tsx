@@ -473,10 +473,10 @@ export default function AdminAgentManagement() {
       )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-black">
-              Assigned Territories — {editingAgent?.users?.full_name}
+        <DialogContent className="max-w-md rounded-3xl bg-white border-zinc-100 p-6 shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-zinc-100">
+            <DialogTitle className="text-base font-black text-zinc-900 tracking-tight flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-brand" /> Assigned Territories — {editingAgent?.users?.full_name}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-64 overflow-y-auto py-2">
@@ -500,11 +500,11 @@ export default function AdminAgentManagement() {
               ))
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+          <DialogFooter className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="h-10 rounded-xl border-slate-200 font-bold">
               Cancel
             </Button>
-            <Button onClick={handleSaveTerritories} disabled={isSaving}>
+            <Button onClick={handleSaveTerritories} disabled={isSaving} className="bg-brand hover:bg-brand/90 text-zinc-900 h-10 rounded-xl font-bold px-4">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Territories"}
             </Button>
           </DialogFooter>

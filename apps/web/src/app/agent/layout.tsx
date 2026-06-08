@@ -29,10 +29,16 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     void (async () => {
-      const result = await tryAgentData(getAgentProfile, fetchAgentProfileClient);
-      if (result.success && result.profile) {
-        setAgentName(result.profile.fullName || "Agent");
-        setAgentAvatar(result.profile.avatarUrl || "");
+      try {
+        const result = await tryAgentData(getAgentProfile, fetchAgentProfileClient, {
+          clientFirst: false,
+        });
+        if (result.success && result.profile) {
+          setAgentName(result.profile.fullName || "Agent");
+          setAgentAvatar(result.profile.avatarUrl || "");
+        }
+      } catch {
+        // Layout should render even if profile hydration fails.
       }
     })();
 

@@ -83,14 +83,36 @@ export async function computeBookingSlots(
 
     const { data: bookedEvents } = await supabase
       .from("bookings")
-      .select("booking_time, staff_id, status, created_at")
+      .select("id, booking_time, staff_id, status, created_at")
       .eq("salon_id", salonId)
       .eq("booking_date", dateISO);
 
+    // Fetch per-booking total duration from booking_services for overlap detection
+    const bookedIds = (bookedEvents || []).map((b) => b.id).filter(Boolean);
+    const bookingDurations = new Map<string, number>();
+    if (bookedIds.length > 0) {
+      const { data: bsRows } = await supabase
+        .from("booking_services")
+        .select("booking_id, duration_min")
+        .in("booking_id", bookedIds);
+      if (bsRows) {
+        for (const row of bsRows) {
+          const dur = parseInt(String(row.duration_min || 0), 10);
+          bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
+        }
+      }
+    }
+
+    const enrichedBookings: BookingConflictRow[] = (bookedEvents || []).map((b) => ({
+      ...b,
+      duration_minutes: bookingDurations.get(b.id) || 30,
+    }));
+
     const blockedSlots = getBlockedDisplaySlots(
-      (bookedEvents || []) as BookingConflictRow[],
+      enrichedBookings,
       staffId || "any",
-      staffIds || []
+      staffIds || [],
+      totalDurationMinutes
     );
 
     const { data: salonResources } = await supabase

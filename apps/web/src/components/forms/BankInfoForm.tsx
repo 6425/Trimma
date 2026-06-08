@@ -5,6 +5,14 @@ import { Loader2, CheckCircle2, Landmark, ShieldCheck, Mail, FileText, Upload, B
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { uploadSalonDocument } from "@/app/actions/salon-operations";
+
+const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve((reader.result as string).split(',')[1]);
+  reader.onerror = error => reject(error);
+});
 
 export function BankInfoForm({
   salon,
@@ -40,7 +48,24 @@ export function BankInfoForm({
   const [vatRegistered, setVatRegistered] = useState(ext.vat_registered || "No");
   const [vatNumber, setVatNumber] = useState(ext.vat_number || "");
 
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // Section E (Verification Documents)
+  const bankVerifiedStatus = ext.bank_verified_status || "Pending";
+
+  const [verificationDocUrl, setVerificationDocUrl] = useState(ext.verification_document_url || "");
+  const [nicFrontUrl, setNicFrontUrl] = useState(ext.owner_nic_front_url || "");
+  const [nicBackUrl, setNicBackUrl] = useState(ext.owner_nic_back_url || "");
+  const [bizRegUrl, setBizRegUrl] = useState(ext.business_registration_url || "");
+
+  const [verificationDocFile, setVerificationDocFile] = useState<File | null>(null);
+  const [nicFrontFile, setNicFrontFile] = useState<File | null>(null);
+  const [nicBackFile, setNicBackFile] = useState<File | null>(null);
+  const [bizRegFile, setBizRegFile] = useState<File | null>(null);
+
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const nicFrontInputRef = useRef<HTMLInputElement>(null);
+  const nicBackInputRef = useRef<HTMLInputElement>(null);
+  const bizRegInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!salon) return;
     const newExt = salon.bank_info || {};
@@ -56,20 +81,18 @@ export function BankInfoForm({
     setTinNumber(newExt.tin_number || "");
     setVatRegistered(newExt.vat_registered || "No");
     setVatNumber(newExt.vat_number || "");
+
+    setVerificationDocUrl(newExt.verification_document_url || "");
+    setNicFrontUrl(newExt.owner_nic_front_url || "");
+    setNicBackUrl(newExt.owner_nic_back_url || "");
+    setBizRegUrl(newExt.business_registration_url || "");
   }, [salon]);
 
-  // Section E
-  // Bank verification doc upload usually handles by supabase storage, we will store a URL or reference.
-  const [verificationDocUrl, setVerificationDocUrl] = useState(ext.verification_document_url || "");
-  const bankVerifiedStatus = ext.bank_verified_status || "Pending";
-  const docInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setFile: (f: File | null) => void, setUrl: (u: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // In a real implementation, upload to Supabase storage here.
-    // Simulating upload for now.
-    setVerificationDocUrl(URL.createObjectURL(file));
+    setFile(file);
+    setUrl(URL.createObjectURL(file)); // preview only
   };
 
   const bankOptions = [
@@ -91,6 +114,33 @@ export function BankInfoForm({
     if (readOnly) return;
     setLoading(true);
     try {
+      let finalVerDocUrl = verificationDocUrl;
+      let finalNicFrontUrl = nicFrontUrl;
+      let finalNicBackUrl = nicBackUrl;
+      let finalBizRegUrl = bizRegUrl;
+
+      // Upload files if they were added
+      if (verificationDocFile) {
+        const b64 = await toBase64(verificationDocFile);
+        const res = await uploadSalonDocument("bank_statement", b64, verificationDocFile.type);
+        if (res.success) finalVerDocUrl = res.documentUrl;
+      }
+      if (nicFrontFile) {
+        const b64 = await toBase64(nicFrontFile);
+        const res = await uploadSalonDocument("nic_front", b64, nicFrontFile.type);
+        if (res.success) finalNicFrontUrl = res.documentUrl;
+      }
+      if (nicBackFile) {
+        const b64 = await toBase64(nicBackFile);
+        const res = await uploadSalonDocument("nic_back", b64, nicBackFile.type);
+        if (res.success) finalNicBackUrl = res.documentUrl;
+      }
+      if (bizRegFile) {
+        const b64 = await toBase64(bizRegFile);
+        const res = await uploadSalonDocument("business_registration", b64, bizRegFile.type);
+        if (res.success) finalBizRegUrl = res.documentUrl;
+      }
+
       const payload = {
         bank_info: {
           account_holder_name: accName,
@@ -104,7 +154,10 @@ export function BankInfoForm({
           tin_number: tinNumber,
           vat_registered: vatRegistered,
           vat_number: vatRegistered === "Yes" ? vatNumber : "",
-          verification_document_url: verificationDocUrl,
+          verification_document_url: finalVerDocUrl,
+          owner_nic_front_url: finalNicFrontUrl,
+          owner_nic_back_url: finalNicBackUrl,
+          business_registration_url: finalBizRegUrl,
           bank_verified_status: bankVerifiedStatus,
           last_updated_by: "Owner",
           updated_at: new Date().toISOString()
@@ -214,49 +267,50 @@ export function BankInfoForm({
             <FileCheck className="w-5 h-5 text-indigo-500" /> Section E: Verification Documents
           </h3>
           <p className="text-xs text-zinc-500 mb-4">
-            Please upload a scanned copy of a voided check or a bank statement header for account verification.
+            Please upload clear, legible copies of the following documents to verify your business and identity. Supports PDF, JPG, PNG up to 10MB.
           </p>
 
-          {verificationDocUrl ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-green-900">Document Uploaded</p>
-                  <a href={verificationDocUrl} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-green-600 hover:underline uppercase tracking-widest">
-                    View Document
-                  </a>
-                </div>
-              </div>
-              {!readOnly && (
-                <Button type="button" variant="outline" size="sm" onClick={() => setVerificationDocUrl("")} className="text-xs font-bold border-green-200 text-green-700 hover:bg-green-100">
-                  Replace
-                </Button>
-              )}
-            </div>
-          ) : (
-            !readOnly && (
-              <div 
-                onClick={() => docInputRef.current?.click()}
-                className="border-2 border-dashed border-zinc-200 hover:border-indigo-400 bg-zinc-50/50 hover:bg-indigo-50/30 transition-colors rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer text-center group"
-              >
-                <div className="w-12 h-12 bg-white border shadow-sm rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Upload className="w-5 h-5 text-zinc-400 group-hover:text-indigo-500" />
-                </div>
-                <h4 className="text-sm font-bold text-zinc-800">Click to upload document</h4>
-                <p className="text-xs text-zinc-400 mt-1">Supports PDF, JPG, PNG up to 5MB</p>
-                <input 
-                  ref={docInputRef}
-                  type="file" 
-                  className="hidden" 
-                  accept=".pdf,image/png,image/jpeg"
-                  onChange={handleFileUpload}
-                />
-              </div>
-            )
-          )}
+          <div className="space-y-4">
+            {/* Owner NIC Front */}
+            <DocumentUploadSlot
+              title="Owner NIC (Front)"
+              url={nicFrontUrl}
+              readOnly={readOnly}
+              inputRef={nicFrontInputRef}
+              onClear={() => { setNicFrontUrl(""); setNicFrontFile(null); }}
+              onChange={(e) => handleFileUpload(e, setNicFrontFile, setNicFrontUrl)}
+            />
+
+            {/* Owner NIC Back */}
+            <DocumentUploadSlot
+              title="Owner NIC (Back)"
+              url={nicBackUrl}
+              readOnly={readOnly}
+              inputRef={nicBackInputRef}
+              onClear={() => { setNicBackUrl(""); setNicBackFile(null); }}
+              onChange={(e) => handleFileUpload(e, setNicBackFile, setNicBackUrl)}
+            />
+
+            {/* Business Registration */}
+            <DocumentUploadSlot
+              title="Business Registration (BR)"
+              url={bizRegUrl}
+              readOnly={readOnly}
+              inputRef={bizRegInputRef}
+              onClear={() => { setBizRegUrl(""); setBizRegFile(null); }}
+              onChange={(e) => handleFileUpload(e, setBizRegFile, setBizRegUrl)}
+            />
+
+            {/* Bank Statement */}
+            <DocumentUploadSlot
+              title="Bank Statement or Passbook"
+              url={verificationDocUrl}
+              readOnly={readOnly}
+              inputRef={docInputRef}
+              onClear={() => { setVerificationDocUrl(""); setVerificationDocFile(null); }}
+              onChange={(e) => handleFileUpload(e, setVerificationDocFile, setVerificationDocUrl)}
+            />
+          </div>
         </div>
       </div>
 
@@ -266,7 +320,7 @@ export function BankInfoForm({
           <Button 
             type="submit" 
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 px-8 font-black text-sm w-full md:w-auto flex items-center justify-center gap-2"
+            className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black shadow-md shadow-[#F5B700]/20 rounded-xl h-12 px-8 font-black text-sm w-full md:w-auto flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> Save Bank Info</>}
           </Button>
@@ -274,5 +328,57 @@ export function BankInfoForm({
       )}
 
     </form>
+  );
+}
+
+function DocumentUploadSlot({ 
+  title, url, readOnly, inputRef, onClear, onChange 
+}: { 
+  title: string; url: string; readOnly: boolean; inputRef: React.RefObject<HTMLInputElement>; onClear: () => void; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void 
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{title}</Label>
+      {url ? (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-green-900">Document Uploaded</p>
+              {/* Note: In a real app with private buckets, you'd need a presigned URL to view it. 
+                  But for now we just show it's uploaded. If it's a blob preview URL, it works. */}
+            </div>
+          </div>
+          {!readOnly && (
+            <Button type="button" variant="outline" size="sm" onClick={onClear} className="text-xs font-bold border-green-200 text-green-700 hover:bg-green-100 h-8">
+              Replace
+            </Button>
+          )}
+        </div>
+      ) : (
+        !readOnly ? (
+          <div 
+            onClick={() => inputRef.current?.click()}
+            className="border-2 border-dashed border-zinc-200 hover:border-indigo-400 bg-zinc-50/50 hover:bg-indigo-50/30 transition-colors rounded-xl p-4 flex items-center justify-center cursor-pointer text-center group gap-2"
+          >
+            <Upload className="w-4 h-4 text-zinc-400 group-hover:text-indigo-500" />
+            <h4 className="text-xs font-bold text-zinc-600 group-hover:text-indigo-600">Click to upload</h4>
+            <input 
+              ref={inputRef}
+              type="file" 
+              className="hidden" 
+              accept=".pdf,image/png,image/jpeg"
+              onChange={onChange}
+            />
+          </div>
+        ) : (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-500 font-medium italic">
+            No document provided.
+          </div>
+        )
+      )}
+    </div>
   );
 }

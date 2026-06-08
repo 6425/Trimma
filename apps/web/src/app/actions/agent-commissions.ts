@@ -14,6 +14,7 @@ export type AgentCommissionBooking = {
   customer_email: string;
   agent_cut: number;
   agent_percent: number;
+  platform_commission: number;
 };
 
 export type AgentCommissionSubscription = {
@@ -47,7 +48,7 @@ export async function getAgentCommissionsData() {
     supabase
       .from("bookings")
       .select(
-        "id, salon_id, booking_date, status, amount, customer_email, agent_commission_amount, agent_commission_percent, salons(name)"
+        "id, salon_id, booking_date, status, amount, customer_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
       )
       .eq("agent_email", email)
       .order("booking_date", { ascending: false }),
@@ -83,8 +84,11 @@ export async function getAgentCommissionsData() {
     const amount = Number(row.amount) || 0;
     const storedPct = Number(row.agent_commission_percent);
     const agentPercent = storedPct > 0 ? storedPct : bookingAgentPct;
+    // Platform commission is the base the agent's % is applied to.
+    const platformCommission = Number(row.platform_commission_amount) || 0;
     const storedCut = Number(row.agent_commission_amount);
-    const agentCut = storedCut > 0 ? storedCut : amount * (agentPercent / 100);
+    const agentCut =
+      storedCut > 0 ? storedCut : platformCommission * (agentPercent / 100);
     const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
     const joinedName = Array.isArray(salonsJoin) ? salonsJoin[0]?.name : salonsJoin?.name;
 
@@ -98,6 +102,7 @@ export async function getAgentCommissionsData() {
       customer_email: String(row.customer_email || "—"),
       agent_cut: agentCut,
       agent_percent: agentPercent,
+      platform_commission: platformCommission,
     });
   };
 
@@ -110,7 +115,7 @@ export async function getAgentCommissionsData() {
     const { data: salonBookings } = await supabase
       .from("bookings")
       .select(
-        "id, salon_id, booking_date, status, amount, customer_email, agent_commission_amount, agent_commission_percent, salons(name)"
+        "id, salon_id, booking_date, status, amount, customer_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
       )
       .in("salon_id", salonIds)
       .order("booking_date", { ascending: false });

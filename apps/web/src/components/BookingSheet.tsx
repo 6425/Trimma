@@ -20,6 +20,15 @@ import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/servic
 
 const bookingServiceIconMap = { LayoutGrid, Scissors };
 
+/** Convert a display slot like "02:30 PM" to minutes from midnight (for sorting). */
+function displaySlotToMinutes(slot: string): number {
+  const [timeStr, period] = slot.split(" ");
+  let [hh, mm] = timeStr.split(":").map(Number);
+  if (period === "PM" && hh < 12) hh += 12;
+  if (period === "AM" && hh === 12) hh = 0;
+  return hh * 60 + mm;
+}
+
 export function BookingSheet({ 
   isOpen, 
   onOpenChange, 
@@ -56,7 +65,7 @@ export function BookingSheet({
   const [activeEnvironment, setActiveEnvironment] = useState<'sandbox' | 'live'>('sandbox');
 
   // Dynamic Commission Rates
-  const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, payhere: 3, agent: 20 });
+  const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, agent: 20 });
 
   // Fetch global commission rates
   useEffect(() => {
@@ -72,7 +81,6 @@ export function BookingSheet({
       setGlobalRates({
       platform: data.platform_percentage,
       salon: data.salon_percentage,
-      payhere: data.payhere_percentage,
       agent: data.agent_percentage || 20
       });
       }
@@ -119,6 +127,7 @@ export function BookingSheet({
 
   // Dynamic constraints
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [closedDays, setClosedDays] = useState<number[]>([]);
   const [customRates, setCustomRates] = useState<any[]>([]);
@@ -415,7 +424,6 @@ export function BookingSheet({
                       total_reservation_fee: reservationFee,
                       salon_upfront_amount: pricing.salonUpfront,
                       platform_commission_amount: pricing.platformCommission,
-                      payhere_fee_amount: pricing.payhereFee,
                       agent_email: agentEmail,
                       agent_commission_percent: agentCommissionPct,
                       agent_commission_amount: agentCommissionAmount
@@ -548,10 +556,12 @@ export function BookingSheet({
         }
 
         setTimeSlots(result.slots);
+        setBookedSlots(result.bookedSlots || []);
         setSelectedTimeSlot((prev) => (prev && result.slots.includes(prev) ? prev : null));
       } catch (e) {
         console.error("Failed to load time slots", e);
         setTimeSlots([]);
+        setBookedSlots([]);
       } finally {
         setLoadingSlots(false);
       }
@@ -694,7 +704,6 @@ export function BookingSheet({
           total_reservation_fee: reservationFee,
           salon_upfront_amount: pricing.salonUpfront,
           platform_commission_amount: pricing.platformCommission,
-          payhere_fee_amount: pricing.payhereFee,
           agent_email: agentEmail,
           agent_commission_percent: agentCommissionPct,
           agent_commission_amount: agentCommissionAmount
@@ -944,37 +953,75 @@ export function BookingSheet({
               </div>
 
               <div>
-                <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-3">
-                  Dynamic Time Slots (Green shows available slots)
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider">
+                    Dynamic Time Slots
+                  </div>
+                  <div className="flex items-center gap-3 text-[10px] font-semibold">
+                    <span className="flex items-center gap-1 text-emerald-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Available
+                    </span>
+                    <span className="flex items-center gap-1 text-rose-500">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Already booked
+                    </span>
+                  </div>
                 </div>
-                {loadingSlots ? (
-                  <div className="flex justify-center py-12 bg-white rounded-2xl border border-slate-100 shadow-sm"><Loader2 className="w-6 h-6 animate-spin text-zinc-400" /></div>
-                ) : timeSlots.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-3">
-                    {timeSlots.map(time => {
-                      const isSelected = selectedTimeSlot === time;
-                      return (
-                        <button
-                          key={time}
-                          onClick={() => setSelectedTimeSlot(time)}
-                          className={`py-3 px-1 text-xs font-semibold rounded-xl border flex items-center justify-between transition-all ${
-                            isSelected 
-                              ? 'border-zinc-900 bg-zinc-900 text-white shadow-md ring-1 ring-zinc-900' 
-                              : 'border-slate-100 bg-white hover:border-zinc-900 text-zinc-900 hover:bg-slate-50 shadow-sm'
-                          }`}
-                        >
-                          <span className="ml-1.5">{time}</span>
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isSelected ? 'bg-emerald-400' : 'bg-emerald-500 animate-pulse'}`} />
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center text-sm text-zinc-500 py-12 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                    <AlertCircle className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-                    No remaining open slots match the duration of this appointment today.
-                  </div>
-                )}
+                {(() => {
+                  const combinedSlots = [
+                    ...timeSlots.map((time) => ({ time, booked: false })),
+                    ...bookedSlots.map((time) => ({ time, booked: true })),
+                  ].sort((a, b) => displaySlotToMinutes(a.time) - displaySlotToMinutes(b.time));
+
+                  if (loadingSlots) {
+                    return (
+                      <div className="flex justify-center py-12 bg-white rounded-2xl border border-slate-100 shadow-sm"><Loader2 className="w-6 h-6 animate-spin text-zinc-400" /></div>
+                    );
+                  }
+                  if (combinedSlots.length === 0) {
+                    return (
+                      <div className="text-center text-sm text-zinc-500 py-12 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                        <AlertCircle className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                        No remaining open slots match the duration of this appointment today.
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="grid grid-cols-3 gap-3">
+                      {combinedSlots.map(({ time, booked }) => {
+                        if (booked) {
+                          return (
+                            <button
+                              key={time}
+                              type="button"
+                              disabled
+                              aria-disabled="true"
+                              title="Already booked"
+                              className="py-3 px-1 text-xs font-semibold rounded-xl border flex items-center justify-between border-rose-200 bg-rose-50 text-rose-400 cursor-not-allowed line-through"
+                            >
+                              <span className="ml-1.5">{time}</span>
+                              <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-rose-400" />
+                            </button>
+                          );
+                        }
+                        const isSelected = selectedTimeSlot === time;
+                        return (
+                          <button
+                            key={time}
+                            onClick={() => setSelectedTimeSlot(time)}
+                            className={`py-3 px-1 text-xs font-semibold rounded-xl border flex items-center justify-between transition-all ${
+                              isSelected
+                                ? 'border-zinc-900 bg-zinc-900 text-white shadow-md ring-1 ring-zinc-900'
+                                : 'border-slate-100 bg-white hover:border-zinc-900 text-zinc-900 hover:bg-slate-50 shadow-sm'
+                            }`}
+                          >
+                            <span className="ml-1.5">{time}</span>
+                            <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${isSelected ? 'bg-emerald-400' : 'bg-emerald-500 animate-pulse'}`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

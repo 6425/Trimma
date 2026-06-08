@@ -209,16 +209,35 @@ export async function createDirectBooking(
       .eq("salon_id", salonId)
       .eq("booking_date", bookingDate);
 
-    const bookings = (existingBookings || []) as BookingConflictRow[];
+    // Fetch per-booking total duration from booking_services for overlap detection
+    const existingBookingIds = (existingBookings || []).map((b) => b.id).filter(Boolean);
+    const bookingDurations = new Map<string, number>();
+    if (existingBookingIds.length > 0) {
+      const { data: bsRows } = await supabase
+        .from("booking_services")
+        .select("booking_id, duration_min")
+        .in("booking_id", existingBookingIds);
+      if (bsRows) {
+        for (const row of bsRows) {
+          const dur = parseInt(String(row.duration_min || 0), 10);
+          bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
+        }
+      }
+    }
+
+    const bookings: BookingConflictRow[] = (existingBookings || []).map((b) => ({
+      ...b,
+      duration_minutes: bookingDurations.get(b.id) || 30,
+    }));
 
     let resolvedStaffId: string | null;
     if (staffId && staffId !== "any") {
       resolvedStaffId = staffId;
     } else {
-      resolvedStaffId = resolveAvailableStaffId(staffIds, bookings, formattedTime) || staffIds[0] || null;
+      resolvedStaffId = resolveAvailableStaffId(staffIds, bookings, formattedTime, totalDuration) || staffIds[0] || null;
     }
 
-    assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime);
+    assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime, totalDuration);
 
     const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
     const isPaid = paymentMethod === "paypal";
@@ -239,7 +258,6 @@ export async function createDirectBooking(
       total_reservation_fee: reservationFee,
       salon_upfront_amount: pricing.salonUpfront,
       platform_commission_amount: pricing.platformCommission,
-      payhere_fee_amount: pricing.payhereFee,
       agent_email: agentEmail,
       agent_commission_percent: agentCommissionPct,
       agent_commission_amount: agentCommissionAmount,

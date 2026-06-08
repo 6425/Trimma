@@ -41,7 +41,11 @@ export async function fetchSalonDashboardPage() {
       supabase
         .from("bookings")
         .select(
-          "id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, created_at, customer_email"
+          `id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, booking_time, created_at, customer_email, staff_id,
+          services (name),
+          salon_staff (name),
+          booking_services ( services (name) ),
+          booking_staff ( salon_staff (name) )`
         )
         .eq("salon_id", ctx.salonId)
         .order("created_at", { ascending: false }),
@@ -149,7 +153,13 @@ export async function fetchSalonFinancePage() {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data, error } = await supabase
       .from("bookings")
-      .select("*")
+      .select(`
+        *,
+        services (name),
+        salon_staff (name),
+        booking_services ( services (name) ),
+        booking_staff ( salon_staff (name) )
+      `)
       .eq("salon_id", ctx.salonId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);

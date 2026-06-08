@@ -319,7 +319,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="text-xs text-white/80">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
               <Avatar className="h-8 w-8 border-2 border-[#F5B700]/30">
-                <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'admin' ? 'Admin' : 'Salon'}`} />
+                <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(role === 'admin' ? 'Admin' : salonName)}`} />
                 <AvatarFallback className="bg-[#F5B700] text-black text-xs font-bold">
                   {role === 'admin' ? 'AD' : 'SA'}
                 </AvatarFallback>

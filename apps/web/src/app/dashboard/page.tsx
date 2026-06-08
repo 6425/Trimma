@@ -6,14 +6,14 @@ import Card from "../../components/ui/Card";
 import { fetchSalonDashboardPage } from "@/app/actions/salon-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
 import { Loader2, RefreshCw } from "lucide-react";
-import { CommissionCard } from "../../components/CommissionCard";
-import type { CommissionRow } from "@/lib/types/commission";
+import { BookingCommissionTable } from "../../components/dashboard/BookingCommissionTable";
+import { StaffBookingTrendChart } from "../../components/dashboard/StaffBookingTrendChart";
+import { RevenueTrendChart } from "../../components/dashboard/RevenueTrendChart";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import {
   ActivityItem,
   formatLkr,
   formatRelativeTime,
-  getBookingAmount,
   groupBookingsByMonth,
   type MonthlyPoint,
 } from "@/lib/dashboard-stats";
@@ -71,7 +71,8 @@ export default function Dashboard() {
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [commissions, setCommissions] = useState<CommissionRow[]>([]);
+  const [recentBookings, setRecentBookings] = useState<any[]>([]);
+  const [allStaff, setAllStaff] = useState<any[]>([]);
 
   const fetchDashboardStats = useCallback(async (forceRefresh = false) => {
     try {
@@ -82,9 +83,15 @@ export default function Dashboard() {
         const cached = sessionStorage.getItem("dashboardCache");
         if (cached) {
           const parsed = JSON.parse(cached);
+          if (!parsed.allStaff) {
+             // Cache is stale (missing allStaff), clear and fetch fresh
+             sessionStorage.removeItem("dashboardCache");
+             return fetchDashboardStats(true);
+          }
           setSalonName(parsed.salonName || "your salon");
           setStats(parsed.stats);
-          setCommissions(parsed.commissions);
+          setRecentBookings(parsed.recentBookings || []);
+          setAllStaff(parsed.allStaff || []);
           setMonthlyPoints(parsed.monthlyPoints || []);
           setActivity(parsed.activity || []);
           setLoading(false);
@@ -108,7 +115,12 @@ export default function Dashboard() {
 
       setSalonName((salonData.name as string) || "your salon");
 
-      const revenue = bookings.reduce((sum, booking) => sum + getBookingAmount(booking), 0);
+      // Total Revenue = gross booking value (matches the Finance page's Gross Revenue),
+      // not just the upfront reservation deposit.
+      const revenue = bookings.reduce(
+        (sum, booking) => sum + Number(booking.amount || 0),
+        0
+      );
       const activeServices = services.filter((service) => service.status === "active").length;
 
       const newStats = {
@@ -118,43 +130,12 @@ export default function Dashboard() {
         revenue,
       };
 
-      let fetchedCommissions: CommissionRow[] = [];
-      const latestBooking = bookings[0];
-      if (latestBooking) {
-        const salonShare = Number(latestBooking.salon_upfront_amount ?? 0);
-        const platformShare = Number(latestBooking.platform_commission_amount ?? 0);
-        const agentShare = Number(latestBooking.agent_commission_amount ?? 0);
-
-        if (salonShare > 0 || platformShare > 0) {
-          if (salonShare > 0) {
-            fetchedCommissions.push({
-              entity_type: "salon",
-              amount: salonShare,
-              description: "Salon share from latest booking",
-            });
-          }
-          if (platformShare > 0) {
-            fetchedCommissions.push({
-              entity_type: "platform",
-              amount: platformShare,
-              description: "Platform fee from latest booking",
-            });
-          }
-        } else {
-          const total = Number(latestBooking.amount ?? 0);
-          fetchedCommissions = [
-            { entity_type: "salon", amount: Math.round(total * 0.8), description: "Estimated salon share (80%)" },
-            { entity_type: "platform", amount: Math.round(total * 0.2), description: "Estimated platform fee (20%)" },
-          ];
-        }
-      }
-
       const feed: ActivityItem[] = [];
       for (const booking of bookings.slice(0, 4)) {
         feed.push({
           id: `booking-${booking.id}`,
           title: "Booking update",
-          description: `${booking.customer_email || "Customer"} · LKR ${formatLkr(getBookingAmount(booking))} · ${booking.status}`,
+          description: `${booking.customer_email || "Customer"} · LKR ${formatLkr(Number(booking.amount || 0))} · ${booking.status}`,
           time: formatRelativeTime(booking.created_at),
           tone: "blue",
         });
@@ -181,7 +162,8 @@ export default function Dashboard() {
       const monthly = groupBookingsByMonth(bookings);
 
       setStats(newStats);
-      setCommissions(fetchedCommissions);
+      setRecentBookings(bookings);
+      setAllStaff(staff);
       setMonthlyPoints(monthly);
       setActivity(feed.slice(0, 6));
 
@@ -190,7 +172,8 @@ export default function Dashboard() {
         JSON.stringify({
           salonName: salonData.name,
           stats: newStats,
-          commissions: fetchedCommissions,
+          recentBookings: bookings,
+          allStaff: staff,
           monthlyPoints: monthly,
           activity: feed.slice(0, 6),
         })
@@ -244,27 +227,11 @@ export default function Dashboard() {
         <Card title="Total Revenue" value={`LKR ${formatLkr(stats.revenue)}`} />
       </div>
 
-      {commissions.length > 0 && (
-        <div className="bg-white dark:bg-brand-surface-dark p-6 rounded-3xl border border-slate-200 dark:border-white/5 space-y-4">
-          <div>
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-              Recent Booking Commission Split
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Split breakdown from your most recent booking in the database.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {commissions.filter(c => c.entity_type !== 'agent').map((row, i) => (
-              <CommissionCard key={i} row={row} />
-            ))}
-          </div>
-        </div>
-      )}
+      <BookingCommissionTable bookings={recentBookings} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SimpleBarChart title="Booking Trends" points={monthlyPoints} valueKey="bookings" />
-        <SimpleBarChart title="Revenue Growth" points={monthlyPoints} valueKey="revenue" />
+        <StaffBookingTrendChart bookings={recentBookings} allStaff={allStaff} />
+        <RevenueTrendChart bookings={recentBookings} />
       </div>
 
       <div className="bg-white p-4 rounded-xl border border-slate-200">

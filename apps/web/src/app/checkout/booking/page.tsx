@@ -33,7 +33,7 @@ type LoadedBookingCheckout = {
   staffMember: any | null;
   reservationFee: number;
   serviceTotal: number;
-  rates: { platform: number; salon: number; payhere: number; agent: number };
+  rates: { platform: number; salon: number; agent: number };
 };
 
 function getErrorMessage(error: unknown): string {

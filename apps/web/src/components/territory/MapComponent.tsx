@@ -18,6 +18,8 @@ export type BusinessResult = {
   is_verified: boolean;
   rating: number;
   status: string;
+  assign_to?: string | null;
+  is_taken?: boolean;
 };
 
 export type Territory = {

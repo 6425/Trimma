@@ -3,7 +3,6 @@ export const RESERVATION_DEPOSIT_PERCENT = 20;
 export type BookingCommissionRates = {
   platform: number;
   salon: number;
-  payhere: number;
 };
 
 export function calculateReservationFee(serviceTotal: number): number {
@@ -24,6 +23,5 @@ export function calculateCommissionSplit(
     reservationFee,
     platformCommission: serviceTotal * (rates.platform / 100),
     salonUpfront: serviceTotal * (rates.salon / 100),
-    payhereFee: reservationFee * (rates.payhere / 100),
   };
 }

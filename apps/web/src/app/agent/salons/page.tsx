@@ -25,6 +25,12 @@ import {
 } from "@/lib/agent-salons";
 import { useRouter } from "next/navigation";
 
+type SubscriptionPlanInfo = {
+  name?: string | null;
+  monthly_price?: number | null;
+  intro_monthly_price?: number | null;
+};
+
 type AgentSalon = {
   id: string;
   name: string;
@@ -36,7 +42,30 @@ type AgentSalon = {
   onboarding_status?: string | null;
   booking_enabled?: boolean | null;
   created_at?: string | null;
+  subscription_plan_id?: string | null;
+  subscription_plans?: SubscriptionPlanInfo | SubscriptionPlanInfo[] | null;
+  subscription_charge?: number | null;
+  subscription_currency?: string | null;
+  subscription_billing_cycle?: string | null;
+  subscription_plan_name?: string | null;
 };
+
+const lkr = new Intl.NumberFormat("en-LK", {
+  style: "currency",
+  currency: "LKR",
+  maximumFractionDigits: 0,
+});
+
+function getSubscriptionPlan(salon: AgentSalon): SubscriptionPlanInfo | null {
+  const plan = salon.subscription_plans;
+  if (!plan) return null;
+  return Array.isArray(plan) ? plan[0] ?? null : plan;
+}
+
+function getCycleSuffix(cycle?: string | null): string {
+  if (!cycle) return "";
+  return cycle.toLowerCase().startsWith("ann") ? "/yr" : "/mo";
+}
 
 type FilterTab = "all" | "active" | "needs_action" | "live";
 
@@ -203,6 +232,7 @@ export default function AgentSalons() {
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Status</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Contact</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Owner Gmail</th>
+                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Subscription</th>
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-right">Actions</th>
                 </tr>
               </thead>
@@ -250,6 +280,32 @@ export default function AgentSalons() {
                       ) : (
                         <span className="text-zinc-400">Not set</span>
                       )}
+                    </td>
+                    <td className="px-5 py-4 align-top">
+                      {(() => {
+                        const charge = salon.subscription_charge;
+                        if (charge == null) {
+                          return (
+                            <span className="text-xs text-zinc-400 font-semibold italic">
+                              Not charged yet
+                            </span>
+                          );
+                        }
+                        const planName =
+                          salon.subscription_plan_name || getSubscriptionPlan(salon)?.name;
+                        return (
+                          <div>
+                            <div className="font-bold text-emerald-600">
+                              {`${lkr.format(charge)}${getCycleSuffix(salon.subscription_billing_cycle)}`}
+                            </div>
+                            {planName && (
+                              <div className="text-[10px] font-semibold text-zinc-400 mt-0.5 uppercase tracking-wide">
+                                {planName}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-5 py-4 align-top">
                       <div className="flex justify-end gap-2">

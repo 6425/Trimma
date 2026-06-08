@@ -464,18 +464,25 @@ export default function DashboardBookings() {
                             <Badge className="bg-rose-50 text-rose-600 border-none px-1.5 py-0 text-[8px] font-black uppercase">Unpaid</Badge>
                           )}
                         </div>
-                        {b.reservation_fee_paid && (
-                          <div className="bg-amber-50/50 border border-amber-100 rounded flex flex-col p-1.5 mt-0.5">
-                            <div className="flex justify-between text-[9px] font-bold">
-                              <span className="text-amber-700/70">Platform Fee ({b.platform_commission_percent || 10}%):</span>
-                              <span className="text-amber-700">- LKR {((parseFloat(b.amount || "0") * 0.2) * ((b.platform_commission_percent || 10) / 100)).toLocaleString()}</span>
+                        {b.reservation_fee_paid && (() => {
+                          const amt = parseFloat(b.amount || "0");
+                          // Strictly calculate as 10% each as per new rules, ignoring legacy DB splits
+                          const platAmt = amt * 0.10;
+                          const salonAmt = amt * 0.10;
+                          
+                          return (
+                            <div className="bg-amber-50/50 border border-amber-100 rounded flex flex-col p-1.5 mt-0.5">
+                              <div className="flex justify-between text-[9px] font-bold">
+                                <span className="text-amber-700/70">Platform Fee (10%):</span>
+                                <span className="text-amber-700">- LKR {platAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                              </div>
+                              <div className="flex justify-between text-[10px] font-black mt-0.5 border-t border-amber-100/50 pt-0.5">
+                                <span className="text-emerald-700">Salon Commission (10%):</span>
+                                <span className="text-emerald-700">LKR {salonAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between text-[10px] font-black mt-0.5 border-t border-amber-100/50 pt-0.5">
-                              <span className="text-emerald-700">Salon Payout:</span>
-                              <span className="text-emerald-700">LKR {((parseFloat(b.amount || "0") * 0.2) * (1 - ((b.platform_commission_percent || 10) / 100))).toLocaleString()}</span>
-                            </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                       {(b.payment_status === 'reservation_paid' || b.payment_status === 'paid' || b.payment_status === 'refunded') && (
                         <div className="text-[10px] font-bold text-zinc-400 mt-1.5 capitalize border-t border-slate-100 pt-1">

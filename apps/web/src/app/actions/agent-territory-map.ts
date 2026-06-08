@@ -35,7 +35,11 @@ export async function getAgentMapData() {
   };
 }
 
-export async function searchBusinessesInTerritories(categories: string[], territoryIds: string[]) {
+export async function searchBusinessesInTerritories(
+  categories: string[],
+  territoryIds: string[],
+  limit: number = 0
+) {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
 
@@ -46,11 +50,13 @@ export async function searchBusinessesInTerritories(categories: string[], territ
   // Build query for local DB
   let query = supabase
     .from("salons")
-    .select("id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status");
+    .select("id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to");
+
+  if (limit > 0) query = query.limit(limit);
 
   let leadsQuery = supabase
     .from("salon_leads")
-    .select("name, address");
+    .select("name, address, assign_to");
 
   if (territoryIds.length > 0) {
     const realIds = territoryIds.filter(id => !id.startsWith("primary-"));
@@ -140,22 +146,34 @@ export async function searchBusinessesInTerritories(categories: string[], territ
 
     const { data: localLeads } = await leadsQuery;
 
-    // Merge Google results, avoiding duplicates by name across BOTH salons and salon_leads
-    const existingNames = new Set([
-      ...businesses.map(b => b.name.toLowerCase()),
-      ...(localLeads || []).map(l => l.name.toLowerCase())
-    ]);
-    
+    // Salons already in our DB are shown as their own rows, so skip Google dups of them.
+    const salonNames = new Set(businesses.map(b => b.name.toLowerCase()));
+
+    // Manual leads (salon_leads) aren't shown as rows, so surface their Google match
+    // and flag it as "already taken" instead of hiding it.
+    const leadByName = new Map<string, { assign_to?: string | null }>();
+    for (const l of localLeads || []) {
+      if (l?.name) leadByName.set(l.name.toLowerCase(), { assign_to: l.assign_to });
+    }
+
+    const seenGoogle = new Set<string>();
     for (const gb of googleBusinesses) {
-      if (!existingNames.has(gb.name.toLowerCase())) {
+      const key = gb.name.toLowerCase();
+      if (salonNames.has(key)) continue; // already represented by a salon row
+      if (seenGoogle.has(key)) continue; // de-dup within Google results
+      seenGoogle.add(key);
+
+      const lead = leadByName.get(key);
+      if (lead) {
+        businesses.push({ ...gb, is_taken: true, assign_to: lead.assign_to ?? null });
+      } else {
         businesses.push(gb);
-        existingNames.add(gb.name.toLowerCase());
       }
     }
   }
 
   return {
     success: true as const,
-    businesses,
+    businesses: limit > 0 ? businesses.slice(0, limit) : businesses,
   };
 }

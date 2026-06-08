@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSalonFinancePage } from "@/app/actions/salon-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
+import { BookingCommissionTable } from "../../../components/dashboard/BookingCommissionTable";
 
 interface BookingWithSplits {
   id: string;
@@ -18,7 +19,6 @@ interface BookingWithSplits {
   created_at: string;
   platform_commission_amount: number;
   salon_upfront_amount: number;
-  payhere_fee_amount: number;
   agent_commission_amount: number;
 }
 
@@ -35,15 +35,14 @@ export default function FinanceDashboard() {
     platformComm: 0,
     salonComm: 0,
     agentComm: 0,
-    payhereComm: 0,
     completedCount: 0
   });
 
-  const globalRates = {
-    platform: 15,
-    salon: 85,
-    payhere: 2.9
-  };
+  const [globalRates, setGlobalRates] = useState({ 
+    platform: 10, 
+    salon: 10, 
+    agent: 20 
+  });
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -54,14 +53,16 @@ export default function FinanceDashboard() {
 
       setSalon(result.salon);
       const bookingsData = result.bookings || [];
-      const resolvedBookings = bookingsData.map((b: any) => ({
-      ...b,
-      amount: parseFloat(b.total_price || 0),
-      platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
-      salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
-      payhere_fee_amount: parseFloat(b.payhere_fee_amount || 0),
-      agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
-      }));
+      const resolvedBookings = bookingsData.map((b: any) => {
+        const totalRes = parseFloat(b.total_reservation_fee || 0);
+        return {
+          ...b,
+          amount: parseFloat(b.amount || 0),
+          platform_commission_amount: totalRes / 2,
+          salon_upfront_amount: totalRes / 2,
+          agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
+        };
+      });
       
       setBookings(resolvedBookings);
       
@@ -70,7 +71,6 @@ export default function FinanceDashboard() {
       let platform = 0;
       let salonUpfront = 0;
       let agent = 0;
-      let payhere = 0;
       let completed = 0;
       
       resolvedBookings.forEach((b: BookingWithSplits) => {
@@ -79,7 +79,6 @@ export default function FinanceDashboard() {
       platform += b.platform_commission_amount;
       salonUpfront += b.salon_upfront_amount;
       agent += b.agent_commission_amount;
-      payhere += b.payhere_fee_amount;
       completed += 1;
       }
       });
@@ -89,7 +88,6 @@ export default function FinanceDashboard() {
       platformComm: platform,
       salonComm: salonUpfront,
       agentComm: agent,
-      payhereComm: payhere,
       completedCount: completed
       });
       } catch (err) {
@@ -164,8 +162,8 @@ export default function FinanceDashboard() {
         </div>
       </div>
 
-      {/* KPI Stats Section (5 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* KPI Stats Section (4 Cards) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Gross Revenue */}
         <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
@@ -208,19 +206,6 @@ export default function FinanceDashboard() {
           </div>
         </div>
 
-        {/* PayHere Fee */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">PayHere ({globalRates.payhere}%)</span>
-            <div className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center text-rose-500">
-              <CreditCard className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.payhereComm)}</h3>
-            <p className="text-[10px] text-zinc-500">Payment Gateway Costs</p>
-          </div>
-        </div>
 
         {/* Agent Share */}
         <div className="bg-brand/5 border border-brand/20 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all">
@@ -238,102 +223,22 @@ export default function FinanceDashboard() {
       </div>
 
       {/* Main Ledger Section */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-          <div>
-            <h2 className="font-bold text-lg text-zinc-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-zinc-400" /> Bookings Ledger &amp; Breakdown
-            </h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Click any booking row to review the platform, salon, payhere, and agent split breakdowns.</p>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl">
-            {['all', 'completed', 'pending', 'cancelled'].map(f => (
-              <Button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none capitalize ${
-                  filter === f ? "bg-white text-zinc-950" : "bg-transparent text-zinc-500 hover:text-zinc-900"
-                }`}
-              >
-                {f === 'completed' ? 'Settled' : f}
-              </Button>
-            ))}
-          </div>
+      <div className="space-y-6">
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl w-fit ml-auto">
+          {['all', 'completed', 'pending', 'cancelled'].map(f => (
+            <Button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`h-8 px-3 text-xs font-bold rounded-xl transition-all shadow-none border-none capitalize ${
+                filter === f ? "bg-white text-zinc-950 shadow-sm" : "bg-transparent text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              {f === 'completed' ? 'Settled' : f}
+            </Button>
+          ))}
         </div>
-
-        <div className="space-y-3">
-          {filteredBookings.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-zinc-400 space-y-2">
-              <Calendar className="w-8 h-8 text-zinc-300" />
-              <p className="text-sm font-medium">No bookings found matching the filter.</p>
-            </div>
-          ) : (
-            filteredBookings.map((booking) => {
-              const isExpanded = expandedBooking === booking.id;
-              return (
-                <div key={booking.id} className={`border rounded-2xl transition-all ${isExpanded ? "border-slate-300 bg-slate-50/50" : "border-slate-100 hover:border-slate-200"}`}>
-                  {/* Row Summary */}
-                  <div onClick={() => setExpandedBooking(isExpanded ? null : booking.id)} className="flex flex-col md:flex-row md:items-center justify-between p-4 cursor-pointer select-none gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-[#1A1C29] text-xs">
-                        {booking.booking_no?.substring(4) || "BK"}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-zinc-900 text-sm">{booking.booking_no || "TRM-000000"}</span>
-                          <span className={`px-2 py-0.5 border text-[10px] font-bold rounded-full ${getStatusStyle(booking.status)}`}>{booking.status}</span>
-                        </div>
-                        <p className="text-xs text-zinc-400 mt-0.5">{booking.customer_email} • {formatDate(booking.booking_date)}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-none pt-3 md:pt-0">
-                      <div className="text-left md:text-right">
-                        <span className="text-sm font-black text-zinc-900">{formatLKR(booking.amount)}</span>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">Gross Amount</p>
-                      </div>
-                      <div className="text-zinc-400">
-                        <ArrowRight className={`w-4 h-4 transform transition-transform ${isExpanded ? "rotate-90 text-brand" : ""}`} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expanded Breakdown */}
-                  {isExpanded && (
-                    <div className="border-t border-slate-200 p-5 bg-white rounded-b-2xl space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Direct Database Fee Breakdown</h4>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">💼 Platform Gross</span>
-                          <h5 className="text-lg font-black text-zinc-900 mt-1">{formatLKR(booking.platform_commission_amount)}</h5>
-                        </div>
-
-                        <div className="bg-teal-50/50 p-4 rounded-xl border border-teal-100">
-                          <span className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">🏢 Salon Res.</span>
-                          <h5 className="text-lg font-black text-teal-700 mt-1">{formatLKR(booking.salon_upfront_amount)}</h5>
-                        </div>
-
-                        <div className="bg-rose-50/50 p-4 rounded-xl border border-rose-100">
-                          <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">💳 PayHere Fee</span>
-                          <h5 className="text-lg font-black text-rose-600 mt-1">{formatLKR(booking.payhere_fee_amount)}</h5>
-                        </div>
-
-                        <div className="bg-brand/5 p-4 rounded-xl border border-brand/10">
-                          <span className="text-[10px] font-bold text-brand uppercase tracking-wider">🤝 Agent Cut</span>
-                          <h5 className="text-lg font-black text-brand mt-1">{formatLKR(booking.agent_commission_amount)}</h5>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
+        
+        <BookingCommissionTable bookings={filteredBookings} />
       </div>
 
     </div>

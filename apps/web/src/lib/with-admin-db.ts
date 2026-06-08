@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type AdminDbResult<T> = { success: true; data: T } | { success: false; error: string };
 
 export function mapAdminDbError(message: string, hint?: string): string {
+  console.error("[mapAdminDbError] Raw DB Error:", message);
   const lower = message.toLowerCase();
   if (lower.includes("does not exist") || lower.includes("relation")) {
     return hint || "Database table is missing. Run the matching packages/db patch in Supabase SQL Editor.";

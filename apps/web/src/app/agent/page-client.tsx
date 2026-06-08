@@ -103,15 +103,6 @@ export default function AgentDashboard() {
 
   const totalEarnings = stats.subscriptionCommissions + stats.bookingCommissions;
 
-  const handleWhatsAppClick = (phone: string, salonName: string) => {
-    if (!phone) return;
-    const cleanPhone = phone.replace(/[^0-9]/g, "");
-    const message = encodeURIComponent(
-      `Hello! This is ${agentName} from Trimma. I saw your professional salon, "${salonName}", on Google and would love to help you activate your Trimma Premium Subscription. Let me know when is a good time to talk!`
-    );
-    window.open(`https://wa.me/${cleanPhone}?text=${message}`, "_blank");
-  };
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh]">
@@ -251,25 +242,6 @@ export default function AgentDashboard() {
                       ) : null}
                     </div>
 
-                    <div className="flex sm:flex-col gap-2 shrink-0 justify-center">
-                      {lead.phone ? (
-                        <>
-                          <Button onClick={() => window.open(`tel:${lead.phone}`, "_self")} size="sm" className="flex-1 bg-zinc-900 text-white rounded-lg h-9 font-bold">
-                            <PhoneCall className="w-3.5 h-3.5 mr-1.5" /> Call
-                          </Button>
-                          <Button
-                            onClick={() => handleWhatsAppClick(lead.phone!, lead.name)}
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 border-slate-200 text-emerald-600 font-bold rounded-lg h-9 hover:bg-emerald-50"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 mr-1.5" /> WhatsApp
-                          </Button>
-                        </>
-                      ) : (
-                        <span className="text-xs text-zinc-400 font-semibold italic">No contact details</span>
-                      )}
-                    </div>
                   </div>
                 ))
               )}

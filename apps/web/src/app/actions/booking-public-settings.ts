@@ -7,7 +7,6 @@ const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 export type BookingCommissionRates = {
   platform: number;
   salon: number;
-  payhere: number;
   agent: number;
 };
 
@@ -21,7 +20,6 @@ export type PublicPaymentGatewaySettings = {
 const DEFAULT_RATES: BookingCommissionRates = {
   platform: 10,
   salon: 10,
-  payhere: 3,
   agent: 20,
 };
 
@@ -30,7 +28,7 @@ export async function fetchBookingCommissionRates(): Promise<BookingCommissionRa
     const supabase = createSupabaseAdminClient();
     const { data } = await supabase
       .from("commission_master")
-      .select("platform_percentage, salon_percentage, payhere_percentage, agent_percentage")
+      .select("platform_percentage, salon_percentage, agent_percentage")
       .eq("commission_type", "booking")
       .eq("active", true)
       .maybeSingle();
@@ -40,7 +38,6 @@ export async function fetchBookingCommissionRates(): Promise<BookingCommissionRa
     return {
       platform: data.platform_percentage ?? DEFAULT_RATES.platform,
       salon: data.salon_percentage ?? DEFAULT_RATES.salon,
-      payhere: data.payhere_percentage ?? DEFAULT_RATES.payhere,
       agent: data.agent_percentage ?? DEFAULT_RATES.agent,
     };
   } catch {

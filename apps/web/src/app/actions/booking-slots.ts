@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { getBlockedDisplaySlots, type BookingConflictRow } from "@/lib/booking-availability";
 
 export type BookingSlotsResult =
-  | { success: true; slots: string[]; closed: boolean; reason?: string }
+  | { success: true; slots: string[]; bookedSlots: string[]; closed: boolean; reason?: string }
   | { success: false; error: string };
 
 /**
@@ -38,7 +38,7 @@ export async function fetchAvailableBookingSlots(input: {
       .maybeSingle();
 
     if (operatingHours?.is_closed) {
-      return { success: true, slots: [], closed: true, reason: "Salon is closed on this day." };
+      return { success: true, slots: [], bookedSlots: [], closed: true, reason: "Salon is closed on this day." };
     }
 
     let startHour = 9;
@@ -80,20 +80,52 @@ export async function fetchAvailableBookingSlots(input: {
     }
 
     if (!staffWorking) {
-      return { success: true, slots: [], closed: false, reason: "Stylist is not working on this day." };
+      return { success: true, slots: [], bookedSlots: [], closed: false, reason: "Stylist is not working on this day." };
     }
 
-    // 3. Existing bookings for the day
+    // 3. Existing bookings for the day — with their total service duration
     const { data: bookedEvents } = await supabase
       .from("bookings")
-      .select("booking_time, staff_id, status, created_at")
+      .select("id, booking_time, staff_id, status, created_at")
       .eq("salon_id", salonId)
       .eq("booking_date", dateISO);
 
+    // Fetch per-booking total duration from booking_services
+    const bookingIds = (bookedEvents || []).map((b) => b.id).filter(Boolean);
+    let bookingDurations = new Map<string, number>();
+
+    if (bookingIds.length > 0) {
+      const { data: bsRows } = await supabase
+        .from("booking_services")
+        .select("booking_id, duration_min")
+        .in("booking_id", bookingIds);
+
+      if (bsRows) {
+        for (const row of bsRows) {
+          const dur = parseInt(String(row.duration_min || 0), 10);
+          bookingDurations.set(
+            row.booking_id,
+            (bookingDurations.get(row.booking_id) || 0) + dur
+          );
+        }
+      }
+    }
+
+    // Enrich bookings with duration_minutes
+    const enrichedBookings: BookingConflictRow[] = (bookedEvents || []).map((b) => ({
+      id: b.id,
+      booking_time: b.booking_time,
+      staff_id: b.staff_id,
+      status: b.status,
+      created_at: b.created_at,
+      duration_minutes: bookingDurations.get(b.id) || 30, // fallback 30 min
+    }));
+
     const blockedSlots = getBlockedDisplaySlots(
-      (bookedEvents || []) as BookingConflictRow[],
+      enrichedBookings,
       staffId || "any",
-      staffIds
+      staffIds,
+      totalDurationMinutes
     );
 
     // 4. Shared resources (chairs/basins) and their bookings
@@ -156,7 +188,12 @@ export async function fetchAvailableBookingSlots(input: {
       return true;
     });
 
-    return { success: true, slots: finalSlots, closed: false };
+    // Slots that fall within the salon's operating hours but are taken by an
+    // existing booking (for this staff member, or all staff when "any" is chosen).
+    // These are surfaced so the UI can show them as "already booked" instead of hiding them.
+    const bookedSlots = baseSlots.filter((slot) => blockedSlots.has(slot));
+
+    return { success: true, slots: finalSlots, bookedSlots, closed: false };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load time slots.";
     return { success: false, error: message };

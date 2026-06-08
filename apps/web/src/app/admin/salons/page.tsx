@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert } from "lucide-react";
+import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { fetchAdminSalons } from "@/app/actions/admin-list-data";
-import { approveAdminSalon, verifyAdminSalon, rejectAdminSalon } from "@/app/actions/admin-operations";
+import { fetchAdminSalons, fetchAdminUsers } from "@/app/actions/admin-list-data";
+import { approveAdminSalon, verifyAdminSalon, rejectAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
 import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
 import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
@@ -22,6 +22,7 @@ export default function Salons() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "pending" | "verification">("all");
+  const [agents, setAgents] = useState<any[]>([]);
 
   // Rejection Modal State
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -57,7 +58,13 @@ export default function Salons() {
   };
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchSalons());
+    void Promise.resolve().then(async () => {
+      await fetchSalons();
+      const userRes = await fetchAdminUsers();
+      if (userRes.success) {
+        setAgents(userRes.users.filter((u: any) => u.global_role === "agent"));
+      }
+    });
   }, []);
 
   const openViewModal = (salon: any) => {
@@ -83,7 +90,8 @@ export default function Salons() {
           : salon.working_hours
             ? JSON.stringify(salon.working_hours, null, 2)
             : "",
-      is_verified: salon.is_verified || false
+      is_verified: salon.is_verified || false,
+      assign_to: salon.assign_to || ""
     });
     setViewModalOpen(true);
   };
@@ -330,6 +338,7 @@ export default function Salons() {
               <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-500 uppercase tracking-widest border-b border-zinc-100">
                 <th className="px-8 py-5">Salon Profile</th>
                 <th className="px-8 py-5">Location</th>
+                <th className="px-8 py-5">Assigned Agent</th>
                 <th className="px-8 py-5">Platform Status</th>
                 <th className="px-8 py-5 text-right">Actions</th>
               </tr>
@@ -337,14 +346,14 @@ export default function Salons() {
             <tbody className="divide-y divide-zinc-50">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-8 py-24 text-center">
+                  <td colSpan={5} className="px-8 py-24 text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-brand mx-auto mb-4" />
                     <p className="text-zinc-500 font-medium font-sans">Accessing salon directory...</p>
                   </td>
                 </tr>
               ) : filteredSalons.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-8 py-24 text-center text-zinc-500">
+                  <td colSpan={5} className="px-8 py-24 text-center text-zinc-500">
                     <Store className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p className="font-medium font-sans">No matching salons found.</p>
                   </td>
@@ -375,6 +384,31 @@ export default function Salons() {
                       <div className="flex items-center gap-2 text-sm text-zinc-500 font-medium">
                         <MapPin className="w-4 h-4 text-zinc-700" /> {salon.city || salon.district || "Not Set"}
                       </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <select
+                        value={salon.assign_to || ""}
+                        onChange={async (e) => {
+                          const newAgent = e.target.value;
+                          toast.loading("Assigning agent...");
+                          try {
+                            const res = await updateAdminSalon(salon.id, { assign_to: newAgent || null });
+                            if (res.success === false) throw new Error((res as any).error);
+                            toast.dismiss();
+                            toast.success("Agent reassigned successfully");
+                            fetchSalons();
+                          } catch (err: any) {
+                            toast.dismiss();
+                            toast.error("Failed to reassign agent: " + err.message);
+                          }
+                        }}
+                        className="w-full max-w-[180px] h-9 px-2 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 text-xs font-semibold text-zinc-700 cursor-pointer hover:bg-white transition-colors"
+                      >
+                        <option value="">Unassigned</option>
+                        {agents.map(a => (
+                          <option key={a.email} value={a.email}>{a.full_name || a.email}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
@@ -446,7 +480,7 @@ export default function Salons() {
                           size="sm" 
                           className="text-zinc-500 hover:text-brand hover:bg-zinc-100 rounded-xl ml-2 font-medium"
                         >
-                          <Eye className="w-4 h-4 mr-2" /> View Form
+                          <Pencil className="w-4 h-4 mr-2" /> Edit Profile
                         </Button>
                       </div>
                     </td>
@@ -567,6 +601,21 @@ export default function Salons() {
                       <option value="rejected">REJECTED</option>
                     </select>
                   </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Assigned Agent</label>
+                    <select
+                      value={editForm.assign_to}
+                      onChange={(e) => setEditForm({...editForm, assign_to: e.target.value})}
+                      className="w-full h-10 px-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold cursor-pointer"
+                    >
+                      <option value="">Unassigned</option>
+                      {agents.map((a) => (
+                        <option key={a.email} value={a.email}>
+                          {a.full_name || a.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="space-y-1 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Description</label>
                     <Textarea 
@@ -672,7 +721,7 @@ export default function Salons() {
                 ) : (
                   <Save className="w-4 h-4 mr-2" />
                 )}
-                Save Data Silently
+                Save Changes
               </Button>
             </div>
 

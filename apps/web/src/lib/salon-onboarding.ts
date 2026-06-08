@@ -1,5 +1,5 @@
 /** Salon onboarding statuses where the owner must complete the activation wizard. */
-export const OWNER_ACTIVATION_STATUSES = ["AGENT_VERIFIED", "OWNER_INVITED"] as const;
+export const OWNER_ACTIVATION_STATUSES = ["AGENT_VERIFIED", "OWNER_INVITED", "ASSIGNED_TO_AGENT"] as const;
 
 export function needsOwnerActivationWizard(status: string | null | undefined): boolean {
   if (!status) return false;

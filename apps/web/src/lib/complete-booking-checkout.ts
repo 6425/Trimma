@@ -47,7 +47,6 @@ export type CompleteBookingCheckoutInput = {
   rates: {
     platform: number;
     salon: number;
-    payhere: number;
     agent: number;
   };
   salon: {
@@ -153,20 +152,38 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     .eq("salon_id", salon.id)
     .eq("booking_date", draft.bookingDate);
 
-  const bookings = (existingBookings || []) as BookingConflictRow[];
+  const existingBookingIds = (existingBookings || []).map((b) => b.id).filter(Boolean);
+  const bookingDurations = new Map<string, number>();
+  if (existingBookingIds.length > 0) {
+    const { data: bsRows } = await supabase
+      .from("booking_services")
+      .select("booking_id, duration_min")
+      .in("booking_id", existingBookingIds);
+    if (bsRows) {
+      for (const row of bsRows) {
+        const dur = parseInt(String(row.duration_min || 0), 10);
+        bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
+      }
+    }
+  }
+
+  const bookings: BookingConflictRow[] = (existingBookings || []).map((b) => ({
+    ...b,
+    duration_minutes: bookingDurations.get(b.id) || 30,
+  }));
 
   let resolvedStaffId: string | null;
   if (draft.staffId && draft.staffId !== "any") {
     resolvedStaffId = draft.staffId;
   } else {
     resolvedStaffId =
-      resolveAvailableStaffId(staffIds, bookings, formattedTime) ||
+      resolveAvailableStaffId(staffIds, bookings, formattedTime, totalDuration) ||
       staffMemberId ||
       staffIds[0] ||
       null;
   }
 
-  assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime);
+  assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime, totalDuration);
 
   const pricing = calculateCommissionSplit(serviceTotal, rates);
   const resolvedReservationFee = pricing.reservationFee;
@@ -193,7 +210,6 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     total_reservation_fee: resolvedReservationFee,
     salon_upfront_amount: pricing.salonUpfront,
     platform_commission_amount: pricing.platformCommission,
-    payhere_fee_amount: pricing.payhereFee,
     agent_email: agentEmail,
     agent_commission_percent: agentCommissionPct,
     agent_commission_amount: agentCommissionAmount,
