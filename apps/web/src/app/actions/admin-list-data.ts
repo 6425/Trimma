@@ -70,17 +70,35 @@ export async function fetchAdminFinancePage() {
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
       supabase.from("commission_master").select("*"),
       supabase.from("salons").select("id, name, owner_email, subscription_plan_id"),
-      supabase.from("bookings").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("bookings")
+        .select(
+          "id, booking_no, booking_date, booking_time, amount, total_price, status, customer_email, created_at, platform_commission_amount, salon_upfront_amount, agent_commission_amount, agent_commission_percent, agent_email, salon_id"
+        )
+        .order("booking_date", { ascending: false }),
     ]);
     if (rolesRes.error) throw new Error(rolesRes.error.message);
     if (commissionRes.error) throw new Error(commissionRes.error.message);
     if (salonsRes.error) throw new Error(salonsRes.error.message);
     if (bookingsRes.error) throw new Error(bookingsRes.error.message);
+
+    // Subscription ledger is optional: it only exists after SUBSCRIPTION_COMMISSION_PATCH.
+    // Select base columns only (no salons embed / patched columns) and tolerate absence.
+    let subscriptionLedger: any[] = [];
+    const ledgerRes = await supabase
+      .from("commission_ledger")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!ledgerRes.error) {
+      subscriptionLedger = ledgerRes.data || [];
+    }
+
     return {
       adminRoles: rolesRes.data || [],
       commissionMaster: commissionRes.data || [],
       salons: salonsRes.data || [],
       bookings: bookingsRes.data || [],
+      subscriptionLedger,
     };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

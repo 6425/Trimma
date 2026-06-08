@@ -5,7 +5,7 @@ import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-
 export type BookingCommissionInput = {
   platform: number;
   salon: number;
-  payhere: number;
+  agent?: number;
   previousId?: string | null;
 };
 
@@ -25,8 +25,8 @@ export type CommissionRuleInput = {
 };
 
 export async function saveBookingCommissionMaster(input: BookingCommissionInput) {
-  if (input.platform + input.salon + input.payhere !== 23) {
-    return { success: false as const, error: "Platform + Salon + PayHere must equal 23%." };
+  if (input.platform + input.salon !== 20) {
+    return { success: false as const, error: "Platform + Salon must equal 20%." };
   }
 
   const result = await withAdminDb(async (supabase) => {
@@ -42,8 +42,7 @@ export async function saveBookingCommissionMaster(input: BookingCommissionInput)
       commission_type: "booking",
       platform_percentage: input.platform,
       salon_percentage: input.salon,
-      payhere_percentage: input.payhere,
-      agent_percentage: 0,
+      agent_percentage: input.agent ?? 20,
       active: true,
     });
     if (error) throw new Error(error.message);

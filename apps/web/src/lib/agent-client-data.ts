@@ -101,7 +101,7 @@ export async function loadAgentDashboardFromClient() {
       .order("created_at", { ascending: false }),
     supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
     supabase.from("bookings").select("agent_commission_amount").eq("agent_email", email),
-    supabase.from("commission_ledger").select("amount, status").eq("agent_email", email),
+    supabase.from("commission_ledger").select("*").eq("agent_email", email),
   ]);
 
   const agentRow = await findAgentRecord(supabase, email, auth.userId);
@@ -129,10 +129,9 @@ export async function loadAgentDashboardFromClient() {
           (sum, b) => sum + (Number(b.agent_commission_amount) || 0),
           0
         ),
-        subscriptionCommissions: (ledgerRows || []).reduce(
-          (sum, e) => sum + (Number(e.amount) || 0),
-          0
-        ),
+        subscriptionCommissions: (ledgerRows || [])
+          .filter((e) => String(e.commission_category || "").toLowerCase() === "subscription")
+          .reduce((sum, e) => sum + (Number(e.amount) || 0), 0),
         hotLeads,
         upcomingTasks: pendingSalons.map((salon) => {
           const status = salon.onboarding_status || "ASSIGNED_TO_AGENT";
@@ -166,10 +165,15 @@ export async function fetchAgentProfileClient() {
 
   if (error) return { success: false as const, error: error.message };
 
-  const agentRow = await findAgentRecord(supabase, auth.email, auth.userId);
-  const territory = formatAgentTerritoryLabel(
-    await buildAgentTerritories(supabase, auth.email, agentRow)
-  );
+  let territory = "No territory assigned";
+  try {
+    const agentRow = await findAgentRecord(supabase, auth.email, auth.userId);
+    territory = formatAgentTerritoryLabel(
+      await buildAgentTerritories(supabase, auth.email, agentRow)
+    );
+  } catch {
+    // Client RLS may block agents/agent_territories until FIX_AGENT_CLIENT_RLS.sql is applied.
+  }
 
   return {
     success: true as const,
@@ -376,6 +380,140 @@ export async function searchBusinessesInTerritoriesClient(
   return { success: true as const, businesses: data || [] };
 }
 
+// --- Commissions ---
+
+export async function fetchAgentCommissionsClient() {
+  const auth = await requireAgentEmailClient();
+  if (auth.success === false) return { success: false as const, error: auth.error };
+
+  const email = auth.email;
+
+  const [masterRes, agentRow, salonsRes, bookingsByAgentRes, ledgerRes] = await Promise.all([
+    supabase
+      .from("commission_master")
+      .select("commission_type, agent_percentage, active")
+      .eq("active", true),
+    findAgentRecord(supabase, email, auth.userId),
+    supabase.from("salons").select("id, name").eq("assign_to", email),
+    supabase
+      .from("bookings")
+      .select(
+        "id, salon_id, booking_date, status, amount, customer_email, agent_commission_amount, agent_commission_percent, salons(name)"
+      )
+      .eq("agent_email", email)
+      .order("booking_date", { ascending: false }),
+    supabase
+      .from("commission_ledger")
+      .select("*")
+      .eq("agent_email", email)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const bookingMaster = (masterRes.data || []).find((r) => r.commission_type === "booking");
+  const subscriptionMaster = (masterRes.data || []).find((r) => r.commission_type === "subscription");
+  const bookingAgentPct =
+    Number(bookingMaster?.agent_percentage) ||
+    Number(agentRow?.commission_rate) ||
+    20;
+  const subscriptionAgentPct = Number(subscriptionMaster?.agent_percentage) || 20;
+
+  const salonMap = new Map<string, string>();
+  for (const salon of salonsRes.data || []) {
+    salonMap.set(salon.id, salon.name);
+  }
+
+  const bookingIds = new Set<string>();
+  const bookings: Array<{
+    id: string;
+    salon_id: string;
+    salon_name: string;
+    booking_date: string;
+    status: string;
+    amount: number;
+    customer_email: string;
+    agent_cut: number;
+    agent_percent: number;
+  }> = [];
+
+  const pushBooking = (row: Record<string, unknown>) => {
+    const id = String(row.id);
+    if (bookingIds.has(id)) return;
+    bookingIds.add(id);
+
+    const amount = Number(row.amount) || 0;
+    const storedPct = Number(row.agent_commission_percent);
+    const agentPercent = storedPct > 0 ? storedPct : bookingAgentPct;
+    const storedCut = Number(row.agent_commission_amount);
+    const agentCut = storedCut > 0 ? storedCut : amount * (agentPercent / 100);
+    const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
+    const joinedName = Array.isArray(salonsJoin) ? salonsJoin[0]?.name : salonsJoin?.name;
+
+    bookings.push({
+      id,
+      salon_id: String(row.salon_id || ""),
+      salon_name: joinedName || salonMap.get(String(row.salon_id)) || "Referred Salon",
+      booking_date: String(row.booking_date || ""),
+      status: String(row.status || "pending"),
+      amount,
+      customer_email: String(row.customer_email || "—"),
+      agent_cut: agentCut,
+      agent_percent: agentPercent,
+    });
+  };
+
+  for (const row of bookingsByAgentRes.data || []) {
+    pushBooking(row as Record<string, unknown>);
+  }
+
+  const salonIds = [...salonMap.keys()];
+  if (salonIds.length > 0) {
+    const { data: salonBookings } = await supabase
+      .from("bookings")
+      .select(
+        "id, salon_id, booking_date, status, amount, customer_email, agent_commission_amount, agent_commission_percent, salons(name)"
+      )
+      .in("salon_id", salonIds)
+      .order("booking_date", { ascending: false });
+
+    for (const row of salonBookings || []) {
+      pushBooking(row as Record<string, unknown>);
+    }
+  }
+
+  bookings.sort(
+    (a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()
+  );
+
+  const subscriptions = (ledgerRes.data || [])
+    .filter((row) => String(row.commission_category || "").toLowerCase() === "subscription")
+    .map((row) => ({
+      id: row.id,
+      amount: Number(row.amount) || 0,
+      status: row.status || "PENDING",
+      notes: row.notes,
+      created_at: row.created_at,
+    }));
+
+  let allTimeBookingGross = 0;
+  bookings.forEach((b) => {
+    if (b.status === "completed" || b.status === "confirmed") {
+      allTimeBookingGross += b.amount;
+    }
+  });
+
+  return {
+    success: true as const,
+    agentEmail: email,
+    bookingAgentPct,
+    subscriptionAgentPct,
+    profileCommissionRate: Number(agentRow?.commission_rate) || bookingAgentPct,
+    referredSalonCount: salonIds.length,
+    bookings,
+    subscriptions,
+    allTimeBookingGross,
+  };
+}
+
 // --- Work queue ---
 
 export async function fetchAgentWorkQueueClient(agentEmail: string) {
@@ -438,7 +576,7 @@ export async function fetchAgentWorkQueueClient(agentEmail: string) {
     .from("commission_ledger")
     .select("id, amount, status, created_at, salon_id")
     .eq("agent_email", agentEmail)
-    .eq("status", "pending");
+    .eq("status", "PENDING");
 
   (commissions || []).forEach((comm) => {
     workItems.push({

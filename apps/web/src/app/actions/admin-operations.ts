@@ -6,7 +6,10 @@ import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { findAuthUserIdByEmail, syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
-import { saveBookingCommissionMaster } from "@/app/actions/commission-master";
+import {
+  saveBookingCommissionMaster,
+  saveSubscriptionCommissionMaster,
+} from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
@@ -379,13 +382,25 @@ export async function updateCommissionLedgerStatus(
 export async function saveAdminFinanceBookingRates(input: {
   platform: number;
   salon: number;
-  payhere: number;
+  agent?: number;
   previousId?: string | null;
 }) {
   return saveBookingCommissionMaster({
     platform: input.platform,
     salon: input.salon,
-    payhere: input.payhere,
+    agent: input.agent,
+    previousId: input.previousId,
+  });
+}
+
+export async function saveAdminFinanceSubscriptionRates(input: {
+  platform: number;
+  agent: number;
+  previousId?: string | null;
+}) {
+  return saveSubscriptionCommissionMaster({
+    platform: input.platform,
+    agent: input.agent,
     previousId: input.previousId,
   });
 }

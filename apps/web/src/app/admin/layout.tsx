@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
 import { signOutTrimmaSession } from "../../config/supabase";
@@ -27,6 +27,7 @@ function readRoleFromCookie(): string | null {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const navigate = useRouter();
   const [role] = useState<string | null>(() => readRoleFromCookie() || "admin");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -142,7 +143,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ]
     },
     { name: "Lead Mgmt", href: "/admin/leads", icon: <MapPin className="w-4 h-4" /> },
-    { name: "Agent Mgmt", href: "/admin/agents", icon: <UserPlus className="w-4 h-4" /> },
+    {
+      name: "Agent Mgmt",
+      href: "/admin/agents",
+      icon: <UserPlus className="w-4 h-4" />,
+      children: [
+        { name: "Agent Dashboard", href: "/admin/agents" },
+        { name: "Subscription Commission", href: "/admin/agents?tab=commissions" },
+      ],
+    },
     { name: "Payments", href: "/admin/payments", icon: <DollarSign className="w-4 h-4" /> },
     { name: "Finance & Commission", href: "/admin/finance", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Branding Settings", href: "/admin/branding", icon: <Sparkles className="w-4 h-4" /> },
@@ -169,10 +178,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isActive = (href: string) => {
     if (!pathname) return false;
-    if (href === "/dashboard" || href === "/admin") {
-      return pathname === href || pathname === `${href}/`;
+    const [path, queryString] = href.split("?");
+    const pathMatches =
+      href === "/dashboard" || href === "/admin"
+        ? pathname === path || pathname === `${path}/`
+        : pathname === path || pathname.startsWith(`${path}/`) || pathname.startsWith(path);
+
+    if (!queryString) {
+      if (path === "/admin/agents" && searchParams.get("tab") === "commissions") {
+        return false;
+      }
+      return pathMatches;
     }
-    return pathname.startsWith(href);
+
+    if (!pathMatches) return false;
+    const expected = new URLSearchParams(queryString);
+    for (const [key, value] of expected.entries()) {
+      if (searchParams.get(key) !== value) return false;
+    }
+    return true;
   };
 
   if (pathname === "/admin/login") {

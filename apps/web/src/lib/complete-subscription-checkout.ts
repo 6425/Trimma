@@ -27,6 +27,68 @@ function createSubscriptionOrderId() {
   return `SUB-${Math.floor(100000 + Math.random() * 900000)}`;
 }
 
+/**
+ * Best-effort: when a referred salon pays a subscription, record the referring
+ * agent's commission in commission_ledger (commission_category = 'subscription').
+ *
+ * This never throws — a missing SUBSCRIPTION_COMMISSION_PATCH (no salon_id /
+ * commission_category columns, or a NOT NULL lead_id) must not fail the payment.
+ */
+async function recordSubscriptionCommission(params: {
+  supabase: ReturnType<typeof createSupabaseAdminClient>;
+  salonId: string;
+  baseAmount: number;
+  orderId: string;
+  planName: string;
+  billingCycle: "monthly" | "annual";
+}) {
+  const { supabase, salonId, baseAmount, orderId, planName, billingCycle } = params;
+  try {
+    const { data: salon } = await supabase
+      .from("salons")
+      .select("assign_to")
+      .eq("id", salonId)
+      .maybeSingle();
+
+    const agentEmail = salon?.assign_to;
+    if (!agentEmail) return; // No referring agent → no commission.
+
+    const { data: master } = await supabase
+      .from("commission_master")
+      .select("agent_percentage")
+      .eq("commission_type", "subscription")
+      .eq("active", true)
+      .maybeSingle();
+
+    const agentPercent = Number(master?.agent_percentage) || 20;
+    const amount = Math.round(baseAmount * (agentPercent / 100) * 100) / 100;
+
+    const { error } = await supabase.from("commission_ledger").insert({
+      agent_email: agentEmail,
+      salon_id: salonId,
+      commission_category: "subscription",
+      base_amount: baseAmount,
+      agent_percent: agentPercent,
+      amount,
+      status: "PENDING",
+      notes: `Subscription commission: ${planName} (${billingCycle}) payment ${orderId}.`,
+    });
+
+    if (error) {
+      console.warn(
+        "[recordSubscriptionCommission] Ledger insert skipped:",
+        error.message,
+        "— ensure SUBSCRIPTION_COMMISSION_PATCH.sql is applied."
+      );
+    }
+  } catch (err) {
+    console.warn(
+      "[recordSubscriptionCommission] Unexpected error (non-fatal):",
+      err instanceof Error ? err.message : err
+    );
+  }
+}
+
 export async function completeSubscriptionCheckout(input: CompleteSubscriptionCheckoutInput) {
   const auth = await requireSalonOwnerFromCookies();
   if ("error" in auth) {
@@ -105,6 +167,15 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     .eq("id", auth.salonId);
 
   if (salonUpdateError) throw new Error(salonUpdateError.message);
+
+  await recordSubscriptionCommission({
+    supabase,
+    salonId: auth.salonId,
+    baseAmount: input.chargeAmount,
+    orderId,
+    planName: plan.name as string,
+    billingCycle: input.billingCycle,
+  });
 
   return {
     success: true as const,

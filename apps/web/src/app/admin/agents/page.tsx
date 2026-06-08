@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Users, Search, Percent, Trash2, Phone, Loader2, Edit, CheckCircle2, UserCheck, MapPin, TrendingUp, Plus, Award, DollarSign, ClipboardList, Check, X, Lock, AlertTriangle, History, Landmark } from "lucide-react";
+import { Users, Search, Percent, Trash2, Phone, Loader2, Edit, CheckCircle2, UserCheck, MapPin, TrendingUp, Plus, Award, DollarSign, ClipboardList, Check, X, Lock, AlertTriangle, History, Landmark, CreditCard, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
+import { fetchAdminAgentsPage, fetchAdminCommissionsPage } from "@/app/actions/admin-list-data";
 import { assignAgentTerritory, removeAgentTerritory, syncAgentTerritories } from "@/app/actions/agent-territories";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
@@ -15,6 +15,7 @@ import {
   demoteAdminAgent,
   insertAgentActivityLog,
   updateCommissionLedgerStatus,
+  saveAdminFinanceSubscriptionRates,
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 
@@ -50,7 +51,13 @@ const getDeepestSelectedTerritories = (
 };
 
 export default function AdminAgents() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'directory' | 'territories' | 'ledger' | 'logs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<
+    'dashboard' | 'directory' | 'territories' | 'commissions' | 'ledger' | 'logs'
+  >('dashboard');
+
+  const [subscriptionRates, setSubscriptionRates] = useState({ platform: 80, agent: 20 });
+  const [activeSubscriptionId, setActiveSubscriptionId] = useState<string | null>(null);
+  const [savingSubscriptionRates, setSavingSubscriptionRates] = useState(false);
   
   // Data States
   const [agents, setAgents] = useState<any[]>([]);
@@ -221,6 +228,68 @@ export default function AdminAgents() {
     void Promise.resolve().then(() => fetchInitialData());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab === "commissions") setActiveTab("commissions");
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== "commissions") return;
+    void (async () => {
+      try {
+        const result = await fetchAdminCommissionsPage();
+        if (result.success === false) return;
+        const subData = (result.commissionMaster || []).find(
+          (c) => c.commission_type === "subscription" && c.active
+        );
+        if (subData) {
+          setActiveSubscriptionId(subData.id);
+          setSubscriptionRates({
+            platform: subData.platform_percentage,
+            agent: subData.agent_percentage || 20,
+          });
+        }
+      } catch {
+        // commission config is optional on first load
+      }
+    })();
+  }, [activeTab]);
+
+  const handleSaveSubscriptionCommission = async () => {
+    if (subscriptionRates.platform + subscriptionRates.agent !== 100) {
+      toast.error("Platform + Agent must equal 100%.");
+      return;
+    }
+    try {
+      setSavingSubscriptionRates(true);
+      const result = await saveAdminFinanceSubscriptionRates({
+        platform: subscriptionRates.platform,
+        agent: subscriptionRates.agent,
+        previousId: activeSubscriptionId,
+      });
+      if (result.success === false) throw new Error(result.error);
+      toast.success("Agent subscription commission updated.");
+      const refreshed = await fetchAdminCommissionsPage();
+      if (refreshed.success) {
+        const subData = (refreshed.commissionMaster || []).find(
+          (c) => c.commission_type === "subscription" && c.active
+        );
+        if (subData) {
+          setActiveSubscriptionId(subData.id);
+          setSubscriptionRates({
+            platform: subData.platform_percentage,
+            agent: subData.agent_percentage || 20,
+          });
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save subscription commission.");
+    } finally {
+      setSavingSubscriptionRates(false);
+    }
+  };
 
   const handleOpenEditModal = (agent: any) => {
     setSelectedAgent(agent);
@@ -491,6 +560,16 @@ export default function AdminAgents() {
                 }`}
               >
                 <MapPin className="w-3.5 h-3.5 inline mr-1" /> Territory Explorer
+              </button>
+              <button
+                onClick={() => setActiveTab("commissions")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  activeTab === "commissions"
+                    ? "bg-white shadow-sm text-brand"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5 inline mr-1" /> Subscription Commission
               </button>
               <button 
                 onClick={() => setActiveTab('ledger')}
@@ -1201,6 +1280,96 @@ export default function AdminAgents() {
                 </div>
               </Card>
 
+            </div>
+          )}
+
+          {/* TAB: AGENT SUBSCRIPTION COMMISSION */}
+          {activeTab === "commissions" && (
+            <div className="space-y-6 animate-in fade-in duration-300 max-w-3xl">
+              <Card className="p-6 border border-indigo-100 shadow-sm rounded-2xl bg-white">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="font-extrabold text-zinc-900 text-lg flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-indigo-600" />
+                      Agent Subscription Commission
+                    </h3>
+                    <p className="text-sm text-zinc-500 mt-1">
+                      Global split when a referred salon pays a Trimma subscription. Agents see this rate on{" "}
+                      <span className="font-semibold text-zinc-700">Agent → Commissions</span>.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleSaveSubscriptionCommission}
+                    disabled={savingSubscriptionRates}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 px-5 shrink-0"
+                  >
+                    {savingSubscriptionRates ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    Save Rates
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-zinc-50 rounded-2xl p-5 border border-slate-100 space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Platform Retains (%)
+                    </label>
+                    <Input
+                      type="number"
+                      value={subscriptionRates.platform}
+                      onChange={(e) => {
+                        const platform = parseFloat(e.target.value) || 0;
+                        setSubscriptionRates({
+                          platform,
+                          agent: Math.max(0, 100 - platform),
+                        });
+                      }}
+                      className="font-black text-2xl h-14 rounded-xl bg-white"
+                    />
+                  </div>
+                  <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 space-y-2">
+                    <label className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest">
+                      Agent Earns (%)
+                    </label>
+                    <Input
+                      type="number"
+                      value={subscriptionRates.agent}
+                      onChange={(e) => {
+                        const agent = parseFloat(e.target.value) || 0;
+                        setSubscriptionRates({
+                          agent,
+                          platform: Math.max(0, 100 - agent),
+                        });
+                      }}
+                      className="font-black text-2xl h-14 rounded-xl bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-5 p-4 rounded-xl bg-amber-50 border border-amber-100 text-xs text-amber-800 font-medium space-y-1">
+                  <p>
+                    Platform + Agent must total <strong>100%</strong> (default <strong>80% / 20%</strong>).
+                  </p>
+                  <p>
+                    Per-agent booking tiers are still edited per agent in the <strong>Directory</strong> tab
+                    (commission % column).
+                  </p>
+                </div>
+
+                {subscriptionRates.platform + subscriptionRates.agent === 100 ? (
+                  <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Valid: {subscriptionRates.platform}% platform /{" "}
+                    {subscriptionRates.agent}% agent
+                  </p>
+                ) : (
+                  <p className="text-xs font-bold text-rose-500 mt-3">
+                    Total is {subscriptionRates.platform + subscriptionRates.agent}% — must be 100%
+                  </p>
+                )}
+              </Card>
             </div>
           )}
 
