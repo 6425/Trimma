@@ -73,7 +73,7 @@ export async function fetchAdminFinancePage() {
       supabase
         .from("bookings")
         .select(
-          "id, booking_no, booking_date, booking_time, amount, status, customer_email, created_at, platform_commission_amount, salon_upfront_amount, agent_commission_amount, agent_commission_percent, agent_email, salon_id"
+          "id, booking_no, booking_date, booking_time, amount, status, payment_status, reservation_fee_paid, customer_email, created_at, platform_commission_amount, salon_upfront_amount, agent_commission_amount, agent_commission_percent, agent_email, salon_id"
         )
         .order("booking_date", { ascending: false }),
     ]);

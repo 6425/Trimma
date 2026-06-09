@@ -31,6 +31,8 @@ interface BookingWithSplits {
   booking_time: string;
   amount: number;
   status: string;
+  payment_status: string;
+  reservation_fee_paid: boolean;
   customer_email: string;
   created_at: string;
   platform_commission_amount: number;
@@ -74,14 +76,32 @@ function getWeekRange(offsetWeeks: number) {
   return { start, end, startMs: start.getTime(), endMs: end.getTime() };
 }
 
-function isSettledBooking(status: string) {
-  const s = status?.toLowerCase();
-  return s === "completed" || s === "confirmed";
+type BookingLedgerStatus = Pick<
+  BookingWithSplits,
+  "status" | "payment_status" | "reservation_fee_paid"
+>;
+
+function isReservationPaidBooking(booking: BookingLedgerStatus) {
+  if (booking.reservation_fee_paid) return true;
+  return booking.payment_status?.toLowerCase() === "reservation_paid";
 }
 
-function isPendingBooking(status: string) {
-  const s = status?.toLowerCase();
+function isSettledBooking(booking: BookingLedgerStatus) {
+  const s = booking.status?.toLowerCase();
+  if (s === "completed" || s === "confirmed") return true;
+  return isReservationPaidBooking(booking);
+}
+
+function isPendingBooking(booking: BookingLedgerStatus) {
+  if (isReservationPaidBooking(booking)) return false;
+  const s = booking.status?.toLowerCase();
   return s === "pending" || s === "reserved" || s === "awaiting_confirmation";
+}
+
+function bookingWeekTimestamp(booking: Pick<BookingWithSplits, "created_at" | "booking_date">) {
+  if (booking.created_at) return new Date(booking.created_at).getTime();
+  if (booking.booking_date) return new Date(booking.booking_date).getTime();
+  return NaN;
 }
 
 function isCancelledBooking(status: string) {
@@ -145,6 +165,8 @@ export default function FinanceDashboard() {
           const resolvedBookings = (bookingsData || []).map((b: any) => ({
             ...b,
             amount: parseFloat(b.amount || 0),
+            payment_status: String(b.payment_status || ""),
+            reservation_fee_paid: Boolean(b.reservation_fee_paid),
             platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
             salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
             agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
@@ -237,13 +259,12 @@ export default function FinanceDashboard() {
 
     for (const booking of bookings) {
       if (isCancelledBooking(booking.status)) continue;
-      if (!booking.booking_date) continue;
 
-      const t = new Date(booking.booking_date).getTime();
-      if (t < week.startMs || t > week.endMs) continue;
+      const t = bookingWeekTimestamp(booking);
+      if (!Number.isFinite(t) || t < week.startMs || t > week.endMs) continue;
 
-      const settled = isSettledBooking(booking.status);
-      const pending = isPendingBooking(booking.status);
+      const settled = isSettledBooking(booking);
+      const pending = isPendingBooking(booking);
       if (statusTab === "settled" && !settled) continue;
       if (statusTab === "pending" && !pending) continue;
 
@@ -265,7 +286,7 @@ export default function FinanceDashboard() {
       rows.push({
         id: booking.id,
         reference: booking.booking_no || "TRM-000000",
-        date: booking.booking_date,
+        date: booking.created_at || booking.booking_date,
         status: booking.status,
         platformGross,
         salonCommission,
@@ -373,7 +394,7 @@ export default function FinanceDashboard() {
           </div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Finance &amp; Revenue</h1>
           <p className="text-zinc-500 text-sm mt-0.5">
-            Per-booking commission breakdown with weekly navigation. Cancellations are excluded.
+            Per-booking commission breakdown with weekly navigation. Settled includes reservation-paid bookings; weeks use payment date.
           </p>
         </div>
         <div className="flex gap-2">
@@ -480,7 +501,7 @@ export default function FinanceDashboard() {
             <Activity className="w-5 h-5 text-zinc-500" /> Commission Grid — {weekLabel}
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            {weekRangeLabel} · {statusTab === "settled" ? "Settled" : "Pending"} · cancellations excluded
+            {weekRangeLabel} · {statusTab === "settled" ? "Settled (incl. reservation paid)" : "Pending (unpaid)"} · cancellations excluded
           </p>
         </div>
 
