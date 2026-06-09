@@ -106,7 +106,7 @@ function SearchPageInner() {
           </p>
           
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-400 mb-10">
-             <span className="font-extrabold text-white bg-brand/20 text-brand px-3 py-1 rounded-full">{filteredSalons.length} Salons Found</span>
+             <span className="font-extrabold bg-brand/20 text-brand px-3 py-1 rounded-full">{filteredSalons.length} Salons Found</span>
              <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
           </div>

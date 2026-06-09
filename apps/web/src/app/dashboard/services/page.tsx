@@ -388,7 +388,7 @@ export default function DashboardServices() {
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
           </Button>
-          <Button className="flex-1 md:flex-none bg-brand text-white hover:bg-brand-hover rounded-xl font-bold px-6 h-11">
+          <Button className="flex-1 md:flex-none bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11">
             <Plus className="w-4 h-4 mr-2" />
             Add Custom Service
           </Button>
@@ -419,7 +419,7 @@ export default function DashboardServices() {
               <Button onClick={() => fetchSalonAndPlan()} variant="outline" className="rounded-xl font-bold">
                 Retry
               </Button>
-              <Button onClick={() => router.push("/dashboard/profile")} className="rounded-xl font-bold bg-brand text-white">
+              <Button onClick={() => router.push("/dashboard/profile")} className="rounded-xl font-bold bg-brand text-black">
                 Complete Salon Setup
               </Button>
             </div>
@@ -435,7 +435,7 @@ export default function DashboardServices() {
             </p>
             <Button 
               onClick={() => setShowImportModal(true)}
-              className="bg-brand text-white hover:bg-brand-hover rounded-xl font-bold"
+              className="bg-brand text-black hover:bg-brand-hover rounded-xl font-bold"
             >
               <Sparkles className="w-4 h-4 mr-2" /> Import from Master Catalog
             </Button>
@@ -558,7 +558,7 @@ export default function DashboardServices() {
                   onClick={() => setActiveCategoryTab(cat.id)}
                   className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap ${
                     activeCategoryTab === cat.id 
-                    ? "bg-brand text-white shadow-md shadow-brand/20" 
+                    ? "bg-brand text-black shadow-md shadow-brand/20" 
                     : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
                   }`}
                 >
@@ -662,7 +662,7 @@ export default function DashboardServices() {
                 <Button 
                   onClick={handleImportAndPublish}
                   disabled={importing}
-                  className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
+                  className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
                 >
                   {importing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
                   Publish Selected Services
@@ -834,7 +834,7 @@ export default function DashboardServices() {
                 <Button 
                   type="submit"
                   disabled={updating}
-                  className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
+                  className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
                 >
                   {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Save & Publish Changes

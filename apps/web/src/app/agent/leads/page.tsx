@@ -840,7 +840,7 @@ function AgentLeads() {
         >
           Salon Leads (Manual)
           {manualLeads.length > 0 && (
-            <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${mainTab === "manual" ? "bg-white text-[#1A1C29]" : "bg-brand-pink text-white"}`}>{manualLeads.length}</span>
+            <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${mainTab === "manual" ? "bg-white text-[#1A1C29]" : "bg-brand text-black"}`}>{manualLeads.length}</span>
           )}
         </button>
       </div>
@@ -1016,7 +1016,7 @@ function AgentLeads() {
                           <div className="font-medium text-zinc-800">{lead.whatsapp_number || lead.phone}</div>
                         </td>
                         <td className="px-4 py-4 text-right">
-                          <Button size="sm" className="text-xs h-8 bg-brand hover:bg-brand/90 text-white shadow-sm font-bold" onClick={() => handleOpenModal(lead, true)}>
+                          <Button size="sm" className="text-xs h-8 bg-brand hover:bg-brand-hover text-black shadow-sm font-bold" onClick={() => handleOpenModal(lead, true)}>
                             Edit / Process
                           </Button>
                         </td>
@@ -1459,7 +1459,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleSendInvitation}
                       disabled={updating || !formData.phone || !formData.owner_gmail}
-                      className="bg-brand hover:bg-emerald-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Send Invitation
                     </Button>

@@ -197,7 +197,7 @@ export default function ReviewsPage() {
                   <Button
                     onClick={() => handleReply(review.id)}
                     disabled={savingReplyId === review.id}
-                    className="h-8 rounded-lg bg-brand hover:bg-brand-hover text-white text-[10px] font-bold"
+                    className="h-8 rounded-lg bg-brand hover:bg-brand-hover text-black text-[10px] font-bold"
                   >
                     {savingReplyId === review.id ? (
                       <Loader2 className="w-3 h-3 animate-spin" />

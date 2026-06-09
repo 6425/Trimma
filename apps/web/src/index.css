@@ -497,8 +497,24 @@
   :is(button, a, [role="button"], [data-slot="button"]):is(
     .bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient, [class*="bg-primary-gradient"]
   ),
-  :is(.bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient)[class*="text-white"] {
+  :is(.bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient)[class*="text-white"],
+  :is(.bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"]):is(:hover, :focus-visible, :active) {
     color: #000000 !important;
+  }
+
+  /* Secondary actions on dark panels — yellow outline, never white ghost */
+  :is(button, a, [role="button"], [data-slot="button"])[class*="border-white/20"][class*="bg-white/5"][class*="text-white"],
+  :is(button, a, [role="button"], [data-slot="button"])[class*="bg-white/10"][class*="text-white"]:not([class*="bg-zinc-9"]):not([class*="bg-black"]) {
+    border-color: rgba(245, 183, 0, 0.5) !important;
+    background-color: rgba(245, 183, 0, 0.1) !important;
+    color: #F5B700 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"])[class*="border-white/20"][class*="bg-white/5"][class*="text-white"]:hover,
+  :is(button, a, [role="button"], [data-slot="button"])[class*="bg-white/10"][class*="text-white"]:hover:not([class*="bg-zinc-9"]):not([class*="bg-black"]) {
+    background-color: rgba(245, 183, 0, 0.2) !important;
+    border-color: #F5B700 !important;
+    color: #FFC947 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(

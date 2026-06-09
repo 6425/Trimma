@@ -83,7 +83,7 @@ export default function SocialMediaPage() {
                   </Button>
                 </>
               ) : (
-                <Button className="rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs h-10 px-5 shadow-sm flex items-center gap-1.5">
+                <Button className="rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs h-10 px-5 shadow-sm flex items-center gap-1.5">
                   <Play className="w-3.5 h-3.5" /> Setup Sync
                 </Button>
               )}

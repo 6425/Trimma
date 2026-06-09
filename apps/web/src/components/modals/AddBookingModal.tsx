@@ -257,7 +257,7 @@ export function AddBookingModal({
               <Button 
                 type="submit" 
                 disabled={isSubmitting || !formData.service_id}
-                className="w-full h-11 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold shadow-md shadow-brand/20 mt-2"
+                className="w-full h-11 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold shadow-md shadow-brand/20 mt-2"
               >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Capture Booking"}
               </Button>

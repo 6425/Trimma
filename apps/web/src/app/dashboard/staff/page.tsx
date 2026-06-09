@@ -621,7 +621,7 @@ export default function DashboardStaff() {
             }
             setIsAddModalOpen(true);
           }}
-          className="bg-brand text-white hover:bg-brand-hover rounded-xl font-bold px-6 h-11 shadow-md shadow-brand/20 self-start sm:self-auto"
+          className="bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11 shadow-md shadow-brand/20 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Custom Staff
@@ -996,7 +996,7 @@ export default function DashboardStaff() {
               <Button 
                 type="submit" 
                 disabled={adding}
-                className="flex-1 bg-brand hover:bg-brand-hover text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
+                className="flex-1 bg-brand hover:bg-brand-hover text-black rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
               </Button>
@@ -1271,7 +1271,7 @@ export default function DashboardStaff() {
               <Button 
                 type="submit" 
                 disabled={adding}
-                className="flex-1 bg-brand hover:bg-brand-hover text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
+                className="flex-1 bg-brand hover:bg-brand-hover text-black rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
               >
                 {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
               </Button>
@@ -1314,7 +1314,7 @@ export default function DashboardStaff() {
 
             <div className="flex gap-3">
               <Button onClick={() => setIsCropModalOpen(false)} variant="outline" className="flex-1 rounded-xl h-11 font-bold">Cancel</Button>
-              <Button onClick={generateCroppedImage} className="flex-1 rounded-xl h-11 font-bold bg-brand hover:bg-brand-hover text-white">Save Photo</Button>
+              <Button onClick={generateCroppedImage} className="flex-1 rounded-xl h-11 font-bold bg-brand hover:bg-brand-hover text-black">Save Photo</Button>
             </div>
           </div>
         </div>

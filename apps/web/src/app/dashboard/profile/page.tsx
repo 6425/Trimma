@@ -1248,7 +1248,7 @@ export default function SalonProfilePage() {
                 <Button 
                   onClick={() => window.open(`/salons/${slug}`, "_blank")}
                   variant="ghost" 
-                  className="w-full text-white hover:bg-white/10 font-bold h-12 rounded-xl flex items-center justify-center gap-2"
+                  className="w-full border border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] font-bold h-12 rounded-xl flex items-center justify-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4 text-brand" /> Open Live Page
                 </Button>
@@ -1287,7 +1287,7 @@ export default function SalonProfilePage() {
             <Button 
               onClick={handleSave} 
               disabled={saving}
-              className="bg-brand hover:bg-[#b01849] text-white shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+              className="bg-brand hover:bg-brand-hover text-black shadow-md shadow-brand/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
             >
               {saving ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>

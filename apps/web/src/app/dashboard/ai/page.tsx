@@ -26,7 +26,7 @@ export default function AIAssistantPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Sparkles className="w-3.5 h-3.5 animate-pulse" /> Launch AI Agent
         </Button>
       </div>
@@ -95,7 +95,7 @@ export default function AIAssistantPage() {
               <div className="flex items-center gap-2 text-zinc-500 text-xs font-semibold">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" /> Active RLS-Secured Integration
               </div>
-              <Button className="bg-brand hover:bg-brand-hover text-white rounded-xl font-bold text-xs h-10 px-5">
+              <Button className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold text-xs h-10 px-5">
                 Save Instructions
               </Button>
             </div>

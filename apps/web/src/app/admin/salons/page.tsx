@@ -323,7 +323,7 @@ export default function Salons() {
           <Badge 
             variant="outline" 
             onClick={() => setFilterMode("verification")}
-            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'verification' ? 'bg-indigo-500 text-zinc-900 border-indigo-500' : 'bg-white text-indigo-600 hover:bg-indigo-50'}`}
+            className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'verification' ? 'bg-brand text-black border-brand' : 'bg-white text-brand hover:bg-brand/10'}`}
           >
             Pending Verification (Agent Approved)
           </Badge>
@@ -446,7 +446,7 @@ export default function Salons() {
                             onClick={() => handleVerify(salon.id)}
                             variant="outline" 
                             size="sm" 
-                            className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 rounded-xl bg-indigo-50"
+                            className="text-brand border-brand/30 hover:bg-brand/10 rounded-xl bg-brand/10"
                           >
                             <ShieldCheck className="w-4 h-4 mr-1" /> Verify Profile
                           </Button>
@@ -533,7 +533,7 @@ export default function Salons() {
                     </Button>
                  )}
                  {(selectedSalon.onboarding_status === 'OWNER_ACTIVATED' || selectedSalon.onboarding_status === 'AGENT_APPROVED') && !selectedSalon.is_verified && (
-                    <Button onClick={() => handleVerify(selectedSalon.id)} variant="outline" size="sm" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 h-9 bg-indigo-50">
+                    <Button onClick={() => handleVerify(selectedSalon.id)} variant="outline" size="sm" className="text-brand border-brand/30 hover:bg-brand/10 h-9 bg-brand/10">
                        <ShieldCheck className="w-4 h-4 mr-1" /> Award Badge
                     </Button>
                  )}

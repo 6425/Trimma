@@ -42,7 +42,7 @@ export default function CustomersPage() {
           </div>
         </div>
         
-        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
+        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
           <Plus className="w-3.5 h-3.5" /> Add Customer
         </Button>
       </div>

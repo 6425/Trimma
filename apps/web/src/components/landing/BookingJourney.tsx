@@ -61,7 +61,7 @@ export function BookingJourney() {
                   <div className="absolute inset-0 bg-brand-pink/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
                   
                   {/* Step Number Badge */}
-                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-brand-pink text-white text-xs font-bold flex items-center justify-center shadow-md">
+                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-brand text-black text-xs font-bold flex items-center justify-center shadow-md">
                     {i + 1}
                   </div>
                 </div>

@@ -56,7 +56,7 @@ export function PremiumCTA() {
               </Button>
             </Link>
             <Link href="/onboarding" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full h-14 px-8 rounded-xl border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/40 hover:scale-105 transition-all font-bold text-base gap-2 backdrop-blur-sm">
+              <Button size="lg" variant="outline" className="w-full h-14 px-8 rounded-xl border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] hover:scale-105 transition-all font-bold text-base gap-2 backdrop-blur-sm">
                 Register Your Salon <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>

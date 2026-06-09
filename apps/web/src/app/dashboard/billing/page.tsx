@@ -125,7 +125,7 @@ export default function BillingPage() {
       </div>
 
       {activePlan && (
-        <div className="bg-brand text-white p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="bg-brand text-black p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10 space-y-2">

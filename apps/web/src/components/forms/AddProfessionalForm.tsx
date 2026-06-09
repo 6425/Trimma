@@ -441,7 +441,7 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
           <Button 
             type="submit" 
             disabled={adding}
-            className="flex-1 bg-brand hover:bg-brand-hover text-white rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
+            className="flex-1 bg-brand hover:bg-brand-hover text-black rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
           >
             {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
           </Button>

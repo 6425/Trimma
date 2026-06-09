@@ -181,7 +181,7 @@ export default function CalendarPage() {
               setSelectedSlot({ date: format(new Date(), "yyyy-MM-dd"), time: "09:00:00" });
               setIsModalOpen(true);
             }}
-            className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20"
+            className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20"
           >
             <Plus className="w-3.5 h-3.5" /> Book Appointment
           </Button>
@@ -212,7 +212,7 @@ export default function CalendarPage() {
           {days.map((day, idx) => (
             <div key={idx} className={`p-4 ${day.isToday ? "bg-rose-50/20" : ""} flex flex-col items-center justify-center`}>
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{day.name}</span>
-              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-black mt-1 ${day.isToday ? "bg-brand text-white shadow-md shadow-brand/20" : "text-zinc-800"}`}>
+              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-black mt-1 ${day.isToday ? "bg-brand text-black shadow-md shadow-brand/20" : "text-zinc-800"}`}>
                 {day.date}
               </span>
             </div>

@@ -87,7 +87,7 @@ export function SearchHeroWidget() {
               </Link>
               <Link
                 href="/signup"
-                className="bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm border border-white/30 text-white font-bold min-h-[56px] h-14 px-8 rounded-xl transition-all text-lg flex items-center justify-center shadow-lg hover:scale-105 transform duration-200"
+                className="border border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] active:bg-[#F5B700]/30 backdrop-blur-sm font-bold min-h-[56px] h-14 px-8 rounded-xl transition-all text-lg flex items-center justify-center shadow-lg hover:scale-105 transform duration-200"
               >
                 List Your Business
               </Link>

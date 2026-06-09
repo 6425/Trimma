@@ -342,13 +342,13 @@ export function SalonOnboardingCTA() {
           <div className="flex flex-wrap gap-4">
             <Link 
               href="/signup?role=salon_owner"
-              className="inline-flex items-center justify-center rounded-xl bg-brand hover:bg-brand/90 text-white font-extrabold text-sm h-11 px-6 shadow-lg shadow-brand-pink/20 transition-all border-none"
+              className="inline-flex items-center justify-center rounded-xl bg-brand hover:bg-brand-hover text-black font-extrabold text-sm h-11 px-6 shadow-lg shadow-brand-pink/20 transition-all border-none"
             >
               List Your Salon Now <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
             <Link 
               href="/pricing"
-              className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm h-11 px-6 backdrop-blur-md border border-white/10 transition-colors"
+              className="inline-flex items-center justify-center rounded-xl border border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] font-bold text-sm h-11 px-6 backdrop-blur-md transition-colors"
             >
               Explore Pricing
             </Link>

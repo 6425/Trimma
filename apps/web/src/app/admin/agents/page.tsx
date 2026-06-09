@@ -849,7 +849,7 @@ export default function AdminAgents() {
                                     onClick={() => handleOpenEditModal(agent)}
                                     variant="ghost" 
                                     size="icon" 
-                                    className="w-7 h-7 rounded-lg text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50"
+                                    className="w-7 h-7 rounded-lg text-zinc-500 hover:text-brand hover:bg-brand/10"
                                     title="Edit Credentials"
                                   >
                                     <Edit className="w-3.5 h-3.5" />
@@ -1247,7 +1247,7 @@ export default function AdminAgents() {
                                     <Button 
                                       onClick={() => handleSettlementAction(row.id, row.agent_email, row.amount, 'PAID')}
                                       variant="outline" 
-                                      className="h-7 rounded-lg text-indigo-600 border-indigo-100 hover:bg-indigo-50 font-bold px-2.5 text-[10px] gap-1"
+                                      className="h-7 rounded-lg text-brand border-brand/30 hover:bg-brand/10 font-bold px-2.5 text-[10px] gap-1"
                                     >
                                       <Landmark className="w-3.5 h-3.5" /> Pay Agent
                                     </Button>

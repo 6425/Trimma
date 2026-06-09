@@ -201,7 +201,7 @@ export default function OnboardingClient() {
       <Button 
         type="submit" 
         disabled={submitting}
-        className="w-full h-14 text-base font-bold rounded-xl bg-brand-pink hover:bg-brand-pink/90 text-white shadow-lg shadow-brand-pink/20 transition-all"
+        className="w-full h-14 text-base font-bold rounded-xl bg-brand hover:bg-brand-hover text-black shadow-lg shadow-brand-pink/20 transition-all"
       >
         {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : "Request Onboarding"}
       </Button>

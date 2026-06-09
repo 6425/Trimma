@@ -524,7 +524,7 @@ export function SalonOwnerHelpGuide() {
             <Link href={`/salons/${SALON.slug}`} target="_blank">
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-white/20 bg-white/5 text-white hover:bg-white/10 text-xs font-bold"
+                className="h-9 rounded-xl border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] text-xs font-bold"
               >
                 View public listing
               </Button>
