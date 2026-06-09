@@ -157,7 +157,9 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    void fetchDashboardStats();
+    void Promise.resolve().then(() => {
+      void fetchDashboardStats();
+    });
 
     const interval = window.setInterval(() => {
       void fetchDashboardStats();
