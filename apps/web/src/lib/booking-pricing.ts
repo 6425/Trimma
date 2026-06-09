@@ -32,3 +32,21 @@ export function calculateCommissionSplit(
     salonUpfront: serviceTotal * (rates.salon / 100),
   };
 }
+
+/** Platform share after the agent referral cut (agent % is taken from the platform fee). */
+export function calculatePlatformNetCommission(
+  platformGross: number,
+  agentCommission: number
+): number {
+  return Math.max(0, platformGross - Math.max(0, agentCommission));
+}
+
+/** Effective platform % of service total once agent referral is deducted from platform share. */
+export function calculateEffectivePlatformRate(
+  platformRate: number,
+  agentRateOfPlatform: number,
+  hasAgentReferral: boolean
+): number {
+  if (!hasAgentReferral) return platformRate;
+  return platformRate * (1 - agentRateOfPlatform / 100);
+}

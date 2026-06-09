@@ -23,6 +23,11 @@ import { toast } from "sonner";
 import { fetchAdminFinancePage } from "@/app/actions/admin-list-data";
 import { saveAdminFinanceBookingRates } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
+import {
+  calculateEffectivePlatformRate,
+  calculatePlatformNetCommission,
+  resolveBookingAgentPercentage,
+} from "@/lib/booking-pricing";
 
 interface BookingWithSplits {
   id: string;
@@ -56,7 +61,7 @@ type FinanceGridRow = {
   reference: string;
   date: string;
   status: string;
-  platformGross: number;
+  platformNet: number;
   salonCommission: number;
   agentBookingCommission: number;
   agentSubscriptionCommission: number;
@@ -268,8 +273,8 @@ export default function FinanceDashboard() {
       if (statusTab === "settled" && !settled) continue;
       if (statusTab === "pending" && !pending) continue;
 
-      // Platform & salon shares are a fixed % of the booking value, so fall back to
-      // the configured rates only if a (legacy) booking is missing the stored split.
+      // Salon share is 10% of service; platform gross is 10% of service; agent takes
+      // 20% of the platform gross (2% of service). Admin finance shows platform NET.
       const platformGross =
         booking.platform_commission_amount > 0
           ? booking.platform_commission_amount
@@ -278,21 +283,19 @@ export default function FinanceDashboard() {
         booking.salon_upfront_amount > 0
           ? booking.salon_upfront_amount
           : booking.amount * (globalRates.salon / 100);
-      // Agent commission is a cut of the PLATFORM fee and only exists when a referring
-      // agent is attributed. Use the stored value verbatim — a 0 here means "no agent",
-      // so we must NOT fabricate a commission for non-referred bookings.
       const agentBookingCommission = booking.agent_commission_amount;
+      const platformNet = calculatePlatformNetCommission(platformGross, agentBookingCommission);
 
       rows.push({
         id: booking.id,
         reference: booking.booking_no || "TRM-000000",
         date: booking.created_at || booking.booking_date,
         status: booking.status,
-        platformGross,
+        platformNet,
         salonCommission,
         agentBookingCommission,
         agentSubscriptionCommission: 0,
-        total: platformGross + salonCommission + agentBookingCommission,
+        total: platformNet + salonCommission + agentBookingCommission,
         kind: "booking",
       });
     }
@@ -318,7 +321,7 @@ export default function FinanceDashboard() {
         reference: `SUB-${entry.id.slice(0, 8).toUpperCase()}`,
         date: entry.created_at,
         status: entry.status,
-        platformGross: 0,
+        platformNet: 0,
         salonCommission: 0,
         agentBookingCommission: 0,
         agentSubscriptionCommission: agentSub,
@@ -335,7 +338,7 @@ export default function FinanceDashboard() {
     () =>
       gridRows.reduce(
         (acc, row) => ({
-          platformGross: acc.platformGross + row.platformGross,
+          platformNet: acc.platformNet + row.platformNet,
           salonCommission: acc.salonCommission + row.salonCommission,
           agentBookingCommission: acc.agentBookingCommission + row.agentBookingCommission,
           agentSubscriptionCommission:
@@ -343,7 +346,7 @@ export default function FinanceDashboard() {
           total: acc.total + row.total,
         }),
         {
-          platformGross: 0,
+          platformNet: 0,
           salonCommission: 0,
           agentBookingCommission: 0,
           agentSubscriptionCommission: 0,
@@ -351,6 +354,16 @@ export default function FinanceDashboard() {
         }
       ),
     [gridRows]
+  );
+
+  const effectivePlatformRate = useMemo(
+    () =>
+      calculateEffectivePlatformRate(
+        globalRates.platform,
+        resolveBookingAgentPercentage(globalRates.agent),
+        columnSums.agentBookingCommission > 0
+      ),
+    [globalRates, columnSums.agentBookingCommission]
   );
 
   const stats = useMemo(
@@ -361,7 +374,7 @@ export default function FinanceDashboard() {
           const booking = bookings.find((b) => b.id === r.id);
           return sum + (booking?.amount || 0);
         }, 0),
-      platformComm: columnSums.platformGross,
+      platformComm: columnSums.platformNet,
       salonComm: columnSums.salonCommission,
       agentBookingComm: columnSums.agentBookingCommission,
       agentSubscriptionComm: columnSums.agentSubscriptionCommission,
@@ -457,12 +470,14 @@ export default function FinanceDashboard() {
         <div className="bg-white border border-[#1A1C29] rounded-3xl p-5 shadow-xl space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Platform ({globalRates.platform}%)
+              Platform (net)
             </span>
             <Briefcase className="w-4 h-4 text-zinc-900" />
           </div>
           <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.platformComm)}</h3>
-          <p className="text-[10px] text-zinc-500">Gross booking commission</p>
+          <p className="text-[10px] text-zinc-500">
+            {effectivePlatformRate}% of service after {resolveBookingAgentPercentage(globalRates.agent)}% agent cut
+          </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3">
@@ -512,7 +527,7 @@ export default function FinanceDashboard() {
                 <th className="text-left px-5 py-3">Booking Reference</th>
                 <th className="text-left px-4 py-3">Date</th>
                 <th className="text-center px-4 py-3">Status</th>
-                <th className="text-right px-4 py-3">Platform Gross Booking Commission</th>
+                <th className="text-right px-4 py-3">Platform Net Commission</th>
                 <th className="text-right px-4 py-3">Salon Commission</th>
                 <th className="text-right px-4 py-3">Agent Booking Commission</th>
                 <th className="text-right px-4 py-3">Agent Subscription Commission</th>
@@ -547,7 +562,7 @@ export default function FinanceDashboard() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3.5 text-right font-semibold text-zinc-800">
-                      {formatLKR(row.platformGross)}
+                      {formatLKR(row.platformNet)}
                     </td>
                     <td className="px-4 py-3.5 text-right font-semibold text-teal-700">
                       {formatLKR(row.salonCommission)}
@@ -572,7 +587,7 @@ export default function FinanceDashboard() {
                     Week Total ({gridRows.length} rows)
                   </td>
                   <td className="px-4 py-4 text-right font-black text-zinc-900">
-                    {formatLKR(columnSums.platformGross)}
+                    {formatLKR(columnSums.platformNet)}
                   </td>
                   <td className="px-4 py-4 text-right font-black text-teal-700">
                     {formatLKR(columnSums.salonCommission)}
