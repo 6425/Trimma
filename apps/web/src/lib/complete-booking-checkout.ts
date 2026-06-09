@@ -10,8 +10,8 @@ import { buildEmailRateLimitKey } from "@/lib/email/rate-limit";
 import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
-  type BookingConflictRow,
 } from "@/lib/booking-availability";
+import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 import type { CardType } from "@/lib/card-payment";
@@ -148,29 +148,11 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
 
   const { data: existingBookings } = await supabase
     .from("bookings")
-    .select("id, booking_time, staff_id, status, created_at, customer_email")
+    .select("id, booking_time, staff_id, status, created_at, customer_email, service_id")
     .eq("salon_id", salon.id)
     .eq("booking_date", draft.bookingDate);
 
-  const existingBookingIds = (existingBookings || []).map((b) => b.id).filter(Boolean);
-  const bookingDurations = new Map<string, number>();
-  if (existingBookingIds.length > 0) {
-    const { data: bsRows } = await supabase
-      .from("booking_services")
-      .select("booking_id, duration_min")
-      .in("booking_id", existingBookingIds);
-    if (bsRows) {
-      for (const row of bsRows) {
-        const dur = parseInt(String(row.duration_min || 0), 10);
-        bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
-      }
-    }
-  }
-
-  const bookings: BookingConflictRow[] = (existingBookings || []).map((b) => ({
-    ...b,
-    duration_minutes: bookingDurations.get(b.id) || 30,
-  }));
+  const bookings = await enrichBookingsWithDurations(supabase, existingBookings || []);
 
   const resolvedStaffId = resolveStaffForBookingSlot({
     bookings,

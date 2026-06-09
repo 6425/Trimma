@@ -124,6 +124,7 @@ export default function SalonPage() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [slotsRefreshNonce, setSlotsRefreshNonce] = useState(0);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -262,7 +263,7 @@ export default function SalonPage() {
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedServiceId, selectedStaffId, selectedDate, salon, services, staff, selectedPromotionPackage]);
+  }, [selectedServiceId, selectedStaffId, selectedDate, salon, services, staff, selectedPromotionPackage, slotsRefreshNonce]);
 
   const handleInlineBookSubmit = async () => {
     if ((!selectedServiceId && !selectedPromotionPackage) || !selectedTimeSlot || !customerDetails.fullName || !customerDetails.phone) {
@@ -296,6 +297,7 @@ export default function SalonPage() {
       if (validation.success === false) {
         toast.error(validation.error);
         setSelectedTimeSlot(null);
+        setSlotsRefreshNonce((n) => n + 1);
         return;
       }
 

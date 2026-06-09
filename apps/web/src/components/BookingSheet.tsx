@@ -123,6 +123,7 @@ export function BookingSheet({
   // Dynamic constraints
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [slotsRefreshNonce, setSlotsRefreshNonce] = useState(0);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [closedDays, setClosedDays] = useState<number[]>([]);
   const [customRates, setCustomRates] = useState<any[]>([]);
@@ -276,7 +277,7 @@ export function BookingSheet({
         setLoadingSlots(false);
       }
     });
-  }, [step, selectedDate, selectedStaffId, selectedServiceIds, salonId, staff, totalDuration]);
+  }, [step, selectedDate, selectedStaffId, selectedServiceIds, salonId, staff, totalDuration, slotsRefreshNonce]);
 
   // Autofill search by phone
   const handleSearchCustomer = async () => {
@@ -344,6 +345,7 @@ export function BookingSheet({
       if (validation.success === false) {
         alert(validation.error);
         setSelectedTimeSlot(null);
+        setSlotsRefreshNonce((n) => n + 1);
         setStep(3);
         return;
       }

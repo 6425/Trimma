@@ -6,8 +6,8 @@ import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
   SLOT_UNAVAILABLE_MESSAGE,
-  type BookingConflictRow,
 } from "@/lib/booking-availability";
+import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 
 export type BookingSlotsResult =
   | { success: true; slots: string[]; bookedSlots: string[]; closed: boolean; reason?: string }
@@ -92,40 +92,11 @@ export async function fetchAvailableBookingSlots(input: {
     // 3. Existing bookings for the day — with their total service duration
     const { data: bookedEvents } = await supabase
       .from("bookings")
-      .select("id, booking_time, staff_id, status, created_at")
+      .select("id, booking_time, staff_id, status, created_at, service_id")
       .eq("salon_id", salonId)
       .eq("booking_date", dateISO);
 
-    // Fetch per-booking total duration from booking_services
-    const bookingIds = (bookedEvents || []).map((b) => b.id).filter(Boolean);
-    let bookingDurations = new Map<string, number>();
-
-    if (bookingIds.length > 0) {
-      const { data: bsRows } = await supabase
-        .from("booking_services")
-        .select("booking_id, duration_min")
-        .in("booking_id", bookingIds);
-
-      if (bsRows) {
-        for (const row of bsRows) {
-          const dur = parseInt(String(row.duration_min || 0), 10);
-          bookingDurations.set(
-            row.booking_id,
-            (bookingDurations.get(row.booking_id) || 0) + dur
-          );
-        }
-      }
-    }
-
-    // Enrich bookings with duration_minutes
-    const enrichedBookings: BookingConflictRow[] = (bookedEvents || []).map((b) => ({
-      id: b.id,
-      booking_time: b.booking_time,
-      staff_id: b.staff_id,
-      status: b.status,
-      created_at: b.created_at,
-      duration_minutes: bookingDurations.get(b.id) || 30, // fallback 30 min
-    }));
+    const enrichedBookings = await enrichBookingsWithDurations(supabase, bookedEvents || []);
 
     const blockedSlots = getBlockedDisplaySlots(
       enrichedBookings,
@@ -235,30 +206,12 @@ export async function validateBookingSlotSelection(input: {
       supabase.from("salon_staff").select("id").eq("salon_id", salonId),
       supabase
         .from("bookings")
-        .select("id, booking_time, staff_id, status, created_at")
+        .select("id, booking_time, staff_id, status, created_at, service_id")
         .eq("salon_id", salonId)
         .eq("booking_date", bookingDate),
     ]);
 
-    const dayBookingIds = (dayBookings || []).map((b) => b.id).filter(Boolean);
-    const bookingDurations = new Map<string, number>();
-    if (dayBookingIds.length > 0) {
-      const { data: bsRows } = await supabase
-        .from("booking_services")
-        .select("booking_id, duration_min")
-        .in("booking_id", dayBookingIds);
-      if (bsRows) {
-        for (const row of bsRows) {
-          const dur = parseInt(String(row.duration_min || 0), 10);
-          bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
-        }
-      }
-    }
-
-    const enrichedBookings: BookingConflictRow[] = (dayBookings || []).map((b) => ({
-      ...b,
-      duration_minutes: bookingDurations.get(b.id) || 30,
-    }));
+    const enrichedBookings = await enrichBookingsWithDurations(supabase, dayBookings || []);
 
     const staffIds = (salonStaff || []).map((member) => member.id).filter(Boolean);
     const resolvedStaffId = resolveStaffForBookingSlot({

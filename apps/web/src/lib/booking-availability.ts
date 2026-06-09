@@ -1,4 +1,9 @@
-export const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"] as const;
+export const ACTIVE_BOOKING_STATUSES = [
+  "pending",
+  "confirmed",
+  "in_progress",
+  "checked_in",
+] as const;
 
 export type BookingConflictRow = {
   id?: string;
@@ -47,19 +52,21 @@ function timeToMinutes(normalized: string): number {
   return hh * 60 + mm;
 }
 
-export function shouldBlockBooking(
+/**
+ * Whether an existing booking should block slot selection in the UI and at checkout.
+ * Matches the DB unique index: all pending/confirmed bookings block their exact slot.
+ */
+export function shouldBlockBooking(booking: BookingConflictRow): boolean {
+  return isActiveBookingStatus(booking.status);
+}
+
+/** Unassigned bookings (staff_id null) occupy salon capacity for every stylist. */
+export function bookingAppliesToStaff(
   booking: BookingConflictRow,
-  stalePendingMinutes = 10
+  staffId: string
 ): boolean {
-  if (!isActiveBookingStatus(booking.status)) return false;
-
-  if ((booking.status || "").toLowerCase() === "pending" && booking.created_at) {
-    const createdAt = new Date(booking.created_at).getTime();
-    const cutoff = Date.now() - stalePendingMinutes * 60 * 1000;
-    if (createdAt < cutoff) return false;
-  }
-
-  return true;
+  if (!booking.staff_id) return true;
+  return booking.staff_id === staffId;
 }
 
 /**
@@ -74,47 +81,68 @@ function rangesOverlap(
 ): boolean {
   const slotEnd = slotStartMin + Math.max(slotDurationMin, 1);
   const bookingEnd = bookingStartMin + Math.max(bookingDurationMin, 1);
-  // Two ranges [A, B) and [C, D) overlap when A < D && C < B
   return slotStartMin < bookingEnd && bookingStartMin < slotEnd;
+}
+
+type BusyRange = { startMin: number; durationMin: number };
+
+function getBookingBusyRange(booking: BookingConflictRow): BusyRange {
+  return {
+    startMin: timeToMinutes(normalizeDbTime(booking.booking_time)),
+    durationMin: booking.duration_minutes ?? 30,
+  };
+}
+
+function addBusyRange(
+  staffBusyMap: Map<string, BusyRange[]>,
+  staffKey: string,
+  range: BusyRange
+): void {
+  if (!staffBusyMap.has(staffKey)) staffBusyMap.set(staffKey, []);
+  staffBusyMap.get(staffKey)!.push(range);
+}
+
+function buildStaffBusyMap(
+  bookings: BookingConflictRow[],
+  staffPool: string[]
+): Map<string, BusyRange[]> {
+  const staffBusyMap = new Map<string, BusyRange[]>();
+
+  for (const booking of bookings) {
+    const range = getBookingBusyRange(booking);
+
+    if (!booking.staff_id) {
+      if (staffPool.length > 0) {
+        for (const staffMemberId of staffPool) {
+          addBusyRange(staffBusyMap, staffMemberId, range);
+        }
+      } else {
+        addBusyRange(staffBusyMap, "__unassigned__", range);
+      }
+      continue;
+    }
+
+    addBusyRange(staffBusyMap, booking.staff_id, range);
+  }
+
+  return staffBusyMap;
 }
 
 /**
  * Returns the set of display-format time slots that should be shown as blocked
  * (unavailable) for the given staff member (or "any").
- *
- * This version is duration-aware: a 60-minute booking at 10:00 will block both
- * the 10:00 and 10:30 display slots (assuming 30-min slot intervals and a
- * proposed service of any positive duration).
  */
 export function getBlockedDisplaySlots(
   bookings: BookingConflictRow[],
   staffId: string | "any",
   allStaffIds: string[],
-  proposedDurationMinutes: number,
-  stalePendingMinutes = 10
+  proposedDurationMinutes: number
 ): Set<string> {
-  const active = bookings.filter((b) => shouldBlockBooking(b, stalePendingMinutes));
+  const active = bookings.filter((b) => shouldBlockBooking(b));
   const blocked = new Set<string>();
   const staffPool = allStaffIds.filter(Boolean);
+  const staffBusyMap = buildStaffBusyMap(active, staffPool);
 
-  // Build a helper to check if a candidate display slot is blocked.
-  // We generate all half-hour display slots from 00:00 to 23:30
-  // but the caller only cares about slots that exist in their base list,
-  // so returning a superset is fine — the caller will intersect.
-
-  // Collect per-staff busy ranges
-  type BusyRange = { startMin: number; durationMin: number };
-  const staffBusyMap = new Map<string, BusyRange[]>();
-
-  for (const b of active) {
-    const sid = b.staff_id || "__unassigned__";
-    const startMin = timeToMinutes(normalizeDbTime(b.booking_time));
-    const dur = b.duration_minutes ?? 30;
-    if (!staffBusyMap.has(sid)) staffBusyMap.set(sid, []);
-    staffBusyMap.get(sid)!.push({ startMin, durationMin: dur });
-  }
-
-  // Generate candidate display slots (every 30 min, 0:00-23:30)
   const candidateSlots: { display: string; startMin: number }[] = [];
   for (let h = 0; h < 24; h++) {
     for (const m of [0, 30]) {
@@ -127,7 +155,6 @@ export function getBlockedDisplaySlots(
   }
 
   if (staffId && staffId !== "any") {
-    // Specific staff: block any slot that overlaps with this staff member's bookings
     const busyRanges = staffBusyMap.get(staffId) || [];
     for (const slot of candidateSlots) {
       for (const busy of busyRanges) {
@@ -137,30 +164,26 @@ export function getBlockedDisplaySlots(
         }
       }
     }
-  } else {
-    // "Any" staff: a slot is blocked only if ALL staff members are busy during that range
-    if (staffPool.length === 0) {
-      // No staff pool info — treat all active bookings as blocking
-      const allBusy: BusyRange[] = [];
-      for (const ranges of staffBusyMap.values()) allBusy.push(...ranges);
-      for (const slot of candidateSlots) {
-        for (const busy of allBusy) {
-          if (rangesOverlap(slot.startMin, proposedDurationMinutes, busy.startMin, busy.durationMin)) {
-            blocked.add(slot.display);
-            break;
-          }
+  } else if (staffPool.length === 0) {
+    const allBusy: BusyRange[] = [];
+    for (const ranges of staffBusyMap.values()) allBusy.push(...ranges);
+    for (const slot of candidateSlots) {
+      for (const busy of allBusy) {
+        if (rangesOverlap(slot.startMin, proposedDurationMinutes, busy.startMin, busy.durationMin)) {
+          blocked.add(slot.display);
+          break;
         }
       }
-    } else {
-      for (const slot of candidateSlots) {
-        const allBusy = staffPool.every((sid) => {
-          const ranges = staffBusyMap.get(sid) || [];
-          return ranges.some((busy) =>
-            rangesOverlap(slot.startMin, proposedDurationMinutes, busy.startMin, busy.durationMin)
-          );
-        });
-        if (allBusy) blocked.add(slot.display);
-      }
+    }
+  } else {
+    for (const slot of candidateSlots) {
+      const allBusy = staffPool.every((sid) => {
+        const ranges = staffBusyMap.get(sid) || [];
+        return ranges.some((busy) =>
+          rangesOverlap(slot.startMin, proposedDurationMinutes, busy.startMin, busy.durationMin)
+        );
+      });
+      if (allBusy) blocked.add(slot.display);
     }
   }
 
@@ -175,18 +198,16 @@ export function resolveAvailableStaffId(
   staffIds: string[],
   bookings: BookingConflictRow[],
   formattedTime: string,
-  proposedDurationMinutes: number,
-  stalePendingMinutes = 10
+  proposedDurationMinutes: number
 ): string | null {
-  const active = bookings.filter((b) => shouldBlockBooking(b, stalePendingMinutes));
+  const active = bookings.filter((b) => shouldBlockBooking(b));
   const slotStartMin = timeToMinutes(formattedTime);
 
   return (
     staffIds.find((id) => {
-      // Check this staff member has no overlapping bookings
       return !active.some(
         (b) =>
-          b.staff_id === id &&
+          bookingAppliesToStaff(b, id) &&
           rangesOverlap(
             slotStartMin,
             proposedDurationMinutes,
@@ -211,16 +232,8 @@ export function resolveStaffForBookingSlot(params: {
   preferredStaffId?: string | null;
   formattedTime: string;
   proposedDurationMinutes: number;
-  stalePendingMinutes?: number;
 }): string {
-  const {
-    bookings,
-    staffIds,
-    preferredStaffId,
-    formattedTime,
-    proposedDurationMinutes,
-    stalePendingMinutes = 10,
-  } = params;
+  const { bookings, staffIds, preferredStaffId, formattedTime, proposedDurationMinutes } = params;
 
   let resolvedStaffId: string | null = null;
 
@@ -231,18 +244,11 @@ export function resolveStaffForBookingSlot(params: {
       staffIds,
       bookings,
       formattedTime,
-      proposedDurationMinutes,
-      stalePendingMinutes
+      proposedDurationMinutes
     );
   }
 
-  assertStaffSlotAvailable(
-    bookings,
-    resolvedStaffId,
-    formattedTime,
-    proposedDurationMinutes,
-    stalePendingMinutes
-  );
+  assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime, proposedDurationMinutes);
 
   return resolvedStaffId!;
 }
@@ -256,8 +262,7 @@ export function assertStaffSlotAvailable(
   bookings: BookingConflictRow[],
   staffId: string | null,
   formattedTime: string,
-  proposedDurationMinutes: number,
-  stalePendingMinutes = 10
+  proposedDurationMinutes: number
 ): void {
   if (!staffId) {
     throw new Error("No staff member is available for the selected time slot.");
@@ -267,8 +272,8 @@ export function assertStaffSlotAvailable(
 
   const conflict = bookings.find(
     (b) =>
-      shouldBlockBooking(b, stalePendingMinutes) &&
-      b.staff_id === staffId &&
+      shouldBlockBooking(b) &&
+      bookingAppliesToStaff(b, staffId) &&
       rangesOverlap(
         slotStartMin,
         proposedDurationMinutes,
