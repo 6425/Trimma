@@ -86,7 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Finance & Commissions", href: "/dashboard/finance", icon: <DollarSign className="w-4 h-4" /> },
     { name: "Subscription & Billing", href: "/dashboard/billing", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Salon Profile", href: "/dashboard/profile", icon: <Store className="w-4 h-4" /> },
-    { name: "Help Center", href: "/dashboard/help", icon: <HelpCircle className="w-4 h-4" /> },
+    { name: "Salon Help", href: "/dashboard/help", icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   const adminItems = [

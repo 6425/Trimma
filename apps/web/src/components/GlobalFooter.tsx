@@ -14,7 +14,7 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Support</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/help" className="hover:text-[#F5B700] transition-colors">Help Center</Link></li>
+              <li><Link href="/dashboard/help" className="hover:text-[#F5B700] transition-colors">Salon Help</Link></li>
               <li><Link href="/customer-help" className="hover:text-[#F5B700] transition-colors">Customer Help</Link></li>
               <li><Link href="/help" className="hover:text-[#F5B700] transition-colors">Cancellation options</Link></li>
               <li><Link href="/safety" className="hover:text-[#F5B700] transition-colors">Safety Resource Center</Link></li>
