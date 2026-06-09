@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { 
   Home, Map, UserPlus, Building2,
   Wallet, MapPin, User, LogOut, Search,
-  KanbanSquare, Menu, X, Bell, CheckCircle2
+  KanbanSquare, Menu, X, Bell, CheckCircle2, HelpCircle
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,6 +62,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       items: [
         { name: "Dashboard", path: "/agent", icon: <Home className="w-4 h-4" /> },
         { name: "My Profile", path: "/agent/profile", icon: <User className="w-4 h-4" /> },
+        { name: "Agent Help", path: "/agent/help", icon: <HelpCircle className="w-4 h-4" /> },
       ]
     },
     {
