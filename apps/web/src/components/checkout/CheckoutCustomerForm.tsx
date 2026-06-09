@@ -46,7 +46,7 @@ export function CheckoutCustomerForm({
   cardDetails,
   setCardDetails,
 }: CheckoutCustomerFormProps) {
-  if (!payhereEnabled) {
+  if (!payhereEnabled && paymentMode !== "inline") {
     return (
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
         PayHere payments are temporarily disabled. Please contact support or try again later.

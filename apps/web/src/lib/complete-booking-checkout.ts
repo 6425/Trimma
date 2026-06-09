@@ -8,12 +8,11 @@ import { isEmailSendFailure } from "@/lib/email/result";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { buildEmailRateLimitKey } from "@/lib/email/rate-limit";
 import {
-  assertStaffSlotAvailable,
   parseDisplayTimeSlot,
-  resolveAvailableStaffId,
+  resolveStaffForBookingSlot,
   type BookingConflictRow,
 } from "@/lib/booking-availability";
-import { calculateCommissionSplit } from "@/lib/booking-pricing";
+import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 import type { CardType } from "@/lib/card-payment";
 
@@ -173,18 +172,13 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     duration_minutes: bookingDurations.get(b.id) || 30,
   }));
 
-  let resolvedStaffId: string | null;
-  if (draft.staffId && draft.staffId !== "any") {
-    resolvedStaffId = draft.staffId;
-  } else {
-    resolvedStaffId =
-      resolveAvailableStaffId(staffIds, bookings, formattedTime, totalDuration) ||
-      staffMemberId ||
-      staffIds[0] ||
-      null;
-  }
-
-  assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime, totalDuration);
+  const resolvedStaffId = resolveStaffForBookingSlot({
+    bookings,
+    staffIds,
+    preferredStaffId: draft.staffId && draft.staffId !== "any" ? draft.staffId : staffMemberId,
+    formattedTime,
+    proposedDurationMinutes: totalDuration,
+  });
 
   const pricing = calculateCommissionSplit(serviceTotal, rates);
   const resolvedReservationFee = pricing.reservationFee;
@@ -192,7 +186,7 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   const referringAgent = resolveReferringAgentEmail(salon);
   if (referringAgent) {
     agentEmail = referringAgent;
-    agentCommissionPct = rates.agent;
+    agentCommissionPct = resolveBookingAgentPercentage(rates.agent);
     agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
   }
 

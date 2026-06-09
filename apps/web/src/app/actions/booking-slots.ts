@@ -1,7 +1,13 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getBlockedDisplaySlots, type BookingConflictRow } from "@/lib/booking-availability";
+import {
+  getBlockedDisplaySlots,
+  parseDisplayTimeSlot,
+  resolveStaffForBookingSlot,
+  SLOT_UNAVAILABLE_MESSAGE,
+  type BookingConflictRow,
+} from "@/lib/booking-availability";
 
 export type BookingSlotsResult =
   | { success: true; slots: string[]; bookedSlots: string[]; closed: boolean; reason?: string }
@@ -196,6 +202,76 @@ export async function fetchAvailableBookingSlots(input: {
     return { success: true, slots: finalSlots, bookedSlots, closed: false };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load time slots.";
+    return { success: false, error: message };
+  }
+}
+
+export type ValidateSlotResult =
+  | { success: true; resolvedStaffId: string }
+  | { success: false; error: string };
+
+/**
+ * Re-check slot availability immediately before checkout redirect or payment.
+ * Uses the same staff-resolution rules as checkout completion.
+ */
+export async function validateBookingSlotSelection(input: {
+  salonId: string;
+  staffId: string;
+  bookingDate: string;
+  timeSlot: string;
+  totalDurationMinutes: number;
+}): Promise<ValidateSlotResult> {
+  const { salonId, staffId, bookingDate, timeSlot, totalDurationMinutes } = input;
+
+  if (!salonId || !bookingDate || !timeSlot || totalDurationMinutes <= 0) {
+    return { success: false, error: "Missing booking details." };
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const formattedTime = parseDisplayTimeSlot(timeSlot);
+
+    const [{ data: salonStaff }, { data: dayBookings }] = await Promise.all([
+      supabase.from("salon_staff").select("id").eq("salon_id", salonId),
+      supabase
+        .from("bookings")
+        .select("id, booking_time, staff_id, status, created_at")
+        .eq("salon_id", salonId)
+        .eq("booking_date", bookingDate),
+    ]);
+
+    const dayBookingIds = (dayBookings || []).map((b) => b.id).filter(Boolean);
+    const bookingDurations = new Map<string, number>();
+    if (dayBookingIds.length > 0) {
+      const { data: bsRows } = await supabase
+        .from("booking_services")
+        .select("booking_id, duration_min")
+        .in("booking_id", dayBookingIds);
+      if (bsRows) {
+        for (const row of bsRows) {
+          const dur = parseInt(String(row.duration_min || 0), 10);
+          bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
+        }
+      }
+    }
+
+    const enrichedBookings: BookingConflictRow[] = (dayBookings || []).map((b) => ({
+      ...b,
+      duration_minutes: bookingDurations.get(b.id) || 30,
+    }));
+
+    const staffIds = (salonStaff || []).map((member) => member.id).filter(Boolean);
+    const resolvedStaffId = resolveStaffForBookingSlot({
+      bookings: enrichedBookings,
+      staffIds,
+      preferredStaffId: staffId,
+      formattedTime,
+      proposedDurationMinutes: totalDurationMinutes,
+    });
+
+    return { success: true, resolvedStaffId };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : SLOT_UNAVAILABLE_MESSAGE;
     return { success: false, error: message };
   }
 }

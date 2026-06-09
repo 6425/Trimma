@@ -198,6 +198,55 @@ export function resolveAvailableStaffId(
   );
 }
 
+export const SLOT_UNAVAILABLE_MESSAGE =
+  "This time slot is no longer available. Please choose another time.";
+
+/**
+ * Resolve which staff member will take the booking and verify the slot is free.
+ * Never falls back to a busy stylist — throws if no one is available.
+ */
+export function resolveStaffForBookingSlot(params: {
+  bookings: BookingConflictRow[];
+  staffIds: string[];
+  preferredStaffId?: string | null;
+  formattedTime: string;
+  proposedDurationMinutes: number;
+  stalePendingMinutes?: number;
+}): string {
+  const {
+    bookings,
+    staffIds,
+    preferredStaffId,
+    formattedTime,
+    proposedDurationMinutes,
+    stalePendingMinutes = 10,
+  } = params;
+
+  let resolvedStaffId: string | null = null;
+
+  if (preferredStaffId && preferredStaffId !== "any") {
+    resolvedStaffId = preferredStaffId;
+  } else {
+    resolvedStaffId = resolveAvailableStaffId(
+      staffIds,
+      bookings,
+      formattedTime,
+      proposedDurationMinutes,
+      stalePendingMinutes
+    );
+  }
+
+  assertStaffSlotAvailable(
+    bookings,
+    resolvedStaffId,
+    formattedTime,
+    proposedDurationMinutes,
+    stalePendingMinutes
+  );
+
+  return resolvedStaffId!;
+}
+
 /**
  * Assert that the given staff member's slot is still available,
  * considering the full duration of the proposed booking.
@@ -229,6 +278,6 @@ export function assertStaffSlotAvailable(
   );
 
   if (conflict) {
-    throw new Error("This time slot is no longer available. Please choose another time.");
+    throw new Error(SLOT_UNAVAILABLE_MESSAGE);
   }
 }

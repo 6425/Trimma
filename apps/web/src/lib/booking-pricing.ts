@@ -1,4 +1,11 @@
 export const RESERVATION_DEPOSIT_PERCENT = 20;
+export const DEFAULT_BOOKING_AGENT_PERCENT = 20;
+
+/** commission_master may seed booking agent % as 0 — treat that as "use default". */
+export function resolveBookingAgentPercentage(stored: number | null | undefined): number {
+  const value = Number(stored);
+  return value > 0 ? value : DEFAULT_BOOKING_AGENT_PERCENT;
+}
 
 export type BookingCommissionRates = {
   platform: number;

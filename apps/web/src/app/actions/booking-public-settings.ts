@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -38,7 +39,7 @@ export async function fetchBookingCommissionRates(): Promise<BookingCommissionRa
     return {
       platform: data.platform_percentage ?? DEFAULT_RATES.platform,
       salon: data.salon_percentage ?? DEFAULT_RATES.salon,
-      agent: data.agent_percentage ?? DEFAULT_RATES.agent,
+      agent: resolveBookingAgentPercentage(data.agent_percentage),
     };
   } catch {
     return DEFAULT_RATES;

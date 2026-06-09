@@ -2,20 +2,21 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { format, addDays } from "date-fns";
-import { Clock, User, Scissors, CheckCircle2, ChevronLeft, CreditCard, Loader2, Sparkles, Tag, AlertCircle, CalendarRange, LayoutGrid } from "lucide-react";
+import { Clock, User, Scissors, CheckCircle2, ChevronLeft, CreditCard, Loader2, Sparkles, AlertCircle, CalendarRange, LayoutGrid } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
-import { fetchAvailableBookingSlots, fetchSalonClosedDays } from "@/app/actions/booking-slots";
+import {
+  fetchAvailableBookingSlots,
+  fetchSalonClosedDays,
+  validateBookingSlotSelection,
+} from "@/app/actions/booking-slots";
 import { withTimeout } from "@/lib/promise-timeout";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
-import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
-import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
-import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
-import { sendBookingCreatedCustomerEmail, sendBookingCreatedOwnerEmail } from "@/app/actions/email-settings";
+import { calculateCommissionSplit, calculateReservationFee, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 
@@ -53,17 +54,10 @@ export function BookingSheet({
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
-  const [paymentOption, setPaymentOption] = useState<'reservation'>('reservation');
-  const [paymentMethod, setPaymentMethod] = useState<'payhere' | 'paypal'>('payhere');
   const [understandRefund, setUnderstandRefund] = useState(false);
   const [agreeReschedule, setAgreeReschedule] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = useState("");
-  const [paypalEnabled, setPaypalEnabled] = useState(true);
-  const [payhereEnabled, setPayhereEnabled] = useState(true);
-  const [payhereMerchantId, setPayhereMerchantId] = useState("1211149");
-  const [payhereMerchantSecret, setPayhereMerchantSecret] = useState("");
-  const [activeEnvironment, setActiveEnvironment] = useState<'sandbox' | 'live'>('sandbox');
 
   // Dynamic Commission Rates
   const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, agent: 20 });
@@ -82,7 +76,7 @@ export function BookingSheet({
       setGlobalRates({
       platform: data.platform_percentage,
       salon: data.salon_percentage,
-      agent: data.agent_percentage || 20
+      agent: resolveBookingAgentPercentage(data.agent_percentage)
       });
       }
       }
@@ -152,61 +146,6 @@ export function BookingSheet({
 
   // Generate next 7 days for date picker
   const upcomingDays = Array.from({ length: 7 }).map((_, i) => addDays(new Date(), i));
-
-  // Load active payment gateways and environments
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      if (isOpen) {
-      async function fetchGateways() {
-      try {
-      const { data } = await supabase
-      .from("global_payment_settings")
-      .select("*")
-      .eq("id", "00000000-0000-0000-0000-000000000001")
-      .maybeSingle();
-      
-      if (data) {
-      setPaypalEnabled(data.paypal_enabled !== false);
-      setPayhereEnabled(data.payhere_enabled !== false);
-      setActiveEnvironment(data.environment || 'sandbox');
-      if (data.payhere_merchant_id) {
-      setPayhereMerchantId(data.payhere_merchant_id);
-      }
-      if (data.payhere_merchant_secret) {
-      setPayhereMerchantSecret(data.payhere_merchant_secret);
-      }
-      
-      // Automatically set default selected payment method based on what is active
-      if (data.payhere_enabled !== false) {
-      setPaymentMethod('payhere');
-      } else if (data.paypal_enabled !== false) {
-      setPaymentMethod('paypal');
-      }
-      } else {
-      // LocalStorage fallback
-      const localPaypal = localStorage.getItem("trimma_paypal_enabled");
-      if (localPaypal) setPaypalEnabled(localPaypal === "true");
-      
-      const localPayhere = localStorage.getItem("trimma_payhere_enabled");
-      if (localPayhere) setPayhereEnabled(localPayhere === "true");
-      
-      const localEnv = localStorage.getItem("trimma_payment_env");
-      if (localEnv) setActiveEnvironment(localEnv as 'sandbox' | 'live');
-      
-      if (localPayhere === "false" && localPaypal === "true") {
-      setPaymentMethod('paypal');
-      } else {
-      setPaymentMethod('payhere');
-      }
-      }
-      } catch (e) {
-      console.warn("Failed to fetch gateways settings:", e);
-      }
-      }
-      fetchGateways();
-      }
-    });
-  }, [isOpen]);
 
   // Initialize with the clicked service if provided
   useEffect(() => {
@@ -300,237 +239,6 @@ export function BookingSheet({
     return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(price);
   };
 
-  // Load PayPal SDK dynamically in Step 5 if selected
-  useEffect(() => {
-    if (step === 5 && paymentMethod === 'paypal') {
-      const existingScript = document.getElementById("paypal-sdk");
-      if (existingScript) return;
-
-      const script = document.createElement("script");
-      script.id = "paypal-sdk";
-      script.src = "https://www.paypal.com/sdk/js?client-id=sb&currency=USD"; // sb = sandbox client id
-      script.async = true;
-      script.onload = () => {
-        console.log("PayPal SDK Loaded successfully");
-      };
-      script.onerror = () => {
-        console.error("PayPal SDK failed to load");
-      };
-      document.body.appendChild(script);
-
-      return () => {
-        const scriptToRemove = document.getElementById("paypal-sdk");
-        if (scriptToRemove) {
-          document.body.removeChild(scriptToRemove);
-        }
-      };
-    }
-  }, [step, paymentMethod]);
-
-  // Render PayPal Smart Buttons when script is loaded and container is available
-  useEffect(() => {
-    let paypalBtn: any = null;
-    let timerId: any = null;
-
-    if (step === 5 && paymentMethod === 'paypal') {
-      const renderButton = () => {
-        const container = document.getElementById("paypal-button-container");
-        const paypal = (window as any).paypal;
-
-        if (container && paypal && container.innerHTML === "") {
-          try {
-            paypalBtn = paypal.Buttons({
-              style: {
-                layout: 'vertical',
-                color:  'gold',
-                shape:  'rect',
-                label:  'paypal'
-              },
-              createOrder: (data: any, actions: any) => {
-                // Convert LKR to USD for sandbox demo purposes (1 USD = 300 LKR)
-                const usdAmount = (reservationFee / 300).toFixed(2);
-                return actions.order.create({
-                  purchase_units: [{
-                    amount: {
-                      value: usdAmount,
-                      currency_code: 'USD'
-                    },
-                    description: `Reservation Fee for ${selectedServicesWithRates.map(s => s.name).join(', ')}`
-                  }]
-                });
-              },
-              onApprove: async (data: any, actions: any) => {
-                setIsProcessing(true);
-                try {
-                  const details = await actions.order.capture();
-                  const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
-                  const formattedDate = format(selectedDate, "yyyy-MM-dd");
-                  
-                  const [timeStr, period] = selectedTimeSlot!.split(" ");
-                  let [hh, mm] = timeStr.split(":").map(Number);
-                  if (period === "PM" && hh < 12) hh += 12;
-                  if (period === "AM" && hh === 12) hh = 0;
-                  const formattedTime = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:00`;
-
-                  const customerEmail = customerDetails.email || "guest@trimma.com";
-                  const customerName = customerDetails.fullName.trim() || "Guest Client";
-
-                  // Check if user profile exists via secure RPC
-                  const { data: emailExists } = await supabase
-                    .rpc("check_user_email_exists", { email_to_check: customerEmail });
-
-                  if (!emailExists) {
-                    await supabase
-                      .from("users")
-                      .insert({
-                        email: customerEmail,
-                        full_name: customerName,
-                        phone: customerDetails.phone,
-                        global_role: "customer"
-                      });
-                  }
-
-                  // Fetch Salon's assigned agent for commission routing
-                  let agentEmail = null;
-                  let agentCommissionPct = 0;
-                  let agentCommissionAmount = 0;
-
-                  let ownerEmail = null;
-                  const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, assign_to, owner_email').eq('id', salonId).single();
-                  if (salonData) {
-                    const referringAgent = resolveReferringAgentEmail(salonData);
-                    if (referringAgent) {
-                      agentEmail = referringAgent;
-                      agentCommissionPct = globalRates.agent;
-                      agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
-                    }
-                    ownerEmail = salonData.owner_email;
-                  }
-
-                  // 1. Create Confirmed Booking row
-                  const { data: newBooking, error: bookingErr } = await supabase
-                    .from("bookings")
-                    .insert({
-                      booking_no: bookingNo,
-                      salon_id: salonId,
-                      customer_email: customerEmail,
-                      service_id: selectedServiceIds[0],
-                      staff_id: selectedStaffId === 'any' ? (staff[0]?.id || null) : selectedStaffId,
-                      booking_date: formattedDate,
-                      booking_time: formattedTime,
-                      amount: totalPrice,
-                      status: "confirmed",
-                      payment_status: "reservation_paid",
-                      reservation_fee_paid: true,
-                      reservation_fee_refundable: false,
-                      total_reservation_fee: reservationFee,
-                      salon_upfront_amount: pricing.salonUpfront,
-                      platform_commission_amount: pricing.platformCommission,
-                      agent_email: agentEmail,
-                      agent_commission_percent: agentCommissionPct,
-                      agent_commission_amount: agentCommissionAmount
-                    })
-                    .select()
-                    .single();
-
-                  if (bookingErr || !newBooking) throw bookingErr || new Error("Failed to insert booking");
-
-                  // 2. Insert into booking_services
-                  const serviceInserts = selectedServicesWithRates.map(s => ({
-                    booking_id: newBooking.id,
-                    service_id: s.id,
-                    price: s.price,
-                    duration_min: s.duration
-                  }));
-                  await supabase.from("booking_services").insert(serviceInserts);
-
-                  // 3. Insert into booking_staff
-                  const staffInserts = selectedServicesWithRates.map(s => ({
-                    booking_id: newBooking.id,
-                    staff_id: selectedStaffId === 'any' ? (staff[0]?.id || null) : selectedStaffId,
-                    service_id: s.id
-                  }));
-                  await supabase.from("booking_staff").insert(staffInserts);
-
-                  // 4. Resource Allocation
-                  const { data: salonResources } = await supabase
-                    .from("resources")
-                    .select("*")
-                    .eq("salon_id", salonId);
-
-                  if (salonResources && salonResources.length > 0) {
-                    const startMin = hh * 60 + mm;
-                    const endMin = startMin + totalDuration;
-                    const endH = Math.floor(endMin / 60);
-                    const endM = endMin % 60;
-                    const formattedEndTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
-
-                    const resourceInserts = salonResources.map(res => ({
-                      booking_id: newBooking.id,
-                      resource_id: res.id,
-                      booking_date: formattedDate,
-                      start_time: formattedTime,
-                      end_time: formattedEndTime
-                    }));
-                    await supabase.from("resource_bookings").insert(resourceInserts);
-                  }
-
-                  // 5. Payments Audit Log
-                  await supabase.from("payments").insert({
-                    booking_id: newBooking.id,
-                    salon_id: salonId,
-                    provider: 'paypal',
-                    provider_payment_id: details.id,
-                    amount: reservationFee,
-                    currency: 'LKR',
-                    status: 'completed',
-                    raw_response: details
-                  });
-
-                  // 6. Trigger WhatsApp Alerts (Since PayPal is instantly confirmed)
-                  await sendWhatsAppReservationPaidNotification(bookingNo);
-                  await sendBookingCreatedCustomerEmail(bookingNo);
-                  if (ownerEmail) await sendBookingCreatedOwnerEmail(bookingNo, ownerEmail, "reservation_paid");
-
-                  setConfirmedBookingId(bookingNo);
-                  setStep(6);
-                } catch (e: any) {
-                  alert("Failed to capture PayPal booking: " + e.message);
-                } finally {
-                  setIsProcessing(false);
-                }
-              },
-              onError: (err: any) => {
-                console.error("PayPal Error:", err);
-                alert("PayPal transaction was interrupted. Please try again.");
-              }
-            });
-
-            if (paypalBtn) {
-              paypalBtn.render("#paypal-button-container");
-            }
-          } catch (e) {
-            console.error("PayPal Buttons Rendering failed:", e);
-          }
-        } else if (!paypal) {
-          // If script is not fully loaded yet, retry in 200ms
-          timerId = setTimeout(renderButton, 200);
-        }
-      };
-
-      // Start check/render loop
-      renderButton();
-    }
-
-    return () => {
-      if (timerId) clearTimeout(timerId);
-      // Clean up PayPal buttons container if needed
-      const container = document.getElementById("paypal-button-container");
-      if (container) container.innerHTML = "";
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, paymentMethod, selectedDate, selectedTimeSlot, selectedStaffId, selectedServiceIds, customerDetails, reservationFee]);
-
   // Fetch availability via server action (client Supabase hangs on production)
   useEffect(() => {
     void Promise.resolve().then(async () => {
@@ -617,166 +325,43 @@ export function BookingSheet({
   const handleBack = () => setStep(step - 1);
 
   const handleConfirm = async () => {
+    if (!salonId || !selectedTimeSlot) return;
+
     setIsProcessing(true);
     try {
-      if (paymentMethod === "payhere" && payhereEnabled) {
-        saveBookingCheckoutDraft({
-          salonId: salonId!,
-          salonSlug,
-          serviceIds: selectedServiceIds,
+      const validation = await withTimeout(
+        validateBookingSlotSelection({
+          salonId,
           staffId: selectedStaffId || "any",
           bookingDate: format(selectedDate, "yyyy-MM-dd"),
-          timeSlot: selectedTimeSlot!,
-          customerDetails,
-        });
-        onOpenChange(false);
-        router.push("/checkout/booking");
+          timeSlot: selectedTimeSlot,
+          totalDurationMinutes: totalDuration || 30,
+        }),
+        15000,
+        "Could not verify this time slot. Please try again."
+      );
+
+      if (validation.success === false) {
+        alert(validation.error);
+        setSelectedTimeSlot(null);
+        setStep(3);
         return;
       }
 
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      
-      const [timeStr, period] = selectedTimeSlot!.split(" ");
-      let [hh, mm] = timeStr.split(":").map(Number);
-      if (period === "PM" && hh < 12) hh += 12;
-      if (period === "AM" && hh === 12) hh = 0;
-      const formattedTime = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:00`;
-
-      // Generate random unique Booking ID
-      const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
-      const customerEmail = customerDetails.email || "guest@trimma.com";
-      const customerName = customerDetails.fullName.trim() || "Guest Client";
-
-      // Proactively create/ensure customer user profile in DB via secure RPC
-      const { data: emailExists } = await supabase
-        .rpc("check_user_email_exists", { email_to_check: customerEmail });
-
-      if (!emailExists) {
-        await supabase
-          .from("users")
-          .insert({
-            email: customerEmail,
-            full_name: customerName,
-            phone: customerDetails.phone,
-            global_role: "customer"
-          });
-      } else {
-        // Dynamic fallback: Proactively sync their latest name and WhatsApp number to the users table
-        await supabase
-          .from("users")
-          .update({
-            full_name: customerName,
-            phone: customerDetails.phone
-          })
-          .eq("email", customerEmail);
-      }
-
-      // 0.1 Fetch Salon's assigned agent for commission routing
-      let agentEmail = null;
-      let agentCommissionPct = 0;
-      let agentCommissionAmount = 0;
-
-      let ownerEmail = null;
-      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, assign_to, owner_email').eq('id', salonId).single();
-      if (salonData) {
-        const referringAgent = resolveReferringAgentEmail(salonData);
-        if (referringAgent) {
-          agentEmail = referringAgent;
-          agentCommissionPct = globalRates.agent;
-          agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
-        }
-        ownerEmail = salonData.owner_email;
-      }
-
-      // 1. Write master booking row directly into Supabase database (with backward compatibility fallback)
-      const { data: newBooking, error: bookingErr } = await supabase
-        .from("bookings")
-        .insert({
-          booking_no: bookingNo,
-          salon_id: salonId,
-          customer_email: customerEmail,
-          service_id: selectedServiceIds[0],
-          staff_id: selectedStaffId === 'any' ? (staff[0]?.id || null) : selectedStaffId,
-          booking_date: formattedDate,
-          booking_time: formattedTime,
-          amount: totalPrice,
-          status: paymentMethod === 'payhere' ? "pending" : "confirmed",
-          payment_status: paymentMethod === 'payhere' ? "unpaid" : "reservation_paid",
-          reservation_fee_paid: paymentMethod !== 'payhere',
-          reservation_fee_refundable: false,
-          total_reservation_fee: reservationFee,
-          salon_upfront_amount: pricing.salonUpfront,
-          platform_commission_amount: pricing.platformCommission,
-          agent_email: agentEmail,
-          agent_commission_percent: agentCommissionPct,
-          agent_commission_amount: agentCommissionAmount
-        })
-        .select()
-        .single();
-
-      if (bookingErr || !newBooking) throw bookingErr || new Error("Failed to insert booking");
-
-      // 2. Insert into booking_services (Many-to-Many association)
-      const serviceInserts = selectedServicesWithRates.map(s => ({
-        booking_id: newBooking.id,
-        service_id: s.id,
-        price: s.price,
-        duration_min: s.duration
-      }));
-
-      const { error: svcErr } = await supabase
-        .from("booking_services")
-        .insert(serviceInserts);
-      if (svcErr) console.error("Failed to insert booking_services", svcErr);
-
-      // 3. Insert into booking_staff (Many-to-Many association)
-      const staffInserts = selectedServicesWithRates.map(s => ({
-        booking_id: newBooking.id,
-        staff_id: selectedStaffId === 'any' ? (staff[0]?.id || null) : selectedStaffId,
-        service_id: s.id
-      }));
-
-      const { error: staffErr } = await supabase
-        .from("booking_staff")
-        .insert(staffInserts);
-      if (staffErr) console.error("Failed to insert booking_staff", staffErr);
-
-      // 4. Auto-allocate resources and insert resource_bookings if configured
-      const { data: salonResources } = await supabase
-        .from("resources")
-        .select("*")
-        .eq("salon_id", salonId);
-
-      if (salonResources && salonResources.length > 0) {
-        const startMin = hh * 60 + mm;
-        const endMin = startMin + totalDuration;
-        const endH = Math.floor(endMin / 60);
-        const endM = endMin % 60;
-        const formattedEndTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
-
-        const resourceInserts = salonResources.map(res => ({
-          booking_id: newBooking.id,
-          resource_id: res.id,
-          booking_date: formattedDate,
-          start_time: formattedTime,
-          end_time: formattedEndTime
-        }));
-
-        const { error: resErr } = await supabase
-          .from("resource_bookings")
-          .insert(resourceInserts);
-        if (resErr) console.error("Failed to insert resource_bookings", resErr);
-      }
-
-      // Trigger WhatsApp Alert for direct confirmation
-      await sendBookingCreatedAlert(bookingNo);
-      await sendBookingCreatedCustomerEmail(bookingNo);
-      if (ownerEmail) await sendBookingCreatedOwnerEmail(bookingNo, ownerEmail, paymentMethod === 'payhere' ? "unpaid" : "reservation_paid");
-
-      setConfirmedBookingId(bookingNo);
-      setStep(6); // Advance to ticket screen!
-    } catch(e: any) {
-      alert("Failed to confirm booking: " + e.message);
+      saveBookingCheckoutDraft({
+        salonId,
+        salonSlug,
+        serviceIds: selectedServiceIds,
+        staffId: selectedStaffId || "any",
+        bookingDate: format(selectedDate, "yyyy-MM-dd"),
+        timeSlot: selectedTimeSlot,
+        customerDetails,
+      });
+      onOpenChange(false);
+      router.push("/checkout/booking");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to start checkout.";
+      alert(message);
     } finally {
       setIsProcessing(false);
     }
@@ -1254,61 +839,15 @@ export function BookingSheet({
                 </label>
               </div>
 
-              {/* Payment Methods / Gateway Selector */}
-              {(payhereEnabled || paypalEnabled) ? (
-                <div className="space-y-3">
-                  <h4 className="font-bold text-zinc-900 text-sm">Select Payment Gateway</h4>
-                  <div className={`grid gap-3 ${payhereEnabled && paypalEnabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                    {payhereEnabled && (
-                      <button 
-                        onClick={() => setPaymentMethod('payhere')}
-                        className={`p-4 rounded-2xl border-2 font-bold text-xs flex flex-col items-center justify-center gap-2 transition-all shadow-sm hover:shadow ${
-                          paymentMethod === 'payhere' 
-                            ? 'border-zinc-900 bg-zinc-950 text-white' 
-                            : 'border-slate-100 bg-white hover:border-slate-200 text-zinc-700'
-                        }`}
-                      >
-                        <CreditCard className="w-5 h-5" /> 
-                        <span>PayHere (Card / LKR)</span>
-                      </button>
-                    )}
-                    
-                    {paypalEnabled && (
-                      <button 
-                        onClick={() => setPaymentMethod('paypal')}
-                        className={`p-4 rounded-2xl border-2 font-bold text-xs flex flex-col items-center justify-center gap-2 transition-all shadow-sm hover:shadow ${
-                          paymentMethod === 'paypal' 
-                            ? 'border-zinc-900 bg-zinc-950 text-white' 
-                            : 'border-slate-100 bg-white hover:border-slate-200 text-zinc-700'
-                        }`}
-                      >
-                        <Tag className="w-5 h-5" />
-                        <span>PayPal (USD / Global)</span>
-                      </button>
-                    )}
-                  </div>
+              <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-2xl">
+                <div className="flex items-center gap-2 text-xs font-bold text-zinc-700 mb-1">
+                  <CreditCard className="w-4 h-4" />
+                  Secure server checkout
                 </div>
-              ) : (
-                <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-center text-zinc-400 font-bold text-xs">
-                  No online payment methods are currently active. Please contact support.
-                </div>
-              )}
-
-              {/* Embedded PayPal Containers */}
-              {paymentMethod === 'paypal' && (
-                <div className="mt-4 p-4 bg-amber-50/50 rounded-2xl border border-amber-100/60 shadow-inner">
-                  <div className="text-xs font-bold text-amber-800 mb-2.5 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 animate-pulse" /> Fast Checkout with PayPal
-                  </div>
-                  {(!understandRefund || !agreeReschedule) ? (
-                    <div className="text-xs font-medium text-amber-600 bg-white p-4 rounded-xl border border-amber-100 shadow-sm text-center">
-                      Please accept all policies to load PayPal payment buttons.
-                    </div>
-                  ) : (
-                    <div id="paypal-button-container" className="w-full min-h-[150px]" />
-                  )}
-                </div>
-              )}
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  You&apos;ll complete card payment on the next page. Your slot is validated server-side before the booking is created.
+                </p>
+              </div>
             </div>
           )}
 
@@ -1402,19 +941,14 @@ export function BookingSheet({
                Review Appointment
              </Button>
            )}
-           {step === 5 && paymentMethod !== 'paypal' && (
+           {step === 5 && (
              <Button 
                className="w-full text-base h-13 bg-zinc-900 text-white rounded-xl shadow-lg hover:bg-zinc-800 font-bold transition-all" 
                onClick={handleConfirm} 
                disabled={isProcessing || !understandRefund || !agreeReschedule}
              >
-                {isProcessing ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</> : `Confirm & Pay Deposit`}
+                {isProcessing ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</> : `Continue to Payment`}
              </Button>
-           )}
-           {step === 5 && paymentMethod === 'paypal' && (
-             <div className="text-center py-3 text-xs font-bold text-zinc-400 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-xl w-full">
-               Complete Checkout via PayPal Above
-             </div>
            )}
            {step === 6 && (
              <Button 

@@ -50,6 +50,8 @@ function BookingCheckoutForm() {
   const [processing, setProcessing] = useState(false);
   const [checkoutData, setCheckoutData] = useState<LoadedBookingCheckout | null>(null);
   const [missingDraft, setMissingDraft] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [salonBackSlug, setSalonBackSlug] = useState<string | null>(null);
   const [payhereEnabled, setPayhereEnabled] = useState(true);
   const [payhereEnvironment, setPayhereEnvironment] = useState("sandbox");
   const [cardType, setCardType] = useState<CardType>("visa");
@@ -99,7 +101,12 @@ function BookingCheckoutForm() {
         );
 
         if (result.success === false) {
-          setMissingDraft(true);
+          if (result.missingDraft) {
+            setMissingDraft(true);
+          } else {
+            setCheckoutError(result.error);
+            setSalonBackSlug(draft.salonSlug || null);
+          }
           setLoading(false);
           return;
         }
@@ -168,7 +175,7 @@ function BookingCheckoutForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!checkoutData || !payhereEnabled) return;
+    if (!checkoutData) return;
 
     const cardError = validateCardPayment(cardType, cardDetails);
     if (cardError) {
@@ -244,6 +251,19 @@ function BookingCheckoutForm() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f9fafb]">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-900" />
+      </div>
+    );
+  }
+
+  if (checkoutError) {
+    const backHref = salonBackSlug ? `/salons/${salonBackSlug}` : "/";
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center">
+        <p className="text-lg font-semibold text-zinc-900 mb-2">Time slot unavailable</p>
+        <p className="text-sm text-zinc-500 mb-6 max-w-md">{checkoutError}</p>
+        <Link href={backHref} className="text-sm font-bold text-zinc-900 underline">
+          Choose another time
+        </Link>
       </div>
     );
   }

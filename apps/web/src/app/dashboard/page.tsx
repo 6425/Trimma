@@ -74,28 +74,11 @@ export default function Dashboard() {
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [allStaff, setAllStaff] = useState<any[]>([]);
 
-  const fetchDashboardStats = useCallback(async (forceRefresh = false) => {
+  const fetchDashboardStats = useCallback(async (options?: { showSpinner?: boolean }) => {
+    const showSpinner = options?.showSpinner ?? false;
     try {
-      if (forceRefresh) {
+      if (showSpinner) {
         setIsRefreshing(true);
-        sessionStorage.removeItem("dashboardCache");
-      } else {
-        const cached = sessionStorage.getItem("dashboardCache");
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.allStaff) {
-            setSalonName(parsed.salonName || "your salon");
-            setStats(parsed.stats);
-            setRecentBookings(parsed.recentBookings || []);
-            setAllStaff(parsed.allStaff || []);
-            setMonthlyPoints(parsed.monthlyPoints || []);
-            setActivity(parsed.activity || []);
-            setLoading(false);
-            return;
-          }
-          // Cache is stale (missing allStaff) — clear and fall through to fetch fresh.
-          sessionStorage.removeItem("dashboardCache");
-        }
       }
 
       const result = await withTimeout(
@@ -165,18 +148,6 @@ export default function Dashboard() {
       setAllStaff(staff);
       setMonthlyPoints(monthly);
       setActivity(feed.slice(0, 6));
-
-      sessionStorage.setItem(
-        "dashboardCache",
-        JSON.stringify({
-          salonName: salonData.name,
-          stats: newStats,
-          recentBookings: bookings,
-          allStaff: staff,
-          monthlyPoints: monthly,
-          activity: feed.slice(0, 6),
-        })
-      );
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
     } finally {
@@ -186,9 +157,29 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      fetchDashboardStats(false);
-    });
+    void fetchDashboardStats();
+
+    const interval = window.setInterval(() => {
+      void fetchDashboardStats();
+    }, 45000);
+
+    const handleRefresh = () => {
+      void fetchDashboardStats({ showSpinner: true });
+    };
+    window.addEventListener("trimma:dashboard-refresh", handleRefresh);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void fetchDashboardStats();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("trimma:dashboard-refresh", handleRefresh);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [fetchDashboardStats]);
 
   if (loading) {
@@ -210,7 +201,7 @@ export default function Dashboard() {
           </p>
         </div>
         <button
-          onClick={() => fetchDashboardStats(true)}
+          onClick={() => fetchDashboardStats({ showSpinner: true })}
           disabled={isRefreshing}
           className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-sm"
         >

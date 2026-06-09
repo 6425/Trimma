@@ -3,7 +3,8 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   parseDisplayTimeSlot,
-  resolveAvailableStaffId,
+  resolveStaffForBookingSlot,
+  SLOT_UNAVAILABLE_MESSAGE,
   type BookingConflictRow,
 } from "@/lib/booking-availability";
 import {
@@ -11,7 +12,7 @@ import {
   resolvePromotionBookingServices,
 } from "@/lib/promotion-booking";
 import { mapSalonPromotionRows } from "@/lib/deals";
-import { calculateReservationFee } from "@/lib/booking-pricing";
+import { calculateReservationFee, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 
 export type CheckoutDataInput = {
   salonId: string;
@@ -130,67 +131,69 @@ export async function fetchBookingCheckoutData(
       return { success: false, missingDraft: true, error: "Salon or services not found." };
     }
 
-    let staffMember: Record<string, unknown> | null = null;
-    if (draft.staffId && draft.staffId !== "any") {
-      const { data: staffData } = await supabase
-        .from("salon_staff")
-        .select("*")
-        .eq("id", draft.staffId)
-        .maybeSingle();
-      staffMember = staffData;
-    } else {
-      const [{ data: staffList }, { data: dayBookings }] = await Promise.all([
-        supabase.from("salon_staff").select("*").eq("salon_id", draft.salonId),
-        supabase
-          .from("bookings")
-          .select("id, booking_time, staff_id, status, created_at")
-          .eq("salon_id", draft.salonId)
-          .eq("booking_date", draft.bookingDate),
-      ]);
-
-      // Fetch per-booking durations for overlap detection
-      const dayBookingIds = (dayBookings || []).map((b) => b.id).filter(Boolean);
-      const bookingDurations = new Map<string, number>();
-      if (dayBookingIds.length > 0) {
-        const { data: bsRows } = await supabase
-          .from("booking_services")
-          .select("booking_id, duration_min")
-          .in("booking_id", dayBookingIds);
-        if (bsRows) {
-          for (const row of bsRows) {
-            const dur = parseInt(String(row.duration_min || 0), 10);
-            bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
-          }
-        }
-      }
-
-      const enrichedBookings: BookingConflictRow[] = (dayBookings || []).map((b) => ({
-        ...b,
-        duration_minutes: bookingDurations.get(b.id) || 30,
-      }));
-
-      // Estimate proposed duration from services
-      const proposedDuration = services.reduce(
+    const proposedDuration =
+      services.reduce(
         (sum, s) => sum + parseInt(String(s.duration || s.duration_min || "30"), 10),
         0
       ) || 30;
+    const formattedTime = parseDisplayTimeSlot(draft.timeSlot);
 
-      const staffIds = (staffList || []).map((member) => member.id).filter(Boolean);
-      const formattedTime = parseDisplayTimeSlot(draft.timeSlot);
-      const availableStaffId = resolveAvailableStaffId(
-        staffIds,
-        enrichedBookings,
-        formattedTime,
-        proposedDuration
-      );
-      staffMember =
-        staffList?.find((member) => member.id === availableStaffId) || staffList?.[0] || null;
+    const [{ data: salonStaff }, { data: dayBookings }] = await Promise.all([
+      supabase.from("salon_staff").select("id").eq("salon_id", draft.salonId),
+      supabase
+        .from("bookings")
+        .select("id, booking_time, staff_id, status, created_at")
+        .eq("salon_id", draft.salonId)
+        .eq("booking_date", draft.bookingDate),
+    ]);
+
+    const dayBookingIds = (dayBookings || []).map((b) => b.id).filter(Boolean);
+    const bookingDurations = new Map<string, number>();
+    if (dayBookingIds.length > 0) {
+      const { data: bsRows } = await supabase
+        .from("booking_services")
+        .select("booking_id, duration_min")
+        .in("booking_id", dayBookingIds);
+      if (bsRows) {
+        for (const row of bsRows) {
+          const dur = parseInt(String(row.duration_min || 0), 10);
+          bookingDurations.set(row.booking_id, (bookingDurations.get(row.booking_id) || 0) + dur);
+        }
+      }
     }
+
+    const enrichedBookings: BookingConflictRow[] = (dayBookings || []).map((b) => ({
+      ...b,
+      duration_minutes: bookingDurations.get(b.id) || 30,
+    }));
+
+    const staffIds = (salonStaff || []).map((member) => member.id).filter(Boolean);
+
+    let resolvedStaffId: string;
+    try {
+      resolvedStaffId = resolveStaffForBookingSlot({
+        bookings: enrichedBookings,
+        staffIds,
+        preferredStaffId: draft.staffId,
+        formattedTime,
+        proposedDurationMinutes: proposedDuration,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : SLOT_UNAVAILABLE_MESSAGE;
+      return { success: false, error: message };
+    }
+
+    const { data: staffData } = await supabase
+      .from("salon_staff")
+      .select("*")
+      .eq("id", resolvedStaffId)
+      .maybeSingle();
+    const staffMember: Record<string, unknown> | null = staffData;
 
     const rates = {
       platform: ratesData?.platform_percentage || 10,
       salon: ratesData?.salon_percentage || 10,
-      agent: ratesData?.agent_percentage || 20,
+      agent: resolveBookingAgentPercentage(ratesData?.agent_percentage),
     };
 
     const serviceTotal =

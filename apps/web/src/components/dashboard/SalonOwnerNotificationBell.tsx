@@ -161,6 +161,7 @@ export function SalonOwnerNotificationBell() {
       );
       if (result.success === false) throw new Error(result.error);
       toast.success(`Booking ${result.bookingNo || ""} confirmed!`);
+      window.dispatchEvent(new Event("trimma:dashboard-refresh"));
       await loadNotifications();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not confirm booking.");

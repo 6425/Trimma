@@ -14,9 +14,7 @@ import { SalonLocationMap } from "../../../components/SalonLocationMap";
 import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
 import { supabase } from "../../../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
-import { calculateCommissionSplit } from "@/lib/booking-pricing";
-import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
-import { fetchAvailableBookingSlots } from "@/app/actions/booking-slots";
+import { fetchAvailableBookingSlots, validateBookingSlotSelection } from "@/app/actions/booking-slots";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { getSalonDirectionsUrl } from "@/lib/salon-map";
 import {
@@ -275,194 +273,53 @@ export default function SalonPage() {
       ? getPromotionResolution(selectedPromotionPackage)
       : null;
 
+    const selectedSvc = services.find((s) => s.id === selectedServiceId);
+    let bookingDuration = parseInt(selectedSvc?.duration || 30);
+    if (selectedPromotionPackage) {
+      bookingDuration = promotionResolution?.durationMinutes || 30;
+    }
+
     setIsProcessing(true);
     try {
-      const { data: paymentSettings } = await supabase
-        .from("global_payment_settings")
-        .select("payhere_enabled")
-        .eq("id", "00000000-0000-0000-0000-000000000001")
-        .maybeSingle();
-
-      const payhereEnabled = paymentSettings?.payhere_enabled !== false;
-
-      if (payhereEnabled) {
-        saveBookingCheckoutDraft({
+      const validation = await withTimeout(
+        validateBookingSlotSelection({
           salonId: salon.id,
-          salonSlug: slug,
-          serviceIds: promotionResolution?.serviceIds.length
-            ? promotionResolution.serviceIds
-            : selectedServiceId
-              ? [selectedServiceId]
-              : [],
           staffId: selectedStaffId || "any",
           bookingDate: format(selectedDate, "yyyy-MM-dd"),
           timeSlot: selectedTimeSlot,
-          promotionPackageId: selectedPromotionPackage?.id,
-          promotionPackageName: selectedPromotionPackage?.name,
-          promotionPackagePrice: selectedPromotionPackage?.package_price,
-          promotionPackageIncludedServices: selectedPromotionPackage?.included_services,
-          customerDetails,
-        });
-        router.push("/checkout/booking");
+          totalDurationMinutes: bookingDuration,
+        }),
+        15000,
+        "Could not verify this time slot. Please try again."
+      );
+
+      if (validation.success === false) {
+        toast.error(validation.error);
+        setSelectedTimeSlot(null);
         return;
       }
 
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      
-      const [timeStr, period] = selectedTimeSlot!.split(" ");
-      let [hh, mm] = timeStr.split(":").map(Number);
-      if (period === "PM" && hh < 12) hh += 12;
-      if (period === "AM" && hh === 12) hh = 0;
-      const formattedTime = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}:00`;
-
-      const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
-      const customerEmail = customerDetails.email || "guest@trimma.com";
-      const customerName = customerDetails.fullName.trim() || "Guest Client";
-
-      // 1. Ensure user in DB via secure RPC
-      const { data: emailExists } = await supabase
-        .rpc("check_user_email_exists", { email_to_check: customerEmail });
-
-      if (!emailExists) {
-        await supabase
-          .from("users")
-          .insert({
-            email: customerEmail,
-            full_name: customerName,
-            phone: customerDetails.phone,
-            global_role: "customer"
-          });
-      } else {
-        // Dynamic fallback: Proactively sync their latest name and WhatsApp number to the users table
-        await supabase
-          .from("users")
-          .update({
-            full_name: customerName,
-            phone: customerDetails.phone
-          })
-          .eq("email", customerEmail);
-      }
-
-      const selectedService = services.find(s => s.id === selectedServiceId);
-      const totalPrice = selectedPromotionPackage
-        ? selectedPromotionPackage.package_price
-        : parseFloat(selectedService?.price || 0);
-
-      // Fetch dynamic commissions
-      const { data: ratesData } = await supabase.from('commission_master').select('*').eq('commission_type', 'booking').eq('active', true).maybeSingle();
-      const platformRate = ratesData?.platform_percentage || 10;
-      const salonRate = ratesData?.salon_percentage || 10;
-      const agentRate = ratesData?.agent_percentage || 20;
-
-      const pricing = calculateCommissionSplit(totalPrice, {
-        platform: platformRate,
-        salon: salonRate,
-      });
-      const reservationFee = pricing.reservationFee;
-
-      let agentEmail = null;
-      let agentCommissionPct = 0;
-      let agentCommissionAmount = 0;
-
-      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, assign_to').eq('id', salon.id).single();
-      const referringAgent = resolveReferringAgentEmail(salonData);
-      if (referringAgent) {
-        agentEmail = referringAgent;
-        agentCommissionPct = agentRate;
-        agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
-      }
-
-      // 2. Insert master booking row directly into Supabase database (with backward compatibility fallback)
-      const { data: newBooking, error: bookingErr } = await supabase
-        .from("bookings")
-        .insert({
-          booking_no: bookingNo,
-          salon_id: salon.id,
-          customer_email: customerEmail,
-          service_id: selectedServiceId,
-          staff_id: selectedStaffId === 'any' || !selectedStaffId ? (staff[0]?.id || null) : selectedStaffId,
-          booking_date: formattedDate,
-          booking_time: formattedTime,
-          amount: totalPrice,
-          status: "confirmed",
-          payment_status: "unpaid",
-          reservation_fee_paid: false,
-          reservation_fee_refundable: false,
-          total_reservation_fee: reservationFee,
-          salon_upfront_amount: pricing.salonUpfront,
-          platform_commission_amount: pricing.platformCommission,
-          agent_email: agentEmail,
-          agent_commission_percent: agentCommissionPct,
-          agent_commission_amount: agentCommissionAmount
-        })
-        .select()
-        .single();
-
-      if (bookingErr || !newBooking) throw bookingErr || new Error("Failed to insert booking row.");
-
-      // 3. Insert into booking_services (Many-to-Many association)
-      await supabase
-        .from("booking_services")
-        .insert({
-          booking_id: newBooking.id,
-          service_id: selectedServiceId,
-          price: totalPrice,
-          duration_min: parseInt(selectedService?.duration || 30)
-        });
-
-      // 4. Insert into booking_staff (Many-to-Many association)
-      await supabase
-        .from("booking_staff")
-        .insert({
-          booking_id: newBooking.id,
-          staff_id: selectedStaffId === 'any' || !selectedStaffId ? (staff[0]?.id || null) : selectedStaffId,
-          service_id: selectedServiceId
-        });
-
-      // 5. Auto-allocate resources and insert resource_bookings if configured
-      const { data: salonResources } = await supabase
-        .from("resources")
-        .select("*")
-        .eq("salon_id", salon.id);
-
-      if (salonResources && salonResources.length > 0) {
-        const startMin = hh * 60 + mm;
-        const endMin = startMin + parseInt(selectedService?.duration || 30);
-        const endH = Math.floor(endMin / 60);
-        const endM = endMin % 60;
-        const formattedEndTime = `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
-
-        const resourceInserts = salonResources.map(res => ({
-          booking_id: newBooking.id,
-          resource_id: res.id,
-          booking_date: formattedDate,
-          start_time: formattedTime,
-          end_time: formattedEndTime
-        }));
-
-        await supabase
-          .from("resource_bookings")
-          .insert(resourceInserts);
-      }
-
-      // Save details for success ticket modal
-      setConfirmedBookingDetails({
-        bookingNo,
-        customerName,
-        dateStr: format(selectedDate, "MMMM d, yyyy"),
+      saveBookingCheckoutDraft({
+        salonId: salon.id,
+        salonSlug: slug,
+        serviceIds: promotionResolution?.serviceIds.length
+          ? promotionResolution.serviceIds
+          : selectedServiceId
+            ? [selectedServiceId]
+            : [],
+        staffId: selectedStaffId || "any",
+        bookingDate: format(selectedDate, "yyyy-MM-dd"),
         timeSlot: selectedTimeSlot,
-        serviceName: selectedService?.name || "Premium Treatment",
-        staffName: staff.find(st => st.id === selectedStaffId)?.name || "Anyone Available",
-        price: totalPrice
+        promotionPackageId: selectedPromotionPackage?.id,
+        promotionPackageName: selectedPromotionPackage?.name,
+        promotionPackagePrice: selectedPromotionPackage?.package_price,
+        promotionPackageIncludedServices: selectedPromotionPackage?.included_services,
+        customerDetails,
       });
-      setShowSuccessModal(true);
-      
-      // Reset selections
-      setSelectedServiceId(null);
-      setSelectedTimeSlot(null);
-      setCustomerDetails({ fullName: "", email: "", phone: "" });
-    } catch(e: any) {
-      alert("Failed to confirm booking: " + e.message);
+      router.push("/checkout/booking");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to start checkout.";
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }

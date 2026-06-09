@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { SLOT_UNAVAILABLE_MESSAGE } from "@/lib/booking-availability";
 
 export type BookingRecordInput = {
   booking_no: string;
@@ -64,7 +65,7 @@ export async function insertBookingRecord(
   }
 
   if (isSlotConflictError(fullAttempt.error)) {
-    throw new Error("This time slot was just taken. Please go back and choose another time.");
+    throw new Error(SLOT_UNAVAILABLE_MESSAGE);
   }
 
   const minimalAttempt = await supabase
@@ -76,7 +77,7 @@ export async function insertBookingRecord(
   if (minimalAttempt.error || !minimalAttempt.data) {
     const rawError = minimalAttempt.error || fullAttempt.error;
     if (isSlotConflictError(rawError)) {
-      throw new Error("This time slot was just taken. Please go back and choose another time.");
+      throw new Error(SLOT_UNAVAILABLE_MESSAGE);
     }
     const message = getErrorMessage(rawError);
     throw new Error(message || "Failed to create booking.");

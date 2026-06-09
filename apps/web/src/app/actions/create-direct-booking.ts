@@ -2,9 +2,8 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
-  assertStaffSlotAvailable,
   parseDisplayTimeSlot,
-  resolveAvailableStaffId,
+  resolveStaffForBookingSlot,
   type BookingConflictRow,
 } from "@/lib/booking-availability";
 import { insertBookingRecord } from "@/lib/booking-insert";
@@ -232,14 +231,13 @@ export async function createDirectBooking(
       duration_minutes: bookingDurations.get(b.id) || 30,
     }));
 
-    let resolvedStaffId: string | null;
-    if (staffId && staffId !== "any") {
-      resolvedStaffId = staffId;
-    } else {
-      resolvedStaffId = resolveAvailableStaffId(staffIds, bookings, formattedTime, totalDuration) || staffIds[0] || null;
-    }
-
-    assertStaffSlotAvailable(bookings, resolvedStaffId, formattedTime, totalDuration);
+    const resolvedStaffId = resolveStaffForBookingSlot({
+      bookings,
+      staffIds,
+      preferredStaffId: staffId,
+      formattedTime,
+      proposedDurationMinutes: totalDuration,
+    });
 
     const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
     const isPaid = paymentMethod === "paypal";
