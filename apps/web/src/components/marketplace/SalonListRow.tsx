@@ -70,16 +70,29 @@ export function SalonListRow({ salon }: SalonListRowProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm mb-2">
-          <span className="inline-flex items-center gap-1.5 font-bold text-zinc-900">
-            <span className="inline-flex items-center justify-center min-w-[30px] h-7 px-2 rounded-lg bg-zinc-900 text-brand text-sm font-black">
-              {salon.rating.toFixed(1)}
+          {salon.reviews > 0 && salon.rating > 0 ? (
+            <span className="inline-flex items-center gap-1.5 font-bold text-zinc-900">
+              <span className="inline-flex items-center justify-center min-w-[30px] h-7 px-2 rounded-lg bg-zinc-900 text-brand text-sm font-black">
+                {salon.rating.toFixed(1)}
+              </span>
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="text-zinc-600 font-semibold">
+                {salon.rating >= 4.5 ? "Excellent" : salon.rating >= 4 ? "Very good" : "Good"}
+              </span>
             </span>
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span className="text-zinc-600 font-semibold">
-              {salon.rating >= 4.5 ? "Excellent" : salon.rating >= 4 ? "Very good" : "Good"}
+          ) : (
+            <span className="inline-flex items-center gap-1.5 font-semibold text-zinc-500">
+              <span className="inline-flex items-center justify-center h-7 px-2.5 rounded-lg bg-slate-100 text-zinc-600 text-xs font-bold uppercase tracking-wide">
+                New
+              </span>
+              <span>No reviews yet</span>
             </span>
-          </span>
-          <span className="text-zinc-500">{salon.reviews} reviews</span>
+          )}
+          {salon.reviews > 0 && (
+            <span className="text-zinc-500">
+              {salon.reviews} {salon.reviews === 1 ? "review" : "reviews"}
+            </span>
+          )}
           <span className="text-slate-300 hidden sm:inline">·</span>
           <span className="inline-flex items-center text-zinc-600">
             <MapPin className="w-3.5 h-3.5 mr-1 text-brand/80 shrink-0" />

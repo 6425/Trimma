@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("salons")
       .select(`
-        id, name, slug, rating,
+        id, name, slug, rating, review_count,
         city, district, category, logo_url, cover_url,
         is_featured, is_verified,
         services ( id, name, price, category )
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       query = query.ilike('category', `%${category}%`);
     }
     if (minRating > 0) {
-      query = query.gte('rating', minRating);
+      query = query.gt('review_count', 0).gte('rating', minRating);
     }
     if (verifiedOnly) {
       query = query.eq('is_verified', true);
