@@ -474,16 +474,25 @@ export async function sendBookingCancelledEmail(bookingNo: string) {
 
 export async function sendReviewRequestEmail(bookingNo: string) {
   const supabase = getSupabaseAdmin();
-  const { data: booking } = await supabase.from("bookings").select("customer_email, salons(name, slug)").eq("booking_no", bookingNo).maybeSingle();
-  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("id, customer_email, salons(name, slug)")
+    .eq("booking_no", bookingNo)
+    .maybeSingle();
+  if (!booking?.customer_email || !booking.id) return { success: false, error: "Not found", skipped: true };
   const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
   const { data: customer } = await supabase.from("users").select("full_name").eq("email", booking.customer_email).maybeSingle();
+  const { buildCustomerReviewLink } = await import("@/lib/reviews");
 
   return sendTriggeredEmail({
     triggerId: "review",
     to: booking.customer_email,
-    variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", review_link: salon?.slug ? `${APP_BASE_URL}/salons/${salon.slug}` : APP_BASE_URL },
-    rateLimitKey: `review:${bookingNo}`
+    variables: {
+      customer_name: customer?.full_name || "Valued Client",
+      salon_name: salon?.name || "Partner Salon",
+      review_link: buildCustomerReviewLink(booking.id),
+    },
+    rateLimitKey: `review:${bookingNo}`,
   });
 }
 

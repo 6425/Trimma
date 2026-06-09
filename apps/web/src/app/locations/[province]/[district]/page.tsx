@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { DistrictDetailTemplate, DistrictData } from "../../../../components/marketplace/DistrictDetailTemplate";
 import { supabase } from "@/config/supabase";
+import { mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 import {
   buildCityCards,
   getDistrictBySlugs,
@@ -65,8 +66,7 @@ export default function DistrictDetailPage() {
       id: s.id,
       slug: s.slug,
       name: s.name,
-      rating: s.rating || 4.9,
-      reviews: s.reviews_count || 142,
+      ...mapVerifiedSalonListingStats(s),
       location: `${s.city || districtMeta.name}, ${s.district || provinceMeta.name}`,
       city: s.city || districtMeta.name,
       district: s.district || districtMeta.name,

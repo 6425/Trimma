@@ -23,7 +23,7 @@ import {
   buildSalonAmenityInsert,
   parseSalonAmenityValue,
 } from "@/lib/salon-amenities";
-import { formatServerActionError, slugifySalonName } from "@/lib/salon-profile-save";
+import { formatServerActionError } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
@@ -112,6 +112,7 @@ export default function SalonProfilePage() {
   const [globalServices, setGlobalServices] = useState<any[]>([]);
   const [globalStaffRoles, setGlobalStaffRoles] = useState<any[]>([]);
   const [selectedServices, setSelectedServices] = useState<{[key: string]: { enabled: boolean, price: string, duration: string, category: string }}>({});
+  const [existingSalonServices, setExistingSalonServices] = useState<any[]>([]);
   const [staffToAdd, setStaffToAdd] = useState<any[]>([]);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
 
@@ -236,6 +237,7 @@ export default function SalonProfilePage() {
       if (res.globalStaffRoles) setGlobalStaffRoles(res.globalStaffRoles);
       
       if (res.services) {
+        setExistingSalonServices(res.services);
         const svcMap: any = {};
         for (const s of res.services) {
           svcMap[s.global_service_id] = {
@@ -460,28 +462,31 @@ export default function SalonProfilePage() {
     try {
       setSaving(true);
       
-      const svcsToAdd = [];
-      const svcsToRemoveIds: string[] = []; // We will insert all
-      for (const [id, config] of Object.entries(selectedServices)) {
-        if (config.enabled) {
-          const gs = globalServices.find((g:any) => g.id === id);
-          if (gs) {
-            svcsToAdd.push({
-              global_service_id: id,
-              name: gs.name,
-              category: config.category,
-              category_id: gs.category_id,
-              price: parseFloat(config.price) || 0,
-              duration_min: parseInt(config.duration) || gs.default_duration || 30,
-              status: "active"
-            });
-          }
-        }
-      }
+      const existingSvcIds = existingSalonServices
+        .map((service) => service.global_service_id)
+        .filter(Boolean);
+      const selectedSvcIds = Object.keys(selectedServices).filter((id) => selectedServices[id].enabled);
+      const svcsToAddIds = selectedSvcIds.filter((id) => !existingSvcIds.includes(id));
+      const svcsToRemoveIds = existingSalonServices
+        .filter((service) => !selectedSvcIds.includes(service.global_service_id))
+        .map((service) => service.id);
+
+      const svcsToAdd = svcsToAddIds.map((id) => {
+        const gs = globalServices.find((g: any) => g.id === id);
+        const config = selectedServices[id];
+        return {
+          global_service_id: id,
+          name: gs?.name || "Service",
+          category: config?.category || gs?.category || "Other",
+          category_id: gs?.category_id,
+          price: parseFloat(config?.price) || 0,
+          duration_min: parseInt(config?.duration) || gs?.default_duration || 30,
+          status: "active",
+        };
+      });
 
       const payload = {
         name,
-        slug: slugifySalonName(name),
         phone: contact,
         address: address,
         province,
@@ -1174,7 +1179,7 @@ export default function SalonProfilePage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-zinc-900 shadow-sm flex items-center gap-1">
-                  <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> 4.9 (184)
+                  <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> {rating ? `${rating} verified` : "New"}
                 </div>
                 <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${status === 'active' ? 'bg-[#F5B700] text-black' : 'bg-amber-600 text-white'}`}>
                   {status === 'active' ? 'LIVE NOW' : 'DRAFT'}

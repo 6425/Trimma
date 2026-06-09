@@ -5,10 +5,11 @@ import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
 import {
+  applySalonSlugOnNameChange,
   parseSalonScheduleFromWorkingHours,
   pickSalonProfileUpdate,
-  slugifySalonName,
 } from "@/lib/salon-profile-save";
+import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
 
 async function assertSalonService(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -274,6 +275,19 @@ export async function uploadSalonProfileImage(
     return { success: true as const, documentUrl: result.data.documentUrl };
   }
 
+export async function saveSalonAmenities(
+  amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }>
+) {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    await syncSalonAmenitiesForSalon(supabase, ctx.salonId, amenitiesData);
+  });
+
+  if (!isSalonDbSuccess(result)) {
+    return salonDbFailure(result, "Run packages/db/AMENITIES_PATCH.sql if amenities fail to save.");
+  }
+  return { success: true as const };
+}
+
 export async function updateSalonMediaFields(payload: {
   logo_url?: string | null;
   cover_url?: string | null;
@@ -294,24 +308,12 @@ export async function saveSalonProfile(input: {
 }) {
   try {
     const result = await withSalonDb(async (supabase, ctx) => {
-      const profile = pickSalonProfileUpdate(input.profile);
+      const profile = await applySalonSlugOnNameChange(
+        supabase,
+        ctx.salonId,
+        pickSalonProfileUpdate(input.profile)
+      );
       const salonSchedule = parseSalonScheduleFromWorkingHours(profile.working_hours);
-
-      if (typeof profile.name === "string" && profile.name.trim()) {
-        const nextSlug = slugifySalonName(profile.name);
-        if (nextSlug) {
-          const { data: slugOwner, error: slugError } = await supabase
-            .from("salons")
-            .select("id")
-            .eq("slug", nextSlug)
-            .maybeSingle();
-          if (slugError) throw new Error(slugError.message);
-          profile.slug =
-            !slugOwner || slugOwner.id === ctx.salonId
-              ? nextSlug
-              : `${nextSlug}-${String(ctx.salonId).slice(0, 8)}`;
-        }
-      }
 
       const { error: profileError } = await supabase
         .from("salons")
@@ -432,24 +434,9 @@ export async function saveOwnerVerificationData(
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null
 ) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    // 1. Resolve Slug Collisions
-    const finalPayload = { ...updatePayload };
-    
-    if (typeof finalPayload.name === "string" && finalPayload.name.trim()) {
-      const nextSlug = slugifySalonName(finalPayload.name);
-      if (nextSlug) {
-        const { data: slugOwner, error: slugError } = await supabase
-          .from("salons")
-          .select("id")
-          .eq("slug", nextSlug)
-          .maybeSingle();
-        if (slugError) throw new Error(slugError.message);
-        finalPayload.slug =
-          !slugOwner || slugOwner.id === ctx.salonId
-            ? nextSlug
-            : `${nextSlug}-${String(ctx.salonId).slice(0, 8)}`;
-      }
-    }
+    const finalPayload = await applySalonSlugOnNameChange(supabase, ctx.salonId, {
+      ...updatePayload,
+    });
 
     // 2. Update Salon Data
     const { error: updateError } = await supabase
@@ -461,41 +448,42 @@ export async function saveOwnerVerificationData(
 
     // 2. Sync Services
     if (servicesData) {
-      if (servicesData.svcsToAdd.length > 0) {
-        const { error: s1 } = await supabase.from("services").insert(servicesData.svcsToAdd.map(s => ({...s, salon_id: ctx.salonId})));
-        if (s1) throw new Error(s1.message);
-      }
       if (servicesData.svcsToRemoveIds.length > 0) {
-        const { error: s2 } = await supabase.from("services").delete().in("id", servicesData.svcsToRemoveIds).eq("salon_id", ctx.salonId);
+        const { error: s2 } = await supabase
+          .from("services")
+          .delete()
+          .in("id", servicesData.svcsToRemoveIds)
+          .eq("salon_id", ctx.salonId);
         if (s2) throw new Error(s2.message);
+      }
+
+      if (servicesData.svcsToAdd.length > 0) {
+        const { error: s1 } = await supabase
+          .from("services")
+          .insert(servicesData.svcsToAdd.map((s) => ({ ...s, salon_id: ctx.salonId })));
+        if (s1) throw new Error(s1.message);
       }
     }
 
-    // 3. Add Staff
+    // 3. Add Staff (new rows only — existing staff already live in DB)
     if (staffToAdd && staffToAdd.length > 0) {
-      const { error: staffErr } = await supabase.from("salon_staff").insert(staffToAdd.map(s => ({...s, salon_id: ctx.salonId})));
-      if (staffErr) throw new Error(staffErr.message);
+      const newStaffRows = staffToAdd
+        .filter((staff) => !staff.id)
+        .map((staff) => ({ ...staff, salon_id: ctx.salonId }));
+      if (newStaffRows.length > 0) {
+        const { error: staffErr } = await supabase.from("salon_staff").insert(newStaffRows);
+        if (staffErr) throw new Error(staffErr.message);
+      }
     }
 
     // 4. Sync Amenities
     if (amenitiesData) {
-      await supabase.from("salon_amenities").delete().eq("salon_id", ctx.salonId);
-      
-      const amenityInserts = Object.keys(amenitiesData)
-        .filter((amenityId) => amenitiesData[amenityId].has_amenity)
-        .map((amenityId) => ({
-          salon_id: ctx.salonId,
-          amenity_id: amenityId,
-          quantity: amenitiesData[amenityId].quantity || null,
-        }));
-      
-      if (amenityInserts.length > 0) {
-        const { error: amErr } = await supabase.from("salon_amenities").insert(amenityInserts);
-        if (amErr) throw new Error(amErr.message);
-      }
+      await syncSalonAmenitiesForSalon(supabase, ctx.salonId, amenitiesData);
     }
   });
 
-  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  if (!isSalonDbSuccess(result)) {
+    return salonDbFailure(result, "Run packages/db/AMENITIES_PATCH.sql if amenities fail to save.");
+  }
   return { success: true as const };
 }

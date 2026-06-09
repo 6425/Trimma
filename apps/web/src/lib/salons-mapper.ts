@@ -1,3 +1,14 @@
+export function mapVerifiedSalonListingStats(salon: {
+  rating?: number | string | null;
+  review_count?: number | string | null;
+  reviews_count?: number | string | null;
+}) {
+  const reviews = Math.max(0, Number(salon.review_count ?? salon.reviews_count ?? 0) || 0);
+  const rawRating = Number(salon.rating) || 0;
+  const rating = reviews > 0 && rawRating > 0 ? parseFloat(rawRating.toFixed(1)) : 0;
+  return { rating, reviews };
+}
+
 export function mapSalonRowToUI(s: any, idx: number) {
   const prices = s.services?.map((ser: any) => Number(ser.price)) || [];
   const startingPrice = prices.length > 0 ? Math.min(...prices) : 1500;
@@ -10,8 +21,7 @@ export function mapSalonRowToUI(s: any, idx: number) {
   const city = s.city;
   const district = s.district;
   const locationString = city && district ? `${city}, ${district}` : city ? city : district ? district : "Location pending";
-  const rating = s.rating || (4.7 + (idx % 3) * 0.1);
-
+  const { rating, reviews } = mapVerifiedSalonListingStats(s);
   const fallbackImages = [
     "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=600&auto=format&fit=crop",
@@ -27,8 +37,8 @@ export function mapSalonRowToUI(s: any, idx: number) {
     id: s.id,
     name,
     slug: s.slug,
-    rating: parseFloat(Number(rating).toFixed(1)),
-    reviews: s.reviews_count || s.review_count || (24 + (idx * 5) % 40),
+    rating,
+    reviews,
     location: locationString,
     category: s.category || tags[0] || "Beauty Lounge",
     logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,

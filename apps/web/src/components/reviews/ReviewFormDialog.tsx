@@ -22,7 +22,9 @@ type ReviewFormDialogProps = {
   bookingId: string;
   salonName: string;
   bookingNo: string;
+  staffName?: string | null;
   initialRating?: number;
+  initialStaffRating?: number;
   initialComment?: string | null;
   onSubmitted?: () => void;
 };
@@ -34,11 +36,14 @@ export function ReviewFormDialog({
   bookingId,
   salonName,
   bookingNo,
+  staffName,
   initialRating = 0,
+  initialStaffRating = 0,
   initialComment = "",
   onSubmitted,
 }: ReviewFormDialogProps) {
   const [rating, setRating] = useState(initialRating);
+  const [staffRating, setStaffRating] = useState(initialStaffRating);
   const [reviewText, setReviewText] = useState(initialComment || "");
   const [saving, setSaving] = useState(false);
 
@@ -55,6 +60,7 @@ export function ReviewFormDialog({
         bookingId,
         rating,
         reviewText,
+        staffRating: staffName ? staffRating || undefined : undefined,
       });
 
       if (!result.success) {
@@ -62,7 +68,11 @@ export function ReviewFormDialog({
         return;
       }
 
-      toast.success(result.updated ? "Review updated." : "Thank you for your verified review!");
+      if ("staffReviewWarning" in result && result.staffReviewWarning) {
+        toast.warning(result.staffReviewWarning);
+      } else {
+        toast.success(result.updated ? "Review updated." : "Thank you for your verified review!");
+      }
       onOpenChange(false);
       onSubmitted?.();
     } finally {
@@ -72,19 +82,28 @@ export function ReviewFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="trimma-light-context sm:max-w-lg rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Leave a verified review</DialogTitle>
-          <DialogDescription>
-            Booking {bookingNo} at {salonName}. Only customers with completed appointments can review.
+          <DialogTitle className="text-zinc-900">Leave a verified review</DialogTitle>
+          <DialogDescription className="text-zinc-600">
+            Booking {bookingNo} at {salonName}. Share your experience after your confirmed visit.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Overall rating</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Salon experience</p>
             <StarRatingInput value={rating} onChange={setRating} disabled={saving} />
           </div>
+
+          {staffName ? (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">
+                Stylist: {staffName}
+              </p>
+              <StarRatingInput value={staffRating} onChange={setStaffRating} disabled={saving} />
+            </div>
+          ) : null}
 
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">
@@ -104,11 +123,17 @@ export function ReviewFormDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+        <DialogFooter className="border-t border-zinc-200 bg-zinc-50">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+            className="border-zinc-300 bg-white !text-zinc-700 hover:bg-zinc-100 hover:!text-zinc-900 hover:border-zinc-400"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={saving}>
+          <Button type="button" onClick={handleSubmit} disabled={saving} className="!text-black">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit review"}
           </Button>
         </DialogFooter>

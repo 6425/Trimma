@@ -1,3 +1,9 @@
+import { APP_BASE_URL } from "@/lib/email/config";
+
+export function buildCustomerReviewLink(bookingId: string, baseUrl = APP_BASE_URL) {
+  return `${baseUrl}/customer/bookings?review=${encodeURIComponent(bookingId)}`;
+}
+
 export type BookingReviewRow = {
   id: string;
   booking_id: string | null;
@@ -32,13 +38,31 @@ export function normalizeBookingStatus(status: string | null | undefined) {
   return (status || "").trim().toLowerCase();
 }
 
+/** Public marketplace may only show reviews tied to a real customer booking. */
+export function isVerifiedBookingReview(row: { booking_id?: string | null; status?: string | null }) {
+  return Boolean(row.booking_id) && (row.status || "published") === "published";
+}
+
 export function isCompletedBookingStatus(status: string | null | undefined) {
   return normalizeBookingStatus(status) === "completed";
 }
 
+const REVIEW_ELIGIBLE_BOOKING_STATUSES = new Set([
+  "confirmed",
+  "in_progress",
+  "checked_in",
+  "completed",
+]);
+
+export function isReviewEligibleBookingStatus(status: string | null | undefined) {
+  return REVIEW_ELIGIBLE_BOOKING_STATUSES.has(normalizeBookingStatus(status));
+}
+
 export function getBookingDateTime(bookingDate: string, bookingTime: string) {
   const time = bookingTime.length === 5 ? `${bookingTime}:00` : bookingTime;
-  return new Date(`${bookingDate}T${time}`);
+  const normalizedTime = time.slice(0, 8);
+  // Booking times are stored as Sri Lanka local wall-clock values.
+  return new Date(`${bookingDate}T${normalizedTime}+05:30`);
 }
 
 export function isBookingAppointmentPast(
@@ -59,7 +83,7 @@ export function isBookingReviewEligible(
   now = new Date()
 ) {
   return (
-    isCompletedBookingStatus(booking.status) &&
+    isReviewEligibleBookingStatus(booking.status) &&
     isBookingAppointmentPast(booking.booking_date, booking.booking_time, now)
   );
 }
@@ -120,6 +144,55 @@ export function buildReviewSummary(
         ) / 10;
 
   return { averageRating, totalReviews, distribution };
+}
+
+export type CustomerReviewUiState =
+  | { kind: "action"; actionLabel: "Leave review" | "Edit review" }
+  | { kind: "submitted"; rating: number }
+  | { kind: "waiting"; message: string }
+  | { kind: "info"; message: string };
+
+export function getCustomerReviewUiState(booking: {
+  status: string;
+  hasReview: boolean;
+  canReview: boolean;
+  reviewPending?: boolean;
+  existingReview?: { rating: number } | null;
+}): CustomerReviewUiState | null {
+  if (booking.canReview) {
+    return {
+      kind: "action",
+      actionLabel: booking.hasReview ? "Edit review" : "Leave review",
+    };
+  }
+
+  if (booking.hasReview && booking.existingReview) {
+    return { kind: "submitted", rating: booking.existingReview.rating };
+  }
+
+  if (booking.reviewPending) {
+    return {
+      kind: "waiting",
+      message: "Leave review unlocks after your appointment time has passed.",
+    };
+  }
+
+  const status = normalizeBookingStatus(booking.status);
+  if (status === "pending") {
+    return {
+      kind: "info",
+      message: "Review opens once your booking is confirmed and your visit time has passed.",
+    };
+  }
+
+  if (isReviewEligibleBookingStatus(status)) {
+    return {
+      kind: "waiting",
+      message: "Leave review unlocks after your appointment time has passed.",
+    };
+  }
+
+  return null;
 }
 
 export function maskReviewerName(fullName: string | null | undefined, email: string | null | undefined) {

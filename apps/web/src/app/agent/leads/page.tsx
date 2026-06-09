@@ -30,6 +30,7 @@ import {
   fetchAgentLeadEditorDataClient,
   fetchAgentGlobalsClient,
 } from "@/lib/agent-client-data";
+import { parseSalonAmenityValue } from "@/lib/salon-amenities";
 
 
 const DAYS_OF_WEEK = [
@@ -285,8 +286,14 @@ function AgentLeads() {
       setSelectedServices(svcMap);
 
       const amMap: any = {};
-      (editorRes.amenities || []).forEach((sa) => {
-        amMap[sa.amenity_id] = { has_amenity: true, quantity: sa.quantity };
+      (editorRes.amenities || []).forEach((sa: any) => {
+        const globalAmenity = Array.isArray(sa.global_amenities)
+          ? sa.global_amenities[0]
+          : sa.global_amenities;
+        const parsed = parseSalonAmenityValue(globalAmenity?.type || "boolean", sa.value);
+        if (parsed.has_amenity) {
+          amMap[sa.amenity_id] = parsed;
+        }
       });
       setSalonAmenities(amMap);
     } catch (err) {

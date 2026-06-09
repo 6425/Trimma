@@ -8,8 +8,9 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { sendWhatsAppCancellationNotification, sendReviewRequestAlert } from "@/app/actions/whatsapp";
-import { sendBookingCancelledEmail, sendReviewRequestEmail } from "@/app/actions/email-settings";
+import { sendWhatsAppCancellationNotification } from "@/app/actions/whatsapp";
+import { sendBookingCancelledEmail } from "@/app/actions/email-settings";
+import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
 
 // Timeline step definition
@@ -98,10 +99,6 @@ export default function BookingDetailPage() {
           break;
         case "complete":
           updatePayload.status = "completed";
-          if (booking?.booking_no) {
-            await sendReviewRequestAlert(booking.booking_no);
-            await sendReviewRequestEmail(booking.booking_no);
-          }
           break;
         case "mark_paid":
           updatePayload.payment_status = "paid";
@@ -116,6 +113,10 @@ export default function BookingDetailPage() {
 
       const result = await updateOwnerBooking(bookingId, updatePayload);
       if (result.success === false) throw new Error(result.error);
+
+      if (action === "complete" && booking?.booking_no) {
+        void sendBookingReviewRequests(booking.booking_no);
+      }
 
       if (action === "cancel" && booking?.booking_no) {
         await sendWhatsAppCancellationNotification(booking.booking_no);

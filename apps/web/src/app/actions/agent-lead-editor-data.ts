@@ -110,7 +110,10 @@ export async function fetchAgentLeadEditorData(salonId: string) {
         .from("services")
         .select("global_service_id, price, duration_min, category")
         .eq("salon_id", salonId),
-      supabase.from("salon_amenities").select("*").eq("salon_id", salonId),
+      supabase
+        .from("salon_amenities")
+        .select("amenity_id, value, global_amenities(type)")
+        .eq("salon_id", salonId),
     ]);
 
     if (servicesRes.error) {

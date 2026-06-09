@@ -49,6 +49,64 @@ export function buildSalonAmenityInsert(
   return { salon_id: salonId, amenity_id: amenityId, value: "true" };
 }
 
+export function buildSalonAmenityRowsFromState(
+  salonId: string,
+  amenitiesData: Record<string, SalonAmenityState>,
+  globalAmenities: Array<{ id: string; type: string }>
+) {
+  const rows: Array<{ salon_id: string; amenity_id: string; value: string }> = [];
+
+  for (const [amenityId, state] of Object.entries(amenitiesData)) {
+    const globalAmenity = globalAmenities.find((item) => item.id === amenityId);
+    if (!globalAmenity) continue;
+    const row = buildSalonAmenityInsert(salonId, amenityId, globalAmenity.type, state);
+    if (row) rows.push(row);
+  }
+
+  return rows;
+}
+
+export async function syncSalonAmenitiesForSalon(
+  supabase: {
+    from: (table: string) => {
+      select: (columns: string) => PromiseLike<{
+        data: Array<{ id: string; type: string }> | null;
+        error: { message: string } | null;
+      }>;
+      delete: () => {
+        eq: (column: string, value: string) => PromiseLike<{ error: { message: string } | null }>;
+      };
+      insert: (
+        rows: Array<{ salon_id: string; amenity_id: string; value: string }>
+      ) => PromiseLike<{ error: { message: string } | null }>;
+    };
+  },
+  salonId: string,
+  amenitiesData: Record<string, SalonAmenityState>
+) {
+  const { data: globalAmenities, error: globalError } = await supabase
+    .from("global_amenities")
+    .select("id, type");
+  if (globalError) throw new Error(globalError.message);
+
+  const { error: deleteError } = await supabase.from("salon_amenities").delete().eq("salon_id", salonId);
+  if (deleteError) {
+    const lower = deleteError.message.toLowerCase();
+    if (lower.includes("does not exist") || lower.includes("schema cache")) {
+      throw new Error(
+        "salon_amenities table is missing. Run packages/db/AMENITIES_PATCH.sql in Supabase SQL Editor."
+      );
+    }
+    throw new Error(deleteError.message);
+  }
+
+  const rows = buildSalonAmenityRowsFromState(salonId, amenitiesData, globalAmenities || []);
+  if (rows.length === 0) return;
+
+  const { error: insertError } = await supabase.from("salon_amenities").insert(rows);
+  if (insertError) throw new Error(insertError.message);
+}
+
 export function formatPublicSalonAmenity(
   globalAmenity: { name: string; icon_name: string; type: string },
   row: SalonAmenityRow

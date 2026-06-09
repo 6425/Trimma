@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
+import { mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 import {
   buildDistrictCards,
   getProvinceByRouteSlug,
@@ -121,8 +122,7 @@ export default function ProvinceDetailPage() {
             id: s.id,
             slug: s.slug,
             name: s.name,
-            rating: s.rating || 4.9, 
-            reviews: s.reviews_count || 142,
+            ...mapVerifiedSalonListingStats(s),
             location: `${s.city || 'Colombo'}, ${s.district || 'Western Province'}`,
             city: s.city || 'Colombo',
             district: s.district || 'Colombo',

@@ -441,8 +441,8 @@ export default function SalonPage() {
     ? salon.featured_images[0]
     : mockExtraData.gallery[1];
   const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=ffc107&textColor=000000`;
-  const displayRating = reviewSummary.totalReviews > 0 ? reviewSummary.averageRating : (salon.rating || 0);
-  const displayReviewCount = reviewSummary.totalReviews > 0 ? reviewSummary.totalReviews : (salon.review_count || 0);
+  const displayRating = reviewSummary.averageRating;
+  const displayReviewCount = reviewSummary.totalReviews;
 
   const hasContactInfo = Boolean(salon.phone && salon.owner_email && !salon.owner_email.includes("draft-"));
   const isBookable = salon.booking_enabled && hasContactInfo;

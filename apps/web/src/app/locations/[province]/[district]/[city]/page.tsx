@@ -9,6 +9,7 @@ import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Heart
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
+import { mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 import {
   getDistrictBySlugs,
   normalizeProvinceSlug,
@@ -106,8 +107,7 @@ export default function CityDetailPage() {
             id: s.id,
             slug: s.slug,
             name: s.name,
-            rating: s.rating || 4.9, 
-            reviews: s.reviews_count || 142,
+            ...mapVerifiedSalonListingStats(s),
             location: `${s.city || 'Colombo'}, ${s.district || 'Western Province'}`,
             city: s.city || 'Colombo',
             district: s.district || 'Western Province',

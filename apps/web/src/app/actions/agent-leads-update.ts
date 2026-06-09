@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import { assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
 
 export async function saveAgentLeadData(
   salonId: string,
@@ -123,20 +124,7 @@ export async function saveAgentLeadData(
 
     // 4. Sync Amenities
     if (amenitiesData) {
-      // Delete old amenities
-      await supabaseAdmin.from("salon_amenities").delete().eq("salon_id", salonId);
-      
-      const amenityInserts = Object.keys(amenitiesData)
-        .filter((amenityId) => amenitiesData[amenityId].has_amenity)
-        .map((amenityId) => ({
-          salon_id: salonId,
-          amenity_id: amenityId,
-          quantity: amenitiesData[amenityId].quantity || null,
-        }));
-      
-      if (amenityInserts.length > 0) {
-        await supabaseAdmin.from("salon_amenities").insert(amenityInserts);
-      }
+      await syncSalonAmenitiesForSalon(supabaseAdmin, salonId, amenitiesData);
     }
 
     // 5. Log Activity
@@ -209,17 +197,7 @@ export async function createAgentLeadData(
 
     // 4. Sync Amenities
     if (amenitiesData) {
-      const amenityInserts = Object.keys(amenitiesData)
-        .filter((amenityId) => amenitiesData[amenityId].has_amenity)
-        .map((amenityId) => ({
-          salon_id: salonId,
-          amenity_id: amenityId,
-          quantity: amenitiesData[amenityId].quantity || null,
-        }));
-      
-      if (amenityInserts.length > 0) {
-        await supabaseAdmin.from("salon_amenities").insert(amenityInserts);
-      }
+      await syncSalonAmenitiesForSalon(supabaseAdmin, salonId, amenitiesData);
     }
 
     // 5. Log Activity
@@ -337,17 +315,7 @@ export async function convertManualLeadToSalon(
 
     // 5. Sync Amenities
     if (amenitiesData) {
-      const amenityInserts = Object.keys(amenitiesData)
-        .filter((amenityId) => amenitiesData[amenityId].has_amenity)
-        .map((amenityId) => ({
-          salon_id: salonId,
-          amenity_id: amenityId,
-          quantity: amenitiesData[amenityId].quantity || null,
-        }));
-      
-      if (amenityInserts.length > 0) {
-        await supabaseAdmin.from("salon_amenities").insert(amenityInserts);
-      }
+      await syncSalonAmenitiesForSalon(supabaseAdmin, salonId, amenitiesData);
     }
 
     // 6. Log Activity

@@ -109,6 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Global Staff Categories", href: "/admin/staff-roles", icon: <UserPlus className="w-4 h-4" /> },
     { name: "Salon Mgmt", href: "/admin/salons", icon: <Store className="w-4 h-4" /> },
     { name: "Booking Mgmt", href: "/admin/bookings", icon: <Calendar className="w-4 h-4" /> },
+    { name: "Review Moderation", href: "/admin/reviews", icon: <Star className="w-4 h-4" /> },
     { 
       name: "Marketplace", 
       href: "/admin/marketplace", 

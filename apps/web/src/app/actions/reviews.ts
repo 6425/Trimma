@@ -4,8 +4,12 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import {
   buildReviewSummary,
+  isBookingAppointmentPast,
   isBookingReviewEligible,
+  isReviewEligibleBookingStatus,
+  isVerifiedBookingReview,
   maskReviewerName,
+  normalizeBookingStatus,
   validateReviewRating,
   validateReviewText,
   type SalonReviewSummary,
@@ -31,6 +35,8 @@ export type ReviewableBooking = {
   salonId: string;
   salonName: string;
   salonSlug: string | null;
+  staffId: string | null;
+  staffName: string | null;
   bookingDate: string;
   bookingTime: string;
   status: string;
@@ -39,8 +45,10 @@ export type ReviewableBooking = {
     id: string;
     rating: number;
     comment: string | null;
+    staffRating: number | null;
   } | null;
   canReview: boolean;
+  reviewPending: boolean;
 };
 
 async function getAuthedEmail(accessToken: string) {
@@ -79,12 +87,14 @@ export async function getSalonReviewSummary(salonId: string): Promise<SalonRevie
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from("reviews")
-      .select("rating")
+      .select("rating, booking_id, status")
       .eq("salon_id", salonId)
-      .eq("status", "published");
+      .eq("status", "published")
+      .not("booking_id", "is", null);
 
     if (error) throw error;
-    return buildReviewSummary(data || []);
+    const verifiedRows = (data || []).filter((row) => isVerifiedBookingReview(row));
+    return buildReviewSummary(verifiedRows);
   } catch {
     return buildReviewSummary([]);
   }
@@ -95,17 +105,21 @@ export async function getSalonReviews(salonId: string): Promise<PublicSalonRevie
     const supabase = createServerSupabaseClient();
     const { data: reviews, error } = await supabase
       .from("reviews")
-      .select("id, booking_id, customer_email, rating, comment, created_at")
+      .select("id, booking_id, customer_email, rating, comment, created_at, status")
       .eq("salon_id", salonId)
       .eq("status", "published")
+      .not("booking_id", "is", null)
       .order("created_at", { ascending: false })
       .limit(50);
 
     if (error) throw error;
-    if (!reviews?.length) return [];
+    const verifiedReviews = (reviews || []).filter((row) => isVerifiedBookingReview(row));
+    if (!verifiedReviews.length) return [];
 
-    const emails = [...new Set(reviews.map((row) => (row.customer_email || "").toLowerCase()).filter(Boolean))];
-    const reviewIds = reviews.map((row) => row.id);
+    const emails = [
+      ...new Set(verifiedReviews.map((row) => (row.customer_email || "").toLowerCase()).filter(Boolean)),
+    ];
+    const reviewIds = verifiedReviews.map((row) => row.id);
 
     const admin = createSupabaseAdminClient();
     const [{ data: users }, { data: replies }] = await Promise.all([
@@ -124,9 +138,7 @@ export async function getSalonReviews(salonId: string): Promise<PublicSalonRevie
       (replies || []).map((reply) => [reply.review_id, reply])
     );
 
-    return reviews
-      .filter((row) => row.booking_id)
-      .map((row) => mapPublicReview(row, nameByEmail, replyByReviewId));
+    return verifiedReviews.map((row) => mapPublicReview(row, nameByEmail, replyByReviewId));
   } catch {
     return [];
   }
@@ -140,7 +152,9 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
     const admin = createSupabaseAdminClient();
     const { data: bookings, error } = await admin
       .from("bookings")
-      .select("id, booking_no, salon_id, status, booking_date, booking_time, salons(name, slug)")
+      .select(
+        "id, booking_no, salon_id, staff_id, status, booking_date, booking_time, salons(name, slug), salon_staff(name)"
+      )
       .ilike("customer_email", email)
       .order("booking_date", { ascending: false })
       .order("booking_time", { ascending: false })
@@ -154,14 +168,25 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
       .select("id, booking_id, rating, comment")
       .in("booking_id", bookingIds);
 
+    const staffReviewsRes = await admin
+      .from("staff_reviews")
+      .select("booking_id, rating")
+      .in("booking_id", bookingIds);
+    const staffReviews = staffReviewsRes.error ? [] : staffReviewsRes.data || [];
+
     const reviewByBookingId = Object.fromEntries(
       (reviews || []).map((review) => [review.booking_id, review])
+    );
+    const staffReviewByBookingId = Object.fromEntries(
+      (staffReviews || []).map((review) => [review.booking_id, review])
     );
 
     return bookings.map((booking) => {
       const existingReview = reviewByBookingId[booking.id] || null;
+      const existingStaffReview = staffReviewByBookingId[booking.id] || null;
       const canReview = isBookingReviewEligible(booking);
       const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+      const staff = Array.isArray(booking.salon_staff) ? booking.salon_staff[0] : booking.salon_staff;
 
       return {
         id: booking.id,
@@ -169,6 +194,8 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
         salonId: booking.salon_id,
         salonName: salon?.name || "Trimma Partner Salon",
         salonSlug: salon?.slug || null,
+        staffId: booking.staff_id || null,
+        staffName: staff?.name || null,
         bookingDate: booking.booking_date,
         bookingTime: booking.booking_time,
         status: booking.status,
@@ -178,9 +205,15 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
               id: existingReview.id,
               rating: existingReview.rating,
               comment: existingReview.comment,
+              staffRating: existingStaffReview?.rating ?? null,
             }
           : null,
         canReview,
+        reviewPending:
+          !existingReview &&
+          !canReview &&
+          isReviewEligibleBookingStatus(booking.status) &&
+          !isBookingAppointmentPast(booking.booking_date, booking.booking_time),
       };
     });
   } catch {
@@ -188,11 +221,49 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
   }
 }
 
+async function upsertStaffReviewForBooking(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  input: {
+    bookingId: string;
+    salonId: string;
+    staffId: string;
+    customerEmail: string;
+    staffRating: number;
+    comment: string | null;
+  }
+) {
+  const payload = {
+    booking_id: input.bookingId,
+    salon_id: input.salonId,
+    staff_id: input.staffId,
+    customer_email: input.customerEmail,
+    rating: input.staffRating,
+    comment: input.comment,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: existing } = await admin
+    .from("staff_reviews")
+    .select("id")
+    .eq("booking_id", input.bookingId)
+    .maybeSingle();
+
+  if (existing?.id) {
+    const { error } = await admin.from("staff_reviews").update(payload).eq("id", existing.id);
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await admin.from("staff_reviews").insert(payload);
+  if (error) throw error;
+}
+
 export async function submitBookingReview(input: {
   accessToken: string;
   bookingId: string;
   rating: number;
   reviewText: string;
+  staffRating?: number;
 }) {
   try {
     const email = await getAuthedEmail(input.accessToken);
@@ -213,7 +284,7 @@ export async function submitBookingReview(input: {
     const admin = createSupabaseAdminClient();
     const { data: booking, error: bookingError } = await admin
       .from("bookings")
-      .select("id, salon_id, customer_email, status, booking_date, booking_time")
+      .select("id, salon_id, staff_id, customer_email, status, booking_date, booking_time")
       .eq("id", input.bookingId)
       .maybeSingle();
 
@@ -228,7 +299,7 @@ export async function submitBookingReview(input: {
     if (!isBookingReviewEligible(booking)) {
       return {
         success: false as const,
-        error: "Reviews unlock only after your appointment is marked completed and the visit time has passed.",
+        error: "Reviews unlock after your confirmed visit time has passed.",
       };
     }
 
@@ -251,6 +322,31 @@ export async function submitBookingReview(input: {
     if (existing?.id) {
       const { error } = await admin.from("reviews").update(payload).eq("id", existing.id);
       if (error) throw error;
+
+      if (typeof input.staffRating === "number" && booking.staff_id) {
+        const staffRatingResult = validateReviewRating(input.staffRating);
+        if (staffRatingResult.ok) {
+          try {
+            await upsertStaffReviewForBooking(admin, {
+              bookingId: booking.id,
+              salonId: booking.salon_id,
+              staffId: booking.staff_id,
+              customerEmail: email,
+              staffRating: staffRatingResult.value,
+              comment: textResult.value || null,
+            });
+          } catch (staffErr) {
+            console.warn("Staff review save skipped:", staffErr);
+            return {
+              success: true as const,
+              reviewId: existing.id,
+              updated: true,
+              staffReviewWarning: "Salon review saved, but stylist rating could not be saved. Run packages/db/STAFF_REVIEWS_PATCH.sql.",
+            };
+          }
+        }
+      }
+
       return { success: true as const, reviewId: existing.id, updated: true };
     }
 
@@ -261,6 +357,31 @@ export async function submitBookingReview(input: {
       .single();
 
     if (insertError) throw insertError;
+
+    if (typeof input.staffRating === "number" && booking.staff_id) {
+      const staffRatingResult = validateReviewRating(input.staffRating);
+      if (staffRatingResult.ok) {
+        try {
+          await upsertStaffReviewForBooking(admin, {
+            bookingId: booking.id,
+            salonId: booking.salon_id,
+            staffId: booking.staff_id,
+            customerEmail: email,
+            staffRating: staffRatingResult.value,
+            comment: textResult.value || null,
+          });
+        } catch (staffErr) {
+          console.warn("Staff review save skipped:", staffErr);
+          return {
+            success: true as const,
+            reviewId: inserted.id,
+            updated: false,
+            staffReviewWarning: "Salon review saved, but stylist rating could not be saved. Run packages/db/STAFF_REVIEWS_PATCH.sql.",
+          };
+        }
+      }
+    }
+
     return { success: true as const, reviewId: inserted.id, updated: false };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not submit review.";

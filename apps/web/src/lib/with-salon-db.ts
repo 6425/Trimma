@@ -6,11 +6,17 @@ export type SalonDbResult<T> = { success: true; data: T } | { success: false; er
 
 export function mapSalonDbError(message: string, hint?: string): string {
   const lower = message.toLowerCase();
-  if (lower.includes("does not exist") || lower.includes("schema cache")) {
-    return hint || "Database table is missing. Run the matching packages/db patch in Supabase SQL Editor.";
+  if (lower.includes("schema cache") && lower.includes("column")) {
+    return message;
   }
-  if (lower.includes("duplicate key") || lower.includes("salons_slug_key")) {
+  if (lower.includes("does not exist") || lower.includes("schema cache")) {
+    return hint || message || "Database table is missing. Run the matching packages/db patch in Supabase SQL Editor.";
+  }
+  if (lower.includes("salons_slug_key")) {
     return "That salon URL slug is already taken. Try a slightly different salon name.";
+  }
+  if (lower.includes("duplicate key")) {
+    return "This save conflicted with existing data. Refresh the page and try again.";
   }
   if (lower.includes("row-level security") || lower.includes("permission denied")) {
     return "Save blocked by database permissions.";

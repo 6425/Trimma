@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 export const SALON_PROFILE_UPDATE_FIELDS = [
   "name",
   "slug",
@@ -37,6 +39,49 @@ export function slugifySalonName(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
+}
+
+export async function applySalonSlugOnNameChange(
+  supabase: SupabaseClient,
+  salonId: string,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const next = { ...payload };
+  delete next.slug;
+
+  if (typeof next.name !== "string" || !next.name.trim()) {
+    return next;
+  }
+
+  const trimmedName = next.name.trim();
+  const { data: current, error: currentError } = await supabase
+    .from("salons")
+    .select("name, slug")
+    .eq("id", salonId)
+    .maybeSingle();
+  if (currentError) throw new Error(currentError.message);
+
+  const currentName = (current?.name || "").trim();
+  if (current && trimmedName === currentName) {
+    return next;
+  }
+
+  const nextSlug = slugifySalonName(trimmedName);
+  if (!nextSlug) return next;
+
+  const { data: slugOwner, error: slugError } = await supabase
+    .from("salons")
+    .select("id")
+    .eq("slug", nextSlug)
+    .maybeSingle();
+  if (slugError) throw new Error(slugError.message);
+
+  next.slug =
+    !slugOwner || slugOwner.id === salonId
+      ? nextSlug
+      : `${nextSlug}-${salonId.replace(/-/g, "").slice(0, 12)}`;
+
+  return next;
 }
 
 export function parseSalonScheduleFromWorkingHours(

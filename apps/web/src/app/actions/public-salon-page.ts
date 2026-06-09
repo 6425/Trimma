@@ -131,8 +131,8 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       name: member.name,
       role: member.role || "Professional",
       experience: "5 yrs",
-      rating: 4.8,
-      completed: 100,
+      rating: 0,
+      completed: 0,
       availableToday: true,
       working_hours: member.working_hours,
     }));

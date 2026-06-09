@@ -20,7 +20,7 @@ export function SalonReviewsSection({ reviews, summary }: SalonReviewsSectionPro
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Verified Customer Reviews</h2>
           <p className="text-sm text-zinc-500 mt-1">
-            Only customers with completed bookings can leave a review.
+            Only customers with a confirmed Trimma booking can leave a public review.
           </p>
         </div>
         <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
@@ -60,7 +60,7 @@ export function SalonReviewsSection({ reviews, summary }: SalonReviewsSectionPro
               <MessageSquare className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
               <h3 className="font-bold text-zinc-800">No verified reviews yet</h3>
               <p className="text-sm text-zinc-500 mt-1 max-w-md mx-auto">
-                Reviews appear here after customers complete their appointment and share feedback.
+                Reviews appear here after customers book through Trimma, attend their visit, and share feedback.
               </p>
             </div>
           ) : (

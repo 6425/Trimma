@@ -11,14 +11,9 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { 
-  sendWhatsAppCancellationNotification, 
-  sendReviewRequestAlert 
-} from "@/app/actions/whatsapp";
-import {
-  sendBookingCancelledEmail,
-  sendReviewRequestEmail
-} from "@/app/actions/email-settings";
+import { sendWhatsAppCancellationNotification } from "@/app/actions/whatsapp";
+import { sendBookingCancelledEmail } from "@/app/actions/email-settings";
+import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
@@ -235,10 +230,6 @@ export default function DashboardBookings() {
           break;
         case 'complete': 
           updatePayload.status = 'completed'; 
-          if (bookingNo) {
-            await sendReviewRequestAlert(bookingNo);
-            await sendReviewRequestEmail(bookingNo);
-          }
           break;
         case 'no_show': 
           updatePayload.status = 'no_show'; 
@@ -265,6 +256,10 @@ export default function DashboardBookings() {
 
       const result = await updateOwnerBooking(bookingId, updatePayload);
       if (result.success === false) throw new Error(result.error);
+
+      if (action === "complete" && bookingNo) {
+        void sendBookingReviewRequests(bookingNo);
+      }
 
       toast.success(`Booking successfully updated!`);
       await fetchBookings(); // Refresh UI

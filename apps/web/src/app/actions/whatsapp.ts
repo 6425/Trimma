@@ -1101,7 +1101,8 @@ export async function sendReviewRequestAlert(bookingNo: string) {
     if (!customer || !customer.phone) return { success: false };
 
     const customerPhone = cleanPhoneNumber(customer.phone);
-    const reviewLink = `${APP_BASE_URL}/customer/bookings?review=${booking.id}`;
+    const { buildCustomerReviewLink } = await import("@/lib/reviews");
+    const reviewLink = buildCustomerReviewLink(booking.id);
 
     const variables = {
       customer_name: customer.full_name || "Valued Client",

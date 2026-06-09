@@ -30,8 +30,12 @@ export default function AgentSalonApprovalReview() {
         supabase.from("salons").select("*").eq("id", id).single(),
         supabase.from("salon_staff").select("id", { count: "exact", head: true }).eq("salon_id", id),
         supabase.from("services").select("id", { count: "exact", head: true }).eq("salon_id", id),
-        // Join with amenities to get the name
-        supabase.from("salon_amenities").select("quantity, amenities!inner(name)").eq("salon_id", id).eq("amenities.name", "Number of Chairs").maybeSingle(),
+        supabase
+          .from("salon_amenities")
+          .select("value, global_amenities!inner(name, type)")
+          .eq("salon_id", id)
+          .eq("global_amenities.name", "Number of Chairs")
+          .maybeSingle(),
         supabase.from("salon_promotion_packages").select("id", { count: "exact", head: true }).eq("salon_id", id)
       ]);
 
@@ -39,8 +43,8 @@ export default function AgentSalonApprovalReview() {
         setSalon(salonRes.data);
         
         let seatsCount = 0;
-        if (amenitiesRes.data) {
-          seatsCount = amenitiesRes.data.quantity || 0;
+        if (amenitiesRes.data?.value) {
+          seatsCount = parseInt(String(amenitiesRes.data.value), 10) || 0;
         }
 
         setCounts({
