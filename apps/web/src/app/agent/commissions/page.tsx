@@ -22,7 +22,10 @@ type CommissionBooking = {
   id: string;
   salon_name: string;
   booking_date: string;
+  created_at: string;
   status: string;
+  payment_status: string;
+  reservation_fee_paid: boolean;
   amount: number;
   customer_email: string;
   agent_cut: number;
@@ -71,9 +74,21 @@ function getWeekRange(offsetWeeks: number) {
   return { start, end, startMs: start.getTime(), endMs: end.getTime() };
 }
 
-function isSettledBooking(status: string) {
-  const s = status?.toLowerCase();
-  return s === "completed" || s === "confirmed";
+function isCommissionEligibleBooking(booking: Pick<
+  CommissionBooking,
+  "status" | "payment_status" | "reservation_fee_paid"
+>) {
+  const s = booking.status?.toLowerCase();
+  if (s === "completed" || s === "confirmed") return true;
+  if (booking.reservation_fee_paid) return true;
+  if (booking.payment_status?.toLowerCase() === "reservation_paid") return true;
+  return false;
+}
+
+function bookingWeekTimestamp(booking: Pick<CommissionBooking, "created_at" | "booking_date">) {
+  if (booking.created_at) return new Date(booking.created_at).getTime();
+  if (booking.booking_date) return new Date(booking.booking_date).getTime();
+  return NaN;
 }
 
 export default function AgentCommissions() {
@@ -125,8 +140,8 @@ export default function AgentCommissions() {
   const weeklyBookings = useMemo(
     () =>
       bookings.filter((b) => {
-        if (!b.booking_date) return false;
-        const t = new Date(b.booking_date).getTime();
+        const t = bookingWeekTimestamp(b);
+        if (!Number.isFinite(t)) return false;
         return t >= week.startMs && t <= week.endMs;
       }),
     [bookings, week]
@@ -143,11 +158,11 @@ export default function AgentCommissions() {
   );
 
   const weeklyBookingGross = weeklyBookings.reduce(
-    (sum, b) => (isSettledBooking(b.status) ? sum + b.amount : sum),
+    (sum, b) => (isCommissionEligibleBooking(b) ? sum + b.amount : sum),
     0
   );
   const weeklyBookingEarned = weeklyBookings.reduce(
-    (sum, b) => (isSettledBooking(b.status) ? sum + b.agent_cut : sum),
+    (sum, b) => (isCommissionEligibleBooking(b) ? sum + b.agent_cut : sum),
     0
   );
   const weeklySubsEarned = weeklySubscriptions.reduce((sum, s) => sum + s.amount, 0);
@@ -215,7 +230,7 @@ export default function AgentCommissions() {
             <Activity className="w-4 h-4 text-emerald-600" />
           </div>
           <h3 className="text-2xl font-black text-zinc-900">{formatLKR(weeklyBookingEarned)}</h3>
-          <p className="text-[10px] text-zinc-500 mt-1">{bookingAgentPct}% on settled bookings</p>
+          <p className="text-[10px] text-zinc-500 mt-1">{bookingAgentPct}% when reservation is paid</p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -261,7 +276,7 @@ export default function AgentCommissions() {
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">{weekRangeLabel}</p>
           <p className="text-[11px] text-zinc-400 mt-1">
-            Customer booking total = sum of completed/confirmed booking amounts this week. Your commission = {bookingAgentPct}% of the platform fee on each booking (not {bookingAgentPct}% of the booking value).
+            Weekly rows use the reservation payment date. Commission counts once the customer pays the reservation fee (not only after salon confirms). Your cut = {bookingAgentPct}% of the platform fee on each booking.
           </p>
         </div>
         <div className="overflow-x-auto">
@@ -339,7 +354,7 @@ export default function AgentCommissions() {
                   <div>
                     <p className="font-bold text-sm text-zinc-900">{b.salon_name}</p>
                     <p className="text-[11px] text-zinc-500">
-                      {formatDate(b.booking_date)} · {b.customer_email}
+                      Paid {formatDate(b.created_at || b.booking_date)} · Appt {formatDate(b.booking_date)} · {b.customer_email}
                     </p>
                     <Badge variant="outline" className="mt-1 text-[9px] font-bold uppercase">
                       {b.status}

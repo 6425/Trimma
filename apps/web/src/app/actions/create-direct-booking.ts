@@ -12,6 +12,7 @@ import { calculateCommissionSplit } from "@/lib/booking-pricing";
 import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
+import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 
 export type CreateDirectBookingInput = {
   salonId: string;
@@ -186,8 +187,9 @@ export async function createDirectBooking(
     let agentCommissionPct = 0;
     let agentCommissionAmount = 0;
 
-    if (salonData?.onboarding_agent_email || salonData?.assign_to) {
-      agentEmail = salonData.onboarding_agent_email || salonData.assign_to || null;
+    const referringAgent = resolveReferringAgentEmail(salonData);
+    if (referringAgent) {
+      agentEmail = referringAgent;
       agentCommissionPct = globalRates.agent;
       agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
     }

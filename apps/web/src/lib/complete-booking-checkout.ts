@@ -14,6 +14,7 @@ import {
   type BookingConflictRow,
 } from "@/lib/booking-availability";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
+import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteBookingCheckoutInput = {
@@ -188,8 +189,9 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   const pricing = calculateCommissionSplit(serviceTotal, rates);
   const resolvedReservationFee = pricing.reservationFee;
 
-  if (salon.onboarding_agent_email || salon.assign_to) {
-    agentEmail = salon.onboarding_agent_email || salon.assign_to || null;
+  const referringAgent = resolveReferringAgentEmail(salon);
+  if (referringAgent) {
+    agentEmail = referringAgent;
     agentCommissionPct = rates.agent;
     agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
   }

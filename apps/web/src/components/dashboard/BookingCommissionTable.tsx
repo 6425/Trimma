@@ -41,8 +41,7 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
   timeframeBookings.forEach((b) => {
     const amount = Number(b.amount || 0);
     const totalResFee = Number(b.total_reservation_fee || 0);
-    // Salon Reservation Share exactly equals Platform Fee (both split the 20% reservation fee equally)
-    const salonUpfront = totalResFee / 2;
+    const salonUpfront = Number(b.salon_upfront_amount || 0);
     const balanceDue = amount - totalResFee;
     const totalIncome = balanceDue + salonUpfront;
 
@@ -134,8 +133,7 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
 
               const amount = Number(b.amount || 0);
               const totalResFee = Number(b.total_reservation_fee || 0);
-              // Salon Reservation Share exactly equals Platform Fee (both split the 20% reservation fee equally)
-              const salonUpfront = totalResFee / 2;
+              const salonUpfront = Number(b.salon_upfront_amount || 0);
               const balanceDue = amount - totalResFee;
               const totalIncome = balanceDue + salonUpfront;
 

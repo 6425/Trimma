@@ -15,6 +15,7 @@ import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavori
 import { supabase } from "../../../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
+import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 import { fetchAvailableBookingSlots } from "@/app/actions/booking-slots";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { getSalonDirectionsUrl } from "@/lib/salon-map";
@@ -363,9 +364,10 @@ export default function SalonPage() {
       let agentCommissionPct = 0;
       let agentCommissionAmount = 0;
 
-      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email').eq('id', salon.id).single();
-      if (salonData?.onboarding_agent_email) {
-        agentEmail = salonData.onboarding_agent_email;
+      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, assign_to').eq('id', salon.id).single();
+      const referringAgent = resolveReferringAgentEmail(salonData);
+      if (referringAgent) {
+        agentEmail = referringAgent;
         agentCommissionPct = agentRate;
         agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
       }

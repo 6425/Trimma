@@ -59,8 +59,8 @@ export async function getAgentDashboardData() {
         .eq("assign_to", email)
         .order("created_at", { ascending: false }),
       supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
-      supabase.from("bookings").select("agent_commission_amount").eq("agent_email", email),
-      supabase.from("commission_ledger").select("*").eq("agent_email", email),
+      supabase.from("bookings").select("agent_commission_amount").ilike("agent_email", email),
+      supabase.from("commission_ledger").select("*").ilike("agent_email", email),
     ]);
 
     let territoryLabel = "No territory assigned";

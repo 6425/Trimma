@@ -1,6 +1,7 @@
 import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
+import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteSubscriptionCheckoutInput = {
@@ -46,12 +47,12 @@ async function recordSubscriptionCommission(params: {
   try {
     const { data: salon } = await supabase
       .from("salons")
-      .select("assign_to")
+      .select("onboarding_agent_email, assign_to")
       .eq("id", salonId)
       .maybeSingle();
 
-    const agentEmail = salon?.assign_to;
-    if (!agentEmail) return; // No referring agent → no commission.
+    const agentEmail = resolveReferringAgentEmail(salon);
+    if (!agentEmail) return;
 
     const { data: master } = await supabase
       .from("commission_master")

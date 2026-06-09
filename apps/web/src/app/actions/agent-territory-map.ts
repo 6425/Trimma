@@ -31,7 +31,7 @@ export async function getAgentMapData() {
     success: true as const,
     agentId: resolveAgentMapAgentId(auth.email, agentRow),
     territories,
-    categories: catData?.map((c) => c.name) || [],
+    categories: [...new Set((catData || []).map((c) => c.name).filter(Boolean))],
   };
 }
 

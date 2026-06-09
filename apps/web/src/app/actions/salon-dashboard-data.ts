@@ -10,6 +10,7 @@ import {
   readPlanFlags,
   sliceAllowedCategories,
 } from "@/lib/salon-subscription-plan";
+import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 
 export async function fetchSalonLayoutShell() {
   const email = await getSalonOwnerEmailFromCookies();
@@ -150,23 +151,26 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
 }
 
 export async function fetchSalonFinancePage() {
-  const result = await withSalonDb(async (supabase, ctx) => {
-    const { data, error } = await supabase
-      .from("bookings")
-      .select(`
-        *,
-        services (name),
-        salon_staff (name),
-        booking_services ( services (name) ),
-        booking_staff ( salon_staff (name) )
-      `)
-      .eq("salon_id", ctx.salonId)
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { salon: ctx.salon, bookings: data || [] };
-  });
+  const [result, commissionRates] = await Promise.all([
+    withSalonDb(async (supabase, ctx) => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          services (name),
+          salon_staff (name),
+          booking_services ( services (name) ),
+          booking_staff ( salon_staff (name) )
+        `)
+        .eq("salon_id", ctx.salonId)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return { salon: ctx.salon, bookings: data || [] };
+    }),
+    fetchBookingCommissionRates(),
+  ]);
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
-  return { success: true as const, ...result.data };
+  return { success: true as const, ...result.data, commissionRates };
 }
 
 export async function fetchSalonBillingPage() {

@@ -13,6 +13,7 @@ import { fetchAvailableBookingSlots, fetchSalonClosedDays } from "@/app/actions/
 import { withTimeout } from "@/lib/promise-timeout";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { calculateCommissionSplit, calculateReservationFee } from "@/lib/booking-pricing";
+import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
 import { sendBookingCreatedAlert, sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
 import { sendBookingCreatedCustomerEmail, sendBookingCreatedOwnerEmail } from "@/app/actions/email-settings";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
@@ -395,10 +396,11 @@ export function BookingSheet({
                   let agentCommissionAmount = 0;
 
                   let ownerEmail = null;
-                  const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, owner_email').eq('id', salonId).single();
+                  const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, assign_to, owner_email').eq('id', salonId).single();
                   if (salonData) {
-                    if (salonData.onboarding_agent_email) {
-                      agentEmail = salonData.onboarding_agent_email;
+                    const referringAgent = resolveReferringAgentEmail(salonData);
+                    if (referringAgent) {
+                      agentEmail = referringAgent;
                       agentCommissionPct = globalRates.agent;
                       agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
                     }
@@ -675,10 +677,11 @@ export function BookingSheet({
       let agentCommissionAmount = 0;
 
       let ownerEmail = null;
-      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, owner_email').eq('id', salonId).single();
+      const { data: salonData } = await supabase.from('salons').select('onboarding_agent_email, assign_to, owner_email').eq('id', salonId).single();
       if (salonData) {
-        if (salonData.onboarding_agent_email) {
-          agentEmail = salonData.onboarding_agent_email;
+        const referringAgent = resolveReferringAgentEmail(salonData);
+        if (referringAgent) {
+          agentEmail = referringAgent;
           agentCommissionPct = globalRates.agent;
           agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
         }

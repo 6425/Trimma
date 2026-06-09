@@ -52,18 +52,22 @@ export default function FinanceDashboard() {
       if (result.success === false) throw new Error(result.error);
 
       setSalon(result.salon);
+      if (result.commissionRates) {
+        setGlobalRates({
+          platform: result.commissionRates.platform,
+          salon: result.commissionRates.salon,
+          agent: result.commissionRates.agent,
+        });
+      }
       const bookingsData = result.bookings || [];
-      const resolvedBookings = bookingsData.map((b: any) => {
-        const totalRes = parseFloat(b.total_reservation_fee || 0);
-        return {
-          ...b,
-          amount: parseFloat(b.amount || 0),
-          platform_commission_amount: totalRes / 2,
-          salon_upfront_amount: totalRes / 2,
-          agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
-        };
-      });
-      
+      const resolvedBookings = bookingsData.map((b: any) => ({
+        ...b,
+        amount: parseFloat(b.amount || 0),
+        platform_commission_amount: parseFloat(b.platform_commission_amount || 0),
+        salon_upfront_amount: parseFloat(b.salon_upfront_amount || 0),
+        agent_commission_amount: parseFloat(b.agent_commission_amount || 0),
+      }));
+
       setBookings(resolvedBookings);
       
       // 4. Calculate aggregates

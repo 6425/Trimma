@@ -76,7 +76,7 @@ function TerritoryExplorerContent() {
             type: t.type || "assigned",
           }))
         );
-        setCategories(res.categories || []);
+        setCategories([...new Set((res.categories || []).filter(Boolean))]);
       } else {
         if (res.error?.includes("Not authenticated")) {
           router.replace("/login?redirectTo=/agent/territory");

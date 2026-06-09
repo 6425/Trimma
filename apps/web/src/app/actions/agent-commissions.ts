@@ -3,13 +3,17 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import { findAgentRecord } from "@/lib/agent-territory-resolve";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export type AgentCommissionBooking = {
   id: string;
   salon_id: string;
   salon_name: string;
   booking_date: string;
+  created_at: string;
   status: string;
+  payment_status: string;
+  reservation_fee_paid: boolean;
   amount: number;
   customer_email: string;
   agent_cut: number;
@@ -30,7 +34,7 @@ export async function getAgentCommissionsData() {
   if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabase = createSupabaseAdminClient();
-  const email = auth.email;
+  const email = normalizeEmail(auth.email);
 
   const [
     masterRes,
@@ -48,14 +52,14 @@ export async function getAgentCommissionsData() {
     supabase
       .from("bookings")
       .select(
-        "id, salon_id, booking_date, status, amount, customer_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
+        "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
       )
-      .eq("agent_email", email)
+      .ilike("agent_email", email)
       .order("booking_date", { ascending: false }),
     supabase
       .from("commission_ledger")
       .select("*")
-      .eq("agent_email", email)
+      .ilike("agent_email", email)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -79,16 +83,25 @@ export async function getAgentCommissionsData() {
   const pushBooking = (row: Record<string, unknown>) => {
     const id = String(row.id);
     if (bookingIds.has(id)) return;
+
+    const rowAgentEmail = String(row.agent_email || "").trim().toLowerCase();
+    const storedCut = Number(row.agent_commission_amount) || 0;
+    const isAttributed =
+      (rowAgentEmail.length > 0 && rowAgentEmail === email.toLowerCase()) || storedCut > 0;
+    if (!isAttributed) return;
+
     bookingIds.add(id);
 
     const amount = Number(row.amount) || 0;
     const storedPct = Number(row.agent_commission_percent);
     const agentPercent = storedPct > 0 ? storedPct : bookingAgentPct;
-    // Platform commission is the base the agent's % is applied to.
     const platformCommission = Number(row.platform_commission_amount) || 0;
-    const storedCut = Number(row.agent_commission_amount);
     const agentCut =
-      storedCut > 0 ? storedCut : platformCommission * (agentPercent / 100);
+      storedCut > 0
+        ? storedCut
+        : rowAgentEmail
+          ? platformCommission * (agentPercent / 100)
+          : 0;
     const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
     const joinedName = Array.isArray(salonsJoin) ? salonsJoin[0]?.name : salonsJoin?.name;
 
@@ -97,7 +110,10 @@ export async function getAgentCommissionsData() {
       salon_id: String(row.salon_id || ""),
       salon_name: joinedName || salonMap.get(String(row.salon_id)) || "Referred Salon",
       booking_date: String(row.booking_date || ""),
+      created_at: String(row.created_at || ""),
       status: String(row.status || "pending"),
+      payment_status: String(row.payment_status || ""),
+      reservation_fee_paid: Boolean(row.reservation_fee_paid),
       amount,
       customer_email: String(row.customer_email || "—"),
       agent_cut: agentCut,
@@ -111,19 +127,6 @@ export async function getAgentCommissionsData() {
   }
 
   const salonIds = [...salonMap.keys()];
-  if (salonIds.length > 0) {
-    const { data: salonBookings } = await supabase
-      .from("bookings")
-      .select(
-        "id, salon_id, booking_date, status, amount, customer_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
-      )
-      .in("salon_id", salonIds)
-      .order("booking_date", { ascending: false });
-
-    for (const row of salonBookings || []) {
-      pushBooking(row as Record<string, unknown>);
-    }
-  }
 
   bookings.sort(
     (a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()

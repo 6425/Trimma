@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
+import { normalizeEmail } from "@/lib/normalize-email";
 import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
 import { withTimeout } from "@/lib/promise-timeout";
@@ -40,7 +41,7 @@ export async function requireAgentFromCookies(): Promise<
     return {
       accessToken,
       userId: user.id,
-      email: user.email,
+      email: normalizeEmail(user.email),
       role,
     };
   } catch (err) {
