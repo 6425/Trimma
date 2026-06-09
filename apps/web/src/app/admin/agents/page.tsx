@@ -1297,7 +1297,7 @@ export default function AdminAgents() {
                   <Button
                     onClick={handleSaveSubscriptionCommission}
                     disabled={savingSubscriptionRates}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 px-5 shrink-0"
+                    className="bg-brand hover:bg-brand-hover text-black font-bold rounded-xl h-10 px-5 shrink-0"
                   >
                     {savingSubscriptionRates ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />

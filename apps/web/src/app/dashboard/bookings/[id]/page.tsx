@@ -332,10 +332,10 @@ export default function BookingDetailPage() {
                   <ActionButton label="Confirm Booking" action="confirm" color="bg-emerald-600 hover:bg-emerald-700" icon={<CheckCircle2 className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
                 )}
                 {status === "confirmed" && (
-                  <ActionButton label="Check-In Customer" action="check_in" color="bg-blue-600 hover:bg-blue-700" icon={<UserCheck className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
+                  <ActionButton label="Check-In Customer" action="check_in" color="bg-brand hover:bg-brand-hover text-black" icon={<UserCheck className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
                 )}
                 {status === "checked_in" && (
-                  <ActionButton label="Start Service" action="start_service" color="bg-indigo-600 hover:bg-indigo-700" icon={<PlayCircle className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
+                  <ActionButton label="Start Service" action="start_service" color="bg-brand hover:bg-brand-hover text-black" icon={<PlayCircle className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
                 )}
                 {status === "in_progress" && (
                   <ActionButton label="Complete Service" action="complete" color="bg-zinc-800 hover:bg-zinc-900" icon={<CheckCircle2 className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />

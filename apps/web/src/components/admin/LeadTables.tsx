@@ -619,7 +619,7 @@ export function LeadTables({
                           <Button
                             onClick={() => handleOpenAssignModal(lead)}
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
+                            className="bg-brand hover:bg-brand-hover text-black font-bold h-7 px-2.5 rounded-lg text-[10px] uppercase tracking-tighter flex items-center gap-1 border-none shadow-sm"
                           >
                             Edit
                           </Button>

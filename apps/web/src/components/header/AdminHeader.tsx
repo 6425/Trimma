@@ -9,7 +9,7 @@ export default function AdminHeader() {
           className="border rounded-lg px-3 py-1"
         />
 
-        <div className="w-8 h-8 bg-blue-500 rounded-full" />
+        <div className="w-8 h-8 bg-brand rounded-full" />
       </div>
     </header>
   );

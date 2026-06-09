@@ -374,7 +374,7 @@ export default function DashboardBookings() {
                       : tab.key === "confirmed"
                         ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
                         : tab.key === "rescheduled"
-                          ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                          ? "bg-brand text-black border-brand shadow-sm"
                           : "bg-rose-600 text-white border-rose-600 shadow-sm"
                     : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
                 }`}

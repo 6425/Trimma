@@ -510,7 +510,7 @@ export default function AgentNewLeadPage() {
               type="submit"
               disabled={saving}
               onClick={() => setSubmitAction("REVIEW")}
-              className="h-12 flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm"
+              className="h-12 flex-1 bg-brand hover:bg-brand-hover text-black font-bold rounded-xl text-sm"
             >
               {saving && submitAction === "REVIEW" ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>

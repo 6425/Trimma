@@ -1449,7 +1449,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleSendToOwner}
                       disabled={updating || !formData.phone || !formData.owner_gmail}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
                       <Send className="w-4 h-4" /> Send to Salon Owner for Review
                     </Button>
@@ -1469,7 +1469,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleAgentApproval}
                       disabled={updating}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Enable Booking & Send to Admin
                     </Button>

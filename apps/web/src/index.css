@@ -416,9 +416,72 @@
   }
 
   /* Yellow/Brand backgrounds must have dark text (default + hover) */
-  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#F5B700\],
+  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#F5B700\],
   .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#F5B700\]:hover, .hover\:bg-\[\#FFC947\]:hover,
+  .hover\:bg-blue-500:hover, .hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover,
   .bg-primary-gradient, [class*="bg-primary-gradient"] {
+    color: #000000 !important;
+  }
+
+  /*
+   * App-wide contrast guard — prevent white-on-white and black-on-black on hover/focus.
+   * Applies outside trimma-light/dark context shells (marketing, auth, customer, etc.).
+   */
+  :is(
+    .hover\:bg-white:hover,
+    [class*="hover:bg-white"]:hover,
+    [class*="hover:bg-zinc-50"]:hover,
+    [class*="hover:bg-zinc-100"]:hover,
+    [class*="hover:bg-slate-50"]:hover,
+    [class*="hover:bg-slate-100"]:hover,
+    [class*="hover:bg-gray-50"]:hover,
+    [class*="hover:bg-gray-100"]:hover
+  ):is(.text-white, [class*="text-white"]):not(
+    [class*="bg-black"], [class*="bg-zinc-9"], [class*="bg-slate-9"], [class*="bg-[#0B0B0B]"], [class*="bg-[#151515]"], [class*="from-[#"]
+  ) {
+    color: var(--text-dark) !important;
+  }
+
+  :is(
+    .hover\:bg-black:hover,
+    [class*="hover:bg-black"]:hover,
+    .hover\:bg-zinc-800:hover,
+    .hover\:bg-zinc-900:hover,
+    .hover\:bg-zinc-950:hover,
+    [class*="hover:bg-zinc-8"]:hover,
+    [class*="hover:bg-zinc-9"]:hover,
+    [class*="hover:bg-slate-8"]:hover,
+    [class*="hover:bg-slate-9"]:hover
+  ):is(.text-black, .text-zinc-900, [class*="text-zinc-9"], [class*="text-black"]):not(
+    [class*="bg-white"], [class*="bg-zinc-50"], [class*="bg-slate-50"]
+  ) {
+    color: var(--text-light) !important;
+  }
+
+  /*
+   * Blue/indigo solid controls → brand yellow with black text (default + hover).
+   * Catches legacy inline button classes that still reference blue-* utilities.
+   */
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700
+  ),
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-indigo-600, .bg-indigo-700
+  ):is(:hover, :focus-visible, :active),
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .hover\:bg-blue-500:hover, .hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover,
+    .hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover
+  ) {
+    background-color: #F5B700 !important;
+    border-color: #F5B700 !important;
+    color: #000000 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover
+  ) {
+    background-color: #FFC947 !important;
+    border-color: #FFC947 !important;
     color: #000000 !important;
   }
 
@@ -565,6 +628,24 @@
   .hover\:bg-rose-50:hover, .hover\:bg-pink-50:hover { background-color: rgba(245,183,0,0.08) !important; }
   .border-pink-500, .border-rose-500 { border-color: #F5B700 !important; }
   .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #F5B700 !important; }
+
+  /* Blue Tailwind fills on interactive controls → brand yellow + black text */
+  :is(button, a, [role="button"], [data-slot="button"]).bg-blue-500,
+  :is(button, a, [role="button"], [data-slot="button"]).bg-blue-600,
+  :is(button, a, [role="button"], [data-slot="button"]).bg-blue-700,
+  :is(button, a, [role="button"], [data-slot="button"]).bg-indigo-600,
+  :is(button, a, [role="button"], [data-slot="button"]).bg-indigo-700 {
+    background-color: #F5B700 !important;
+    border-color: #F5B700 !important;
+    color: #000000 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-blue-700:hover,
+  :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-indigo-700:hover {
+    background-color: #FFC947 !important;
+    border-color: #FFC947 !important;
+    color: #000000 !important;
+  }
 
   /* Override hardcoded Booking.com blues to Yellow */
   .bg-\[\#003B95\] { background-color: #F5B700 !important; color: #000000 !important; }

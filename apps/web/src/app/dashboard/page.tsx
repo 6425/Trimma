@@ -239,7 +239,7 @@ export default function Dashboard() {
                     item.tone === "emerald"
                       ? "bg-emerald-500"
                       : item.tone === "blue"
-                        ? "bg-blue-500"
+                        ? "bg-brand"
                         : item.tone === "purple"
                           ? "bg-purple-500"
                           : "bg-amber-500"
