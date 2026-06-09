@@ -491,15 +491,32 @@
   }
 
   /*
-   * Unified primary button contract — yellow fill, black text, gold hover.
-   * Overrides legacy inline classes (text-white, pink hovers) across the app.
+   * Unified primary button contract — SOLID yellow fill only, black text, gold hover.
+   * Excludes low-opacity brand tints (/10, /20) used for outline secondary on dark panels.
    */
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient, [class*="bg-primary-gradient"]
-  ),
-  :is(.bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"], .bg-primary-gradient)[class*="text-white"],
-  :is(.bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"]):is(:hover, :focus-visible, :active) {
+    .bg-brand, .bg-\[\#F5B700\], .bg-brand-hover, .bg-primary-gradient, [class*="bg-primary-gradient"]
+  ):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]):not([class*="bg-[#F5B700]/3"]),
+  :is(.bg-brand, .bg-\[\#F5B700\], .bg-primary-gradient)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#F5B700]/1"]),
+  :is(.bg-brand, .bg-\[\#F5B700\]):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]) {
     color: #000000 !important;
+  }
+
+  /* Outline secondary on dark surfaces — yellow label must stay readable */
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    [class*="bg-[#F5B700]/10"], [class*="bg-[#F5B700]/20"],
+    [class*="bg-brand/10"], [class*="bg-brand/20"]
+  ),
+  :is(button, a, [role="button"], [data-slot="button"])[class*="text-[#F5B700]"],
+  :is(button, a, [role="button"], [data-slot="button"])[class*="text-brand"]:not(.bg-brand):not(.bg-\[\#F5B700\]) {
+    color: #F5B700 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    [class*="hover:bg-[#F5B700]/20"], [class*="hover:bg-brand/20"]
+  ):hover,
+  :is(button, a, [role="button"], [data-slot="button"])[class*="hover:text-[#FFC947]"]:hover {
+    color: #FFC947 !important;
   }
 
   /* Secondary actions on dark panels — yellow outline, never white ghost */
@@ -518,11 +535,18 @@
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .bg-brand, [class*="bg-brand"], [class*="bg-[#F5B700]"]
-  ):is(:hover, :focus-visible, :active),
-  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-brand"]:hover) {
+    .bg-brand, .bg-\[\#F5B700\], .bg-brand-hover
+  ):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]),
+  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-[#F5B700]/90"]:hover) {
     background-color: #FFC947 !important;
     color: #000000 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    [class*="hover:bg-[#F5B700]/20"], [class*="hover:bg-brand/20"]
+  ):hover {
+    background-color: rgba(245, 183, 0, 0.2) !important;
+    color: #FFC947 !important;
   }
 
   /* Remove legacy pink button hovers */
