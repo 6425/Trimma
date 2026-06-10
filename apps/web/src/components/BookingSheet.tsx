@@ -225,11 +225,10 @@ export function BookingSheet({
   const totalDuration = selectedServicesWithRates.reduce((sum, s) => sum + s.duration, 0);
   const basePrice = selectedServicesWithRates.reduce((sum, s) => sum + s.price, 0);
   
-  // Calculate discount & taxes
+  // Calculate discount
   const discountAmount = basePrice * (discountPercentage / 100);
   const priceAfterDiscount = basePrice - discountAmount;
-  const serviceCharge = priceAfterDiscount * 0.10; // 10% Taxes & Service Charge
-  const totalPrice = priceAfterDiscount + serviceCharge;
+  const totalPrice = priceAfterDiscount;
 
   const reservationFee = calculateReservationFee(totalPrice);
   const pricing = calculateCommissionSplit(totalPrice, globalRates);
@@ -657,6 +656,30 @@ export function BookingSheet({
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email</label>
+                    <input 
+                      type="email" 
+                      required
+                      placeholder="you@example.com" 
+                      value={customerDetails.email}
+                      onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Phone Number</label>
+                    <input 
+                      type="tel" 
+                      required
+                      placeholder="+94771234567" 
+                      value={customerDetails.phone}
+                      onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800" 
+                    />
+                  </div>
+
 
 
                   <div className="grid grid-cols-2 gap-4">
@@ -738,11 +761,6 @@ export function BookingSheet({
                        <span>-{formatPrice(discountAmount)}</span>
                      </div>
                    )}
-
-                   <div className="flex justify-between items-center text-zinc-500">
-                     <span>Taxes & Service Charge (10%)</span>
-                     <span className="font-semibold text-zinc-900">{formatPrice(serviceCharge)}</span>
-                   </div>
 
                    <div className="flex justify-between items-center text-zinc-950 font-black text-base pt-1">
                      <span>Total Booking Value</span>

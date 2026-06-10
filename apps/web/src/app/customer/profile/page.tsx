@@ -162,7 +162,35 @@ function ProfileFormContent() {
                 </div>
               </div>
 
+              {/* PHONE */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Phone Number</Label>
+                <LkPhoneInput
+                  id="phone"
+                  theme="light"
+                  value={phone}
+                  onChange={setPhone}
+                  className="h-11"
+                  inputClassName="h-11"
+                />
+              </div>
 
+              {/* EMAIL (read-only) */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-zinc-500">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    readOnly
+                    disabled
+                    className="h-11 pl-9 bg-zinc-100 border-zinc-200 text-zinc-500 rounded-xl cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-[10px] text-zinc-400 font-medium">Your email is used for sign-in and booking confirmations and can&apos;t be changed here.</p>
+              </div>
 
             </div>
           </div>

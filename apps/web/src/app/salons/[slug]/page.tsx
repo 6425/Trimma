@@ -160,6 +160,29 @@ export default function SalonPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [confirmedBookingDetails, setConfirmedBookingDetails] = useState<any>(null);
 
+  // Auto-open booking when arriving via ?action=book (from cards / favorites / marketplace)
+  useEffect(() => {
+    if (loading || !salon || !salon.booking_enabled) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("action") !== "book") return;
+
+    void Promise.resolve().then(() => {
+      if (window.innerWidth < 1024) {
+        setIsBookingOpen(true);
+      } else {
+        const sidebarElement = document.getElementById("booking-sidebar-card");
+        if (sidebarElement) {
+          sidebarElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+
+      params.delete("action");
+      const query = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
+    });
+  }, [loading, salon]);
+
   // FETCH SALON DATA VIA SERVER (client Supabase hangs on production)
   useEffect(() => {
     void Promise.resolve().then(async () => {
@@ -1274,19 +1297,19 @@ export default function SalonPage() {
                 </div>
 
                 <div className="border-t border-dashed border-slate-200 pt-4 space-y-2">
-                  <div className="text-zinc-400 font-bold uppercase tracking-wider text-[9px]">Billing Summary (Pay at Salon)</div>
+                  <div className="text-zinc-400 font-bold uppercase tracking-wider text-[9px]">Billing Summary</div>
                   <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2 text-xs">
                     <div className="flex justify-between text-zinc-500 font-semibold">
                       <span>Service Fee</span>
                       <span className="text-zinc-900">LKR {confirmedBookingDetails.price?.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-zinc-500 font-semibold">
-                      <span>Taxes & Service Charge</span>
-                      <span className="text-zinc-900">LKR {(confirmedBookingDetails.price * 0.10).toLocaleString()}</span>
+                      <span>Deposit Paid (20%)</span>
+                      <span className="text-zinc-900">LKR {(confirmedBookingDetails.price * 0.20).toLocaleString()}</span>
                     </div>
                     <div className="border-t border-slate-100 pt-2 flex justify-between font-bold text-zinc-900 text-sm">
-                      <span>Total Amount</span>
-                      <span>LKR {(confirmedBookingDetails.price * 1.10).toLocaleString()}</span>
+                      <span>Balance at Salon</span>
+                      <span>LKR {(confirmedBookingDetails.price * 0.80).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   Home, CalendarDays, Heart, 
-  User, LifeBuoy,
+  User, LifeBuoy, HelpCircle,
   LogOut, Scissors, Menu, X, Bell
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
@@ -35,7 +35,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   const bottomNavItems = [
     { name: "Dashboard", path: "/customer", icon: <Home className="w-5 h-5" /> },
     { name: "Bookings", path: "/customer/bookings", icon: <CalendarDays className="w-5 h-5" /> },
-    { name: "Explore", path: "/salons", icon: <Scissors className="w-5 h-5" /> },
+    { name: "Explore", path: "/", icon: <Scissors className="w-5 h-5" /> },
     { name: "Favorites", path: "/customer/favorites", icon: <Heart className="w-5 h-5" /> },
     { name: "Profile", path: "/customer/profile", icon: <User className="w-5 h-5" /> },
   ];
@@ -74,7 +74,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         <div className="trimma-dashboard-sidebar-nav flex-1 overflow-y-auto pt-4 pb-4 px-3 space-y-0.5 scrollbar-none lg:pt-6">
           <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-3 pt-1">Menu</div>
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path !== '/customer' && pathname.startsWith(item.path));
+            const isActive = pathname === item.path || (item.path !== '/customer' && item.path !== '/' && pathname.startsWith(item.path));
             return (
               <Link key={item.name}
                 href={item.path}
@@ -94,6 +94,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-2">Account</div>
             {[
               { name: "Profile", path: "/customer/profile", icon: <User className="w-5 h-5" /> },
+              { name: "Customer Help", path: "/customer-help", icon: <HelpCircle className="w-5 h-5" /> },
               { name: "Support", path: "/customer/support", icon: <LifeBuoy className="w-5 h-5" /> },
             ].map((item) => {
               const isActive = pathname === item.path;
@@ -161,7 +162,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-50 border-t border-black/10 flex justify-around items-center px-2 py-2 z-30">
         {bottomNavItems.map((item) => {
-          const isActive = pathname === item.path || (item.path !== '/customer' && pathname.startsWith(item.path));
+          const isActive = pathname === item.path || (item.path !== '/customer' && item.path !== '/' && pathname.startsWith(item.path));
           return (
             <Link key={item.name}
               href={item.path}
