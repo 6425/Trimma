@@ -136,7 +136,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                           alt={style.title}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
-                          className="object-contain"
+                          className="object-cover"
                         />
                         <StyleSaveButton styleId={style.id} styleTitle={style.title} />
                       </div>

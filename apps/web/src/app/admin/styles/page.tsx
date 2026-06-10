@@ -302,14 +302,14 @@ export default function AdminStyleManagementPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/90 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-zinc-900">Crop Style Image (3:4 Portrait)</h3>
+              <h3 className="text-xl font-bold text-zinc-900">Crop Style Image (1080 × 566 Landscape)</h3>
               <button type="button" onClick={closeCropModal} className="text-zinc-500 hover:text-zinc-900">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <p className="text-xs text-zinc-500 mb-3">
-              Output: 600×800 portrait — shown on the public Styles gallery and customer saved styles.
+              Output: 1080×566 landscape — shown on the public Styles gallery and customer saved styles.
             </p>
 
             <div className="flex-1 overflow-auto bg-zinc-100 rounded-xl flex items-center justify-center border border-zinc-200">
@@ -391,7 +391,7 @@ export default function AdminStyleManagementPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filtered.map((style) => (
                   <div key={style.id} className="rounded-2xl border border-zinc-100 overflow-hidden bg-white shadow-sm">
-                    <div className="relative aspect-[3/4] bg-zinc-100">
+                    <div className="relative aspect-[1080/566] bg-zinc-100">
                       <Image src={style.image_url} alt={style.title} fill className="object-cover" sizes="200px" />
                       {!style.is_active && (
                         <Badge className="absolute top-2 left-2 bg-zinc-800/90 text-white text-[9px]">Hidden</Badge>
@@ -459,8 +459,8 @@ export default function AdminStyleManagementPage() {
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase text-zinc-500">Style Image (3:4)</Label>
               {formData.image_url ? (
-                <div className="relative aspect-[3/4] w-full max-w-[180px] rounded-xl overflow-hidden border border-zinc-200">
-                  <Image src={formData.image_url} alt="Preview" fill className="object-cover" sizes="180px" />
+                <div className="relative aspect-[1080/566] w-full max-w-[280px] rounded-xl overflow-hidden border border-zinc-200">
+                  <Image src={formData.image_url} alt="Preview" fill className="object-cover" sizes="280px" />
                   <button
                     type="button"
                     onClick={() => setFormData((p) => ({ ...p, image_url: "" }))}
@@ -470,7 +470,7 @@ export default function AdminStyleManagementPage() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center aspect-[3/4] max-w-[180px] rounded-xl border-2 border-dashed border-zinc-200 bg-slate-50 cursor-pointer hover:border-[#F5B700]/50 transition-colors">
+                <label className="flex flex-col items-center justify-center aspect-[1080/566] w-full max-w-[280px] rounded-xl border-2 border-dashed border-zinc-200 bg-slate-50 cursor-pointer hover:border-[#F5B700]/50 transition-colors">
                   <Upload className="w-6 h-6 text-zinc-400 mb-2" />
                   <span className="text-[10px] font-bold text-zinc-500 text-center px-2">Upload &amp; crop</span>
                   <input type="file" accept="image/*" className="hidden" onChange={onSelectFile} />

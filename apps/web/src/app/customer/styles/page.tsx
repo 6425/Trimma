@@ -129,7 +129,7 @@ function SavedStylesContent() {
                 key={row.id}
                 className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#F5B700]/50 transition-all shadow-sm"
               >
-                <div className="relative aspect-[3/4] bg-zinc-100">
+                <div className="relative aspect-[1080/566] bg-zinc-100">
                   <Image
                     src={style.image_url}
                     alt={style.title}
