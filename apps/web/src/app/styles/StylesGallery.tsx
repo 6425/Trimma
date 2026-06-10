@@ -124,7 +124,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                   </Link>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {categoryStyles.map((style) => (
                     <article
                       key={style.id}
@@ -135,8 +135,8 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                           src={style.image_url}
                           alt={style.title}
                           fill
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                          className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
+                          className="object-contain"
                         />
                         <StyleSaveButton styleId={style.id} styleTitle={style.title} />
                       </div>
@@ -144,9 +144,9 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                         <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
                           {category.name}
                         </Badge>
-                        <h3 className="font-extrabold text-zinc-900 line-clamp-1">{style.title}</h3>
+                        <h3 className="font-extrabold text-zinc-900">{style.title}</h3>
                         {style.description && (
-                          <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">{style.description}</p>
+                          <p className="text-xs text-zinc-500 leading-relaxed">{style.description}</p>
                         )}
                       </div>
                     </article>
