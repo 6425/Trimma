@@ -507,8 +507,8 @@
     [class*="bg-[#F5B700]/10"], [class*="bg-[#F5B700]/20"],
     [class*="bg-brand/10"], [class*="bg-brand/20"]
   ),
-  :is(button, a, [role="button"], [data-slot="button"])[class*="text-[#F5B700]"],
-  :is(button, a, [role="button"], [data-slot="button"])[class*="text-brand"]:not(.bg-brand):not(.bg-\[\#F5B700\]) {
+  :is(button, a, [role="button"], [data-slot="button"])[class~="text-[#F5B700]"],
+  :is(button, a, [role="button"], [data-slot="button"])[class~="text-brand"]:not(.bg-brand):not(.bg-\[\#F5B700\]) {
     color: #F5B700 !important;
   }
 
