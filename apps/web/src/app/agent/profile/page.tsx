@@ -7,6 +7,7 @@ import { User, Mail, MapPin, RefreshCw, Upload, Image as ImageIcon } from "lucid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { toast } from "sonner";
 import { getAgentProfile, uploadAgentAvatar } from "@/app/actions/agent-profile";
 import { tryAgentData, fetchAgentProfileClient } from "@/lib/agent-client-data";
@@ -281,21 +282,14 @@ function ProfileFormContent() {
                 {/* PHONE */}
                 <div className="space-y-2.5">
                   <Label htmlFor="phone" className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Phone Number</Label>
-                  <div className="relative flex items-center group">
-                    <span className="absolute left-3.5 text-zinc-500 font-bold text-sm">+947</span>
-                    <Input
-                      id="phone"
-                      value={phone.replace(/^\+?947?/, '')}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 8);
-                        setPhone(`+947${val}`);
-                      }}
-                      placeholder="7123456"
-                      className="h-12 pl-[3.5rem] bg-zinc-50/50 border-slate-200 text-zinc-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 rounded-xl font-medium shadow-none transition-all"
-                      type="tel"
-                      inputMode="numeric"
-                    />
-                  </div>
+                  <LkPhoneInput
+                    id="phone"
+                    theme="light"
+                    value={phone}
+                    onChange={setPhone}
+                    className="h-12"
+                    inputClassName="h-12"
+                  />
                 </div>
 
                 {/* EMAIL */}

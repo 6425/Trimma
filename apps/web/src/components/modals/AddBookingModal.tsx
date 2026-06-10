@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Loader2, CalendarIcon, Clock, User, Phone, Mail, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { fetchSalonServicesList, fetchSalonStaffList, addManualBooking } from "@/app/actions/calendar-actions";
 
 export function AddBookingModal({ 
@@ -184,13 +185,13 @@ export function AddBookingModal({
                   <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
                     <Phone className="w-3 h-3" /> Phone
                   </label>
-                  <input 
-                    type="tel" 
+                  <LkPhoneInput
                     required
-                    placeholder="07X XXX XXXX"
+                    theme="light"
                     value={formData.customer_phone}
-                    onChange={e => setFormData({...formData, customer_phone: e.target.value})}
-                    className="w-full h-10 px-3 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all placeholder:text-zinc-400 placeholder:font-medium"
+                    onChange={(val) => setFormData({...formData, customer_phone: val})}
+                    className="h-10"
+                    inputClassName="h-10"
                   />
                 </div>
                 <div className="space-y-1.5">

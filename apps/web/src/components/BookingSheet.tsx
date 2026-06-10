@@ -670,13 +670,12 @@ export function BookingSheet({
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Phone Number</label>
-                    <input 
-                      type="tel" 
-                      required
-                      placeholder="+94771234567" 
+                    <LkPhoneInput
+                      theme="light"
                       value={customerDetails.phone}
-                      onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800" 
+                      onChange={(val) => setCustomerDetails(prev => ({ ...prev, phone: val }))}
+                      className="h-11"
+                      inputClassName="h-11"
                     />
                   </div>
 

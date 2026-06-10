@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
 import { submitOnboardingLead } from "../actions/submit-onboarding-lead";
 
@@ -124,7 +125,7 @@ export default function OnboardingClient() {
 
           <div className="space-y-2">
             <Label className="text-xs font-bold text-zinc-500">WhatsApp Number <span className="text-red-500">*</span></Label>
-            <Input required type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="077 123 4567" className="h-12 rounded-xl bg-slate-50/50" />
+            <LkPhoneInput required theme="light" value={whatsapp} onChange={setWhatsapp} className="h-12" inputClassName="h-12" />
           </div>
 
           <div className="space-y-2">
