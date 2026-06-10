@@ -130,7 +130,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                       key={style.id}
                       className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all"
                     >
-                      <div className="relative aspect-[3/4] bg-slate-100">
+                      <div className="relative aspect-[1080/566] bg-slate-100">
                         <Image
                           src={style.image_url}
                           alt={style.title}
