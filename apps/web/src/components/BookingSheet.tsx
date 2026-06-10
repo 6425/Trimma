@@ -128,10 +128,6 @@ export function BookingSheet({
   const [closedDays, setClosedDays] = useState<number[]>([]);
   const [customRates, setCustomRates] = useState<any[]>([]);
 
-  // Coupon
-  const [couponCode, setCouponCode] = useState("");
-  const [discountPercentage, setDiscountPercentage] = useState(0);
-
   // Filter active staff by certified services if selected. Fall back to all staff
   // when the filter would hide everyone, so the customer can always choose a
   // stylist (matches the desktop scheduler, which lists every staff member).
@@ -228,10 +224,7 @@ export function BookingSheet({
   const totalDuration = selectedServicesWithRates.reduce((sum, s) => sum + s.duration, 0);
   const basePrice = selectedServicesWithRates.reduce((sum, s) => sum + s.price, 0);
   
-  // Calculate discount
-  const discountAmount = basePrice * (discountPercentage / 100);
-  const priceAfterDiscount = basePrice - discountAmount;
-  const totalPrice = priceAfterDiscount;
+  const totalPrice = basePrice;
 
   const reservationFee = calculateReservationFee(totalPrice);
   const pricing = calculateCommissionSplit(totalPrice, globalRates);
@@ -309,14 +302,6 @@ export function BookingSheet({
     }
   };
 
-  const handleApplyCoupon = () => {
-    if (couponCode.toUpperCase() === "TRIMMA10") {
-      setDiscountPercentage(10);
-      alert("🎉 Coupon applied successfully! 10% discount subtracted.");
-    } else {
-      alert("Invalid coupon code.");
-    }
-  };
 
   const toggleService = (id: string) => {
     setSelectedServiceIds(prev => 
@@ -757,38 +742,11 @@ export function BookingSheet({
                      <span className="font-semibold text-zinc-900">{formatPrice(basePrice)}</span>
                    </div>
                    
-                   {discountPercentage > 0 && (
-                     <div className="flex justify-between items-center text-emerald-600 font-medium">
-                       <span>Promo Code (10% off)</span>
-                       <span>-{formatPrice(discountAmount)}</span>
-                     </div>
-                   )}
-
                    <div className="flex justify-between items-center text-zinc-950 font-black text-base pt-1">
                      <span>Total Booking Value</span>
                      <span>{formatPrice(totalPrice)}</span>
                    </div>
                  </div>
-              </div>
-
-              {/* Promo Code Input */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Have a Promotional Code?</div>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="Enter coupon (e.g. TRIMMA10)"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    className="flex-1 h-10 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold uppercase"
-                  />
-                  <Button 
-                    className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl h-10 text-xs px-3.5"
-                    onClick={handleApplyCoupon}
-                  >
-                    Apply
-                  </Button>
-                </div>
               </div>
 
               {/* Deposit Info (Locked 20%) */}
