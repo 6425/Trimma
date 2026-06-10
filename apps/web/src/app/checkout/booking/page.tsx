@@ -286,7 +286,7 @@ function BookingCheckoutForm() {
   const formattedReservationFee = formatLkr(reservationFee, 2);
   const formattedServiceTotal = formatLkr(serviceTotal, 2);
   const formattedBalanceDue = formatLkr(calculateBalanceDue(serviceTotal), 2);
-  const backHref = draft.salonSlug ? `/salons/${draft.salonSlug}` : "/salons";
+  const backHref = draft.salonSlug ? `/salons/${draft.salonSlug}` : "/search";
   const appointmentDate = format(parseISO(draft.bookingDate), "MMMM d, yyyy");
   const staffLabel = staffMember?.name || "Anyone Available";
 

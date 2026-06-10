@@ -294,7 +294,7 @@ export default function ProvinceDetailPage() {
                 </div>
                 
                 <Link 
-                  href={`/salons?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
+                  href={`/search?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
                   className="h-12 px-8 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold border-none shadow-md shadow-brand-pink/20 flex items-center justify-center text-sm"
                 >
                   Search
