@@ -194,7 +194,7 @@ export default function AdminStyleManagementPage() {
     e.preventDefault();
     if (!formData.category_id) return toast.error("Salon category is required");
     if (!formData.title.trim()) return toast.error("Style name is required");
-    if (!formData.image_url) return toast.error("Upload a 3:4 style image first");
+    if (!formData.image_url) return toast.error("Upload a style image first");
 
     const selectedCategory = categories.find((c) => c.id === formData.category_id);
     const tags = formData.tags
@@ -302,14 +302,14 @@ export default function AdminStyleManagementPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/90 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-zinc-900">Crop Style Image (1080 × 566 Landscape)</h3>
+              <h3 className="text-xl font-bold text-zinc-900">Crop Style Image (1080 × 1350 Portrait)</h3>
               <button type="button" onClick={closeCropModal} className="text-zinc-500 hover:text-zinc-900">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <p className="text-xs text-zinc-500 mb-3">
-              Output: 1080×566 landscape — shown on the public Styles gallery and customer saved styles.
+              Output: 1080×1350 portrait — shown on the public Styles gallery and customer saved styles.
             </p>
 
             <div className="flex-1 overflow-auto bg-zinc-100 rounded-xl flex items-center justify-center border border-zinc-200">
@@ -385,13 +385,13 @@ export default function AdminStyleManagementPage() {
               <div className="text-center py-16 text-zinc-500">
                 <ImageIcon className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
                 <p className="font-bold text-sm">No styles yet</p>
-                <p className="text-xs mt-1">Add your first 3:4 style image using the form on the right.</p>
+                <p className="text-xs mt-1">Add your first style image using the form on the right.</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filtered.map((style) => (
                   <div key={style.id} className="rounded-2xl border border-zinc-100 overflow-hidden bg-white shadow-sm">
-                    <div className="relative aspect-[1080/566] bg-zinc-100">
+                    <div className="relative aspect-[4/5] bg-zinc-100">
                       <Image src={style.image_url} alt={style.title} fill className="object-cover" sizes="200px" />
                       {!style.is_active && (
                         <Badge className="absolute top-2 left-2 bg-zinc-800/90 text-white text-[9px]">Hidden</Badge>
@@ -459,8 +459,8 @@ export default function AdminStyleManagementPage() {
             <div className="space-y-2">
               <Label className="text-xs font-bold uppercase text-zinc-500">Style Image (3:4)</Label>
               {formData.image_url ? (
-                <div className="relative aspect-[1080/566] w-full max-w-[280px] rounded-xl overflow-hidden border border-zinc-200">
-                  <Image src={formData.image_url} alt="Preview" fill className="object-cover" sizes="280px" />
+                <div className="relative aspect-[4/5] w-full max-w-[200px] rounded-xl overflow-hidden border border-zinc-200">
+                  <Image src={formData.image_url} alt="Preview" fill className="object-cover" sizes="200px" />
                   <button
                     type="button"
                     onClick={() => setFormData((p) => ({ ...p, image_url: "" }))}
@@ -470,7 +470,7 @@ export default function AdminStyleManagementPage() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center aspect-[1080/566] w-full max-w-[280px] rounded-xl border-2 border-dashed border-zinc-200 bg-slate-50 cursor-pointer hover:border-[#F5B700]/50 transition-colors">
+                <label className="flex flex-col items-center justify-center aspect-[4/5] w-full max-w-[200px] rounded-xl border-2 border-dashed border-zinc-200 bg-slate-50 cursor-pointer hover:border-[#F5B700]/50 transition-colors">
                   <Upload className="w-6 h-6 text-zinc-400 mb-2" />
                   <span className="text-[10px] font-bold text-zinc-500 text-center px-2">Upload &amp; crop</span>
                   <input type="file" accept="image/*" className="hidden" onChange={onSelectFile} />

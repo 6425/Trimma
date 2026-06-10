@@ -1,11 +1,11 @@
 import { centerCrop, makeAspectCrop, type PixelCrop } from "react-image-crop";
 
-export const STYLE_CROP_ASPECT = 1080 / 566;
+export const STYLE_CROP_ASPECT = 1080 / 1350;
 export const STYLE_OUTPUT_WIDTH = 1080;
-export const STYLE_OUTPUT_HEIGHT = 566;
+export const STYLE_OUTPUT_HEIGHT = 1350;
 
-/** Crop UI max edge — output is 1080×566 so 1200 is plenty. */
-export const CROP_PREP_MAX_DIMENSION = 1200;
+/** Crop UI max edge — output is 1080×1350 so 1500 keeps full quality. */
+export const CROP_PREP_MAX_DIMENSION = 1500;
 
 export const DEFAULT_UPLOAD_MIME = "image/jpeg";
 export const DEFAULT_UPLOAD_EXT = "jpg";
