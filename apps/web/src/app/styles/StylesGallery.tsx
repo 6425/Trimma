@@ -31,9 +31,22 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
       }
     }
 
-    return Array.from(map.values()).sort((a, b) =>
-      a.category.name.localeCompare(b.category.name)
-    );
+    // Within each category, sort by style family name then by trailing number
+    // e.g. "3D Luxury Nail Art 03" → family="3D Luxury Nail Art", num=3
+    function styleSort(a: PublicPlatformStyle, b: PublicPlatformStyle) {
+      const parse = (title: string) => {
+        const m = title.match(/^(.*?)\s*(\d+)\s*$/);
+        return m ? { family: m[1].trim(), num: parseInt(m[2], 10) } : { family: title.trim(), num: 0 };
+      };
+      const pa = parse(a.title);
+      const pb = parse(b.title);
+      const famCmp = pa.family.localeCompare(pb.family);
+      return famCmp !== 0 ? famCmp : pa.num - pb.num;
+    }
+
+    return Array.from(map.values())
+      .map((group) => ({ ...group, styles: [...group.styles].sort(styleSort) }))
+      .sort((a, b) => a.category.name.localeCompare(b.category.name));
   }, [initialStyles]);
 
   const visibleGroups =
