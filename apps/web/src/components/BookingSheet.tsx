@@ -132,13 +132,16 @@ export function BookingSheet({
   const [couponCode, setCouponCode] = useState("");
   const [discountPercentage, setDiscountPercentage] = useState(0);
 
-  // Filter active staff by certified services if selected
-  const qualifiedStaff = staff.filter(s => {
+  // Filter active staff by certified services if selected. Fall back to all staff
+  // when the filter would hide everyone, so the customer can always choose a
+  // stylist (matches the desktop scheduler, which lists every staff member).
+  const filteredQualifiedStaff = staff.filter(s => {
     if (!s.working_hours?.assigned_services || s.working_hours.assigned_services.length === 0) {
       return true;
     }
     return s.working_hours.assigned_services.some((as: any) => selectedServiceIds.includes(as.service_id));
   });
+  const qualifiedStaff = filteredQualifiedStaff.length > 0 ? filteredQualifiedStaff : staff;
 
   // Append 'any' to staff list
   const activeStaff = qualifiedStaff.length > 0 
