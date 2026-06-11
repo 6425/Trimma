@@ -13,13 +13,6 @@ import {
   type SalonDealRow,
 } from "@/lib/deals";
 
-const CARD_GRADIENTS = [
-  "from-amber-500 to-amber-700",
-  "from-violet-600 to-indigo-700",
-  "from-amber-500 to-orange-600",
-  "from-teal-500 to-emerald-600",
-];
-
 export function DealsDiscountSection() {
   const [deals, setDeals] = useState<SalonDealRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +71,7 @@ export function DealsDiscountSection() {
     <section id="deals-discount" className="py-12 bg-zinc-50 scroll-mt-24">
       <div className="max-w-7xl mx-auto px-8 lg:px-12">
         <div className="mb-8">
-          <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-2">
+          <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-2">
             <Gift className="w-3.5 h-3.5" />
             Exclusive Special Deals
           </div>
@@ -110,12 +103,11 @@ export function DealsDiscountSection() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {deals.map((deal, index) => {
+            {deals.map((deal) => {
               const salon = deal.salon;
               if (!salon?.slug) return null;
 
               const discount = getDealDiscountPercent(deal);
-              const gradient = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
               const serviceLabel =
                 deal.included_services[0] ||
                 deal.name;
@@ -124,34 +116,34 @@ export function DealsDiscountSection() {
                 <Link
                   key={deal.id}
                   href={`/salons/${salon.slug}`}
-                  className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  className="bg-[#F5B700] rounded-3xl border border-amber-500/50 shadow-md shadow-amber-200/60 overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className={`p-6 bg-gradient-to-br ${gradient} text-white relative min-h-[140px]`}>
-                    <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                  <div className="p-6 relative min-h-[140px]">
+                    <div className="absolute top-4 right-4 bg-black/10 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 text-zinc-950">
                       <Percent className="w-3 h-3" />
                       {discount > 0 ? `${discount}% OFF` : "Deal"}
                     </div>
-                    <h3 className="text-lg font-black leading-tight pr-16">{deal.name}</h3>
-                    <p className="text-white/85 text-xs font-bold mt-2">{salon.name}</p>
+                    <h3 className="text-lg font-black leading-tight pr-16 text-zinc-950">{deal.name}</h3>
+                    <p className="text-zinc-800 text-xs font-bold mt-2">{salon.name}</p>
                   </div>
 
-                  <div className="p-5 flex flex-col flex-1">
-                    <p className="text-zinc-600 text-xs leading-relaxed mb-3 font-medium line-clamp-2">
+                  <div className="px-5 pb-5 flex flex-col flex-1">
+                    <p className="text-zinc-800 text-xs leading-relaxed mb-3 font-medium line-clamp-2">
                       {deal.description || serviceLabel}
                     </p>
-                    <p className="text-[11px] text-zinc-400 mb-3">{getDealLocationLabel(salon)}</p>
-                    <div className="mt-auto flex items-end justify-between pt-3 border-t border-slate-100">
+                    <p className="text-[11px] text-zinc-700 mb-3">{getDealLocationLabel(salon)}</p>
+                    <div className="mt-auto flex items-end justify-between pt-3 border-t border-black/10">
                       <div>
-                        <p className="text-base font-black text-zinc-900">
+                        <p className="text-base font-black text-zinc-950">
                           LKR {deal.package_price.toLocaleString()}
                         </p>
                         {deal.original_price > deal.package_price ? (
-                          <p className="text-xs text-zinc-400 line-through">
+                          <p className="text-xs text-zinc-700 line-through">
                             LKR {deal.original_price.toLocaleString()}
                           </p>
                         ) : null}
                       </div>
-                      <span className="text-[11px] font-bold text-[#F5B700] group-hover:underline">
+                      <span className="text-[11px] font-bold text-zinc-950 bg-black/10 px-2.5 py-1 rounded-lg group-hover:bg-zinc-950 group-hover:text-white transition-colors">
                         View salon
                       </span>
                     </div>

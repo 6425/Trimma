@@ -166,41 +166,41 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                       return (
                         <article
                           key={deal.id}
-                          className="group bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                          className="group bg-[#F5B700] border border-amber-500/50 rounded-3xl p-6 shadow-md shadow-amber-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
                           <div className="flex flex-col gap-4">
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <h3 className="text-base font-bold text-zinc-900 group-hover:text-amber-700 transition-colors">
+                                <h3 className="text-base font-bold text-zinc-950 group-hover:text-black transition-colors">
                                   {deal.name}
                                 </h3>
                                 {salon.category ? (
-                                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-black/10 border border-black/15 text-zinc-900">
                                     {salon.category}
                                   </span>
                                 ) : null}
                               </div>
 
-                              <p className="text-sm text-zinc-600">
+                              <p className="text-sm text-zinc-800">
                                 <Link
                                   href={`/salons/${salon.slug}`}
-                                  className="font-semibold text-zinc-800 hover:text-amber-600 transition-colors"
+                                  className="font-semibold text-zinc-950 hover:text-black transition-colors underline-offset-2 hover:underline"
                                 >
                                   {salon.name}
                                 </Link>
                                 {" · "}
-                                <span className="text-zinc-500">{getDealLocationLabel(salon)}</span>
+                                <span className="text-zinc-700">{getDealLocationLabel(salon)}</span>
                               </p>
 
                               {deal.description ? (
-                                <p className="text-sm text-zinc-500 mt-3 leading-relaxed line-clamp-2">
+                                <p className="text-sm text-zinc-800 mt-3 leading-relaxed line-clamp-2">
                                   {deal.description}
                                 </p>
                               ) : null}
 
                               {deal.included_services.length > 0 ? (
-                                <p className="text-xs text-zinc-500 mt-3 flex items-start gap-1.5">
-                                  <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                                <p className="text-xs text-zinc-800 mt-3 flex items-start gap-1.5">
+                                  <Tag className="w-3.5 h-3.5 text-zinc-900 shrink-0 mt-0.5" />
                                   <span>
                                     Includes: {deal.included_services.slice(0, 4).join(", ")}
                                     {deal.included_services.length > 4 ? "…" : ""}
@@ -209,7 +209,7 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                               ) : null}
 
                               {(deal.start_date || deal.end_date) && (
-                                <p className="text-xs text-zinc-400 mt-2 font-medium">
+                                <p className="text-xs text-zinc-700 mt-2 font-medium">
                                   Valid{" "}
                                   {deal.start_date ? formatDisplayDate(deal.start_date) : "now"}
                                   {deal.end_date ? ` – ${formatDisplayDate(deal.end_date)}` : ""}
@@ -217,20 +217,20 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                               )}
                             </div>
 
-                            <div className="flex items-center justify-between pt-4 border-t border-zinc-100">
+                            <div className="flex items-center justify-between pt-4 border-t border-black/10">
                               <div>
-                                <p className="text-xl font-black text-amber-600">
+                                <p className="text-xl font-black text-zinc-950">
                                   LKR {deal.package_price.toLocaleString()}
                                 </p>
                                 {hasDiscount ? (
-                                  <p className="text-xs text-zinc-400 line-through font-medium">
+                                  <p className="text-xs text-zinc-700 line-through font-medium">
                                     LKR {deal.original_price.toLocaleString()}
                                   </p>
                                 ) : null}
                               </div>
                               <Link
                                 href={`/salons/${salon.slug}`}
-                                className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 text-black font-bold text-sm px-5 py-2.5 rounded-xl transition-all hover:scale-[1.02] shadow-sm shadow-amber-100"
+                                className="inline-flex items-center gap-1.5 bg-zinc-950 hover:bg-black text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all hover:scale-[1.02] shadow-sm"
                               >
                                 View salon
                                 <ArrowRight className="w-3.5 h-3.5" />
