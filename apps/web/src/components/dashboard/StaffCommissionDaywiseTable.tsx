@@ -23,16 +23,55 @@ export function StaffCommissionDaywiseTable({
     [bookings, allStaff]
   );
 
-  const timeframeBookings = useMemo(() => {
+  const { rows, sumCommission } = useMemo(() => {
     const filtered = filterBookingsByCommissionWeek(bookings, offsetWeeks);
-    return [...filtered].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const dateCompare = (a.booking_date || "").localeCompare(b.booking_date || "");
       if (dateCompare !== 0) return dateCompare;
       return (a.booking_time || "").localeCompare(b.booking_time || "");
     });
-  }, [bookings, offsetWeeks]);
 
-  let sumCommission = 0;
+    const tableRows = sorted.map((booking) => {
+      let serviceName = "General Service";
+      const fullServiceName = booking.services?.name
+        || (booking.booking_services?.[0]?.services
+          ? (Array.isArray(booking.booking_services[0].services)
+            ? booking.booking_services[0].services[0]?.name
+            : booking.booking_services[0].services?.name)
+          : null);
+      if (fullServiceName) serviceName = fullServiceName;
+
+      const assignedStaff = resolveStaffMemberFromBooking(booking, allStaff);
+      const inferredStaff = inferredStaffByBookingId.get(booking.id);
+      const displayStaff = assignedStaff || inferredStaff;
+      let staffName = "Unassigned";
+      if (displayStaff?.name) {
+        staffName = displayStaff.name;
+        if (!assignedStaff && inferredStaff) staffName += " (auto)";
+      }
+
+      const staffCommission = resolveBookingStaffCommission(booking, {
+        allStaff,
+        inferredStaff: inferredStaffByBookingId.get(booking.id) || null,
+      });
+
+      return {
+        id: booking.id,
+        bookingDate: booking.booking_date || "—",
+        serviceName,
+        timeLabel: booking.booking_time ? booking.booking_time.slice(0, 5) : "",
+        staffName,
+        staffCommission,
+      };
+    });
+
+    const sumCommission = tableRows.reduce(
+      (sum, row) => sum + (row.staffCommission?.amount ?? 0),
+      0
+    );
+
+    return { rows: tableRows, sumCommission };
+  }, [bookings, offsetWeeks, allStaff, inferredStaffByBookingId]);
 
   return (
     <div className="bg-white p-4 rounded-xl border border-slate-200 h-full flex flex-col">
@@ -68,7 +107,7 @@ export function StaffCommissionDaywiseTable({
         </div>
       </div>
 
-      {timeframeBookings.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-sm text-zinc-500 flex-1">No bookings in this period.</p>
       ) : (
         <div className="overflow-x-auto flex-1 -mx-1 px-1">
@@ -83,54 +122,26 @@ export function StaffCommissionDaywiseTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {timeframeBookings.map((booking) => {
-                let serviceName = "General Service";
-                const fullServiceName = booking.services?.name
-                  || (booking.booking_services?.[0]?.services
-                    ? (Array.isArray(booking.booking_services[0].services)
-                      ? booking.booking_services[0].services[0]?.name
-                      : booking.booking_services[0].services?.name)
-                    : null);
-                if (fullServiceName) serviceName = fullServiceName;
-
-                const assignedStaff = resolveStaffMemberFromBooking(booking, allStaff);
-                const inferredStaff = inferredStaffByBookingId.get(booking.id);
-                const displayStaff = assignedStaff || inferredStaff;
-                let staffName = "Unassigned";
-                if (displayStaff?.name) {
-                  staffName = displayStaff.name;
-                  if (!assignedStaff && inferredStaff) staffName += " (auto)";
-                }
-
-                const staffCommission = resolveBookingStaffCommission(booking, {
-                  allStaff,
-                  inferredStaff: inferredStaffByBookingId.get(booking.id) || null,
-                });
-                sumCommission += staffCommission?.amount ?? 0;
-
-                const timeLabel = booking.booking_time ? booking.booking_time.slice(0, 5) : "";
-
-                return (
-                  <tr key={booking.id} className="hover:bg-slate-50/60">
-                    <td className="py-2 pr-2 font-semibold text-slate-700 whitespace-nowrap">
-                      {booking.booking_date || "—"}
-                    </td>
-                    <td className="py-2 px-2">
-                      <div className="font-semibold text-slate-800">{serviceName}</div>
-                      {timeLabel ? (
-                        <div className="text-[10px] text-zinc-500">{timeLabel}</div>
-                      ) : null}
-                    </td>
-                    <td className="py-2 px-2 text-zinc-600 font-medium">{staffName}</td>
-                    <td className="py-2 px-2 text-right text-zinc-500">
-                      {staffCommission ? `${staffCommission.rate}%` : "—"}
-                    </td>
-                    <td className="py-2 pl-2 text-right font-bold text-slate-800">
-                      {staffCommission ? `LKR ${formatLkr(staffCommission.amount)}` : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
+              {rows.map((row) => (
+                <tr key={row.id} className="hover:bg-slate-50/60">
+                  <td className="py-2 pr-2 font-semibold text-slate-700 whitespace-nowrap">
+                    {row.bookingDate}
+                  </td>
+                  <td className="py-2 px-2">
+                    <div className="font-semibold text-slate-800">{row.serviceName}</div>
+                    {row.timeLabel ? (
+                      <div className="text-[10px] text-zinc-500">{row.timeLabel}</div>
+                    ) : null}
+                  </td>
+                  <td className="py-2 px-2 text-zinc-600 font-medium">{row.staffName}</td>
+                  <td className="py-2 px-2 text-right text-zinc-500">
+                    {row.staffCommission ? `${row.staffCommission.rate}%` : "—"}
+                  </td>
+                  <td className="py-2 pl-2 text-right font-bold text-slate-800">
+                    {row.staffCommission ? `LKR ${formatLkr(row.staffCommission.amount)}` : "—"}
+                  </td>
+                </tr>
+              ))}
             </tbody>
             <tfoot>
               <tr className="border-t border-slate-200">
