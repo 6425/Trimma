@@ -412,12 +412,25 @@ export async function fetchSalonCustomersPage() {
 
     const emails = [...new Set((bookings || []).map(b => b.customer_email).filter(Boolean))];
     let usersData: any[] = [];
+    let vipByEmail = new Map<string, boolean>();
     if (emails.length > 0) {
-      const { data } = await supabase
-        .from("users")
-        .select("email, full_name, phone")
-        .in("email", emails);
-      if (data) usersData = data;
+      const [usersRes, vipRes] = await Promise.all([
+        supabase.from("users").select("email, full_name, phone").in("email", emails),
+        supabase
+          .from("salon_customer_profiles")
+          .select("customer_email, is_vip")
+          .eq("salon_id", ctx.salonId)
+          .in("customer_email", emails),
+      ]);
+      if (usersRes.data) usersData = usersRes.data;
+      if (vipRes.error && !vipRes.error.message.toLowerCase().includes("does not exist")) {
+        throw new Error(vipRes.error.message);
+      }
+      (vipRes.data || []).forEach((row) => {
+        if (row.customer_email) {
+          vipByEmail.set(String(row.customer_email).toLowerCase(), Boolean(row.is_vip));
+        }
+      });
     }
     
     const usersByEmail = new Map();
@@ -435,6 +448,7 @@ export async function fetchSalonCustomersPage() {
           email: email,
           name: user?.full_name || "Guest",
           phone: user?.phone || "-",
+          isVip: vipByEmail.get(email) ?? false,
           bookings: 0,
           spent: 0,
           rating: 5, // We don't have per-customer ratings aggregated easily right now
@@ -462,6 +476,7 @@ export async function fetchSalonCustomersPage() {
         name: c.name,
         email: c.email,
         phone: c.phone,
+        isVip: c.isVip,
         bookings: c.bookings,
         spent: "LKR " + c.spent.toLocaleString(),
         rating: 5,
@@ -474,5 +489,39 @@ export async function fetchSalonCustomersPage() {
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return { success: true as const, ...result.data };
+}
+
+export async function setSalonCustomerVip(customerEmail: string, isVip: boolean) {
+  const normalizedEmail = customerEmail.trim().toLowerCase();
+  if (!normalizedEmail || !normalizedEmail.includes("@")) {
+    return { success: false as const, error: "A valid customer email is required." };
+  }
+
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("salon_customer_profiles").upsert(
+      {
+        salon_id: ctx.salonId,
+        customer_email: normalizedEmail,
+        is_vip: isVip,
+        marked_vip_at: isVip ? now : null,
+        marked_vip_by: isVip ? ctx.email : null,
+        updated_at: now,
+      },
+      { onConflict: "salon_id,customer_email" }
+    );
+
+    if (error) throw new Error(error.message);
+    return { email: normalizedEmail, isVip };
+  });
+
+  if (!isSalonDbSuccess(result)) {
+    return salonDbFailure(
+      result,
+      "VIP status could not be saved. Run packages/db/SALON_CUSTOMER_VIP_PATCH.sql in Supabase SQL Editor."
+    );
+  }
+
   return { success: true as const, ...result.data };
 }
