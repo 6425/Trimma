@@ -65,8 +65,8 @@ export function filterServicesWithStaffCoverage<T extends { id: string; status?:
   );
 }
 
-type BookingForAllocation = {
-  id: string;
+export type BookingForAllocation = {
+  id?: string;
   booking_date?: string | null;
   booking_time?: string | null;
   staff_id?: string | null;
@@ -195,7 +195,7 @@ export function inferStaffAllocations(
     );
 
     for (const booking of sorted) {
-      if (bookingHasAssignedStaff(booking)) continue;
+      if (!booking.id || bookingHasAssignedStaff(booking)) continue;
 
       const serviceIds = getBookingServiceIds(booking);
       const qualified = filterStaffQualifiedForServices(allStaff, serviceIds);
@@ -203,10 +203,10 @@ export function inferStaffAllocations(
       if (!staffIds.length) continue;
 
       const conflictBookings: BookingConflictRow[] = sorted
-        .filter((other) => other.id !== booking.id)
+        .filter((other) => other.id && other.id !== booking.id)
         .map((other) => {
           const assigned = resolveStaffMemberFromBooking(other, allStaff);
-          const inferredStaff = inferred.get(other.id);
+          const inferredStaff = other.id ? inferred.get(other.id) : undefined;
           const staffId =
             assigned?.id || other.staff_id || inferredStaff?.id || null;
           return toConflictRow(other, staffId);
