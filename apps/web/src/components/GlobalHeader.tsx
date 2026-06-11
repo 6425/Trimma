@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift } from "lucide-react";
+import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
 import Logo from "./Logo";
@@ -40,6 +40,7 @@ export default function GlobalHeader() {
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isDealsActive = pathname === "/deals";
   const isStylesActive = pathname === "/styles";
+  const isContactActive = pathname === "/contact";
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -259,6 +260,14 @@ export default function GlobalHeader() {
               >
                 Deals
               </Link>
+              <Link
+                href="/contact"
+                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
+                  isContactActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+                }`}
+              >
+                Contact
+              </Link>
             </div>
 
             <div className="hidden md:flex items-center gap-2">
@@ -447,6 +456,16 @@ export default function GlobalHeader() {
             >
               <Gift className="w-4 h-4 shrink-0" />
               Deals
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isContactActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              <Mail className="w-4 h-4 shrink-0" />
+              Contact
             </Link>
             <div className="h-px bg-zinc-100 my-2" />
             <Link
