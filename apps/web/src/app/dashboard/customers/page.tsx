@@ -26,18 +26,27 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-function buildWhatsAppHref(phone: string): string | null {
+function buildWhatsAppHref(phone: string, customerName: string): string | null {
   if (!phone || phone === "-") return null;
   let digits = phone.replace(/\D/g, "");
   if (!digits) return null;
   if (digits.startsWith("0")) digits = `94${digits.slice(1)}`;
   else if (!digits.startsWith("94") && digits.length === 9) digits = `94${digits}`;
-  return `https://wa.me/${digits}`;
+  const text = encodeURIComponent(`Hi ${customerName}, `);
+  // wa.me opens the salon owner's logged-in WhatsApp (app on mobile, WhatsApp Web on desktop)
+  return `https://wa.me/${digits}?text=${text}`;
 }
 
-function buildMailtoHref(email: string): string | null {
+function buildGmailHref(email: string, customerName: string): string | null {
   if (!email || !email.includes("@")) return null;
-  return `mailto:${email}`;
+  const params = new URLSearchParams({
+    view: "cm",
+    fs: "1",
+    to: email,
+    su: "Message from your salon",
+    body: `Hi ${customerName},\n\n`,
+  });
+  return `https://mail.google.com/mail/?${params.toString()}`;
 }
 
 export default function CustomersPage() {
@@ -168,8 +177,8 @@ export default function CustomersPage() {
                 </tr>
               ) : (
                 filteredCustomers.map((c) => {
-                  const whatsappHref = buildWhatsAppHref(c.phone);
-                  const mailtoHref = buildMailtoHref(c.email);
+                  const whatsappHref = buildWhatsAppHref(c.phone, c.name);
+                  const gmailHref = buildGmailHref(c.email, c.name);
                   const isUpdatingVip = vipUpdating === c.email;
 
                   return (
@@ -238,10 +247,12 @@ export default function CustomersPage() {
                               <WhatsAppIcon className="w-4 h-4" />
                             </span>
                           )}
-                          {mailtoHref ? (
+                          {gmailHref ? (
                             <a
-                              href={mailtoHref}
-                              title={`Email ${c.name}`}
+                              href={gmailHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={`Gmail ${c.name}`}
                               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-zinc-400 hover:text-brand hover:bg-amber-50 transition-colors"
                             >
                               <Mail className="w-3.5 h-3.5" />
