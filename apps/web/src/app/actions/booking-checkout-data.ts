@@ -7,6 +7,7 @@ import {
   SLOT_UNAVAILABLE_MESSAGE,
 } from "@/lib/booking-availability";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
+import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
 import {
   buildPromotionCheckoutService,
   resolvePromotionBookingServices,
@@ -139,7 +140,7 @@ export async function fetchBookingCheckoutData(
     const formattedTime = parseDisplayTimeSlot(draft.timeSlot);
 
     const [{ data: salonStaff }, { data: dayBookings }] = await Promise.all([
-      supabase.from("salon_staff").select("id").eq("salon_id", draft.salonId),
+      supabase.from("salon_staff").select("id, working_hours").eq("salon_id", draft.salonId),
       supabase
         .from("bookings")
         .select("id, booking_time, staff_id, status, created_at, service_id")
@@ -149,7 +150,11 @@ export async function fetchBookingCheckoutData(
 
     const enrichedBookings = await enrichBookingsWithDurations(supabase, dayBookings || []);
 
-    const staffIds = (salonStaff || []).map((member) => member.id).filter(Boolean);
+    const qualifiedStaff = filterStaffQualifiedForServices(
+      salonStaff || [],
+      services.map((service) => service.id)
+    );
+    const staffIds = qualifiedStaff.map((member) => member.id).filter(Boolean);
 
     let resolvedStaffId: string;
     try {

@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Scissors, Search, Loader2, Trash2, Edit2, Sparkles, Ban, LayoutGrid } from "lucide-react";
+import { Plus, Scissors, Search, Loader2, Trash2, Edit2, Sparkles, Ban, LayoutGrid, Users } from "lucide-react";
+import Link from "next/link";
+import { salonHasActiveStaff } from "@/lib/staff-allocation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,9 @@ export default function DashboardServices() {
   const [subscriptionPlan, setSubscriptionPlan] = useState<any>(null);
   const [allowedCategories, setAllowedCategories] = useState<any[]>([]);
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>("");
+  const [salonStaff, setSalonStaff] = useState<any[]>([]);
+  const [coveredServiceIds, setCoveredServiceIds] = useState<string[]>([]);
+  const hasActiveStaff = salonHasActiveStaff(salonStaff);
   
   // Import Modal States
   const [showImportModal, setShowImportModal] = useState(false);
@@ -84,6 +89,8 @@ export default function DashboardServices() {
       const salonData = result.salon;
       setSalon(salonData);
       setServices(result.services || []);
+      setSalonStaff(result.staff || []);
+      setCoveredServiceIds(result.coveredServiceIds || []);
       setSubscriptionPlan(result.subscriptionPlan);
       setAllowedCategories(result.allowedCategories || []);
       setGlobalServices(result.globalServices || []);
@@ -187,6 +194,10 @@ export default function DashboardServices() {
       return toast.error("Please select at least one service to import.");
     }
 
+    if (!hasActiveStaff) {
+      return toast.error("Add at least one staff member in the Staff menu before importing services.");
+    }
+
     // Double-check thresholds before submitting to database
     const maxServicesAllowed = subscriptionPlan?.max_services || 6;
     const currentServiceCount = services.length;
@@ -228,14 +239,16 @@ export default function DashboardServices() {
           duration_min: parseInt(info.duration_min) || 30,
           description: info.description,
           image_url: globalSvc?.icon_image_url || null,
-          status: "active"
+          status: "inactive"
         };
       });
 
       const result = await insertSalonServices(insertPayloads);
       if (result.success === false) throw new Error(result.error);
 
-      toast.success(`${insertPayloads.length} services customized and published successfully!`);
+      toast.success(
+        `${insertPayloads.length} service(s) added as Inactive. Assign each to a staff member in Staff, then set Active here.`
+      );
       setShowImportModal(false);
       
       // Refresh local catalog
@@ -374,6 +387,26 @@ export default function DashboardServices() {
         </div>
       )}
 
+      {!hasActiveStaff && !loading && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-900 text-sm">Add staff before services</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Services cannot be published until you have staff. Add your team first, map services to each stylist, then activate services here.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/staff"
+            className="inline-flex items-center justify-center h-9 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold whitespace-nowrap"
+          >
+            Go to Staff
+          </Link>
+        </div>
+      )}
+
       {/* Main Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -382,8 +415,15 @@ export default function DashboardServices() {
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 
-            onClick={() => setShowImportModal(true)}
-            className="flex-1 md:flex-none border border-brand bg-white text-brand hover:bg-rose-50 rounded-xl font-bold px-6 h-11 transition-all"
+            onClick={() => {
+              if (!hasActiveStaff) {
+                toast.error("Add at least one staff member before importing services.");
+                return;
+              }
+              setShowImportModal(true);
+            }}
+            disabled={!hasActiveStaff}
+            className="flex-1 md:flex-none border border-brand bg-white text-brand hover:bg-rose-50 rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
@@ -492,9 +532,16 @@ export default function DashboardServices() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={service.status === 'active' ? "bg-emerald-50 text-emerald-600 border-none" : "bg-zinc-100 text-zinc-400 border-none"}>
-                        {service.status === 'active' ? "Active" : "Inactive"}
-                      </Badge>
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge className={service.status === 'active' ? "bg-emerald-50 text-emerald-600 border-none" : "bg-zinc-100 text-zinc-400 border-none"}>
+                          {service.status === 'active' ? "Active" : "Inactive"}
+                        </Badge>
+                        {service.status !== 'active' && !coveredServiceIds.includes(service.id) && (
+                          <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200">
+                            Needs staff
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
@@ -772,6 +819,11 @@ export default function DashboardServices() {
                     <option value="active">Active & Bookable</option>
                     <option value="inactive">Inactive / Paused</option>
                   </select>
+                  {editingServiceId && !coveredServiceIds.includes(editingServiceId) && (
+                    <p className="text-[10px] text-amber-600 font-medium">
+                      Map this service to a staff member in Staff before activating.
+                    </p>
+                  )}
                 </div>
               </div>
 

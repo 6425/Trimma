@@ -8,6 +8,7 @@ import {
   SLOT_UNAVAILABLE_MESSAGE,
 } from "@/lib/booking-availability";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
+import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
 
 export type BookingSlotsResult =
   | { success: true; slots: string[]; bookedSlots: string[]; closed: boolean; reason?: string }
@@ -191,8 +192,9 @@ export async function validateBookingSlotSelection(input: {
   bookingDate: string;
   timeSlot: string;
   totalDurationMinutes: number;
+  serviceIds?: string[];
 }): Promise<ValidateSlotResult> {
-  const { salonId, staffId, bookingDate, timeSlot, totalDurationMinutes } = input;
+  const { salonId, staffId, bookingDate, timeSlot, totalDurationMinutes, serviceIds = [] } = input;
 
   if (!salonId || !bookingDate || !timeSlot || totalDurationMinutes <= 0) {
     return { success: false, error: "Missing booking details." };
@@ -203,7 +205,7 @@ export async function validateBookingSlotSelection(input: {
     const formattedTime = parseDisplayTimeSlot(timeSlot);
 
     const [{ data: salonStaff }, { data: dayBookings }] = await Promise.all([
-      supabase.from("salon_staff").select("id").eq("salon_id", salonId),
+      supabase.from("salon_staff").select("id, working_hours").eq("salon_id", salonId),
       supabase
         .from("bookings")
         .select("id, booking_time, staff_id, status, created_at, service_id")
@@ -213,7 +215,8 @@ export async function validateBookingSlotSelection(input: {
 
     const enrichedBookings = await enrichBookingsWithDurations(supabase, dayBookings || []);
 
-    const staffIds = (salonStaff || []).map((member) => member.id).filter(Boolean);
+    const qualifiedStaff = filterStaffQualifiedForServices(salonStaff || [], serviceIds);
+    const staffIds = qualifiedStaff.map((member) => member.id).filter(Boolean);
     const resolvedStaffId = resolveStaffForBookingSlot({
       bookings: enrichedBookings,
       staffIds,

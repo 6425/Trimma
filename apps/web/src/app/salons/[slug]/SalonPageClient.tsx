@@ -315,6 +315,12 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
     setIsProcessing(true);
     try {
+      const bookingServiceIds = promotionResolution?.serviceIds.length
+        ? promotionResolution.serviceIds
+        : selectedServiceId
+          ? [selectedServiceId]
+          : [];
+
       const validation = await withTimeout(
         validateBookingSlotSelection({
           salonId: salon.id,
@@ -322,6 +328,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
           bookingDate: format(selectedDate, "yyyy-MM-dd"),
           timeSlot: selectedTimeSlot,
           totalDurationMinutes: bookingDuration,
+          serviceIds: bookingServiceIds,
         }),
         15000,
         "Could not verify this time slot. Please try again."
@@ -948,7 +955,14 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                  {staff.map(st => (
                    <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
                      <Avatar className="w-16 h-16 border border-slate-100">
-                       <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${st.name}`} />
+                       <AvatarImage
+                         src={
+                           st.avatar_url ||
+                           `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(st.name)}`
+                         }
+                         alt={st.name}
+                         className="object-cover"
+                       />
                        <AvatarFallback>{st.name[0]}</AvatarFallback>
                      </Avatar>
                      <div className="flex-1">

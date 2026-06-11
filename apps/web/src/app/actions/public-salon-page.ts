@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { mapSalonPromotionRows, type SalonPromotionPackage } from "@/lib/deals";
 import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { isDummySalonRecord } from "@/lib/salon-list-filters";
+import { filterServicesWithStaffCoverage } from "@/lib/staff-allocation";
 
 const SALON_COLUMNS =
   "id, slug, name, city, district, province, address, phone, owner_email, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled";
@@ -30,6 +31,7 @@ export type PublicSalonStaff = {
   completed: number;
   availableToday: boolean;
   working_hours: unknown;
+  avatar_url: string | null;
 };
 
 export type PublicSalonAmenityDisplay = {
@@ -113,7 +115,17 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     if (globalAmenitiesRes.error) throw new Error(globalAmenitiesRes.error.message);
     if (promotionsRes.error) throw new Error(promotionsRes.error.message);
 
-    const services: PublicSalonService[] = (servicesRes.data || []).map((svc) => ({
+    const staffForCoverage = (staffRes.data || []) as Array<{
+      id: string;
+      status?: string | null;
+      working_hours?: { assigned_services?: Array<{ service_id: string; enabled?: boolean }> } | null;
+    }>;
+    const bookableServices = filterServicesWithStaffCoverage(
+      servicesRes.data || [],
+      staffForCoverage
+    );
+
+    const services: PublicSalonService[] = bookableServices.map((svc) => ({
       id: svc.id,
       name: svc.name,
       duration: svc.duration_min,
@@ -135,6 +147,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       completed: 0,
       availableToday: true,
       working_hours: member.working_hours,
+      avatar_url: member.avatar_url || null,
     }));
 
     const globalMap = Object.fromEntries((globalAmenitiesRes.data || []).map((row) => [row.id, row]));

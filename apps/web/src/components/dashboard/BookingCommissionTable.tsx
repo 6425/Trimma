@@ -1,9 +1,21 @@
 import React, { useState } from "react";
-import { formatLkr } from "@/lib/dashboard-stats";
+import {
+  buildInferredStaffMap,
+  formatLkr,
+  resolveBookingStaffCommission,
+} from "@/lib/dashboard-stats";
+import { resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
 import { Building2, Info, ChevronDown, ChevronUp } from "lucide-react";
 
-export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
+export function BookingCommissionTable({
+  bookings,
+  allStaff = [],
+}: {
+  bookings: any[];
+  allStaff?: any[];
+}) {
   const [offsetWeeks, setOffsetWeeks] = useState(0);
+  const inferredStaffByBookingId = buildInferredStaffMap(bookings, allStaff);
 
   if (!bookings || bookings.length === 0) {
     return (
@@ -33,6 +45,7 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
 
   // Calculate Sums for the current timeframe
   let sumAmount = 0;
+  let sumStaffCommission = 0;
   let sumResFee = 0;
   let sumBalanceDue = 0;
   let sumSalonUpfront = 0;
@@ -44,8 +57,13 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
     const salonUpfront = Number(b.salon_upfront_amount || 0);
     const balanceDue = amount - totalResFee;
     const totalIncome = balanceDue + salonUpfront;
+    const staffCommission = resolveBookingStaffCommission(b, {
+      allStaff,
+      inferredStaff: inferredStaffByBookingId.get(b.id) || null,
+    });
 
     sumAmount += amount;
+    sumStaffCommission += staffCommission?.amount ?? 0;
     sumResFee += totalResFee;
     sumBalanceDue += balanceDue;
     sumSalonUpfront += salonUpfront;
@@ -120,15 +138,15 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
               }
 
               let staffName = "Any Staff";
-              
-              // Try direct relation first, then fallback to junction table
-              let fullStaffName = b.salon_staff?.name;
-              if (!fullStaffName && b.booking_staff && b.booking_staff.length > 0) {
-                const st = b.booking_staff[0].salon_staff;
-                fullStaffName = Array.isArray(st) ? st[0]?.name : st?.name;
-              }
-              if (fullStaffName) {
-                staffName = fullStaffName.split(" ")[0];
+
+              const assignedStaff = resolveStaffMemberFromBooking(b, allStaff);
+              const inferredStaff = inferredStaffByBookingId.get(b.id);
+              const displayStaff = assignedStaff || inferredStaff;
+              if (displayStaff?.name) {
+                staffName = displayStaff.name.split(" ")[0];
+                if (!assignedStaff && inferredStaff) {
+                  staffName = `${staffName} (auto)`;
+                }
               }
 
               const amount = Number(b.amount || 0);
@@ -136,6 +154,10 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
               const salonUpfront = Number(b.salon_upfront_amount || 0);
               const balanceDue = amount - totalResFee;
               const totalIncome = balanceDue + salonUpfront;
+              const staffCommission = resolveBookingStaffCommission(b, {
+                allStaff,
+                inferredStaff: inferredStaffByBookingId.get(b.id) || null,
+              });
 
               return (
                 <tr key={b.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -148,8 +170,15 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
                   <td className="py-3 px-4 text-right text-sm font-semibold text-slate-600">
                     LKR {formatLkr(amount)}
                   </td>
-                  <td className="py-3 px-4 text-right text-sm font-medium text-slate-400 italic">
-                    N/A
+                  <td className="py-3 px-4 text-right text-sm font-semibold text-slate-700">
+                    {staffCommission ? (
+                      <span title={`${staffCommission.rate}% commission`}>
+                        LKR {formatLkr(staffCommission.amount)}
+                        <span className="block text-[10px] font-medium text-slate-400">{staffCommission.rate}%</span>
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-medium">—</span>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-right text-sm font-medium text-slate-500 border-l border-slate-100 bg-slate-50/50">
                     LKR {formatLkr(totalResFee)}
@@ -175,8 +204,8 @@ export function BookingCommissionTable({ bookings }: { bookings: any[] }) {
               <td className="py-4 px-4 text-right text-sm font-black text-slate-800">
                 LKR {formatLkr(sumAmount)}
               </td>
-              <td className="py-4 px-4 text-right text-sm font-medium text-slate-400 italic">
-                N/A
+              <td className="py-4 px-4 text-right text-sm font-black text-slate-700">
+                LKR {formatLkr(sumStaffCommission)}
               </td>
               <td className="py-4 px-4 text-right text-sm font-black text-slate-600 border-l border-slate-200 bg-slate-100/50">
                 LKR {formatLkr(sumResFee)}

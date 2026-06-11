@@ -26,6 +26,7 @@ export default function FinanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [salon, setSalon] = useState<any>(null);
   const [bookings, setBookings] = useState<BookingWithSplits[]>([]);
+  const [allStaff, setAllStaff] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
 
@@ -69,6 +70,7 @@ export default function FinanceDashboard() {
       }));
 
       setBookings(resolvedBookings);
+      setAllStaff(result.staff || []);
       
       // 4. Calculate aggregates
       let gross = 0;
@@ -242,7 +244,7 @@ export default function FinanceDashboard() {
           ))}
         </div>
         
-        <BookingCommissionTable bookings={filteredBookings} />
+        <BookingCommissionTable bookings={filteredBookings} allStaff={allStaff} />
       </div>
 
     </div>

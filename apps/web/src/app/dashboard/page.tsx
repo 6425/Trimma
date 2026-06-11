@@ -7,6 +7,7 @@ import { fetchSalonDashboardPage } from "@/app/actions/salon-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
 import { Loader2, RefreshCw } from "lucide-react";
 import { BookingCommissionTable } from "../../components/dashboard/BookingCommissionTable";
+import { SalonSetupChecklist } from "../../components/dashboard/SalonSetupChecklist";
 import { StaffBookingTrendChart } from "../../components/dashboard/StaffBookingTrendChart";
 import { RevenueTrendChart } from "../../components/dashboard/RevenueTrendChart";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
@@ -73,6 +74,7 @@ export default function Dashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [allStaff, setAllStaff] = useState<any[]>([]);
+  const [allServices, setAllServices] = useState<any[]>([]);
 
   const fetchDashboardStats = useCallback(async (options?: { showSpinner?: boolean }) => {
     const showSpinner = options?.showSpinner ?? false;
@@ -146,6 +148,7 @@ export default function Dashboard() {
       setStats(newStats);
       setRecentBookings(bookings);
       setAllStaff(staff);
+      setAllServices(services);
       setMonthlyPoints(monthly);
       setActivity(feed.slice(0, 6));
     } catch (err) {
@@ -212,6 +215,8 @@ export default function Dashboard() {
         </button>
       </div>
 
+      <SalonSetupChecklist services={allServices} staff={allStaff} />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card title="Total Bookings" value={stats.totalBookings.toLocaleString()} />
         <Card title="Active Services" value={stats.activeServices.toLocaleString()} />
@@ -219,7 +224,7 @@ export default function Dashboard() {
         <Card title="Total Revenue" value={`LKR ${formatLkr(stats.revenue)}`} />
       </div>
 
-      <BookingCommissionTable bookings={recentBookings} />
+      <BookingCommissionTable bookings={recentBookings} allStaff={allStaff} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <StaffBookingTrendChart bookings={recentBookings} allStaff={allStaff} />

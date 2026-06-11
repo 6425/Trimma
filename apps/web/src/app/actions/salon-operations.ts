@@ -10,6 +10,25 @@ import {
   pickSalonProfileUpdate,
 } from "@/lib/salon-profile-save";
 import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
+import {
+  isServiceCoveredByStaff,
+  salonHasActiveStaff,
+  SERVICE_NEEDS_STAFF_MSG,
+  STAFF_REQUIRED_BEFORE_SERVICES_MSG,
+  type SalonStaffForAllocation,
+} from "@/lib/staff-allocation";
+
+async function loadSalonStaffForCoverage(
+  supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
+  salonId: string
+): Promise<SalonStaffForAllocation[]> {
+  const { data, error } = await supabase
+    .from("salon_staff")
+    .select("id, name, status, commission_rate, working_hours")
+    .eq("salon_id", salonId);
+  if (error) throw new Error(error.message);
+  return (data || []) as SalonStaffForAllocation[];
+}
 
 async function assertSalonService(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -136,7 +155,16 @@ export async function updateSalonPromotionPackage(packageId: string, payload: Re
 
 export async function insertSalonServices(payloads: Record<string, unknown>[]) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const rows = payloads.map((row) => ({ ...row, salon_id: ctx.salonId }));
+    const staff = await loadSalonStaffForCoverage(supabase, ctx.salonId);
+    if (!salonHasActiveStaff(staff)) {
+      throw new Error(STAFF_REQUIRED_BEFORE_SERVICES_MSG);
+    }
+
+    const rows = payloads.map((row) => ({
+      ...row,
+      salon_id: ctx.salonId,
+      status: "inactive",
+    }));
     const { error } = await supabase.from("services").insert(rows);
     if (error) throw new Error(error.message);
   });
@@ -147,6 +175,17 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
 export async function updateSalonService(serviceId: string, payload: Record<string, unknown>) {
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonService(supabase, ctx, serviceId);
+
+    if (payload.status === "active") {
+      const staff = await loadSalonStaffForCoverage(supabase, ctx.salonId);
+      if (!salonHasActiveStaff(staff)) {
+        throw new Error(STAFF_REQUIRED_BEFORE_SERVICES_MSG);
+      }
+      if (!isServiceCoveredByStaff(serviceId, staff)) {
+        throw new Error(SERVICE_NEEDS_STAFF_MSG);
+      }
+    }
+
     const { error } = await supabase.from("services").update(payload).eq("id", serviceId);
     if (error) throw new Error(error.message);
   });

@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { parseDisplayTimeSlot, resolveStaffForBookingSlot } from "@/lib/booking-availability";
+import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { insertBookingRecord } from "@/lib/booking-insert";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
@@ -196,10 +197,14 @@ export async function createDirectBooking(
 
     const { data: salonStaff } = await supabase
       .from("salon_staff")
-      .select("id")
+      .select("id, working_hours")
       .eq("salon_id", salonId);
 
-    const staffIds = (salonStaff || []).map((m) => m.id).filter(Boolean);
+    const qualifiedStaff = filterStaffQualifiedForServices(
+      salonStaff || [],
+      processedServices.map((service) => service.id)
+    );
+    const staffIds = qualifiedStaff.map((member) => member.id).filter(Boolean);
 
     const { data: existingBookings } = await supabase
       .from("bookings")

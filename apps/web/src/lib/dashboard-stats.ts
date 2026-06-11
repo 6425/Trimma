@@ -1,3 +1,11 @@
+import {
+  computeStaffCommissionAmount,
+  getBookingServiceIds,
+  inferStaffAllocations,
+  resolveStaffMemberFromBooking,
+  type SalonStaffForAllocation,
+} from "@/lib/staff-allocation";
+
 export function formatLkr(value: number): string {
   if (!Number.isFinite(value)) return "0";
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -212,6 +220,52 @@ export function groupRevenueByDay(bookings: any[], offsetWeeks = 0) {
   return Array.from(dataMap.values());
 }
 
+
+/** Resolve staff commission for a booking using per-service rate when configured. */
+export function resolveBookingStaffCommission(
+  booking: {
+    id?: string;
+    amount?: number | string | null;
+    service_id?: string | null;
+    staff_id?: string | null;
+    salon_staff?: SalonStaffForAllocation | null;
+    booking_services?: Array<{
+      service_id?: string | null;
+      services?: { id?: string } | { id?: string }[] | null;
+    }> | null;
+    booking_staff?: Array<{
+      staff_id?: string | null;
+      salon_staff?: SalonStaffForAllocation | SalonStaffForAllocation[] | null;
+    }> | null;
+  },
+  context?: {
+    allStaff?: SalonStaffForAllocation[];
+    inferredStaff?: SalonStaffForAllocation | null;
+  }
+): { amount: number; rate: number } | null {
+  const servicePrice = Number(booking.amount || 0);
+  if (!servicePrice) return null;
+
+  const allStaff = context?.allStaff || [];
+  let staffMember =
+    resolveStaffMemberFromBooking(booking, allStaff) || context?.inferredStaff || null;
+
+  if (!staffMember) return null;
+
+  const serviceIds = getBookingServiceIds(booking);
+  const serviceId = serviceIds[0] || null;
+
+  return computeStaffCommissionAmount(staffMember, serviceId, servicePrice);
+}
+
+/** Build inferred staff map for unassigned bookings (Anyone Available). */
+export function buildInferredStaffMap(
+  bookings: Parameters<typeof inferStaffAllocations>[0],
+  allStaff: SalonStaffForAllocation[]
+): Map<string, SalonStaffForAllocation> {
+  if (!allStaff.length) return new Map();
+  return inferStaffAllocations(bookings, allStaff);
+}
 
 export type ActivityItem = {
   id: string;

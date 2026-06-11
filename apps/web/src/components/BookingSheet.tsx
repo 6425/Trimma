@@ -131,13 +131,14 @@ export function BookingSheet({
   // Filter active staff by certified services if selected. Fall back to all staff
   // when the filter would hide everyone, so the customer can always choose a
   // stylist (matches the desktop scheduler, which lists every staff member).
-  const filteredQualifiedStaff = staff.filter(s => {
-    if (!s.working_hours?.assigned_services || s.working_hours.assigned_services.length === 0) {
-      return true;
-    }
-    return s.working_hours.assigned_services.some((as: any) => selectedServiceIds.includes(as.service_id));
+  const qualifiedStaff = staff.filter((s) => {
+    const assigned = s.working_hours?.assigned_services;
+    if (!assigned?.length) return false;
+    return assigned.some(
+      (as: { service_id: string; enabled?: boolean }) =>
+        selectedServiceIds.includes(as.service_id) && as.enabled !== false
+    );
   });
-  const qualifiedStaff = filteredQualifiedStaff.length > 0 ? filteredQualifiedStaff : staff;
 
   // Append 'any' to staff list
   const activeStaff = qualifiedStaff.length > 0 
@@ -324,6 +325,7 @@ export function BookingSheet({
           bookingDate: format(selectedDate, "yyyy-MM-dd"),
           timeSlot: selectedTimeSlot,
           totalDurationMinutes: totalDuration || 30,
+          serviceIds: selectedServiceIds,
         }),
         15000,
         "Could not verify this time slot. Please try again."

@@ -11,6 +11,7 @@ import {
   sliceAllowedCategories,
 } from "@/lib/salon-subscription-plan";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
+import { getServiceIdsCoveredByStaff } from "@/lib/staff-allocation";
 
 export async function fetchSalonLayoutShell() {
   const email = await getSalonOwnerEmailFromCookies();
@@ -42,16 +43,19 @@ export async function fetchSalonDashboardPage() {
       supabase
         .from("bookings")
         .select(
-          `id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, booking_time, created_at, customer_email, staff_id,
-          services (name),
-          salon_staff (name),
-          booking_services ( services (name) ),
-          booking_staff ( salon_staff (name) )`
+          `id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, booking_time, created_at, customer_email, staff_id, service_id,
+          services (id, name),
+          salon_staff (id, name, commission_rate, working_hours),
+          booking_services (service_id, duration_min, services (id, name)),
+          booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))`
         )
         .eq("salon_id", ctx.salonId)
         .order("created_at", { ascending: false }),
       supabase.from("services").select("id, name, status, created_at").eq("salon_id", ctx.salonId),
-      supabase.from("salon_staff").select("id, name, created_at").eq("salon_id", ctx.salonId),
+      supabase
+        .from("salon_staff")
+        .select("id, name, commission_rate, working_hours, created_at")
+        .eq("salon_id", ctx.salonId),
     ]);
 
     if (bookingsRes.error) throw new Error(bookingsRes.error.message);
@@ -153,19 +157,26 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
 export async function fetchSalonFinancePage() {
   const [result, commissionRates] = await Promise.all([
     withSalonDb(async (supabase, ctx) => {
-      const { data, error } = await supabase
-        .from("bookings")
-        .select(`
+      const [bookingsRes, staffRes] = await Promise.all([
+        supabase
+          .from("bookings")
+          .select(`
           *,
-          services (name),
-          salon_staff (name),
-          booking_services ( services (name) ),
-          booking_staff ( salon_staff (name) )
+          services (id, name),
+          salon_staff (id, name, commission_rate, working_hours),
+          booking_services (service_id, duration_min, services (id, name)),
+          booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
         `)
-        .eq("salon_id", ctx.salonId)
-        .order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return { salon: ctx.salon, bookings: data || [] };
+          .eq("salon_id", ctx.salonId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("salon_staff")
+          .select("id, name, commission_rate, working_hours")
+          .eq("salon_id", ctx.salonId),
+      ]);
+      if (bookingsRes.error) throw new Error(bookingsRes.error.message);
+      if (staffRes.error) throw new Error(staffRes.error.message);
+      return { salon: ctx.salon, bookings: bookingsRes.data || [], staff: staffRes.data || [] };
     }),
     fetchBookingCommissionRates(),
   ]);
@@ -210,15 +221,22 @@ export async function fetchSalonServicesPage() {
     const salon =
       updatedSalon && planId ? { ...ctx.salon, subscription_plan_id: planId } : ctx.salon;
 
-    const [servicesRes, categoriesRes, globalServicesRes] = await Promise.all([
+    const [servicesRes, categoriesRes, globalServicesRes, staffRes] = await Promise.all([
       supabase.from("services").select("*").eq("salon_id", ctx.salonId).order("created_at", { ascending: false }),
       supabase.from("categories").select("*").order("name"),
       supabase.from("global_services").select("*").order("name"),
+      supabase
+        .from("salon_staff")
+        .select("id, name, status, working_hours")
+        .eq("salon_id", ctx.salonId),
     ]);
 
-    for (const res of [servicesRes, categoriesRes, globalServicesRes]) {
+    for (const res of [servicesRes, categoriesRes, globalServicesRes, staffRes]) {
       if (res.error) throw new Error(res.error.message);
     }
+
+    const staff = staffRes.data || [];
+    const coveredServiceIds = [...getServiceIdsCoveredByStaff(staff)];
 
     const flags = readPlanFlags(plan);
     const categories = sliceAllowedCategories(
@@ -230,6 +248,8 @@ export async function fetchSalonServicesPage() {
     return {
       salon,
       services: servicesRes.data || [],
+      staff,
+      coveredServiceIds,
       subscriptionPlan: plan,
       allowedCategories: categories,
       globalServices: globalServicesRes.data || [],

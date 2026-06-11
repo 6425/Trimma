@@ -11,6 +11,7 @@ import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
 } from "@/lib/booking-availability";
+import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
@@ -139,12 +140,17 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     bookingServiceLines[0].service_id = fallbackServiceId;
   }
 
+  const serviceIdsForStaff = bookingServiceLines
+    .map((line) => line.service_id)
+    .filter(Boolean) as string[];
+
   const { data: salonStaff } = await supabase
     .from("salon_staff")
-    .select("id")
+    .select("id, working_hours")
     .eq("salon_id", salon.id);
 
-  const staffIds = (salonStaff || []).map((member) => member.id).filter(Boolean);
+  const qualifiedStaff = filterStaffQualifiedForServices(salonStaff || [], serviceIdsForStaff);
+  const staffIds = qualifiedStaff.map((member) => member.id).filter(Boolean);
 
   const { data: existingBookings } = await supabase
     .from("bookings")
