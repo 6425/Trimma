@@ -258,6 +258,28 @@ export function resolveBookingStaffCommission(
   return computeStaffCommissionAmount(staffMember, serviceId, servicePrice);
 }
 
+/** Bookings in the 7-day commission window (by created_at), aligned with Booking Income Breakdown. */
+export function filterBookingsByCommissionWeek<T extends { created_at?: string | null }>(
+  bookings: T[],
+  offsetWeeks = 0
+): T[] {
+  const endDateObj = new Date();
+  endDateObj.setHours(0, 0, 0, 0);
+  endDateObj.setDate(endDateObj.getDate() - offsetWeeks * 7);
+
+  const startDateObj = new Date(endDateObj);
+  startDateObj.setDate(startDateObj.getDate() - 6);
+
+  const startMs = startDateObj.getTime();
+  const endMs = endDateObj.getTime() + 86400000;
+
+  return bookings.filter((booking) => {
+    if (!booking.created_at) return false;
+    const createdMs = new Date(booking.created_at).getTime();
+    return createdMs >= startMs && createdMs < endMs;
+  });
+}
+
 /** Build inferred staff map for unassigned bookings (Anyone Available). */
 export function buildInferredStaffMap(
   bookings: Parameters<typeof inferStaffAllocations>[0],

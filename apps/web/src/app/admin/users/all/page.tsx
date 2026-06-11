@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -341,11 +342,12 @@ function AdminUserList() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">WhatsApp No.</label>
-                <Input 
+                <LkPhoneInput
+                  theme="light"
                   value={editingUser?.phone || ""}
-                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
-                  placeholder="+94 XX XXX XXXX"
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium focus:ring-2 focus:ring-brand/20"
+                  onChange={(phone) => setEditingUser({ ...editingUser, phone })}
+                  className="h-12 rounded-xl bg-zinc-50"
+                  inputClassName="h-12 font-medium"
                 />
               </div>
 

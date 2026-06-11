@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { sendAdminApprovalEmail } from "@/app/actions/email-settings";
 
 export default function Salons() {
@@ -635,11 +636,12 @@ export default function Salons() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Phone Number</label>
-                    <Input 
+                    <LkPhoneInput
+                      theme="light"
                       value={editForm.phone}
-                      onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                      placeholder="e.g. +94..."
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                      onChange={(phone) => setEditForm({ ...editForm, phone })}
+                      className="h-10 rounded-xl bg-zinc-50"
+                      inputClassName="h-10"
                     />
                   </div>
                   <div className="md:col-span-2 space-y-1">

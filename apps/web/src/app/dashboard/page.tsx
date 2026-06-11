@@ -8,6 +8,7 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { Loader2, RefreshCw } from "lucide-react";
 import { BookingCommissionTable } from "../../components/dashboard/BookingCommissionTable";
 import { SalonSetupChecklist } from "../../components/dashboard/SalonSetupChecklist";
+import { StaffCommissionDaywiseTable } from "../../components/dashboard/StaffCommissionDaywiseTable";
 import { StaffBookingTrendChart } from "../../components/dashboard/StaffBookingTrendChart";
 import { RevenueTrendChart } from "../../components/dashboard/RevenueTrendChart";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
@@ -231,34 +232,37 @@ export default function Dashboard() {
         <RevenueTrendChart bookings={recentBookings} />
       </div>
 
-      <div className="bg-white p-4 rounded-xl border border-slate-200">
-        <h3 className="font-semibold text-zinc-900 mb-4">Recent Activity</h3>
-        {activity.length === 0 ? (
-          <p className="text-sm text-zinc-500">No recent activity yet.</p>
-        ) : (
-          <ul className="space-y-3 text-sm text-zinc-600">
-            {activity.map((item) => (
-              <li key={item.id} className="flex items-start gap-2">
-                <span
-                  className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                    item.tone === "emerald"
-                      ? "bg-emerald-500"
-                      : item.tone === "blue"
-                        ? "bg-brand"
-                        : item.tone === "purple"
-                          ? "bg-purple-500"
-                          : "bg-amber-500"
-                  }`}
-                />
-                <div>
-                  <p className="font-medium text-zinc-800">{item.title}</p>
-                  <p className="text-zinc-500">{item.description}</p>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">{item.time}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <div className="bg-white p-4 rounded-xl border border-slate-200">
+          <h3 className="font-semibold text-zinc-900 mb-4">Recent Activity</h3>
+          {activity.length === 0 ? (
+            <p className="text-sm text-zinc-500">No recent activity yet.</p>
+          ) : (
+            <ul className="space-y-3 text-sm text-zinc-600">
+              {activity.map((item) => (
+                <li key={item.id} className="flex items-start gap-2">
+                  <span
+                    className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                      item.tone === "emerald"
+                        ? "bg-emerald-500"
+                        : item.tone === "blue"
+                          ? "bg-brand"
+                          : item.tone === "purple"
+                            ? "bg-purple-500"
+                            : "bg-amber-500"
+                    }`}
+                  />
+                  <div>
+                    <p className="font-medium text-zinc-800">{item.title}</p>
+                    <p className="text-zinc-500">{item.description}</p>
+                    <p className="text-[10px] text-zinc-400 mt-0.5">{item.time}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <StaffCommissionDaywiseTable bookings={recentBookings} allStaff={allStaff} />
       </div>
     </div>
   );

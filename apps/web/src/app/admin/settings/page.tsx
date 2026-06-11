@@ -11,6 +11,7 @@ import {
 } from "../../actions/whatsapp";
 import { WHATSAPP_TRIGGER_CATALOG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
 function SettingsPanelContent() {
   const [loading, setLoading] = useState(true);
@@ -410,12 +411,13 @@ function SettingsPanelContent() {
                   <Label htmlFor="admin_alert_phone" className="text-xs font-black uppercase tracking-wider text-zinc-500">
                     Platform Admin Alert Phone
                   </Label>
-                  <Input
+                  <LkPhoneInput
                     id="admin_alert_phone"
+                    theme="light"
                     value={adminAlertPhone}
-                    onChange={(e) => setAdminAlertPhone(e.target.value)}
-                    placeholder="+94 77 123 4567"
-                    className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
+                    onChange={setAdminAlertPhone}
+                    className="h-11 rounded-xl"
+                    inputClassName="h-11 text-sm"
                   />
                   <p className="text-[10px] text-zinc-500">
                     Receives internal WhatsApp alerts when agents approve salons or when you grant the Verified badge.
@@ -539,13 +541,14 @@ function SettingsPanelContent() {
                   <Label htmlFor="test_phone" className="text-[10px] font-black uppercase tracking-wider text-zinc-500">
                     Recipient Phone Number
                   </Label>
-                  <Input 
+                  <LkPhoneInput
                     id="test_phone"
-                    value={testPhone}
-                    onChange={(e) => setTestPhone(e.target.value)}
+                    theme="light"
                     required
-                    placeholder="+94 77 123 4567"
-                    className="h-10 bg-slate-50 border-zinc-800 focus:border-emerald-500 rounded-xl text-zinc-900 placeholder-zinc-600 text-xs"
+                    value={testPhone}
+                    onChange={setTestPhone}
+                    className="h-10 rounded-xl bg-slate-50"
+                    inputClassName="h-10 text-xs"
                   />
                   <p className="text-[9px] text-zinc-500 leading-normal">
                     This phone number **must** be verified in your Meta Sandbox whitelist list!

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { fetchAdminProfilePage, saveGlobalBrandingSettings, updateAdminUserProfile } from "@/app/actions/admin-operations";
 import { pubSubUpdateBranding } from "../../../components/Logo";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
 // Font Family Preset Options
 const FONT_FAMILIES = [
@@ -392,12 +393,13 @@ export default function AdminProfilePage() {
                     <Label htmlFor="admin_phone" className="text-xs font-black uppercase tracking-wider text-zinc-500">
                       Phone Number
                     </Label>
-                    <Input 
+                    <LkPhoneInput
                       id="admin_phone"
+                      theme="light"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="e.g. +94 77 123 4567"
-                      className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm"
+                      onChange={setPhone}
+                      className="h-11 rounded-xl"
+                      inputClassName="h-11 text-sm"
                     />
                   </div>
                 </div>

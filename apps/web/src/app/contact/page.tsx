@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import {
   ArrowRight,
   Building2,
@@ -374,13 +375,12 @@ export default function ContactPage() {
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Phone Number</label>
-                    <input
-                      name="phone"
-                      type="tel"
+                    <LkPhoneInput
+                      theme="light"
                       value={form.phone}
-                      onChange={handleChange}
-                      placeholder="+94 77 000 0000"
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                      onChange={(phone) => setForm((prev) => ({ ...prev, phone }))}
+                      className="rounded-xl"
+                      inputClassName="py-3"
                     />
                   </div>
                 </div>

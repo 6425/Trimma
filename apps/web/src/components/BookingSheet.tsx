@@ -614,12 +614,12 @@ export function BookingSheet({
                     <p className="text-xs text-zinc-400 mt-0.5">Lookup profiles by phone to instantly autofill your booking details.</p>
                   </div>
                   <div className="flex gap-2">
-                    <input 
-                      type="tel"
-                      placeholder="e.g. +94771234567"
+                    <LkPhoneInput
+                      theme="light"
                       value={searchPhone}
-                      onChange={(e) => setSearchPhone(e.target.value)}
-                      className="flex-1 h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold"
+                      onChange={setSearchPhone}
+                      className="flex-1 h-11 rounded-xl"
+                      inputClassName="h-11 text-sm font-semibold"
                     />
                     <Button 
                       className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl h-11 px-4"

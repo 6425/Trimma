@@ -5,6 +5,7 @@ import { Loader2, CheckCircle2, User, Building, MapPin, Store, Globe, Search } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
 export function BusinessInfoForm({
   salon,
@@ -205,7 +206,7 @@ export function BusinessInfoForm({
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Contact Number *</Label>
-            <Input required disabled={readOnly} value={phone} onChange={e => setPhone(e.target.value)} className="h-11 rounded-xl" />
+            <LkPhoneInput required disabled={readOnly} theme="light" value={phone} onChange={setPhone} className="h-11 rounded-xl" inputClassName="h-11" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Email Address *</Label>
@@ -290,7 +291,7 @@ export function BusinessInfoForm({
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">WhatsApp Number</Label>
-            <Input disabled={readOnly} value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+94..." className="h-11 rounded-xl" />
+            <LkPhoneInput disabled={readOnly} theme="light" value={whatsapp} onChange={setWhatsapp} className="h-11 rounded-xl" inputClassName="h-11" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Facebook URL</Label>

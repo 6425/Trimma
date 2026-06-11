@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   buildInferredStaffMap,
+  filterBookingsByCommissionWeek,
   formatLkr,
   resolveBookingStaffCommission,
 } from "@/lib/dashboard-stats";
@@ -25,23 +26,7 @@ export function BookingCommissionTable({
     );
   }
 
-  // Determine the start and end dates for the currently selected week (7 days)
-  const endDateObj = new Date();
-  endDateObj.setHours(0, 0, 0, 0);
-  endDateObj.setDate(endDateObj.getDate() - (offsetWeeks * 7));
-  
-  const startDateObj = new Date(endDateObj);
-  startDateObj.setDate(startDateObj.getDate() - 6); // 7 day window including end date
-
-  const startMs = startDateObj.getTime();
-  const endMs = endDateObj.getTime() + 86400000; // include the whole end day
-
-  // Filter bookings for the selected 7-day timeframe
-  const timeframeBookings = bookings.filter(b => {
-    if (!b.created_at) return false;
-    const d = new Date(b.created_at).getTime();
-    return d >= startMs && d < endMs;
-  });
+  const timeframeBookings = filterBookingsByCommissionWeek(bookings, offsetWeeks);
 
   // Calculate Sums for the current timeframe
   let sumAmount = 0;
@@ -50,6 +35,7 @@ export function BookingCommissionTable({
   let sumBalanceDue = 0;
   let sumSalonUpfront = 0;
   let sumTotalIncome = 0;
+  let sumNetIncome = 0;
 
   timeframeBookings.forEach((b) => {
     const amount = Number(b.amount || 0);
@@ -68,6 +54,7 @@ export function BookingCommissionTable({
     sumBalanceDue += balanceDue;
     sumSalonUpfront += salonUpfront;
     sumTotalIncome += totalIncome;
+    sumNetIncome += totalIncome - (staffCommission?.amount ?? 0);
   });
 
   return (
@@ -110,7 +97,7 @@ export function BookingCommissionTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[800px]">
+        <table className="w-full text-left border-collapse min-w-[920px]">
           <thead>
             <tr className="border-b-2 border-slate-100">
               <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Booking Info</th>
@@ -120,6 +107,7 @@ export function BookingCommissionTable({
               <th className="py-3 px-4 text-[10px] font-black text-emerald-500 uppercase tracking-widest text-right whitespace-nowrap">Balance Payment Due</th>
               <th className="py-3 px-4 text-[10px] font-black text-emerald-500 uppercase tracking-widest text-right whitespace-nowrap">Salon Reservation Share</th>
               <th className="py-3 px-4 text-[11px] font-black text-indigo-600 uppercase tracking-widest text-right whitespace-nowrap border-l-2 border-indigo-100 bg-indigo-50/30">Total Salon Income</th>
+              <th className="py-3 px-4 text-[11px] font-black text-emerald-700 uppercase tracking-widest text-right whitespace-nowrap border-l border-emerald-100 bg-emerald-50/40">Net Income</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -158,6 +146,7 @@ export function BookingCommissionTable({
                 allStaff,
                 inferredStaff: inferredStaffByBookingId.get(b.id) || null,
               });
+              const netIncome = totalIncome - (staffCommission?.amount ?? 0);
 
               return (
                 <tr key={b.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -192,6 +181,9 @@ export function BookingCommissionTable({
                   <td className="py-3 px-4 text-right text-[15px] font-black text-indigo-700 border-l-2 border-indigo-100 bg-indigo-50/30">
                     LKR {formatLkr(totalIncome)}
                   </td>
+                  <td className="py-3 px-4 text-right text-sm font-black text-emerald-700 border-l border-emerald-100 bg-emerald-50/40">
+                    LKR {formatLkr(netIncome)}
+                  </td>
                 </tr>
               );
             })}
@@ -218,6 +210,9 @@ export function BookingCommissionTable({
               </td>
               <td className="py-4 px-4 text-right text-base font-black text-indigo-800 border-l-2 border-indigo-200 bg-indigo-100/50">
                 LKR {formatLkr(sumTotalIncome)}
+              </td>
+              <td className="py-4 px-4 text-right text-base font-black text-emerald-800 border-l border-emerald-200 bg-emerald-100/50">
+                LKR {formatLkr(sumNetIncome)}
               </td>
             </tr>
           </tfoot>

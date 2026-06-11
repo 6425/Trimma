@@ -151,7 +151,7 @@ export function LkPhoneInput({
   };
 
   const handleNumberChange = (raw: string) => {
-    onChange(buildPhone(country.dial, raw));
+    onChange(buildPhone(country.dial, digitsOnly(raw)));
   };
 
   // ── Theme tokens ───────────────────────────────────────────────────────────
@@ -182,15 +182,15 @@ export function LkPhoneInput({
     <div className={`${wrapperBase} ${wrapperTheme} ${className}`}>
       {/* Country code dropdown — defaults to Sri Lanka (+94) */}
       <select
-        aria-label="Country code"
+        aria-label="Country"
         disabled={disabled}
         value={iso}
         onChange={(e) => handleCountryChange(e.target.value)}
-        className={`w-[104px] shrink-0 px-2 text-sm font-bold outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${selectTheme}`}
+        className={`min-w-[10.5rem] max-w-[12rem] shrink-0 px-2.5 text-sm font-semibold outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${selectTheme}`}
       >
         {PHONE_COUNTRIES.map((c) => (
           <option key={c.iso} value={c.iso}>
-            {c.flag} +{c.dial} · {c.name}
+            {c.name} (+{c.dial})
           </option>
         ))}
       </select>
