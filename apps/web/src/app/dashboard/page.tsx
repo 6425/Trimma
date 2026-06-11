@@ -198,18 +198,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto p-4">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Salon Performance</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+    <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto p-3 sm:p-4 pb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Salon Performance</h1>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
             Welcome back. Here is what is happening at {salonName} today.
           </p>
         </div>
         <button
           onClick={() => fetchDashboardStats({ showSpinner: true })}
           disabled={isRefreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-zinc-700 hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-sm w-full sm:w-auto min-h-[44px] sm:min-h-0"
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-brand" : "text-zinc-500"}`} />
           {isRefreshing ? "Refreshing..." : "Refresh"}
@@ -218,7 +218,7 @@ export default function Dashboard() {
 
       <SalonSetupChecklist services={allServices} staff={allStaff} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card title="Total Bookings" value={stats.totalBookings.toLocaleString()} />
         <Card title="Active Services" value={stats.activeServices.toLocaleString()} />
         <Card title="Total Staff" value={stats.totalStaff.toLocaleString()} />
@@ -227,14 +227,14 @@ export default function Dashboard() {
 
       <BookingCommissionTable bookings={recentBookings} allStaff={allStaff} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         <StaffBookingTrendChart bookings={recentBookings} allStaff={allStaff} />
         <RevenueTrendChart bookings={recentBookings} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-        <div className="bg-white p-4 rounded-xl border border-slate-200">
-          <h3 className="font-semibold text-zinc-900 mb-4">Recent Activity</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-stretch">
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200">
+          <h3 className="text-sm sm:text-base font-semibold text-zinc-900 mb-3 sm:mb-4">Recent Activity</h3>
           {activity.length === 0 ? (
             <p className="text-sm text-zinc-500">No recent activity yet.</p>
           ) : (

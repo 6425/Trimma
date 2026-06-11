@@ -25,7 +25,7 @@ export function SalonSetupChecklist({
 
   if (complete) {
     return (
-      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex items-start gap-3">
+      <div className="bg-emerald-50 border border-emerald-100 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex items-start gap-3">
         <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
         <div>
           <p className="font-bold text-emerald-900">Your salon is ready for bookings</p>
@@ -38,8 +38,8 @@ export function SalonSetupChecklist({
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <div className="p-5 border-b border-slate-100 bg-gradient-to-r from-amber-50/80 to-white">
+    <div className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
+      <div className="p-3 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-amber-50/80 to-white">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-brand/15 flex items-center justify-center shrink-0">
@@ -69,7 +69,7 @@ export function SalonSetupChecklist({
         {steps.map((step) => (
           <li
             key={step.id}
-            className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 ${
+            className={`p-3 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 ${
               step.current ? "bg-amber-50/40" : ""
             }`}
           >
