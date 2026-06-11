@@ -86,7 +86,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Finance & Commissions", href: "/dashboard/finance", icon: <DollarSign className="w-4 h-4" /> },
     { name: "Subscription & Billing", href: "/dashboard/billing", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Salon Profile", href: "/dashboard/profile", icon: <Store className="w-4 h-4" /> },
-    { name: "Salon Help", href: "/dashboard/help", icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   const adminItems = [
@@ -258,6 +257,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Settings className="w-4 h-4" />
             Settings
           </Link>
+          {!isAd && (
+            <Link
+              href="/dashboard/help"
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                pathname === "/dashboard/help"
+                  ? "bg-[#F5B700] text-black font-semibold"
+                  : "text-white hover:bg-white/10"
+              }`}
+            >
+              <HelpCircle className="w-4 h-4" />
+              Salon Help
+            </Link>
+          )}
           <button
             type="button"
             onClick={handleLogout}

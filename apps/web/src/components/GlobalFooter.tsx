@@ -14,11 +14,10 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Support</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/dashboard/help" className="hover:text-[#F5B700] transition-colors">Salon Help</Link></li>
               <li><Link href="/customer-help" className="hover:text-[#F5B700] transition-colors">Customer Help</Link></li>
               <li><Link href="/help" className="hover:text-[#F5B700] transition-colors">Cancellation options</Link></li>
               <li><Link href="/safety" className="hover:text-[#F5B700] transition-colors">Safety Resource Center</Link></li>
-              <li><Link href="/contact" className="hover:text-[#F5B700] transition-colors">Contact us</Link></li>
+              <li><Link href="/contact" className="hover:text-[#F5B700] transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -29,7 +28,7 @@ export default function GlobalFooter() {
               <li><Link href="/" className="hover:text-[#F5B700] transition-colors">All Salons</Link></li>
               <li><Link href="/locations" className="hover:text-[#F5B700] transition-colors">Locations</Link></li>
               <li><Link href="/pricing" className="hover:text-[#F5B700] transition-colors">Pricing Plans</Link></li>
-              <li><Link href="/services" className="hover:text-[#F5B700] transition-colors">All Services</Link></li>
+              <li><Link href="/features" className="hover:text-[#F5B700] transition-colors">Features</Link></li>
             </ul>
           </div>
 
