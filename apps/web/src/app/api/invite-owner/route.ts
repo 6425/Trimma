@@ -1,57 +1,22 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
-import { preAssignSalonOwnerRole, assignSalonOwnerRoleByAdminClient } from "@/app/actions/admin-operations";
+import { assignSalonOwnerRoleByAdminClient } from "@/app/actions/admin-operations";
 import { isEmailSendFailure } from "@/lib/email/result";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
-
-function getAccessTokenFromCookie(request: Request) {
-  const cookieHeader = request.headers.get("cookie") || "";
-  
-  let chunkedToken = "";
-  for (let i = 0; i < 5; i++) {
-    const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)sb-access-token\\.${i}=([^;]+)`));
-    if (match) chunkedToken += match[1];
-  }
-  if (chunkedToken) return decodeURIComponent(chunkedToken);
-
-  const match = cookieHeader.match(/(?:^|;\s*)sb-access-token=([^;]+)/);
-  return match?.[1] ? decodeURIComponent(match[1]) : null;
-}
-
-async function getRequestUserEmail(request: Request): Promise<string | null> {
-  const token = getAccessTokenFromCookie(request);
-  if (!token) return null;
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !anonKey) return null;
-
-  const supabase = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user?.email) return null;
-  return data.user.email.toLowerCase();
-}
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export async function POST(request: Request) {
   try {
-    const { salonId, ownerEmail, actorEmail: bodyActorEmail } = await request.json();
+    const auth = await requireAgentFromCookies();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
+
+    const { salonId, ownerEmail } = await request.json();
     const normalizedOwnerEmail = String(ownerEmail || "")
       .trim()
       .toLowerCase();
@@ -60,9 +25,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Salon ID and Owner Email are required" }, { status: 400 });
     }
 
+    const supabaseAdmin = createSupabaseAdminClient();
+
     const { data: salon, error: salonError } = await supabaseAdmin
       .from("salons")
-      .select("id, name, slug, phone")
+      .select("id, name, slug, phone, assign_to")
       .eq("id", salonId)
       .maybeSingle();
 
@@ -71,18 +38,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Salon not found." }, { status: 404 });
     }
 
-    try {
-      await assignSalonOwnerRoleByAdminClient(supabaseAdmin, normalizedOwnerEmail, (salon.name || "Salon") + " Owner", salon.phone || "");
-    } catch (roleErr: any) {
-      console.error("⚠️ Failed to pre-assign salon_owner role:", roleErr);
-      return NextResponse.json({ error: "Failed to assign salon owner role: " + roleErr.message }, { status: 500 });
+    if (auth.role === "agent") {
+      const assignedTo = salon.assign_to ? normalizeEmail(salon.assign_to) : null;
+      if (assignedTo && assignedTo !== auth.email) {
+        return NextResponse.json({ error: "You do not have access to this lead." }, { status: 403 });
+      }
     }
 
-    const sessionEmail = await getRequestUserEmail(request);
-    const actorEmail = String(bodyActorEmail || sessionEmail || "system@trimma.io")
-      .trim()
-      .toLowerCase();
+    try {
+      await assignSalonOwnerRoleByAdminClient(
+        supabaseAdmin,
+        normalizedOwnerEmail,
+        (salon.name || "Salon") + " Owner",
+        salon.phone || ""
+      );
+    } catch (roleErr: unknown) {
+      const message = roleErr instanceof Error ? roleErr.message : "Unknown error";
+      console.error("Failed to pre-assign salon_owner role:", roleErr);
+      return NextResponse.json({ error: "Failed to assign salon owner role: " + message }, { status: 500 });
+    }
 
+    const actorEmail = auth.email;
     const ip = getClientIp(request);
     const rateLimitKey = buildEmailRateLimitKey(ip, actorEmail);
     const loginLink = `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedOwnerEmail)}&next=${encodeURIComponent("/dashboard/profile")}`;
