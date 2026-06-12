@@ -27,10 +27,17 @@ export function isAssignableSalonService(status?: string | null): boolean {
   return normalized !== "deleted" && normalized !== "inactive";
 }
 
+export type SalonServiceAssignmentRow = {
+  id: string;
+  global_service_id?: string | null;
+  name?: string | null;
+  duration_min?: number | null;
+};
+
 export function findSalonServiceForAssignmentId(
-  salonServices: Array<{ id: string; global_service_id?: string | null }>,
+  salonServices: SalonServiceAssignmentRow[],
   assignedId: string
-) {
+): SalonServiceAssignmentRow | undefined {
   return salonServices.find(
     (s) => s.id === assignedId || (s.global_service_id != null && s.global_service_id === assignedId)
   );
@@ -47,7 +54,7 @@ export function buildStaffServicesConfigFromMember(
       }>;
     } | null;
   },
-  salonServices: Array<{ id: string; global_service_id?: string | null; duration_min?: number | null }>
+  salonServices: SalonServiceAssignmentRow[]
 ) {
   const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
   for (const service of salonServices) {
@@ -75,7 +82,7 @@ export function buildStaffWorkingHoursPayload(
   schedule: Record<string, unknown>,
   generalBufferTime: number | string,
   services: Record<string, { enabled?: boolean; commission?: string | number; buffer?: string | number; duration?: string | number }>,
-  salonServices: Array<{ id: string; global_service_id?: string | null; duration_min?: number | null }>
+  salonServices: SalonServiceAssignmentRow[]
 ) {
   const assigned_services = Object.entries(services)
     .filter(([, cfg]) => cfg?.enabled)
