@@ -26,11 +26,11 @@ import {
 } from "@/lib/agent-client-data";
 import { MapComponent, BusinessResult, Territory } from "../../../components/territory/MapComponent";
 import { BusinessResultsSidebar } from "../../../components/territory/BusinessResultsSidebar";
-
-
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 function TerritoryExplorerContent() {
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [territories, setTerritories] = useState<Territory[]>([]);
@@ -79,7 +79,7 @@ function TerritoryExplorerContent() {
         setCategories([...new Set((res.categories || []).filter(Boolean))]);
       } else {
         if (res.error?.includes("Not authenticated")) {
-          router.replace("/login?redirectTo=/agent/territory");
+          router.replace(`/login?redirectTo=${path("/territory")}`);
           return;
         }
         const msg = res.error || "Failed to load territories";

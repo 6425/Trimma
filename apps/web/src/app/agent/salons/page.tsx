@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { fetchAgentSalonsList } from "@/app/actions/agent-lead-editor-data";
 import { tryAgentData, fetchAgentSalonsListClient } from "@/lib/agent-client-data";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 import {
   getAgentSalonStatusClass,
   getAgentSalonStatusLabel,
@@ -71,6 +72,7 @@ type FilterTab = "all" | "active" | "needs_action" | "live";
 
 export default function AgentSalons() {
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [salons, setSalons] = useState<AgentSalon[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -145,11 +147,11 @@ export default function AgentSalons() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/agent/leads/new" className={buttonVariants({ className: "rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold" })}>
+          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold" })}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add Salon
           </Link>
-          <Link href="/agent/leads" className={buttonVariants({ variant: "outline", className: "rounded-xl border-zinc-200" })}>
+          <Link href={path("/leads")} className={buttonVariants({ variant: "outline", className: "rounded-xl border-zinc-200" })}>
             Open Field Editor
           </Link>
         </div>
@@ -219,7 +221,7 @@ export default function AgentSalons() {
             <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
               Salons appear here when an admin assigns them to you in Admin → Leads, or when you add a manual lead.
             </p>
-            <Link href="/agent/leads/new" className={buttonVariants({ className: "mt-4 rounded-xl" })}>
+            <Link href={path("/leads/new")} className={buttonVariants({ className: "mt-4 rounded-xl" })}>
               Add your first salon
             </Link>
           </div>
@@ -309,7 +311,7 @@ export default function AgentSalons() {
                     </td>
                     <td className="px-5 py-4 align-top">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/agent/leads?open=${salon.id}`} className={buttonVariants({ size: "sm", className: "rounded-lg h-8 text-xs font-bold" })}>
+                        <Link href={`${path("/leads")}?open=${salon.id}`} className={buttonVariants({ size: "sm", className: "rounded-lg h-8 text-xs font-bold" })}>
                           Manage
                         </Link>
                         {salon.slug && isAgentSalonLive(salon.onboarding_status) && (

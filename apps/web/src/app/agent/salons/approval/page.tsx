@@ -4,8 +4,10 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, CheckCircle2, Search, Building2, ChevronRight, Store } from "lucide-react";
 import { supabase } from "@/config/supabase";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 export default function AgentSalonApprovalList() {
+  const { path } = useAgentPortal();
   const [salons, setSalons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -115,7 +117,7 @@ export default function AgentSalonApprovalList() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link 
-                        href={`/agent/salons/approval/${salon.id}`}
+                        href={`${path("/salons/approval")}/${salon.id}`}
                         className="inline-flex items-center justify-center h-8 px-4 rounded-lg bg-white border border-zinc-200 text-xs font-bold text-zinc-700 hover:border-brand hover:text-brand transition-colors"
                       >
                         Review Profile <ChevronRight className="w-3 h-3 ml-1" />

@@ -126,6 +126,14 @@ export async function middleware(req: NextRequest) {
   // 4. Role Validation (RBAC)
   const userRole = readRoleCookie(roleCookie?.value);
 
+  // Regional heads always use /regional-head routes (never /agent).
+  if (userRole === "regional_head" && pathname.startsWith("/agent")) {
+    const suffix = pathname.slice("/agent".length);
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = `/regional-head${suffix}`;
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Agent / regional-head routes: shell loads for signed-in users; server actions enforce role.
   if (pathname.startsWith("/agent") || pathname.startsWith("/regional-head")) {
     return NextResponse.next();

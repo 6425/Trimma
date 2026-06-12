@@ -118,6 +118,7 @@ export default function GlobalHeader() {
     if (userRole === 'admin') return '/admin';
     if (userRole === 'salon_owner') return '/dashboard';
     if (userRole === 'agent') return '/agent';
+    if (userRole === 'regional_head') return '/regional-head';
     return '/customer';
   };
 

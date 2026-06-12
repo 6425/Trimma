@@ -11,9 +11,11 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { toast } from "sonner";
 import { getAgentProfile, uploadAgentAvatar } from "@/app/actions/agent-profile";
 import { tryAgentData, fetchAgentProfileClient } from "@/lib/agent-client-data";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 function ProfileFormContent() {
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,7 +36,7 @@ function ProfileFormContent() {
 
       if (!result.success) {
         if (result.error?.includes("Not authenticated")) {
-          router.replace("/login?redirectTo=/agent/profile");
+          router.replace(`/login?redirectTo=${path("/profile")}`);
           return;
         }
         throw new Error(result.error);

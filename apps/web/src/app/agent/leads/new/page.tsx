@@ -16,9 +16,11 @@ import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-l
 import { tryAgentData, fetchAgentGlobalsClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
 import { sendOnboardingInviteAlert } from "../../../actions/whatsapp";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 export default function AgentNewLeadPage() {
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -198,7 +200,7 @@ export default function AgentNewLeadPage() {
         toast.success("Manual lead saved as draft successfully.");
       }
 
-      router.push(`/agent/leads?open=${salonId}`);
+      router.push(`${path("/leads")}?open=${salonId}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to create lead.";
       toast.error(message);
@@ -211,7 +213,7 @@ export default function AgentNewLeadPage() {
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300 pb-20">
       <div className="flex items-center gap-3">
         <Link
-          href="/agent/leads"
+          href={path("/leads")}
           className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-500 hover:text-zinc-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -521,7 +523,7 @@ export default function AgentNewLeadPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/agent/leads")}
+              onClick={() => router.push(path("/leads"))}
               className="h-12 px-6 border-zinc-200 text-zinc-600 hover:bg-zinc-50 rounded-xl font-bold text-sm"
             >
               Cancel

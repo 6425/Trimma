@@ -69,7 +69,7 @@ export function resolvePostAuthRedirect(
 
   if (role === "admin") return "/admin";
   if (role === "salon_owner") return "/dashboard";
-  if (role === "regional_head") return "/regional-head/commissions";
+  if (role === "regional_head") return "/regional-head";
   if (role === "agent") return "/agent";
   if (role === "customer") return "/customer";
   return "/onboarding";

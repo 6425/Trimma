@@ -26,9 +26,11 @@ import {
   type CommissionBookingRow,
   type CommissionSubscriptionRow,
 } from "@/lib/commission-ledger-format";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 export default function AgentCommissions() {
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [loading, setLoading] = useState(true);
   const [offsetWeeks, setOffsetWeeks] = useState(0);
   const [bookingAgentPct, setBookingAgentPct] = useState(20);
@@ -46,7 +48,7 @@ export default function AgentCommissions() {
       });
       if (!result.success) {
         if (result.error?.includes("Not authenticated")) {
-          router.replace("/login?redirectTo=/agent/commissions");
+          router.replace(`/login?redirectTo=${path("/commissions")}`);
         }
         return;
       }

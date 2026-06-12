@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 const AGENT = {
   name: "Nimal Fernando",
@@ -233,6 +234,9 @@ function SectionCard({
   tips?: string[];
   mockup?: React.ReactNode;
 }) {
+  const { remap } = useAgentPortal();
+  const href = remap(path);
+
   return (
     <section id={id} className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
       <div className="p-6 sm:p-8 border-b border-slate-100">
@@ -244,7 +248,7 @@ function SectionCard({
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h2 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight">{title}</h2>
               <Link
-                href={path}
+                href={href}
                 className="inline-flex items-center gap-1 text-[10px] font-bold text-brand hover:underline"
               >
                 Open in portal <ExternalLink className="w-3 h-3" />
@@ -313,6 +317,7 @@ const FAQS = [
 ];
 
 export function AgentHelpGuide() {
+  const { path } = useAgentPortal();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeNav, setActiveNav] = useState<string>("overview");
 
@@ -341,12 +346,12 @@ export function AgentHelpGuide() {
             follow real workflows from lead assignment to live salon and commission payout.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Link href="/agent/leads">
+            <Link href={path("/leads")}>
               <Button className="h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold">
                 Open Salon Creation
               </Button>
             </Link>
-            <Link href="/agent/salons">
+            <Link href={path("/salons")}>
               <Button
                 variant="outline"
                 className="h-9 rounded-xl border-[#F5B700]/50 bg-[#F5B700]/10 !text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:!text-[#FFC947] text-xs font-bold"
@@ -752,7 +757,7 @@ export function AgentHelpGuide() {
                     <MessageCircle className="w-5 h-5 text-emerald-400" />
                     WhatsApp Agent Support Line
                   </div>
-                  <Link href="/agent/profile">
+                  <Link href={path("/profile")}>
                     <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
                       Update {AGENT.name}&apos;s profile
                     </Button>

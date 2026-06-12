@@ -13,6 +13,7 @@ import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { toast } from "sonner";
 import { getAgentDashboardData } from "@/app/actions/agent-dashboard";
 import { loadAgentDashboardFromClient, tryAgentData } from "@/lib/agent-client-data";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 type AssignedSalon = {
   id: string;
@@ -34,6 +35,7 @@ type AgentTask = {
 
 export default function AgentDashboard() {
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [agentEmail, setAgentEmail] = useState("");
@@ -73,7 +75,7 @@ export default function AgentDashboard() {
           return;
         }
         
-        router.replace("/login?redirectTo=/agent");
+        router.replace(`/login?redirectTo=${path()}`);
         return;
       }
       
@@ -140,7 +142,7 @@ export default function AgentDashboard() {
         </div>
         <div className="w-full sm:w-auto">
           <Button
-            onClick={() => router.push("/agent/leads")}
+            onClick={() => router.push(path("/leads"))}
             className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-extrabold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4 mr-2" /> View Lead Sheet
@@ -182,7 +184,7 @@ export default function AgentDashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div
-                onClick={() => router.push("/agent/salons")}
+                onClick={() => router.push(path("/salons"))}
                 className="bg-white rounded-xl p-4 border border-emerald-100/50 flex items-center justify-between shadow-sm cursor-pointer hover:border-emerald-300 transition-colors"
               >
                 <div>
@@ -192,7 +194,7 @@ export default function AgentDashboard() {
                 <PhoneCall className="w-5 h-5 text-emerald-500" />
               </div>
               <div
-                onClick={() => router.push("/agent/leads")}
+                onClick={() => router.push(path("/leads"))}
                 className="bg-white rounded-xl p-4 border border-emerald-100/50 flex items-center justify-between shadow-sm cursor-pointer hover:border-emerald-300 transition-colors"
               >
                 <div>
@@ -210,7 +212,7 @@ export default function AgentDashboard() {
                 <h2 className="text-lg font-bold text-zinc-900">Recent Assigned Salons</h2>
                 <p className="text-sm text-zinc-500 mt-0.5">Quick access to salons managed by you</p>
               </div>
-              <Link href="/agent/salons" className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline">
+              <Link href={path("/salons")} className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline">
                 View all salons &rarr;
               </Link>
             </div>
@@ -263,7 +265,7 @@ export default function AgentDashboard() {
               <h3 className="font-bold text-zinc-900 text-xl mb-1">Assigned Territories</h3>
               <p className="text-zinc-500 text-sm mb-6">{territoryLabel}</p>
 
-              <Button onClick={() => router.push("/agent/territory")} className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl">
+              <Button onClick={() => router.push(path("/territory"))} className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl">
                 <Map className="w-4 h-4 mr-2" /> Open Territory Explorer
               </Button>
             </div>
@@ -291,9 +293,7 @@ export default function AgentDashboard() {
               </div>
 
               <Button
-                onClick={() =>
-                  router.push(isRegionalHead ? "/regional-head/commissions" : "/agent/commissions")
-                }
+                onClick={() => router.push(path("/commissions"))}
                 className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl mt-2"
               >
                 View Commission Ledger

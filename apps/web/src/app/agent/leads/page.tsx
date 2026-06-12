@@ -31,6 +31,7 @@ import {
   fetchAgentGlobalsClient,
 } from "@/lib/agent-client-data";
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 
 const SALON_DEFAULT_CURRENCY = "LKR";
@@ -149,6 +150,7 @@ export default function AgentLeadsPage() {
 }
 
 function AgentLeads() {
+  const { path } = useAgentPortal();
   const searchParams = useSearchParams();
   const openSalonId = searchParams.get("open");
   const [leads, setLeads] = useState<any[]>([]);
@@ -787,7 +789,7 @@ function AgentLeads() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Salon Creation</h1>
-          <p className="text-zinc-500 text-sm mt-1">Verify salon details, set owner Gmail, and send invites. See all assigned salons in <Link href="/agent/salons" className="text-brand font-semibold hover:underline">My Salons</Link>.</p>
+          <p className="text-zinc-500 text-sm mt-1">Verify salon details, set owner Gmail, and send invites. See all assigned salons in <Link href={path("/salons")} className="text-brand font-semibold hover:underline">My Salons</Link>.</p>
         </div>
       </div>
 

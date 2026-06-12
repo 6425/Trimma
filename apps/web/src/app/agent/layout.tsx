@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   Home, Map, UserPlus, Building2,
-  Wallet, MapPin, User, LogOut, Search, Users,
+  Wallet, MapPin, User, LogOut, Search,
   KanbanSquare, Menu, X, Bell, CheckCircle2, HelpCircle
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
@@ -13,8 +13,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "../../components/Logo";
 import { getAgentProfile } from "@/app/actions/agent-profile";
 import { tryAgentData, fetchAgentProfileClient } from "@/lib/agent-client-data";
+import { AgentPortalProvider } from "@/lib/agent-portal-provider";
+import { useRouter } from "next/navigation";
+import { remapAgentPortalPath } from "@/lib/agent-portal-paths";
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [agentName, setAgentName] = useState("Agent");
@@ -27,6 +31,12 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       setMobileMenuOpen(false);
     });
   }, [pathname]);
+
+  useEffect(() => {
+    if (isRegionalHead && pathname.startsWith("/agent")) {
+      router.replace(remapAgentPortalPath(pathname, "/regional-head"));
+    }
+  }, [isRegionalHead, pathname, router]);
 
   useEffect(() => {
     void (async () => {
@@ -80,16 +90,12 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
     {
       title: "Performance",
-      items: isRegionalHead
-        ? [
-            { name: "Commissions", path: "/regional-head/commissions", icon: <Wallet className="w-4 h-4" /> },
-            { name: "Team", path: "/regional-head/team", icon: <Users className="w-4 h-4" /> },
-          ]
-        : [{ name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> }],
+      items: [{ name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> }],
     },
   ];
 
   return (
+    <AgentPortalProvider>
     <div className="min-h-screen bg-[#0B0B0B] flex font-sans trimma-dark-context">
 
       {/* ── Mobile Overlay ── */}
@@ -253,5 +259,6 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       </nav>
 
     </div>
+    </AgentPortalProvider>
   );
 }

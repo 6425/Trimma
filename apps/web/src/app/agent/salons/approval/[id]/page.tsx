@@ -10,10 +10,12 @@ import { BankInfoForm } from "../../../../../components/forms/BankInfoForm";
 import { approveSalon, rejectSalon } from "@/app/actions/agent-approval";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 export default function AgentSalonApprovalReview() {
   const { id } = useParams();
   const router = useRouter();
+  const { path } = useAgentPortal();
   const [salon, setSalon] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"operations" | "business" | "bank">("operations");
@@ -56,7 +58,7 @@ export default function AgentSalonApprovalReview() {
         });
       } else {
         toast.error("Salon not found");
-        router.push("/agent/salons/approval");
+        router.push(path("/salons/approval"));
       }
       setLoading(false);
     }
@@ -68,7 +70,7 @@ export default function AgentSalonApprovalReview() {
     const result = await approveSalon(salon.id);
     if (result.success) {
       toast.success("Salon approved successfully!");
-      router.push("/agent/salons/approval");
+      router.push(path("/salons/approval"));
     } else {
       toast.error("Failed to approve salon");
     }
@@ -84,7 +86,7 @@ export default function AgentSalonApprovalReview() {
     const result = await rejectSalon(salon.id, rejectionReason);
     if (result.success) {
       toast.success("Salon rejected. Notification sent to owner.");
-      router.push("/agent/salons/approval");
+      router.push(path("/salons/approval"));
     } else {
       toast.error("Failed to reject salon");
     }
@@ -107,7 +109,7 @@ export default function AgentSalonApprovalReview() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Link href="/agent/salons/approval" className="inline-flex items-center text-xs font-bold text-zinc-400 hover:text-brand mb-2 transition-colors">
+          <Link href={path("/salons/approval")} className="inline-flex items-center text-xs font-bold text-zinc-400 hover:text-brand mb-2 transition-colors">
             <ChevronLeft className="w-3 h-3 mr-1" /> Back to Queue
           </Link>
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">{salon.name}</h1>
