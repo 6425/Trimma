@@ -170,7 +170,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
+      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
         
         {/* Sidebar Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-white/8 shrink-0 py-4">
@@ -203,8 +203,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <CollapsibleTrigger
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         pathname?.startsWith(item.href)
-                          ? "bg-[#F5B700] text-black"
-                          : "text-white hover:bg-white/10"
+                          ? "is-active-nav bg-[#F5B700] text-black"
+                          : "text-white hover:text-[#F5B700] hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -219,8 +219,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           href={child.href}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                             isActive(child.href)
-                              ? "text-[#F5B700] bg-[#F5B700]/10"
-                              : "text-white/80 hover:text-white hover:bg-white/10"
+                              ? "is-active-nav text-[#F5B700] bg-[#F5B700]/10"
+                              : "text-white hover:text-[#F5B700] hover:bg-white/10"
                           }`}
                         >
                           {child.name}
@@ -232,8 +232,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link href={item.href}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive(item.href)
-                        ? "bg-[#F5B700] text-black font-semibold"
-                        : "text-white hover:bg-white/10"
+                        ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                        : "text-white hover:text-[#F5B700] hover:bg-white/10"
                     }`}
                   >
                     {item.icon}
@@ -246,12 +246,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-white/8 space-y-0.5">
+        <div className="trimma-dashboard-sidebar-footer p-3 border-t border-white/8 space-y-0.5">
           <Link href="/dashboard/settings"
             className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
-                ? "bg-[#F5B700] text-black font-semibold"
-                : "text-white hover:bg-white/10"
+                ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                : "text-white hover:text-[#F5B700] hover:bg-white/10"
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -262,8 +262,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/dashboard/help"
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 pathname === "/dashboard/help"
-                  ? "bg-[#F5B700] text-black font-semibold"
-                  : "text-white hover:bg-white/10"
+                  ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                  : "text-white hover:text-[#F5B700] hover:bg-white/10"
               }`}
             >
               <HelpCircle className="w-4 h-4" />

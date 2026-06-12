@@ -824,6 +824,19 @@
     color: inherit;
   }
 
+  /* Salon dashboard sidebar — white menu labels/icons, yellow on hover */
+  .trimma-dashboard-sidebar :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a):not(.is-active-nav) {
+    color: #ffffff;
+  }
+
+  .trimma-dashboard-sidebar :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a):not(.is-active-nav):is(:hover, :focus-visible) {
+    color: #f5b700;
+  }
+
+  .trimma-dashboard-sidebar :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a):not(.is-active-nav) svg {
+    color: currentColor;
+  }
+
   /* Customer / dashboard sidebars — keep menu items clear of site header overlap */
   .trimma-dashboard-sidebar-nav {
     padding-top: 1rem;
