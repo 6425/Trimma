@@ -302,15 +302,11 @@ export default function AdminAgents() {
     }
   };
 
-  const regionalHeadOptions = useMemo(
-    () =>
-      agents.filter(
-        (agent) =>
-          agent.agent_tier !== "field_agent" &&
-          agent.id &&
-          (!selectedAgent?.id || agent.id !== selectedAgent.id)
-      ),
-    [agents, selectedAgent?.id]
+  const regionalHeadOptions = agents.filter(
+    (agent) =>
+      agent.agent_tier !== "field_agent" &&
+      agent.id &&
+      (!selectedAgent?.id || agent.id !== selectedAgent.id)
   );
 
   const handleOpenEditModal = (agent: any) => {

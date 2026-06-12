@@ -50,7 +50,7 @@ export default function AgentTeamPage() {
   };
 
   useEffect(() => {
-    void loadTeam();
+    void Promise.resolve().then(() => loadTeam());
   }, []);
 
   const handleSaveSplit = async (subAgentId: string) => {

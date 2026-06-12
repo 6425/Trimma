@@ -235,10 +235,10 @@ export function matrixFromRows(
   const matrix = structuredClone(DEFAULT_ROLE_PERMISSIONS);
   for (const row of rows) {
     const role = normalizePlatformRoleSlug(row.role_slug);
-    const module = row.module_slug as PermissionModuleSlug;
+    const moduleSlug = row.module_slug as PermissionModuleSlug;
     const action = row.action_slug as PermissionActionSlug;
-    if (!role || !(module in matrix[role]) || !(action in matrix[role][module])) continue;
-    matrix[role][module][action] = Boolean(row.allowed);
+    if (!role || !(moduleSlug in matrix[role]) || !(action in matrix[role][moduleSlug])) continue;
+    matrix[role][moduleSlug][action] = Boolean(row.allowed);
   }
   return matrix;
 }
