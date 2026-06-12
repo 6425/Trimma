@@ -18,6 +18,7 @@ export type BookingRecordInput = {
   salon_upfront_amount?: number;
   platform_commission_amount?: number;
   agent_email?: string | null;
+  field_agent_email?: string | null;
   agent_commission_percent?: number;
   agent_commission_amount?: number;
   promotion_package_id?: string | null;

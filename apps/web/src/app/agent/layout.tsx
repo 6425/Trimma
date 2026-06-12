@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { 
   Home, Map, UserPlus, Building2,
-  Wallet, MapPin, User, LogOut, Search,
+  Wallet, MapPin, User, LogOut, Search, Users,
   KanbanSquare, Menu, X, Bell, CheckCircle2, HelpCircle
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
@@ -20,6 +20,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   const [agentName, setAgentName] = useState("Agent");
   const [agentAvatar, setAgentAvatar] = useState("");
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
+  const [isRegionalHead, setIsRegionalHead] = useState(false);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -36,6 +37,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         if (result.success && result.profile) {
           setAgentName(result.profile.fullName || "Agent");
           setAgentAvatar(result.profile.avatarUrl || "");
+          setIsRegionalHead(Boolean(result.profile.isRegionalHead));
         }
       } catch {
         // Layout should render even if profile hydration fails.
@@ -80,6 +82,9 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       title: "Performance",
       items: [
         { name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> },
+        ...(isRegionalHead
+          ? [{ name: "Team", path: "/agent/team", icon: <Users className="w-4 h-4" /> }]
+          : []),
       ]
     },
   ];

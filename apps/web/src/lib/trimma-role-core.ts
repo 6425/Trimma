@@ -2,13 +2,29 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { normalizeEmail } from "@/lib/normalize-email";
 
-const ROLE_PRIORITY: TrimmaUserRole[] = ["admin", "salon_owner", "agent", "customer"];
+const ROLE_PRIORITY: TrimmaUserRole[] = [
+  "admin",
+  "regional_head",
+  "salon_owner",
+  "agent",
+  "customer",
+];
 
 function normalizeRoleValue(role: string | null | undefined): string | null {
   if (!role) return null;
   const value = role.toLowerCase();
-  if (value === "superadmin" || value === "regional_admin") return "admin";
-  return value;
+  if (value === "superadmin") return "admin";
+  if (value === "regional_admin") return "regional_head";
+  if (
+    value === "admin" ||
+    value === "regional_head" ||
+    value === "salon_owner" ||
+    value === "agent" ||
+    value === "customer"
+  ) {
+    return value;
+  }
+  return null;
 }
 
 export function pickHighestRole(
@@ -59,7 +75,7 @@ export async function fetchGlobalRolesForEmail(
     .filter((role): role is string => Boolean(role));
 }
 
-export const PLATFORM_ADMIN_ROLE_VALUES = new Set(["admin", "superadmin", "regional_admin"]);
+export const PLATFORM_ADMIN_ROLE_VALUES = new Set(["admin", "superadmin"]);
 
 export function isPlatformAdminRole(role: string | null | undefined): boolean {
   if (!role) return false;

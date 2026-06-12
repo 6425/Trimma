@@ -49,7 +49,9 @@ export default function AdminAgentManagement() {
 
       if (result.success === false) throw new Error(result.error);
 
-      const agentUsers = (result.users || []).filter((u: any) => u.global_role === "agent");
+      const agentUsers = (result.users || []).filter((u: any) =>
+        ["agent", "regional_head"].includes(String(u.global_role || "").toLowerCase())
+      );
       const assignments = result.agentTerritories || [];
       const catalog = result.territoryCatalog || [];
 

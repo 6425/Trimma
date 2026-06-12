@@ -1,4 +1,4 @@
-export type TrimmaUserRole = "admin" | "salon_owner" | "agent" | "customer";
+export type TrimmaUserRole = "admin" | "regional_head" | "salon_owner" | "agent" | "customer";
 
 export function canAccessTrimmaRoute(
   role: TrimmaUserRole | null | undefined,
@@ -14,7 +14,7 @@ export function canAccessTrimmaRoute(
       route.startsWith("/staff")
     );
   }
-  if (role === "agent") {
+  if (role === "agent" || role === "regional_head") {
     return (
       route.startsWith("/agent") ||
       route.startsWith("/leads") ||
@@ -61,7 +61,7 @@ export function resolvePostAuthRedirect(
 
   if (role === "admin") return "/admin";
   if (role === "salon_owner") return "/dashboard";
-  if (role === "agent") return "/agent";
+  if (role === "regional_head" || role === "agent") return "/agent";
   if (role === "customer") return "/customer";
   return "/onboarding";
 }

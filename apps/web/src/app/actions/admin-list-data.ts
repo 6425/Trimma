@@ -40,7 +40,11 @@ export async function fetchAdminUsers(role?: string | null) {
   const result = await withAdminDb(async (supabase) => {
     let query = supabase.from("users").select("*").order("email");
     if (role) {
-      query = query.eq("global_role", role);
+      if (role === "regional_head") {
+        query = query.in("global_role", ["regional_head", "regional_admin"]);
+      } else {
+        query = query.eq("global_role", role);
+      }
     }
     const { data, error } = await query;
     if (error) throw new Error(error.message);

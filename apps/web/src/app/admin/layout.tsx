@@ -104,6 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: 'Roles', href: '/admin/users/roles' },
         { name: 'Customers', href: '/admin/users/all?role=customer' },
         { name: 'Salon Owners', href: '/admin/users/all?role=salon_owner' },
+        { name: 'Regional Heads', href: '/admin/users/all?role=regional_head' },
         { name: 'Agents', href: '/admin/users/agents' },
         { name: 'Admins', href: '/admin/users/all?role=admin' },
       ]

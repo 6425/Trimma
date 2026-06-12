@@ -80,6 +80,9 @@ export default function AdminAgents() {
   // Form edit states
   const [editCommission, setEditCommission] = useState("10");
   const [editStatus, setEditStatus] = useState("active");
+  const [editAgentTier, setEditAgentTier] = useState<"regional_head" | "field_agent">("regional_head");
+  const [editReportsToAgentId, setEditReportsToAgentId] = useState("");
+  const [editSubAgentSplit, setEditSubAgentSplit] = useState("50");
   const [editTerritoryIds, setEditTerritoryIds] = useState<string[]>([]);
   
   const [modalProvinceIds, setModalProvinceIds] = useState<string[]>([]);
@@ -140,7 +143,9 @@ export default function AdminAgents() {
     const isAgentUser = (u: { email?: string; global_role?: string }) => {
       const email = String(u.email || "").trim().toLowerCase();
       return (
-        String(u.global_role || "").toLowerCase() === "agent" ||
+        ["agent", "regional_head", "regional_admin"].includes(
+          String(u.global_role || "").toLowerCase()
+        ) ||
         agentEmailsFromRoles.has(email) ||
         (agentsData || []).some(
           (a) => String(a.user_email || "").trim().toLowerCase() === email
@@ -158,6 +163,11 @@ export default function AdminAgents() {
       const agentLeads = (leadsData || []).filter((l: any) => l.assign_to === u.email);
       const convertedCount = agentLeads.filter((l: any) => l.onboarding_stage === "CONVERTED").length;
 
+      const reportsToId = agentMeta.reports_to_agent_id || null;
+      const reportsToAgent = reportsToId
+        ? (agentsData || []).find((a: any) => a.id === reportsToId)
+        : null;
+
       return {
         id: agentMeta.id,
         email: u.email,
@@ -167,6 +177,11 @@ export default function AdminAgents() {
         agent_exists: !!agentMeta.user_email,
         status: agentMeta.status || "active",
         commission_rate: agentMeta.commission_rate !== undefined ? agentMeta.commission_rate : 10,
+        agent_tier: agentMeta.agent_tier || "regional_head",
+        reports_to_agent_id: reportsToId,
+        reports_to_email: reportsToAgent?.user_email || "",
+        sub_agent_split_percent:
+          agentMeta.sub_agent_split_percent != null ? agentMeta.sub_agent_split_percent : 50,
         territory: agentMeta.territory || "",
         total_leads: agentLeads.length,
         converted_leads: convertedCount,
@@ -287,10 +302,24 @@ export default function AdminAgents() {
     }
   };
 
+  const regionalHeadOptions = useMemo(
+    () =>
+      agents.filter(
+        (agent) =>
+          agent.agent_tier !== "field_agent" &&
+          agent.id &&
+          (!selectedAgent?.id || agent.id !== selectedAgent.id)
+      ),
+    [agents, selectedAgent?.id]
+  );
+
   const handleOpenEditModal = (agent: any) => {
     setSelectedAgent(agent);
     setEditCommission(String(agent.commission_rate));
     setEditStatus(agent.status);
+    setEditAgentTier(agent.agent_tier === "field_agent" ? "field_agent" : "regional_head");
+    setEditReportsToAgentId(agent.reports_to_agent_id || "");
+    setEditSubAgentSplit(String(agent.sub_agent_split_percent ?? 50));
     
     // Find assigned territories for this agent
     const assignedIds = agentTerritories
@@ -333,12 +362,20 @@ export default function AdminAgents() {
         .map((t) => t.name)
         .join(", ");
 
+      if (editAgentTier === "field_agent" && !editReportsToAgentId) {
+        throw new Error("Field agents must be assigned to a regional head.");
+      }
+
       const result = await saveAdminAgentProfile({
         user_email: selectedAgent.email,
         status: editStatus,
         commission_rate: parsedRate,
         territory: assignedNames,
         territory_id: finalIds[0] ?? null,
+        agent_tier: editAgentTier,
+        reports_to_agent_id: editAgentTier === "field_agent" ? editReportsToAgentId : null,
+        sub_agent_split_percent:
+          editAgentTier === "field_agent" ? parseFloat(editSubAgentSplit) || 50 : null,
         createIfMissing: !selectedAgent.agent_exists,
       });
       if (result.success === false) throw new Error(result.error);
@@ -780,6 +817,22 @@ export default function AdminAgents() {
                                   <div>
                                     <div className="font-extrabold text-zinc-900 text-sm tracking-tight">{agent.full_name}</div>
                                     <div className="text-[10px] text-zinc-500">{agent.email}</div>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                      <Badge
+                                        variant="secondary"
+                                        className="px-1.5 py-0 border-none bg-slate-100 text-zinc-600 font-bold text-[9px]"
+                                      >
+                                        {agent.agent_tier === "field_agent" ? "Sub-Agent" : "Regional Head"}
+                                      </Badge>
+                                      {agent.agent_tier === "field_agent" && agent.reports_to_email && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="px-1.5 py-0 border-none bg-[#F5B700]/15 text-[#9A7200] font-bold text-[9px]"
+                                        >
+                                          → {agent.reports_to_email}
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -1443,6 +1496,52 @@ export default function AdminAgents() {
                   <Percent className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-700" />
                 </div>
               </div>
+
+              {/* Agent Tier */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Agent Tier</label>
+                <select
+                  value={editAgentTier}
+                  onChange={(e) =>
+                    setEditAgentTier(e.target.value === "field_agent" ? "field_agent" : "regional_head")
+                  }
+                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#F5B700]/20"
+                >
+                  <option value="regional_head">Regional Head</option>
+                  <option value="field_agent">Sub-Agent (Field Agent)</option>
+                </select>
+              </div>
+
+              {editAgentTier === "field_agent" && (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Reports To (Regional Head)</label>
+                    <select
+                      value={editReportsToAgentId}
+                      onChange={(e) => setEditReportsToAgentId(e.target.value)}
+                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#F5B700]/20"
+                    >
+                      <option value="">Select regional head...</option>
+                      {regionalHeadOptions.map((head) => (
+                        <option key={head.id} value={head.id}>
+                          {head.full_name} ({head.email})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Sub-Agent Split (% of head commission)</label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editSubAgentSplit}
+                      onChange={(e) => setEditSubAgentSplit(e.target.value)}
+                      className="h-10 text-zinc-700 font-extrabold focus:ring-2 focus:ring-brand/20 rounded-xl"
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Status */}
               <div className="space-y-1">

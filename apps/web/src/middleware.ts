@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Define roles and permissions inline to avoid module resolution issues in Edge Runtime
-type UserRole = 'admin' | 'salon_owner' | 'agent' | 'customer';
+type UserRole = 'admin' | 'regional_head' | 'salon_owner' | 'agent' | 'customer';
 
 const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> = {
   admin: {
@@ -14,6 +14,9 @@ const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> =
   agent: {
     canAccess: (route: string) => route.startsWith('/agent') || route.startsWith('/leads') || route.startsWith('/dashboard'),
   },
+  regional_head: {
+    canAccess: (route: string) => route.startsWith('/agent') || route.startsWith('/leads') || route.startsWith('/dashboard'),
+  },
   customer: {
     canAccess: (route: string) => route.startsWith('/profile') || route.startsWith('/bookings') || route.startsWith('/customer'),
   }
@@ -23,8 +26,15 @@ function readRoleCookie(value: string | undefined): UserRole | null {
   if (!value) return null;
   try {
     const decoded = decodeURIComponent(value).toLowerCase();
-    if (decoded === "superadmin" || decoded === "regional_admin") return "admin";
-    if (decoded === "admin" || decoded === "salon_owner" || decoded === "agent" || decoded === "customer") {
+    if (decoded === "superadmin") return "admin";
+    if (decoded === "regional_admin") return "regional_head";
+    if (
+      decoded === "admin" ||
+      decoded === "regional_head" ||
+      decoded === "salon_owner" ||
+      decoded === "agent" ||
+      decoded === "customer"
+    ) {
       return decoded;
     }
     return null;

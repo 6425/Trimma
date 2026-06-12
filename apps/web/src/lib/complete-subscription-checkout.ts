@@ -1,7 +1,7 @@
 import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
-import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
+import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteSubscriptionCheckoutInput = {
@@ -51,8 +51,8 @@ async function recordSubscriptionCommission(params: {
       .eq("id", salonId)
       .maybeSingle();
 
-    const agentEmail = resolveReferringAgentEmail(salon);
-    if (!agentEmail) return;
+    const attribution = await resolveAgentCommissionAttribution(supabase, salon);
+    if (!attribution.payeeEmail) return;
 
     const { data: master } = await supabase
       .from("commission_master")
@@ -65,14 +65,17 @@ async function recordSubscriptionCommission(params: {
     const amount = Math.round(baseAmount * (agentPercent / 100) * 100) / 100;
 
     const { error } = await supabase.from("commission_ledger").insert({
-      agent_email: agentEmail,
+      agent_email: attribution.payeeEmail,
+      field_agent_email: attribution.fieldAgentEmail,
       salon_id: salonId,
       commission_category: "subscription",
       base_amount: baseAmount,
       agent_percent: agentPercent,
       amount,
       status: "PENDING",
-      notes: `Subscription commission: ${planName} (${billingCycle}) payment ${orderId}.`,
+      notes: attribution.fieldAgentEmail
+        ? `Subscription commission: ${planName} (${billingCycle}) payment ${orderId}. Field agent: ${attribution.fieldAgentEmail} (${attribution.splitPercent}% split).`
+        : `Subscription commission: ${planName} (${billingCycle}) payment ${orderId}.`,
     });
 
     if (error) {

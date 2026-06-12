@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { getAgentOperationalEmails } from "@/lib/agent-hierarchy";
 
 export type WorkPriority = "HIGH" | "MEDIUM" | "LOW";
 
@@ -22,12 +23,13 @@ export async function fetchAgentWorkQueue(agentEmail: string) {
 
   const supabase = createSupabaseAdminClient();
   const workItems: WorkItem[] = [];
+  const operationalEmails = await getAgentOperationalEmails(supabase, agentEmail);
 
   // 1. Fetch assigned leads (from salons table where onboarding_status is ASSIGNED_TO_AGENT, UNVERIFIED, etc.)
   const { data: leads, error: leadsError } = await supabase
     .from("salons")
     .select("id, name, onboarding_status, created_at, updated_at")
-    .eq("assign_to", agentEmail)
+    .in("assign_to", operationalEmails)
     .not("onboarding_status", "in", '("VERIFIED","REJECTED","COMPLETED")');
 
   if (!leadsError && leads) {
@@ -75,7 +77,7 @@ export async function fetchAgentWorkQueue(agentEmail: string) {
   const { data: salons, error: salonsError } = await supabase
     .from("salons")
     .select("id, name, onboarding_status, activation_status, updated_at")
-    .eq("assign_to", agentEmail)
+    .in("assign_to", operationalEmails)
     .eq("onboarding_status", "VERIFIED"); // meaning it's verified but perhaps owner hasn't completed setup
 
   if (!salonsError && salons) {

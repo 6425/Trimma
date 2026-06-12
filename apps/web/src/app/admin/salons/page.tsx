@@ -63,7 +63,14 @@ export default function Salons() {
       await fetchSalons();
       const userRes = await fetchAdminUsers();
       if (userRes.success) {
-        setAgents(userRes.users.filter((u: any) => u.global_role === "agent"));
+        setAgents(
+          userRes.users.filter(
+            (u: any) =>
+              u.global_role === "agent" ||
+              u.global_role === "regional_head" ||
+              u.global_role === "regional_admin"
+          )
+        );
       }
     });
   }, []);

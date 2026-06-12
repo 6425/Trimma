@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import { UserPlus, User, Shield, ArrowLeft, Check, ClipboardList, Fingerprint, Lock, Globe, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
 import { getAccessTokenFromCookie } from "@/lib/client-auth-cookie";
 import { toast } from "sonner";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { listRegionalHeadAgentsForAdmin } from "@/app/actions/admin-operations";
+import { PlatformRoleSelect } from "../../../../components/admin/PlatformRoleSelect";
 
 const ALL_DISTRICTS = SRI_LANKA_PROVINCES.flatMap(p => p.districts.map(d => d.name)).sort();
 
@@ -26,6 +28,7 @@ function AdminUserCreateInner() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [regionalHeads, setRegionalHeads] = useState<Array<{ id: string; user_email: string }>>([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -33,14 +36,29 @@ function AdminUserCreateInner() {
     email: "",
     role: initialRole,
     territory: "Colombo",
+    agentTier: "regional_head" as "regional_head" | "field_agent",
+    reportsToAgentId: "",
+    subAgentSplitPercent: "50",
     password: "",
     confirmPassword: ""
   });
+
+  useEffect(() => {
+    void (async () => {
+      const result = await listRegionalHeadAgentsForAdmin();
+      if (result.success) {
+        setRegionalHeads(result.heads);
+      }
+    })();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       return toast.error("Passwords do not match");
+    }
+    if (formData.role === "agent" && formData.agentTier === "field_agent" && !formData.reportsToAgentId) {
+      return toast.error("Field agents must be assigned to a regional head.");
     }
 
     setIsLoading(true);
@@ -62,6 +80,15 @@ function AdminUserCreateInner() {
           fullName: formData.fullName,
           role: formData.role,
           territory: formData.territory,
+          agentTier: formData.role === "agent" ? formData.agentTier : undefined,
+          reportsToAgentId:
+            formData.role === "agent" && formData.agentTier === "field_agent"
+              ? formData.reportsToAgentId
+              : null,
+          subAgentSplitPercent:
+            formData.role === "agent" && formData.agentTier === "field_agent"
+              ? Number(formData.subAgentSplitPercent) || 50
+              : null,
         }),
       });
 
@@ -71,7 +98,15 @@ function AdminUserCreateInner() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push(formData.role === "agent" ? "/admin/users/agents" : "/admin/users/all"), 2000);
+      setTimeout(
+        () =>
+          router.push(
+            formData.role === "agent" || formData.role === "regional_head"
+              ? "/admin/users/agents"
+              : "/admin/users/all"
+          ),
+        2000
+      );
     } catch (error: any) {
       toast.error("Provisioning failed: " + error.message);
     } finally {
@@ -155,22 +190,13 @@ function AdminUserCreateInner() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Account Role</label>
-                  <Select 
+                  <PlatformRoleSelect
+                    mode="create"
                     value={formData.role}
                     onValueChange={(val) => setFormData({ ...formData, role: val })}
-                    required
-                  >
-                    <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-none shadow-2xl p-1">
-                      <SelectItem value="superadmin" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Super Admin</SelectItem>
-                      <SelectItem value="admin" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Admin</SelectItem>
-                      <SelectItem value="regional_admin" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Regional Admin</SelectItem>
-                      <SelectItem value="agent" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Agent</SelectItem>
-                      <SelectItem value="salon_owner" className="font-medium rounded-lg py-2.5 px-3 cursor-pointer">Salon Owner</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    triggerClassName="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-0 focus:ring-offset-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none"
+                    contentClassName="rounded-xl border-none shadow-2xl p-1"
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Primary Territory</label>
@@ -193,6 +219,53 @@ function AdminUserCreateInner() {
                   </Select>
                 </div>
               </div>
+
+              {(formData.role === "agent" || formData.role === "regional_head") && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  {formData.role === "agent" ? (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">Regional Head</label>
+                        <Select
+                          value={formData.reportsToAgentId}
+                          onValueChange={(val) => setFormData({ ...formData, reportsToAgentId: val })}
+                        >
+                          <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
+                            <SelectValue placeholder="Select regional head" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl border-none shadow-2xl p-1 max-h-[280px]">
+                            {regionalHeads.map((head) => (
+                              <SelectItem key={head.id} value={head.id}>
+                                {head.user_email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest pl-1">
+                          Sub-Agent Split (% of regional head commission)
+                        </label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={formData.subAgentSplitPercent}
+                          onChange={(e) =>
+                            setFormData({ ...formData, subAgentSplitPercent: e.target.value })
+                          }
+                          className="h-12 bg-zinc-50 border-none rounded-xl"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="sm:col-span-2 text-xs text-zinc-500 bg-zinc-50 rounded-xl p-3 border border-zinc-100">
+                      Regional heads receive full agent portal access and can manage sub-agents, commission splits,
+                      and salon assignments for their team.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-4 pt-4 border-t border-zinc-50">

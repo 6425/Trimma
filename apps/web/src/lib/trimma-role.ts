@@ -84,13 +84,16 @@ export async function confirmAdminAccessForSession(
 export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
   const secure =
     typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
+  const normalized = role.toLowerCase();
   const middlewareRole = isPlatformAdminRole(role)
     ? "admin"
-    : role.toLowerCase() === "agent"
-      ? "agent"
-      : role.toLowerCase() === "salon_owner"
-        ? "salon_owner"
-        : "customer";
+    : normalized === "regional_head"
+      ? "regional_head"
+      : normalized === "agent"
+        ? "agent"
+        : normalized === "salon_owner"
+          ? "salon_owner"
+          : "customer";
   
   // Try to set the full token for backward compatibility, but it might fail if > 4KB
   const encodedToken = encodeURIComponent(accessToken);

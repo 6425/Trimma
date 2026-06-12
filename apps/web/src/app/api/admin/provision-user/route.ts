@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 const PLATFORM_ADMIN_ROLES = new Set(["admin", "superadmin"]);
-const AGENT_TABLE_ROLES = new Set(["agent", "admin", "superadmin", "regional_admin"]);
+const AGENT_TABLE_ROLES = new Set(["agent", "admin", "superadmin", "regional_head"]);
 
 export async function POST(request: Request) {
   try {
@@ -33,12 +33,15 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, password, fullName, role, territory } = body as {
+    const { email, password, fullName, role, territory, agentTier, reportsToAgentId, subAgentSplitPercent } = body as {
       email?: string;
       password?: string;
       fullName?: string;
       role?: string;
       territory?: string;
+      agentTier?: "regional_head" | "field_agent";
+      reportsToAgentId?: string | null;
+      subAgentSplitPercent?: number | null;
     };
 
     if (!email || !password || !fullName || !role) {
@@ -144,12 +147,44 @@ export async function POST(request: Request) {
         .eq("user_email", normalizedEmail)
         .maybeSingle();
 
-      const agentPayload = {
+      const tier =
+        role === "regional_head"
+          ? "regional_head"
+          : agentTier === "field_agent"
+            ? "field_agent"
+            : "regional_head";
+      const agentPayload: Record<string, unknown> = {
         user_id: createdUser.user.id,
         user_email: normalizedEmail,
         status: "active",
         commission_rate: 0,
+        agent_tier: tier,
       };
+
+      if (tier === "field_agent") {
+        if (!reportsToAgentId) {
+          return NextResponse.json(
+            { error: "Field agents must be assigned to a regional head." },
+            { status: 400 }
+          );
+        }
+        const { data: headAgent, error: headError } = await supabaseAdmin
+          .from("agents")
+          .select("id, agent_tier")
+          .eq("id", reportsToAgentId)
+          .maybeSingle();
+        if (headError || !headAgent?.id || headAgent.agent_tier !== "regional_head") {
+          return NextResponse.json(
+            { error: "Selected regional head is invalid." },
+            { status: 400 }
+          );
+        }
+        agentPayload.reports_to_agent_id = reportsToAgentId;
+        agentPayload.sub_agent_split_percent =
+          subAgentSplitPercent == null
+            ? 50
+            : Math.min(100, Math.max(0, Number(subAgentSplitPercent) || 0));
+      }
 
       if (!existingAgent) {
         const { error: agentError } = await supabaseAdmin.from("agents").insert(agentPayload);

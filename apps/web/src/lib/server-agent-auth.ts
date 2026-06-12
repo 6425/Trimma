@@ -34,7 +34,7 @@ export async function requireAgentFromCookies(): Promise<
     }
 
     const role = await resolveTrimmaUserRoleServer(user.id, user.email);
-    if (role !== "agent" && role !== "admin") {
+    if (role !== "agent" && role !== "regional_head" && role !== "admin") {
       return { error: "Unauthorized access", role: role ?? null };
     }
 

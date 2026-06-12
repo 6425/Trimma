@@ -8,6 +8,7 @@ import { APP_BASE_URL } from "@/lib/email/config";
 import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { canAgentAccessSalonAssignee } from "@/lib/agent-hierarchy";
 
 export async function POST(request: Request) {
   try {
@@ -39,8 +40,13 @@ export async function POST(request: Request) {
     }
 
     if (auth.role === "agent") {
-      const assignedTo = salon.assign_to ? normalizeEmail(salon.assign_to) : null;
-      if (assignedTo && assignedTo !== auth.email) {
+      const hasAccess = await canAgentAccessSalonAssignee(
+        supabaseAdmin,
+        auth.email,
+        auth.userId,
+        salon.assign_to
+      );
+      if (!hasAccess) {
         return NextResponse.json({ error: "You do not have access to this lead." }, { status: 403 });
       }
     }

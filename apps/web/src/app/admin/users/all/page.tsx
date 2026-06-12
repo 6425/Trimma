@@ -31,10 +31,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { saveAdminUserWithRole } from "@/app/actions/admin-operations";
+import {
+  getAdminAgentMetaForUser,
+  listRegionalHeadAgentsForAdmin,
+  saveAdminUserWithRole,
+} from "@/app/actions/admin-operations";
+import { PlatformRoleSelect } from "../../../../components/admin/PlatformRoleSelect";
 import { toast } from "sonner";
 import { fetchAdminUsers } from "@/app/actions/admin-list-data";
 import { withTimeout } from "@/lib/promise-timeout";
+import {
+  formatPlatformRoleLabel,
+  getRoleBadgeClass,
+  isProtectedAdminRole,
+  normalizePlatformRoleValue,
+} from "@/lib/platform-role-options";
 
 function AdminUserList() {
   const navigate = useRouter();
@@ -50,6 +61,9 @@ function AdminUserList() {
   const [resettingUser, setResettingUser] = useState<any>(null);
   const [newPassword, setNewPassword] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [regionalHeads, setRegionalHeads] = useState<Array<{ id: string; user_email: string }>>([]);
+  const [editReportsToAgentId, setEditReportsToAgentId] = useState("");
+  const [editSubAgentSplit, setEditSubAgentSplit] = useState("50");
 
   const fetchUsers = async () => {
     try {
@@ -77,9 +91,28 @@ function AdminUserList() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roleFilter]);
 
+  useEffect(() => {
+    void (async () => {
+      const result = await listRegionalHeadAgentsForAdmin();
+      if (result.success) setRegionalHeads(result.heads);
+    })();
+  }, []);
+
   const handleEditClick = (user: any) => {
     setEditingUser({ ...user });
+    setEditReportsToAgentId("");
+    setEditSubAgentSplit("50");
     setIsEditDialogOpen(true);
+
+    if (user.global_role === "agent") {
+      void (async () => {
+        const meta = await getAdminAgentMetaForUser(user.email);
+        if (meta.success && meta.agent) {
+          setEditReportsToAgentId(meta.agent.reports_to_agent_id || "");
+          setEditSubAgentSplit(String(meta.agent.sub_agent_split_percent ?? 50));
+        }
+      })();
+    }
   };
 
   const handleUpdateUser = async () => {
@@ -91,6 +124,12 @@ function AdminUserList() {
         full_name: editingUser.full_name,
         phone: editingUser.phone,
         global_role: editingUser.global_role,
+        reports_to_agent_id:
+          editingUser.global_role === "agent" ? editReportsToAgentId || null : null,
+        sub_agent_split_percent:
+          editingUser.global_role === "agent"
+            ? Number(editSubAgentSplit) || 50
+            : null,
       });
       if (result.success === false) throw new Error(result.error);
       
@@ -134,7 +173,9 @@ function AdminUserList() {
   const filteredUsers = users.filter(u => {
     const matchesSearch = (u.full_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
                           (u.email?.toLowerCase() || "").includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter ? u.global_role === roleFilter : true;
+    const matchesRole = roleFilter
+      ? normalizePlatformRoleValue(u.global_role) === normalizePlatformRoleValue(roleFilter)
+      : true;
     return matchesSearch && matchesRole;
   });
 
@@ -242,13 +283,8 @@ function AdminUserList() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={`rounded-lg px-2.5 py-0.5 text-[11px] font-bold shadow-none border-none capitalize ${
-                         (user.global_role || "").includes('admin') ? 'bg-white text-zinc-900' : 
-                         user.global_role === 'salon_owner' ? 'bg-brand/10 text-brand' :
-                         user.global_role === 'customer' ? 'bg-zinc-100 text-zinc-600' :
-                         'bg-purple-100 text-purple-600'
-                      }`}>
-                        {user.global_role || "User"}
+                      <Badge className={`rounded-lg px-2.5 py-0.5 text-[11px] font-bold shadow-none border-none ${getRoleBadgeClass(user.global_role)}`}>
+                        {formatPlatformRoleLabel(user.global_role)}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
@@ -353,25 +389,54 @@ function AdminUserList() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Platform Role</label>
-                <Select 
-                  value={editingUser?.global_role || "user"}
-                  onValueChange={(val) => setEditingUser({ ...editingUser, global_role: val })}
-                >
-                  <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 outline-none focus:ring-2 focus:ring-brand/20 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent
-                    alignItemWithTrigger={false}
-                    className="rounded-xl border-0 ring-0 shadow-2xl p-1.5 w-auto min-w-[11rem]"
-                  >
-                    <SelectItem value="superadmin" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Super Admin</SelectItem>
-                    <SelectItem value="admin" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Admin</SelectItem>
-                    <SelectItem value="regional_admin" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Regional Admin</SelectItem>
-                    <SelectItem value="agent" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Agent</SelectItem>
-                    <SelectItem value="salon_owner" className="font-medium rounded-lg py-2.5 pl-4 pr-3 cursor-pointer">Salon Owner</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isProtectedAdminRole(editingUser?.global_role) ? (
+                  <div className="h-12 px-4 rounded-xl bg-zinc-100 flex items-center text-sm font-semibold text-zinc-600">
+                    {formatPlatformRoleLabel(editingUser?.global_role)} — protected account
+                  </div>
+                ) : (
+                  <PlatformRoleSelect
+                    mode="edit"
+                    value={editingUser?.global_role || "customer"}
+                    onValueChange={(val) => setEditingUser({ ...editingUser, global_role: val })}
+                  />
+                )}
               </div>
+
+              {editingUser?.global_role === "agent" && !isProtectedAdminRole(editingUser?.global_role) && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Regional Head</label>
+                    <Select
+                      value={editReportsToAgentId}
+                      onValueChange={setEditReportsToAgentId}
+                    >
+                      <SelectTrigger className="w-full h-12 bg-zinc-50 border-0 rounded-xl px-4 font-medium text-zinc-900 shadow-none">
+                        <SelectValue placeholder="Select regional head" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-none shadow-2xl p-1 max-h-[280px]">
+                        {regionalHeads.map((head) => (
+                          <SelectItem key={head.id} value={head.id}>
+                            {head.user_email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Sub-Agent Split (%)
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={editSubAgentSplit}
+                      onChange={(e) => setEditSubAgentSplit(e.target.value)}
+                      className="h-12 bg-zinc-50 border-none rounded-xl font-medium"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <DialogFooter className="pt-4 flex items-center justify-between gap-4">

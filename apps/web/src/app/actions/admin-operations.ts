@@ -232,15 +232,34 @@ export async function saveAdminUserWithRole(input: {
   full_name: string;
   phone?: string | null;
   global_role: string;
+  reports_to_agent_id?: string | null;
+  sub_agent_split_percent?: number | null;
 }) {
-  const rolesToReplicate = ["agent", "admin", "superadmin", "regional_admin"];
+  const normalizedEmail = normalizeEmail(input.email);
+  if (!normalizedEmail) {
+    return { success: false as const, error: "User email is required." };
+  }
+
+  if (String(input.global_role || "").toLowerCase() === "regional_admin") {
+    input = { ...input, global_role: "regional_head" };
+  }
 
   const result = await withAdminDb(async (supabase) => {
     const { data: currentUser } = await supabase
       .from("users")
       .select("global_role")
-      .eq("email", input.email)
+      .eq("email", normalizedEmail)
       .maybeSingle();
+
+    const currentRole = String(currentUser?.global_role || "").toLowerCase();
+    if (currentRole === "admin" || currentRole === "superadmin") {
+      throw new Error("Platform admin accounts cannot be reassigned from this screen.");
+    }
+
+    const targetRole = String(input.global_role || "").toLowerCase();
+    if (targetRole === "admin" || targetRole === "superadmin") {
+      throw new Error("Platform admin roles cannot be assigned from user edit.");
+    }
 
     const { error: profileError } = await supabase
       .from("users")
@@ -249,29 +268,70 @@ export async function saveAdminUserWithRole(input: {
         global_role: input.global_role,
         phone: input.phone ?? null,
       })
-      .eq("email", input.email);
+      .eq("email", normalizedEmail);
     if (profileError) throw new Error(profileError.message);
 
-    if (rolesToReplicate.includes(input.global_role)) {
-      const { data: existingAgent } = await supabase
-        .from("agents")
-        .select("id")
-        .eq("user_email", input.email)
-        .maybeSingle();
-      if (!existingAgent) {
-        const { error: agentError } = await supabase.from("agents").insert([
-          { user_email: input.email, status: "active", commission_rate: 0 },
-        ]);
+    const authUserId = await findAuthUserIdByEmail(supabase, normalizedEmail);
+    const { data: existingAgent } = await supabase
+      .from("agents")
+      .select("id, reports_to_agent_id, sub_agent_split_percent")
+      .eq("user_email", normalizedEmail)
+      .maybeSingle();
+
+    if (targetRole === "regional_head" || targetRole === "agent") {
+      const agentTier = targetRole === "regional_head" ? "regional_head" : "field_agent";
+      const payload: Record<string, unknown> = {
+        user_email: normalizedEmail,
+        status: "active",
+        commission_rate: 0,
+        agent_tier: agentTier,
+      };
+      if (authUserId) payload.user_id = authUserId;
+
+      if (agentTier === "regional_head") {
+        payload.reports_to_agent_id = null;
+        payload.sub_agent_split_percent = null;
+      } else {
+        const reportsTo = input.reports_to_agent_id || existingAgent?.reports_to_agent_id || null;
+        if (!reportsTo) {
+          throw new Error("Sub-agents must be assigned to a regional head.");
+        }
+        const { data: headAgent, error: headError } = await supabase
+          .from("agents")
+          .select("id, agent_tier")
+          .eq("id", reportsTo)
+          .maybeSingle();
+        if (headError || !headAgent?.id || headAgent.agent_tier !== "regional_head") {
+          throw new Error("Selected regional head is invalid.");
+        }
+        payload.reports_to_agent_id = reportsTo;
+        payload.sub_agent_split_percent =
+          input.sub_agent_split_percent == null
+            ? existingAgent?.sub_agent_split_percent ?? 50
+            : Math.min(100, Math.max(0, Number(input.sub_agent_split_percent) || 0));
+      }
+
+      if (existingAgent?.id) {
+        const { error: agentError } = await supabase
+          .from("agents")
+          .update(payload)
+          .eq("id", existingAgent.id);
+        if (agentError) throw new Error(agentError.message);
+      } else {
+        const { error: agentError } = await supabase.from("agents").insert([payload]);
         if (agentError) throw new Error(agentError.message);
       }
-    } else if (currentUser && rolesToReplicate.includes(String(currentUser.global_role))) {
-      // keep agent history row
+    } else if (existingAgent?.id) {
+      await supabase
+        .from("agents")
+        .update({ status: "inactive" })
+        .eq("id", existingAgent.id);
     }
 
-    await syncUserRolesForGlobalRole(supabase, input.email, input.global_role);
+    await syncUserRolesForGlobalRole(supabase, normalizedEmail, input.global_role);
 
     if (input.global_role === "salon_owner") {
-      await ensureSalonOwnerAccess(supabase, input.email);
+      await ensureSalonOwnerAccess(supabase, normalizedEmail);
     }
   });
 
@@ -281,12 +341,46 @@ export async function saveAdminUserWithRole(input: {
 
 // ─── Agents ─────────────────────────────────────────────────────────────────
 
+export async function getAdminAgentMetaForUser(email: string) {
+  const normalizedEmail = normalizeEmail(email);
+  if (!normalizedEmail) return { success: false as const, error: "Email is required." };
+
+  const result = await withAdminDb(async (supabase) => {
+    const { data, error } = await supabase
+      .from("agents")
+      .select("id, reports_to_agent_id, sub_agent_split_percent, agent_tier, status")
+      .eq("user_email", normalizedEmail)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { agent: data };
+  });
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const, agent: result.data.agent };
+}
+
+export async function listRegionalHeadAgentsForAdmin() {
+  const result = await withAdminDb(async (supabase) => {
+    const { data, error } = await supabase
+      .from("agents")
+      .select("id, user_email, user_id, status")
+      .eq("agent_tier", "regional_head")
+      .order("user_email", { ascending: true });
+    if (error) throw new Error(error.message);
+    return { heads: data || [] };
+  });
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const, heads: result.data.heads };
+}
+
 export async function saveAdminAgentProfile(input: {
   user_email: string;
   status: string;
   commission_rate: number;
   territory?: string;
   territory_id?: string | null;
+  agent_tier?: "regional_head" | "field_agent";
+  reports_to_agent_id?: string | null;
+  sub_agent_split_percent?: number | null;
   createIfMissing?: boolean;
 }) {
   const result = await withAdminDb(async (supabase) => {
@@ -314,6 +408,31 @@ export async function saveAdminAgentProfile(input: {
     }
     if (input.territory_id !== undefined) {
       payload.territory_id = input.territory_id;
+    }
+
+    const tier = input.agent_tier === "field_agent" ? "field_agent" : "regional_head";
+    payload.agent_tier = tier;
+
+    if (tier === "field_agent") {
+      if (!input.reports_to_agent_id) {
+        throw new Error("Field agents must report to a regional head.");
+      }
+      const { data: headAgent, error: headError } = await supabase
+        .from("agents")
+        .select("id, agent_tier")
+        .eq("id", input.reports_to_agent_id)
+        .maybeSingle();
+      if (headError || !headAgent?.id || headAgent.agent_tier !== "regional_head") {
+        throw new Error("Selected regional head is invalid.");
+      }
+      payload.reports_to_agent_id = input.reports_to_agent_id;
+      payload.sub_agent_split_percent =
+        input.sub_agent_split_percent == null
+          ? 50
+          : Math.min(100, Math.max(0, Number(input.sub_agent_split_percent) || 0));
+    } else {
+      payload.reports_to_agent_id = null;
+      payload.sub_agent_split_percent = null;
     }
 
     if (existing?.id) {

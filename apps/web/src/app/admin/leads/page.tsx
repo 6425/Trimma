@@ -235,7 +235,7 @@ export default function Leads() {
       }
 
       const data = (result.users || []).filter((u) =>
-        ["agent", "admin"].includes(u.global_role)
+        ["agent", "regional_head", "regional_admin", "admin"].includes(u.global_role)
       );
       setAgents(data);
     } catch (error: any) {

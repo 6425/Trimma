@@ -2,6 +2,10 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import {
+  canAgentAccessSalonAssignee,
+  getAgentOperationalEmails,
+} from "@/lib/agent-hierarchy";
 
 /**
  * Attach the actual amount we charge each salon, taken from the latest
@@ -55,10 +59,15 @@ export async function fetchAgentAssignedLeads() {
 
   try {
     const supabase = createSupabaseAdminClient();
+    const operationalEmails = await getAgentOperationalEmails(
+      supabase,
+      auth.email,
+      auth.userId
+    );
     const { data, error } = await supabase
       .from("salons")
       .select("*")
-      .eq("assign_to", auth.email)
+      .in("assign_to", operationalEmails)
       .not("onboarding_status", "in", '("VERIFIED","REJECTED")')
       .order("created_at", { ascending: false });
 
@@ -101,7 +110,13 @@ export async function fetchAgentLeadEditorData(salonId: string) {
       return { success: false as const, error: salonError?.message || "Salon not found." };
     }
 
-    if (salon.assign_to && salon.assign_to !== auth.email) {
+    const hasAccess = await canAgentAccessSalonAssignee(
+      supabase,
+      auth.email,
+      auth.userId,
+      salon.assign_to
+    );
+    if (!hasAccess) {
       return { success: false as const, error: "You do not have access to this lead." };
     }
 
@@ -142,12 +157,17 @@ export async function fetchAgentSalonsList() {
 
   try {
     const supabase = createSupabaseAdminClient();
+    const operationalEmails = await getAgentOperationalEmails(
+      supabase,
+      auth.email,
+      auth.userId
+    );
     const { data, error } = await supabase
       .from("salons")
       .select(
         "id, name, slug, address, phone, category, owner_gmail, onboarding_status, booking_enabled, created_at, subscription_plan_id, subscription_plans(name, monthly_price, intro_monthly_price)"
       )
-      .eq("assign_to", auth.email)
+      .in("assign_to", operationalEmails)
       .order("created_at", { ascending: false });
 
     if (error) {

@@ -14,7 +14,7 @@ import {
 import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
-import { resolveReferringAgentEmail } from "@/lib/resolve-referring-agent";
+import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteBookingCheckoutInput = {
@@ -106,6 +106,7 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   }
 
   let agentEmail: string | null = null;
+  let fieldAgentEmail: string | null = null;
   let agentCommissionPct = 0;
   let agentCommissionAmount = 0;
 
@@ -171,9 +172,10 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   const pricing = calculateCommissionSplit(serviceTotal, rates);
   const resolvedReservationFee = pricing.reservationFee;
 
-  const referringAgent = resolveReferringAgentEmail(salon);
-  if (referringAgent) {
-    agentEmail = referringAgent;
+  const attribution = await resolveAgentCommissionAttribution(supabase, salon);
+  if (attribution.payeeEmail) {
+    agentEmail = attribution.payeeEmail;
+    fieldAgentEmail = attribution.fieldAgentEmail;
     agentCommissionPct = resolveBookingAgentPercentage(rates.agent);
     agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
   }
@@ -195,6 +197,7 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     salon_upfront_amount: pricing.salonUpfront,
     platform_commission_amount: pricing.platformCommission,
     agent_email: agentEmail,
+    field_agent_email: fieldAgentEmail,
     agent_commission_percent: agentCommissionPct,
     agent_commission_amount: agentCommissionAmount,
     promotion_package_id: draft.promotionPackageId || null,

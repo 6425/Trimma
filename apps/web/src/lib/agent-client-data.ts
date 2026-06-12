@@ -159,18 +159,22 @@ export async function fetchAgentProfileClient() {
 
   const { data, error } = await supabase
     .from("users")
-    .select("full_name, email, phone, avatar_url")
+    .select("full_name, email, phone, avatar_url, global_role")
     .eq("email", auth.email)
     .maybeSingle();
 
   if (error) return { success: false as const, error: error.message };
 
   let territory = "No territory assigned";
+  let isRegionalHead = false;
   try {
     const agentRow = await findAgentRecord(supabase, auth.email, auth.userId);
     territory = formatAgentTerritoryLabel(
       await buildAgentTerritories(supabase, auth.email, agentRow)
     );
+    const { findAgentHierarchyRecord, isRegionalHeadAgent } = await import("@/lib/agent-hierarchy");
+    const hierarchyRow = await findAgentHierarchyRecord(supabase, auth.email, auth.userId);
+    isRegionalHead = isRegionalHeadAgent(hierarchyRow, data?.global_role);
   } catch {
     // Client RLS may block agents/agent_territories until FIX_AGENT_CLIENT_RLS.sql is applied.
   }
@@ -183,6 +187,8 @@ export async function fetchAgentProfileClient() {
       phone: data?.phone || "",
       avatarUrl: data?.avatar_url || "",
       territory,
+      agentTier: isRegionalHead ? "regional_head" : "field_agent",
+      isRegionalHead,
     },
   };
 }
@@ -294,7 +300,14 @@ export async function fetchAgentLeadEditorDataClient(salonId: string) {
   if (salonError || !salon) {
     return { success: false as const, error: salonError?.message || "Salon not found." };
   }
-  if (salon.assign_to && salon.assign_to !== auth.email) {
+  const { canAgentAccessSalonAssignee } = await import("@/lib/agent-hierarchy");
+  const hasAccess = await canAgentAccessSalonAssignee(
+    supabase,
+    auth.email,
+    auth.userId,
+    salon.assign_to
+  );
+  if (!hasAccess) {
     return { success: false as const, error: "You do not have access to this lead." };
   }
 

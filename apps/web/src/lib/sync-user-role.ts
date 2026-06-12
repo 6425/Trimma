@@ -2,7 +2,23 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { normalizeEmail } from "@/lib/normalize-email";
 
-const VALID_ROLES: TrimmaUserRole[] = ["admin", "salon_owner", "agent", "customer"];
+const VALID_ROLES: TrimmaUserRole[] = [
+  "admin",
+  "regional_head",
+  "salon_owner",
+  "agent",
+  "customer",
+];
+
+function normalizeGlobalRoleForSync(globalRole: string): TrimmaUserRole {
+  const value = globalRole.toLowerCase();
+  if (value === "superadmin") return "admin";
+  if (value === "regional_admin") return "regional_head";
+  if (VALID_ROLES.includes(value as TrimmaUserRole)) {
+    return value as TrimmaUserRole;
+  }
+  return "customer";
+}
 
 export async function findAuthUserIdByEmail(
   supabase: SupabaseClient,
@@ -37,9 +53,7 @@ export async function syncUserRolesForGlobalRole(
   const normalized = normalizeEmail(email);
   if (!normalized) return;
 
-  const role = VALID_ROLES.includes(globalRole as TrimmaUserRole)
-    ? (globalRole as TrimmaUserRole)
-    : "customer";
+  const role = normalizeGlobalRoleForSync(globalRole);
 
   const authUserId = await findAuthUserIdByEmail(supabase, normalized);
   if (!authUserId) return;

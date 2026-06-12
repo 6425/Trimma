@@ -7,6 +7,7 @@ import {
   findAgentRecord,
   formatAgentTerritoryLabel,
 } from "@/lib/agent-territory-resolve";
+import { findAgentHierarchyRecord, isRegionalHeadAgent } from "@/lib/agent-hierarchy";
 
 export async function getAgentProfile() {
   const auth = await requireAgentFromCookies();
@@ -30,6 +31,13 @@ export async function getAgentProfile() {
   }
 
   const agentRow = await findAgentRecord(supabase, data.email, auth.userId);
+  const hierarchyRow = await findAgentHierarchyRecord(supabase, data.email, auth.userId);
+  const { data: roleRow } = await supabase
+    .from("users")
+    .select("global_role")
+    .eq("email", data.email)
+    .maybeSingle();
+  const isRegionalHead = isRegionalHeadAgent(hierarchyRow, roleRow?.global_role);
   const territoryList = await buildAgentTerritories(supabase, data.email, agentRow);
   const territory = formatAgentTerritoryLabel(territoryList);
 
@@ -41,6 +49,8 @@ export async function getAgentProfile() {
       phone: data.phone || "",
       avatarUrl: data.avatar_url || "",
       territory,
+      agentTier: isRegionalHead ? "regional_head" : "field_agent",
+      isRegionalHead,
     }
   };
 }
