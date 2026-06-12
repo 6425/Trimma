@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -73,18 +73,8 @@ export function AddProfessionalForm({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ADD FORM STATES
-  const [newName, setNewName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [newRole, setNewRole] = useState("");
-  const [newCommission, setNewCommission] = useState("10");
-  const [newSchedule, setNewSchedule] = useState(defaultSchedule);
-  const [generalBufferTime, setGeneralBufferTime] = useState("15");
-  
   const effectiveRoles = globalRoles && globalRoles.length > 0 ? globalRoles : [
     { role_name: "Stylist", category: "Operational" },
     { role_name: "Barber", category: "Operational" },
@@ -92,10 +82,13 @@ export function AddProfessionalForm({
     { role_name: "Manager", category: "Admin" },
     { role_name: "Reception", category: "Admin" },
   ];
-  
-  const buildServicesConfig = (staff?: AddProfessionalFormProps["initialStaff"]) => {
+
+  const buildServicesConfig = (
+    staff: AddProfessionalFormProps["initialStaff"],
+    services: AddProfessionalFormProps["salonServices"]
+  ) => {
     const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
-    salonServices.forEach((srv) => {
+    services.forEach((srv) => {
       const assigned = staff?.working_hours?.assigned_services?.find(
         (row) => row.service_id === srv.id || row.service_id === srv.salonServiceId || row.service_id === srv.global_service_id
       );
@@ -126,24 +119,31 @@ export function AddProfessionalForm({
     return configs;
   };
 
-  const [selectedServices, setSelectedServices] = useState<any>(() => buildServicesConfig(initialStaff));
-
-  useEffect(() => {
-    if (!initialStaff) return;
-    setNewName(initialStaff.name || "");
-    setNewEmail(initialStaff.email || "");
-    setNewRole(initialStaff.role || "");
-    setNewCommission(initialStaff.commission_rate?.toString() || "10");
-    setGeneralBufferTime(
-      initialStaff.general_buffer_time?.toString() ||
-        initialStaff.working_hours?.general_buffer_time?.toString() ||
-        "15"
-    );
-    setNewSchedule(initialStaff.schedule || initialStaff.working_hours?.schedule || defaultSchedule);
-    setSelectedServices(buildServicesConfig(initialStaff));
-    setAvatarBlob(null);
-    setAvatarPreviewUrl(initialStaff.avatar_url || "");
-  }, [initialStaff, salonServices]);
+  // ADD FORM STATES — initialized from initialStaff when editing (parent should pass a stable key to remount)
+  const [newName, setNewName] = useState(() => initialStaff?.name || "");
+  const [newEmail, setNewEmail] = useState(() => initialStaff?.email || "");
+  const [newRole, setNewRole] = useState(() => initialStaff?.role || "");
+  const [newCategory, setNewCategory] = useState(() => {
+    const role = initialStaff?.role;
+    if (!role) return "";
+    return effectiveRoles.find((r) => r.role_name === role)?.category || "";
+  });
+  const [newCommission, setNewCommission] = useState(
+    () => initialStaff?.commission_rate?.toString() || "10"
+  );
+  const [newSchedule, setNewSchedule] = useState(
+    () => initialStaff?.schedule || initialStaff?.working_hours?.schedule || defaultSchedule
+  );
+  const [generalBufferTime, setGeneralBufferTime] = useState(
+    () =>
+      initialStaff?.general_buffer_time?.toString() ||
+      initialStaff?.working_hours?.general_buffer_time?.toString() ||
+      "15"
+  );
+  const [selectedServices, setSelectedServices] = useState<any>(() =>
+    buildServicesConfig(initialStaff, salonServices)
+  );
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(() => initialStaff?.avatar_url || "");
 
   const handleServiceCheckboxChange = (serviceId: string, checked: boolean) => {
     setSelectedServices((prev: any) => ({

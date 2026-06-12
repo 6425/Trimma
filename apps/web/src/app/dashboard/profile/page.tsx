@@ -1452,6 +1452,11 @@ export default function SalonProfilePage() {
         {isStaffModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
             <AddProfessionalForm
+              key={
+                editingStaffIndex !== null
+                  ? `edit-${staffToAdd[editingStaffIndex]?.id ?? editingStaffIndex}-${profileSalonServices.length}`
+                  : `add-${profileSalonServices.length}`
+              }
               onCancel={closeStaffModal}
               onSubmit={handleStaffModalSubmit}
               globalRoles={globalStaffRoles}
