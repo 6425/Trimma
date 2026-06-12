@@ -67,7 +67,16 @@ export async function syncUserRolesForGlobalRole(
     .from("user_roles")
     .upsert({ user_id: authUserId, role }, { onConflict: "user_id,role" });
 
-  if (upsertError && !upsertError.message.toLowerCase().includes("does not exist")) {
+  if (upsertError) {
+    const lower = upsertError.message.toLowerCase();
+    if (lower.includes("does not exist") || lower.includes("relation")) {
+      return;
+    }
+    if (lower.includes("user_roles_role_check") || lower.includes("violates check constraint")) {
+      throw new Error(
+        "user_roles does not allow this role yet. Run packages/db/ADMIN_USER_ROLE_PATCH.sql in Supabase SQL Editor."
+      );
+    }
     throw new Error(upsertError.message);
   }
 }

@@ -2,6 +2,8 @@ import { fetchPublicSalonPage } from "@/app/actions/public-salon-page";
 import SalonPage from "./SalonPageClient";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function SalonServerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 

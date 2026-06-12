@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { sendBookingConfirmedEmail } from "@/app/actions/email-settings";
 import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
@@ -17,6 +18,12 @@ import {
   STAFF_REQUIRED_BEFORE_SERVICES_MSG,
   type SalonStaffForAllocation,
 } from "@/lib/staff-allocation";
+
+function revalidateOwnerSalonPage(salon: Record<string, unknown>) {
+  const slug = typeof salon.slug === "string" ? salon.slug.trim() : "";
+  if (slug) revalidatePath(`/salons/${slug}`);
+  if (salon.id != null) revalidatePath(`/salons/${String(salon.id)}`);
+}
 
 async function loadSalonStaffForCoverage(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -211,6 +218,7 @@ export async function insertSalonStaff(payload: Record<string, unknown>) {
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    revalidateOwnerSalonPage(ctx.salon);
     return { staffId: data.id as string };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
@@ -222,6 +230,7 @@ export async function updateSalonStaff(staffId: string, payload: Record<string, 
     await assertSalonStaffMember(supabase, ctx, staffId);
     const { error } = await supabase.from("salon_staff").update(payload).eq("id", staffId);
     if (error) throw new Error(error.message);
+    revalidateOwnerSalonPage(ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -232,6 +241,7 @@ export async function deleteSalonStaff(staffId: string) {
     await assertSalonStaffMember(supabase, ctx, staffId);
     const { error } = await supabase.from("salon_staff").delete().eq("id", staffId);
     if (error) throw new Error(error.message);
+    revalidateOwnerSalonPage(ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -263,6 +273,7 @@ export async function uploadSalonStaffAvatar(
       .eq("id", staffId);
     if (updateError) throw new Error(updateError.message);
 
+    revalidateOwnerSalonPage(ctx.salon);
     return { publicUrl: data.publicUrl };
   });
 

@@ -463,7 +463,14 @@ export function BookingSheet({
                        {s.id === 'any' ? (
                          <Sparkles className="w-6 h-6 text-zinc-400" />
                        ) : (
-                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${s.name}`} alt={s.name} className="w-full h-full rounded-full" />
+                         <img
+                           src={
+                             s.avatar_url ||
+                             `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s.name)}`
+                           }
+                           alt={s.name}
+                           className="w-full h-full rounded-full object-cover"
+                         />
                        )}
                     </div>
                     <div className="flex-1">

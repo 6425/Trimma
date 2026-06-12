@@ -167,7 +167,7 @@ export async function canAgentAccessSalonAssignee(
   if (assignee === actor) return true;
 
   const actorAgent = await findAgentHierarchyRecord(supabase, actor, actorUserId);
-  if (!actorAgent?.id || !isRegionalHeadAgent(actorAgent)) {
+  if (!actorAgent?.id || !isRegionalHeadAgent(actorAgent, null)) {
     return false;
   }
 
@@ -178,13 +178,14 @@ export async function canAgentAccessSalonAssignee(
 export async function getAgentOperationalEmails(
   supabase: SupabaseClient,
   email: string,
-  userId?: string | null
+  userId?: string | null,
+  globalRole?: string | null
 ): Promise<string[]> {
   const normalized = normalizeEmail(email);
   if (!normalized) return [];
 
   const agent = await findAgentHierarchyRecord(supabase, normalized, userId);
-  if (!agent?.id || !isRegionalHeadAgent(agent)) {
+  if (!agent?.id || !isRegionalHeadAgent(agent, globalRole)) {
     return [normalized];
   }
 

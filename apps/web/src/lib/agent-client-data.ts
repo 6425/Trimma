@@ -62,7 +62,7 @@ async function requireAgentEmailClient(): Promise<
     return { success: false, error: "Not authenticated" };
   }
   const role = await resolveTrimmaUserRole(session.user.id, session.user.email);
-  if (role !== "agent" && role !== "admin") {
+  if (role !== "agent" && role !== "regional_head" && role !== "admin") {
     return { success: false, error: "Unauthorized access" };
   }
   return {

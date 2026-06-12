@@ -40,8 +40,15 @@ export async function getAgentTeamData() {
     .eq("email", email)
     .maybeSingle();
 
-  if (!head?.id || !isRegionalHeadAgent(head, userRow?.global_role)) {
-    return { success: false as const, error: "Only regional heads can manage a team." };
+  const isHead =
+    auth.role === "regional_head" || isRegionalHeadAgent(head, userRow?.global_role);
+  if (!isHead || !head?.id) {
+    return {
+      success: false as const,
+      error: head?.id
+        ? "Only regional heads can manage a team."
+        : "Regional head agent profile is missing. Ask an admin to link your account in Agents.",
+    };
   }
 
   const subAgents = await listSubAgentsForRegionalHead(supabase, head.id);
@@ -125,8 +132,15 @@ export async function updateSubAgentSplitPercent(subAgentId: string, splitPercen
     .eq("email", normalizeEmail(auth.email))
     .maybeSingle();
 
-  if (!head?.id || !isRegionalHeadAgent(head, userRow?.global_role)) {
-    return { success: false as const, error: "Only regional heads can update sub-agent splits." };
+  const isHead =
+    auth.role === "regional_head" || isRegionalHeadAgent(head, userRow?.global_role);
+  if (!isHead || !head?.id) {
+    return {
+      success: false as const,
+      error: head?.id
+        ? "Only regional heads can update sub-agent splits."
+        : "Regional head agent profile is missing. Ask an admin to link your account in Agents.",
+    };
   }
 
   const { data: subAgent, error: subError } = await supabase

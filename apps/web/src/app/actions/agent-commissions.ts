@@ -8,9 +8,11 @@ import {
   clampSplitPercent,
   findAgentHierarchyRecord,
   getAgentOperationalEmails,
+  isRegionalHeadAgent,
   listSubAgentsForRegionalHead,
   normalizeAgentTier,
 } from "@/lib/agent-hierarchy";
+import type { SubAgentTeamRow } from "@/app/actions/agent-team";
 import { normalizeEmail } from "@/lib/normalize-email";
 
 export type AgentCommissionBooking = {
@@ -26,6 +28,8 @@ export type AgentCommissionBooking = {
   customer_email: string;
   agent_cut: number;
   gross_agent_cut: number;
+  head_cut: number;
+  sub_agent_cut: number;
   agent_percent: number;
   platform_commission: number;
   field_agent_email?: string | null;
@@ -36,6 +40,8 @@ export type AgentCommissionSubscription = {
   id: string;
   amount: number;
   gross_amount: number;
+  head_cut: number;
+  sub_agent_cut: number;
   status: string;
   notes: string | null;
   created_at: string;
@@ -51,9 +57,23 @@ export async function getAgentCommissionsData() {
   const email = normalizeEmail(auth.email);
 
   const agentRow = await findAgentHierarchyRecord(supabase, email, auth.userId);
-  const tier = normalizeAgentTier(agentRow?.agent_tier);
-  const isFieldAgent = tier === "field_agent";
-  const operationalEmails = await getAgentOperationalEmails(supabase, email, auth.userId);
+  const { data: userRow } = await supabase
+    .from("users")
+    .select("global_role")
+    .eq("email", email)
+    .maybeSingle();
+
+  const globalRole = userRow?.global_role ?? auth.role;
+  const isRegionalHead =
+    auth.role === "regional_head" || isRegionalHeadAgent(agentRow, globalRole);
+  const isFieldAgent =
+    !isRegionalHead && normalizeAgentTier(agentRow?.agent_tier) === "field_agent";
+  const operationalEmails = await getAgentOperationalEmails(
+    supabase,
+    email,
+    auth.userId,
+    globalRole
+  );
 
   const splitByFieldEmail = new Map<string, number>();
   if (!isFieldAgent && agentRow?.id) {
@@ -150,11 +170,13 @@ export async function getAgentCommissionsData() {
         ? splitByFieldEmail.get(fieldEmail) ?? clampSplitPercent(undefined)
         : 0;
 
-    const agentCut = isFieldAgent
+    const subAgentCut = fieldEmail
       ? calculateSubAgentShare(grossAgentCut, splitPercent)
-      : fieldEmail
-        ? calculateRegionalHeadNet(grossAgentCut, splitPercent)
-        : grossAgentCut;
+      : 0;
+    const headCut = fieldEmail
+      ? calculateRegionalHeadNet(grossAgentCut, splitPercent)
+      : grossAgentCut;
+    const agentCut = isFieldAgent ? subAgentCut : headCut;
 
     const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
     const joinedName = Array.isArray(salonsJoin) ? salonsJoin[0]?.name : salonsJoin?.name;
@@ -172,6 +194,8 @@ export async function getAgentCommissionsData() {
       customer_email: String(row.customer_email || "—"),
       agent_cut: agentCut,
       gross_agent_cut: grossAgentCut,
+      head_cut: headCut,
+      sub_agent_cut: subAgentCut,
       agent_percent: agentPercent,
       platform_commission: platformCommission,
       field_agent_email: fieldEmail || null,
@@ -197,16 +221,20 @@ export async function getAgentCommissionsData() {
         : fieldEmail
           ? splitByFieldEmail.get(fieldEmail) ?? clampSplitPercent(undefined)
           : 0;
-      const netAmount = isFieldAgent
+      const subAgentCut = fieldEmail
         ? calculateSubAgentShare(grossAmount, splitPercent)
-        : fieldEmail
-          ? calculateRegionalHeadNet(grossAmount, splitPercent)
-          : grossAmount;
+        : 0;
+      const headCut = fieldEmail
+        ? calculateRegionalHeadNet(grossAmount, splitPercent)
+        : grossAmount;
+      const netAmount = isFieldAgent ? subAgentCut : headCut;
 
       return {
         id: row.id,
         amount: netAmount,
         gross_amount: grossAmount,
+        head_cut: headCut,
+        sub_agent_cut: subAgentCut,
         status: row.status || "PENDING",
         notes: row.notes,
         created_at: row.created_at,
@@ -222,15 +250,33 @@ export async function getAgentCommissionsData() {
     }
   });
 
+  let subAgents: SubAgentTeamRow[] = [];
+  if (isRegionalHead && agentRow?.id) {
+    const team = await listSubAgentsForRegionalHead(supabase, agentRow.id);
+    subAgents = team.map((sub) => ({
+      id: sub.id,
+      email: normalizeEmail(sub.user_email || "") || "—",
+      status: sub.status || "active",
+      splitPercent: clampSplitPercent(sub.sub_agent_split_percent),
+      salonCount: 0,
+      bookingGross: 0,
+      bookingEarnings: 0,
+      subscriptionGross: 0,
+      subscriptionEarnings: 0,
+      totalEarnings: 0,
+    }));
+  }
+
   return {
     success: true as const,
     agentEmail: email,
-    agentTier: tier,
-    isRegionalHead: !isFieldAgent,
+    agentTier: isRegionalHead ? "regional_head" : "field_agent",
+    isRegionalHead,
     bookingAgentPct,
     subscriptionAgentPct,
     profileCommissionRate: Number(agentRow?.commission_rate) || bookingAgentPct,
     referredSalonCount: salonMap.size,
+    subAgents,
     bookings,
     subscriptions,
     allTimeBookingGross,

@@ -11,6 +11,7 @@ import {
   findAgentHierarchyRecord,
   getAgentOperationalEmails,
   listSubAgentsForRegionalHead,
+  isRegionalHeadAgent,
   normalizeAgentTier,
 } from "@/lib/agent-hierarchy";
 import { normalizeEmail } from "@/lib/normalize-email";
@@ -48,14 +49,23 @@ export async function getAgentDashboardData() {
     const supabase = createSupabaseAdminClient();
     const email = auth.email;
     const hierarchyRow = await findAgentHierarchyRecord(supabase, email, auth.userId);
-    const isFieldAgent = normalizeAgentTier(hierarchyRow?.agent_tier) === "field_agent";
-    const operationalEmails = await getAgentOperationalEmails(supabase, email, auth.userId);
-
     const { data: userData } = await supabase
       .from("users")
-      .select("full_name")
+      .select("full_name, global_role")
       .eq("email", email)
       .maybeSingle();
+
+    const isRegionalHead =
+      auth.role === "regional_head" ||
+      isRegionalHeadAgent(hierarchyRow, userData?.global_role);
+    const isFieldAgent =
+      !isRegionalHead && normalizeAgentTier(hierarchyRow?.agent_tier) === "field_agent";
+    const operationalEmails = await getAgentOperationalEmails(
+      supabase,
+      email,
+      auth.userId,
+      userData?.global_role
+    );
 
     const agentName = userData?.full_name || email.split("@")[0];
 

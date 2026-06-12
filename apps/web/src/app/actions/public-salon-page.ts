@@ -93,7 +93,11 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     const [servicesRes, staffRes, amenitiesRes, globalAmenitiesRes, promotionsRes] =
       await Promise.all([
         supabase.from("services").select("*").eq("salon_id", salonId).eq("status", "active"),
-        supabase.from("salon_staff").select("*").eq("salon_id", salonId).eq("status", "active"),
+        supabase
+          .from("salon_staff")
+          .select("id, name, role, working_hours, status, avatar_url")
+          .eq("salon_id", salonId)
+          .eq("status", "active"),
         supabase
           .from("salon_amenities")
           .select("*")

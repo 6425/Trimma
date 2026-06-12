@@ -227,6 +227,25 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  // Always refresh staff after mount so avatar_url updates from the dashboard appear promptly.
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await fetchPublicSalonPage(slug);
+        if (!cancelled && result.success) {
+          setStaff(result.staff);
+        }
+      } catch (err) {
+        console.error("Failed to refresh salon staff", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
   // Reviews use server actions (extra round-trip) — load after the page is visible
   useEffect(() => {
     if (!salon?.id) return;

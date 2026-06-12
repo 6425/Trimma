@@ -1,6 +1,11 @@
 "use server";
 
-import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
+import {
+  adminDbFailure,
+  isAdminDbSuccess,
+  isMissingDbSchemaError,
+  withAdminDb,
+} from "@/lib/with-admin-db";
 import { saveAdminSalonRecord } from "@/lib/admin-salon-save-core";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
@@ -272,11 +277,36 @@ export async function saveAdminUserWithRole(input: {
     if (profileError) throw new Error(profileError.message);
 
     const authUserId = await findAuthUserIdByEmail(supabase, normalizedEmail);
-    const { data: existingAgent } = await supabase
+    const { data: existingAgent, error: existingAgentError } = await supabase
       .from("agents")
-      .select("id, reports_to_agent_id, sub_agent_split_percent")
+      .select("id")
       .eq("user_email", normalizedEmail)
       .maybeSingle();
+    if (existingAgentError) throw new Error(existingAgentError.message);
+
+    let existingReportsTo: string | null = null;
+    let existingSplitPercent: number | null = null;
+
+    if (existingAgent?.id && (targetRole === "regional_head" || targetRole === "agent")) {
+      const { data: hierarchy, error: hierarchyError } = await supabase
+        .from("agents")
+        .select("reports_to_agent_id, sub_agent_split_percent")
+        .eq("id", existingAgent.id)
+        .maybeSingle();
+      if (hierarchyError) {
+        if (isMissingDbSchemaError(hierarchyError.message)) {
+          throw new Error(
+            "Agent hierarchy columns are missing. Run packages/db/ADMIN_USER_ROLE_PATCH.sql in Supabase SQL Editor."
+          );
+        }
+        throw new Error(hierarchyError.message);
+      }
+      existingReportsTo = (hierarchy?.reports_to_agent_id as string | null) ?? null;
+      existingSplitPercent =
+        hierarchy?.sub_agent_split_percent == null
+          ? null
+          : Number(hierarchy.sub_agent_split_percent);
+    }
 
     if (targetRole === "regional_head" || targetRole === "agent") {
       const agentTier = targetRole === "regional_head" ? "regional_head" : "field_agent";
@@ -292,7 +322,7 @@ export async function saveAdminUserWithRole(input: {
         payload.reports_to_agent_id = null;
         payload.sub_agent_split_percent = null;
       } else {
-        const reportsTo = input.reports_to_agent_id || existingAgent?.reports_to_agent_id || null;
+        const reportsTo = input.reports_to_agent_id || existingReportsTo || null;
         if (!reportsTo) {
           throw new Error("Sub-agents must be assigned to a regional head.");
         }
@@ -301,13 +331,21 @@ export async function saveAdminUserWithRole(input: {
           .select("id, agent_tier")
           .eq("id", reportsTo)
           .maybeSingle();
-        if (headError || !headAgent?.id || headAgent.agent_tier !== "regional_head") {
+        if (headError) {
+          if (isMissingDbSchemaError(headError.message)) {
+            throw new Error(
+              "Agent hierarchy columns are missing. Run packages/db/ADMIN_USER_ROLE_PATCH.sql in Supabase SQL Editor."
+            );
+          }
+          throw new Error(headError.message);
+        }
+        if (!headAgent?.id || headAgent.agent_tier !== "regional_head") {
           throw new Error("Selected regional head is invalid.");
         }
         payload.reports_to_agent_id = reportsTo;
         payload.sub_agent_split_percent =
           input.sub_agent_split_percent == null
-            ? existingAgent?.sub_agent_split_percent ?? 50
+            ? existingSplitPercent ?? 50
             : Math.min(100, Math.max(0, Number(input.sub_agent_split_percent) || 0));
       }
 
@@ -365,7 +403,18 @@ export async function listRegionalHeadAgentsForAdmin() {
       .select("id, user_email, user_id, status")
       .eq("agent_tier", "regional_head")
       .order("user_email", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (isMissingDbSchemaError(error.message)) {
+        const { data: fallback, error: fallbackError } = await supabase
+          .from("agents")
+          .select("id, user_email, user_id, status")
+          .eq("status", "active")
+          .order("user_email", { ascending: true });
+        if (fallbackError) throw new Error(fallbackError.message);
+        return { heads: fallback || [] };
+      }
+      throw new Error(error.message);
+    }
     return { heads: data || [] };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
