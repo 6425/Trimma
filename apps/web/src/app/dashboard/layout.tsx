@@ -201,10 +201,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     className="space-y-0.5"
                   >
                     <CollapsibleTrigger
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`trimma-sidebar-nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         pathname?.startsWith(item.href)
                           ? "is-active-nav bg-[#F5B700] text-black"
-                          : "text-white hover:text-[#F5B700] hover:bg-white/10"
+                          : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -217,10 +217,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       {item.children.map((child: any) => (
                         <Link key={child.name}
                           href={child.href}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+                          className={`trimma-sidebar-nav-item flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                             isActive(child.href)
                               ? "is-active-nav text-[#F5B700] bg-[#F5B700]/10"
-                              : "text-white hover:text-[#F5B700] hover:bg-white/10"
+                              : ""
                           }`}
                         >
                           {child.name}
@@ -230,10 +230,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Collapsible>
                 ) : (
                   <Link href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive(item.href)
                         ? "is-active-nav bg-[#F5B700] text-black font-semibold"
-                        : "text-white hover:text-[#F5B700] hover:bg-white/10"
+                        : ""
                     }`}
                   >
                     {item.icon}
@@ -248,10 +248,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar Footer */}
         <div className="trimma-dashboard-sidebar-footer p-3 border-t border-white/8 space-y-0.5">
           <Link href="/dashboard/settings"
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
                 ? "is-active-nav bg-[#F5B700] text-black font-semibold"
-                : "text-white hover:text-[#F5B700] hover:bg-white/10"
+                : ""
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -260,10 +260,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {!isAd && (
             <Link
               href="/dashboard/help"
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 pathname === "/dashboard/help"
                   ? "is-active-nav bg-[#F5B700] text-black font-semibold"
-                  : "text-white hover:text-[#F5B700] hover:bg-white/10"
+                  : ""
               }`}
             >
               <HelpCircle className="w-4 h-4" />

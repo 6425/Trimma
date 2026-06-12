@@ -134,10 +134,10 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                     key={item.name}
                     href={item.path}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
                         ? "is-active-nav bg-[#F5B700] text-black font-semibold"
-                        : "text-white hover:bg-white/10 hover:text-[#F5B700]"
+                        : ""
                     }`}
                   >
                     {item.icon}
