@@ -31,6 +31,7 @@ import { AddProfessionalForm } from "../../../components/forms/AddProfessionalFo
 import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
 import { BankInfoForm } from "../../../components/forms/BankInfoForm";
 import { Plus, Users, Globe, ClipboardList, Tag, FileText, Landmark } from "lucide-react";
+import { supabase } from "@/config/supabase";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -457,10 +458,44 @@ export default function SalonProfilePage() {
     }
   };
 
+  const prepareStaffForSave = async (salonId: string) => {
+    const prepared: any[] = [];
+    for (const st of staffToAdd) {
+      if (st.id) continue;
+
+      let avatarUrl: string | null = st.avatar_url || null;
+      if (st.avatarBlob instanceof Blob) {
+        const fileName = `${salonId}-${Date.now()}-${prepared.length}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("staff-avatars")
+          .upload(fileName, st.avatarBlob, { contentType: "image/jpeg", upsert: true });
+        if (!uploadError) {
+          const { data } = supabase.storage.from("staff-avatars").getPublicUrl(fileName);
+          avatarUrl = data.publicUrl;
+        }
+      }
+
+      prepared.push({
+        name: st.name,
+        email: st.email || null,
+        role: st.role,
+        commission_rate: st.commission_rate,
+        general_buffer_time: st.general_buffer_time,
+        schedule: st.schedule,
+        services: st.services,
+        avatar_url: avatarUrl,
+        status: "active",
+      });
+    }
+    return prepared;
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     try {
       setSaving(true);
+
+      const preparedStaff = salon?.id ? await prepareStaffForSave(salon.id) : [];
       
       const existingSvcIds = existingSalonServices
         .map((service) => service.global_service_id)
@@ -503,7 +538,7 @@ export default function SalonProfilePage() {
       const result = await saveOwnerVerificationData(
         payload,
         { svcsToAdd, svcsToRemoveIds },
-        staffToAdd,
+        preparedStaff,
         salonAmenities
       );
 

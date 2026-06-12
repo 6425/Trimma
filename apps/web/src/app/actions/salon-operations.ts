@@ -18,6 +18,7 @@ import {
   STAFF_REQUIRED_BEFORE_SERVICES_MSG,
   type SalonStaffForAllocation,
 } from "@/lib/staff-allocation";
+import { normalizeSalonStaffInsertRow } from "@/lib/salon-staff-insert";
 
 function revalidateOwnerSalonPage(salon: Record<string, unknown>) {
   const slug = typeof salon.slug === "string" ? salon.slug.trim() : "";
@@ -518,8 +519,8 @@ export async function saveOwnerVerificationData(
     // 3. Add Staff (new rows only — existing staff already live in DB)
     if (staffToAdd && staffToAdd.length > 0) {
       const newStaffRows = staffToAdd
-        .filter((staff) => !staff.id)
-        .map((staff) => ({ ...staff, salon_id: ctx.salonId }));
+        .map((staff) => normalizeSalonStaffInsertRow(staff, ctx.salonId))
+        .filter((row): row is Record<string, unknown> => row !== null);
       if (newStaffRows.length > 0) {
         const { error: staffErr } = await supabase.from("salon_staff").insert(newStaffRows);
         if (staffErr) throw new Error(staffErr.message);
