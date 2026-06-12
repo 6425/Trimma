@@ -38,6 +38,7 @@ export default function AgentDashboard() {
   const [authorized, setAuthorized] = useState(false);
   const [agentEmail, setAgentEmail] = useState("");
   const [agentName, setAgentName] = useState("");
+  const [isRegionalHead, setIsRegionalHead] = useState(false);
   const [territoryLabel, setTerritoryLabel] = useState("No territory assigned");
   const [stats, setStats] = useState({
     assignedCount: 0,
@@ -83,6 +84,7 @@ export default function AgentDashboard() {
         setAgentEmail(dashboardData.agentEmail);
         setAgentName(dashboardData.agentName);
         setTerritoryLabel(dashboardData.territoryLabel);
+        setIsRegionalHead(Boolean((dashboardData as { isRegionalHead?: boolean }).isRegionalHead));
         setStats(dashboardData.stats);
       }
       
@@ -288,7 +290,12 @@ export default function AgentDashboard() {
                 <span className="text-sm font-bold text-brand">Rs {stats.bookingCommissions.toLocaleString()}</span>
               </div>
 
-              <Button onClick={() => router.push("/agent/commissions")} className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl mt-2">
+              <Button
+                onClick={() =>
+                  router.push(isRegionalHead ? "/regional-head/commissions" : "/agent/commissions")
+                }
+                className="w-full bg-[#1A1C29] text-white hover:bg-zinc-800 font-bold h-11 rounded-xl mt-2"
+              >
                 View Commission Ledger
               </Button>
             </div>

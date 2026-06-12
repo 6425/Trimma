@@ -14,9 +14,17 @@ export function canAccessTrimmaRoute(
       route.startsWith("/staff")
     );
   }
-  if (role === "agent" || role === "regional_head") {
+  if (role === "agent") {
     return (
       route.startsWith("/agent") ||
+      route.startsWith("/leads") ||
+      route.startsWith("/dashboard")
+    );
+  }
+  if (role === "regional_head") {
+    return (
+      route.startsWith("/agent") ||
+      route.startsWith("/regional-head") ||
       route.startsWith("/leads") ||
       route.startsWith("/dashboard")
     );
@@ -61,7 +69,8 @@ export function resolvePostAuthRedirect(
 
   if (role === "admin") return "/admin";
   if (role === "salon_owner") return "/dashboard";
-  if (role === "regional_head" || role === "agent") return "/agent";
+  if (role === "regional_head") return "/regional-head/commissions";
+  if (role === "agent") return "/agent";
   if (role === "customer") return "/customer";
   return "/onboarding";
 }

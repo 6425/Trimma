@@ -209,6 +209,7 @@ export async function getAgentDashboardData() {
         agentEmail: email,
         agentName,
         territoryLabel,
+        isRegionalHead,
         stats: {
           assignedCount,
           convertedCount,

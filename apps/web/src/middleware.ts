@@ -15,7 +15,11 @@ const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> =
     canAccess: (route: string) => route.startsWith('/agent') || route.startsWith('/leads') || route.startsWith('/dashboard'),
   },
   regional_head: {
-    canAccess: (route: string) => route.startsWith('/agent') || route.startsWith('/leads') || route.startsWith('/dashboard'),
+    canAccess: (route: string) =>
+      route.startsWith('/agent') ||
+      route.startsWith('/regional-head') ||
+      route.startsWith('/leads') ||
+      route.startsWith('/dashboard'),
   },
   customer: {
     canAccess: (route: string) => route.startsWith('/profile') || route.startsWith('/bookings') || route.startsWith('/customer'),
@@ -122,8 +126,8 @@ export async function middleware(req: NextRequest) {
   // 4. Role Validation (RBAC)
   const userRole = readRoleCookie(roleCookie?.value);
 
-  // Agent routes: any signed-in user may load the shell; server actions enforce agent/admin role.
-  if (pathname.startsWith("/agent")) {
+  // Agent / regional-head routes: shell loads for signed-in users; server actions enforce role.
+  if (pathname.startsWith("/agent") || pathname.startsWith("/regional-head")) {
     return NextResponse.next();
   }
 

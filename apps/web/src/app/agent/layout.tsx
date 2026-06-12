@@ -80,12 +80,12 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
     {
       title: "Performance",
-      items: [
-        { name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> },
-        ...(isRegionalHead
-          ? [{ name: "Team", path: "/agent/team", icon: <Users className="w-4 h-4" /> }]
-          : []),
-      ]
+      items: isRegionalHead
+        ? [
+            { name: "Commissions", path: "/regional-head/commissions", icon: <Wallet className="w-4 h-4" /> },
+            { name: "Team", path: "/regional-head/team", icon: <Users className="w-4 h-4" /> },
+          ]
+        : [{ name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> }],
     },
   ];
 

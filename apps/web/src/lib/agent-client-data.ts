@@ -121,6 +121,7 @@ export async function loadAgentDashboardFromClient() {
       agentEmail: email,
       agentName,
       territoryLabel,
+      isRegionalHead: auth.role === "regional_head",
       stats: {
         assignedCount: salons.length,
         convertedCount: salons.filter((s) => isAgentSalonLive(s.onboarding_status)).length,

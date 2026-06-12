@@ -603,7 +603,7 @@ export function AgentHelpGuide() {
             id="commissions"
             icon={Wallet}
             title="Commissions"
-            path="/agent/commissions"
+            path="/regional-head/commissions"
             description="Weekly referral ledger for booking commissions and subscription conversion rewards from salons you brought to Trimma."
             features={[
               "Referral Ledger badge — shows your booking % and subscription % rates",
