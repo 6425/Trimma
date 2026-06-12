@@ -269,7 +269,11 @@ export async function fetchSalonStaffPage() {
 
     const [staffRes, servicesRes, rolesRes] = await Promise.all([
       supabase.from("salon_staff").select("*").eq("salon_id", ctx.salonId),
-      supabase.from("services").select("*").eq("salon_id", ctx.salonId).eq("status", "active"),
+      supabase
+        .from("services")
+        .select("id, name, category, price, duration_min, status, global_service_id")
+        .eq("salon_id", ctx.salonId)
+        .order("name"),
       supabase.from("global_staff_roles").select("*").order("category"),
     ]);
 
@@ -287,7 +291,10 @@ export async function fetchSalonStaffPage() {
     return {
       salon: ctx.salon,
       staff: staffRes.data || [],
-      salonServices: servicesRes.data || [],
+      salonServices: (servicesRes.data || []).filter((service: { status?: string | null }) => {
+        const status = (service.status || "active").toLowerCase();
+        return status !== "deleted" && status !== "inactive";
+      }),
       globalStaffRoles,
       globalSkillGrades,
       subscriptionPlan: plan ? { name: plan.name, max_staff: plan.max_staff } : null,

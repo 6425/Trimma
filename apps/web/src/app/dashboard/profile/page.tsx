@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Store, MapPin, Phone, Clock, Sparkles, Loader2, Check, Save, QrCode, ExternalLink, Printer, Star, ShieldCheck, Upload, X, Trash2, ChevronRight, Image as ImageIcon } from "lucide-react";
+import { Store, MapPin, Phone, Clock, Sparkles, Loader2, Check, Save, QrCode, ExternalLink, Printer, Star, ShieldCheck, Upload, X, Trash2, ChevronRight, Image as ImageIcon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,11 @@ import {
   saveSalonProfile,
   updateSalonMediaFields,
   uploadSalonProfileImage,
-  saveOwnerVerificationData
+  saveOwnerVerificationData,
+  updateSalonStaff,
+  uploadSalonStaffAvatar,
 } from "@/app/actions/salon-operations";
+import { buildStaffWorkingHoursPayload } from "@/lib/salon-staff-insert";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { LocationHierarchySelect } from "../../../components/locations/LocationHierarchySelect";
@@ -116,6 +119,8 @@ export default function SalonProfilePage() {
   const [existingSalonServices, setExistingSalonServices] = useState<any[]>([]);
   const [staffToAdd, setStaffToAdd] = useState<any[]>([]);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [editingStaffIndex, setEditingStaffIndex] = useState<number | null>(null);
+  const [savingStaff, setSavingStaff] = useState(false);
 
   // Hidden File Inputs Refs
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -458,6 +463,123 @@ export default function SalonProfilePage() {
     }
   };
 
+  const profileSalonServices =
+    existingSalonServices.length > 0
+      ? existingSalonServices.map((service) => {
+          const globalMatch = globalServices.find((g) => g.id === service.global_service_id);
+          return {
+            id: service.global_service_id || service.id,
+            salonServiceId: service.id,
+            global_service_id: service.global_service_id,
+            name: service.name || globalMatch?.name || "Service",
+            category: service.category || globalMatch?.category || "",
+            duration_min: service.duration_min,
+            duration: service.duration_min,
+          };
+        })
+      : Object.keys(selectedServices)
+          .filter((id) => selectedServices[id]?.enabled)
+          .map((id) => {
+            const gs = globalServices.find((g) => g.id === id);
+            return {
+              id,
+              name: gs?.name || "Service",
+              category: gs?.category || "",
+              duration_min: parseInt(selectedServices[id]?.duration || "30", 10),
+              duration: selectedServices[id]?.duration || "30",
+            };
+          });
+
+  const closeStaffModal = () => {
+    setIsStaffModalOpen(false);
+    setEditingStaffIndex(null);
+  };
+
+  const openAddStaffModal = () => {
+    setEditingStaffIndex(null);
+    setIsStaffModalOpen(true);
+  };
+
+  const openEditStaffModal = (index: number) => {
+    setEditingStaffIndex(index);
+    setIsStaffModalOpen(true);
+  };
+
+  const handleStaffModalSubmit = async (staffData: any) => {
+    const salonServiceRows = existingSalonServices.map((service) => ({
+      id: service.id,
+      global_service_id: service.global_service_id,
+      duration_min: service.duration_min,
+    }));
+
+    if (staffData.id) {
+      try {
+        setSavingStaff(true);
+        let avatarUrl = staffData.avatar_url || null;
+        if (staffData.avatarBlob instanceof Blob) {
+          const base64 = await fileToBase64(staffData.avatarBlob);
+          const avatarResult = await uploadSalonStaffAvatar(staffData.id, base64);
+          if (avatarResult.success === false) throw new Error(avatarResult.error);
+          avatarUrl = avatarResult.publicUrl;
+        }
+
+        const workingHours = buildStaffWorkingHoursPayload(
+          staffData.schedule,
+          staffData.general_buffer_time,
+          staffData.services,
+          salonServiceRows
+        );
+
+        const updateResult = await updateSalonStaff(staffData.id, {
+          name: staffData.name,
+          email: staffData.email || null,
+          role: staffData.role,
+          commission_rate: staffData.commission_rate,
+          working_hours: workingHours,
+          avatar_url: avatarUrl,
+        });
+        if (updateResult.success === false) throw new Error(updateResult.error);
+
+        setStaffToAdd((prev) =>
+          prev.map((row) =>
+            row.id === staffData.id
+              ? {
+                  ...row,
+                  name: staffData.name,
+                  email: staffData.email,
+                  role: staffData.role,
+                  commission_rate: staffData.commission_rate,
+                  general_buffer_time: staffData.general_buffer_time,
+                  schedule: staffData.schedule,
+                  services: staffData.services,
+                  working_hours: workingHours,
+                  avatar_url: avatarUrl,
+                }
+              : row
+          )
+        );
+        toast.success(`${staffData.name} updated successfully.`);
+        closeStaffModal();
+      } catch (err: any) {
+        toast.error("Failed to update staff: " + err.message);
+      } finally {
+        setSavingStaff(false);
+      }
+      return;
+    }
+
+    if (editingStaffIndex !== null) {
+      setStaffToAdd((prev) =>
+        prev.map((row, idx) => (idx === editingStaffIndex ? { ...staffData } : row))
+      );
+      toast.success(`${staffData.name} updated. Save Operations to publish new staff.`);
+    } else {
+      setStaffToAdd((prev) => [...prev, staffData]);
+      toast.success(`${staffData.name} added. Save Operations to publish new staff.`);
+    }
+    closeStaffModal();
+  };
+
   const prepareStaffForSave = async (salonId: string) => {
     const prepared: any[] = [];
     for (const st of staffToAdd) {
@@ -475,6 +597,12 @@ export default function SalonProfilePage() {
         }
       }
 
+      const salonServiceRows = existingSalonServices.map((service) => ({
+        id: service.id,
+        global_service_id: service.global_service_id,
+        duration_min: service.duration_min,
+      }));
+
       prepared.push({
         name: st.name,
         email: st.email || null,
@@ -485,6 +613,12 @@ export default function SalonProfilePage() {
         services: st.services,
         avatar_url: avatarUrl,
         status: "active",
+        working_hours: buildStaffWorkingHoursPayload(
+          st.schedule || {},
+          st.general_buffer_time ?? 15,
+          st.services || {},
+          salonServiceRows
+        ),
       });
     }
     return prepared;
@@ -1098,19 +1232,42 @@ export default function SalonProfilePage() {
                 {staffToAdd.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                     {staffToAdd.map((st, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-white font-bold text-xs uppercase">
-                            {st.name.substring(0,2)}
+                      <div key={st.id || idx} className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => openEditStaffModal(idx)}
+                          className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-white font-bold text-xs uppercase overflow-hidden shrink-0">
+                            {st.avatar_url ? (
+                              <img src={st.avatar_url} alt={st.name} className="w-full h-full object-cover" />
+                            ) : (
+                              st.name.substring(0, 2)
+                            )}
                           </div>
-                          <div>
-                            <h5 className="text-xs font-bold text-zinc-900">{st.name}</h5>
-                            <p className="text-[10px] text-zinc-500 font-medium">{st.role}</p>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-bold text-zinc-900 truncate">{st.name}</h5>
+                            <p className="text-[10px] text-zinc-500 font-medium truncate">{st.role}</p>
                           </div>
-                        </div>
-                        <button type="button" onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-zinc-400 hover:text-red-500 p-1">
-                          <Trash2 className="w-4 h-4" />
                         </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => openEditStaffModal(idx)}
+                            className="text-zinc-400 hover:text-brand p-1"
+                            aria-label={`Edit ${st.name}`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStaffToAdd((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-zinc-400 hover:text-red-500 p-1"
+                            aria-label={`Remove ${st.name}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1123,7 +1280,7 @@ export default function SalonProfilePage() {
                       toast.error(`You can only add up to ${allowedStaffCount} staff members. Upgrade to a premium plan to add more.`);
                       return;
                     }
-                    setIsStaffModalOpen(true);
+                    openAddStaffModal();
                   }}
                   className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-12 rounded-xl"
                 >
@@ -1295,20 +1452,14 @@ export default function SalonProfilePage() {
         {isStaffModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
             <AddProfessionalForm
-              onCancel={() => setIsStaffModalOpen(false)}
-              onSubmit={(staffData) => {
-                setStaffToAdd(prev => [...prev, staffData]);
-                setIsStaffModalOpen(false);
-              }}
+              onCancel={closeStaffModal}
+              onSubmit={handleStaffModalSubmit}
               globalRoles={globalStaffRoles}
-              salonServices={Object.keys(selectedServices).filter(id => selectedServices[id].enabled).map(id => {
-                const gs = globalServices.find(g => g.id === id);
-                return {
-                  id,
-                  name: gs?.name || "",
-                  category: gs?.category || ""
-                };
-              })}
+              salonServices={profileSalonServices}
+              adding={savingStaff}
+              initialStaff={editingStaffIndex !== null ? staffToAdd[editingStaffIndex] : null}
+              title={editingStaffIndex !== null ? "Edit Professional" : "Add Professional"}
+              submitLabel={editingStaffIndex !== null ? "Save Changes" : "Add Professional"}
             />
           </div>
         )}

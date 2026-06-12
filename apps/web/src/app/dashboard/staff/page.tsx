@@ -18,6 +18,11 @@ import {
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
+import {
+  buildStaffServicesConfigFromMember,
+  buildStaffWorkingHoursPayload,
+  findSalonServiceForAssignmentId,
+} from "@/lib/salon-staff-insert";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -286,27 +291,7 @@ export default function DashboardStaff() {
       setEditSchedule(defaultSchedule);
     }
 
-    // Populate service checkboxes configs
-    const editConfigs: any = {};
-    salonServices.forEach(s => {
-      const assigned = member.working_hours?.assigned_services?.find((as: any) => as.service_id === s.id);
-      if (assigned) {
-        editConfigs[s.id] = {
-          enabled: true,
-          commission: assigned.commission_rate?.toString() || "10",
-          buffer: assigned.buffer_time?.toString() || "15",
-          duration: assigned.service_time?.toString() || s.duration_min?.toString() || "30"
-        };
-      } else {
-        editConfigs[s.id] = {
-          enabled: false,
-          commission: "10",
-          buffer: "15",
-          duration: s.duration_min?.toString() || "30"
-        };
-      }
-    });
-    setEditSelectedServices(editConfigs);
+    setEditSelectedServices(buildStaffServicesConfigFromMember(member, salonServices));
     setIsEditModalOpen(true);
   };
 
@@ -347,20 +332,12 @@ export default function DashboardStaff() {
         }
       }
 
-      const assignedServicesConfig = Object.entries(selectedServices)
-        .filter(([_, cfg]) => cfg.enabled)
-        .map(([serviceId, cfg]) => ({
-          service_id: serviceId,
-          commission_rate: parseFloat(cfg.commission) || 0,
-          buffer_time: parseInt(cfg.buffer) || 0,
-          service_time: parseInt(cfg.duration) || 30
-        }));
-
-      const workingHoursPayload = {
-        schedule: newSchedule,
-        general_buffer_time: parseInt(generalBufferTime) || 15,
-        assigned_services: assignedServicesConfig
-      };
+      const workingHoursPayload = buildStaffWorkingHoursPayload(
+        newSchedule,
+        generalBufferTime,
+        selectedServices,
+        salonServices
+      );
 
       const insertResult = await insertSalonStaff({
           name: newName,
@@ -440,20 +417,12 @@ export default function DashboardStaff() {
         }
       }
 
-      const assignedServicesConfig = Object.entries(editSelectedServices)
-        .filter(([_, cfg]) => cfg.enabled)
-        .map(([serviceId, cfg]) => ({
-          service_id: serviceId,
-          commission_rate: parseFloat(cfg.commission) || 0,
-          buffer_time: parseInt(cfg.buffer) || 0,
-          service_time: parseInt(cfg.duration) || 30
-        }));
-
-      const workingHoursPayload = {
-        schedule: editSchedule,
-        general_buffer_time: parseInt(editBufferTime) || 15,
-        assigned_services: assignedServicesConfig
-      };
+      const workingHoursPayload = buildStaffWorkingHoursPayload(
+        editSchedule,
+        editBufferTime,
+        editSelectedServices,
+        salonServices
+      );
 
       let updatedAvatarUrl = existingAvatarUrl;
       if (avatarBlob && editingStaffId) {
@@ -675,7 +644,7 @@ export default function DashboardStaff() {
                        {member.working_hours?.assigned_services && member.working_hours.assigned_services.length > 0 && (
                          <div className="flex flex-wrap gap-1 mt-2">
                            {member.working_hours.assigned_services.map((as: any) => {
-                             const matchedServ = salonServices.find(s => s.id === as.service_id);
+                             const matchedServ = findSalonServiceForAssignmentId(salonServices, as.service_id);
                              return (
                                <Badge key={as.service_id} className="bg-rose-50 text-brand border-none font-bold text-[9px] py-0 px-2 rounded">
                                  {matchedServ?.name || "Service"} ({as.commission_rate}%)

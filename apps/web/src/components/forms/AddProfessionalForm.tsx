@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -37,9 +37,35 @@ export interface AddProfessionalFormProps {
   globalSkillGrades?: any[];
   salonServices: any[];
   adding?: boolean;
+  initialStaff?: Partial<StaffPayload> & {
+    id?: string;
+    avatar_url?: string | null;
+    working_hours?: {
+      schedule?: typeof defaultSchedule;
+      general_buffer_time?: number;
+      assigned_services?: Array<{
+        service_id: string;
+        commission_rate?: number | null;
+        buffer_time?: number | null;
+        service_time?: number | null;
+      }>;
+    } | null;
+  } | null;
+  title?: string;
+  submitLabel?: string;
 }
 
-export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSkillGrades, salonServices, adding }: AddProfessionalFormProps) {
+export function AddProfessionalForm({
+  onCancel,
+  onSubmit,
+  globalRoles,
+  globalSkillGrades,
+  salonServices,
+  adding,
+  initialStaff = null,
+  title = "Add Professional",
+  submitLabel = "Add Professional",
+}: AddProfessionalFormProps) {
   // Avatar Upload & Crop States
   const [imgSrc, setImgSrc] = useState('');
   const imgRef = useRef<HTMLImageElement>(null);
@@ -67,15 +93,57 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
     { role_name: "Reception", category: "Admin" },
   ];
   
-  // Initialize services config based on passed services
-  const initServices = () => {
-    const s: any = {};
-    salonServices.forEach(srv => {
-      s[srv.id] = { enabled: false, commission: "10", buffer: "15", duration: srv.duration_min?.toString() || srv.duration?.toString() || "30" };
+  const buildServicesConfig = (staff?: AddProfessionalFormProps["initialStaff"]) => {
+    const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
+    salonServices.forEach((srv) => {
+      const assigned = staff?.working_hours?.assigned_services?.find(
+        (row) => row.service_id === srv.id || row.service_id === srv.salonServiceId || row.service_id === srv.global_service_id
+      );
+      const fromStaffServices = staff?.services?.[srv.id];
+      if (fromStaffServices) {
+        configs[srv.id] = {
+          enabled: Boolean(fromStaffServices.enabled),
+          commission: fromStaffServices.commission?.toString() || "10",
+          buffer: fromStaffServices.buffer?.toString() || "15",
+          duration: fromStaffServices.duration?.toString() || srv.duration_min?.toString() || srv.duration?.toString() || "30",
+        };
+      } else if (assigned) {
+        configs[srv.id] = {
+          enabled: true,
+          commission: assigned.commission_rate?.toString() || "10",
+          buffer: assigned.buffer_time?.toString() || "15",
+          duration: assigned.service_time?.toString() || srv.duration_min?.toString() || srv.duration?.toString() || "30",
+        };
+      } else {
+        configs[srv.id] = {
+          enabled: false,
+          commission: "10",
+          buffer: "15",
+          duration: srv.duration_min?.toString() || srv.duration?.toString() || "30",
+        };
+      }
     });
-    return s;
+    return configs;
   };
-  const [selectedServices, setSelectedServices] = useState<any>(initServices());
+
+  const [selectedServices, setSelectedServices] = useState<any>(() => buildServicesConfig(initialStaff));
+
+  useEffect(() => {
+    if (!initialStaff) return;
+    setNewName(initialStaff.name || "");
+    setNewEmail(initialStaff.email || "");
+    setNewRole(initialStaff.role || "");
+    setNewCommission(initialStaff.commission_rate?.toString() || "10");
+    setGeneralBufferTime(
+      initialStaff.general_buffer_time?.toString() ||
+        initialStaff.working_hours?.general_buffer_time?.toString() ||
+        "15"
+    );
+    setNewSchedule(initialStaff.schedule || initialStaff.working_hours?.schedule || defaultSchedule);
+    setSelectedServices(buildServicesConfig(initialStaff));
+    setAvatarBlob(null);
+    setAvatarPreviewUrl(initialStaff.avatar_url || "");
+  }, [initialStaff, salonServices]);
 
   const handleServiceCheckboxChange = (serviceId: string, checked: boolean) => {
     setSelectedServices((prev: any) => ({
@@ -155,6 +223,7 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
+      id: initialStaff?.id,
       name: newName,
       email: newEmail,
       role: newRole,
@@ -162,7 +231,8 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
       general_buffer_time: parseFloat(generalBufferTime) || 0,
       schedule: newSchedule,
       services: selectedServices,
-      avatarBlob
+      avatarBlob,
+      avatar_url: initialStaff?.avatar_url || null,
     });
   };
 
@@ -176,8 +246,12 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
 
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-xl font-black text-zinc-900">Add Professional</h2>
-            <p className="text-xs text-zinc-500 mt-1">Register a new professional with custom hours and service commissions.</p>
+            <h2 className="text-xl font-black text-zinc-900">{title}</h2>
+            <p className="text-xs text-zinc-500 mt-1">
+              {initialStaff?.id
+                ? "Update this professional's hours, services, and commission settings."
+                : "Register a new professional with custom hours and service commissions."}
+            </p>
           </div>
           <button 
             type="button"
@@ -443,7 +517,7 @@ export function AddProfessionalForm({ onCancel, onSubmit, globalRoles, globalSki
             disabled={adding}
             className="flex-1 bg-brand hover:bg-brand-hover text-black rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
           >
-            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
+            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : submitLabel}
           </Button>
         </div>
       </form>
