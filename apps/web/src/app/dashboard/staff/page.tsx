@@ -18,11 +18,8 @@ import {
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
-import {
-  buildStaffServicesConfigFromMember,
-  buildStaffWorkingHoursPayload,
-  findSalonServiceForAssignmentId,
-} from "@/lib/salon-staff-insert";
+import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId } from "@/lib/salon-staff-insert";
+import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -49,7 +46,7 @@ export default function DashboardStaff() {
 
   // Modal Open States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStaffMember, setEditingStaffMember] = useState<any | null>(null);
   const [globalRoles, setGlobalRoles] = useState<any[]>([]);
 
   // Avatar Upload & Crop States
@@ -60,7 +57,6 @@ export default function DashboardStaff() {
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
-  const [existingAvatarUrl, setExistingAvatarUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ADD FORM STATES
@@ -83,18 +79,17 @@ export default function DashboardStaff() {
   const [generalBufferTime, setGeneralBufferTime] = useState("15");
   const [selectedServices, setSelectedServices] = useState<{[key: string]: { enabled: boolean, commission: string, buffer: string, duration: string }}>({});
 
-  // EDIT FORM STATES
-  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editCategory, setEditCategory] = useState("");
-  const [editRole, setEditRole] = useState("stylist");
-  const [editCommission, setEditCommission] = useState("10");
-  const [editSchedule, setEditSchedule] = useState(defaultSchedule);
-  const [editBufferTime, setEditBufferTime] = useState("15");
-  const [editSelectedServices, setEditSelectedServices] = useState<{[key: string]: { enabled: boolean, commission: string, buffer: string, duration: string }}>({});
-
   const [salonWorkingHours, setSalonWorkingHours] = useState(defaultSchedule);
+
+  const staffFormServices = salonServices.map((service) => ({
+    id: service.global_service_id || service.id,
+    salonServiceId: service.id,
+    global_service_id: service.global_service_id,
+    name: service.name || "Service",
+    category: service.category || "",
+    duration_min: service.duration_min,
+    duration: service.duration_min,
+  }));
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -226,73 +221,8 @@ export default function DashboardStaff() {
     }));
   };
 
-  // EDIT MODULE SERVICES HANDLERS
-  const handleEditServiceCheckboxChange = (serviceId: string, checked: boolean) => {
-    setEditSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        enabled: checked,
-        commission: prev[serviceId]?.commission || editCommission,
-        buffer: prev[serviceId]?.buffer || editBufferTime,
-        duration: prev[serviceId]?.duration || salonServices.find(s => s.id === serviceId)?.duration_min?.toString() || "30"
-      }
-    }));
-  };
-
-  const handleEditServiceDurationChange = (serviceId: string, val: string) => {
-    setEditSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        duration: val
-      }
-    }));
-  };
-
-  const handleEditServiceCommissionChange = (serviceId: string, val: string) => {
-    setEditSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        commission: val
-      }
-    }));
-  };
-
-  const handleEditServiceBufferChange = (serviceId: string, val: string) => {
-    setEditSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        buffer: val
-      }
-    }));
-  };
-
-  // START EDITING POPULATOR
   const startEditing = (member: any) => {
-    setEditingStaffId(member.id);
-    setEditName(member.name || "");
-    setEditEmail(member.email || "");
-    const foundCategory = globalRoles.find(r => r.role_name?.toLowerCase() === (member.role || "stylist").toLowerCase())?.category || "";
-    setEditCategory(foundCategory);
-    setEditRole(member.role || "stylist");
-    setEditCommission(member.commission_rate?.toString() || "10");
-    setEditBufferTime(member.working_hours?.general_buffer_time?.toString() || "15");
-    
-    // Reset avatar states for editing
-    setAvatarBlob(null);
-    setAvatarPreviewUrl('');
-    setExistingAvatarUrl(member.avatar_url || '');
-    if (member.working_hours?.schedule) {
-      setEditSchedule(member.working_hours.schedule);
-    } else {
-      setEditSchedule(defaultSchedule);
-    }
-
-    setEditSelectedServices(buildStaffServicesConfigFromMember(member, salonServices));
-    setIsEditModalOpen(true);
+    setEditingStaffMember(member);
   };
 
   // ADD STYLIST SUBMITTER
@@ -386,28 +316,40 @@ export default function DashboardStaff() {
     }
   };
 
-  // EDIT STYLIST SUBMITTER
-  const handleEditStaffSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editName) {
+  const handleEditStaffSubmit = async (data: {
+    id?: string;
+    name: string;
+    email: string;
+    role: string;
+    commission_rate: number;
+    general_buffer_time: number;
+    schedule: typeof defaultSchedule;
+    services: Record<string, { enabled?: boolean; commission?: string; buffer?: string; duration?: string }>;
+    avatarBlob?: Blob | null;
+    avatar_url?: string | null;
+  }) => {
+    if (!data.name) {
       toast.error("Staff name is required.");
+      return;
+    }
+    if (!editingStaffMember?.id) {
+      toast.error("No staff member selected.");
       return;
     }
 
     try {
       setAdding(true);
 
-      // Validate bounds against Salon Operational Hours
-      for (const day of Object.keys(editSchedule)) {
-        const staffDay = editSchedule[day as keyof typeof editSchedule];
+      for (const day of Object.keys(data.schedule)) {
+        const staffDay = data.schedule[day as keyof typeof defaultSchedule];
         const salonDay = salonWorkingHours[day as keyof typeof salonWorkingHours];
-        
+
         if (staffDay.isWorking && !salonDay.isWorking) {
           toast.error(`Stylist cannot work on ${day} as the salon is closed.`);
           setAdding(false);
           return;
         }
-        
+
         if (staffDay.isWorking && salonDay.isWorking) {
           if (staffDay.start < salonDay.start || staffDay.end > salonDay.end) {
             toast.error(`Stylist hours on ${day} exceed the salon's operational hours (${salonDay.start} - ${salonDay.end}).`);
@@ -418,17 +360,17 @@ export default function DashboardStaff() {
       }
 
       const workingHoursPayload = buildStaffWorkingHoursPayload(
-        editSchedule,
-        editBufferTime,
-        editSelectedServices,
+        data.schedule,
+        data.general_buffer_time,
+        data.services,
         salonServices
       );
 
-      let updatedAvatarUrl = existingAvatarUrl;
-      if (avatarBlob && editingStaffId) {
+      let updatedAvatarUrl = data.avatar_url || editingStaffMember.avatar_url || null;
+      if (data.avatarBlob) {
         try {
-          const base64 = await blobToBase64(avatarBlob);
-          const avatarResult = await uploadSalonStaffAvatar(editingStaffId, base64);
+          const base64 = await blobToBase64(data.avatarBlob);
+          const avatarResult = await uploadSalonStaffAvatar(editingStaffMember.id, base64);
           if (avatarResult.success === false) throw new Error(avatarResult.error);
           updatedAvatarUrl = avatarResult.publicUrl;
         } catch (uploadErr) {
@@ -437,20 +379,19 @@ export default function DashboardStaff() {
         }
       }
 
-      const updateResult = await updateSalonStaff(editingStaffId!, {
-          name: editName,
-          email: editEmail || null,
-          role: editRole,
-          commission_rate: parseFloat(editCommission) || 0,
-          working_hours: workingHoursPayload,
-          avatar_url: updatedAvatarUrl || null,
-        });
+      const updateResult = await updateSalonStaff(editingStaffMember.id, {
+        name: data.name,
+        email: data.email || null,
+        role: data.role,
+        commission_rate: data.commission_rate || 0,
+        working_hours: workingHoursPayload,
+        avatar_url: updatedAvatarUrl,
+      });
 
       if (updateResult.success === false) throw new Error(updateResult.error);
 
-      toast.success(`Stylist settings for ${editName} updated successfully! 🌟`);
-      setIsEditModalOpen(false);
-      setEditingStaffId(null);
+      toast.success(`Stylist settings for ${data.name} updated successfully! 🌟`);
+      setEditingStaffMember(null);
       fetchStaff();
     } catch (err: any) {
       toast.error("Failed to update staff: " + err.message);
@@ -974,278 +915,27 @@ export default function DashboardStaff() {
         </div>
       )}
 
-      {/* POPUP MODAL DIALOG - EDIT PROFESSIONAL */}
-      {isEditModalOpen && (
+      {editingStaffMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-          <form 
+          <AddProfessionalForm
+            key={`edit-${editingStaffMember.id}-${staffFormServices.length}`}
+            onCancel={() => setEditingStaffMember(null)}
             onSubmit={handleEditStaffSubmit}
-            className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-4 space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden my-auto max-h-[85vh] overflow-y-auto"
-          >
-            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
-
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-black text-zinc-900">Edit Professional</h2>
-                <p className="text-xs text-zinc-500 mt-1">Modify stylist operational rules, working hours, and commissions.</p>
-              </div>
-              <button 
-                type="button"
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setEditingStaffId(null);
-                }}
-                className="text-zinc-400 hover:text-zinc-600 p-1.5 rounded-full hover:bg-zinc-100 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              
-              {/* Identity details */}
-              <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Users className="w-4 h-4 text-brand" /> Personal Identity
-                </h3>
-                <div className="flex flex-col items-center gap-2 mb-2">
-                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                      {avatarPreviewUrl ? (
-                        <AvatarImage src={avatarPreviewUrl} className="object-cover" />
-                      ) : existingAvatarUrl ? (
-                        <AvatarImage src={existingAvatarUrl} className="object-cover" />
-                      ) : (
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(editName || 'New')}`} />
-                      )}
-                      <AvatarFallback>SP</AvatarFallback>
-                    </Avatar>
-                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Upload className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={onSelectFile} />
-                  <p className="text-[10px] text-zinc-400 font-semibold uppercase">Click to change photo</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Stylist Name *</label>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="e.g. Michael Scofield"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Email Address</label>
-                    <input 
-                      type="email"
-                      placeholder="michael@example.com"
-                      value={editEmail}
-                      onChange={(e) => setEditEmail(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Category</label>
-                    <select 
-                      value={editCategory}
-                      onChange={(e) => { setEditCategory(e.target.value); setEditRole(""); }}
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                      required
-                    >
-                      <option value="" disabled>Select Category (Optional Filter)</option>
-                      {Array.from(new Set(globalRoles.map(r => r.category || 'Other'))).map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Name</label>
-                    <select 
-                      value={editRole}
-                      onChange={(e) => {
-                        const selectedRole = e.target.value;
-                        setEditRole(selectedRole);
-                        const foundCat = globalRoles.find(r => r.role_name === selectedRole)?.category;
-                        if (foundCat) setEditCategory(foundCat);
-                      }}
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                      required
-                    >
-                      <option value="" disabled>Select Role Name</option>
-                      {globalRoles
-                        .filter(r => !editCategory || (r.category || 'Other') === editCategory)
-                        .map(r => (
-                        <option key={r.id || r.role_name} value={r.role_name}>{r.role_name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Working attributes */}
-              <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Clock className="w-4 h-4 text-brand" /> Operational Scheduling & Rates
-                </h3>
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-2">7-Day Schedule</label>
-                  {Object.entries(editSchedule).map(([day, scheduleObj]: [string, any]) => (
-                    <div key={day} className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl p-2 px-3">
-                      <div className="w-20">
-                        <span className="text-xs font-bold text-zinc-800 capitalize">{day}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setEditSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], isWorking: !prev[day as keyof typeof defaultSchedule].isWorking } }))}
-                        className={`h-8 w-14 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
-                      >
-                        {scheduleObj.isWorking ? 'IN' : 'OUT'}
-                      </Button>
-                      <div className="flex flex-1 items-center gap-2">
-                        <input 
-                          type="time" 
-                          disabled={!scheduleObj.isWorking}
-                          value={scheduleObj.start}
-                          onChange={(e) => setEditSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], start: e.target.value } }))}
-                          className="h-8 w-full px-2 rounded-lg border border-slate-200 text-xs focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
-                        />
-                        <span className="text-zinc-300 text-xs">-</span>
-                        <input 
-                          type="time" 
-                          disabled={!scheduleObj.isWorking}
-                          value={scheduleObj.end}
-                          onChange={(e) => setEditSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], end: e.target.value } }))}
-                          className="h-8 w-full px-2 rounded-lg border border-slate-200 text-xs focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">General Buffer Time (mins)</label>
-                    <input 
-                      type="number"
-                      required
-                      placeholder="15"
-                      value={editBufferTime}
-                      onChange={(e) => setEditBufferTime(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Base Commission Rate (%)</label>
-                    <input 
-                      type="number"
-                      required
-                      placeholder="10"
-                      value={editCommission}
-                      onChange={(e) => setEditCommission(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Certified services checklist */}
-              <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Tag className="w-4 h-4 text-brand" /> Certify Shop Services
-                </h3>
-
-                {salonServices.length === 0 ? (
-                  <p className="text-xs text-zinc-400 italic">No active services registered for this salon. Stylist will have access to all.</p>
-                ) : (
-                  <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
-                    {salonServices.map((service) => {
-                      const config = editSelectedServices[service.id] || { enabled: false, commission: "10", buffer: "15" };
-                      return (
-                        <div key={service.id} className="bg-white border border-slate-100 rounded-xl p-3 space-y-2 shadow-sm">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={config.enabled}
-                              onChange={(e) => handleEditServiceCheckboxChange(service.id, e.target.checked)}
-                              className="rounded border-zinc-300 text-brand focus:ring-brand"
-                            />
-                            <span className="text-xs font-bold text-zinc-800">{service.name}</span>
-                          </label>
-
-                          {config.enabled && (
-                            <div className="grid grid-cols-3 gap-3 pl-6 animate-in slide-in-from-top-1 duration-200">
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Service Comm Rate (%)</span>
-                                <input 
-                                  type="number"
-                                  placeholder={editCommission}
-                                  value={config.commission}
-                                  onChange={(e) => handleEditServiceCommissionChange(service.id, e.target.value)}
-                                  className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Buffer Time (mins)</span>
-                                <input 
-                                  type="number"
-                                  placeholder={editBufferTime}
-                                  value={config.buffer}
-                                  onChange={(e) => handleEditServiceBufferChange(service.id, e.target.value)}
-                                  className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Service Time (mins)</span>
-                                <input 
-                                  type="number"
-                                  placeholder="30"
-                                  value={config.duration}
-                                  onChange={(e) => handleEditServiceDurationChange(service.id, e.target.value)}
-                                  className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setEditingStaffId(null);
-                }}
-                className="flex-1 rounded-xl h-11 font-bold text-xs border-zinc-200"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={adding}
-                className="flex-1 bg-brand hover:bg-brand-hover text-black rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
-              >
-                {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
-              </Button>
-            </div>
-          </form>
+            globalRoles={globalRoles}
+            salonServices={staffFormServices}
+            adding={adding}
+            initialStaff={{
+              id: editingStaffMember.id,
+              name: editingStaffMember.name,
+              email: editingStaffMember.email,
+              role: editingStaffMember.role,
+              commission_rate: editingStaffMember.commission_rate,
+              avatar_url: editingStaffMember.avatar_url,
+              working_hours: editingStaffMember.working_hours,
+            }}
+            title="Edit Professional"
+            submitLabel="Save Changes"
+          />
         </div>
       )}
       {/* IMAGE CROP MODAL */}

@@ -29,6 +29,7 @@ export function isAssignableSalonService(status?: string | null): boolean {
 
 export type SalonServiceAssignmentRow = {
   id: string;
+  salonServiceId?: string | null;
   global_service_id?: string | null;
   name?: string | null;
   duration_min?: number | null;
@@ -39,7 +40,10 @@ export function findSalonServiceForAssignmentId(
   assignedId: string
 ): SalonServiceAssignmentRow | undefined {
   return salonServices.find(
-    (s) => s.id === assignedId || (s.global_service_id != null && s.global_service_id === assignedId)
+    (s) =>
+      s.id === assignedId ||
+      s.salonServiceId === assignedId ||
+      (s.global_service_id != null && s.global_service_id === assignedId)
   );
 }
 
@@ -59,7 +63,10 @@ export function buildStaffServicesConfigFromMember(
   const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
   for (const service of salonServices) {
     const assigned = member.working_hours?.assigned_services?.find(
-      (row) => row.service_id === service.id || row.service_id === service.global_service_id
+      (row) =>
+        row.service_id === service.id ||
+        row.service_id === service.salonServiceId ||
+        row.service_id === service.global_service_id
     );
     configs[service.id] = assigned
       ? {
