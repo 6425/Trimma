@@ -824,17 +824,27 @@
     color: inherit;
   }
 
-  /* Salon dashboard sidebar — white menu labels/icons, yellow on hover */
-  .trimma-dashboard-sidebar :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a):not(.is-active-nav) {
-    color: #ffffff;
+  /*
+   * Salon + agent sidebars — white default, yellow on hover.
+   * !important overrides global ghost-link tint (a.text-white + hover:bg-white/10 → yellow).
+   */
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar)
+    :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a, .trimma-agent-sidebar-footer a):not(.is-active-nav) {
+    color: #ffffff !important;
   }
 
-  .trimma-dashboard-sidebar :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a):not(.is-active-nav):is(:hover, :focus-visible) {
-    color: #f5b700;
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar)
+    :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a, .trimma-agent-sidebar-footer a):not(.is-active-nav):is(
+      :hover,
+      :focus-visible
+    ) {
+    color: #f5b700 !important;
   }
 
-  .trimma-dashboard-sidebar :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a):not(.is-active-nav) svg {
-    color: currentColor;
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar)
+    :is(nav a, [data-slot="collapsible-trigger"], .trimma-dashboard-sidebar-footer a, .trimma-agent-sidebar-footer a):not(.is-active-nav)
+    :is(svg, [class*="lucide"]) {
+    color: currentColor !important;
   }
 
   /* Customer / dashboard sidebars — keep menu items clear of site header overlap */

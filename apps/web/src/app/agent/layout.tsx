@@ -96,7 +96,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* ── SIDEBAR (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+      <aside className={`trimma-agent-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
         mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'
       }`}>
         
@@ -115,7 +115,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Nav Items */}
-        <div className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">
           {menuSections.map((section, idx) => (
             <div key={idx} className="space-y-0.5">
               <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-1.5">
@@ -136,21 +136,21 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-[#F5B700] text-black font-semibold"
+                        ? "is-active-nav bg-[#F5B700] text-black font-semibold"
                         : "text-white hover:bg-white/10 hover:text-[#F5B700]"
                     }`}
                   >
-                    <span className={isActive ? "text-black" : "text-white"}>{item.icon}</span>
+                    {item.icon}
                     {item.name}
                   </Link>
                 );
               })}
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-white/8 shrink-0">
+        <div className="trimma-agent-sidebar-footer p-3 border-t border-white/8 shrink-0">
           <button
             type="button"
             onClick={handleLogout}

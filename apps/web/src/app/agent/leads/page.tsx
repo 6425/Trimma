@@ -33,6 +33,14 @@ import {
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
 
 
+const SALON_DEFAULT_CURRENCY = "LKR";
+
+function normalizeSalonCurrency(value?: string | null): string {
+  if (!value) return SALON_DEFAULT_CURRENCY;
+  const trimmed = value.trim().toUpperCase();
+  return trimmed.includes("LKR") ? SALON_DEFAULT_CURRENCY : SALON_DEFAULT_CURRENCY;
+}
+
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },
   { value: 1, label: "Monday" },
@@ -171,7 +179,7 @@ function AgentLeads() {
     working_hours: "",
     latitude: "",
     longitude: "",
-    price_level: "",
+    price_level: SALON_DEFAULT_CURRENCY,
     summary: "",
     hero_url: "",
     onboarding_status: "ASSIGNED_TO_AGENT",
@@ -245,7 +253,7 @@ function AgentLeads() {
       working_hours: typeof lead.working_hours === 'string' ? lead.working_hours : (lead.working_hours ? JSON.stringify(lead.working_hours, null, 2) : "[]"),
       latitude: lead.latitude !== null && lead.latitude !== undefined ? String(lead.latitude) : "",
       longitude: lead.longitude !== null && lead.longitude !== undefined ? String(lead.longitude) : "",
-      price_level: lead.price_level || "",
+      price_level: normalizeSalonCurrency(lead.price_level),
       summary: lead.summary || "",
       hero_url: lead.hero_url || "",
       onboarding_status: lead.onboarding_status || "ASSIGNED_TO_AGENT",
@@ -447,7 +455,7 @@ function AgentLeads() {
         working_hours: parsedHours,
         latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
-        price_level: formData.price_level || null,
+        price_level: SALON_DEFAULT_CURRENCY,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
@@ -524,7 +532,7 @@ function AgentLeads() {
         working_hours: parsedHours,
         latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
-        price_level: formData.price_level || null,
+        price_level: SALON_DEFAULT_CURRENCY,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
@@ -632,7 +640,7 @@ function AgentLeads() {
         working_hours: parsedHours,
         latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
-        price_level: formData.price_level || null,
+        price_level: SALON_DEFAULT_CURRENCY,
         summary: formData.summary || null,
         hero_url: formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
@@ -1032,7 +1040,7 @@ function AgentLeads() {
 
       {isModalOpen && selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 max-w-3xl w-full shadow-2xl relative border border-zinc-100 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl relative border border-zinc-100 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
             
             <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
               <div>
@@ -1066,20 +1074,20 @@ function AgentLeads() {
 
             <div className="flex-1 overflow-y-auto py-5 space-y-6 pr-1 text-xs">
 
-              <div className="space-y-3">
-                <h4 className="font-extrabold uppercase tracking-widest text-blue-600 text-[10px] border-b border-blue-100 pb-1 flex items-center gap-1.5">
+              <div className="space-y-4 rounded-2xl border border-zinc-100 bg-zinc-50/60 p-4">
+                <h4 className="font-extrabold uppercase tracking-widest text-blue-600 text-[10px] border-b border-blue-100 pb-2 flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5" /> 1. Salon & Owner Details
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="space-y-1 md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Salon Name</label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                      className="h-11 rounded-xl bg-white border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-sm"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Category</label>
                     <CategoryMultiSelect
                       value={selectedCategories}
@@ -1092,24 +1100,25 @@ function AgentLeads() {
                       showUpgradeLink={false}
                     />
                   </div>
-                  <div className="space-y-1 md:col-span-3">
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Full Address</label>
                     <Input
                       value={formData.address}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                      className="h-11 rounded-xl bg-white border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-sm"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">WhatsApp Number <span className="text-rose-500">*</span></label>
                     <LkPhoneInput
                       value={formData.phone}
                       onChange={(phone) => setFormData({...formData, phone})}
                       theme="light"
-                      className="h-10"
+                      className="h-11 w-full"
+                      inputClassName="text-sm"
                     />
                   </div>
-                  <div className="space-y-1 md:col-span-2">
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide flex items-center gap-1.5">
                       <Mail className="w-3 h-3 text-emerald-600" /> Owner Email (Creates Invite)
                       <span className="text-rose-500">*</span>
@@ -1118,36 +1127,47 @@ function AgentLeads() {
                       value={formData.owner_gmail}
                       onChange={(e) => setFormData({...formData, owner_gmail: e.target.value})}
                       placeholder="e.g. salonname.trimma@gmail.com"
-                      className="h-10 rounded-xl bg-emerald-50 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20 font-semibold"
+                      className="h-11 rounded-xl bg-emerald-50 border-emerald-200 focus:ring-2 focus:ring-emerald-500/20 font-semibold text-sm"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Website</label>
                     <Input
                       value={formData.website}
                       onChange={(e) => setFormData({...formData, website: e.target.value})}
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                      placeholder="https://"
+                      className="h-11 rounded-xl bg-white border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-sm"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Rating</label>
                     <Input
                       type="number" step="0.1" min="0" max="5"
                       value={formData.rating}
                       onChange={(e) => setFormData({...formData, rating: e.target.value})}
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
+                      className="h-11 rounded-xl bg-white border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-sm"
                     />
                   </div>
-                  <div className="space-y-1 md:col-span-2">
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Currency</label>
+                    <Input
+                      value={SALON_DEFAULT_CURRENCY}
+                      readOnly
+                      disabled
+                      aria-label="Currency"
+                      className="h-11 rounded-xl bg-zinc-100 border-zinc-200 text-zinc-700 font-semibold text-sm cursor-default"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Hero Image</label>
                     <div className="flex items-center gap-2">
                       <Input
                         value={formData.hero_url}
                         onChange={(e) => setFormData({...formData, hero_url: e.target.value})}
                         placeholder="https://..."
-                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 flex-1"
+                        className="h-11 rounded-xl bg-white border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 flex-1 text-sm"
                       />
-                      <Button type="button" variant="outline" className="h-10 px-4 rounded-xl relative overflow-hidden bg-white hover:bg-zinc-50 text-zinc-600 font-bold text-xs" disabled={uploadingImage}>
+                      <Button type="button" variant="outline" className="h-11 px-4 rounded-xl relative overflow-hidden bg-white hover:bg-zinc-50 text-zinc-600 font-bold text-xs shrink-0" disabled={uploadingImage}>
                         {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <><UploadCloud className="w-4 h-4 mr-2" /> Upload</>}
                         <input 
                           type="file" 
@@ -1159,22 +1179,13 @@ function AgentLeads() {
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Price Level</label>
-                    <Input
-                      value={formData.price_level}
-                      onChange={(e) => setFormData({...formData, price_level: e.target.value})}
-                      placeholder="LKR, LKR LKR, LKR LKR LKR"
-                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20"
-                    />
-                  </div>
-                  <div className="space-y-1 md:col-span-3">
+                  <div className="space-y-1.5 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Google Summary / Description</label>
                     <textarea
                       value={formData.summary}
                       onChange={(e) => setFormData({...formData, summary: e.target.value})}
                       placeholder="Google Places description or AI-generated summary..."
-                      className="w-full min-h-[64px] p-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-xs font-medium leading-relaxed"
+                      className="w-full min-h-[72px] p-3 rounded-xl bg-white border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-medium leading-relaxed"
                     />
                   </div>
                 </div>

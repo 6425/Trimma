@@ -269,13 +269,13 @@ export default function AgentNewLeadPage() {
                 />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="md:col-span-2 space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">WhatsApp Number</label>
                 <LkPhoneInput
                   value={form.phone}
                   onChange={(phone) => setForm({ ...form, phone })}
                   theme="light"
-                  className="h-11"
+                  className="h-11 w-full"
                 />
               </div>
               

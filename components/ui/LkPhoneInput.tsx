@@ -155,7 +155,8 @@ export function LkPhoneInput({
   };
 
   // ── Theme tokens ───────────────────────────────────────────────────────────
-  const wrapperBase = "flex items-stretch overflow-hidden focus-within:ring-2 transition-all";
+  const wrapperBase =
+    "grid grid-cols-[minmax(9.5rem,11.5rem)_minmax(6.5rem,1fr)] items-stretch overflow-hidden focus-within:ring-2 transition-all w-full";
 
   const wrapperTheme =
     theme === "dark"
@@ -186,7 +187,7 @@ export function LkPhoneInput({
         disabled={disabled}
         value={iso}
         onChange={(e) => handleCountryChange(e.target.value)}
-        className={`min-w-[10.5rem] max-w-[12rem] shrink-0 px-2.5 text-sm font-semibold outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${selectTheme}`}
+        className={`w-full min-w-0 px-2.5 text-sm font-semibold outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${selectTheme}`}
       >
         {PHONE_COUNTRIES.map((c) => (
           <option key={c.iso} value={c.iso}>
@@ -206,7 +207,7 @@ export function LkPhoneInput({
         placeholder={placeholder}
         value={national}
         onChange={(e) => handleNumberChange(e.target.value)}
-        className={`flex-1 min-w-0 px-3 py-2.5 text-sm outline-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed ${inputTheme} ${inputClassName}`}
+        className={`w-full min-w-0 px-3 py-2.5 text-sm outline-none bg-transparent disabled:opacity-40 disabled:cursor-not-allowed ${inputTheme} ${inputClassName}`}
       />
     </div>
   );
