@@ -2,9 +2,9 @@ import Link from "next/link";
 import {
   ArrowRight,
   Building2,
-  CalendarDays,
   Globe,
   Heart,
+  Mail,
   MapPin,
   Shield,
   Sparkles,
@@ -226,8 +226,8 @@ export default function AboutPage() {
               href="/contact"
               className="inline-flex items-center justify-center gap-2 border-2 border-zinc-200 hover:border-zinc-300 text-zinc-900 font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03]"
             >
-              <CalendarDays className="w-4 h-4" />
-              Book a Demo
+              <Mail className="w-4 h-4" />
+              Contact Us
             </Link>
           </div>
         </div>

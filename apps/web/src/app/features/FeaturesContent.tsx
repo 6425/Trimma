@@ -420,9 +420,12 @@ export function FeaturesContent() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
                 <span className="text-white text-sm font-bold">Trimma OS Dashboard</span>
-                <span className="text-xs font-semibold text-black bg-[#F5B700] px-3 py-1 rounded-full">
-                  Live Demo
-                </span>
+                <Link
+                  href="/contact"
+                  className="text-xs font-semibold text-black bg-[#F5B700] hover:bg-[#FFC947] px-3 py-1 rounded-full transition-colors"
+                >
+                  Contact Us
+                </Link>
               </div>
             </div>
           </div>

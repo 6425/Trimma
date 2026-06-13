@@ -100,7 +100,7 @@ const FAQS = [
   },
   {
     q: "What support channels are available?",
-    a: "We offer email support (24-hour response), WhatsApp chat (7 days a week), a self-service knowledge base, and live demo bookings for salon owners.",
+    a: "We offer email support (24-hour response), WhatsApp chat (7 days a week), a self-service knowledge base, and direct contact with our team for salon owners.",
   },
   {
     q: "Is Trimma available for multiple business types?",
@@ -175,7 +175,7 @@ function HeroIllustration() {
         <div className="space-y-3">
           {[
             { from: "support", text: "Hi! How can we help your salon today?", time: "10:02 AM" },
-            { from: "user", text: "I'd like to schedule a demo for my salon.", time: "10:03 AM" },
+            { from: "user", text: "I'd like to get in touch about listing my salon.", time: "10:03 AM" },
             { from: "support", text: "Absolutely! Let me connect you with our onboarding team.", time: "10:03 AM" },
           ].map((msg, i) => (
             <div key={i} className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
@@ -268,11 +268,11 @@ export default function ContactPage() {
                 Contact Our Team
               </a>
               <a
-                href="mailto:sales@trimma.io?subject=Demo%20Request"
+                href="#contact-form"
                 className="inline-flex items-center justify-center gap-2 bg-white border-2 border-zinc-200 hover:border-zinc-300 text-zinc-900 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-[1.02]"
               >
-                <CalendarDays className="w-4 h-4" />
-                Schedule a Demo
+                <Mail className="w-4 h-4" />
+                Contact Us
               </a>
             </div>
           </div>
@@ -611,13 +611,13 @@ export default function ContactPage() {
               <Users className="w-4 h-4" />
               Become a Partner
             </Link>
-            <a
-              href="mailto:sales@trimma.io?subject=Demo%20Request"
+            <Link
+              href="#contact-form"
               className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03]"
             >
-              <CalendarDays className="w-4 h-4" />
-              Book a Demo
-            </a>
+              <Mail className="w-4 h-4" />
+              Contact Us
+            </Link>
           </div>
         </div>
       </section>
