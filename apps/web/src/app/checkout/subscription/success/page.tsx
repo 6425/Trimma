@@ -8,7 +8,8 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 function SubscriptionSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+  const sessionId =
+    searchParams.get("payment_intent") || searchParams.get("session_id");
   const [loading, setLoading] = useState(Boolean(sessionId));
   const [error, setError] = useState<string | null>(null);
 

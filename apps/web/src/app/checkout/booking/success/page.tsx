@@ -9,7 +9,8 @@ import { clearBookingCheckoutDraft } from "@/lib/booking-checkout";
 
 function BookingSuccessContent() {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+  const sessionId =
+    searchParams.get("payment_intent") || searchParams.get("session_id");
   const bookingNoParam = searchParams.get("booking_no");
   const [bookingNo, setBookingNo] = useState<string | null>(bookingNoParam);
   const [whatsappSent, setWhatsappSent] = useState(searchParams.get("whatsapp_sent") === "true");

@@ -346,6 +346,9 @@ function SubscriptionCheckoutForm() {
               stripeEnvironment={stripeEnvironment}
               stripeClientSecret={stripeClientSecret}
               stripePublishableKey={stripePublishableKey}
+              returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/checkout/subscription/success`}
+              amountLabel={formattedAmount}
+              onPaymentError={setStripeError}
             />
           </div>
         </div>

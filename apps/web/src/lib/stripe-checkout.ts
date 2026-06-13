@@ -1,18 +1,15 @@
-import Stripe from "stripe";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { APP_BASE_URL } from "@/lib/email/config";
 import { getStripeServerClient } from "@/lib/stripe-client";
 import { loadStripeGatewaySettings, toStripeAmountLkr } from "@/lib/stripe-settings";
 
 export type StripeCheckoutType = "booking" | "subscription";
 
-export async function createStripeEmbeddedSession(input: {
+export async function createStripePaymentIntent(input: {
   checkoutType: StripeCheckoutType;
   amount: number;
   description: string;
   customerEmail: string;
   payload: Record<string, unknown>;
-  returnPath: string;
 }) {
   const settings = await loadStripeGatewaySettings();
   if (!settings.enabled) {
@@ -46,45 +43,33 @@ export async function createStripeEmbeddedSession(input: {
   }
 
   const stripe = await getStripeServerClient();
-  const returnUrl = `${APP_BASE_URL}${input.returnPath}?session_id={CHECKOUT_SESSION_ID}`;
 
-  const session = await stripe.checkout.sessions.create({
-    ui_mode: "embedded",
-    mode: "payment",
-    ...(input.customerEmail ? { customer_email: input.customerEmail } : {}),
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "lkr",
-          unit_amount: toStripeAmountLkr(input.amount),
-          product_data: {
-            name: input.description,
-          },
-        },
-      },
-    ],
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: toStripeAmountLkr(input.amount),
+    currency: "lkr",
+    description: input.description,
+    ...(input.customerEmail ? { receipt_email: input.customerEmail } : {}),
+    automatic_payment_methods: { enabled: true },
     metadata: {
       pending_id: pending.id,
       checkout_type: input.checkoutType,
       environment: settings.environment,
     },
-    return_url: returnUrl,
-  } as unknown as Stripe.Checkout.SessionCreateParams);
+  });
 
-  if (!session.client_secret) {
-    throw new Error("Stripe did not return a checkout session.");
+  if (!paymentIntent.client_secret) {
+    throw new Error("Stripe did not return a payment intent.");
   }
 
   await supabase
     .from("stripe_checkout_pending")
-    .update({ stripe_session_id: session.id })
+    .update({ stripe_session_id: paymentIntent.id })
     .eq("id", pending.id);
 
   return {
-    clientSecret: session.client_secret,
+    clientSecret: paymentIntent.client_secret,
     publishableKey: settings.publishableKey,
-    sessionId: session.id,
+    paymentIntentId: paymentIntent.id,
     pendingId: pending.id,
     environment: settings.environment,
   };
@@ -118,17 +103,17 @@ export async function updateStripePendingPayload(
   if (error) throw new Error(error.message);
 }
 
-export async function loadStripePendingCheckout(sessionId: string) {
+export async function loadStripePendingCheckout(paymentIntentId: string) {
   const stripe = await getStripeServerClient();
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
-  if (session.payment_status !== "paid") {
+  if (paymentIntent.status !== "succeeded") {
     throw new Error("Payment has not been completed yet.");
   }
 
-  const pendingId = session.metadata?.pending_id;
+  const pendingId = paymentIntent.metadata?.pending_id;
   if (!pendingId) {
-    throw new Error("Checkout session is missing metadata.");
+    throw new Error("Payment is missing checkout metadata.");
   }
 
   const supabase = createSupabaseAdminClient();
@@ -141,10 +126,10 @@ export async function loadStripePendingCheckout(sessionId: string) {
   if (error) throw new Error(error.message);
   if (!pending) throw new Error("Checkout session expired or not found.");
   if (pending.status === "completed") {
-    return { session, pending, alreadyCompleted: true as const };
+    return { paymentIntent, pending, alreadyCompleted: true as const };
   }
 
-  return { session, pending, alreadyCompleted: false as const };
+  return { paymentIntent, pending, alreadyCompleted: false as const };
 }
 
 export async function markStripePendingCompleted(

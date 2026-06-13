@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createStripeEmbeddedSession } from "@/lib/stripe-checkout";
+import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
 export async function POST(request: Request) {
   try {
@@ -25,12 +25,11 @@ export async function POST(request: Request) {
       (services || []).map((service: { name?: string }) => service.name).filter(Boolean).join(" + ") ||
       "Salon booking deposit";
 
-    const result = await createStripeEmbeddedSession({
+    const result = await createStripePaymentIntent({
       checkoutType: "booking",
       amount: Number(reservationFee),
       description: `Trimma booking deposit — ${serviceLabel}`,
       customerEmail: customer.email,
-      returnPath: "/checkout/booking/success",
       payload: {
         draft,
         customer,
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[stripe/booking-session]", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create Stripe session." },
+      { error: error instanceof Error ? error.message : "Failed to create Stripe payment." },
       { status: 500 }
     );
   }

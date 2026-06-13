@@ -394,6 +394,9 @@ function BookingCheckoutForm() {
               stripeEnvironment={stripeEnvironment}
               stripeClientSecret={stripeClientSecret}
               stripePublishableKey={stripePublishableKey}
+              returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/checkout/booking/success`}
+              amountLabel={formattedReservationFee}
+              onPaymentError={setStripeError}
             />
           </div>
         </div>

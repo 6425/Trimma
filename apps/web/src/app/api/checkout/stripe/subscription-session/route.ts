@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createStripeEmbeddedSession } from "@/lib/stripe-checkout";
+import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
 export async function POST(request: Request) {
   try {
@@ -10,12 +10,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incomplete subscription checkout details." }, { status: 400 });
     }
 
-    const result = await createStripeEmbeddedSession({
+    const result = await createStripePaymentIntent({
       checkoutType: "subscription",
       amount: Number(chargeAmount),
       description: `Trimma ${planName} plan (${billingCycle})`,
       customerEmail: customer?.email || "",
-      returnPath: "/checkout/subscription/success",
       payload: {
         planName,
         billingCycle,
@@ -28,7 +27,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[stripe/subscription-session]", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create Stripe session." },
+      { error: error instanceof Error ? error.message : "Failed to create Stripe payment." },
       { status: 500 }
     );
   }

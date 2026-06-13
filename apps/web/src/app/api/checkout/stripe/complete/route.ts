@@ -9,21 +9,24 @@ import {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const sessionId = body.sessionId as string | undefined;
+    const paymentIntentId =
+      (body.paymentIntentId as string | undefined) ||
+      (body.sessionId as string | undefined);
 
-    if (!sessionId) {
-      return NextResponse.json({ error: "Missing Stripe session id." }, { status: 400 });
+    if (!paymentIntentId) {
+      return NextResponse.json({ error: "Missing Stripe payment id." }, { status: 400 });
     }
 
-    const { session, pending, alreadyCompleted } = await loadStripePendingCheckout(sessionId);
+    const { paymentIntent, pending, alreadyCompleted } =
+      await loadStripePendingCheckout(paymentIntentId);
     const payload = pending.payload as Record<string, unknown>;
-    const environment = session.metadata?.environment || "sandbox";
+    const environment = paymentIntent.metadata?.environment || "sandbox";
 
     if (pending.checkout_type === "booking") {
       if (alreadyCompleted) {
         const bookingNo =
           (payload.completedBookingNo as string | undefined) ||
-          (session.metadata?.booking_no as string | undefined);
+          (paymentIntent.metadata?.booking_no as string | undefined);
         return NextResponse.json({
           checkoutType: "booking",
           bookingNo: bookingNo || null,
@@ -34,7 +37,7 @@ export async function POST(request: Request) {
       const result = await completeBookingCheckout({
         ...(payload as Parameters<typeof completeBookingCheckout>[0]),
         stripePayment: {
-          paymentId: session.id,
+          paymentId: paymentIntent.id,
           environment,
         },
         payhereEnvironment: environment,
@@ -65,7 +68,7 @@ export async function POST(request: Request) {
       const result = await completeSubscriptionCheckout({
         ...(payload as Parameters<typeof completeSubscriptionCheckout>[0]),
         stripePayment: {
-          paymentId: session.id,
+          paymentId: paymentIntent.id,
           environment,
         },
         payhereEnvironment: environment,
