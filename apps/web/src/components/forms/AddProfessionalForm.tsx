@@ -86,11 +86,20 @@ export function AddProfessionalForm({
   // ADD FORM STATES — initialized from initialStaff when editing (parent should pass a stable key to remount)
   const [newName, setNewName] = useState(() => initialStaff?.name || "");
   const [newEmail, setNewEmail] = useState(() => initialStaff?.email || "");
-  const [newRole, setNewRole] = useState(() => initialStaff?.role || "");
+  const [newRole, setNewRole] = useState(() => {
+    const role = initialStaff?.role;
+    if (!role) return "";
+    const matched = effectiveRoles.find(
+      (r) => r.role_name?.toLowerCase() === role.toLowerCase()
+    );
+    return matched?.role_name || role;
+  });
   const [newCategory, setNewCategory] = useState(() => {
     const role = initialStaff?.role;
     if (!role) return "";
-    return effectiveRoles.find((r) => r.role_name === role)?.category || "";
+    return (
+      effectiveRoles.find((r) => r.role_name?.toLowerCase() === role.toLowerCase())?.category || ""
+    );
   });
   const [newCommission, setNewCommission] = useState(
     () => initialStaff?.commission_rate?.toString() || "10"

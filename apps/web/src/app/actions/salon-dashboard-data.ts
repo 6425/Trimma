@@ -275,7 +275,7 @@ export async function fetchSalonStaffPage() {
         .eq("salon_id", ctx.salonId)
         .order("name"),
       supabase.from("global_staff_roles").select("*").order("category"),
-      supabase.from("global_services").select("id, name, category").eq("is_active", true),
+      supabase.from("global_services").select("id, name, category").order("name"),
     ]);
 
     for (const res of [staffRes, servicesRes, rolesRes, globalServicesRes]) {

@@ -44,9 +44,10 @@ export default function DashboardStaff() {
   const [subscriptionName, setSubscriptionName] = useState("Free");
 
   // Modal Open States
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [staffModalMode, setStaffModalMode] = useState<"add" | "edit" | null>(null);
   const [editingStaffMember, setEditingStaffMember] = useState<any | null>(null);
   const [globalRoles, setGlobalRoles] = useState<any[]>([]);
+  const [refreshingForm, setRefreshingForm] = useState(false);
 
   const defaultSchedule = {
     monday: { isWorking: true, start: "09:00", end: "18:00" },
@@ -61,6 +62,9 @@ export default function DashboardStaff() {
   const [salonWorkingHours, setSalonWorkingHours] = useState(defaultSchedule);
 
   const staffFormServices = mapSalonServicesForStaffForm(salonServices, globalServices);
+  const effectiveStaffRoles = resolveEffectiveStaffRoles(globalRoles);
+  const staffFormReady = !loading && !refreshingForm && staffFormServices.length > 0;
+  const staffFormKey = `${staffModalMode || "closed"}-${editingStaffMember?.id || "new"}-${staffFormServices.map((s) => s.salonServiceId || s.id).join(",")}`;
   const salonServiceRows = salonServices.map((service) => ({
     id: service.id,
     salonServiceId: service.id,
@@ -76,7 +80,7 @@ export default function DashboardStaff() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function fetchStaff() {
+  async function fetchStaff(): Promise<number> {
     try {
       setLoading(true);
       const result = await withTimeout(fetchSalonStaffPage(), 20000, "Loading timed out.");
@@ -86,7 +90,7 @@ export default function DashboardStaff() {
       if (salonData?.id) setSalonId(salonData.id);
       if (!salonData) {
         setStaff([]);
-        return;
+        return 0;
       }
 
       if (salonData.working_hours) {
@@ -137,8 +141,14 @@ export default function DashboardStaff() {
 
       const rolesData = result.globalStaffRoles || [];
       setGlobalRoles(resolveEffectiveStaffRoles(rolesData));
+
+      return mapSalonServicesForStaffForm(
+        servicesData,
+        result.globalServices || []
+      ).length;
     } catch (err) {
       console.error("Failed to fetch staff:", err);
+      return 0;
     } finally {
       setLoading(false);
     }
@@ -164,8 +174,44 @@ export default function DashboardStaff() {
     return true;
   };
 
-  const startEditing = (member: any) => {
+  const closeStaffModal = () => {
+    setStaffModalMode(null);
+    setEditingStaffMember(null);
+  };
+
+  const openStaffModal = async (mode: "add" | "edit", member?: any) => {
+    if (mode === "add" && staff.length >= maxStaffLimit) {
+      toast.error(`Staff limit reached! Your ${subscriptionName} plan allows up to ${maxStaffLimit} members. Upgrade to add more!`);
+      window.location.href = "/dashboard/billing";
+      return;
+    }
+
+    let serviceCount = 0;
+    try {
+      setRefreshingForm(true);
+      serviceCount = await fetchStaff();
+    } finally {
+      setRefreshingForm(false);
+    }
+
+    if (serviceCount === 0) {
+      toast.error("Add salon services in the Services menu before assigning staff to services.");
+      return;
+    }
+
+    if (mode === "add") {
+      setEditingStaffMember(null);
+      setStaffModalMode("add");
+      return;
+    }
+
+    if (!member) return;
     setEditingStaffMember(member);
+    setStaffModalMode("edit");
+  };
+
+  const startEditing = (member: any) => {
+    void openStaffModal("edit", member);
   };
 
   const handleAddStaffFormSubmit = async (data: {
@@ -230,7 +276,7 @@ export default function DashboardStaff() {
       }
 
       toast.success(`${data.name} added successfully to your staff directory! 🌟`);
-      setIsAddModalOpen(false);
+      closeStaffModal();
       fetchStaff();
     } catch (err: any) {
       toast.error("Failed to add staff: " + err.message);
@@ -300,7 +346,7 @@ export default function DashboardStaff() {
       if (updateResult.success === false) throw new Error(updateResult.error);
 
       toast.success(`Stylist settings for ${data.name} updated successfully! 🌟`);
-      setEditingStaffMember(null);
+      closeStaffModal();
       fetchStaff();
     } catch (err: any) {
       toast.error("Failed to update staff: " + err.message);
@@ -374,18 +420,12 @@ export default function DashboardStaff() {
           <p className="text-sm text-zinc-500 mt-1">Manage your barbers, stylists, and professional commissions.</p>
         </div>
         <Button 
-          onClick={() => {
-            if (staff.length >= maxStaffLimit) {
-              toast.error(`Staff limit reached! Your ${subscriptionName} plan allows up to ${maxStaffLimit} members. Upgrade to add more!`);
-              window.location.href = '/dashboard/billing';
-              return;
-            }
-            setIsAddModalOpen(true);
-          }}
+          onClick={() => void openStaffModal("add")}
+          disabled={loading || refreshingForm}
           className="bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11 shadow-md shadow-brand/20 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Custom Staff
+          Add Professional
         </Button>
       </div>
 
@@ -404,8 +444,8 @@ export default function DashboardStaff() {
              <p className="text-zinc-500 max-w-xs mx-auto mt-1">
                Add your stylists and barbers to manage their schedules and performance.
              </p>
-             <Button onClick={() => setIsAddModalOpen(true)} variant="outline" className="mt-6 rounded-xl h-10 px-5 font-bold">
-               <Plus className="w-4 h-4 mr-2" /> Add first member
+             <Button onClick={() => void openStaffModal("add")} variant="outline" className="mt-6 rounded-xl h-10 px-5 font-bold">
+               <Plus className="w-4 h-4 mr-2" /> Add Professional
              </Button>
            </div>
         ) : (
@@ -499,41 +539,40 @@ export default function DashboardStaff() {
         )}
       </div>
 
-      {isAddModalOpen && (
+      {staffModalMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-          <AddProfessionalForm
-            key={`add-${staffFormServices.map((s) => s.salonServiceId).join(",")}`}
-            onCancel={() => setIsAddModalOpen(false)}
-            onSubmit={handleAddStaffFormSubmit}
-            globalRoles={globalRoles}
-            salonServices={staffFormServices}
-            adding={adding}
-            title="Add Professional"
-            submitLabel="Save Stylist"
-          />
-        </div>
-      )}
-      {editingStaffMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-          <AddProfessionalForm
-            key={`edit-${editingStaffMember.id}-${staffFormServices.map((s) => s.salonServiceId).join(",")}`}
-            onCancel={() => setEditingStaffMember(null)}
-            onSubmit={handleEditStaffSubmit}
-            globalRoles={globalRoles}
-            salonServices={staffFormServices}
-            adding={adding}
-            initialStaff={{
-              id: editingStaffMember.id,
-              name: editingStaffMember.name,
-              email: editingStaffMember.email,
-              role: editingStaffMember.role,
-              commission_rate: editingStaffMember.commission_rate,
-              avatar_url: editingStaffMember.avatar_url,
-              working_hours: parseStaffWorkingHours(editingStaffMember.working_hours) || editingStaffMember.working_hours,
-            }}
-            title="Edit Professional"
-            submitLabel="Save Changes"
-          />
+          {!staffFormReady ? (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-10 flex flex-col items-center gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-brand" />
+              <p className="text-sm font-semibold text-zinc-600">Loading salon services and roles...</p>
+            </div>
+          ) : (
+            <AddProfessionalForm
+              key={staffFormKey}
+              onCancel={closeStaffModal}
+              onSubmit={staffModalMode === "add" ? handleAddStaffFormSubmit : handleEditStaffSubmit}
+              globalRoles={effectiveStaffRoles}
+              salonServices={staffFormServices}
+              adding={adding}
+              initialStaff={
+                staffModalMode === "edit" && editingStaffMember
+                  ? {
+                      id: editingStaffMember.id,
+                      name: editingStaffMember.name,
+                      email: editingStaffMember.email,
+                      role: editingStaffMember.role,
+                      commission_rate: editingStaffMember.commission_rate,
+                      avatar_url: editingStaffMember.avatar_url,
+                      working_hours:
+                        parseStaffWorkingHours(editingStaffMember.working_hours) ||
+                        editingStaffMember.working_hours,
+                    }
+                  : null
+              }
+              title={staffModalMode === "edit" ? "Edit Professional" : "Add Professional"}
+              submitLabel={staffModalMode === "edit" ? "Save Changes" : "Save Stylist"}
+            />
+          )}
         </div>
       )}
 
