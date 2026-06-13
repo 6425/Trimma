@@ -586,13 +586,13 @@ export function FeaturesContent() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="relative order-2 lg:order-1">
               <div className="absolute -inset-6 rounded-[2rem] bg-[#F5B700]/10 blur-3xl pointer-events-none" />
-              <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-200">
+              <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-zinc-50">
                 <Image
-                  src="/assets/dashboard_mockup.jpg"
-                  alt="Trimma salon dashboard"
+                  src="/assets/trimma-os-dashboard.png"
+                  alt="Trimma OS Agent Cockpit dashboard"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover object-center"
+                  className="object-contain object-top"
                 />
               </div>
             </div>
