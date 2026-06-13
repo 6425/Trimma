@@ -23,6 +23,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { AgentApplicationForm } from "@/components/careers/AgentApplicationForm";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -159,7 +160,7 @@ const FAQS = [
   },
   {
     q: "How do I apply?",
-    a: "Contact our partnerships team with your name, territory, and experience. Approved agents receive portal access and territory assignments from Trimma admin.",
+    a: "Use the application form on this page. Submit your personal details, territory, NIC, and bank account information. Trimma admin reviews requests in the Agent Requests dashboard.",
   },
 ];
 
@@ -237,7 +238,7 @@ export function CareersContent() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
-                  href="mailto:sales@trimma.io?subject=Trimma%20Agent%20Application"
+                  href="#apply"
                   className="inline-flex items-center justify-center gap-2 bg-[#F5B700] hover:bg-[#FFC947] text-black font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-[#F5B700]/25 hover:scale-[1.02]"
                 >
                   <Briefcase className="w-4 h-4" />
@@ -466,6 +467,9 @@ export function CareersContent() {
         </div>
       </section>
 
+      {/* ── Application Form ── */}
+      <AgentApplicationForm />
+
       {/* ── FAQ ── */}
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-6">
@@ -499,7 +503,7 @@ export function CareersContent() {
             across Sri Lanka.
           </p>
           <a
-            href="mailto:sales@trimma.io?subject=Trimma%20Agent%20Application"
+            href="#apply"
             className="inline-flex items-center justify-center gap-2 bg-[#F5B700] hover:bg-[#FFC947] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#F5B700]/20 mb-8"
           >
             <Briefcase className="w-4 h-4" />

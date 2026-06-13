@@ -151,6 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       icon: <UserPlus className="w-4 h-4" />,
       children: [
         { name: "Agent Dashboard", href: "/admin/agents" },
+        { name: "Agent Requests", href: "/admin/agents/requests" },
         { name: "Subscription Commission", href: "/admin/agents?tab=commissions" },
       ],
     },
@@ -189,6 +190,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!queryString) {
       if (path === "/admin/agents" && searchParams.get("tab") === "commissions") {
         return false;
+      }
+      if (path === "/admin/agents") {
+        return pathname === "/admin/agents" || pathname === "/admin/agents/";
       }
       return pathMatches;
     }
