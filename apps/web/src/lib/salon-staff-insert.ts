@@ -21,6 +21,21 @@ export type SalonStaffFormInput = {
   salon_id?: string;
 };
 
+export const DEFAULT_STAFF_ROLES = [
+  { role_name: "Stylist", category: "Operational" },
+  { role_name: "Barber", category: "Operational" },
+  { role_name: "Therapist", category: "Operational" },
+  { role_name: "Manager", category: "Admin" },
+  { role_name: "Reception", category: "Admin" },
+];
+
+export function resolveEffectiveStaffRoles(
+  globalRoles: Array<{ role_name?: string | null; category?: string | null; id?: string }> = []
+) {
+  const filtered = globalRoles.filter((role) => role.category !== "Grade" && role.role_name);
+  return filtered.length > 0 ? filtered : DEFAULT_STAFF_ROLES;
+}
+
 /** Map AddProfessionalForm / profile staff payload to salon_staff table columns only. */
 export function isAssignableSalonService(status?: string | null): boolean {
   const normalized = (status || "active").toLowerCase();

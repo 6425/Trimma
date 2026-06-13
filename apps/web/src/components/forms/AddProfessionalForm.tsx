@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { buildStaffServicesConfigFromMember } from "@/lib/salon-staff-insert";
+import { buildStaffServicesConfigFromMember, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -76,13 +76,7 @@ export function AddProfessionalForm({
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const effectiveRoles = globalRoles && globalRoles.length > 0 ? globalRoles : [
-    { role_name: "Stylist", category: "Operational" },
-    { role_name: "Barber", category: "Operational" },
-    { role_name: "Therapist", category: "Operational" },
-    { role_name: "Manager", category: "Admin" },
-    { role_name: "Reception", category: "Admin" },
-  ];
+  const effectiveRoles = resolveEffectiveStaffRoles(globalRoles);
 
   const buildServicesConfig = (
     staff: AddProfessionalFormProps["initialStaff"],
@@ -285,7 +279,6 @@ export function AddProfessionalForm({
                   value={newCategory}
                   onChange={(e) => { setNewCategory(e.target.value); setNewRole(""); }}
                   className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                  required
                 >
                   <option value="" disabled>Select Category (Optional Filter)</option>
                   {Array.from(new Set(effectiveRoles.map(r => r.category || 'Other'))).map(c => (
@@ -311,7 +304,7 @@ export function AddProfessionalForm({
                   {effectiveRoles
                     .filter(r => !newCategory || (r.category || 'Other') === newCategory)
                     .map(r => (
-                    <option key={r.id || r.role_name} value={r.role_name}>{r.role_name}</option>
+                    <option key={(r as { id?: string }).id || r.role_name} value={r.role_name}>{r.role_name}</option>
                   ))}
                 </select>
               </div>

@@ -1,10 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Plus, Users, Loader2, X, Clock, Tag, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
+import { useState, useEffect } from "react";
+import { Plus, Users, Loader2, Clock, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +16,7 @@ import {
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
-import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId, mapSalonServicesForStaffForm, parseStaffWorkingHours } from "@/lib/salon-staff-insert";
+import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId, mapSalonServicesForStaffForm, parseStaffWorkingHours, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -50,22 +48,6 @@ export default function DashboardStaff() {
   const [editingStaffMember, setEditingStaffMember] = useState<any | null>(null);
   const [globalRoles, setGlobalRoles] = useState<any[]>([]);
 
-  // Avatar Upload & Crop States
-  const [imgSrc, setImgSrc] = useState('');
-  const imgRef = useRef<HTMLImageElement>(null);
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
-  const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // ADD FORM STATES
-  const [newName, setNewName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newCategory, setNewCategory] = useState("");
-  const [newRole, setNewRole] = useState("");
-  const [newCommission, setNewCommission] = useState("10");
   const defaultSchedule = {
     monday: { isWorking: true, start: "09:00", end: "18:00" },
     tuesday: { isWorking: true, start: "09:00", end: "18:00" },
@@ -75,10 +57,6 @@ export default function DashboardStaff() {
     saturday: { isWorking: true, start: "09:00", end: "18:00" },
     sunday: { isWorking: false, start: "09:00", end: "18:00" },
   };
-
-  const [newSchedule, setNewSchedule] = useState(defaultSchedule);
-  const [generalBufferTime, setGeneralBufferTime] = useState("15");
-  const [selectedServices, setSelectedServices] = useState<{[key: string]: { enabled: boolean, commission: string, buffer: string, duration: string }}>({});
 
   const [salonWorkingHours, setSalonWorkingHours] = useState(defaultSchedule);
 
@@ -148,14 +126,7 @@ export default function DashboardStaff() {
 
       const servicesData = result.salonServices || [];
       if (result.globalServices) setGlobalServices(result.globalServices);
-      let prePopServices: any = {};
-      if (servicesData.length) {
-        setSalonServices(servicesData);
-        servicesData.forEach((s: any) => {
-          prePopServices[s.id] = { enabled: false, commission: "10", buffer: "15", duration: s.duration_min?.toString() || "30" };
-        });
-        setSelectedServices(prePopServices);
-      }
+      if (servicesData.length) setSalonServices(servicesData);
 
       setStaff(
         (result.staff || []).map((member: any) => ({
@@ -165,17 +136,7 @@ export default function DashboardStaff() {
       );
 
       const rolesData = result.globalStaffRoles || [];
-      if (rolesData.length > 0) {
-        setGlobalRoles(rolesData);
-      } else {
-        setGlobalRoles([
-          { role_name: "Stylist", category: "Operational" },
-          { role_name: "Barber", category: "Operational" },
-          { role_name: "Therapist", category: "Operational" },
-          { role_name: "Manager", category: "Admin" },
-          { role_name: "Reception", category: "Admin" },
-        ]);
-      }
+      setGlobalRoles(resolveEffectiveStaffRoles(rolesData));
     } catch (err) {
       console.error("Failed to fetch staff:", err);
     } finally {
@@ -183,62 +144,48 @@ export default function DashboardStaff() {
     }
   }
 
-  // ADD MODULE SERVICES HANDLERS
-  const handleServiceCheckboxChange = (serviceId: string, checked: boolean) => {
-    setSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        enabled: checked,
-        commission: prev[serviceId]?.commission || newCommission,
-        buffer: prev[serviceId]?.buffer || generalBufferTime,
-        duration: prev[serviceId]?.duration || salonServices.find(s => s.id === serviceId)?.duration_min?.toString() || "30"
-      }
-    }));
-  };
+  const validateStaffSchedule = (schedule: typeof defaultSchedule) => {
+    for (const day of Object.keys(schedule)) {
+      const staffDay = schedule[day as keyof typeof defaultSchedule];
+      const salonDay = salonWorkingHours[day as keyof typeof salonWorkingHours];
 
-  const handleServiceDurationChange = (serviceId: string, val: string) => {
-    setSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        duration: val
+      if (staffDay.isWorking && !salonDay.isWorking) {
+        toast.error(`Stylist cannot work on ${day} as the salon is closed.`);
+        return false;
       }
-    }));
-  };
 
-  const handleServiceCommissionChange = (serviceId: string, val: string) => {
-    setSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        commission: val
+      if (staffDay.isWorking && salonDay.isWorking) {
+        if (staffDay.start < salonDay.start || staffDay.end > salonDay.end) {
+          toast.error(`Stylist hours on ${day} exceed the salon's operational hours (${salonDay.start} - ${salonDay.end}).`);
+          return false;
+        }
       }
-    }));
-  };
-
-  const handleServiceBufferChange = (serviceId: string, val: string) => {
-    setSelectedServices(prev => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        buffer: val
-      }
-    }));
+    }
+    return true;
   };
 
   const startEditing = (member: any) => {
     setEditingStaffMember(member);
   };
 
-  // ADD STYLIST SUBMITTER
-  const handleAddStaffSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName) {
+  const handleAddStaffFormSubmit = async (data: {
+    name: string;
+    email: string;
+    role: string;
+    commission_rate: number;
+    general_buffer_time: number;
+    schedule: typeof defaultSchedule;
+    services: Record<string, { enabled?: boolean; commission?: string; buffer?: string; duration?: string }>;
+    avatarBlob?: Blob | null;
+  }) => {
+    if (!data.name) {
       toast.error("Staff name is required.");
       return;
     }
-
+    if (!data.role) {
+      toast.error("Please select a role.");
+      return;
+    }
     if (staff.length >= maxStaffLimit) {
       toast.error(`Stylist capacity reached! Your active plan only allows up to ${maxStaffLimit} staff members. Upgrade your subscription to unlock more slots!`);
       return;
@@ -247,49 +194,33 @@ export default function DashboardStaff() {
     try {
       setAdding(true);
       if (!salonId) throw new Error("Salon profile not configured.");
-
-      // Validate bounds against Salon Operational Hours
-      for (const day of Object.keys(newSchedule)) {
-        const staffDay = newSchedule[day as keyof typeof newSchedule];
-        const salonDay = salonWorkingHours[day as keyof typeof salonWorkingHours];
-        
-        if (staffDay.isWorking && !salonDay.isWorking) {
-          toast.error(`Stylist cannot work on ${day} as the salon is closed.`);
-          setAdding(false);
-          return;
-        }
-        
-        if (staffDay.isWorking && salonDay.isWorking) {
-          if (staffDay.start < salonDay.start || staffDay.end > salonDay.end) {
-            toast.error(`Stylist hours on ${day} exceed the salon's operational hours (${salonDay.start} - ${salonDay.end}).`);
-            setAdding(false);
-            return;
-          }
-        }
+      if (!validateStaffSchedule(data.schedule)) {
+        setAdding(false);
+        return;
       }
 
       const workingHoursPayload = buildStaffWorkingHoursPayload(
-        newSchedule,
-        generalBufferTime,
-        selectedServices,
+        data.schedule,
+        data.general_buffer_time,
+        data.services,
         salonServiceRows
       );
 
       const insertResult = await insertSalonStaff({
-          name: newName,
-          email: newEmail || null,
-          role: newRole,
-          commission_rate: parseFloat(newCommission) || 0,
-          working_hours: workingHoursPayload,
-          status: "active",
-        });
+        name: data.name,
+        email: data.email || null,
+        role: data.role,
+        commission_rate: data.commission_rate || 0,
+        working_hours: workingHoursPayload,
+        status: "active",
+      });
 
       if (insertResult.success === false) throw new Error(insertResult.error);
       const newStaffId = insertResult.staffId;
-      
-      if (avatarBlob && newStaffId) {
+
+      if (data.avatarBlob && newStaffId) {
         try {
-          const base64 = await blobToBase64(avatarBlob);
+          const base64 = await blobToBase64(data.avatarBlob);
           const avatarResult = await uploadSalonStaffAvatar(newStaffId, base64);
           if (avatarResult.success === false) throw new Error(avatarResult.error);
         } catch (uploadErr) {
@@ -298,24 +229,10 @@ export default function DashboardStaff() {
         }
       }
 
-      toast.success(`${newName} added successfully to your staff directory! 🌟`);
+      toast.success(`${data.name} added successfully to your staff directory! 🌟`);
       setIsAddModalOpen(false);
-      setNewName("");
-      setNewEmail("");
-      setNewCategory("");
-      setNewRole("");
-      setNewCommission("10");
-      setNewSchedule(defaultSchedule);
-      setGeneralBufferTime("15");
-      
-      const resetConfigs: any = {};
-      salonServices.forEach(s => {
-        resetConfigs[s.id] = { enabled: false, commission: "10", buffer: "15", duration: s.duration_min?.toString() || "30" };
-      });
-      setSelectedServices(resetConfigs);
-      
       fetchStaff();
-    } catch(err: any) {
+    } catch (err: any) {
       toast.error("Failed to add staff: " + err.message);
     } finally {
       setAdding(false);
@@ -346,23 +263,9 @@ export default function DashboardStaff() {
     try {
       setAdding(true);
 
-      for (const day of Object.keys(data.schedule)) {
-        const staffDay = data.schedule[day as keyof typeof defaultSchedule];
-        const salonDay = salonWorkingHours[day as keyof typeof salonWorkingHours];
-
-        if (staffDay.isWorking && !salonDay.isWorking) {
-          toast.error(`Stylist cannot work on ${day} as the salon is closed.`);
-          setAdding(false);
-          return;
-        }
-
-        if (staffDay.isWorking && salonDay.isWorking) {
-          if (staffDay.start < salonDay.start || staffDay.end > salonDay.end) {
-            toast.error(`Stylist hours on ${day} exceed the salon's operational hours (${salonDay.start} - ${salonDay.end}).`);
-            setAdding(false);
-            return;
-          }
-        }
+      if (!validateStaffSchedule(data.schedule)) {
+        setAdding(false);
+        return;
       }
 
       const workingHoursPayload = buildStaffWorkingHoursPayload(
@@ -433,64 +336,6 @@ export default function DashboardStaff() {
       setLoading(false);
     }
   };
-
-  // --- IMAGE CROP HELPERS ---
-  function onSelectFile(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files && e.target.files.length > 0) {
-      setCrop(undefined); // Makes crop preview update between images
-      const reader = new FileReader();
-      reader.addEventListener('load', () => {
-        setImgSrc(reader.result?.toString() || '');
-        setIsCropModalOpen(true);
-      });
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  }
-
-  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
-    const { width, height } = e.currentTarget;
-    const crop = centerCrop(
-      makeAspectCrop({ unit: '%', width: 90 }, 1, width, height),
-      width,
-      height
-    );
-    setCrop(crop);
-  }
-
-  async function generateCroppedImage() {
-    if (!completedCrop || !imgRef.current) return;
-    
-    const canvas = document.createElement('canvas');
-    const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
-    const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-    
-    canvas.width = 250;
-    canvas.height = 250;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.imageSmoothingQuality = 'high';
-    
-    const cropX = completedCrop.x * scaleX;
-    const cropY = completedCrop.y * scaleY;
-    const cropWidth = completedCrop.width * scaleX;
-    const cropHeight = completedCrop.height * scaleY;
-
-    ctx.drawImage(
-      imgRef.current,
-      cropX, cropY, cropWidth, cropHeight,
-      0, 0, 250, 250
-    );
-
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      setAvatarBlob(blob);
-      setAvatarPreviewUrl(URL.createObjectURL(blob));
-      setIsCropModalOpen(false);
-    }, 'image/jpeg', 0.9);
-  }
-
-  // -------------------------;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 relative">
@@ -654,273 +499,20 @@ export default function DashboardStaff() {
         )}
       </div>
 
-      {/* POPUP MODAL DIALOG - ADD PROFESSIONAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-          <form 
-            onSubmit={handleAddStaffSubmit}
-            className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-4 space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden my-auto max-h-[85vh] overflow-y-auto"
-          >
-            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
-
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-black text-zinc-900">Add Professional</h2>
-                <p className="text-xs text-zinc-500 mt-1">Register a new professional with custom hours and service commissions.</p>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-zinc-400 hover:text-zinc-600 p-1.5 rounded-full hover:bg-zinc-100 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              
-              {/* Identity fields */}
-              <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Users className="w-4 h-4 text-brand" /> Personal Identity
-                </h3>
-                <div className="flex flex-col items-center gap-2 mb-2">
-                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                    <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                      {avatarPreviewUrl ? (
-                        <AvatarImage src={avatarPreviewUrl} className="object-cover" />
-                      ) : (
-                        <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newName || 'New')}`} />
-                      )}
-                      <AvatarFallback>SP</AvatarFallback>
-                    </Avatar>
-                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Upload className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={onSelectFile} />
-                  <p className="text-[10px] text-zinc-400 font-semibold uppercase">Click to upload photo</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Stylist Name *</label>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="e.g. Michael Scofield"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 col-span-2">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Email Address</label>
-                    <input 
-                      type="email"
-                      placeholder="michael@example.com"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Category</label>
-                    <select 
-                      value={newCategory}
-                      onChange={(e) => { setNewCategory(e.target.value); setNewRole(""); }}
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                      required
-                    >
-                      <option value="" disabled>Select Category (Optional Filter)</option>
-                      {Array.from(new Set(globalRoles.map(r => r.category || 'Other'))).map(c => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Role Name</label>
-                    <select 
-                      value={newRole}
-                      onChange={(e) => {
-                        const selectedRole = e.target.value;
-                        setNewRole(selectedRole);
-                        const foundCat = globalRoles.find(r => r.role_name === selectedRole)?.category;
-                        if (foundCat) setNewCategory(foundCat);
-                      }}
-                      className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm bg-white"
-                      required
-                    >
-                      <option value="" disabled>Select Role Name</option>
-                      {globalRoles
-                        .filter(r => !newCategory || (r.category || 'Other') === newCategory)
-                        .map(r => (
-                        <option key={r.id || r.role_name} value={r.role_name}>{r.role_name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Working attributes */}
-              <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Clock className="w-4 h-4 text-brand" /> Operational Scheduling & Rates
-                </h3>
-                
-                <div className="space-y-2">
-                  <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest block mb-2">7-Day Schedule</label>
-                  {Object.entries(newSchedule).map(([day, scheduleObj]: [string, any]) => (
-                    <div key={day} className="flex items-center gap-3 bg-white border border-slate-100 rounded-xl p-2 px-3">
-                      <div className="w-20">
-                        <span className="text-xs font-bold text-zinc-800 capitalize">{day}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setNewSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], isWorking: !prev[day as keyof typeof defaultSchedule].isWorking } }))}
-                        className={`h-8 w-14 px-0 text-[10px] font-bold rounded-lg border-none transition-colors ${scheduleObj.isWorking ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'}`}
-                      >
-                        {scheduleObj.isWorking ? 'IN' : 'OUT'}
-                      </Button>
-                      <div className="flex flex-1 items-center gap-2">
-                        <input 
-                          type="time" 
-                          disabled={!scheduleObj.isWorking}
-                          value={scheduleObj.start}
-                          onChange={(e) => setNewSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], start: e.target.value } }))}
-                          className="h-8 w-full px-2 rounded-lg border border-slate-200 text-xs focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
-                        />
-                        <span className="text-zinc-300 text-xs">-</span>
-                        <input 
-                          type="time" 
-                          disabled={!scheduleObj.isWorking}
-                          value={scheduleObj.end}
-                          onChange={(e) => setNewSchedule(prev => ({ ...prev, [day]: { ...prev[day as keyof typeof defaultSchedule], end: e.target.value } }))}
-                          className="h-8 w-full px-2 rounded-lg border border-slate-200 text-xs focus:border-zinc-900 focus:outline-none disabled:opacity-30 disabled:bg-slate-50 transition-all"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">General Buffer Time (mins)</label>
-                    <input 
-                      type="number"
-                      required
-                      placeholder="15"
-                      value={generalBufferTime}
-                      onChange={(e) => setGeneralBufferTime(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest">Base Commission Rate (%)</label>
-                    <input 
-                      type="number"
-                      required
-                      placeholder="10"
-                      value={newCommission}
-                      onChange={(e) => setNewCommission(e.target.value)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Certified services checklist */}
-              <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
-                <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                   <Tag className="w-4 h-4 text-brand" /> Certify Shop Services
-                </h3>
-
-                {salonServices.length === 0 ? (
-                  <p className="text-xs text-zinc-400 italic">No active services registered for this salon. Stylist will have access to all.</p>
-                ) : (
-                  <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
-                    {salonServices.map((service) => {
-                      const config = selectedServices[service.id] || { enabled: false, commission: "10", buffer: "15" };
-                      return (
-                        <div key={service.id} className="bg-white border border-slate-100 rounded-xl p-3 space-y-2 shadow-sm">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={config.enabled}
-                              onChange={(e) => handleServiceCheckboxChange(service.id, e.target.checked)}
-                              className="rounded border-zinc-300 text-brand focus:ring-brand"
-                            />
-                            <span className="text-xs font-bold text-zinc-800">{service.name}</span>
-                          </label>
-
-                          {config.enabled && (
-                            <div className="grid grid-cols-3 gap-3 pl-6 animate-in slide-in-from-top-1 duration-200">
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Service Comm Rate (%)</span>
-                                <input 
-                                  type="number"
-                                  placeholder={newCommission}
-                                  value={config.commission}
-                                  onChange={(e) => handleServiceCommissionChange(service.id, e.target.value)}
-                                  className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Buffer Time (mins)</span>
-                                <input 
-                                  type="number"
-                                  placeholder={generalBufferTime}
-                                  value={config.buffer}
-                                  onChange={(e) => handleServiceBufferChange(service.id, e.target.value)}
-                                  className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Service Time (mins)</span>
-                                <input 
-                                  type="number"
-                                  placeholder="30"
-                                  value={config.duration}
-                                  onChange={(e) => handleServiceDurationChange(service.id, e.target.value)}
-                                  className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setIsAddModalOpen(false)}
-                className="flex-1 rounded-xl h-11 font-bold text-xs border-zinc-200"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={adding}
-                className="flex-1 bg-brand hover:bg-brand-hover text-black rounded-xl h-11 font-bold text-xs shadow-md shadow-brand/10"
-              >
-                {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
-              </Button>
-            </div>
-          </form>
+          <AddProfessionalForm
+            key={`add-${staffFormServices.map((s) => s.salonServiceId).join(",")}`}
+            onCancel={() => setIsAddModalOpen(false)}
+            onSubmit={handleAddStaffFormSubmit}
+            globalRoles={globalRoles}
+            salonServices={staffFormServices}
+            adding={adding}
+            title="Add Professional"
+            submitLabel="Save Stylist"
+          />
         </div>
       )}
-
       {editingStaffMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
           <AddProfessionalForm
@@ -942,46 +534,6 @@ export default function DashboardStaff() {
             title="Edit Professional"
             submitLabel="Save Changes"
           />
-        </div>
-      )}
-      {/* IMAGE CROP MODAL */}
-      {isCropModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-lg text-zinc-900">Crop Profile Photo</h3>
-              <button onClick={() => setIsCropModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 bg-zinc-100 p-1.5 rounded-full">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="relative bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center min-h-[300px]">
-              {imgSrc ? (
-                <ReactCrop
-                  crop={crop}
-                  onChange={(_, percentCrop) => setCrop(percentCrop)}
-                  onComplete={(c) => setCompletedCrop(c)}
-                  aspect={1}
-                  circularCrop
-                >
-                  <img
-                    ref={imgRef}
-                    alt="Crop me"
-                    src={imgSrc}
-                    onLoad={onImageLoad}
-                    className="max-h-[60vh] w-auto object-contain"
-                  />
-                </ReactCrop>
-              ) : (
-                <Loader2 className="w-8 h-8 animate-spin text-white" />
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <Button onClick={() => setIsCropModalOpen(false)} variant="outline" className="flex-1 rounded-xl h-11 font-bold">Cancel</Button>
-              <Button onClick={generateCroppedImage} className="flex-1 rounded-xl h-11 font-bold bg-brand hover:bg-brand-hover text-black">Save Photo</Button>
-            </div>
-          </div>
         </div>
       )}
 

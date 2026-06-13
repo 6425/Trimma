@@ -18,7 +18,7 @@ import {
   updateSalonStaff,
   uploadSalonStaffAvatar,
 } from "@/app/actions/salon-operations";
-import { buildStaffWorkingHoursPayload } from "@/lib/salon-staff-insert";
+import { buildStaffWorkingHoursPayload, mapSalonServicesForStaffForm, parseStaffWorkingHours, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { LocationHierarchySelect } from "../../../components/locations/LocationHierarchySelect";
@@ -240,7 +240,9 @@ export default function SalonProfilePage() {
       // 4. Fetch Extra Agent Data
       const res = result as any;
       if (res.globalServices) setGlobalServices(res.globalServices);
-      if (res.globalStaffRoles) setGlobalStaffRoles(res.globalStaffRoles);
+      if (res.globalStaffRoles) {
+        setGlobalStaffRoles(resolveEffectiveStaffRoles(res.globalStaffRoles));
+      }
       
       if (res.services) {
         setExistingSalonServices(res.services);
@@ -255,7 +257,14 @@ export default function SalonProfilePage() {
         }
         setSelectedServices(svcMap);
       }
-      if (res.staff) setStaffToAdd(res.staff);
+      if (res.staff) {
+        setStaffToAdd(
+          res.staff.map((member: any) => ({
+            ...member,
+            working_hours: parseStaffWorkingHours(member.working_hours) || member.working_hours,
+          }))
+        );
+      }
 
     } catch (err: any) {
       toast.error("Failed to load salon settings: " + err.message);
@@ -463,32 +472,32 @@ export default function SalonProfilePage() {
     }
   };
 
-  const profileSalonServices =
-    existingSalonServices.length > 0
-      ? existingSalonServices.map((service) => {
-          const globalMatch = globalServices.find((g) => g.id === service.global_service_id);
-          return {
-            id: service.global_service_id || service.id,
-            salonServiceId: service.id,
-            global_service_id: service.global_service_id,
-            name: service.name || globalMatch?.name || "Service",
-            category: service.category || globalMatch?.category || "",
-            duration_min: service.duration_min,
-            duration: service.duration_min,
-          };
-        })
-      : Object.keys(selectedServices)
-          .filter((id) => selectedServices[id]?.enabled)
-          .map((id) => {
-            const gs = globalServices.find((g) => g.id === id);
-            return {
-              id,
-              name: gs?.name || "Service",
-              category: gs?.category || "",
-              duration_min: parseInt(selectedServices[id]?.duration || "30", 10),
-              duration: selectedServices[id]?.duration || "30",
-            };
-          });
+  const profileSalonServices = (() => {
+    const fromSalonTable = mapSalonServicesForStaffForm(existingSalonServices, globalServices);
+    if (fromSalonTable.length > 0) return fromSalonTable;
+    return Object.keys(selectedServices)
+      .filter((id) => selectedServices[id]?.enabled)
+      .map((id) => {
+        const gs = globalServices.find((g) => g.id === id);
+        return {
+          id,
+          salonServiceId: id,
+          global_service_id: id,
+          name: gs?.name || "Service",
+          category: gs?.category || selectedServices[id]?.category || "",
+          duration_min: parseInt(selectedServices[id]?.duration || "30", 10),
+          duration: selectedServices[id]?.duration || "30",
+        };
+      });
+  })();
+
+  const profileSalonServiceRows = existingSalonServices.map((service) => ({
+    id: service.id,
+    salonServiceId: service.id,
+    global_service_id: service.global_service_id,
+    name: service.name,
+    duration_min: service.duration_min,
+  }));
 
   const closeStaffModal = () => {
     setIsStaffModalOpen(false);
@@ -506,11 +515,14 @@ export default function SalonProfilePage() {
   };
 
   const handleStaffModalSubmit = async (staffData: any) => {
-    const salonServiceRows = existingSalonServices.map((service) => ({
-      id: service.id,
-      global_service_id: service.global_service_id,
-      duration_min: service.duration_min,
-    }));
+    const salonServiceRows = profileSalonServiceRows.length > 0
+      ? profileSalonServiceRows
+      : profileSalonServices.map((service) => ({
+          id: service.salonServiceId || service.id,
+          salonServiceId: service.salonServiceId || service.id,
+          global_service_id: service.global_service_id,
+          duration_min: service.duration_min,
+        }));
 
     if (staffData.id) {
       try {
@@ -1454,15 +1466,24 @@ export default function SalonProfilePage() {
             <AddProfessionalForm
               key={
                 editingStaffIndex !== null
-                  ? `edit-${staffToAdd[editingStaffIndex]?.id ?? editingStaffIndex}-${profileSalonServices.length}`
-                  : `add-${profileSalonServices.length}`
+                  ? `edit-${staffToAdd[editingStaffIndex]?.id ?? editingStaffIndex}-${profileSalonServices.map((s) => s.salonServiceId || s.id).join(",")}`
+                  : `add-${profileSalonServices.map((s) => s.salonServiceId || s.id).join(",")}`
               }
               onCancel={closeStaffModal}
               onSubmit={handleStaffModalSubmit}
               globalRoles={globalStaffRoles}
               salonServices={profileSalonServices}
               adding={savingStaff}
-              initialStaff={editingStaffIndex !== null ? staffToAdd[editingStaffIndex] : null}
+              initialStaff={
+                editingStaffIndex !== null
+                  ? {
+                      ...staffToAdd[editingStaffIndex],
+                      working_hours:
+                        parseStaffWorkingHours(staffToAdd[editingStaffIndex]?.working_hours) ||
+                        staffToAdd[editingStaffIndex]?.working_hours,
+                    }
+                  : null
+              }
               title={editingStaffIndex !== null ? "Edit Professional" : "Add Professional"}
               submitLabel={editingStaffIndex !== null ? "Save Changes" : "Add Professional"}
             />
