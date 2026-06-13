@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { Star, MapPin, CalendarDays, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,20 +31,29 @@ type SalonListRowProps = {
   salon: SalonListRowData;
 };
 
+const FALLBACK_SALON_IMAGE =
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
+
 export function SalonListRow({ salon }: SalonListRowProps) {
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = salon.isVerified !== false;
   const locationLabel = salon.location || salon.city;
+  const [imageSrc, setImageSrc] = useState(salon.image || FALLBACK_SALON_IMAGE);
 
   return (
     <article className="group flex flex-col md:flex-row gap-0 md:gap-4 bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 transition-all">
       <div className="relative w-full md:w-[280px] lg:w-[300px] shrink-0 aspect-[4/3] md:aspect-auto md:min-h-[200px] bg-slate-100">
         <Image
-          src={salon.image}
+          src={imageSrc}
           alt={salon.name}
           fill
           sizes="(max-width: 768px) 100vw, 300px"
           className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+          onError={() => {
+            if (imageSrc !== FALLBACK_SALON_IMAGE) {
+              setImageSrc(FALLBACK_SALON_IMAGE);
+            }
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/30 to-transparent pointer-events-none" />
         <SalonFavoriteButton

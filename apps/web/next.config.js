@@ -20,8 +20,6 @@ try {
 }
 
 /** @type {import('next').NextConfig} */
-const isDev = process.env.NODE_ENV !== "production";
-
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -45,8 +43,8 @@ const nextConfig = {
     ]
   },
   images: {
-    // Dev: skip _next/image proxy — Supabase image fetches were timing out at 60s and blocking pages.
-    unoptimized: isDev,
+    // Skip _next/image proxy — Supabase and other remote images were timing out in production.
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
       { protocol: 'http', hostname: '**' }

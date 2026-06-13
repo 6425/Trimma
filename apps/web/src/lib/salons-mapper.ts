@@ -31,7 +31,8 @@ export function mapSalonRowToUI(s: any, idx: number) {
     "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop",
   ];
 
-  const image = s.cover_url || s.hero_url || fallbackImages[idx % fallbackImages.length];
+  const cover = (s.cover_url || s.hero_url || "").trim();
+  const image = cover || fallbackImages[idx % fallbackImages.length];
 
   return {
     id: s.id,

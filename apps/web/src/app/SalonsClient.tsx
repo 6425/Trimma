@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
@@ -40,26 +40,47 @@ interface Category {
   icon: string;
 }
 
+type InitialSearch = {
+  q: string;
+  l: string;
+  category: string;
+};
+
 interface Props {
-  salons: Salon[];
   categories: Category[];
+  initialSearch: InitialSearch;
 }
 
 type SortOption = "recommended" | "rating" | "price_low" | "price_high";
 
-export default function SalonsClient({ categories }: Props) {
-  const router = useRouter();
+function SearchParamsSync({
+  onChange,
+}: {
+  onChange: (next: InitialSearch) => void;
+}) {
   const searchParams = useSearchParams();
-  const qParam = searchParams?.get("q") || "";
-  const lParam = searchParams?.get("l") || "";
-  const categoryParam = searchParams?.get("category") || "";
 
-  const [searchQuery, setSearchQuery] = useState(qParam);
-  const [selectedLocation, setSelectedLocation] = useState(lParam);
+  useEffect(() => {
+    onChange({
+      q: searchParams.get("q") || "",
+      l: searchParams.get("l") || "",
+      category: searchParams.get("category") || "",
+    });
+  }, [searchParams, onChange]);
+
+  return null;
+}
+
+export default function SalonsClient({ categories, initialSearch }: Props) {
+  const router = useRouter();
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch.q);
+  const [selectedLocation, setSelectedLocation] = useState(initialSearch.l);
+  const [urlCategory, setUrlCategory] = useState(initialSearch.category);
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [filters, setFilters] = useState<SalonFilters>(() => ({
     ...defaultSalonFilters,
-    selectedCategories: categoryParam ? [categoryParam] : [],
+    selectedCategories: initialSearch.category ? [initialSearch.category] : [],
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -77,7 +98,7 @@ export default function SalonsClient({ categories }: Props) {
         const params = new URLSearchParams({
           q: searchQuery,
           location: selectedLocation,
-          category: categoryParam,
+          category: urlCategory,
           limit: LIMIT.toString(),
           offset: offset.toString(),
           sort: sortBy === "price_low" || sortBy === "price_high" ? "recommended" : sortBy,
@@ -106,20 +127,8 @@ export default function SalonsClient({ categories }: Props) {
         setIsLoading(false);
       }
     },
-    [searchQuery, selectedLocation, categoryParam, page, sortBy, filters.minRating, filters.verifiedOnly]
+    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly]
   );
-
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      setSearchQuery(qParam);
-      setSelectedLocation(lParam);
-      setFilters((prev) => ({
-        ...prev,
-        selectedCategories: categoryParam ? [categoryParam] : [],
-      }));
-      setPage(0);
-    });
-  }, [qParam, lParam, categoryParam]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -131,7 +140,7 @@ export default function SalonsClient({ categories }: Props) {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (selectedLocation) params.set("l", selectedLocation);
-    if (categoryParam) params.set("category", categoryParam);
+    if (urlCategory) params.set("category", urlCategory);
     setPage(0);
     router.push(`/?${params.toString()}`);
   };
@@ -202,17 +211,32 @@ export default function SalonsClient({ categories }: Props) {
     setPage(0);
   };
 
+  const syncFromUrl = useCallback((next: InitialSearch) => {
+    setSearchQuery(next.q);
+    setSelectedLocation(next.l);
+    setUrlCategory(next.category);
+    setFilters((prev) => ({
+      ...prev,
+      selectedCategories: next.category ? [next.category] : [],
+    }));
+    setPage(0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <Suspense fallback={null}>
+        <SearchParamsSync onChange={syncFromUrl} />
+      </Suspense>
+
       {/* HERO — unchanged search bar */}
       <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-10 md:py-14">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop"
             alt="Salons Background"
-            className="w-full h-full object-cover opacity-15 grayscale"
+            className="w-full h-full object-cover opacity-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/55 to-zinc-950/25" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
