@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Building2,
+  CalendarDays,
   Globe,
   Heart,
   Mail,
