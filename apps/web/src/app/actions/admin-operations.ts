@@ -16,6 +16,7 @@ import {
   saveSubscriptionCommissionMaster,
 } from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
+import { getStripeConnectionStatus } from "@/lib/stripe-env";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 const BRANDING_SETTINGS_ID = "00000000-0000-0000-0000-000000000002";
@@ -173,21 +174,42 @@ export async function saveGlobalPaymentSettings(input: Record<string, unknown>) 
   return { success: true as const };
 }
 
+
+export async function fetchStripeConnectionStatus() {
+  return { success: true as const, connection: getStripeConnectionStatus() };
+}
+
+export async function saveStripePaymentSettings(input: {
+  stripe_enabled: boolean;
+  stripe_environment: "sandbox" | "live";
+}) {
+  const result = await withAdminDb(async (supabase) => {
+    const { error } = await supabase.from("global_payment_settings").upsert({
+      id: PAYMENT_SETTINGS_ID,
+      updated_at: new Date().toISOString(),
+      stripe_enabled: input.stripe_enabled,
+      stripe_environment: input.stripe_environment,
+    });
+    if (error) throw new Error(error.message);
+  });
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const };
+}
+
 export async function simulateAdminTestPayment() {
   const result = await withAdminDb(async (supabase) => {
     const { data: booking } = await supabase.from("bookings").select("id, salon_id, amount").limit(1).maybeSingle();
     if (!booking) throw new Error("No bookings found to simulate a payment.");
 
-    const isPayPal = Math.random() > 0.5;
     const { error } = await supabase.from("payments").insert({
       booking_id: booking.id,
       salon_id: booking.salon_id,
-      provider: isPayPal ? "paypal" : "payhere",
+      provider: "stripe",
       provider_payment_id: "SIM-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
       amount: booking.amount,
       currency: "LKR",
       status: "success",
-      raw_response: { note: "Generated via payments configuration simulator console" },
+      raw_response: { note: "Generated via Stripe payments simulator console" },
     });
     if (error) throw new Error(error.message);
   });

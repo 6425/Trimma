@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { getStripeEnvKeys } from "@/lib/stripe-env";
 
 export type StripeGatewaySettings = {
   enabled: boolean;
@@ -9,21 +10,17 @@ export type StripeGatewaySettings = {
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 
-export async function loadStripeGatewaySettings(): Promise<StripeGatewaySettings> {
-  const defaults: StripeGatewaySettings = {
-    enabled: true,
-    environment: "sandbox",
-    publishableKey: null,
-    secretKey: null,
-  };
+async function loadStripeRuntimeFlags(): Promise<{
+  enabled: boolean;
+  environment: "sandbox" | "live";
+}> {
+  const defaults = { enabled: true, environment: "sandbox" as const };
 
   try {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from("global_payment_settings")
-      .select(
-        "stripe_enabled, stripe_environment, stripe_publishable_key_sandbox, stripe_publishable_key_live, stripe_secret_key_sandbox, stripe_secret_key_live"
-      )
+      .select("stripe_enabled, stripe_environment")
       .eq("id", PAYMENT_SETTINGS_ID)
       .maybeSingle();
 
@@ -39,25 +36,26 @@ export async function loadStripeGatewaySettings(): Promise<StripeGatewaySettings
 
     if (!data) return defaults;
 
-    const environment =
-      data.stripe_environment === "live" ? "live" : "sandbox";
-
     return {
       enabled: data.stripe_enabled !== false,
-      environment,
-      publishableKey:
-        environment === "live"
-          ? data.stripe_publishable_key_live || data.stripe_publishable_key_sandbox || null
-          : data.stripe_publishable_key_sandbox || null,
-      secretKey:
-        environment === "live"
-          ? data.stripe_secret_key_live || data.stripe_secret_key_sandbox || null
-          : data.stripe_secret_key_sandbox || null,
+      environment: data.stripe_environment === "live" ? "live" : "sandbox",
     };
   } catch (err) {
-    console.warn("[loadStripeGatewaySettings]", err);
+    console.warn("[loadStripeRuntimeFlags]", err);
     return defaults;
   }
+}
+
+export async function loadStripeGatewaySettings(): Promise<StripeGatewaySettings> {
+  const flags = await loadStripeRuntimeFlags();
+  const keys = getStripeEnvKeys(flags.environment);
+
+  return {
+    enabled: flags.enabled,
+    environment: flags.environment,
+    publishableKey: keys.publishableKey,
+    secretKey: keys.secretKey,
+  };
 }
 
 export function toStripeAmountLkr(amount: number): number {
