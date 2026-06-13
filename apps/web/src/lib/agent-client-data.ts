@@ -387,7 +387,8 @@ export async function getAgentMapDataClient() {
 export async function searchBusinessesInTerritoriesClient(
   categories: string[],
   territoryIds: string[],
-  limit: number = 0
+  limit: number = 0,
+  businessName?: string
 ) {
   const auth = await requireAgentEmailClient();
   if (auth.success === false) return { success: false as const, error: auth.error };
@@ -422,6 +423,11 @@ export async function searchBusinessesInTerritoriesClient(
   if (categories.length > 0 && !categories.includes("All Categories")) {
     const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
     query = query.or(orClauses);
+  }
+
+  const trimmedName = businessName?.trim();
+  if (trimmedName) {
+    query = query.ilike("name", `%${trimmedName}%`);
   }
 
   if (terrNames.length === 0) {

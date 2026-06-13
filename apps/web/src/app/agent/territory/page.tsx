@@ -40,7 +40,8 @@ function TerritoryExplorerContent() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedTerritoryId, setSelectedTerritoryId] = useState<string>("all");
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
-  const [resultLimit, setResultLimit] = useState<number>(50);
+  const [businessNameSearch, setBusinessNameSearch] = useState("");
+  const [resultLimit, setResultLimit] = useState<number>(12);
 
   const loadInitialData = useCallback(async () => {
     try {
@@ -51,6 +52,7 @@ function TerritoryExplorerContent() {
       const cachedCategory = sessionStorage.getItem("trimma_territory_category");
       const cachedTerritory = sessionStorage.getItem("trimma_territory_id");
       const cachedLimit = sessionStorage.getItem("trimma_territory_limit");
+      const cachedBusinessName = sessionStorage.getItem("trimma_territory_business_name");
       
       if (cachedBusinesses) {
         setBusinesses(JSON.parse(cachedBusinesses));
@@ -62,7 +64,11 @@ function TerritoryExplorerContent() {
         setSelectedTerritoryId(cachedTerritory);
       }
       if (cachedLimit) {
-        setResultLimit(Number(cachedLimit) || 0);
+        const parsed = Number(cachedLimit) || 12;
+        setResultLimit(parsed >= 1 && parsed <= 12 ? parsed : 12);
+      }
+      if (cachedBusinessName) {
+        setBusinessNameSearch(cachedBusinessName);
       }
 
       const res = await tryAgentData(getAgentMapData, getAgentMapDataClient, {
@@ -108,8 +114,8 @@ function TerritoryExplorerContent() {
       const terrIds = selectedTerritoryId === "all" ? territories.map(t => t.id) : [selectedTerritoryId];
       const catsToSearch = (selectedCategory && selectedCategory !== "all") ? [selectedCategory] : categories;
       const res = await tryAgentData(
-        () => searchBusinessesInTerritories(catsToSearch, terrIds, resultLimit),
-        () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds, resultLimit),
+        () => searchBusinessesInTerritories(catsToSearch, terrIds, resultLimit, businessNameSearch),
+        () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds, resultLimit, businessNameSearch),
         { clientFirst: false }
       );
       
@@ -120,6 +126,7 @@ function TerritoryExplorerContent() {
       sessionStorage.setItem("trimma_territory_category", selectedCategory);
       sessionStorage.setItem("trimma_territory_id", selectedTerritoryId);
       sessionStorage.setItem("trimma_territory_limit", String(resultLimit));
+      sessionStorage.setItem("trimma_territory_business_name", businessNameSearch);
       
       toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
     } catch (err: any) {
@@ -206,7 +213,7 @@ function TerritoryExplorerContent() {
 
       {/* FILTER PANEL */}
       <Card className="p-5 border border-slate-200 shadow-sm rounded-2xl bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 items-end">
           
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-1.5">
@@ -239,6 +246,19 @@ function TerritoryExplorerContent() {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" /> Business Name
+            </label>
+            <input
+              type="text"
+              value={businessNameSearch}
+              onChange={(e) => setBusinessNameSearch(e.target.value)}
+              placeholder="Search a specific business…"
+              className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 placeholder:text-zinc-400 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider flex items-center gap-1.5">
               <ListOrdered className="w-3.5 h-3.5" /> Results to Show
             </label>
             <select
@@ -246,19 +266,18 @@ function TerritoryExplorerContent() {
               onChange={(e) => setResultLimit(Number(e.target.value))}
               className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
             >
-              <option value={10}>10 results</option>
-              <option value={25}>25 results</option>
-              <option value={50}>50 results</option>
-              <option value={100}>100 results</option>
-              <option value={250}>250 results</option>
-              <option value={0}>All results</option>
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n} {n === 1 ? "result" : "results"}
+                </option>
+              ))}
             </select>
           </div>
 
           <Button 
             onClick={handleSearch}
             disabled={searching || territories.length === 0}
-            className="w-full h-11 rounded-xl bg-[#FFC107] hover:bg-[#FFC107]/90 text-zinc-900 font-extrabold shadow-none transition-all gap-2"
+            className="w-full h-11 rounded-xl bg-[#FFC107] hover:bg-[#FFC107]/90 text-zinc-900 font-extrabold shadow-none transition-all gap-2 xl:col-span-2"
           >
             {searching ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             Search Businesses

@@ -38,7 +38,8 @@ export async function getAgentMapData() {
 export async function searchBusinessesInTerritories(
   categories: string[],
   territoryIds: string[],
-  limit: number = 0
+  limit: number = 0,
+  businessName?: string
 ) {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -87,12 +88,17 @@ export async function searchBusinessesInTerritories(
     query = query.or(orClauses);
   }
 
+  const trimmedName = businessName?.trim();
+  if (trimmedName) {
+    query = query.ilike("name", `%${trimmedName}%`);
+  }
+
   const { data: dbData, error } = await query;
   if (error) {
     return { success: false as const, error: error.message };
   }
 
-  const businesses: any[] = dbData || [];
+  let businesses: any[] = dbData || [];
 
   // Search Google Places API if a specific category is selected
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -170,6 +176,11 @@ export async function searchBusinessesInTerritories(
         businesses.push(gb);
       }
     }
+  }
+
+  if (trimmedName) {
+    const lower = trimmedName.toLowerCase();
+    businesses = businesses.filter((b) => b.name?.toLowerCase().includes(lower));
   }
 
   return {
