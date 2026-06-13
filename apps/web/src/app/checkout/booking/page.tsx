@@ -40,16 +40,17 @@ function getErrorMessage(error: unknown): string {
 
 function BookingCheckoutForm() {
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
   const [checkoutData, setCheckoutData] = useState<LoadedBookingCheckout | null>(null);
   const [missingDraft, setMissingDraft] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [salonBackSlug, setSalonBackSlug] = useState<string | null>(null);
   const [stripeEnabled, setStripeEnabled] = useState(true);
   const [stripeEnvironment, setStripeEnvironment] = useState("sandbox");
-  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
+  const [stripePendingId, setStripePendingId] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -156,61 +157,98 @@ function BookingCheckoutForm() {
     );
   }, [checkoutData]);
 
-  const handleContinueToStripe = async () => {
-    if (!checkoutData) return;
+  const buildStripeSessionBody = (
+    data: LoadedBookingCheckout,
+    customer: typeof customerDetails
+  ) => {
+    const { draft, salon, services, staffMember, reservationFee, serviceTotal, rates } = data;
+    return {
+      draft: {
+        salonId: draft.salonId,
+        serviceIds: draft.serviceIds,
+        staffId: draft.staffId,
+        bookingDate: draft.bookingDate,
+        timeSlot: draft.timeSlot,
+        promotionPackageId: draft.promotionPackageId,
+        promotionPackageName: draft.promotionPackageName,
+        promotionPackagePrice: draft.promotionPackagePrice,
+        promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
+      },
+      customer,
+      reservationFee,
+      serviceTotal,
+      rates,
+      salon: {
+        id: salon.id,
+        onboarding_agent_email: salon.onboarding_agent_email,
+        assign_to: salon.assign_to,
+      },
+      services,
+      staffMemberId: staffMember?.id || null,
+      totalDuration,
+    };
+  };
 
-    setProcessing(true);
+  useEffect(() => {
+    if (!checkoutData || !stripeEnabled) return;
 
-    try {
-      const { draft, salon, services, staffMember, reservationFee, serviceTotal, rates } =
-        checkoutData;
+    let cancelled = false;
 
-      const response = await fetch("/api/checkout/stripe/booking-session", {
+    void Promise.resolve().then(async () => {
+      setStripeLoading(true);
+      setStripeError(null);
+
+      try {
+        const response = await fetch("/api/checkout/stripe/booking-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildStripeSessionBody(checkoutData, customerDetails)),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to start Stripe checkout.");
+        }
+
+        if (cancelled) return;
+
+        setStripeClientSecret(result.clientSecret);
+        setStripePublishableKey(result.publishableKey);
+        setStripePendingId(result.pendingId || null);
+        setStripeEnvironment(result.environment || stripeEnvironment);
+      } catch (error) {
+        if (!cancelled) {
+          setStripeError(getErrorMessage(error) || "Could not load Stripe checkout.");
+        }
+      } finally {
+        if (!cancelled) setStripeLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutData, stripeEnabled]);
+
+  useEffect(() => {
+    if (!stripePendingId || !checkoutData) return;
+
+    const timer = window.setTimeout(() => {
+      void fetch("/api/checkout/stripe/update-pending", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          draft: {
-            salonId: draft.salonId,
-            serviceIds: draft.serviceIds,
-            staffId: draft.staffId,
-            bookingDate: draft.bookingDate,
-            timeSlot: draft.timeSlot,
-            promotionPackageId: draft.promotionPackageId,
-            promotionPackageName: draft.promotionPackageName,
-            promotionPackagePrice: draft.promotionPackagePrice,
-            promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
-          },
-          customer: customerDetails,
-          reservationFee,
-          serviceTotal,
-          rates,
-          salon: {
-            id: salon.id,
-            onboarding_agent_email: salon.onboarding_agent_email,
-            assign_to: salon.assign_to,
-          },
-          services,
-          staffMemberId: staffMember?.id || null,
-          totalDuration,
+          pendingId: stripePendingId,
+          ...buildStripeSessionBody(checkoutData, customerDetails),
         }),
+      }).catch((error) => {
+        console.warn("Failed to sync checkout customer details:", error);
       });
+    }, 400);
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to start Stripe checkout.");
-      }
-
-      setStripeClientSecret(result.clientSecret);
-      setStripePublishableKey(result.publishableKey);
-      setStripeEnvironment(result.environment || stripeEnvironment);
-      setShowStripeCheckout(true);
-    } catch (error) {
-      console.error("Stripe session failed:", getErrorMessage(error), error);
-      alert(getErrorMessage(error) || "Could not start Stripe checkout.");
-    } finally {
-      setProcessing(false);
-    }
-  };
+    return () => window.clearTimeout(timer);
+  }, [customerDetails, stripePendingId, checkoutData, totalDuration]);
 
   if (loading) {
     return (
@@ -350,14 +388,12 @@ function BookingCheckoutForm() {
             <StripeCheckoutCustomerForm
               customerDetails={customerDetails}
               setCustomerDetails={setCustomerDetails}
-              processing={processing}
+              stripeLoading={stripeLoading}
+              stripeError={stripeError}
               stripeEnabled={stripeEnabled}
               stripeEnvironment={stripeEnvironment}
-              submitLabel={`Continue to pay ${RESERVATION_DEPOSIT_PERCENT}% deposit — ${formattedReservationFee}`}
-              onContinue={handleContinueToStripe}
               stripeClientSecret={stripeClientSecret}
               stripePublishableKey={stripePublishableKey}
-              showStripeCheckout={showStripeCheckout}
             />
           </div>
         </div>

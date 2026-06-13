@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { customer, chargeAmount, planName, billingCycle } = body;
 
-    if (!customer?.email || !planName || !chargeAmount) {
+    if (!planName || !chargeAmount) {
       return NextResponse.json({ error: "Incomplete subscription checkout details." }, { status: 400 });
     }
 
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       checkoutType: "subscription",
       amount: Number(chargeAmount),
       description: `Trimma ${planName} plan (${billingCycle})`,
-      customerEmail: customer.email,
+      customerEmail: customer?.email || "",
       returnPath: "/checkout/subscription/success",
       payload: {
         planName,

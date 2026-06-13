@@ -34,14 +34,15 @@ function SubscriptionCheckoutForm() {
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState(false);
   const [planDetails, setPlanDetails] = useState<any>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(cycleParam);
   const [stripeEnabled, setStripeEnabled] = useState(true);
   const [stripeEnvironment, setStripeEnvironment] = useState("sandbox");
-  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
+  const [stripePendingId, setStripePendingId] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -102,39 +103,72 @@ function SubscriptionCheckoutForm() {
   const listMonthly = planDetails ? getListMonthlyPrice(planDetails) : 0;
   const introMonthly = planDetails ? getIntroMonthlyPrice(planDetails) : 0;
 
-  const handleContinueToStripe = async () => {
-    if (!stripeEnabled || !planDetails) return;
+  useEffect(() => {
+    if (!planDetails || !stripeEnabled || chargeAmount <= 0) return;
 
-    setProcessing(true);
+    let cancelled = false;
 
-    try {
-      const response = await fetch("/api/checkout/stripe/subscription-session", {
+    void Promise.resolve().then(async () => {
+      setStripeLoading(true);
+      setStripeError(null);
+
+      try {
+        const response = await fetch("/api/checkout/stripe/subscription-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            planName: planDetails.name,
+            billingCycle,
+            chargeAmount,
+            customer: customerDetails,
+          }),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to start Stripe checkout.");
+        }
+
+        if (cancelled) return;
+
+        setStripeClientSecret(result.clientSecret);
+        setStripePublishableKey(result.publishableKey);
+        setStripePendingId(result.pendingId || null);
+        setStripeEnvironment(result.environment || stripeEnvironment);
+      } catch (error) {
+        if (!cancelled) {
+          setStripeError(error instanceof Error ? error.message : "Could not load Stripe checkout.");
+        }
+      } finally {
+        if (!cancelled) setStripeLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planDetails, stripeEnabled, billingCycle, chargeAmount]);
+
+  useEffect(() => {
+    if (!stripePendingId || !planDetails) return;
+
+    const timer = window.setTimeout(() => {
+      void fetch("/api/checkout/stripe/update-pending", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          pendingId: stripePendingId,
           planName: planDetails.name,
           billingCycle,
           chargeAmount,
           customer: customerDetails,
         }),
-      });
+      }).catch(console.warn);
+    }, 400);
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to start Stripe checkout.");
-      }
-
-      setStripeClientSecret(result.clientSecret);
-      setStripePublishableKey(result.publishableKey);
-      setStripeEnvironment(result.environment || stripeEnvironment);
-      setShowStripeCheckout(true);
-    } catch (error) {
-      console.error("Subscription Stripe session failed:", error);
-      alert(error instanceof Error ? error.message : "Could not start Stripe checkout.");
-    } finally {
-      setProcessing(false);
-    }
-  };
+    return () => window.clearTimeout(timer);
+  }, [customerDetails, stripePendingId, planDetails, billingCycle, chargeAmount]);
 
   if (loading) {
     return (
@@ -306,14 +340,12 @@ function SubscriptionCheckoutForm() {
             <StripeCheckoutCustomerForm
               customerDetails={customerDetails}
               setCustomerDetails={setCustomerDetails}
-              processing={processing}
+              stripeLoading={stripeLoading}
+              stripeError={stripeError}
               stripeEnabled={stripeEnabled}
               stripeEnvironment={stripeEnvironment}
-              submitLabel={`Continue to subscribe — ${formattedAmount}`}
-              onContinue={handleContinueToStripe}
               stripeClientSecret={stripeClientSecret}
               stripePublishableKey={stripePublishableKey}
-              showStripeCheckout={showStripeCheckout}
             />
           </div>
         </div>

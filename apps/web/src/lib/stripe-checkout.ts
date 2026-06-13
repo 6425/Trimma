@@ -51,7 +51,7 @@ export async function createStripeEmbeddedSession(input: {
   const session = await stripe.checkout.sessions.create({
     ui_mode: "embedded",
     mode: "payment",
-    customer_email: input.customerEmail,
+    ...(input.customerEmail ? { customer_email: input.customerEmail } : {}),
     line_items: [
       {
         quantity: 1,
@@ -85,8 +85,37 @@ export async function createStripeEmbeddedSession(input: {
     clientSecret: session.client_secret,
     publishableKey: settings.publishableKey,
     sessionId: session.id,
+    pendingId: pending.id,
     environment: settings.environment,
   };
+}
+
+export async function updateStripePendingPayload(
+  pendingId: string,
+  payload: Record<string, unknown>
+) {
+  const supabase = createSupabaseAdminClient();
+  const { data: existing, error: readError } = await supabase
+    .from("stripe_checkout_pending")
+    .select("payload, status")
+    .eq("id", pendingId)
+    .maybeSingle();
+
+  if (readError) throw new Error(readError.message);
+  if (!existing) throw new Error("Checkout session not found.");
+  if (existing.status !== "pending") return;
+
+  const mergedPayload = {
+    ...((existing.payload as Record<string, unknown> | null) || {}),
+    ...payload,
+  };
+
+  const { error } = await supabase
+    .from("stripe_checkout_pending")
+    .update({ payload: mergedPayload })
+    .eq("id", pendingId);
+
+  if (error) throw new Error(error.message);
 }
 
 export async function loadStripePendingCheckout(sessionId: string) {
