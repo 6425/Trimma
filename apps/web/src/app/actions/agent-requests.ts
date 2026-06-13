@@ -2,7 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
-import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
 export type AgentRequestRow = {
   id: string;
@@ -67,6 +67,8 @@ export async function updateAdminAgentRequest(input: {
     const auth = await requirePlatformAdminFromCookies();
     if ("error" in auth) throw new Error(auth.error);
 
+    const reviewedBy = await getAdminActorEmail();
+
     const payload: Record<string, unknown> = {
       first_name: input.first_name.trim(),
       last_name: input.last_name.trim(),
@@ -83,7 +85,7 @@ export async function updateAdminAgentRequest(input: {
       assigned_regional_head_id: input.assigned_regional_head_id || null,
       commission_rate: input.commission_rate,
       sub_agent_split_percent: input.sub_agent_split_percent ?? 50,
-      reviewed_by: auth.email,
+      reviewed_by: reviewedBy,
       reviewed_at: new Date().toISOString(),
     };
 
@@ -224,6 +226,8 @@ export async function provisionAgentFromRequest(input: {
     { onConflict: "user_id,role" }
   );
 
+  const reviewedBy = await getAdminActorEmail();
+
   const { error: requestUpdateError } = await supabase
     .from("agent_requests")
     .update({
@@ -233,7 +237,7 @@ export async function provisionAgentFromRequest(input: {
       assigned_regional_head_id: input.assigned_regional_head_id,
       commission_rate: input.commission_rate,
       sub_agent_split_percent: input.sub_agent_split_percent ?? 50,
-      reviewed_by: auth.email,
+      reviewed_by: reviewedBy,
       reviewed_at: new Date().toISOString(),
     })
     .eq("id", input.id);
