@@ -17,6 +17,8 @@ import {
   deleteAdminSalonService,
   deleteAdminSalonStaff,
   updateAdminSalonStaff,
+  fetchAdminSalonServicePickerData,
+  importAdminSalonServices,
   bulkInsertAdminSalons,
   deleteAdminSalon,
   uploadAdminSalonImage,
@@ -99,6 +101,10 @@ export default function Leads() {
   // Modal Tables State
   const [modalServices, setModalServices] = useState<any[]>([]);
   const [modalStaff, setModalStaff] = useState<any[]>([]);
+  const [servicePickerData, setServicePickerData] = useState<any>(null);
+  const [servicePickerCategory, setServicePickerCategory] = useState("");
+  const [selectedImportServices, setSelectedImportServices] = useState<Record<string, boolean>>({});
+  const [importingServices, setImportingServices] = useState(false);
 
   // Onboarding Pipeline Modal States
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -245,12 +251,57 @@ export default function Leads() {
 
   const fetchModalExtras = async (id: string) => {
     try {
-      const result = await fetchSalonServicesAndStaff(id);
+      const [result, pickerResult] = await Promise.all([
+        fetchSalonServicesAndStaff(id),
+        fetchAdminSalonServicePickerData(id),
+      ]);
       if (result.success === false) throw new Error(result.error);
       setModalServices(result.services || []);
       setModalStaff(result.staff || []);
+
+      if (pickerResult.success) {
+        setServicePickerData(pickerResult);
+        setServicePickerCategory("");
+        setSelectedImportServices({});
+      } else {
+        setServicePickerData(null);
+      }
     } catch (err) {
       console.error("Failed to fetch modal extras", err);
+    }
+  };
+
+  const handleImportModalServices = async () => {
+    if (!formData.id || !servicePickerData) return;
+    try {
+      setImportingServices(true);
+      const selected = servicePickerData.services.filter(
+        (svc: any) => selectedImportServices[svc.id]
+      );
+      if (selected.length === 0) {
+        toast.error("Select at least one service to import.");
+        return;
+      }
+
+      const result = await importAdminSalonServices(
+        formData.id,
+        selected.map((svc: any) => ({
+          global_service_id: svc.id,
+          name: svc.name,
+          category: svc.category || "Other",
+          price: Number(svc.default_price) || 0,
+          duration_min: Number(svc.default_duration) || 30,
+          image_url: svc.icon_image_url || null,
+        }))
+      );
+
+      if (result.success === false) throw new Error(result.error);
+      await fetchModalExtras(formData.id);
+      toast.success(`Imported ${result.inserted} service(s).`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to import services.");
+    } finally {
+      setImportingServices(false);
     }
   };
 
@@ -1096,6 +1147,24 @@ export default function Leads() {
         globalRoles={globalRoles}
         handleSaveModalStaff={handleSaveModalStaff}
         handleEditModalStaff={handleEditModalStaff}
+        servicePicker={
+          servicePickerData
+            ? {
+                allowedCategories: servicePickerData.allowedCategories || [],
+                maxServices: servicePickerData.maxServices || 6,
+                planName: servicePickerData.planName || "Free",
+                globalServices: servicePickerData.services || [],
+                existingGlobalServiceIds: servicePickerData.existingGlobalServiceIds || [],
+                selectedCategory: servicePickerCategory,
+                onCategoryChange: setServicePickerCategory,
+                selectedServiceIds: selectedImportServices,
+                onToggleService: (serviceId, enabled) =>
+                  setSelectedImportServices((prev) => ({ ...prev, [serviceId]: enabled })),
+                onImport: handleImportModalServices,
+                importing: importingServices,
+              }
+            : null
+        }
       />
 
       {/* REJECT SALON MODAL */}

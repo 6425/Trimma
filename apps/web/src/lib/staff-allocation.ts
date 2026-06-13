@@ -54,15 +54,18 @@ export function salonHasActiveStaff(staff: SalonStaffForAllocation[]): boolean {
 }
 
 /** Only active services with at least one mapped active staff member are bookable. */
-export function filterServicesWithStaffCoverage<T extends { id: string; status?: string | null }>(
-  services: T[],
-  staff: SalonStaffForAllocation[]
-): T[] {
-  const covered = getServiceIdsCoveredByStaff(staff);
-  return services.filter(
-    (service) =>
-      (service.status || "active").toLowerCase() === "active" && covered.has(service.id)
-  );
+export function filterServicesWithStaffCoverage<
+  T extends { id: string; global_service_id?: string | null; status?: string | null }
+>(services: T[], staff: SalonStaffForAllocation[]): T[] {
+  const coveredStaffIds = getServiceIdsCoveredByStaff(staff);
+  return services.filter((service) => {
+    if ((service.status || "active").toLowerCase() !== "active") return false;
+    if (coveredStaffIds.has(service.id)) return true;
+    if (service.global_service_id && coveredStaffIds.has(service.global_service_id)) {
+      return true;
+    }
+    return false;
+  });
 }
 
 export type BookingForAllocation = {

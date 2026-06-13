@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
 import { WorkingHoursEditor } from "./WorkingHoursEditor";
+import { AdminSalonServiceImporter } from "./AdminSalonServiceImporter";
 import { Image as ImageIcon } from "lucide-react";
 
 interface LeadEditorModalProps {
@@ -31,6 +32,25 @@ interface LeadEditorModalProps {
   globalRoles: any[];
   handleSaveModalStaff: () => void;
   handleEditModalStaff: (staff: any) => void;
+  servicePicker?: {
+    allowedCategories: Array<{ id: string; name: string }>;
+    maxServices: number;
+    planName: string;
+    globalServices: Array<{
+      id: string;
+      name: string;
+      category: string | null;
+      default_price: number;
+      default_duration: number;
+    }>;
+    existingGlobalServiceIds: string[];
+    selectedCategory: string;
+    onCategoryChange: (category: string) => void;
+    selectedServiceIds: Record<string, boolean>;
+    onToggleService: (serviceId: string, enabled: boolean) => void;
+    onImport: () => Promise<void>;
+    importing: boolean;
+  } | null;
 }
 
 export function LeadEditorModal({
@@ -38,7 +58,7 @@ export function LeadEditorModal({
   handleModalImageUpload, discoveryCategories, agents,
   modalServices, modalStaff, handleDeleteModalService, handleDeleteModalStaff,
   editingStaffId, setEditingStaffId, staffEditData, setStaffEditData,
-  globalRoles, handleSaveModalStaff, handleEditModalStaff
+  globalRoles, handleSaveModalStaff, handleEditModalStaff, servicePicker
 }: LeadEditorModalProps) {
   
   if (!isOpen || !selectedLead) return null;
@@ -289,6 +309,24 @@ export function LeadEditorModal({
                   <Scissors className="w-5 h-5 text-brand" />
                   Provisioned Services Library
                 </h3>
+
+                {servicePicker ? (
+                  <AdminSalonServiceImporter
+                    allowedCategories={servicePicker.allowedCategories}
+                    maxServices={servicePicker.maxServices}
+                    planName={servicePicker.planName}
+                    globalServices={servicePicker.globalServices}
+                    existingGlobalServiceIds={servicePicker.existingGlobalServiceIds}
+                    selectedCategory={servicePicker.selectedCategory}
+                    onCategoryChange={servicePicker.onCategoryChange}
+                    selectedServiceIds={servicePicker.selectedServiceIds}
+                    onToggleService={servicePicker.onToggleService}
+                    onImport={servicePicker.onImport}
+                    importing={servicePicker.importing}
+                    currentServiceCount={modalServices.length}
+                  />
+                ) : null}
+
                 <div className="overflow-x-auto rounded-2xl border border-zinc-100">
                   <table className="w-full text-left text-sm whitespace-nowrap">
                     <thead className="bg-zinc-50 border-b border-zinc-100 text-zinc-500 font-bold uppercase text-[10px] tracking-wider">

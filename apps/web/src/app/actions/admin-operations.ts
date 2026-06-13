@@ -18,6 +18,13 @@ import {
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 import { getStripeConnectionStatus } from "@/lib/stripe-env";
 import { loadStripeDbSettingsForAdmin } from "@/lib/stripe-settings";
+import {
+  ensureSalonSubscriptionPlan,
+  getAllowedCategoriesLimit,
+  sliceAllowedCategories,
+} from "@/lib/salon-subscription-plan";
+import { parseFeatureFlags } from "@/lib/parse-feature-flags";
+import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 const BRANDING_SETTINGS_ID = "00000000-0000-0000-0000-000000000002";
@@ -702,6 +709,123 @@ export async function updateAdminSalonStaff(
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const };
+}
+
+export async function fetchAdminSalonServicePickerData(salonId: string) {
+  const result = await withAdminDb(async (supabase) => {
+    const [salonRes, categoriesRes, globalServicesRes, existingServicesRes] = await Promise.all([
+      supabase.from("salons").select("id, category, subscription_plan_id").eq("id", salonId).maybeSingle(),
+      supabase.from("categories").select("id, name").order("name"),
+      supabase.from("global_services").select("*, categories(name)").eq("is_active", true),
+      supabase.from("services").select("id, global_service_id").eq("salon_id", salonId),
+    ]);
+
+    if (salonRes.error) throw new Error(salonRes.error.message);
+    if (categoriesRes.error) throw new Error(categoriesRes.error.message);
+    if (globalServicesRes.error) throw new Error(globalServicesRes.error.message);
+    if (existingServicesRes.error) throw new Error(existingServicesRes.error.message);
+
+    const { plan } = await ensureSalonSubscriptionPlan(
+      supabase,
+      salonId,
+      salonRes.data?.subscription_plan_id
+    );
+    const flags = parseFeatureFlags(plan?.feature_flags);
+    const allowedCategories = sliceAllowedCategories(
+      categoriesRes.data || [],
+      flags,
+      plan?.name as string | undefined
+    );
+
+    const services = (globalServicesRes.data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      category: row.categories?.name || null,
+      default_price: row.suggested_price || 0,
+      default_duration: row.suggested_duration_minutes || 30,
+      icon_image_url: row.icon || null,
+    }));
+
+    return {
+      salonCategory: salonRes.data?.category || "",
+      maxServices: Number(plan?.max_services) || 6,
+      allowedCategories,
+      allowedCategoryLimit: getAllowedCategoriesLimit(flags, plan?.name as string | undefined),
+      planName: plan?.name || "Free",
+      services,
+      existingGlobalServiceIds: (existingServicesRes.data || [])
+        .map((row) => row.global_service_id)
+        .filter(Boolean),
+    };
+  });
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const, ...result.data };
+}
+
+export async function importAdminSalonServices(
+  salonId: string,
+  selectedServices: Array<{
+    global_service_id: string;
+    name: string;
+    category: string;
+    price: number;
+    duration_min: number;
+    image_url?: string | null;
+  }>
+) {
+  const result = await withAdminDb(async (supabase) => {
+    const { data: salon } = await supabase
+      .from("salons")
+      .select("subscription_plan_id")
+      .eq("id", salonId)
+      .maybeSingle();
+    const { plan } = await ensureSalonSubscriptionPlan(
+      supabase,
+      salonId,
+      salon?.subscription_plan_id
+    );
+    const maxServices = Number(plan?.max_services) || 6;
+
+    const { data: existing } = await supabase
+      .from("services")
+      .select("id, global_service_id")
+      .eq("salon_id", salonId);
+    const existingGlobalIds = new Set(
+      (existing || []).map((row) => row.global_service_id).filter(Boolean)
+    );
+
+    const toInsert = selectedServices.filter(
+      (svc) => svc.global_service_id && !existingGlobalIds.has(svc.global_service_id)
+    );
+
+    const totalAfterInsert = (existing || []).length + toInsert.length;
+    if (totalAfterInsert > maxServices) {
+      throw new Error(
+        `This salon's ${plan?.name || "plan"} allows up to ${maxServices} services. Remove some before adding more.`
+      );
+    }
+
+    if (toInsert.length > 0) {
+      const { error } = await supabase.from("services").insert(
+        toInsert.map((svc) => ({
+          salon_id: salonId,
+          global_service_id: svc.global_service_id,
+          name: svc.name,
+          category: svc.category,
+          price: svc.price,
+          duration_min: svc.duration_min,
+          image_url: svc.image_url || null,
+          status: "active",
+        }))
+      );
+      if (error) throw new Error(error.message);
+    }
+
+    await syncStaffServiceAssignmentsForSalon(supabase, salonId);
+    return { inserted: toInsert.length };
+  });
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const, inserted: result.data.inserted };
 }
 
 export async function bulkInsertAdminSalons(rows: Record<string, unknown>[]) {

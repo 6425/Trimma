@@ -5,6 +5,7 @@ import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import { assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
+import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
 
 export async function saveAgentLeadData(
   salonId: string,
@@ -117,9 +118,32 @@ export async function saveAgentLeadData(
       }
     }
 
-    // 3. Add Staff
+    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
+
+    // 3. Add Staff (skip duplicates by name + email)
     if (staffToAdd && staffToAdd.length > 0) {
-      await supabaseAdmin.from("salon_staff").insert(staffToAdd);
+      const { data: existingStaff } = await supabaseAdmin
+        .from("salon_staff")
+        .select("id, name, email")
+        .eq("salon_id", salonId);
+
+      const existingKeys = new Set(
+        (existingStaff || []).map(
+          (row) =>
+            `${String(row.name || "").trim().toLowerCase()}|${String(row.email || "").trim().toLowerCase()}`
+        )
+      );
+
+      const uniqueStaff = staffToAdd.filter((row) => {
+        const key = `${String(row.name || "").trim().toLowerCase()}|${String(row.email || "").trim().toLowerCase()}`;
+        return !existingKeys.has(key);
+      });
+
+      if (uniqueStaff.length > 0) {
+        await supabaseAdmin.from("salon_staff").insert(uniqueStaff);
+      }
+
+      await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
     }
 
     // 4. Sync Amenities
@@ -189,11 +213,12 @@ export async function createAgentLeadData(
       await supabaseAdmin.from("services").insert(svcsToAdd);
     }
 
-    // 3. Add Staff
     if (staffToAdd && staffToAdd.length > 0) {
       const staff = staffToAdd.map(s => ({ ...s, salon_id: salonId }));
       await supabaseAdmin.from("salon_staff").insert(staff);
     }
+
+    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
 
     // 4. Sync Amenities
     if (amenitiesData) {
@@ -312,6 +337,8 @@ export async function convertManualLeadToSalon(
       const staff = staffToAdd.map(s => ({ ...s, salon_id: salonId }));
       await supabaseAdmin.from("salon_staff").insert(staff);
     }
+
+    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
 
     // 5. Sync Amenities
     if (amenitiesData) {

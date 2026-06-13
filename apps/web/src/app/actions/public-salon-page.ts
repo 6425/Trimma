@@ -5,6 +5,7 @@ import { mapSalonPromotionRows, type SalonPromotionPackage } from "@/lib/deals";
 import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { isDummySalonRecord } from "@/lib/salon-list-filters";
 import { filterServicesWithStaffCoverage } from "@/lib/staff-allocation";
+import { dedupeStaffByNameRole } from "@/lib/salon-staff-service-sync";
 
 const SALON_COLUMNS =
   "id, slug, name, city, district, province, address, phone, owner_email, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled";
@@ -124,10 +125,17 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       status?: string | null;
       working_hours?: { assigned_services?: Array<{ service_id: string; enabled?: boolean }> } | null;
     }>;
-    const bookableServices = filterServicesWithStaffCoverage(
-      servicesRes.data || [],
-      staffForCoverage
-    );
+    const bookableServices = (() => {
+      const activeServices = (servicesRes.data || []).filter(
+        (svc) => (svc.status || "active").toLowerCase() === "active"
+      );
+      const mapped = filterServicesWithStaffCoverage(activeServices, staffForCoverage);
+      if (mapped.length > 0) return mapped;
+      if (activeServices.length > 0 && staffForCoverage.length > 0) {
+        return activeServices;
+      }
+      return mapped;
+    })();
 
     const services: PublicSalonService[] = bookableServices.map((svc) => ({
       id: svc.id,
@@ -142,7 +150,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       popular: false,
     }));
 
-    const staff: PublicSalonStaff[] = (staffRes.data || []).map((member) => ({
+    const staff: PublicSalonStaff[] = dedupeStaffByNameRole(staffRes.data || []).map((member) => ({
       id: member.id,
       name: member.name,
       role: member.role || "Professional",

@@ -31,6 +31,7 @@ import {
   fetchAgentGlobalsClient,
 } from "@/lib/agent-client-data";
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
+import { buildStaffWorkingHoursPayload, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 
@@ -265,6 +266,7 @@ function AgentLeads() {
       admin_notes: lead.admin_notes || ""
     });
     setSelectedCategories((lead.category || "").split(",").map((s: string) => s.trim()).filter(Boolean));
+    setStaffToAdd([]);
     setIsModalOpen(true);
 
     if (isManual) {
@@ -344,7 +346,10 @@ function AgentLeads() {
 
 
   const prepareServicesAndStaff = async (salonId: string) => {
-    const existingSvcRes = await fetchAgentSalonServiceIds(salonId);
+    const existingSvcRes = await tryAgentData(
+      () => fetchAgentLeadEditorData(salonId),
+      () => fetchAgentLeadEditorDataClient(salonId)
+    );
     if (!existingSvcRes.success) {
       throw new Error(existingSvcRes.error);
     }
@@ -374,6 +379,14 @@ function AgentLeads() {
     }
 
     let finalStaffToAdd: any[] = [];
+    const salonServiceRows: SalonServiceAssignmentRow[] = existingSvc.map((s) => ({
+      id: s.id,
+      salonServiceId: s.id,
+      global_service_id: s.global_service_id,
+      name: s.name,
+      duration_min: s.duration_min,
+    }));
+
     if (staffToAdd.length > 0) {
       for (const st of staffToAdd) {
         let finalAvatarUrl = null;
@@ -397,15 +410,12 @@ function AgentLeads() {
           commission_rate: st.commission_rate,
           status: 'active',
           avatar_url: finalAvatarUrl,
-          working_hours: {
-            schedule: st.schedule,
-            general_buffer_time: st.general_buffer_time,
-            assigned_services: Object.keys(st.services).filter(id => st.services[id].enabled).map(id => ({
-              service_id: id, 
-              commission_rate: st.services[id].commission,
-              buffer_time: st.services[id].buffer
-            }))
-          }
+          working_hours: buildStaffWorkingHoursPayload(
+            st.schedule || {},
+            st.general_buffer_time ?? 15,
+            st.services || {},
+            salonServiceRows
+          ),
         });
       }
     }
@@ -498,6 +508,7 @@ function AgentLeads() {
 
       toast.success("Changes saved!");
 
+      setStaffToAdd([]);
       setIsModalOpen(false);
       setSelectedLead(null);
       fetchLeads();
