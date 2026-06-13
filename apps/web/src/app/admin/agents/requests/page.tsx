@@ -88,7 +88,7 @@ export default function AdminAgentRequestsPage() {
         listRegionalHeadAgentsForAdmin(),
       ]);
 
-      if (!requestsResult.success) {
+      if (requestsResult.success === false) {
         toast.error(requestsResult.error);
         return;
       }
@@ -103,7 +103,7 @@ export default function AdminAgentRequestsPage() {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    void Promise.resolve().then(() => loadData());
   }, [loadData]);
 
   const filtered = useMemo(() => {
@@ -150,7 +150,7 @@ export default function AdminAgentRequestsPage() {
         sub_agent_split_percent: Number(form.sub_agent_split_percent) || 50,
       });
 
-      if (!result.success) {
+      if (result.success === false) {
         toast.error(result.error);
         return;
       }
@@ -184,7 +184,7 @@ export default function AdminAgentRequestsPage() {
         sub_agent_split_percent: Number(form.sub_agent_split_percent) || 50,
       });
 
-      if (!result.success) {
+      if (result.success === false) {
         toast.error(result.error);
         return;
       }
