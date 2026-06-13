@@ -638,9 +638,9 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
           <img 
             src={salon.hero_url || salon.cover_url || mockExtraData.gallery[0]} 
             alt={`${salon.name} Background`} 
-            className="w-full h-full object-cover opacity-30 filter blur-[1px] scale-102 transition-transform duration-700" 
+            className="w-full h-full object-cover opacity-60 transition-transform duration-700" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/85 via-zinc-950/40 to-zinc-950/10" />
         </div>
 
         {/* Content Container (Full Width Spacing aligned to standard limits but padding spreads nicely) */}
