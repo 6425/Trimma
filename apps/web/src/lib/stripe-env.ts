@@ -46,18 +46,72 @@ export type StripeConnectionStatus = {
     secretConfigured: boolean;
     publishablePreview: string;
     secretPreview: string;
+    publishableSource: StripeKeySource;
+    secretSource: StripeKeySource;
   };
   live: {
     publishableConfigured: boolean;
     secretConfigured: boolean;
     publishablePreview: string;
     secretPreview: string;
+    publishableSource: StripeKeySource;
+    secretSource: StripeKeySource;
   };
 };
 
-export function getStripeConnectionStatus(): StripeConnectionStatus {
-  const sandbox = getStripeEnvKeys("sandbox");
-  const live = getStripeEnvKeys("live");
+export type StripeDbKeyRow = {
+  stripe_publishable_key_sandbox?: string | null;
+  stripe_publishable_key_live?: string | null;
+  stripe_secret_key_sandbox?: string | null;
+  stripe_secret_key_live?: string | null;
+};
+
+export type StripeKeySource = "env" | "database" | "missing";
+
+export type StripeResolvedKeys = StripeEnvKeySet & {
+  publishableSource: StripeKeySource;
+  secretSource: StripeKeySource;
+};
+
+export function resolveStripeKeys(
+  environment: "sandbox" | "live",
+  db?: StripeDbKeyRow | null
+): StripeResolvedKeys {
+  const envKeys = getStripeEnvKeys(environment);
+
+  const dbPublishable =
+    environment === "live"
+      ? db?.stripe_publishable_key_live?.trim() || null
+      : db?.stripe_publishable_key_sandbox?.trim() || null;
+
+  const dbSecret =
+    environment === "live"
+      ? db?.stripe_secret_key_live?.trim() || null
+      : db?.stripe_secret_key_sandbox?.trim() || null;
+
+  const publishableSource: StripeKeySource = envKeys.publishableKey
+    ? "env"
+    : dbPublishable
+      ? "database"
+      : "missing";
+
+  const secretSource: StripeKeySource = envKeys.secretKey
+    ? "env"
+    : dbSecret
+      ? "database"
+      : "missing";
+
+  return {
+    publishableKey: envKeys.publishableKey || dbPublishable,
+    secretKey: envKeys.secretKey || dbSecret,
+    publishableSource,
+    secretSource,
+  };
+}
+
+export function getStripeConnectionStatus(db?: StripeDbKeyRow | null): StripeConnectionStatus {
+  const sandbox = resolveStripeKeys("sandbox", db);
+  const live = resolveStripeKeys("live", db);
 
   return {
     sandbox: {
@@ -65,12 +119,16 @@ export function getStripeConnectionStatus(): StripeConnectionStatus {
       secretConfigured: Boolean(sandbox.secretKey),
       publishablePreview: maskSecret(sandbox.publishableKey),
       secretPreview: maskSecret(sandbox.secretKey),
+      publishableSource: sandbox.publishableSource,
+      secretSource: sandbox.secretSource,
     },
     live: {
       publishableConfigured: Boolean(live.publishableKey),
       secretConfigured: Boolean(live.secretKey),
       publishablePreview: maskSecret(live.publishableKey),
       secretPreview: maskSecret(live.secretKey),
+      publishableSource: live.publishableSource,
+      secretSource: live.secretSource,
     },
   };
 }

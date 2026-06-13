@@ -14,6 +14,8 @@ import {
   RefreshCw,
   CheckCircle2,
   XCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,11 @@ export default function AdminPayments() {
   const [activeTab, setActiveTab] = useState<"keys" | "transactions">("keys");
   const [stripeEnvironment, setStripeEnvironment] = useState<"sandbox" | "live">("sandbox");
   const [stripeEnabled, setStripeEnabled] = useState(true);
+  const [showStripeSecret, setShowStripeSecret] = useState(false);
+  const [stripePublishableKeySandbox, setStripePublishableKeySandbox] = useState("");
+  const [stripePublishableKeyLive, setStripePublishableKeyLive] = useState("");
+  const [stripeSecretKeySandbox, setStripeSecretKeySandbox] = useState("");
+  const [stripeSecretKeyLive, setStripeSecretKeyLive] = useState("");
   const [connection, setConnection] = useState<StripeConnection | null>(null);
   const [realPayments, setRealPayments] = useState<any[]>([]);
   const [loadingRealPayments, setLoadingRealPayments] = useState(false);
@@ -44,6 +51,19 @@ export default function AdminPayments() {
   const keysReady =
     Boolean(activeConnection?.publishableConfigured) &&
     Boolean(activeConnection?.secretConfigured);
+  const envOverridesActiveMode =
+    activeConnection?.publishableSource === "env" ||
+    activeConnection?.secretSource === "env";
+
+  const applySettingsFromDb = (data: Record<string, unknown> | null | undefined) => {
+    if (!data) return;
+    setStripeEnvironment(data.stripe_environment === "live" ? "live" : "sandbox");
+    setStripeEnabled(data.stripe_enabled !== false);
+    setStripePublishableKeySandbox(String(data.stripe_publishable_key_sandbox || ""));
+    setStripePublishableKeyLive(String(data.stripe_publishable_key_live || ""));
+    setStripeSecretKeySandbox(String(data.stripe_secret_key_sandbox || ""));
+    setStripeSecretKeyLive(String(data.stripe_secret_key_live || ""));
+  };
 
   const fetchPaymentSettings = async () => {
     try {
@@ -62,10 +82,7 @@ export default function AdminPayments() {
       }
 
       const data = pageResult.settings;
-      if (data) {
-        setStripeEnvironment(data.stripe_environment === "live" ? "live" : "sandbox");
-        setStripeEnabled(data.stripe_enabled !== false);
-      }
+      applySettingsFromDb(data);
 
       if (connectionResult.success) {
         setConnection(connectionResult.connection);
@@ -113,8 +130,18 @@ export default function AdminPayments() {
       const result = await saveStripePaymentSettings({
         stripe_enabled: stripeEnabled,
         stripe_environment: stripeEnvironment,
+        stripe_publishable_key_sandbox: stripePublishableKeySandbox,
+        stripe_publishable_key_live: stripePublishableKeyLive,
+        stripe_secret_key_sandbox: stripeSecretKeySandbox,
+        stripe_secret_key_live: stripeSecretKeyLive,
       });
       if (result.success === false) throw new Error(result.error);
+
+      const connectionResult = await fetchStripeConnectionStatus();
+      if (connectionResult.success) {
+        setConnection(connectionResult.connection);
+        applySettingsFromDb(connectionResult.settings as Record<string, unknown>);
+      }
 
       toast.success("Stripe payment settings saved.");
     } catch (err: any) {
@@ -149,7 +176,7 @@ export default function AdminPayments() {
         <div>
           <h1 className="text-2xl font-bold text-[#1A1C29] tracking-tight">Stripe Payments</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            Manage Stripe checkout mode and view connection status. API keys are loaded from environment variables.
+            Edit and save Stripe API keys below. Checkout uses Vercel env vars when set; otherwise saved database keys.
           </p>
         </div>
         <Badge
@@ -200,12 +227,68 @@ export default function AdminPayments() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 text-[#1A1C29] font-extrabold text-sm uppercase tracking-wider">
+                  <div className="w-7 h-7 rounded-lg bg-zinc-50 border flex items-center justify-center font-black text-xs text-indigo-600">
+                    S
+                  </div>
+                  <span>Stripe API Keys</span>
+                </div>
+                <Badge className="bg-emerald-50 text-emerald-700 border-none text-[9px] font-black uppercase tracking-wider">
+                  Editable
+                </Badge>
+              </div>
+
+              <p className="text-xs text-zinc-500 font-medium">
+                Type your keys here and click <strong>Save Settings</strong>. Fields are always editable — update anytime.
+              </p>
+
+              {envOverridesActiveMode && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
+                  <span className="font-bold">Vercel env vars are active</span> for {stripeEnvironment} mode and override saved keys at checkout. Remove env vars in Vercel to use the values you save here.
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <KeyField
+                  label="Publishable Key (Sandbox)"
+                  value={stripePublishableKeySandbox}
+                  onChange={setStripePublishableKeySandbox}
+                  placeholder="pk_test_..."
+                />
+                <KeyField
+                  label="Publishable Key (Live)"
+                  value={stripePublishableKeyLive}
+                  onChange={setStripePublishableKeyLive}
+                  placeholder="pk_live_..."
+                />
+                <KeyField
+                  label="Secret Key (Sandbox)"
+                  value={stripeSecretKeySandbox}
+                  onChange={setStripeSecretKeySandbox}
+                  placeholder="sk_test_..."
+                  secret
+                  showSecret={showStripeSecret}
+                  onToggleSecret={() => setShowStripeSecret(!showStripeSecret)}
+                />
+                <KeyField
+                  label="Secret Key (Live)"
+                  value={stripeSecretKeyLive}
+                  onChange={setStripeSecretKeyLive}
+                  placeholder="sk_live_..."
+                  secret
+                  showSecret={showStripeSecret}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-xs space-y-4">
               <div className="flex items-center gap-3 text-[#1A1C29] font-extrabold text-sm uppercase tracking-wider">
                 <Settings className="w-5 h-5 text-brand" />
                 <span>Stripe Environment</span>
               </div>
               <p className="text-xs text-zinc-500 font-medium">
-                Choose which Stripe key pair from your <code className="text-[10px] bg-zinc-100 px-1 rounded">.env</code> file is used for checkout.
+                Choose sandbox or live mode. Keys can be saved here or set via Vercel environment variables (env takes priority).
               </p>
 
               <div className="grid grid-cols-2 gap-3 p-1 bg-zinc-50 rounded-2xl border border-zinc-100">
@@ -285,8 +368,9 @@ export default function AdminPayments() {
                 <div className="w-7 h-7 rounded-lg bg-zinc-50 border flex items-center justify-center font-black text-xs text-indigo-600">
                   S
                 </div>
-                <span>Connection Status (from .env)</span>
+                <span>Connection Status</span>
               </div>
+              <p className="text-xs text-zinc-500">Read-only preview of which keys checkout will use (env first, then saved keys).</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <StatusRow
@@ -321,13 +405,13 @@ export default function AdminPayments() {
                   ))}
                 </ul>
                 <p className="text-[10px] text-zinc-500 pt-1">
-                  Sandbox fallbacks: <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code>
+                  Optional Vercel env vars override saved keys when set.
                 </p>
               </div>
 
               {!keysReady && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
-                  Active mode ({stripeEnvironment}) is missing keys. Add them to Vercel environment variables and redeploy.
+                  Active mode ({stripeEnvironment}) is missing keys. Save sandbox publishable + secret keys above, or add them to Vercel env.
                 </div>
               )}
             </div>
@@ -478,6 +562,53 @@ export default function AdminPayments() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function KeyField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  secret,
+  showSecret,
+  onToggleSecret,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  secret?: boolean;
+  showSecret?: boolean;
+  onToggleSecret?: () => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center">
+        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{label}</label>
+        {secret && onToggleSecret && (
+          <button
+            type="button"
+            onClick={onToggleSecret}
+            className="text-[10px] text-zinc-500 font-extrabold hover:text-zinc-600 flex items-center gap-1 uppercase"
+          >
+            {showSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            {showSecret ? "Hide" : "Show"}
+          </button>
+        )}
+      </div>
+      <input
+        type={secret && !showSecret ? "password" : "text"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+        readOnly={false}
+        disabled={false}
+        className="flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+      />
     </div>
   );
 }

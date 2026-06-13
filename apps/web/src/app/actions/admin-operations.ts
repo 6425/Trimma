@@ -17,6 +17,7 @@ import {
 } from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 import { getStripeConnectionStatus } from "@/lib/stripe-env";
+import { loadStripeDbSettingsForAdmin } from "@/lib/stripe-settings";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 const BRANDING_SETTINGS_ID = "00000000-0000-0000-0000-000000000002";
@@ -176,12 +177,17 @@ export async function saveGlobalPaymentSettings(input: Record<string, unknown>) 
 
 
 export async function fetchStripeConnectionStatus() {
-  return { success: true as const, connection: getStripeConnectionStatus() };
+  const db = await loadStripeDbSettingsForAdmin();
+  return { success: true as const, connection: getStripeConnectionStatus(db), settings: db };
 }
 
 export async function saveStripePaymentSettings(input: {
   stripe_enabled: boolean;
   stripe_environment: "sandbox" | "live";
+  stripe_publishable_key_sandbox?: string;
+  stripe_publishable_key_live?: string;
+  stripe_secret_key_sandbox?: string;
+  stripe_secret_key_live?: string;
 }) {
   const result = await withAdminDb(async (supabase) => {
     const { error } = await supabase.from("global_payment_settings").upsert({
@@ -189,8 +195,20 @@ export async function saveStripePaymentSettings(input: {
       updated_at: new Date().toISOString(),
       stripe_enabled: input.stripe_enabled,
       stripe_environment: input.stripe_environment,
+      stripe_publishable_key_sandbox: input.stripe_publishable_key_sandbox ?? "",
+      stripe_publishable_key_live: input.stripe_publishable_key_live ?? "",
+      stripe_secret_key_sandbox: input.stripe_secret_key_sandbox ?? "",
+      stripe_secret_key_live: input.stripe_secret_key_live ?? "",
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("does not exist") || msg.includes("stripe_")) {
+        throw new Error(
+          "Stripe columns are missing in the database. Run packages/db/STRIPE_PAYMENT_PATCH.sql in Supabase, then try again."
+        );
+      }
+      throw new Error(error.message);
+    }
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const };
