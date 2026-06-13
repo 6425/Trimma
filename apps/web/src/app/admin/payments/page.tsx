@@ -17,6 +17,14 @@ export default function AdminPayments() {
   const [showAppSecret, setShowAppSecret] = useState(false);
   const [activeTab, setActiveTab] = useState<"keys" | "transactions">("keys");
 
+  const [showStripeSecret, setShowStripeSecret] = useState(false);
+  const [stripePublishableKeySandbox, setStripePublishableKeySandbox] = useState("");
+  const [stripePublishableKeyLive, setStripePublishableKeyLive] = useState("");
+  const [stripeSecretKeySandbox, setStripeSecretKeySandbox] = useState("");
+  const [stripeSecretKeyLive, setStripeSecretKeyLive] = useState("");
+  const [stripeEnvironment, setStripeEnvironment] = useState<"sandbox" | "live">("sandbox");
+  const [stripeEnabled, setStripeEnabled] = useState(true);
+
   // Form State
   const [environment, setEnvironment] = useState<"sandbox" | "live">("sandbox");
   const [paypalClientSandbox, setPaypalClientSandbox] = useState("sb");
@@ -62,6 +70,12 @@ export default function AdminPayments() {
         setPayhereAppSecret(data.payhere_app_secret || "");
         setPaypalEnabled(data.paypal_enabled !== false);
         setPayhereEnabled(data.payhere_enabled !== false);
+        setStripePublishableKeySandbox(data.stripe_publishable_key_sandbox || "");
+        setStripePublishableKeyLive(data.stripe_publishable_key_live || "");
+        setStripeSecretKeySandbox(data.stripe_secret_key_sandbox || "");
+        setStripeSecretKeyLive(data.stripe_secret_key_live || "");
+        setStripeEnvironment(data.stripe_environment === "live" ? "live" : "sandbox");
+        setStripeEnabled(data.stripe_enabled !== false);
       } else {
         // LocalStorage Fallback if table is not migrated yet
         const localEnv = localStorage.getItem("trimma_payment_env") as "sandbox" | "live";
@@ -125,6 +139,12 @@ export default function AdminPayments() {
           payhere_app_secret: payhereAppSecret,
           paypal_enabled: paypalEnabled,
           payhere_enabled: payhereEnabled,
+          stripe_publishable_key_sandbox: stripePublishableKeySandbox,
+          stripe_publishable_key_live: stripePublishableKeyLive,
+          stripe_secret_key_sandbox: stripeSecretKeySandbox,
+          stripe_secret_key_live: stripeSecretKeyLive,
+          stripe_environment: stripeEnvironment,
+          stripe_enabled: stripeEnabled,
         });
       if (result.success === false) throw new Error(result.error);
 
@@ -134,6 +154,8 @@ export default function AdminPayments() {
       localStorage.setItem("trimma_payhere_merchant", payhereMerchantId);
       localStorage.setItem("trimma_paypal_enabled", String(paypalEnabled));
       localStorage.setItem("trimma_payhere_enabled", String(payhereEnabled));
+      localStorage.setItem("trimma_stripe_enabled", String(stripeEnabled));
+      localStorage.setItem("trimma_stripe_env", stripeEnvironment);
       
       toast.success("Payment Gateway credentials updated successfully!");
     } catch (err: any) {
@@ -151,7 +173,7 @@ export default function AdminPayments() {
 
       const newLog = {
         id: Date.now(),
-        gateway: Math.random() > 0.5 ? "paypal" : "payhere",
+        gateway: Math.random() > 0.5 ? "paypal" : "stripe",
         type: `${environment === 'sandbox' ? 'Sandbox' : 'Live'} Simulator Run`,
         amount: `LKR ${(Math.floor(Math.random() * 80) + 10) * 100}`,
         status: "success",
@@ -175,7 +197,7 @@ export default function AdminPayments() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 pb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1A1C29] tracking-tight">Payments & Credentials</h1>
-          <p className="text-zinc-500 text-sm mt-1">Configure PayPal Smart Buttons and PayHere redirect keys for sandbox and production environments.</p>
+          <p className="text-zinc-500 text-sm mt-1">Configure PayPal, PayHere, and Stripe payment gateways for sandbox and production environments.</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border-none shadow-sm ${
@@ -290,7 +312,22 @@ export default function AdminPayments() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className={`flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer select-none transition-all ${
-                  payhereEnabled ? 'border-brand/20 bg-rose-50/10' : 'border-zinc-100 bg-white hover:border-zinc-200'
+                  stripeEnabled ? 'border-brand/20 bg-rose-50/10' : 'border-zinc-100 bg-white hover:border-zinc-200'
+                }`}>
+                  <input
+                    type="checkbox"
+                    checked={stripeEnabled}
+                    onChange={(e) => setStripeEnabled(e.target.checked)}
+                    className="w-5 h-5 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950 mt-1 cursor-pointer"
+                  />
+                  <div>
+                    <div className="text-xs font-black text-zinc-800 uppercase tracking-wider">Enable Stripe Checkout</div>
+                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Embedded Stripe checkout for booking deposits and subscriptions.</p>
+                  </div>
+                </label>
+
+                <label className={`flex items-start gap-4 p-4 rounded-2xl border-2 cursor-pointer select-none transition-all ${
+                  payhereEnabled ? 'border-zinc-100 bg-white hover:border-zinc-200 opacity-60' : 'border-zinc-100 bg-white hover:border-zinc-200 opacity-60'
                 }`}>
                   <input
                     type="checkbox"
@@ -299,8 +336,8 @@ export default function AdminPayments() {
                     className="w-5 h-5 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950 mt-1 cursor-pointer"
                   />
                   <div>
-                    <div className="text-xs font-black text-zinc-800 uppercase tracking-wider">Enable PayHere Gateway</div>
-                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Accept local Credit Cards, Debit Cards, and direct LKR transfers.</p>
+                    <div className="text-xs font-black text-zinc-800 uppercase tracking-wider">PayHere (Legacy)</div>
+                    <p className="text-[10px] text-zinc-500 font-bold mt-1">Deprecated — checkout now uses Stripe.</p>
                   </div>
                 </label>
 
@@ -423,6 +460,92 @@ export default function AdminPayments() {
               </div>
             </div>
 
+            {/* Stripe Credentials */}
+            <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-xs space-y-4">
+              <div className="flex items-center gap-3 text-[#1A1C29] font-extrabold text-sm uppercase tracking-wider">
+                <div className="w-7 h-7 rounded-lg bg-zinc-50 border flex items-center justify-center font-black text-xs text-indigo-600">
+                  S
+                </div>
+                <span>Stripe Checkout Gateway Keys</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 p-1 bg-zinc-50 rounded-2xl border border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setStripeEnvironment("sandbox")}
+                  className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                    stripeEnvironment === "sandbox"
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-600"
+                  }`}
+                >
+                  Sandbox Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStripeEnvironment("live")}
+                  className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                    stripeEnvironment === "live"
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-600"
+                  }`}
+                >
+                  Live Production
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Publishable Key (Sandbox)</label>
+                  <Input
+                    value={stripePublishableKeySandbox}
+                    onChange={(e) => setStripePublishableKeySandbox(e.target.value)}
+                    placeholder="pk_test_..."
+                    className="h-11 rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-rose-100"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Publishable Key (Live)</label>
+                  <Input
+                    value={stripePublishableKeyLive}
+                    onChange={(e) => setStripePublishableKeyLive(e.target.value)}
+                    placeholder="pk_live_..."
+                    className="h-11 rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-rose-100"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Secret Key (Sandbox)</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowStripeSecret(!showStripeSecret)}
+                      className="text-[10px] text-zinc-500 font-extrabold hover:text-zinc-600 flex items-center gap-1 uppercase"
+                    >
+                      {showStripeSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      {showStripeSecret ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <Input
+                    type={showStripeSecret ? "text" : "password"}
+                    value={stripeSecretKeySandbox}
+                    onChange={(e) => setStripeSecretKeySandbox(e.target.value)}
+                    placeholder="sk_test_..."
+                    className="h-11 rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-rose-100"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Secret Key (Live)</label>
+                  <Input
+                    type={showStripeSecret ? "text" : "password"}
+                    value={stripeSecretKeyLive}
+                    onChange={(e) => setStripeSecretKeyLive(e.target.value)}
+                    placeholder="sk_live_..."
+                    className="h-11 rounded-xl bg-zinc-50 border-transparent focus:bg-white focus:border-rose-100"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Save Buttons */}
             <div className="flex items-center justify-end gap-3">
               <Button
@@ -477,7 +600,7 @@ export default function AdminPayments() {
                   <div key={log.id} className="flex justify-between items-center p-3 hover:bg-zinc-50/50 rounded-xl transition-colors">
                     <div>
                       <div className="text-xs font-bold text-zinc-800 capitalize flex items-center gap-1.5">
-                        {log.gateway === 'paypal' ? 'PayPal' : 'PayHere'} 
+                        {log.gateway === 'paypal' ? 'PayPal' : log.gateway === 'stripe' ? 'Stripe' : 'PayHere'} 
                         <span className="text-[9px] text-zinc-500 font-medium">({log.type})</span>
                       </div>
                       <div className="text-[10px] text-zinc-500 mt-0.5">{log.time}</div>
@@ -555,7 +678,7 @@ export default function AdminPayments() {
                             ? "bg-blue-50 text-blue-600" 
                             : "bg-rose-50 text-brand"
                         }`}>
-                          {p.provider === 'paypal' ? 'PayPal Checkout' : 'PayHere Hosted'}
+                          {p.provider === 'paypal' ? 'PayPal Checkout' : p.provider === 'stripe' ? 'Stripe Checkout' : 'PayHere Hosted'}
                         </Badge>
                       </td>
                       

@@ -1,16 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, MessageCircle, Home, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
+import { clearBookingCheckoutDraft } from "@/lib/booking-checkout";
 
 function BookingSuccessContent() {
   const searchParams = useSearchParams();
-  const bookingNo = searchParams.get("booking_no");
-  const whatsappSent = searchParams.get("whatsapp_sent") === "true";
-  const whatsappError = searchParams.get("whatsapp_error");
+  const sessionId = searchParams.get("session_id");
+  const bookingNoParam = searchParams.get("booking_no");
+  const [bookingNo, setBookingNo] = useState<string | null>(bookingNoParam);
+  const [whatsappSent, setWhatsappSent] = useState(searchParams.get("whatsapp_sent") === "true");
+  const [whatsappError, setWhatsappError] = useState<string | null>(
+    searchParams.get("whatsapp_error")
+  );
+  const [loading, setLoading] = useState(Boolean(sessionId && !bookingNoParam));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sessionId || bookingNoParam) return;
+
+    void Promise.resolve().then(async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/checkout/stripe/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to finalize booking.");
+        }
+
+        clearBookingCheckoutDraft();
+        setBookingNo(result.bookingNo || null);
+        setWhatsappSent(Boolean(result.whatsappSent));
+        setWhatsappError(result.whatsappError || null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to finalize booking.");
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [sessionId, bookingNoParam]);
 
   useEffect(() => {
     if (!bookingNo) return;
@@ -24,6 +59,27 @@ function BookingSuccessContent() {
       });
     }
   }, [bookingNo, whatsappSent]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-900 mb-4" />
+        <p className="text-sm text-zinc-500 font-medium">Confirming your Stripe payment…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center">
+        <p className="text-lg font-semibold text-zinc-900 mb-2">Payment received, booking pending</p>
+        <p className="text-sm text-zinc-500 mb-6 max-w-md">{error}</p>
+        <Link href="/" className="text-sm font-bold text-zinc-900 underline">
+          Back to home
+        </Link>
+      </div>
+    );
+  }
 
   if (!bookingNo) {
     return (

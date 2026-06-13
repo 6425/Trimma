@@ -14,12 +14,16 @@ export type CompleteSubscriptionCheckoutInput = {
     email: string;
     phone: string;
   };
-  card: {
+  card?: {
     cardType: CardType;
     cardNumber: string;
     expiry: string;
     cvv: string;
     cardholderName: string;
+  };
+  stripePayment?: {
+    paymentId: string;
+    environment: string;
   };
   payhereEnvironment: string;
 };
@@ -115,7 +119,7 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     .from("payments")
     .insert({
       salon_id: auth.salonId,
-      provider: "payhere",
+      provider: input.stripePayment ? "stripe" : "payhere",
       amount: input.chargeAmount,
       currency: "LKR",
       status: "pending",
@@ -133,16 +137,24 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     throw new Error(paymentInsertError?.message || "Failed to create payment record.");
   }
 
-  const paymentResult = await processBookingCardPayment({
-    cardType: input.card.cardType,
-    cardNumber: input.card.cardNumber,
-    expiry: input.card.expiry,
-    cvv: input.card.cvv,
-    cardholderName: input.card.cardholderName,
-    amount: input.chargeAmount,
-    bookingNo: orderId,
-    environment: input.payhereEnvironment,
-  });
+  const paymentResult = input.stripePayment
+    ? {
+        success: true,
+        paymentId: input.stripePayment.paymentId,
+        last4: null as string | null,
+        provider: "stripe" as const,
+        amount: Number(input.chargeAmount.toFixed(2)),
+      }
+    : await processBookingCardPayment({
+        cardType: input.card!.cardType,
+        cardNumber: input.card!.cardNumber,
+        expiry: input.card!.expiry,
+        cvv: input.card!.cvv,
+        cardholderName: input.card!.cardholderName,
+        amount: input.chargeAmount,
+        bookingNo: orderId,
+        environment: input.payhereEnvironment,
+      });
 
   const { error: paymentUpdateError } = await supabase
     .from("payments")
@@ -157,8 +169,9 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
         order_id: orderId,
         provider: paymentResult.provider,
         last4: paymentResult.last4,
-        card_type: input.card.cardType,
-        environment: input.payhereEnvironment,
+        card_type: input.card?.cardType || null,
+        environment: input.stripePayment?.environment || input.payhereEnvironment,
+        stripe_session_id: input.stripePayment?.paymentId || null,
       },
     })
     .eq("id", paymentRow.id);

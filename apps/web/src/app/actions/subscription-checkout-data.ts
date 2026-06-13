@@ -55,7 +55,7 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
     const [paymentRes, planRes, customerPrefill] = await Promise.all([
       supabase
         .from("global_payment_settings")
-        .select("payhere_enabled, environment")
+        .select("stripe_enabled, stripe_environment")
         .eq("id", SETTINGS_ID)
         .maybeSingle(),
       supabase.from("subscription_plans").select("*").ilike("name", normalizedPlan).maybeSingle(),
@@ -68,8 +68,9 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
     return {
       success: true as const,
       planDetails: resolvePlan(normalizedPlan, planRes.data as Record<string, unknown> | null),
-      payhereEnabled: paymentRes.data?.payhere_enabled !== false,
-      payhereEnvironment: (paymentRes.data?.environment as string) || "sandbox",
+      stripeEnabled: paymentRes.data?.stripe_enabled !== false,
+      stripeEnvironment:
+        paymentRes.data?.stripe_environment === "live" ? "live" : "sandbox",
       customerPrefill,
     };
   } catch (err) {
@@ -77,8 +78,8 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
     return {
       success: true as const,
       planDetails: resolvePlan(normalizedPlan, null),
-      payhereEnabled: true,
-      payhereEnvironment: "sandbox",
+      stripeEnabled: true,
+      stripeEnvironment: "sandbox",
       customerPrefill: null,
     };
   }

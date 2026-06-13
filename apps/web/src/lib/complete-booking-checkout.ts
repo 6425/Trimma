@@ -35,12 +35,16 @@ export type CompleteBookingCheckoutInput = {
     email: string;
     phone: string;
   };
-  card: {
+  card?: {
     cardType: CardType;
     cardNumber: string;
     expiry: string;
     cvv: string;
     cardholderName: string;
+  };
+  stripePayment?: {
+    paymentId: string;
+    environment: string;
   };
   payhereEnvironment: string;
   reservationFee: number;
@@ -76,7 +80,7 @@ function parseTimeSlot(timeSlot: string) {
 
 export async function completeBookingCheckout(input: CompleteBookingCheckoutInput) {
   const supabase = createSupabaseAdminClient();
-  const { draft, customer, card, payhereEnvironment, reservationFee, serviceTotal, rates, salon, services, staffMemberId, totalDuration, clientIp } = input;
+  const { draft, customer, card, stripePayment, payhereEnvironment, reservationFee, serviceTotal, rates, salon, services, staffMemberId, totalDuration, clientIp } = input;
 
   const { hh, mm, formattedTime } = parseTimeSlot(draft.timeSlot);
   const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -253,7 +257,7 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     .insert({
       booking_id: newBooking.id,
       salon_id: salon.id,
-      provider: "payhere",
+      provider: stripePayment ? "stripe" : "payhere",
       amount: resolvedReservationFee,
       currency: "LKR",
       status: "pending",
@@ -265,16 +269,24 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     throw new Error(paymentInsertError?.message || "Failed to create payment record.");
   }
 
-  const paymentResult = await processBookingCardPayment({
-    cardType: card.cardType,
-    cardNumber: card.cardNumber,
-    expiry: card.expiry,
-    cvv: card.cvv,
-    cardholderName: card.cardholderName,
-    amount: resolvedReservationFee,
-    bookingNo,
-    environment: payhereEnvironment,
-  });
+  const paymentResult = stripePayment
+    ? {
+        success: true,
+        paymentId: stripePayment.paymentId,
+        last4: null as string | null,
+        provider: "stripe" as const,
+        amount: Number(resolvedReservationFee.toFixed(2)),
+      }
+    : await processBookingCardPayment({
+        cardType: card!.cardType,
+        cardNumber: card!.cardNumber,
+        expiry: card!.expiry,
+        cvv: card!.cvv,
+        cardholderName: card!.cardholderName,
+        amount: resolvedReservationFee,
+        bookingNo,
+        environment: payhereEnvironment,
+      });
 
   const { error: paymentUpdateError } = await supabase
     .from("payments")
@@ -285,8 +297,9 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
       raw_response: {
         provider: paymentResult.provider,
         last4: paymentResult.last4,
-        card_type: card.cardType,
-        environment: payhereEnvironment,
+        card_type: card?.cardType || null,
+        environment: stripePayment?.environment || payhereEnvironment,
+        stripe_session_id: stripePayment?.paymentId || null,
       },
     })
     .eq("id", paymentRow.id);

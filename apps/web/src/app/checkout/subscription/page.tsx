@@ -3,16 +3,11 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { fetchSubscriptionCheckoutPage } from "@/app/actions/subscription-checkout-data";
 import { withTimeout } from "@/lib/promise-timeout";
-import {
-  validateCardPayment,
-  type CardPaymentDetails,
-  type CardType,
-} from "@/lib/card-payment";
-import { CheckoutCustomerForm } from "../../../components/checkout/CheckoutCustomerForm";
 import { CheckoutStyles } from "../../../components/checkout/CheckoutStyles";
+import { StripeCheckoutCustomerForm } from "../../../components/checkout/StripeCheckoutCustomerForm";
 import {
   getAnnualMonthlyRate,
   getAnnualTotal,
@@ -33,7 +28,6 @@ import {
 } from "lucide-react";
 
 function SubscriptionCheckoutForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const planParam = (searchParams.get("plan") || "pro").toLowerCase();
   const cycleParam = searchParams.get("cycle") === "annual" ? "annual" : "monthly";
@@ -43,15 +37,11 @@ function SubscriptionCheckoutForm() {
   const [processing, setProcessing] = useState(false);
   const [planDetails, setPlanDetails] = useState<any>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(cycleParam);
-  const [payhereEnabled, setPayhereEnabled] = useState(true);
-  const [payhereEnvironment, setPayhereEnvironment] = useState("sandbox");
-  const [cardType, setCardType] = useState<CardType>("visa");
-  const [cardDetails, setCardDetails] = useState<CardPaymentDetails>({
-    cardholderName: "",
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-  });
+  const [stripeEnabled, setStripeEnabled] = useState(true);
+  const [stripeEnvironment, setStripeEnvironment] = useState("sandbox");
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
+  const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -79,8 +69,8 @@ function SubscriptionCheckoutForm() {
         if (cancelled) return;
 
         setPlanDetails(result.planDetails);
-        setPayhereEnabled(result.payhereEnabled);
-        setPayhereEnvironment(result.payhereEnvironment);
+        setStripeEnabled(result.stripeEnabled);
+        setStripeEnvironment(result.stripeEnvironment);
 
         if (result.customerPrefill) {
           const fullName = `${result.customerPrefill.firstName} ${result.customerPrefill.lastName}`.trim();
@@ -90,10 +80,6 @@ function SubscriptionCheckoutForm() {
             lastName: result.customerPrefill!.lastName || prev.lastName,
             email: result.customerPrefill!.email || prev.email,
             phone: result.customerPrefill!.phone || prev.phone,
-          }));
-          setCardDetails((prev) => ({
-            ...prev,
-            cardholderName: fullName || prev.cardholderName,
           }));
         }
       } catch (err) {
@@ -116,20 +102,13 @@ function SubscriptionCheckoutForm() {
   const listMonthly = planDetails ? getListMonthlyPrice(planDetails) : 0;
   const introMonthly = planDetails ? getIntroMonthlyPrice(planDetails) : 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!payhereEnabled || !planDetails) return;
-
-    const cardError = validateCardPayment(cardType, cardDetails);
-    if (cardError) {
-      alert(cardError);
-      return;
-    }
+  const handleContinueToStripe = async () => {
+    if (!stripeEnabled || !planDetails) return;
 
     setProcessing(true);
 
     try {
-      const response = await fetch("/api/checkout/subscription", {
+      const response = await fetch("/api/checkout/stripe/subscription-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -137,28 +116,22 @@ function SubscriptionCheckoutForm() {
           billingCycle,
           chargeAmount,
           customer: customerDetails,
-          card: {
-            cardType,
-            cardNumber: cardDetails.cardNumber,
-            expiry: cardDetails.expiry,
-            cvv: cardDetails.cvv,
-            cardholderName: cardDetails.cardholderName,
-          },
-          payhereEnvironment,
         }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Subscription checkout failed.");
+        throw new Error(result.error || "Failed to start Stripe checkout.");
       }
 
-      router.push(
-        `/dashboard/billing?payment_success=true&sub_order=${encodeURIComponent(result.orderId)}&plan=${encodeURIComponent(result.planName)}`
-      );
+      setStripeClientSecret(result.clientSecret);
+      setStripePublishableKey(result.publishableKey);
+      setStripeEnvironment(result.environment || stripeEnvironment);
+      setShowStripeCheckout(true);
     } catch (error) {
-      console.error("Subscription checkout failed:", error);
-      alert(error instanceof Error ? error.message : "Payment failed. Please check your card details and try again.");
+      console.error("Subscription Stripe session failed:", error);
+      alert(error instanceof Error ? error.message : "Could not start Stripe checkout.");
+    } finally {
       setProcessing(false);
     }
   };
@@ -330,19 +303,17 @@ function SubscriptionCheckoutForm() {
 
         <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-6 lg:p-16">
           <div className="w-full max-w-md">
-            <CheckoutCustomerForm
+            <StripeCheckoutCustomerForm
               customerDetails={customerDetails}
               setCustomerDetails={setCustomerDetails}
               processing={processing}
-              payhereEnabled={payhereEnabled}
-              payhereEnvironment={payhereEnvironment}
-              submitLabel={`Subscribe — ${formattedAmount}`}
-              onSubmit={handleSubmit}
-              paymentMode="inline"
-              cardType={cardType}
-              setCardType={setCardType}
-              cardDetails={cardDetails}
-              setCardDetails={setCardDetails}
+              stripeEnabled={stripeEnabled}
+              stripeEnvironment={stripeEnvironment}
+              submitLabel={`Continue to subscribe — ${formattedAmount}`}
+              onContinue={handleContinueToStripe}
+              stripeClientSecret={stripeClientSecret}
+              stripePublishableKey={stripePublishableKey}
+              showStripeCheckout={showStripeCheckout}
             />
           </div>
         </div>

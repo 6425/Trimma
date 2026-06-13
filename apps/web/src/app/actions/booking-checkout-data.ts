@@ -37,8 +37,8 @@ export type CheckoutDataResult =
       serviceTotal: number;
       rates: { platform: number; salon: number; agent: number };
       resolvedServiceIds: string[];
-      payhereEnabled: boolean;
-      payhereEnvironment: string;
+      stripeEnabled: boolean;
+      stripeEnvironment: string;
     }
   | { success: false; missingDraft?: boolean; error: string };
 
@@ -89,7 +89,7 @@ export async function fetchBookingCheckoutData(
         .maybeSingle(),
       supabase
         .from("global_payment_settings")
-        .select("payhere_enabled, environment")
+        .select("stripe_enabled, stripe_environment, stripe_publishable_key_sandbox, stripe_publishable_key_live")
         .eq("id", "00000000-0000-0000-0000-000000000001")
         .maybeSingle(),
     ]);
@@ -189,6 +189,9 @@ export async function fetchBookingCheckoutData(
         : services.reduce((sum, service) => sum + parseFloat(service.price || 0), 0);
     const reservationFee = calculateReservationFee(serviceTotal);
 
+    const stripeEnvironment =
+      paymentSettings?.stripe_environment === "live" ? "live" : "sandbox";
+
     return {
       success: true,
       salon: salon as Record<string, unknown>,
@@ -198,8 +201,8 @@ export async function fetchBookingCheckoutData(
       serviceTotal,
       rates,
       resolvedServiceIds,
-      payhereEnabled: paymentSettings?.payhere_enabled !== false,
-      payhereEnvironment: paymentSettings?.environment || "sandbox",
+      stripeEnabled: paymentSettings?.stripe_enabled !== false,
+      stripeEnvironment,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load checkout.";

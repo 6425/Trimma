@@ -379,7 +379,7 @@ export default function PackagesPage() {
             </p>
           </div>
         </div>
-
+        
         <Button
           onClick={() => setShowImportModal(true)}
           className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-zinc-900 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20"
@@ -435,13 +435,13 @@ export default function PackagesPage() {
               >
                 {pkg.status === "active" ? (
                   <span className="absolute top-5 right-5 bg-emerald-50 text-emerald-600 font-extrabold text-[8px] tracking-widest uppercase px-3 py-1.5 rounded-full border border-emerald-100">
-                    Active Deal
-                  </span>
+                Active Deal
+              </span>
                 ) : (
                   <span className="absolute top-5 right-5 bg-zinc-100 text-zinc-400 font-extrabold text-[8px] tracking-widest uppercase px-3 py-1.5 rounded-full">
-                    Paused
-                  </span>
-                )}
+                Paused
+              </span>
+            )}
 
                 <div className="flex-1 space-y-5 pt-2 pr-16">
                   <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest gap-1.5 px-2.5 py-1">
@@ -473,18 +473,18 @@ export default function PackagesPage() {
                         <li key={sIdx} className="flex items-start gap-2.5 text-xs sm:text-sm font-medium text-zinc-600 leading-relaxed">
                           <CheckCircle className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
                           <span>{srv}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
                 <div className="mt-auto pt-6 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-                  <div>
+              <div>
                     {savings && (
-                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mb-1">
+                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mb-1">
                         <Percent className="w-2.5 h-2.5 inline mr-0.5" /> {savings}
-                      </span>
+                </span>
                     )}
                     <div className="text-xl font-black text-brand">LKR {price.toLocaleString()}</div>
                   </div>
@@ -613,8 +613,8 @@ export default function PackagesPage() {
                   );
                 })
               )}
-            </div>
-
+              </div>
+              
             <div className="shrink-0 p-4 sm:p-6 border-t border-zinc-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 bg-white">
               <Button variant="ghost" onClick={() => setShowImportModal(false)} className="rounded-xl font-bold">
                 Cancel
@@ -774,7 +774,7 @@ export default function PackagesPage() {
               </div>
             </form>
           </div>
-        </div>
+      </div>
       )}
     </div>
   );

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import {
   clearBookingCheckoutDraft,
@@ -12,18 +11,13 @@ import {
 } from "@/lib/booking-checkout";
 import { fetchBookingCheckoutData } from "@/app/actions/booking-checkout-data";
 import { withTimeout } from "@/lib/promise-timeout";
-import {
-  validateCardPayment,
-  type CardPaymentDetails,
-  type CardType,
-} from "@/lib/card-payment";
+import { CheckoutStyles } from "../../../components/checkout/CheckoutStyles";
+import { StripeCheckoutCustomerForm } from "../../../components/checkout/StripeCheckoutCustomerForm";
 import { formatLkr } from "@/lib/subscription-pricing";
 import {
   calculateBalanceDue,
   RESERVATION_DEPOSIT_PERCENT,
 } from "@/lib/booking-pricing";
-import { CheckoutCustomerForm } from "../../../components/checkout/CheckoutCustomerForm";
-import { CheckoutStyles } from "../../../components/checkout/CheckoutStyles";
 import { ArrowLeft, CalendarRange, Clock, Loader2, Scissors, User } from "lucide-react";
 
 type LoadedBookingCheckout = {
@@ -45,22 +39,17 @@ function getErrorMessage(error: unknown): string {
 }
 
 function BookingCheckoutForm() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [checkoutData, setCheckoutData] = useState<LoadedBookingCheckout | null>(null);
   const [missingDraft, setMissingDraft] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [salonBackSlug, setSalonBackSlug] = useState<string | null>(null);
-  const [payhereEnabled, setPayhereEnabled] = useState(true);
-  const [payhereEnvironment, setPayhereEnvironment] = useState("sandbox");
-  const [cardType, setCardType] = useState<CardType>("visa");
-  const [cardDetails, setCardDetails] = useState<CardPaymentDetails>({
-    cardholderName: "",
-    cardNumber: "",
-    expiry: "",
-    cvv: "",
-  });
+  const [stripeEnabled, setStripeEnabled] = useState(true);
+  const [stripeEnvironment, setStripeEnvironment] = useState("sandbox");
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
+  const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -112,8 +101,8 @@ function BookingCheckoutForm() {
         }
 
         draft.serviceIds = result.resolvedServiceIds;
-        setPayhereEnabled(result.payhereEnabled);
-        setPayhereEnvironment(result.payhereEnvironment);
+        setStripeEnabled(result.stripeEnabled);
+        setStripeEnvironment(result.stripeEnvironment);
         setCheckoutData({
           draft,
           salon: result.salon,
@@ -131,12 +120,6 @@ function BookingCheckoutForm() {
           lastName: nameParts.lastName,
           email: draft.customerDetails.email || prev.email,
           phone: draft.customerDetails.phone || prev.phone,
-        }));
-        setCardDetails((prev) => ({
-          ...prev,
-          cardholderName:
-            draft.customerDetails.fullName ||
-            `${nameParts.firstName} ${nameParts.lastName}`.trim(),
         }));
       } catch (error) {
         console.error("Error loading booking checkout:", error);
@@ -173,15 +156,8 @@ function BookingCheckoutForm() {
     );
   }, [checkoutData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleContinueToStripe = async () => {
     if (!checkoutData) return;
-
-    const cardError = validateCardPayment(cardType, cardDetails);
-    if (cardError) {
-      alert(cardError);
-      return;
-    }
 
     setProcessing(true);
 
@@ -189,7 +165,7 @@ function BookingCheckoutForm() {
       const { draft, salon, services, staffMember, reservationFee, serviceTotal, rates } =
         checkoutData;
 
-      const response = await fetch("/api/checkout/booking", {
+      const response = await fetch("/api/checkout/stripe/booking-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -205,14 +181,6 @@ function BookingCheckoutForm() {
             promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
           },
           customer: customerDetails,
-          card: {
-            cardType,
-            cardNumber: cardDetails.cardNumber,
-            expiry: cardDetails.expiry,
-            cvv: cardDetails.cvv,
-            cardholderName: cardDetails.cardholderName,
-          },
-          payhereEnvironment,
           reservationFee,
           serviceTotal,
           rates,
@@ -229,20 +197,17 @@ function BookingCheckoutForm() {
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || "Checkout failed.");
+        throw new Error(result.error || "Failed to start Stripe checkout.");
       }
 
-      clearBookingCheckoutDraft();
-      const whatsappQuery = result.whatsappSent ? "&whatsapp_sent=true" : "&whatsapp_sent=false";
-      const errorQuery = result.whatsappError
-        ? `&whatsapp_error=${encodeURIComponent(result.whatsappError)}`
-        : "";
-      router.push(
-        `/checkout/booking/success?booking_no=${result.bookingNo}${whatsappQuery}${errorQuery}`
-      );
+      setStripeClientSecret(result.clientSecret);
+      setStripePublishableKey(result.publishableKey);
+      setStripeEnvironment(result.environment || stripeEnvironment);
+      setShowStripeCheckout(true);
     } catch (error) {
-      console.error("Booking checkout failed:", getErrorMessage(error), error);
-      alert(getErrorMessage(error) || "Payment failed. Please check your card details and try again.");
+      console.error("Stripe session failed:", getErrorMessage(error), error);
+      alert(getErrorMessage(error) || "Could not start Stripe checkout.");
+    } finally {
       setProcessing(false);
     }
   };
@@ -382,19 +347,17 @@ function BookingCheckoutForm() {
 
         <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-6 lg:p-16">
           <div className="w-full max-w-md">
-            <CheckoutCustomerForm
+            <StripeCheckoutCustomerForm
               customerDetails={customerDetails}
               setCustomerDetails={setCustomerDetails}
               processing={processing}
-              payhereEnabled={payhereEnabled}
-              payhereEnvironment={payhereEnvironment}
-              submitLabel={`Pay ${RESERVATION_DEPOSIT_PERCENT}% deposit — ${formattedReservationFee}`}
-              onSubmit={handleSubmit}
-              paymentMode="inline"
-              cardType={cardType}
-              setCardType={setCardType}
-              cardDetails={cardDetails}
-              setCardDetails={setCardDetails}
+              stripeEnabled={stripeEnabled}
+              stripeEnvironment={stripeEnvironment}
+              submitLabel={`Continue to pay ${RESERVATION_DEPOSIT_PERCENT}% deposit — ${formattedReservationFee}`}
+              onContinue={handleContinueToStripe}
+              stripeClientSecret={stripeClientSecret}
+              stripePublishableKey={stripePublishableKey}
+              showStripeCheckout={showStripeCheckout}
             />
           </div>
         </div>
