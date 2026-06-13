@@ -1334,7 +1334,7 @@ export default function SalonProfilePage() {
                             className="w-5 h-5 rounded border-zinc-300 text-brand focus:ring-brand"
                           />
                           <label htmlFor={`amenity-${amenity.id}`} className="text-sm font-bold text-zinc-900 cursor-pointer flex-1">
-                            {amenity.name}
+                            {amenity.name === "Salon of Chairs" ? "Salon Chairs" : amenity.name}
                           </label>
                         </div>
                         {isChecked && amenity.type === "number" && (
