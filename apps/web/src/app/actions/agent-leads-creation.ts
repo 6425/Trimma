@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 
 function slugify(value: string) {
   const base = value
@@ -69,6 +70,28 @@ export async function createLeadFromGooglePlaces(businessData: {
 
     if (insertError) throw insertError;
     const salonId = newSalon.id;
+
+    try {
+      const images = await syncSalonImagesFromGooglePlace(supabaseAdmin, {
+        id: salonId,
+        name: businessData.name,
+        address: businessData.address,
+        city: null,
+        district: null,
+        place_id: businessData.place_id,
+      });
+
+      await supabaseAdmin
+        .from("salons")
+        .update({
+          cover_url: images.cover_url,
+          hero_url: images.hero_url,
+          place_id: images.place_id,
+        })
+        .eq("id", salonId);
+    } catch (imageErr) {
+      console.warn("Google Places image sync skipped for new lead:", imageErr);
+    }
 
     // 3. Fetch 6 random services and insert
     const { data: globalServices } = await supabaseAdmin

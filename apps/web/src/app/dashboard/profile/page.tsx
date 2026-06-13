@@ -374,10 +374,18 @@ export default function SalonProfilePage() {
     if (type === "cover") {
       setCoverUrl(uploadedUrl);
       updatedCover = uploadedUrl;
+      if (!updatedHero) {
+        setHeroUrl(uploadedUrl);
+        updatedHero = uploadedUrl;
+      }
     }
     if (type === "hero") {
       setHeroUrl(uploadedUrl);
       updatedHero = uploadedUrl;
+      if (!updatedCover) {
+        setCoverUrl(uploadedUrl);
+        updatedCover = uploadedUrl;
+      }
     }
     if (type === "gallery") {
       updatedGallery = [...featuredImages, uploadedUrl];
@@ -847,6 +855,7 @@ export default function SalonProfilePage() {
 
             {/* Hidden File Inputs */}
             <input type="file" ref={logoInputRef} onChange={(e) => handleFileChange(e, "logo")} accept="image/*" className="hidden" />
+            <input type="file" ref={coverInputRef} onChange={(e) => handleFileChange(e, "cover")} accept="image/*" className="hidden" />
             <input type="file" ref={heroInputRef} onChange={(e) => handleFileChange(e, "hero")} accept="image/*" className="hidden" />
             <input type="file" ref={galleryInputRef} onChange={(e) => handleFileChange(e, "gallery")} accept="image/*" className="hidden" />
 
@@ -895,7 +904,48 @@ export default function SalonProfilePage() {
                 </Button>
               </div>
 
+              {/* Card 2: Cover Banner Uploader (used on salon listings) */}
+              <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group md:col-span-2">
+                <div className="space-y-3 w-full">
+                  <span className="inline-flex bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                    {SIZING_INFO.cover.label}
+                  </span>
 
+                  <div className="h-32 w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
+                    {coverUrl ? (
+                      <>
+                        <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage("cover")}
+                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </>
+                    ) : (
+                      <ImageIcon className="w-8 h-8 text-amber-300" />
+                    )}
+                  </div>
+
+                  <div className="text-[11px] text-zinc-400 space-y-0.5">
+                    <p className="font-bold text-amber-700">{SIZING_INFO.cover.resolution}</p>
+                    <p>{SIZING_INFO.cover.sizeText}</p>
+                    <p className="text-zinc-500">Shown on the homepage and salon directory cards.</p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploadingType === "cover"}
+                  className="mt-4 w-full rounded-xl h-10 border-amber-100 text-amber-700 hover:bg-amber-50 font-bold text-xs flex items-center justify-center gap-1.5"
+                >
+                  {uploadingType === "cover" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                  Upload Cover
+                </Button>
+              </div>
 
               {/* Card 3: Hero Header Uploader */}
               <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group">

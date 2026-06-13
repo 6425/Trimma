@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fetchAdminSalons, fetchAdminUsers } from "@/app/actions/admin-list-data";
 import { approveAdminSalon, verifyAdminSalon, rejectAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
+import { refreshSalonGooglePlaceImages } from "@/app/actions/salon-google-images";
 import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
+import { autoCropAndUpload } from "@/lib/auto-crop-upload";
 import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -36,6 +38,8 @@ export default function Salons() {
   const [selectedSalon, setSelectedSalon] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isRefreshingImage, setIsRefreshingImage] = useState(false);
+  const [uploadingImageField, setUploadingImageField] = useState<"cover_url" | "hero_url" | "logo_url" | null>(null);
 
   const fetchSalons = async () => {
     try {
@@ -91,6 +95,8 @@ export default function Salons() {
       rating: salon.rating !== null ? String(salon.rating) : "",
       logo_url: salon.logo_url || "",
       cover_url: salon.cover_url || "",
+      hero_url: salon.hero_url || "",
+      place_id: salon.place_id || "",
       status: salon.status || "active",
       working_hours:
         typeof salon.working_hours === "string"
@@ -102,6 +108,67 @@ export default function Salons() {
       assign_to: salon.assign_to || ""
     });
     setViewModalOpen(true);
+  };
+
+  const handleRefreshGoogleImage = async () => {
+    if (!selectedSalon) return;
+
+    try {
+      setIsRefreshingImage(true);
+      toast.loading("Fetching real Google Business photo...", { id: "refresh-google-image" });
+
+      const result = await refreshSalonGooglePlaceImages(selectedSalon.id);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      setEditForm((prev: any) => ({
+        ...prev,
+        cover_url: result.cover_url,
+        hero_url: result.hero_url,
+        place_id: result.place_id,
+      }));
+      setSelectedSalon({
+        ...selectedSalon,
+        cover_url: result.cover_url,
+        hero_url: result.hero_url,
+        place_id: result.place_id,
+      });
+
+      toast.success("Salon image updated from Google.", { id: "refresh-google-image" });
+      fetchSalons();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to refresh salon image.";
+      toast.error(message, { id: "refresh-google-image" });
+    } finally {
+      setIsRefreshingImage(false);
+    }
+  };
+
+  const handleAdminImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: "cover_url" | "hero_url" | "logo_url"
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    try {
+      setUploadingImageField(field);
+      toast.loading("Uploading image...", { id: `upload-${field}` });
+
+      const targetWidth = field === "logo_url" ? 500 : field === "cover_url" ? 1200 : 1920;
+      const targetHeight = field === "logo_url" ? 500 : field === "cover_url" ? 400 : 680;
+      const publicUrl = await autoCropAndUpload(file, targetWidth, targetHeight, field.replace("_url", ""));
+
+      setEditForm((prev: any) => ({ ...prev, [field]: publicUrl }));
+      toast.success("Image uploaded. Click Save Changes to apply.", { id: `upload-${field}` });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Image upload failed.";
+      toast.error(message, { id: `upload-${field}` });
+    } finally {
+      setUploadingImageField(null);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -705,6 +772,102 @@ export default function Salons() {
                       placeholder="e.g. 79.861244"
                       className="h-10 rounded-xl bg-zinc-50 border-zinc-200 font-mono text-[10px] focus:ring-2 focus:ring-emerald-500/20"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5" /> 3. Salon Images
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1 md:col-span-2">
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Google Place ID</label>
+                    <Input
+                      value={editForm.place_id}
+                      onChange={(e) => setEditForm({ ...editForm, place_id: e.target.value })}
+                      placeholder="Optional — used to fetch the real Google photo"
+                      className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 font-mono text-[10px]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Cover Image URL</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editForm.cover_url}
+                        onChange={(e) => setEditForm({ ...editForm, cover_url: e.target.value })}
+                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-[10px]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingImageField === "cover_url"}
+                        className="h-10 px-3 rounded-xl relative overflow-hidden shrink-0 text-xs font-bold"
+                      >
+                        {uploadingImageField === "cover_url" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={(e) => handleAdminImageUpload(e, "cover_url")}
+                          disabled={uploadingImageField === "cover_url"}
+                        />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Hero Image URL</label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editForm.hero_url}
+                        onChange={(e) => setEditForm({ ...editForm, hero_url: e.target.value })}
+                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-[10px]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingImageField === "hero_url"}
+                        className="h-10 px-3 rounded-xl relative overflow-hidden shrink-0 text-xs font-bold"
+                      >
+                        {uploadingImageField === "hero_url" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={(e) => handleAdminImageUpload(e, "hero_url")}
+                          disabled={uploadingImageField === "hero_url"}
+                        />
+                      </Button>
+                    </div>
+                  </div>
+                  {editForm.cover_url ? (
+                    <div className="md:col-span-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editForm.cover_url}
+                        alt={`${editForm.name || "Salon"} cover preview`}
+                        className="w-full max-h-48 object-cover rounded-xl border border-zinc-200"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="md:col-span-2 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleRefreshGoogleImage}
+                      disabled={isRefreshingImage}
+                      className="rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50 h-10 text-xs font-bold"
+                    >
+                      {isRefreshingImage ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Eye className="w-4 h-4 mr-2" />
+                      )}
+                      Sync from Google
+                    </Button>
+                    <p className="text-[10px] text-zinc-500 self-center">
+                      Google is the default source. Upload or paste a URL above to override it.
+                    </p>
                   </div>
                 </div>
               </div>

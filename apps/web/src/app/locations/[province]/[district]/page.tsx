@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { DistrictDetailTemplate, DistrictData } from "../../../../components/marketplace/DistrictDetailTemplate";
 import { supabase } from "@/config/supabase";
-import { mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+import { mapVerifiedSalonListingStats, getSalonListingImage } from "@/lib/salons-mapper";
 import {
   buildCityCards,
   getDistrictBySlugs,
@@ -57,7 +57,7 @@ export default function DistrictDetailPage() {
       setLoading(true);
       const { data: dbSalons, error } = await supabase
       .from("salons")
-      .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
+      .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured")
       .limit(50);
       
       if (error) throw error;
@@ -74,9 +74,10 @@ export default function DistrictDetailPage() {
       categories: [s.category || "Salon", "Grooming"],
       category: s.category || "Beauty Lounge",
       logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
-      image:
-      s.cover_url ||
-      "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80",
+      image: getSalonListingImage(
+        s,
+        "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80"
+      ),
       featured: s.is_featured === true,
       openNow: true,
       startingPrice: 1500,

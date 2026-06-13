@@ -9,6 +9,14 @@ export function mapVerifiedSalonListingStats(salon: {
   return { rating, reviews };
 }
 
+export function getSalonListingImage(
+  salon: { cover_url?: string | null; hero_url?: string | null },
+  fallback: string
+): string {
+  const image = (salon.cover_url || salon.hero_url || "").trim();
+  return image || fallback;
+}
+
 export function mapSalonRowToUI(s: any, idx: number) {
   const prices = s.services?.map((ser: any) => Number(ser.price)) || [];
   const startingPrice = prices.length > 0 ? Math.min(...prices) : 1500;
@@ -31,8 +39,7 @@ export function mapSalonRowToUI(s: any, idx: number) {
     "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop",
   ];
 
-  const cover = (s.cover_url || s.hero_url || "").trim();
-  const image = cover || fallbackImages[idx % fallbackImages.length];
+  const image = getSalonListingImage(s, fallbackImages[idx % fallbackImages.length]);
 
   return {
     id: s.id,

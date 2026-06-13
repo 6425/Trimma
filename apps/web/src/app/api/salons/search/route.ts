@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       .from("salons")
       .select(`
         id, name, slug, rating, review_count,
-        city, district, category, logo_url, cover_url,
+        city, district, category, logo_url, cover_url, hero_url,
         is_featured, is_verified,
         services ( id, name, price, category )
       `);

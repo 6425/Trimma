@@ -184,6 +184,7 @@ function AgentLeads() {
     longitude: "",
     price_level: SALON_DEFAULT_CURRENCY,
     summary: "",
+    cover_url: "",
     hero_url: "",
     onboarding_status: "ASSIGNED_TO_AGENT",
     activation_status: "INACTIVE",
@@ -258,7 +259,8 @@ function AgentLeads() {
       longitude: lead.longitude !== null && lead.longitude !== undefined ? String(lead.longitude) : "",
       price_level: normalizeSalonCurrency(lead.price_level),
       summary: lead.summary || "",
-      hero_url: lead.hero_url || "",
+      cover_url: lead.cover_url || lead.hero_url || "",
+      hero_url: lead.hero_url || lead.cover_url || "",
       onboarding_status: lead.onboarding_status || "ASSIGNED_TO_AGENT",
       activation_status: lead.activation_status || "INACTIVE",
       owner_gmail: lead.owner_email || lead.owner_gmail || "",
@@ -436,7 +438,7 @@ function AgentLeads() {
       const { error: uploadError } = await supabase.storage.from("salon-images").upload(fileName, file);
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from("salon-images").getPublicUrl(fileName);
-      setFormData({ ...formData, hero_url: data.publicUrl });
+      setFormData({ ...formData, cover_url: data.publicUrl, hero_url: data.publicUrl });
       toast.success("Image uploaded successfully!");
     } catch (err: any) {
       toast.error("Upload failed: " + err.message);
@@ -469,7 +471,8 @@ function AgentLeads() {
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
         price_level: SALON_DEFAULT_CURRENCY,
         summary: formData.summary || null,
-        hero_url: formData.hero_url || null,
+        hero_url: formData.hero_url || formData.cover_url || null,
+        cover_url: formData.cover_url || formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
         agent_notes: formData.agent_notes || null
       };
@@ -547,7 +550,8 @@ function AgentLeads() {
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
         price_level: SALON_DEFAULT_CURRENCY,
         summary: formData.summary || null,
-        hero_url: formData.hero_url || null,
+        hero_url: formData.hero_url || formData.cover_url || null,
+        cover_url: formData.cover_url || formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
         agent_notes: formData.agent_notes || null
       };
@@ -655,7 +659,8 @@ function AgentLeads() {
         longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
         price_level: SALON_DEFAULT_CURRENCY,
         summary: formData.summary || null,
-        hero_url: formData.hero_url || null,
+        hero_url: formData.hero_url || formData.cover_url || null,
+        cover_url: formData.cover_url || formData.hero_url || null,
         owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
         agent_notes: formData.agent_notes || null,
         onboarding_status: "OWNER_INVITED",
@@ -789,7 +794,7 @@ function AgentLeads() {
     if (lead.phone) score += 15;
     if (lead.address) score += 15;
     if (lead.category) score += 10;
-    if (lead.hero_url) score += 15;
+    if (lead.cover_url || lead.hero_url) score += 15;
     if (lead.summary) score += 10;
     if (lead.working_hours && JSON.stringify(lead.working_hours) !== '[]') score += 15;
     return score;
@@ -926,9 +931,9 @@ function AgentLeads() {
                         className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer group"
                         onClick={() => handleOpenModal(lead)}
                       >
-                        {lead.hero_url ? (
+                        {(lead.cover_url || lead.hero_url) ? (
                           <div className="w-full h-32 rounded-xl overflow-hidden mb-3 bg-zinc-200">
-                            <img src={lead.hero_url} alt={lead.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <img src={lead.cover_url || lead.hero_url} alt={lead.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                           </div>
                         ) : (
                           <div className="w-full h-32 rounded-xl mb-3 bg-gradient-to-br from-zinc-100 to-zinc-200 flex items-center justify-center">
@@ -1172,11 +1177,11 @@ function AgentLeads() {
                     />
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Hero Image</label>
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Listing Cover Image</label>
                     <div className="flex items-center gap-2">
                       <Input
-                        value={formData.hero_url}
-                        onChange={(e) => setFormData({...formData, hero_url: e.target.value})}
+                        value={formData.cover_url}
+                        onChange={(e) => setFormData({...formData, cover_url: e.target.value, hero_url: e.target.value})}
                         placeholder="https://..."
                         className="h-11 rounded-xl bg-white border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 flex-1 text-sm"
                       />

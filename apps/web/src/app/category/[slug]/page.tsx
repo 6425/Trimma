@@ -62,7 +62,7 @@ export default function CategoryPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("salons")
-        .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, is_featured")
+        .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured")
         .limit(10);
 
       if (error) throw error;
