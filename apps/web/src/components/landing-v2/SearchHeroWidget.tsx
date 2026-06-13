@@ -61,9 +61,9 @@ export function SearchHeroWidget() {
             alt="Salon Background" 
             fill
             priority
-            className="object-cover opacity-30"
+            className="object-cover opacity-60"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B] via-[#0B0B0B]/90 to-[#F5B700]/40" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B]/55 via-[#0B0B0B]/35 to-[#F5B700]/25" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
