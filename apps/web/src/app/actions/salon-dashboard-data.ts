@@ -267,7 +267,7 @@ export async function fetchSalonStaffPage() {
       ctx.salon.subscription_plan_id as string | null | undefined
     );
 
-    const [staffRes, servicesRes, rolesRes] = await Promise.all([
+    const [staffRes, servicesRes, rolesRes, globalServicesRes] = await Promise.all([
       supabase.from("salon_staff").select("*").eq("salon_id", ctx.salonId),
       supabase
         .from("services")
@@ -275,9 +275,10 @@ export async function fetchSalonStaffPage() {
         .eq("salon_id", ctx.salonId)
         .order("name"),
       supabase.from("global_staff_roles").select("*").order("category"),
+      supabase.from("global_services").select("id, name, category").eq("is_active", true),
     ]);
 
-    for (const res of [staffRes, servicesRes, rolesRes]) {
+    for (const res of [staffRes, servicesRes, rolesRes, globalServicesRes]) {
       if (res.error) throw new Error(res.error.message);
     }
 
@@ -293,8 +294,9 @@ export async function fetchSalonStaffPage() {
       staff: staffRes.data || [],
       salonServices: (servicesRes.data || []).filter((service: { status?: string | null }) => {
         const status = (service.status || "active").toLowerCase();
-        return status !== "deleted" && status !== "inactive";
+        return status !== "deleted";
       }),
+      globalServices: globalServicesRes.data || [],
       globalStaffRoles,
       globalSkillGrades,
       subscriptionPlan: plan ? { name: plan.name, max_staff: plan.max_staff } : null,

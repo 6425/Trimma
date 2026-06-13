@@ -18,7 +18,7 @@ import {
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
-import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId } from "@/lib/salon-staff-insert";
+import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId, mapSalonServicesForStaffForm, parseStaffWorkingHours } from "@/lib/salon-staff-insert";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
 
 async function blobToBase64(blob: Blob): Promise<string> {
@@ -37,6 +37,7 @@ export default function DashboardStaff() {
   const [salonId, setSalonId] = useState<string | null>(null);
   const [staff, setStaff] = useState<any[]>([]);
   const [salonServices, setSalonServices] = useState<any[]>([]);
+  const [globalServices, setGlobalServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   
@@ -81,14 +82,13 @@ export default function DashboardStaff() {
 
   const [salonWorkingHours, setSalonWorkingHours] = useState(defaultSchedule);
 
-  const staffFormServices = salonServices.map((service) => ({
-    id: service.global_service_id || service.id,
+  const staffFormServices = mapSalonServicesForStaffForm(salonServices, globalServices);
+  const salonServiceRows = salonServices.map((service) => ({
+    id: service.id,
     salonServiceId: service.id,
     global_service_id: service.global_service_id,
-    name: service.name || "Service",
-    category: service.category || "",
+    name: service.name,
     duration_min: service.duration_min,
-    duration: service.duration_min,
   }));
 
   useEffect(() => {
@@ -147,6 +147,7 @@ export default function DashboardStaff() {
       }
 
       const servicesData = result.salonServices || [];
+      if (result.globalServices) setGlobalServices(result.globalServices);
       let prePopServices: any = {};
       if (servicesData.length) {
         setSalonServices(servicesData);
@@ -156,7 +157,12 @@ export default function DashboardStaff() {
         setSelectedServices(prePopServices);
       }
 
-      setStaff(result.staff || []);
+      setStaff(
+        (result.staff || []).map((member: any) => ({
+          ...member,
+          working_hours: parseStaffWorkingHours(member.working_hours) || member.working_hours,
+        }))
+      );
 
       const rolesData = result.globalStaffRoles || [];
       if (rolesData.length > 0) {
@@ -266,7 +272,7 @@ export default function DashboardStaff() {
         newSchedule,
         generalBufferTime,
         selectedServices,
-        salonServices
+        salonServiceRows
       );
 
       const insertResult = await insertSalonStaff({
@@ -363,7 +369,7 @@ export default function DashboardStaff() {
         data.schedule,
         data.general_buffer_time,
         data.services,
-        salonServices
+        salonServiceRows
       );
 
       let updatedAvatarUrl = data.avatar_url || editingStaffMember.avatar_url || null;
@@ -585,7 +591,7 @@ export default function DashboardStaff() {
                        {member.working_hours?.assigned_services && member.working_hours.assigned_services.length > 0 && (
                          <div className="flex flex-wrap gap-1 mt-2">
                            {member.working_hours.assigned_services.map((as: any) => {
-                             const matchedServ = findSalonServiceForAssignmentId(salonServices, as.service_id);
+                             const matchedServ = findSalonServiceForAssignmentId(salonServiceRows, as.service_id);
                              return (
                                <Badge key={as.service_id} className="bg-rose-50 text-brand border-none font-bold text-[9px] py-0 px-2 rounded">
                                  {matchedServ?.name || "Service"} ({as.commission_rate}%)
@@ -918,7 +924,7 @@ export default function DashboardStaff() {
       {editingStaffMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
           <AddProfessionalForm
-            key={`edit-${editingStaffMember.id}-${staffFormServices.length}`}
+            key={`edit-${editingStaffMember.id}-${staffFormServices.map((s) => s.salonServiceId).join(",")}`}
             onCancel={() => setEditingStaffMember(null)}
             onSubmit={handleEditStaffSubmit}
             globalRoles={globalRoles}
@@ -931,7 +937,7 @@ export default function DashboardStaff() {
               role: editingStaffMember.role,
               commission_rate: editingStaffMember.commission_rate,
               avatar_url: editingStaffMember.avatar_url,
-              working_hours: editingStaffMember.working_hours,
+              working_hours: parseStaffWorkingHours(editingStaffMember.working_hours) || editingStaffMember.working_hours,
             }}
             title="Edit Professional"
             submitLabel="Save Changes"

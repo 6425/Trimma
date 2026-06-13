@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { buildStaffServicesConfigFromMember } from "@/lib/salon-staff-insert";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -86,38 +87,7 @@ export function AddProfessionalForm({
   const buildServicesConfig = (
     staff: AddProfessionalFormProps["initialStaff"],
     services: AddProfessionalFormProps["salonServices"]
-  ) => {
-    const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
-    services.forEach((srv) => {
-      const assigned = staff?.working_hours?.assigned_services?.find(
-        (row) => row.service_id === srv.id || row.service_id === srv.salonServiceId || row.service_id === srv.global_service_id
-      );
-      const fromStaffServices = staff?.services?.[srv.id];
-      if (fromStaffServices) {
-        configs[srv.id] = {
-          enabled: Boolean(fromStaffServices.enabled),
-          commission: fromStaffServices.commission?.toString() || "10",
-          buffer: fromStaffServices.buffer?.toString() || "15",
-          duration: fromStaffServices.duration?.toString() || srv.duration_min?.toString() || srv.duration?.toString() || "30",
-        };
-      } else if (assigned) {
-        configs[srv.id] = {
-          enabled: true,
-          commission: assigned.commission_rate?.toString() || "10",
-          buffer: assigned.buffer_time?.toString() || "15",
-          duration: assigned.service_time?.toString() || srv.duration_min?.toString() || srv.duration?.toString() || "30",
-        };
-      } else {
-        configs[srv.id] = {
-          enabled: false,
-          commission: "10",
-          buffer: "15",
-          duration: srv.duration_min?.toString() || srv.duration?.toString() || "30",
-        };
-      }
-    });
-    return configs;
-  };
+  ) => buildStaffServicesConfigFromMember(staff || {}, services);
 
   // ADD FORM STATES — initialized from initialStaff when editing (parent should pass a stable key to remount)
   const [newName, setNewName] = useState(() => initialStaff?.name || "");
