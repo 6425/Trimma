@@ -112,7 +112,15 @@ function TerritoryExplorerContent() {
     setSelectedBusinessId(null);
     try {
       const terrIds = selectedTerritoryId === "all" ? territories.map(t => t.id) : [selectedTerritoryId];
-      const catsToSearch = (selectedCategory && selectedCategory !== "all") ? [selectedCategory] : categories;
+      const nameQuery = businessNameSearch.trim();
+      const catsToSearch =
+        nameQuery
+          ? selectedCategory !== "all"
+            ? [selectedCategory]
+            : []
+          : selectedCategory !== "all"
+            ? [selectedCategory]
+            : categories;
       const res = await tryAgentData(
         () => searchBusinessesInTerritories(catsToSearch, terrIds, resultLimit, businessNameSearch),
         () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds, resultLimit, businessNameSearch),

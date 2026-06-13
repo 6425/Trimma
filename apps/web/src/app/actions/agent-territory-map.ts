@@ -11,6 +11,81 @@ import {
 } from "@/lib/agent-territory-resolve";
 import { normalizeEmail } from "@/lib/normalize-email";
 
+function normalizeBusinessName(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function businessNameMatches(
+  placeName: string | null | undefined,
+  search: string
+): boolean {
+  if (!search) return true;
+  if (!placeName) return false;
+  const place = normalizeBusinessName(placeName);
+  const term = normalizeBusinessName(search);
+  if (!term) return true;
+  return place.includes(term) || term.includes(place);
+}
+
+function mapGooglePlace(place: any, category: string, territoryName: string) {
+  return {
+    id: place.place_id,
+    slug: place.place_id,
+    name: place.name,
+    category,
+    address: place.formatted_address,
+    city: territoryName,
+    phone: null,
+    latitude: place.geometry?.location?.lat || null,
+    longitude: place.geometry?.location?.lng || null,
+    location: null,
+    logo_url: place.icon || null,
+    is_verified: false,
+    rating: place.rating || 0,
+    review_count: place.user_ratings_total || 0,
+    status: "google_lead",
+  };
+}
+
+async function fetchGoogleTextSearch(query: string, apiKey: string) {
+  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status === "OK" && data.results) return data.results;
+  } catch (err) {
+    console.error("Google Places API error:", err);
+  }
+  return [];
+}
+
+async function resolveTerritoryNames(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  territoryIds: string[]
+) {
+  const realIds = territoryIds.filter((id) => !id.startsWith("primary-"));
+  const primaryNames = territoryIds
+    .filter((id) => id.startsWith("primary-"))
+    .map((id) => id.replace("primary-", ""));
+
+  let terrNames = [...primaryNames];
+
+  if (realIds.length > 0) {
+    const { data: terrs } = await supabase.from("territories").select("name").in("id", realIds);
+    if (terrs?.length) {
+      terrNames = [...terrNames, ...terrs.map((t) => t.name)];
+    }
+  }
+
+  return [...new Set(terrNames.filter(Boolean))];
+}
+
 export async function getAgentMapData() {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -45,50 +120,34 @@ export async function searchBusinessesInTerritories(
   if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabase = createSupabaseAdminClient();
-  
-  let terrNames: string[] = [];
+  const trimmedName = businessName?.trim();
+  const terrNames = await resolveTerritoryNames(supabase, territoryIds);
 
-  // Build query for local DB
   let query = supabase
     .from("salons")
     .select("id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to");
 
-  if (limit > 0) query = query.limit(limit);
+  // Apply result limit only after Google merge when searching by business name.
+  if (limit > 0 && !trimmedName) query = query.limit(limit);
 
-  let leadsQuery = supabase
-    .from("salon_leads")
-    .select("name, address, assign_to");
+  const leadsQuery = supabase.from("salon_leads").select("name, address, assign_to");
 
-  if (territoryIds.length > 0) {
-    const realIds = territoryIds.filter(id => !id.startsWith("primary-"));
-    const primaryNames = territoryIds.filter(id => id.startsWith("primary-")).map(id => id.replace("primary-", ""));
-    
-    terrNames = [...primaryNames];
-
-    if (realIds.length > 0) {
-      const { data: terrs } = await supabase.from("territories").select("name").in("id", realIds);
-      if (terrs && terrs.length > 0) {
-        terrNames = [...terrNames, ...terrs.map(t => t.name)];
-      }
-    }
-
+  // Territory filter applies to broad browse searches, not explicit business-name lookups.
+  if (!trimmedName) {
     if (terrNames.length > 0) {
       const orClause = territorySearchOrClause(terrNames);
       if (orClause) query = query.or(orClause);
+    } else {
+      const email = normalizeEmail(auth.email) || auth.email;
+      query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
     }
   }
 
-  if (terrNames.length === 0) {
-    const email = normalizeEmail(auth.email) || auth.email;
-    query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
-  }
-
-  if (categories.length > 0 && !categories.includes("All Categories")) {
-    const orClauses = categories.map(cat => `category.ilike.%${cat}%`).join(",");
+  if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
+    const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
     query = query.or(orClauses);
   }
 
-  const trimmedName = businessName?.trim();
   if (trimmedName) {
     query = query.ilike("name", `%${trimmedName}%`);
   }
@@ -100,50 +159,42 @@ export async function searchBusinessesInTerritories(
 
   let businesses: any[] = dbData || [];
 
-  // Search Google Places API if a specific category is selected
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (apiKey && terrNames.length > 0) {
-    const searchCategories = categories.length > 0 && !categories.includes("All Categories") 
-      ? categories 
-      : ["Salon", "Spa"]; // default search terms if all
+  if (apiKey) {
+    const googlePromises: Promise<any[]>[] = [];
+    const searchContexts = terrNames.length > 0 ? terrNames : ["Sri Lanka"];
 
-    const googlePromises = [];
+    if (trimmedName) {
+      const queries = new Set<string>();
+      for (const territoryName of searchContexts) {
+        queries.add(`${trimmedName} in ${territoryName}, Sri Lanka`);
+        queries.add(`${trimmedName} ${territoryName} Sri Lanka`);
+      }
+      queries.add(`${trimmedName} Sri Lanka`);
+      queries.add(trimmedName);
 
-    for (const territoryName of terrNames) {
-      for (const category of searchCategories) {
-        const searchQuery = encodeURIComponent(`${category} in ${territoryName}, Sri Lanka`);
-        const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQuery}&key=${apiKey}`;
-        
+      for (const searchQuery of queries) {
         googlePromises.push(
-          fetch(url)
-            .then(res => res.json())
-            .then(data => {
-              if (data.status === "OK" && data.results) {
-                return data.results.map((place: any) => ({
-                  id: place.place_id,
-                  slug: place.place_id,
-                  name: place.name,
-                  category: category,
-                  address: place.formatted_address,
-                  city: territoryName,
-                  phone: null,
-                  latitude: place.geometry?.location?.lat || null,
-                  longitude: place.geometry?.location?.lng || null,
-                  location: null,
-                  logo_url: place.icon || null,
-                  is_verified: false,
-                  rating: place.rating || 0,
-                  review_count: place.user_ratings_total || 0,
-                  status: "google_lead" // special status for map leads
-                }));
-              }
-              return [];
-            })
-            .catch(err => {
-              console.error("Google Places API error:", err);
-              return [];
-            })
+          fetchGoogleTextSearch(searchQuery, apiKey).then((results) =>
+            results.map((place) => mapGooglePlace(place, "Business", searchContexts[0]))
+          )
         );
+      }
+    } else if (terrNames.length > 0) {
+      const searchCategories =
+        categories.length > 0 && !categories.includes("All Categories")
+          ? categories
+          : ["Salon", "Spa"];
+
+      for (const territoryName of terrNames) {
+        for (const category of searchCategories) {
+          const searchQuery = `${category} in ${territoryName}, Sri Lanka`;
+          googlePromises.push(
+            fetchGoogleTextSearch(searchQuery, apiKey).then((results) =>
+              results.map((place) => mapGooglePlace(place, category, territoryName))
+            )
+          );
+        }
       }
     }
 
@@ -152,11 +203,7 @@ export async function searchBusinessesInTerritories(
 
     const { data: localLeads } = await leadsQuery;
 
-    // Salons already in our DB are shown as their own rows, so skip Google dups of them.
-    const salonNames = new Set(businesses.map(b => b.name.toLowerCase()));
-
-    // Manual leads (salon_leads) aren't shown as rows, so surface their Google match
-    // and flag it as "already taken" instead of hiding it.
+    const salonNames = new Set(businesses.map((b) => b.name.toLowerCase()));
     const leadByName = new Map<string, { assign_to?: string | null }>();
     for (const l of localLeads || []) {
       if (l?.name) leadByName.set(l.name.toLowerCase(), { assign_to: l.assign_to });
@@ -164,12 +211,15 @@ export async function searchBusinessesInTerritories(
 
     const seenGoogle = new Set<string>();
     for (const gb of googleBusinesses) {
-      const key = gb.name.toLowerCase();
-      if (salonNames.has(key)) continue; // already represented by a salon row
-      if (seenGoogle.has(key)) continue; // de-dup within Google results
+      if (trimmedName && !businessNameMatches(gb.name, trimmedName)) continue;
+
+      const key = (gb.id || gb.name || "").toLowerCase();
+      const nameKey = gb.name?.toLowerCase() || "";
+      if (salonNames.has(nameKey)) continue;
+      if (seenGoogle.has(key)) continue;
       seenGoogle.add(key);
 
-      const lead = leadByName.get(key);
+      const lead = leadByName.get(nameKey);
       if (lead) {
         businesses.push({ ...gb, is_taken: true, assign_to: lead.assign_to ?? null });
       } else {
@@ -179,8 +229,7 @@ export async function searchBusinessesInTerritories(
   }
 
   if (trimmedName) {
-    const lower = trimmedName.toLowerCase();
-    businesses = businesses.filter((b) => b.name?.toLowerCase().includes(lower));
+    businesses = businesses.filter((b) => businessNameMatches(b.name, trimmedName));
   }
 
   return {

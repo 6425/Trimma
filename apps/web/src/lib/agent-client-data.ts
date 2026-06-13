@@ -393,6 +393,7 @@ export async function searchBusinessesInTerritoriesClient(
   const auth = await requireAgentEmailClient();
   if (auth.success === false) return { success: false as const, error: auth.error };
 
+  const trimmedName = businessName?.trim();
   let terrNames: string[] = [];
   let query = supabase
     .from("salons")
@@ -400,7 +401,7 @@ export async function searchBusinessesInTerritoriesClient(
       "id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to"
     );
 
-  if (limit > 0) query = query.limit(limit);
+  if (limit > 0 && !trimmedName) query = query.limit(limit);
 
   if (territoryIds.length > 0) {
     const realIds = territoryIds.filter((id) => !id.startsWith("primary-"));
@@ -413,25 +414,24 @@ export async function searchBusinessesInTerritoriesClient(
       const { data: terrs } = await supabase.from("territories").select("name").in("id", realIds);
       if (terrs?.length) terrNames = [...terrNames, ...terrs.map((t) => t.name)];
     }
+  }
 
+  if (!trimmedName) {
     if (terrNames.length > 0) {
       const orClause = territorySearchOrClause(terrNames);
       if (orClause) query = query.or(orClause);
+    } else {
+      query = query.or(`assign_to.eq.${auth.email},assign_to.ilike.${auth.email}`);
     }
   }
 
-  if (categories.length > 0 && !categories.includes("All Categories")) {
+  if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
     const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
     query = query.or(orClauses);
   }
 
-  const trimmedName = businessName?.trim();
   if (trimmedName) {
     query = query.ilike("name", `%${trimmedName}%`);
-  }
-
-  if (terrNames.length === 0) {
-    query = query.or(`assign_to.eq.${auth.email},assign_to.ilike.${auth.email}`);
   }
 
   const { data, error } = await query;
