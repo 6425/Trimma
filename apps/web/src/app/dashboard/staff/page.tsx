@@ -6,7 +6,7 @@ import { Plus, Users, Loader2, Clock, Pencil, Sparkles, Trash2 } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { fetchSalonStaffPage } from "@/app/actions/salon-dashboard-data";
+import { fetchSalonStaffPage, fetchSalonServicesPage } from "@/app/actions/salon-dashboard-data";
 import {
   deleteSalonStaff,
   insertSalonStaff,
@@ -63,7 +63,6 @@ export default function DashboardStaff() {
 
   const staffFormServices = mapSalonServicesForStaffForm(salonServices, globalServices);
   const effectiveStaffRoles = resolveEffectiveStaffRoles(globalRoles);
-  const staffFormReady = !loading && !refreshingForm && staffFormServices.length > 0;
   const staffFormKey = `${staffModalMode || "closed"}-${editingStaffMember?.id || "new"}-${staffFormServices.map((s) => s.salonServiceId || s.id).join(",")}`;
   const salonServiceRows = salonServices.map((service) => ({
     id: service.id,
@@ -80,17 +79,56 @@ export default function DashboardStaff() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function fetchStaff(): Promise<number> {
-    try {
-      setLoading(true);
-      const result = await withTimeout(fetchSalonStaffPage(), 20000, "Loading timed out.");
-      if (result.success === false) throw new Error(result.error);
+  async function loadSalonServiceRows(
+    staffResult?: Awaited<ReturnType<typeof fetchSalonStaffPage>>,
+    servicesResult?: Awaited<ReturnType<typeof fetchSalonServicesPage>>
+  ) {
+    let servicesData: any[] = [];
+    let globals: any[] = [];
 
-      const salonData = result.salon as any;
+    if (staffResult?.success) {
+      servicesData = staffResult.salonServices || [];
+      globals = staffResult.globalServices || [];
+    }
+
+    if (servicesData.length === 0) {
+      const servicesPageResult =
+        servicesResult ??
+        (await withTimeout(fetchSalonServicesPage(), 20000, "Loading timed out."));
+      if (servicesPageResult.success) {
+        servicesData = (servicesPageResult.services || []).filter((service: { status?: string | null }) => {
+          const status = (service.status || "active").toLowerCase();
+          return status !== "deleted";
+        });
+        if (!globals.length) globals = servicesPageResult.globalServices || [];
+      }
+    }
+
+    setSalonServices(servicesData);
+    if (globals.length) setGlobalServices(globals);
+
+    return mapSalonServicesForStaffForm(servicesData, globals).length;
+  }
+
+  async function refreshStaffData(options?: { showPageLoading?: boolean }) {
+    const showPageLoading = options?.showPageLoading ?? false;
+    try {
+      if (showPageLoading) setLoading(true);
+      else setRefreshingForm(true);
+
+      const [staffResult, servicesResult] = await Promise.all([
+        withTimeout(fetchSalonStaffPage(), 20000, "Loading timed out."),
+        withTimeout(fetchSalonServicesPage(), 20000, "Loading timed out."),
+      ]);
+
+      if (staffResult.success === false) throw new Error(staffResult.error);
+
+      const salonData = staffResult.salon as any;
       if (salonData?.id) setSalonId(salonData.id);
       if (!salonData) {
         setStaff([]);
-        return 0;
+        await loadSalonServiceRows(staffResult, servicesResult.success ? servicesResult : undefined);
+        return;
       }
 
       if (salonData.working_hours) {
@@ -121,36 +159,36 @@ export default function DashboardStaff() {
         }
       }
 
-      // 2. Fetch Subscription Plan Details & Limits
-      const planData = result.subscriptionPlan as any;
+      const planData = staffResult.subscriptionPlan as any;
       if (planData) {
         setSubscriptionName(planData.name || "Free");
         setMaxStaffLimit(planData.max_staff || 2);
       }
 
-      const servicesData = result.salonServices || [];
-      if (result.globalServices) setGlobalServices(result.globalServices);
-      if (servicesData.length) setSalonServices(servicesData);
+      await loadSalonServiceRows(staffResult, servicesResult.success ? servicesResult : undefined);
 
       setStaff(
-        (result.staff || []).map((member: any) => ({
+        (staffResult.staff || []).map((member: any) => ({
           ...member,
           working_hours: parseStaffWorkingHours(member.working_hours) || member.working_hours,
         }))
       );
 
-      const rolesData = result.globalStaffRoles || [];
-      setGlobalRoles(resolveEffectiveStaffRoles(rolesData));
-
-      return mapSalonServicesForStaffForm(
-        servicesData,
-        result.globalServices || []
-      ).length;
+      setGlobalRoles(resolveEffectiveStaffRoles(staffResult.globalStaffRoles || []));
     } catch (err) {
       console.error("Failed to fetch staff:", err);
-      return 0;
+      throw err;
     } finally {
-      setLoading(false);
+      if (showPageLoading) setLoading(false);
+      else setRefreshingForm(false);
+    }
+  }
+
+  async function fetchStaff() {
+    try {
+      await refreshStaffData({ showPageLoading: true });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to load staff directory.");
     }
   }
 
@@ -186,16 +224,10 @@ export default function DashboardStaff() {
       return;
     }
 
-    let serviceCount = 0;
     try {
-      setRefreshingForm(true);
-      serviceCount = await fetchStaff();
-    } finally {
-      setRefreshingForm(false);
-    }
-
-    if (serviceCount === 0) {
-      toast.error("Add salon services in the Services menu before assigning staff to services.");
+      await refreshStaffData({ showPageLoading: false });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to refresh staff form data.");
       return;
     }
 
@@ -541,10 +573,10 @@ export default function DashboardStaff() {
 
       {staffModalMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-          {!staffFormReady ? (
+          {refreshingForm ? (
             <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-10 flex flex-col items-center gap-4">
               <Loader2 className="w-8 h-8 animate-spin text-brand" />
-              <p className="text-sm font-semibold text-zinc-600">Loading salon services and roles...</p>
+              <p className="text-sm font-semibold text-zinc-600">Loading staff form...</p>
             </div>
           ) : (
             <AddProfessionalForm

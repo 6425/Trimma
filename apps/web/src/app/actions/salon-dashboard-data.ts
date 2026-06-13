@@ -271,7 +271,7 @@ export async function fetchSalonStaffPage() {
       supabase.from("salon_staff").select("*").eq("salon_id", ctx.salonId),
       supabase
         .from("services")
-        .select("id, name, category, price, duration_min, status, global_service_id")
+        .select("*")
         .eq("salon_id", ctx.salonId)
         .order("name"),
       supabase.from("global_staff_roles").select("*").order("category"),
