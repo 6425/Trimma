@@ -8,7 +8,7 @@ import {
   type AgentRequestRow,
 } from "@/app/actions/agent-requests";
 import { listRegionalHeadAgentsForAdmin } from "@/app/actions/admin-operations";
-import { LocationHierarchySelect } from "@/components/locations/LocationHierarchySelect";
+import { LocationHierarchySelect } from "../../../../components/locations/LocationHierarchySelect";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

@@ -23,7 +23,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { AgentApplicationForm } from "@/components/careers/AgentApplicationForm";
+import { AgentApplicationForm } from "../../components/careers/AgentApplicationForm";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 

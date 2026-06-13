@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
-import { LocationHierarchySelect } from "@/components/locations/LocationHierarchySelect";
+import { LocationHierarchySelect } from "../locations/LocationHierarchySelect";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 const EMPTY_FORM = {
