@@ -60,8 +60,7 @@ export default function DealsClient({ deals, categories, locations }: Props) {
   return (
     <div className="bg-white text-zinc-900 min-h-screen">
       {/* Hero */}
-      <section className="relative overflow-hidden pt-20 pb-16 lg:pt-24 lg:pb-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,183,0,0.12)_0%,_transparent_60%)] pointer-events-none" />
+      <section className="page-hero-light pt-20 pb-16 lg:pt-24 lg:pb-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
           <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-6">
             <Gift className="w-4 h-4" />

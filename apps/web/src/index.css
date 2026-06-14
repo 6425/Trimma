@@ -586,7 +586,19 @@
     background: linear-gradient(135deg, #FFC947 0%, #F5B700 100%);
   }
   .bg-dark-gradient {
-    background: linear-gradient(135deg, #0B0B0B 0%, #151515 100%);
+    background: linear-gradient(135deg, #FFC947 0%, #F5B700 100%);
+  }
+  .page-hero-shell {
+    @apply relative overflow-hidden bg-primary-gradient border-b border-brand/30;
+  }
+  .page-hero-light {
+    @apply relative overflow-hidden bg-primary-gradient border-b border-brand/20;
+  }
+  .page-hero-overlay {
+    background: linear-gradient(to top, rgba(245, 183, 0, 0.82), rgba(255, 201, 71, 0.52), rgba(255, 201, 71, 0.28));
+  }
+  .page-hero-image {
+    @apply w-full h-full object-cover opacity-25 mix-blend-multiply;
   }
   .text-gradient {
     background: linear-gradient(135deg, #FFC947 0%, #F5B700 100%);

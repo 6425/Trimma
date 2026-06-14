@@ -64,25 +64,24 @@ export default function LocationsHubPage() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-32 relative overflow-hidden">
       {/* 1. PREMIUM FULL-WIDTH INTEGRATED HERO */}
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-14 md:py-20 flex items-center justify-center">
-        {/* Background Graphic overlay */}
+      <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=2836&auto=format&fit=crop" 
             alt="Sri Lanka scenic grooming locations" 
-            className="w-full h-full object-cover opacity-15 grayscale"
+            className="page-hero-image"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent"></div>
+          <div className="absolute inset-0 page-hero-overlay"></div>
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center w-full">
-          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> Islandwide Discovery Hub
+          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" /> Islandwide Discovery Hub
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
             Find Your Next Salon
           </h1>
-          <p className="text-base md:text-lg text-zinc-300 mb-6 max-w-xl mx-auto font-medium">
+          <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
             Discover the highest-rated beauty salons, barbers, and premium Ayurvedic spas across the scenic provinces of Sri Lanka.
           </p>
 

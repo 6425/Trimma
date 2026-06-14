@@ -169,42 +169,42 @@ export default function CityDetailPage() {
     <div className="min-h-screen bg-slate-50 font-sans pb-24 md:pb-0 relative">
       
       {/* 1. CITY HERO SECTION */}
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-14 md:py-20">
+      <section className="page-hero-shell py-14 md:py-20">
         <div className="absolute inset-0 z-0">
-           <img src={data.image} alt={data.name} className="w-full h-full object-cover opacity-15 grayscale border-none focus:outline-none" />
-           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent"></div>
+           <img src={data.image} alt={data.name} className="page-hero-image border-none focus:outline-none" />
+           <div className="absolute inset-0 page-hero-overlay"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center gap-2 text-zinc-400 text-xs font-semibold uppercase tracking-wider mb-6">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+          <div className="flex flex-wrap items-center gap-2 text-zinc-600 text-xs font-semibold uppercase tracking-wider mb-6">
+            <Link href="/" className="hover:text-zinc-900 transition-colors">Home</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href="/locations" className="hover:text-white transition-colors">Locations</Link>
+            <Link href="/locations" className="hover:text-zinc-900 transition-colors">Locations</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href={`/locations/${provinceSlug}`} className="hover:text-white transition-colors">{data.province}</Link>
+            <Link href={`/locations/${provinceSlug}`} className="hover:text-zinc-900 transition-colors">{data.province}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href={`/locations/${provinceSlug}/${districtSlug}`} className="hover:text-white transition-colors">{data.district}</Link>
+            <Link href={`/locations/${provinceSlug}/${districtSlug}`} className="hover:text-zinc-900 transition-colors">{data.district}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-zinc-200">{data.name}</span>
+            <span className="text-zinc-800">{data.name}</span>
           </div>
           
           <div className="max-w-3xl">
-             <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-               <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> {data.province} • {data.district} Directory
+             <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+               <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" /> {data.province} • {data.district} Directory
              </Badge>
-             <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">{data.name}</h1>
-             <p className="text-base md:text-lg text-zinc-300 mb-6 font-medium leading-relaxed">
+             <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">{data.name}</h1>
+             <p className="text-base md:text-lg text-zinc-700 mb-6 font-medium leading-relaxed">
                {data.description}
              </p>
              
              <div className="flex flex-wrap items-center gap-3 text-xs font-bold mb-6">
-               <div className="bg-white/5 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-2">
-                 <Store className="w-4 h-4 text-brand" />
-                 <span className="text-white">{data.salonCount} Salons Here</span>
+               <div className="bg-black/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-black/10 flex items-center gap-2">
+                 <Store className="w-4 h-4 text-zinc-900" />
+                 <span className="text-zinc-900">{data.salonCount} Salons Here</span>
                </div>
-               <div className="bg-white/5 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 flex items-center gap-2">
-                 <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                 <span className="text-white">{data.avgRating} Avg Rating</span>
+               <div className="bg-black/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-black/10 flex items-center gap-2">
+                 <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                 <span className="text-zinc-900">{data.avgRating} Avg Rating</span>
                </div>
              </div>
 

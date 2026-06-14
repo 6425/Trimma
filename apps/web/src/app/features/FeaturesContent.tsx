@@ -29,7 +29,105 @@ import {
   Users,
   X,
   Zap,
+  ExternalLink,
 } from "lucide-react";
+
+const SALON_DASHBOARD_ASSETS = {
+  sidebar: "/assets/features/dashboard/sidebar-nav.png",
+  performance: "/assets/features/dashboard/salon-performance.png",
+  income: "/assets/features/dashboard/income-breakdown.png",
+  analytics: "/assets/features/dashboard/analytics-charts.png",
+  activity: "/assets/features/dashboard/recent-activity.png",
+  commission: "/assets/features/dashboard/staff-commission.png",
+} as const;
+
+function DashboardPanel({
+  src,
+  alt,
+  priority = false,
+  className = "",
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm ${className}`}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        width={1400}
+        height={900}
+        priority={priority}
+        sizes="(max-width: 1024px) 100vw, 70vw"
+        className="h-auto w-full"
+      />
+    </div>
+  );
+}
+
+function SalonOwnerDashboardShowcase() {
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-zinc-200 bg-white shadow-2xl shadow-zinc-200/60">
+      <div className="flex items-center gap-3 border-b border-zinc-100 bg-zinc-50 px-4 py-3">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+        </div>
+        <div className="mx-auto flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold text-zinc-500">
+          <LayoutDashboard className="h-3.5 w-3.5 text-[#F5B700]" />
+          trimma.io/dashboard
+        </div>
+        <span className="hidden rounded-full bg-[#F5B700]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-800 sm:inline">
+          Salon Owner
+        </span>
+      </div>
+
+      <div className="flex flex-col lg:flex-row">
+        <div className="border-b border-zinc-100 bg-zinc-950 lg:w-[220px] lg:shrink-0 lg:border-b-0 lg:border-r">
+          <DashboardPanel
+            src={SALON_DASHBOARD_ASSETS.sidebar}
+            alt="Trimma salon owner dashboard sidebar navigation"
+            priority
+            className="rounded-none border-0 shadow-none"
+          />
+        </div>
+
+        <div className="flex-1 space-y-4 bg-slate-50 p-4 lg:p-6">
+          <DashboardPanel
+            src={SALON_DASHBOARD_ASSETS.performance}
+            alt="Salon performance overview with bookings, services, staff, and revenue KPIs"
+          />
+
+          <DashboardPanel
+            src={SALON_DASHBOARD_ASSETS.analytics}
+            alt="Seven-day booking trends by staff and revenue growth charts"
+          />
+
+          <DashboardPanel
+            src={SALON_DASHBOARD_ASSETS.income}
+            alt="Booking income breakdown with service, staff commission, and net totals"
+          />
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <DashboardPanel
+              src={SALON_DASHBOARD_ASSETS.activity}
+              alt="Recent booking activity feed"
+            />
+            <DashboardPanel
+              src={SALON_DASHBOARD_ASSETS.commission}
+              alt="Staff commission breakdown for the last seven days"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -373,9 +471,7 @@ export function FeaturesContent() {
   return (
     <div className="bg-white text-zinc-900 font-sans">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,183,0,0.14)_0%,_transparent_60%)] pointer-events-none" />
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#0B0B0B_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+      <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <SectionBadge>#1 Salon Booking Platform</SectionBadge>
@@ -574,47 +670,46 @@ export function FeaturesContent() {
       </section>
 
       {/* ── Dashboard Showcase ── */}
-      <section className="py-24">
+      <section className="py-24 bg-zinc-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="relative order-2 lg:order-1">
-              <div className="absolute -inset-6 rounded-[2rem] bg-[#F5B700]/10 blur-3xl pointer-events-none" />
-              <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-zinc-50">
-                <Image
-                  src="/assets/trimma-os-dashboard.png"
-                  alt="Trimma OS Agent Cockpit dashboard"
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-contain object-top"
-                />
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <SectionBadge>Salon Dashboard</SectionBadge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
+              Inside the Trimma OS Dashboard
+            </h2>
+            <p className="text-zinc-500 text-lg leading-relaxed mb-6">
+              The salon owner dashboard at{" "}
+              <code className="rounded-md bg-white px-2 py-0.5 text-sm font-semibold text-zinc-800 border border-zinc-200">
+                /dashboard
+              </code>{" "}
+              brings bookings, staff, services, and revenue into one professional workspace.
+            </p>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-sm font-bold text-zinc-900 hover:text-[#B8860B] transition-colors"
+            >
+              Open Salon Dashboard
+              <ExternalLink className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <SalonOwnerDashboardShowcase />
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+            {[
+              { icon: CalendarClock, label: "Live Calendar" },
+              { icon: Users, label: "Staff Rosters" },
+              { icon: BarChart3, label: "Revenue Insights" },
+              { icon: Tag, label: "Deals & Promos" },
+            ].map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 bg-white border border-zinc-200 rounded-2xl px-4 py-3 shadow-sm"
+              >
+                <Icon className="w-5 h-5 text-[#F5B700]" />
+                <span className="text-sm font-semibold text-zinc-800">{label}</span>
               </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <SectionBadge>Salon Dashboard</SectionBadge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
-                Inside the Trimma OS Dashboard
-              </h2>
-              <p className="text-zinc-500 text-lg leading-relaxed mb-8">
-                A professional control panel built for salon owners — manage bookings, staff, services, and revenue
-                without juggling multiple tools.
-              </p>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { icon: CalendarClock, label: "Live Calendar" },
-                  { icon: Users, label: "Staff Rosters" },
-                  { icon: BarChart3, label: "Revenue Insights" },
-                  { icon: Tag, label: "Deals & Promos" },
-                ].map(({ icon: Icon, label }) => (
-                  <div
-                    key={label}
-                    className="flex items-center gap-3 bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-3"
-                  >
-                    <Icon className="w-5 h-5 text-[#F5B700]" />
-                    <span className="text-sm font-semibold text-zinc-800">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

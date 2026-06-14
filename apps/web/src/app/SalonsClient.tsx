@@ -247,7 +247,7 @@ export default function SalonsClient({
       </Suspense>
 
       {/* HERO */}
-      <section className="relative overflow-hidden bg-primary-gradient border-b border-brand/30 py-10 md:py-14">
+      <section className="page-hero-shell py-10 md:py-14">
         <div className="absolute inset-0 z-0">
           <img
             src={HERO_BACKGROUND}
@@ -256,9 +256,9 @@ export default function SalonsClient({
             height={720}
             decoding="async"
             fetchPriority="high"
-            className="w-full h-full object-cover opacity-25 mix-blend-multiply"
+            className="page-hero-image"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#F5B700]/80 via-[#FFC947]/50 to-[#FFC947]/30" />
+          <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">

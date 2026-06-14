@@ -292,19 +292,19 @@ export function CustomerHelpGuide() {
   return (
     <div className="max-w-6xl mx-auto p-4 pb-16 space-y-8">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 border border-white/10">
-        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#F5B700]/10" />
+      <div className="relative overflow-hidden rounded-3xl bg-primary-gradient text-zinc-900 p-6 sm:p-10 border border-brand/20">
+        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-black/10" />
         <div className="relative z-10 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 bg-[#F5B700]/15 text-[#F5B700] border border-[#F5B700]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-black/10 text-zinc-900 border border-black/10 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
             <BookOpen className="w-3.5 h-3.5" />
             Customer Handbook
           </span>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">
             Trimma Booking Guide
           </h1>
-          <p className="text-sm text-white/70 leading-relaxed mb-4">
+          <p className="text-sm text-zinc-700 leading-relaxed mb-4">
             Everything you need to find, book, and enjoy beauty & wellness services in Sri Lanka.
-            Examples use <strong className="text-white">{CUSTOMER.name}</strong> booking{" "}
+            Examples use <strong className="text-zinc-900">{CUSTOMER.name}</strong> booking{" "}
             <strong className="text-white">{SALON.service}</strong> at{" "}
             <strong className="text-white">{SALON.name}</strong> ({SALON.location}).
             This guide is <strong className="text-white">public</strong> — no login required to read it.

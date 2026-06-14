@@ -632,22 +632,20 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans">
       
       {/* 1. DYNAMIC FULL-WIDTH INTEGRATED HERO BANNER */}
-      <div className="relative w-full bg-zinc-950 text-white overflow-hidden border-b border-zinc-900 shadow-sm">
-        {/* Hero Background Image with Premium Dark Gradient Mask */}
+      <div className="relative w-full page-hero-shell text-zinc-900 overflow-hidden shadow-sm">
         <div className="absolute inset-0 z-0">
           <img 
             src={salon.hero_url || salon.cover_url || mockExtraData.gallery[0]} 
             alt={`${salon.name} Background`} 
-            className="w-full h-full object-cover opacity-60 transition-transform duration-700" 
+            className="page-hero-image transition-transform duration-700" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/85 via-zinc-950/40 to-zinc-950/10" />
+          <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
-        {/* Content Container (Full Width Spacing aligned to standard limits but padding spreads nicely) */}
         <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">              {/* Logo Frame */}
-              <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-white/10 shadow-2xl shrink-0 bg-zinc-900 hidden sm:block">
+            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+              <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-black/10 shadow-2xl shrink-0 bg-white hidden sm:block">
                 <AvatarImage src={logoImage} className="object-cover" />
                 <AvatarFallback className="bg-[#FFC107] text-black font-bold">S</AvatarFallback>
               </Avatar>
@@ -655,13 +653,13 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
               <div className="space-y-3 w-full">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="w-16 h-16 rounded-xl border-2 border-white/10 shadow-xl shrink-0 bg-zinc-900 sm:hidden">
+                    <Avatar className="w-16 h-16 rounded-xl border-2 border-black/10 shadow-xl shrink-0 bg-white sm:hidden">
                       <AvatarImage src={logoImage} className="object-cover" />
                       <AvatarFallback className="bg-[#FFC107] text-black font-bold">S</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-zinc-900 leading-tight">
                           {salon.name}
                         </h1>
                         {salon.is_verified && (
@@ -703,20 +701,20 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-300">
-                  <div className="flex items-center text-white bg-white/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/5">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-700">
+                  <div className="flex items-center text-zinc-900 bg-black/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-black/10">
                     <Star className="w-4 h-4 mr-1.5 fill-amber-500 text-amber-500" />
                     {displayRating > 0 ? displayRating.toFixed(1) : "New"}{" "}
-                    <span className="font-normal text-zinc-400 ml-1">
+                    <span className="font-normal text-zinc-600 ml-1">
                       ({displayReviewCount} review{displayReviewCount === 1 ? "" : "s"})
                     </span>
                   </div>
-                  <div className="flex items-center hover:text-white transition-colors cursor-pointer" title={salon.address}>
+                  <div className="flex items-center hover:text-zinc-900 transition-colors cursor-pointer" title={salon.address}>
                     <MapPin className="w-4 h-4 mr-1.5 text-brand" />
                     <span>{salon.district || salon.city || salon.address || "Address not provided"}</span>
                   </div>
                   <button
-                    className="flex items-center text-white bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-1 rounded-lg border border-white/5 cursor-pointer"
+                    className="flex items-center text-zinc-900 bg-black/10 hover:bg-black/15 transition-colors px-2.5 py-1 rounded-lg border border-black/10 cursor-pointer"
                     onClick={() => {
                       const url = getSalonDirectionsUrl(salon);
                       if (url) window.open(url, "_blank", "noopener,noreferrer");
@@ -730,7 +728,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                 
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {serviceCategories.filter(c => c !== "All").map(c => (
-                    <Badge key={c} variant="secondary" className="bg-white/5 hover:bg-white/10 text-zinc-300 border border-white/5 font-semibold text-[9px] uppercase tracking-wider rounded-lg px-2.5 py-0.5">
+                    <Badge key={c} variant="secondary" className="bg-black/10 hover:bg-black/15 text-zinc-800 border border-black/10 font-semibold text-[9px] uppercase tracking-wider rounded-lg px-2.5 py-0.5">
                       {c}
                     </Badge>
                   ))}
@@ -738,7 +736,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
                 {/* WORKING HOURS ROW */}
                 <div className="pt-4 pb-2">
-                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-zinc-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <Clock className="w-3.5 h-3.5" /> Working Hours
                   </h3>
                   <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">

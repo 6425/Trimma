@@ -94,25 +94,25 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24">
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-14 md:py-20">
+      <section className="page-hero-shell py-14 md:py-20">
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=2836&auto=format&fit=crop"
             alt="Salon service categories"
-            className="w-full h-full object-cover opacity-15 grayscale"
+            className="page-hero-image"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+          <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center w-full">
-          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" />
+          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" />
             Browse by Service
           </Badge>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-4 leading-tight">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
             Salon Categories
           </h1>
-          <p className="text-base md:text-lg text-zinc-300 mb-8 max-w-xl mx-auto font-medium">
+          <p className="text-base md:text-lg text-zinc-700 mb-8 max-w-xl mx-auto font-medium">
             Choose a category to browse salons and book your next appointment.
           </p>
 

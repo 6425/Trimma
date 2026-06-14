@@ -131,34 +131,33 @@ export default function CategoryPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       
       {/* 1. HERO SECTION */}
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-14 md:py-20 flex items-center justify-center">
-        <div className="absolute inset-0 z-0 bg-zinc-950">
+      <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
+        <div className="absolute inset-0 z-0">
           <img 
             src={heroImage} 
             alt="Category Hero" 
-            className="w-full h-full object-cover opacity-60"
+            className="page-hero-image"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-[#F5B700]/30 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-950" />
+          <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> {categoryName} Specialists
+          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
             Best {categoryName} <br />
-            in <span className="text-gradient bg-primary-gradient">Sri Lanka</span>
+            in <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">Sri Lanka</span>
           </h1>
           
-          <p className="text-base md:text-lg text-zinc-300 mb-6 max-w-xl mx-auto font-medium">
+          <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
             Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
           </p>
           
-          <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-400 mb-6">
-             <span className="font-extrabold bg-brand/20 text-brand px-3 py-1 rounded-full">{filteredSalons.length} Salons Available</span>
-             <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
+             <span className="font-extrabold bg-black/10 text-zinc-900 px-3 py-1 rounded-full">{filteredSalons.length} Salons Available</span>
+             <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
           </div>
 

@@ -80,34 +80,33 @@ function SearchPageInner() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       
       {/* 1. PREMIUM FULL-WIDTH CENTERING HERO SECTION */}
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-20 md:py-28">
-        {/* Grayscale Subtle Background Image overlay */}
+      <section className="page-hero-shell py-20 md:py-28">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop" 
             alt="Category Background" 
-            className="w-full h-full object-cover opacity-15 grayscale"
+            className="page-hero-image"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+          <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" /> Discover Premium Grooming
+          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" /> Discover Premium Grooming
           </Badge>
           
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-6 leading-tight">
             Best {categoryName} <br />
-            in <span className="text-gradient bg-primary-gradient">Sri Lanka</span>
+            in <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">Sri Lanka</span>
           </h1>
           
-          <p className="text-base md:text-lg text-zinc-300 mb-10 max-w-xl mx-auto font-medium">
+          <p className="text-base md:text-lg text-zinc-700 mb-10 max-w-xl mx-auto font-medium">
             Discover top-rated barbers, beauty salons, and luxury spa centers. Compare services, styles, and book online instantly.
           </p>
           
-          <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-400 mb-10">
-             <span className="font-extrabold bg-brand/20 text-brand px-3 py-1 rounded-full">{filteredSalons.length} Salons Found</span>
-             <span className="w-1.5 h-1.5 rounded-full bg-zinc-700"></span>
+          <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-10">
+             <span className="font-extrabold bg-black/10 text-zinc-900 px-3 py-1 rounded-full">{filteredSalons.length} Salons Found</span>
+             <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
           </div>
 

@@ -7,15 +7,15 @@ import { Search, CalendarCheck, Sparkles, Star, MapPin, Scissors, CreditCard, Me
 // --- MOCKUPS ---
 
 const LandingMockup = () => (
-  <div className="w-full h-[400px] bg-[#0B0B0B] rounded-2xl shadow-xl overflow-hidden border border-zinc-800 flex flex-col relative mx-auto font-sans">
-    <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B] via-[#0B0B0B]/90 to-[#F5B700]/30" />
-    <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-white relative z-10 pt-8">
+  <div className="w-full h-[400px] bg-primary-gradient rounded-2xl shadow-xl overflow-hidden border border-brand/20 flex flex-col relative mx-auto font-sans">
+    <div className="absolute inset-0 page-hero-overlay" />
+    <div className="flex-1 flex flex-col items-center justify-center p-4 text-center text-zinc-900 relative z-10 pt-8">
       <h3 className="text-xl font-bold mb-2">Sri Lanka&apos;s Beauty & Wellness Marketplace</h3>
-      <p className="text-zinc-300 text-[10px] mb-4 max-w-[250px] leading-relaxed">Book salon, spa, barber, nail, skincare, and wellness appointments instantly.</p>
+      <p className="text-zinc-700 text-[10px] mb-4 max-w-[250px] leading-relaxed">Book salon, spa, barber, nail, skincare, and wellness appointments instantly.</p>
       
       <div className="flex gap-2 mb-8">
          <div className="bg-[#F5B700] text-black text-[10px] font-bold px-3 py-1.5 rounded-md">Book Now</div>
-         <div className="bg-white/10 text-white text-[10px] font-bold px-3 py-1.5 rounded-md border border-white/20">List Your Business</div>
+         <div className="bg-black/10 text-zinc-900 text-[10px] font-bold px-3 py-1.5 rounded-md border border-black/10">List Your Business</div>
       </div>
       
       {/* Search Widget */}
@@ -39,14 +39,14 @@ const LandingMockup = () => (
 const SalonsMockup = () => (
   <div className="w-full h-[400px] bg-slate-50 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 flex flex-col relative mx-auto font-sans">
     {/* Hero Header */}
-    <div className="bg-[#0B0B0B] p-4 text-center border-b border-white/10 relative">
-      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
+    <div className="bg-primary-gradient p-4 text-center border-b border-brand/20 relative">
+      <div className="absolute inset-0 page-hero-overlay" />
       <div className="relative z-10">
-        <div className="inline-flex items-center gap-1 bg-[#F5B700]/15 text-[#F5B700] border border-[#F5B700]/20 font-bold text-[8px] uppercase px-2 py-0.5 rounded-full mb-2">
+        <div className="inline-flex items-center gap-1 bg-black/10 text-zinc-900 border border-black/10 font-bold text-[8px] uppercase px-2 py-0.5 rounded-full mb-2">
           <Sparkles className="w-2 h-2" /> Discover Premium Grooming
         </div>
-        <h3 className="text-white font-black text-lg leading-tight mb-3">
-          Best Salons & Spas <br />in <span className="text-[#F5B700]">Sri Lanka</span>
+        <h3 className="text-zinc-900 font-black text-lg leading-tight mb-3">
+          Best Salons & Spas <br />in <span className="text-[#1A1C29]">Sri Lanka</span>
         </h3>
         {/* Miniature Search Bar */}
         <div className="bg-white rounded-lg p-1 flex gap-1 mx-2">

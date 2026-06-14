@@ -53,28 +53,27 @@ export function SearchHeroWidget() {
 
   return (
     <>
-      <section className="relative pt-10 sm:pt-12 pb-20 sm:pb-24 bg-[#0B0B0B]">
-        {/* Background Hero Image */}
+      <section className="relative pt-10 sm:pt-12 pb-20 sm:pb-24 page-hero-shell">
         <div className="absolute inset-0 z-0 overflow-hidden">
           <Image 
             src="https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2940&fm=webp&fit=crop" 
             alt="Salon Background" 
             fill
             priority
-            className="object-cover opacity-60"
+            className="page-hero-image"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0B0B0B]/55 via-[#0B0B0B]/35 to-[#F5B700]/25" />
+          <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-white text-center flex flex-col items-center px-1">
-            <h1 className="mb-4 sm:mb-6 !text-white hover:!text-[#F5B700] transition-colors duration-300 cursor-default">
+          <div className="max-w-4xl mx-auto text-zinc-900 text-center flex flex-col items-center px-1">
+            <h1 className="mb-4 sm:mb-6 text-zinc-900 hover:text-[#1A1C29] transition-colors duration-300 cursor-default">
               Sri Lanka&apos;s Beauty & Wellness Marketplace
             </h1>
-            <p className="text-base sm:text-xl md:text-2xl font-medium !text-white/90 max-w-3xl drop-shadow-md leading-relaxed mb-4">
+            <p className="text-base sm:text-xl md:text-2xl font-medium text-zinc-800 max-w-3xl leading-relaxed mb-4">
               Book salon, spa, barber, nail, skincare, and wellness appointments instantly — all from one trusted platform.
             </p>
-            <p className="text-lg sm:text-2xl font-bold !text-[#F5B700] drop-shadow-md mb-8 sm:mb-10">
+            <p className="text-lg sm:text-2xl font-bold text-[#1A1C29] mb-8 sm:mb-10">
               Find Your Perfect Beauty Experience Today
             </p>
 

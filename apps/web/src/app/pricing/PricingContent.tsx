@@ -35,39 +35,38 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-rose-500 selection:text-white">
-      <section className="bg-zinc-950 text-white pt-28 pb-36 text-center px-4 relative overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-rose-500/10 rounded-full blur-[120px] -translate-y-1/2"></div>
-        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px] -translate-y-1/2"></div>
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+      <section className="page-hero-shell text-zinc-900 pt-28 pb-36 text-center px-4 relative overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-white/20 rounded-full blur-[120px] -translate-y-1/2"></div>
+        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-white/15 rounded-full blur-[120px] -translate-y-1/2"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 text-zinc-400">
-            <Scissors className="w-3.5 h-3.5 text-rose-500 animate-spin-slow" /> Introductory Discounts Available Now
+          <div className="inline-flex items-center gap-2 bg-black/10 border border-black/10 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-6 text-zinc-800">
+            <Scissors className="w-3.5 h-3.5 text-zinc-900 animate-spin-slow" /> Introductory Discounts Available Now
           </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6 bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6 text-zinc-900">
             Choose the Perfect Plan for <br className="hidden md:inline" /> Your Salon&apos;s Growth
           </h2>
-          <p className="text-lg md:text-xl text-zinc-400 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg md:text-xl text-zinc-700 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
             Introduction rates apply to monthly billing. Annual plans use a lower monthly equivalent billed once per year.
           </p>
 
           <div className="flex items-center justify-center gap-4 mt-4">
-            <span className={`text-sm font-bold transition-colors ${!isAnnual ? "text-white" : "text-zinc-500"}`}>
+            <span className={`text-sm font-bold transition-colors ${!isAnnual ? "text-zinc-900" : "text-zinc-600"}`}>
               Billed Monthly
             </span>
             <button
               onClick={() => setIsAnnual(!isAnnual)}
-              className="w-16 h-8 bg-zinc-800 rounded-full p-1 relative flex items-center transition-all duration-300 focus:outline-none"
+              className="w-16 h-8 bg-black/10 rounded-full p-1 relative flex items-center transition-all duration-300 focus:outline-none"
               aria-label="Toggle annual billing"
             >
               <div
-                className={`w-6 h-6 bg-rose-500 rounded-full shadow-md transform transition-transform duration-300 ${
+                className={`w-6 h-6 bg-[#F5B700] rounded-full shadow-md transform transition-transform duration-300 ${
                   isAnnual ? "translate-x-8" : "translate-x-0"
                 }`}
               />
             </button>
             <div className="flex items-center gap-1.5">
-              <span className={`text-sm font-bold transition-colors ${isAnnual ? "text-rose-400" : "text-zinc-500"}`}>
+              <span className={`text-sm font-bold transition-colors ${isAnnual ? "text-zinc-900" : "text-zinc-600"}`}>
                 Billed Annually
               </span>
               {maxAnnualSavings > 0 && (

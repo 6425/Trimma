@@ -56,16 +56,16 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-12 md:py-16">
+      <section className="page-hero-shell py-12 md:py-16">
         <div className="container mx-auto px-4 max-w-6xl relative z-10 text-center">
-          <Badge className="bg-[#F5B700]/15 text-[#F5B700] border border-[#F5B700]/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
             <Sparkles className="w-3.5 h-3.5 inline mr-1.5" />
             Trimma Style Lookbook
           </Badge>
-          <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-3">
+          <h1 className="text-3xl md:text-5xl font-black text-zinc-900 tracking-tight mb-3">
             Latest Styles by Category
           </h1>
-          <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto">
+          <p className="text-zinc-700 text-sm md:text-base max-w-xl mx-auto">
             Browse looks grouped by salon service category. Bookmark styles to save them in your customer dashboard.
           </p>
           <Link

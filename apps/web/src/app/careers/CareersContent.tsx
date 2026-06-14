@@ -204,9 +204,7 @@ export function CareersContent() {
   return (
     <div className="bg-white text-zinc-900 font-sans">
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,183,0,0.14)_0%,_transparent_60%)] pointer-events-none" />
-        <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#0B0B0B_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+      <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>

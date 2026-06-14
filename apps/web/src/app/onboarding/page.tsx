@@ -14,12 +14,12 @@ export default async function OnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Hero Section */}
-      <section className="bg-dark-gradient py-20 px-4 text-center">
+      <section className="page-hero-shell py-20 px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-zinc-900 tracking-tight mb-6">
             Grow Your Salon with Trimma
           </h1>
-          <p className="text-xl text-zinc-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-zinc-700 mb-8 max-w-2xl mx-auto leading-relaxed">
             Join Sri Lanka&apos;s next-generation salon discovery and booking platform.
             <br className="hidden md:block" />
             Our regional onboarding specialists work directly with salon owners to ensure every salon profile is complete, accurate, and optimized for customer bookings.
@@ -34,7 +34,7 @@ export default async function OnboardingPage() {
             </a>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-zinc-400">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-zinc-600">
             <span className="flex items-center gap-2">✓ No setup fees</span>
             <span className="flex items-center gap-2">✓ No technical knowledge required</span>
             <span className="flex items-center gap-2">✓ Personal assistance from Trimma</span>
