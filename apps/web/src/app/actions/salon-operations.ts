@@ -155,8 +155,6 @@ export async function rescheduleOwnerBooking(
       .update({
         booking_date: bookingDate,
         booking_time: bookingTime,
-        reschedule_requested: false,
-        reschedule_status: "approved",
       })
       .eq("id", bookingId);
     if (error) throw new Error(error.message);
