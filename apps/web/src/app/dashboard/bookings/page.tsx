@@ -17,7 +17,7 @@ import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
-import { confirmOwnerBooking, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { confirmOwnerBooking, rescheduleOwnerBooking, updateOwnerBooking } from "@/app/actions/salon-operations";
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
@@ -175,6 +175,9 @@ export default function DashboardBookings() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [reschedulingBooking, setReschedulingBooking] = useState<any | null>(null);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("12:00");
   const tabParam = searchParams.get("tab") as BookingStatusTab | null;
   const statusTab: BookingStatusTab =
     tabParam && BOOKING_STATUS_TABS.some((t) => t.key === tabParam) ? tabParam : "pending";
@@ -208,8 +211,15 @@ export default function DashboardBookings() {
       return;
     }
     if (action === 'reschedule') {
-      // TODO: Open reschedule modal/sheet — for now, show toast
-      toast.info("Reschedule feature coming soon. Use the reschedule request workflow.");
+      const booking = bookings.find((b) => b.id === bookingId);
+      if (!booking) {
+        toast.error("Booking not found.");
+        return;
+      }
+      setReschedulingBooking(booking);
+      setNewDate(booking.booking_date || "");
+      const timeValue = (booking.booking_time || "12:00:00").slice(0, 5);
+      setNewTime(timeValue);
       return;
     }
     setProcessingId(bookingId);
@@ -281,7 +291,25 @@ export default function DashboardBookings() {
     toast.info("Reschedule requests are not enabled on this schema yet.");
   };
 
-  const searchedBookings = bookings.filter(b => 
+  const handleRescheduleSave = async () => {
+    if (!reschedulingBooking || !newDate || !newTime) return;
+    setProcessingId(reschedulingBooking.id);
+    try {
+      const formattedTime = newTime.length === 5 ? `${newTime}:00` : newTime;
+      const result = await rescheduleOwnerBooking(reschedulingBooking.id, newDate, formattedTime);
+      if (result.success === false) throw new Error(result.error);
+
+      toast.success("Appointment successfully rescheduled!");
+      setReschedulingBooking(null);
+      await fetchBookings();
+    } catch (e: any) {
+      toast.error("Failed to reschedule: " + e.message);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const searchedBookings = bookings.filter(b =>
     (b.customer_email || 'Walk-in Customer').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (b.booking_no || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -524,6 +552,76 @@ export default function DashboardBookings() {
           </div>
         )}
       </div>
+
+      {reschedulingBooking && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-slate-200 shadow-2xl space-y-6 mx-4 relative text-left">
+            <div>
+              <h3 className="text-lg font-black text-zinc-900 tracking-tight flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-emerald-600" />
+                Reschedule Appointment
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 font-medium">
+                Updating schedule for booking reference{" "}
+                <strong>{reschedulingBooking.booking_no}</strong>.
+              </p>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  New Appointment Date
+                </label>
+                <input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
+                  className="w-full h-11 px-4 border border-slate-200 focus:border-zinc-950 rounded-xl text-sm focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  New Appointment Time
+                </label>
+                <input
+                  type="time"
+                  value={newTime}
+                  onChange={(e) => setNewTime(e.target.value)}
+                  className="w-full h-11 px-4 border border-slate-200 focus:border-zinc-950 rounded-xl text-sm focus:outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-100 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReschedulingBooking(null)}
+                className="border-slate-200 text-zinc-700 hover:bg-slate-50 font-bold rounded-xl h-10 px-4 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleRescheduleSave}
+                disabled={processingId === reschedulingBooking.id || !newDate || !newTime}
+                className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
+              >
+                {processingId === reschedulingBooking.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  "Confirm Reschedule"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

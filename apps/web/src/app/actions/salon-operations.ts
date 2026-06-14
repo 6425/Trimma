@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { sendBookingConfirmedEmail } from "@/app/actions/email-settings";
-import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
+import { sendBookingConfirmedEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
+import { sendWhatsAppNotification, sendWhatsAppRescheduleNotification } from "@/app/actions/whatsapp";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
 import {
@@ -120,6 +120,56 @@ export async function confirmOwnerBooking(bookingId: string) {
   if (bookingNo) {
     await sendWhatsAppNotification(bookingNo);
     void sendBookingConfirmedEmail(bookingNo);
+  }
+
+  return { success: true as const, bookingNo };
+}
+
+const NON_RESCHEDULABLE_STATUSES = new Set(["completed", "canceled", "cancelled", "no_show"]);
+
+export async function rescheduleOwnerBooking(
+  bookingId: string,
+  bookingDate: string,
+  bookingTime: string
+) {
+  let bookingNo: string | null = null;
+
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: booking, error: readErr } = await supabase
+      .from("bookings")
+      .select("id, salon_id, booking_no, status")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!booking || booking.salon_id !== ctx.salonId) {
+      throw new Error("Booking not found for your salon.");
+    }
+
+    const status = (booking.status || "").toLowerCase();
+    if (NON_RESCHEDULABLE_STATUSES.has(status)) {
+      throw new Error("Completed or cancelled bookings cannot be rescheduled.");
+    }
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        booking_date: bookingDate,
+        booking_time: bookingTime,
+        reschedule_requested: false,
+        reschedule_status: "approved",
+      })
+      .eq("id", bookingId);
+    if (error) throw new Error(error.message);
+
+    bookingNo = booking.booking_no as string;
+    await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+
+  if (bookingNo) {
+    void sendWhatsAppRescheduleNotification(bookingNo);
+    void sendBookingRescheduledEmail(bookingNo);
   }
 
   return { success: true as const, bookingNo };
