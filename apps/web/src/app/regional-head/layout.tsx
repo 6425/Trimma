@@ -215,7 +215,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
             </div>
           </header>
 
-          <div className="p-4 sm:p-6 lg:p-8 flex-1 min-w-0 overflow-x-hidden">{children}</div>
+          <div className="trimma-light-context p-4 sm:p-6 lg:p-8 flex-1 min-w-0 overflow-x-hidden">{children}</div>
         </main>
 
         <nav className="trimma-mobile-bottom-nav trimma-mobile-bottom-nav--dark lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-1 sm:px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] z-30">

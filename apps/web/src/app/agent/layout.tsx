@@ -233,7 +233,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <div className="p-4 sm:p-6 lg:p-8 flex-1 min-w-0 overflow-x-hidden">
+        <div className="trimma-light-context p-4 sm:p-6 lg:p-8 flex-1 min-w-0 overflow-x-hidden">
           {children}
         </div>
       </main>

@@ -388,8 +388,13 @@
     color: var(--text-dark) !important;
   }
 
-  /* Prevent dark text on dark hover backgrounds */
-  .trimma-dark-context :is(
+  /* Prevent dark text on dark hover backgrounds (dark surfaces only — not light dashboard islands) */
+  :is(
+    .trimma-dark-surface,
+    .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
+    .bg-slate-800, .bg-slate-900, .bg-slate-950,
+    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\]
+  ) :is(
     [class*="hover:bg-black"]:hover,
     [class*="hover:bg-zinc-8"]:hover,
     [class*="hover:bg-zinc-9"]:hover,
@@ -1262,16 +1267,15 @@
     color: #FFFFFF;
   }
 
-  /* Dark surfaces and dark-filled controls must never render black/dark text */
+  /* Dark-filled elements must never render dark text utilities on the same node */
   :is(
-    .trimma-dark-context,
     .trimma-dark-surface,
     .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
     .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950,
     .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\],
     [class*="bg-gradient-to"][class*="from-[#0B0B0B]"],
     [class*="bg-gradient-to"][class*="from-[#1A1C29]"]
-  ) :is(
+  ):is(
     .text-black, .text-zinc-900, .text-zinc-950, .text-zinc-800,
     [class*="text-black"], [class*="text-zinc-9"]
   ):not(
@@ -1369,4 +1373,74 @@
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
   color: #ffc947 !important;
+}
+
+/*
+ * Light dashboard hard contract — wins over dark-shell token leaks on mobile.
+ * Agent/regional-head/salon/customer main areas sit inside trimma-dark-context shells.
+ */
+.trimma-dark-context .trimma-light-context {
+  --foreground: #18181b;
+  --card-foreground: #18181b;
+  --popover-foreground: #18181b;
+  --muted-foreground: #52525b;
+  --accent: #e4e4e7;
+  --accent-foreground: #18181b;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.06);
+  color: #18181b;
+}
+
+.trimma-dark-context .trimma-light-context :is(
+  .text-zinc-900, .text-zinc-800, .text-zinc-700, .text-zinc-600, .text-zinc-500,
+  .text-black, [class*="text-zinc-9"], [class*="text-zinc-8"], [class*="text-zinc-7"],
+  [class*="text-zinc-6"], [class*="text-black"]
+) {
+  color: #18181b !important;
+}
+
+.trimma-dark-context .trimma-light-context :is(
+  .bg-white, .bg-slate-50, .bg-zinc-50, .bg-zinc-100, .bg-slate-100
+) :is(
+  [class*="text-white"], .text-white
+):not([class*="bg-\[#0B0B0B\]"]):not([class*="bg-\[#1A1C29\]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-brand"]):not([class*="bg-\[#F5B700\]"]) {
+  color: #18181b !important;
+}
+
+.trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):not(
+  [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
+  [class*="bg-brand"], [class*="bg-\[#F5B700\]"], [class*="text-\[#F5B700\]"], [class*="text-brand"],
+  [class*="text-white"], .trimma-sidebar-nav-item
+) {
+  color: #3f3f46 !important;
+}
+
+.trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
+  [class*="bg-white"], .bg-white
+):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#F5B700\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
+  color: #18181b !important;
+  background-color: #ffffff !important;
+  border-color: #e4e4e7 !important;
+}
+
+.trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
+  [class*="bg-white"], .bg-white
+):is(:hover, :focus-visible):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]) {
+  color: #18181b !important;
+  background-color: #f4f4f5 !important;
+}
+
+.trimma-dark-context .trimma-light-context [data-slot="button"]:is(:hover, :focus-visible):not(
+  [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
+  [class*="bg-brand"], [class*="bg-\[#F5B700\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
+  [class*="hover:bg-black"], [class*="text-\[#F5B700\]"], [class*="text-brand"], [class*="text-white"]
+) {
+  color: #18181b !important;
+}
+
+.trimma-dark-context .trimma-light-context [data-slot="button"][class*="hover:bg-zinc-8"]:hover,
+.trimma-dark-context .trimma-light-context [data-slot="button"][class*="hover:bg-zinc-9"]:hover,
+.trimma-dark-context .trimma-light-context [data-slot="button"][class*="hover:bg-black"]:hover,
+.trimma-dark-context .trimma-light-context :is(button, [data-slot="button"]).hover\:bg-zinc-800:hover {
+  color: #ffffff !important;
 }

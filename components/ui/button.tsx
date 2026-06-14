@@ -39,17 +39,17 @@ const buttonVariants = cva(
         hero:
           "hero-btn-primary !text-[#F5B700] hover:!text-[#FFC947] bg-transparent border-transparent shadow-none hover:shadow-none [&_svg]:!text-[#F5B700] hover:[&_svg]:!text-[#FFC947]",
 
-        // ── Secondary: Surface-aware secondary action ──
+        // ── Secondary: explicit light-surface secondary ──
         secondary:
-          "bg-muted text-foreground border-border hover:bg-accent hover:text-accent-foreground",
+          "bg-zinc-100 text-zinc-900 border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950",
 
         // ── Outline: Transparent, yellow border + text ──
         outline:
           "bg-transparent text-[#F5B700] border-[#F5B700]/50 hover:bg-[#F5B700]/10 hover:border-[#F5B700] hover:text-[#E6AC00]",
 
-        // ── Ghost: Surface-aware subtle hover ──
+        // ── Ghost: explicit readable gray on light dashboards ──
         ghost:
-          "bg-transparent text-muted-foreground border-transparent hover:bg-accent hover:text-accent-foreground",
+          "bg-transparent text-zinc-600 border-transparent hover:bg-zinc-100 hover:text-zinc-900",
 
         // ── Destructive: Red danger actions ──
         destructive:

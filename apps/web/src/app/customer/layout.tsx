@@ -154,7 +154,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 min-w-0 overflow-x-hidden">
+        <div className="flex-1 min-w-0 overflow-x-hidden trimma-light-context">
           {children}
         </div>
       </main>
