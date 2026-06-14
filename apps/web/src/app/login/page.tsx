@@ -242,18 +242,12 @@ function LoginForm() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-4 py-4 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Other portals</p>
-            <p className="text-sm text-zinc-400">
+          <div className="rounded-xl border border-zinc-800 bg-[#1a1a1a] px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Partner portal</p>
+            <p className="text-sm text-zinc-400 mt-2">
               Trimma Agent or Regional Head?{" "}
               <Link href="/agent/login" className="font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline">
                 Partner sign in
-              </Link>
-            </p>
-            <p className="text-sm text-zinc-400">
-              Trimma Administrator?{" "}
-              <Link href="/admin/login" className="font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline">
-                Admin sign in
               </Link>
             </p>
           </div>
