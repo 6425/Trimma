@@ -311,7 +311,7 @@ export function CustomerHelpGuide() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/">
-              <Button className="h-9 rounded-xl hero-btn-primary hero-btn-compact text-xs font-bold">
+              <Button variant="hero" className="h-9 rounded-xl hero-btn-compact text-xs font-bold">
                 Find a salon
               </Button>
             </Link>

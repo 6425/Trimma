@@ -310,7 +310,8 @@ export default function SalonsClient({
             <Button
               onClick={handleSearch}
               size="lg"
-              className="h-12 px-8 rounded-xl hero-btn-primary hero-btn-compact font-bold border-none shadow-md"
+              variant="hero"
+              className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md"
             >
               Search
             </Button>

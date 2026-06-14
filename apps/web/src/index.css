@@ -496,9 +496,9 @@
    */
   :is(button, a, [role="button"], [data-slot="button"]):is(
     .bg-brand, .bg-\[\#F5B700\], .bg-brand-hover, .bg-primary-gradient, [class*="bg-primary-gradient"]
-  ):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]):not([class*="bg-[#F5B700]/3"]),
-  :is(.bg-brand, .bg-\[\#F5B700\], .bg-primary-gradient)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#F5B700]/1"]),
-  :is(.bg-brand, .bg-\[\#F5B700\]):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]) {
+  ):not(.hero-btn-primary):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]):not([class*="bg-[#F5B700]/3"]),
+  :is(.bg-brand, .bg-\[\#F5B700\], .bg-primary-gradient):not(.hero-btn-primary):not(.hero-btn-secondary)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#F5B700]/1"]),
+  :is(.bg-brand, .bg-\[\#F5B700\]):not(.hero-btn-primary):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#F5B700]/1"]):not([class*="bg-[#F5B700]/2"]) {
     color: #000000 !important;
   }
 
@@ -620,7 +620,8 @@
     text-decoration-thickness: 4px;
     text-underline-offset: 0.25em;
   }
-  .hero-btn-primary {
+  .hero-btn-primary,
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -632,12 +633,22 @@
     transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 10px 25px -8px rgb(0 0 0 / 0.35);
   }
-  .hero-btn-primary:hover {
+  .hero-btn-primary:hover,
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover,
+  .hero-btn-primary:focus-visible,
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:focus-visible,
+  .hero-btn-primary:active,
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
     background-color: #1a1a1a !important;
     color: #ffffff !important;
     transform: scale(1.02);
   }
-  .hero-btn-secondary {
+  .hero-btn-primary :is(svg, span),
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
+    color: currentColor !important;
+  }
+  .hero-btn-secondary,
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1119,4 +1130,54 @@
     color: #FFFFFF;
   }
 
+  /* Dark surfaces and dark-filled controls must never render black/dark text */
+  :is(
+    .trimma-dark-context,
+    .trimma-dark-surface,
+    .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
+    .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950,
+    .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#0A0B10\],
+    [class*="bg-gradient-to"][class*="from-[#0B0B0B]"],
+    [class*="bg-gradient-to"][class*="from-[#1A1C29]"]
+  ) :is(
+    .text-black, .text-zinc-900, .text-zinc-950, .text-zinc-800,
+    [class*="text-black"], [class*="text-zinc-9"]
+  ):not(
+    .hero-btn-secondary,
+    [class*="bg-white"],
+    [class*="bg-[#F5B700]"],
+    [class*="bg-brand"],
+    [class*="bg-primary-gradient"],
+    [class*="bg-amber-"],
+    [class*="bg-yellow-"]
+  ) {
+    color: var(--text-light) !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .hero-btn-primary,
+    .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\]
+  ):not(.hero-btn-secondary) {
+    color: #ffffff !important;
+  }
+
+  /* Yellow heroes keep dark copy, but never force dark text into dark hero buttons */
+  :is(.page-hero-shell, .page-hero-light) .hero-btn-primary,
+  :is(.page-hero-shell, .page-hero-light) :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary {
+    color: #ffffff !important;
+  }
+
+}
+
+/*
+ * Final contrast override — outside @layer so it wins over Tailwind !text-black on <Button>.
+ * Black/dark filled controls always use white label text.
+ */
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary,
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover,
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:focus-visible,
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
+  background-color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+  color: #ffffff !important;
 }

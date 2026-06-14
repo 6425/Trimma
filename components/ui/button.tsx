@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
  * 
  * Variants:
  *   default   – Solid yellow (#F5B700) fill, black text. Primary CTA.
+ *   hero      – Black fill on yellow hero sections, white text.
  *   secondary – Dark surface (#1A1A1A) with yellow text. Secondary action.
  *   outline   – Transparent with yellow border + yellow text. Tertiary action.
  *   ghost     – No border, subtle hover. Icon buttons or low-emphasis actions.
@@ -33,6 +34,10 @@ const buttonVariants = cva(
         // ── Primary: Yellow fill, black text ──
         default:
           "bg-[#F5B700] !text-black border-[#F5B700] hover:bg-[#FFC947] hover:!text-black hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
+
+        // ── Hero: Black fill on yellow hero panels (styled via global .hero-btn-primary) ──
+        hero:
+          "hero-btn-primary !text-white bg-transparent border-transparent shadow-none hover:shadow-none",
 
         // ── Secondary: Surface-aware secondary action ──
         secondary:
