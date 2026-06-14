@@ -61,7 +61,7 @@ export function BookingGuideDownloads() {
   };
 
   return (
-    <section id="pdf-guides" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+    <section id="guides" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
       <div className="p-6 sm:p-8 border-b border-slate-100">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-zinc-950 text-white flex items-center justify-center shrink-0">
@@ -69,11 +69,11 @@ export function BookingGuideDownloads() {
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight mb-1">
-              Download Booking Guide (PDF)
+              Download Booking Guide (Word)
             </h2>
             <p className="text-sm text-zinc-600 leading-relaxed max-w-2xl">
               Share these professional step-by-step guides with new customers and salon partners.
-              Available in English, Sinhala, and Tamil — with screenshots for every stage of the booking journey.
+              Available in English, Sinhala, and Tamil — open in Microsoft Word or Google Docs.
             </p>
             {loading && (
               <p className="text-xs text-zinc-400 mt-2 flex items-center gap-1.5">
@@ -102,13 +102,13 @@ export function BookingGuideDownloads() {
                 {doc.description && (
                   <p className="text-xs text-zinc-500 mt-1 leading-relaxed line-clamp-3">{doc.description}</p>
                 )}
-                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} PDF</p>}
+                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} Word doc</p>}
               </div>
               <div className="flex flex-col gap-2 mt-auto">
                 <a href={href} target="_blank" rel="noopener noreferrer" download>
                   <Button className="w-full h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
                     <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                    Download Word Guide
                   </Button>
                 </a>
                 <Button

@@ -62,7 +62,7 @@ const NAV_SECTIONS = [
   { id: "reviews", label: "Reviews" },
   { id: "journey", label: "Booking Journey" },
   { id: "faq", label: "FAQ" },
-  { id: "pdf-guides", label: "PDF Guides" },
+  { id: "guides", label: "Download Guides" },
   { id: "support", label: "Support" },
 ] as const;
 

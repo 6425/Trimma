@@ -72,7 +72,7 @@ export default function AdminHelpDocumentsPage() {
             Help Documents
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Customer booking guide PDFs in English, Sinhala, and Tamil — stored in the database and shareable publicly.
+            Customer booking guide Word documents in English, Sinhala, and Tamil.
           </p>
         </div>
         <Button
@@ -89,7 +89,7 @@ export default function AdminHelpDocumentsPage() {
 
       <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900">
         <strong>Regenerate PDFs:</strong> Run{" "}
-        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">node apps/web/scripts/generate-booking-guide-pdfs.mjs</code>{" "}
+        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">node apps/web/scripts/generate-booking-guide-docx.mjs</code>{" "}
         locally, then{" "}
         <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">--upload</code> with Supabase env vars to sync storage + DB.
       </div>
