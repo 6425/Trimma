@@ -71,11 +71,11 @@ export function BookingGuideDownloads() {
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight mb-1">
-              Download Booking Guide (Word)
+              Download Booking Guide (PDF)
             </h2>
             <p className="text-sm text-zinc-600 leading-relaxed max-w-2xl">
               Share these professional step-by-step guides with new customers and salon partners.
-              Available in English, Sinhala, and Tamil — open in Microsoft Word or Google Docs.
+              Available in English, Sinhala, and Tamil — open on any phone, tablet, or computer.
             </p>
             {loading && (
               <p className="text-xs text-zinc-400 mt-2 flex items-center gap-1.5">
@@ -104,13 +104,13 @@ export function BookingGuideDownloads() {
                 {doc.description && (
                   <p className="text-xs text-zinc-500 mt-1 leading-relaxed line-clamp-3">{doc.description}</p>
                 )}
-                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} Word doc</p>}
+                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} PDF</p>}
               </div>
               <div className="flex flex-col gap-2 mt-auto">
                 <a href={href} target="_blank" rel="noopener noreferrer" download>
                   <Button className="w-full h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
                     <Download className="w-4 h-4 mr-2" />
-                    Download Word Guide
+                    Download PDF Guide
                   </Button>
                 </a>
                 <Button

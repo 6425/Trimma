@@ -94,8 +94,8 @@ VALUES
     'en',
     'Trimma Customer Booking Guide',
     'Step-by-step guide to find salons, book appointments, pay your deposit, and leave reviews on Trimma.',
-    'booking-guide/trimma-booking-guide-en.docx',
-    '/help/booking-guide/trimma-booking-guide-en.docx',
+    'booking-guide/trimma-booking-guide-en.pdf',
+    '/help/booking-guide/trimma-booking-guide-en.pdf',
     1
   ),
   (
@@ -104,8 +104,8 @@ VALUES
     'si',
     'ට්‍රිම්මා පාරිභෝගික වෙන්කරණ මාර්ගෝපදේශය',
     'සැලුන් සොයා ගැනීම, වේලාව වෙන්කර ගැනීම, තැන්පතුව ගෙවීම සහ සමාලෝචන ලිවීම පිළිබඳ පියවරෙන් පියවර මාර්ගෝපදේශය.',
-    'booking-guide/trimma-booking-guide-si.docx',
-    '/help/booking-guide/trimma-booking-guide-si.docx',
+    'booking-guide/trimma-booking-guide-si.pdf',
+    '/help/booking-guide/trimma-booking-guide-si.pdf',
     1
   ),
   (
@@ -114,8 +114,8 @@ VALUES
     'ta',
     'ட்ரிம்மா வாடிக்கையாளர் முன்பதிவு வழிகாட்டி',
     'சலூன்களைக் கண்டறிதல், நேரம் முன்பதிவு செய்தல், வைப்புத்தொகை செலுத்துதல் மற்றும் விமர்சனம் எழுதுதல் பற்றிய படிப்படியான வழிகாட்டி.',
-    'booking-guide/trimma-booking-guide-ta.docx',
-    '/help/booking-guide/trimma-booking-guide-ta.docx',
+    'booking-guide/trimma-booking-guide-ta.pdf',
+    '/help/booking-guide/trimma-booking-guide-ta.pdf',
     1
   )
 ON CONFLICT (slug) DO UPDATE SET

@@ -75,7 +75,7 @@ export default function AdminHelpDocumentsPage() {
             Help Documents
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Customer booking guide Word documents in English, Sinhala, and Tamil.
+            Customer booking guide PDFs in English, Sinhala, and Tamil.
           </p>
         </div>
         <Button
@@ -91,9 +91,10 @@ export default function AdminHelpDocumentsPage() {
       </div>
 
       <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900">
-        <strong>Regenerate guides:</strong> Run{" "}
-        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">npm run generate:booking-guides</code>{" "}
-        locally. Run <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">packages/db/HELP_DOCUMENTS_DOCX_UPDATE.sql</code> in Supabase if download links still point to PDF.
+        <strong>Update PDF links in DB:</strong> Run{" "}
+        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">packages/db/HELP_BOOKING_GUIDE_PDF_UPDATE.sql</code>{" "}
+        in Supabase after placing PDFs in{" "}
+        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">apps/web/public/help/booking-guide/</code>.
       </div>
 
       {loading ? (
