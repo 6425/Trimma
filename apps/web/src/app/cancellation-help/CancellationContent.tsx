@@ -10,6 +10,7 @@ import {
 } from "@/lib/email-multilingual-defaults";
 import {
   ArrowRight,
+  Calendar,
   CalendarClock,
   CheckCircle2,
   ChevronDown,
@@ -237,14 +238,54 @@ function RescheduleIllustration() {
   return (
     <div className="relative w-full max-w-md mx-auto lg:max-w-none">
       <div className="absolute -inset-4 rounded-[2rem] bg-amber-400/10 blur-3xl pointer-events-none" />
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-white">
-        <Image
-          src="/assets/help/reschedule-appointment-card.png"
-          alt="Trimma reschedule appointment form with date, time, and confirm options"
-          width={900}
-          height={700}
-          className="w-full h-auto"
-        />
+      <div className="relative bg-white rounded-3xl border border-slate-200 shadow-2xl p-8 space-y-6">
+        <div>
+          <h3 className="text-lg font-black text-zinc-900 tracking-tight flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-emerald-600 shrink-0" />
+            Reschedule Appointment
+          </h3>
+          <p className="text-xs text-zinc-500 mt-1.5 font-medium leading-relaxed">
+            Updating schedule for booking reference{" "}
+            <span className="font-bold text-zinc-800">TRM-840539</span>.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              New Appointment Date
+            </label>
+            <div className="flex items-center justify-between h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-zinc-900 font-medium">
+              <span>06/13/2026</span>
+              <Calendar className="w-4 h-4 text-zinc-400 shrink-0" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              New Appointment Time
+            </label>
+            <div className="flex items-center justify-between h-11 px-4 border border-slate-200 rounded-xl bg-white text-sm text-zinc-900 font-medium">
+              <span>12:30 PM</span>
+              <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            className="h-10 px-4 rounded-xl border border-slate-200 text-zinc-700 text-xs font-bold bg-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="h-10 px-5 rounded-xl bg-zinc-900 text-white text-xs font-bold shadow-sm ring-1 ring-amber-400/80"
+          >
+            Confirm Reschedule
+          </button>
+        </div>
       </div>
       <p className="mt-4 text-center text-xs font-semibold text-zinc-500">
         Salon owners can reschedule appointments directly — customers receive updated details
