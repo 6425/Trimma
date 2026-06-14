@@ -6,25 +6,38 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import {
   ArrowRight,
   Building2,
-  CalendarDays,
   CheckCircle2,
   ChevronDown,
   Clock,
+  CreditCard,
+  Globe,
   Headphones,
   HelpCircle,
   Mail,
   MapPin,
   MessageCircle,
   Navigation2,
-  Phone,
   Send,
+  ShieldCheck,
   Sparkles,
-  Star,
   Users,
   Wrench,
   Handshake,
   Inbox,
 } from "lucide-react";
+
+const COMPANY_OPERATOR = "Ceylon Wild Tours (Pvt) Ltd.";
+const LEGAL_DISCLAIMER =
+  "Trimma is a software platform owned and operated by Ceylon Wild Tours (Pvt) Ltd. All commercial operations, billing, contracts, and customer support related to Trimma are managed under Ceylon Wild Tours (Pvt) Ltd.";
+
+const REGISTERED_OFFICE =
+  "No: 241/1/D, Mahawela Road, Pahala Biyanwila, Kadawatha. 11850. Sri Lanka.";
+
+const OFFICE_MAP_QUERY = encodeURIComponent(
+  "241/1/D Mahawela Road Pahala Biyanwila Kadawatha 11850 Sri Lanka"
+);
+const OFFICE_MAP_EMBED = `https://www.google.com/maps?q=${OFFICE_MAP_QUERY}&z=16&output=embed`;
+const OFFICE_MAP_DIRECTIONS = `https://www.google.com/maps/dir/?api=1&destination=${OFFICE_MAP_QUERY}`;
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -112,22 +125,22 @@ const FAQS = [
   },
 ];
 
-const TRUST_STATS = [
-  { value: "500+", label: "Businesses Connected", icon: Building2 },
-  { value: "10K+", label: "Appointments Managed", icon: CalendarDays },
-  { value: "98%", label: "Customer Satisfaction", icon: Star },
-  { value: "24/7", label: "Support Availability", icon: Headphones },
+const TRUST_COMPLIANCE = [
+  { icon: CreditCard, label: "Secure Online Payments", description: "Encrypted checkout and deposit handling" },
+  { icon: ShieldCheck, label: "Privacy-Focused Platform", description: "Your data protected by design" },
+  { icon: Headphones, label: "Customer Support Assistance", description: "Responsive help on business days" },
+  { icon: Building2, label: "Trusted Sri Lankan Business", description: "Registered and operated in Sri Lanka" },
 ];
 
 const BUSINESS_INFO = [
-  { icon: Building2, label: "Company Name", value: "Trimma (Pvt) Ltd" },
-  { icon: Mail, label: "Business Email", value: "hello@trimma.io", href: "mailto:hello@trimma.io" },
+  { icon: Building2, label: "Company Name", value: COMPANY_OPERATOR },
+  { icon: Sparkles, label: "Brand", value: "Trimma" },
+  { icon: Globe, label: "Website", value: "https://trimma.io", href: "https://trimma.io" },
   { icon: Headphones, label: "Support Email", value: "support@trimma.io", href: "mailto:support@trimma.io" },
-  { icon: Phone, label: "Phone", value: "+94 00 000 0000", href: "tel:+94000000000" },
   {
     icon: Clock,
     label: "Business Hours",
-    value: "Mon–Fri: 9:00 AM – 6:00 PM\nSat: 9:00 AM – 1:00 PM",
+    value: "Monday – Friday, 9:00 AM – 6:00 PM (GMT+5:30)",
   },
 ];
 
@@ -254,9 +267,13 @@ export default function ContactPage() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6">
               Let&apos;s Connect
             </h1>
-            <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg hero-lead leading-relaxed mb-4 max-w-lg">
               Whether you&apos;re a salon owner looking to grow your business, a customer seeking support,
               or a partner interested in working with us, our team is ready to help.
+            </p>
+            <p className="text-sm text-zinc-800 leading-relaxed mb-8 max-w-lg">
+              <strong className="text-zinc-950">Trimma</strong> is a product and brand operated by{" "}
+              <strong className="text-zinc-950">{COMPANY_OPERATOR}</strong>
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -315,9 +332,13 @@ export default function ContactPage() {
       {/* ── Contact Form ── */}
       <section id="contact-form" className="py-24 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4">Send Us a Message</h2>
             <p className="text-zinc-500 text-lg">We typically respond within one business day.</p>
+          </div>
+
+          <div className="max-w-3xl mx-auto mb-10 bg-amber-50/80 border border-amber-200/80 rounded-2xl px-6 py-5 shadow-sm">
+            <p className="text-sm text-zinc-700 leading-relaxed text-center sm:text-left">{LEGAL_DISCLAIMER}</p>
           </div>
 
           {submitted ? (
@@ -486,6 +507,15 @@ export default function ContactPage() {
             <p className="text-zinc-500">Official company details and contact channels.</p>
           </div>
           <div className="max-w-2xl mx-auto bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
+            <div className="flex items-center gap-3 pb-6 mb-6 border-b border-zinc-100">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
+                <Sparkles className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <div className="font-extrabold text-zinc-950 text-lg">Trimma</div>
+                <div className="text-sm text-zinc-500">Operated by {COMPANY_OPERATOR}</div>
+              </div>
+            </div>
             <div className="space-y-5">
               {BUSINESS_INFO.map(({ icon: Icon, label, value, href }) => (
                 <div key={label} className="flex gap-4">
@@ -495,7 +525,12 @@ export default function ContactPage() {
                   <div>
                     <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-0.5">{label}</div>
                     {href ? (
-                      <a href={href} className="text-zinc-900 font-medium text-sm hover:text-amber-600 transition-colors whitespace-pre-line">
+                      <a
+                        href={href}
+                        target={href.startsWith("http") ? "_blank" : undefined}
+                        rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="text-zinc-900 font-medium text-sm hover:text-amber-600 transition-colors whitespace-pre-line"
+                      >
                         {value}
                       </a>
                     ) : (
@@ -513,40 +548,74 @@ export default function ContactPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-zinc-950 mb-3">Visit Our Office</h2>
-            <p className="text-zinc-500">Colombo, Sri Lanka</p>
+            <h2 className="text-3xl font-extrabold text-zinc-950 mb-3">Registered Office</h2>
+            <p className="text-zinc-500 max-w-2xl mx-auto">
+              Our team operates from Sri Lanka, supporting salons and wellness businesses with modern
+              appointment management solutions.
+            </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div className="relative rounded-3xl overflow-hidden shadow-xl border border-zinc-200 aspect-[4/3]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch">
+            <div className="relative rounded-3xl overflow-hidden shadow-xl border border-zinc-200 min-h-[320px] lg:min-h-[400px]">
               <iframe
-                title="Trimma Office"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126743.5921673895!2d79.78657!3d6.9218!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae253d10f7a7003%3A0x320b2e4d32d3838d!2sColombo%2C%20Sri%20Lanka!5e0!3m2!1sen!2slk!4v1700000000000!5m2!1sen!2slk"
-                className="w-full h-full border-0"
+                title="Ceylon Wild Tours (Pvt) Ltd — Registered Office"
+                src={OFFICE_MAP_EMBED}
+                className="absolute inset-0 w-full h-full border-0"
                 loading="lazy"
                 allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
-            <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm space-y-6">
+            <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm flex flex-col justify-between gap-6">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                   <MapPin className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <div className="font-bold text-zinc-900 text-lg mb-1">Trimma (Pvt) Ltd</div>
-                  <p className="text-zinc-500 text-sm">Colombo, Sri Lanka</p>
-                  <p className="text-zinc-400 text-xs mt-1">Serving salons across Sri Lanka and globally.</p>
+                  <div className="font-bold text-zinc-900 text-lg mb-1">{COMPANY_OPERATOR}</div>
+                  <p className="text-zinc-600 text-sm leading-relaxed">{REGISTERED_OFFICE}</p>
+                  <p className="text-zinc-400 text-xs mt-3">
+                    Brand: Trimma · Registered office of the operating company.
+                  </p>
                 </div>
               </div>
               <a
-                href="https://maps.google.com/?q=Colombo,Sri+Lanka"
+                href={OFFICE_MAP_DIRECTIONS}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-6 py-3 rounded-xl transition-all text-sm"
+                className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-6 py-3 rounded-xl transition-all text-sm w-full sm:w-auto"
               >
                 <Navigation2 className="w-4 h-4" />
                 Get Directions
               </a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust & Compliance ── */}
+      <section className="py-16 bg-zinc-50 border-y border-zinc-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-950 mb-2">Trust &amp; Compliance</h2>
+            <p className="text-zinc-500 text-sm sm:text-base">
+              Transparent operations backed by a registered Sri Lankan company.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TRUST_COMPLIANCE.map((item) => (
+              <div
+                key={item.label}
+                className="bg-white border border-zinc-200 rounded-2xl px-5 py-5 flex items-start gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                  <item.icon className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <div className="font-bold text-zinc-900 text-sm leading-snug mb-1">{item.label}</div>
+                  <p className="text-zinc-500 text-xs leading-relaxed">{item.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -566,26 +635,6 @@ export default function ContactPage() {
           <div className="space-y-3">
             {FAQS.map((faq) => (
               <FaqItem key={faq.q} q={faq.q} a={faq.a} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust & Support Stats ── */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-            {TRUST_STATS.map((stat) => (
-              <div
-                key={stat.label}
-                className="bg-white border border-zinc-200 rounded-2xl p-6 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mx-auto mb-3">
-                  <stat.icon className="w-5 h-5 text-amber-600" />
-                </div>
-                <div className="text-2xl font-black text-zinc-950 mb-1">{stat.value}</div>
-                <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{stat.label}</div>
-              </div>
             ))}
           </div>
         </div>
