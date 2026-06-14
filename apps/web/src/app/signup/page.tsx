@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -50,14 +50,10 @@ export default function SignupPage() {
 
 function SignupForm() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<"customer" | "salon">("customer");
+  const [activeTab, setActiveTab] = useState<"customer" | "salon">(() =>
+    searchParams.get("role") === "salon_owner" ? "salon" : "customer"
+  );
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("role") === "salon_owner") {
-      setActiveTab("salon");
-    }
-  }, [searchParams]);
 
   const handleGoogleSignup = async () => {
     setLoading(true);
