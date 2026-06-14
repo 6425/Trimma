@@ -91,8 +91,8 @@ function SearchPageInner() {
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" /> Discover Premium Grooming
+          <Badge variant="hero" className="px-3 py-1 mb-6">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> Discover Premium Grooming
           </Badge>
           
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-6 leading-tight">
@@ -105,7 +105,7 @@ function SearchPageInner() {
           </p>
           
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-10">
-             <span className="font-extrabold bg-black/10 text-zinc-900 px-3 py-1 rounded-full">{filteredSalons.length} Salons Found</span>
+             <span className="hero-eyebrow font-extrabold px-3 py-1">{filteredSalons.length} Salons Found</span>
              <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
           </div>

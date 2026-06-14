@@ -602,13 +602,36 @@
     border-bottom: 1px solid rgb(245 183 0 / 0.2);
     color: #0a0a0a;
   }
-  .hero-badge {
+  .hero-badge,
+  .hero-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgb(0 0 0 / 0.08);
-    border: 1px solid rgb(0 0 0 / 0.12);
-    color: #0a0a0a;
+    background-color: #0a0a0a !important;
+    border: 1px solid #0a0a0a !important;
+    color: #f5b700 !important;
+    box-shadow: 0 4px 14px -6px rgb(0 0 0 / 0.4);
+  }
+  .hero-badge :is(svg, [class*="lucide"]),
+  .hero-eyebrow :is(svg, [class*="lucide"]) {
+    color: #f5b700 !important;
+    stroke: #f5b700 !important;
+  }
+  .hero-eyebrow {
+    font-weight: 800;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 9999px;
+  }
+  :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) {
+    background-color: #0a0a0a !important;
+    border-color: #0a0a0a !important;
+    color: #f5b700 !important;
+  }
+  :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) :is(svg, [class*="lucide"]) {
+    color: #f5b700 !important;
+    stroke: #f5b700 !important;
   }
   .hero-lead {
     color: rgb(0 0 0 / 0.72);

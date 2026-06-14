@@ -189,8 +189,8 @@ export default function CityDetailPage() {
           </div>
           
           <div className="max-w-3xl">
-             <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-               <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" /> {data.province} • {data.district} Directory
+             <Badge variant="hero" className="px-3 py-1 mb-4">
+               <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {data.province} • {data.district} Directory
              </Badge>
              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">{data.name}</h1>
              <p className="text-base md:text-lg text-zinc-700 mb-6 font-medium leading-relaxed">

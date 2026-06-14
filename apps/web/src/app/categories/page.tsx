@@ -105,8 +105,8 @@ export default function CategoriesPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center w-full">
-          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" />
+          <Badge variant="hero" className="px-3 py-1 mb-4">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
             Browse by Service
           </Badge>
           <h1 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">

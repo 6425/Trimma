@@ -42,7 +42,7 @@ const SalonsMockup = () => (
     <div className="bg-primary-gradient p-4 text-center border-b border-brand/20 relative">
       <div className="absolute inset-0 page-hero-overlay" />
       <div className="relative z-10">
-        <div className="inline-flex items-center gap-1 bg-black/10 text-zinc-900 border border-black/10 font-bold text-[8px] uppercase px-2 py-0.5 rounded-full mb-2">
+        <div className="hero-eyebrow font-bold text-[8px] uppercase px-2 py-0.5 mb-2">
           <Sparkles className="w-2 h-2" /> Discover Premium Grooming
         </div>
         <h3 className="text-zinc-900 font-black text-lg leading-tight mb-3">

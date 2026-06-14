@@ -262,8 +262,8 @@ export default function SalonsClient({
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" />
+          <Badge variant="hero" className="px-3 py-1 mb-4">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
             Discover Premium Grooming
           </Badge>
 

@@ -58,7 +58,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
     <div className="min-h-screen bg-slate-50">
       <section className="page-hero-shell py-12 md:py-16">
         <div className="container mx-auto px-4 max-w-6xl relative z-10 text-center">
-          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+          <Badge variant="hero" className="px-3 py-1 mb-4">
             <Sparkles className="w-3.5 h-3.5 inline mr-1.5" />
             Trimma Style Lookbook
           </Badge>
