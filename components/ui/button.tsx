@@ -35,9 +35,9 @@ const buttonVariants = cva(
         default:
           "bg-[#F5B700] !text-black border-[#F5B700] hover:bg-[#FFC947] hover:!text-black hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
 
-        // ── Hero: Black fill on yellow hero panels (styled via global .hero-btn-primary) ──
+        // ── Hero: Black fill, brand-yellow text/icons on yellow hero panels ──
         hero:
-          "hero-btn-primary !text-white bg-transparent border-transparent shadow-none hover:shadow-none",
+          "hero-btn-primary !text-[#F5B700] hover:!text-[#FFC947] bg-transparent border-transparent shadow-none hover:shadow-none [&_svg]:!text-[#F5B700] hover:[&_svg]:!text-[#FFC947]",
 
         // ── Secondary: Surface-aware secondary action ──
         secondary:

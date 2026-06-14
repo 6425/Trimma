@@ -627,10 +627,10 @@
     justify-content: center;
     gap: 0.5rem;
     background-color: #0a0a0a !important;
-    color: #ffffff !important;
+    color: #f5b700 !important;
     font-weight: 700;
     border: none !important;
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 10px 25px -8px rgb(0 0 0 / 0.35);
   }
   .hero-btn-primary:hover,
@@ -640,12 +640,16 @@
   .hero-btn-primary:active,
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
     background-color: #1a1a1a !important;
-    color: #ffffff !important;
+    color: #ffc947 !important;
     transform: scale(1.02);
   }
   .hero-btn-primary :is(svg, span),
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
-    color: currentColor !important;
+    color: #f5b700 !important;
+  }
+  .hero-btn-primary:hover :is(svg, span),
+  :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
+    color: #ffc947 !important;
   }
   .hero-btn-secondary,
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-secondary {
@@ -1155,23 +1159,69 @@
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .hero-btn-primary,
     .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\]
-  ):not(.hero-btn-secondary) {
+  ):not(.hero-btn-secondary):not(.hero-btn-primary) {
     color: #ffffff !important;
   }
 
-  /* Yellow heroes keep dark copy, but never force dark text into dark hero buttons */
-  :is(.page-hero-shell, .page-hero-light) .hero-btn-primary,
-  :is(.page-hero-shell, .page-hero-light) :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary {
-    color: #ffffff !important;
+  /* Yellow hero CTAs — black fill, brand-yellow label + icons */
+  :is(.page-hero-shell, .page-hero-light) :is(
+    .hero-btn-primary,
+    button.hero-btn-primary,
+    a.hero-btn-primary,
+    [data-slot="button"].hero-btn-primary
+  ),
+  :is(.page-hero-shell, .page-hero-light) :is(
+    button, a, [role="button"], [data-slot="button"]
+  ):is(
+    .hero-btn-primary,
+    .bg-brand, .bg-\[\#F5B700\], .bg-primary-gradient, [class*="bg-primary-gradient"],
+    .bg-amber-400, .bg-amber-500
+  ):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-[#F5B700]/1"]) {
+    background-color: #0a0a0a !important;
+    border-color: #0a0a0a !important;
+    color: #f5b700 !important;
+  }
+
+  :is(.page-hero-shell, .page-hero-light) :is(
+    .hero-btn-primary,
+    button.hero-btn-primary,
+    a.hero-btn-primary,
+    [data-slot="button"].hero-btn-primary
+  ):is(:hover, :focus-visible, :active),
+  :is(.page-hero-shell, .page-hero-light) :is(
+    button, a, [role="button"], [data-slot="button"]
+  ):is(
+    .hero-btn-primary,
+    .bg-brand, .bg-\[\#F5B700\], .bg-primary-gradient, [class*="bg-primary-gradient"],
+    .bg-amber-400, .bg-amber-500
+  ):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-[#F5B700]/1"]) {
+    background-color: #1a1a1a !important;
+    border-color: #1a1a1a !important;
+    color: #ffc947 !important;
+  }
+
+  :is(.page-hero-shell, .page-hero-light) :is(
+    .hero-btn-primary,
+    button.hero-btn-primary,
+    a.hero-btn-primary,
+    [data-slot="button"].hero-btn-primary
+  ) :is(svg, [class*="lucide"]),
+  :is(.page-hero-shell, .page-hero-light) :is(
+    button, a, [role="button"], [data-slot="button"]
+  ):is(
+    .hero-btn-primary,
+    .bg-brand, .bg-\[\#F5B700\], .bg-primary-gradient, [class*="bg-primary-gradient"]
+  ):not(.hero-btn-secondary) :is(svg, [class*="lucide"]) {
+    color: #f5b700 !important;
+    stroke: #f5b700 !important;
   }
 
 }
 
 /*
  * Final contrast override — outside @layer so it wins over Tailwind !text-black on <Button>.
- * Black/dark filled controls always use white label text.
+ * Hero primary controls: black fill with brand-yellow label + icons.
  */
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary,
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover,
@@ -1179,5 +1229,16 @@
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
   background-color: #0a0a0a !important;
   border-color: #0a0a0a !important;
-  color: #ffffff !important;
+  color: #f5b700 !important;
+}
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover,
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:focus-visible,
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
+  color: #ffc947 !important;
+}
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
+  color: #f5b700 !important;
+}
+:is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
+  color: #ffc947 !important;
 }
