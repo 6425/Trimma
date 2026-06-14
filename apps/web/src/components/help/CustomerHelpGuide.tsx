@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BookingGuideDownloads } from "./BookingGuideDownloads";
 
 const CUSTOMER = {
   name: "Nimal Perera",
@@ -61,6 +62,7 @@ const NAV_SECTIONS = [
   { id: "reviews", label: "Reviews" },
   { id: "journey", label: "Booking Journey" },
   { id: "faq", label: "FAQ" },
+  { id: "pdf-guides", label: "PDF Guides" },
   { id: "support", label: "Support" },
 ] as const;
 
@@ -70,7 +72,7 @@ const JOURNEY_STEPS = [
   { step: "3", title: "Pay 20% deposit", desc: "Secure your slot online — LKR 140 on a LKR 700 service." },
   { step: "4", title: "Salon confirms", desc: "WhatsApp + email when pending, then when confirmed." },
   { step: "5", title: "Visit & pay balance", desc: "Pay remaining LKR 560 at the salon after your service." },
-  { step: "6", title: "Leave a review", desc: "Rate your visit from My Bookings after completion." },
+  { step: "6", title: "Leave a review", desc: "Rate your visit from My Bookings once your appointment time has passed." },
 ];
 
 function MockFrame({
@@ -127,7 +129,7 @@ function BookingSheetMockup() {
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden text-[10px]">
       <div className="px-3 py-2 bg-zinc-950 text-white font-bold">Book at {SALON.name}</div>
       <div className="p-3 space-y-2">
-        {["1. Services", "2. Stylist", "3. Date & Time", "4. Your Details"].map((s, i) => (
+        {["1. Services", "2. Stylist", "3. Date & Time", "4. Your Details", "5. Summary"].map((s, i) => (
           <div
             key={s}
             className={`flex items-center justify-between py-1 border-b border-slate-100 ${
@@ -154,6 +156,7 @@ function CustomerSidebarMockup() {
     { label: "Favorite Salons", active: false },
     { label: "Saved Styles", active: false },
     { label: "Profile", active: false },
+    { label: "Customer Help", active: false },
     { label: "Support", active: false },
   ];
   return (
@@ -256,7 +259,7 @@ function SectionCard({
 const FAQS = [
   {
     q: "Do I need an account to browse salons?",
-    a: "No. Anyone can visit Trimma, search salons, view profiles, and read this help guide without signing in. You only need a free customer account when you book an appointment or manage bookings online.",
+    a: "No. Anyone can visit Trimma, search salons, view profiles, and read this help guide without signing in. You can complete a booking as a guest by entering your details in the booking sheet. Sign in with Google at /login when you want to manage bookings, save favorites, or leave reviews in your dashboard.",
   },
   {
     q: "How much do I pay online vs at the salon?",
@@ -272,7 +275,7 @@ const FAQS = [
   },
   {
     q: "When can I leave a review?",
-    a: "Reviews unlock once your confirmed appointment time has passed. Go to My Bookings → Ready to review tab to rate the salon and stylist. You can update your review anytime.",
+    a: "Reviews unlock once your confirmed appointment time has passed. Go to My Bookings → Ready to review tab to rate the salon and stylist. You can edit your review anytime.",
   },
   {
     q: "How do Favorite Salons work?",
@@ -317,7 +320,7 @@ export function CustomerHelpGuide() {
             </Link>
             <Link href="/signup">
               <Button className="h-9 rounded-xl hero-btn-secondary text-xs font-bold px-4">
-                Create free account
+                Sign up with Google
               </Button>
             </Link>
           </div>
@@ -381,7 +384,7 @@ export function CustomerHelpGuide() {
             publicOnly
             description="The Trimma home page and salon listings — open to everyone. Start here to explore what's available near you."
             features={[
-              "Hero search widget — location + service query",
+              "Hero search widget — location, service query, and optional date",
               "Book Now — jump into salon discovery",
               "Browse by category — hair, nails, spa, barber, wellness",
               "Locations hub — provinces, districts, and cities",
@@ -402,13 +405,13 @@ export function CustomerHelpGuide() {
             title="Search & Filters"
             path="/search"
             publicOnly
-            description="Intelligent search across salon names, services, and categories with filters to narrow results."
+            description="Search salons by service and location. Province location pages add district, city, category, and open-now filters plus map and list views."
             features={[
-              "Search bar — type e.g. Barber Salon, facial, manicure",
-              "Autocomplete — matching salons and service suggestions",
-              "Filter chips — price range, open now, highest rated, amenities",
+              "Search page — filter by service name, popular service, or category tags",
+              "Location dropdown — narrow results to Colombo, Gampaha, Kandy, and more",
+              "Location pages — district, city, category, and open-now filter chips",
+              "Map and list toggle — switch views on province location pages",
               "Salon cards — photo, rating, location, category tags, verified badge",
-              "Map and list views on location pages",
             ]}
             tips={[
               `Searching near ${SALON.location} surfaces local options like ${SALON.name}.`,
@@ -446,14 +449,15 @@ export function CustomerHelpGuide() {
               "Step 1 — Select one or more services from the menu",
               "Step 2 — Choose your preferred stylist (or Any Available)",
               "Step 3 — Pick date and time from real-time available slots",
-              "Step 4 — Enter your name, email, and phone number",
-              "Step 5 — Review the booking summary, then continue to payment",
+              "Step 4 — Phone lookup to autofill, then full name, email, phone, and optional notes",
+              "Step 5 — Review summary, deposit breakdown, policy acknowledgements, then payment",
               "Only open time slots are shown — already-booked times aren't selectable",
-              "Booking reference assigned at checkout (e.g. TRM-482916)",
+              "Booking reference assigned after successful deposit (e.g. TRM-482916)",
             ]}
             tips={[
               "If a slot disappears at checkout, refresh and choose the next open time.",
               "Multi-service bookings use combined duration for slot length.",
+              "Use the same email for booking and Google sign-in so appointments appear in My Bookings.",
             ]}
             mockup={<BookingSheetMockup />}
           />
@@ -468,8 +472,8 @@ export function CustomerHelpGuide() {
               "Order summary — services, stylist, date/time, salon name",
               "Deposit line — 20% of total service price",
               "Balance due at salon — remaining 80% shown clearly",
-              "Card payment via secure checkout",
-              "Success page — booking reference and next steps",
+              "Card payment via secure Stripe checkout",
+              "Success page — booking reference and sign-in prompt for My Bookings",
               "Receipt email sent to your inbox",
             ]}
             tips={[
@@ -491,23 +495,24 @@ export function CustomerHelpGuide() {
               "Review invitation — after service completion",
             ]}
             tips={[
-              "Add your Sri Lankan mobile number at checkout for WhatsApp updates.",
+              "Add your Sri Lankan mobile number in booking Step 4 for WhatsApp updates.",
             ]}
           />
 
           <section id="account" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
             <h2 className="text-lg font-bold text-zinc-900 mb-2">Your account</h2>
             <p className="text-sm text-zinc-600 mb-6">
-              Create a free customer account to manage bookings, save favorites, and leave reviews.
-              Sign up at <Link href="/signup" className="text-brand font-bold hover:underline">/signup</Link> or
-              log in at <Link href="/login" className="text-brand font-bold hover:underline">/login</Link>.
+              Sign in with Google to manage bookings, save favorites, and leave reviews — free for customers.
+              New customers sign up at <Link href="/signup" className="text-brand font-bold hover:underline">/signup</Link>;
+              returning users log in at <Link href="/login" className="text-brand font-bold hover:underline">/login</Link>.
+              You can book as a guest without an account; use the same Google email later to see your appointments.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <CustomerSidebarMockup />
               <ul className="flex-1 grid sm:grid-cols-2 gap-2 text-sm text-zinc-700">
                 {[
                   "Light sidebar — Dashboard, Bookings, Favorites, Styles",
-                  "Profile & Support — bottom of sidebar when signed in",
+                  "Account section — Profile, Customer Help, and Support links",
                   "Mobile bottom nav — Dashboard, Bookings, Explore, Favorites, Profile",
                   "Notification bell — booking updates",
                   "Logout — ends session securely",
@@ -544,15 +549,15 @@ export function CustomerHelpGuide() {
             path="/customer/bookings"
             description="Full history and review management for every appointment."
             features={[
-              "Tabs — All · Ready to Review · Reviewed",
+              "Tabs — All · Ready to review · My reviews",
               "Each card — salon, service, stylist, date/time, status badge",
               "Status labels — Pending, Confirmed, Completed, Cancelled",
               "Deposit paid and balance due amounts",
-              "Leave Review button — opens star rating dialog after completion",
+              "Leave review button — opens after your confirmed appointment time passes",
               "Deep link — /customer/bookings?review={id} from email",
             ]}
             tips={[
-              "Only completed bookings with a real visit can receive a public review.",
+              "Reviews unlock once your confirmed visit time has passed — salon completion is not required first.",
             ]}
           />
 
@@ -604,9 +609,9 @@ export function CustomerHelpGuide() {
             title="Reviews"
             description="Help the community by rating salons and stylists after real visits."
             features={[
-              "Star rating (1–5) with optional written comment",
+              "Star rating (1–5) with optional written comment (20+ characters)",
               "Staff-specific rating when a stylist was assigned",
-              "One review per completed booking — prevents fake ratings",
+              "One review per booking appointment — prevents fake ratings",
               "Reviews appear on salon marketplace profile after submission",
               "Legacy ratings without bookings are not shown publicly",
             ]}
@@ -669,6 +674,8 @@ export function CustomerHelpGuide() {
               })}
             </div>
           </section>
+
+          <BookingGuideDownloads />
 
           <section id="support" className="scroll-mt-24">
             <div className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white p-6 sm:p-8 border border-white/10">
