@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -310,7 +311,7 @@ export function CancellationContent() {
               Clear processes that keep appointment records accurate and fair for all parties.
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             <div className="space-y-4">
               {CANCELLATION_STEPS.map((step, index) => (
                 <div key={step.title} className="flex gap-4">
@@ -329,18 +330,35 @@ export function CancellationContent() {
                 </div>
               ))}
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-3xl p-8 shadow-sm">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shrink-0">
-                  <Info className="w-6 h-6 text-black" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-zinc-900 mb-3">Important Note</h3>
-                  <p className="text-zinc-700 leading-relaxed">
-                    Trimma acts as a booking platform connecting customers and salons. Appointment
-                    attendance and service fulfillment are managed directly by the salon.
-                  </p>
-                </div>
+            <div className="relative lg:sticky lg:top-24">
+              <div className="absolute -inset-4 rounded-[2rem] bg-amber-400/10 blur-3xl pointer-events-none" />
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-white">
+                <Image
+                  src="/assets/help/booking-cancellation-actions.png"
+                  alt="Trimma salon dashboard showing booking details with No Show and Cancel Booking quick actions"
+                  width={1400}
+                  height={1050}
+                  className="w-full h-auto"
+                  priority={false}
+                />
+              </div>
+              <p className="mt-4 text-center text-xs font-semibold text-zinc-500">
+                Salon owners mark no-shows and cancellations from the booking dashboard — customers are notified
+                automatically.
+              </p>
+            </div>
+          </div>
+          <div className="mt-10 bg-amber-50 border border-amber-200 rounded-3xl p-8 shadow-sm max-w-3xl">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shrink-0">
+                <Info className="w-6 h-6 text-black" />
+              </div>
+              <div>
+                <h3 className="font-bold text-zinc-900 mb-3">Important Note</h3>
+                <p className="text-zinc-700 leading-relaxed">
+                  Trimma acts as a booking platform connecting customers and salons. Appointment
+                  attendance and service fulfillment are managed directly by the salon.
+                </p>
               </div>
             </div>
           </div>
