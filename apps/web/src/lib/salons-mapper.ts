@@ -1,3 +1,5 @@
+import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
+
 export function mapVerifiedSalonListingStats(salon: {
   rating?: number | string | null;
   review_count?: number | string | null;
@@ -39,7 +41,10 @@ export function mapSalonRowToUI(s: any, idx: number) {
     "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=600&auto=format&fit=crop",
   ];
 
-  const image = getSalonListingImage(s, fallbackImages[idx % fallbackImages.length]);
+  const image = optimizeListingImageUrl(
+    getSalonListingImage(s, fallbackImages[idx % fallbackImages.length]),
+    600
+  );
 
   return {
     id: s.id,

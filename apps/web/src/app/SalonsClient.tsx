@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
@@ -14,6 +14,12 @@ import {
   defaultSalonFilters,
   type SalonFilters,
 } from "../components/marketplace/SalonFiltersPanel";
+import { optimizeHeroImageUrl } from "@/lib/optimize-image-url";
+
+const HERO_BACKGROUND = optimizeHeroImageUrl(
+  "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop",
+  1280
+);
 
 interface Salon {
   id: string;
@@ -49,6 +55,8 @@ type InitialSearch = {
 interface Props {
   categories: Category[];
   initialSearch: InitialSearch;
+  initialSalons?: Salon[];
+  initialHasMore?: boolean;
 }
 
 type SortOption = "recommended" | "rating" | "price_low" | "price_high";
@@ -71,8 +79,14 @@ function SearchParamsSync({
   return null;
 }
 
-export default function SalonsClient({ categories, initialSearch }: Props) {
+export default function SalonsClient({
+  categories,
+  initialSearch,
+  initialSalons = [],
+  initialHasMore = true,
+}: Props) {
   const router = useRouter();
+  const skipInitialFetchRef = useRef(initialSalons.length > 0);
 
   const [searchQuery, setSearchQuery] = useState(initialSearch.q);
   const [selectedLocation, setSelectedLocation] = useState(initialSearch.l);
@@ -84,9 +98,9 @@ export default function SalonsClient({ categories, initialSearch }: Props) {
   }));
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const [searchResults, setSearchResults] = useState<Salon[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
+  const [searchResults, setSearchResults] = useState<Salon[]>(initialSalons);
+  const [isLoading, setIsLoading] = useState(initialSalons.length === 0);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
   const LIMIT = 12;
 
@@ -131,6 +145,10 @@ export default function SalonsClient({ categories, initialSearch }: Props) {
   );
 
   useEffect(() => {
+    if (skipInitialFetchRef.current && page === 0) {
+      skipInitialFetchRef.current = false;
+      return;
+    }
     void Promise.resolve().then(() => {
       fetchResults(page === 0);
     });
@@ -232,8 +250,12 @@ export default function SalonsClient({ categories, initialSearch }: Props) {
       <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-10 md:py-14">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop"
-            alt="Salons Background"
+            src={HERO_BACKGROUND}
+            alt=""
+            width={1280}
+            height={720}
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover opacity-50"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/55 to-zinc-950/25" />
@@ -424,8 +446,12 @@ export default function SalonsClient({ categories, initialSearch }: Props) {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredSalons.map((salon) => (
-                  <SalonListRow key={salon.id} salon={mapToRowProps(salon)} />
+                {filteredSalons.map((salon, index) => (
+                  <SalonListRow
+                    key={salon.id}
+                    salon={mapToRowProps(salon)}
+                    priority={index < 4}
+                  />
                 ))}
               </div>
             )}

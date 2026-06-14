@@ -29,12 +29,13 @@ export type SalonListRowData = {
 
 type SalonListRowProps = {
   salon: SalonListRowData;
+  priority?: boolean;
 };
 
 const FALLBACK_SALON_IMAGE =
-  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=75";
 
-export function SalonListRow({ salon }: SalonListRowProps) {
+export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = salon.isVerified !== false;
   const locationLabel = salon.location || salon.city;
@@ -48,6 +49,8 @@ export function SalonListRow({ salon }: SalonListRowProps) {
           alt={salon.name}
           fill
           sizes="(max-width: 768px) 100vw, 300px"
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
           className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
           onError={() => {
             if (imageSrc !== FALLBACK_SALON_IMAGE) {
