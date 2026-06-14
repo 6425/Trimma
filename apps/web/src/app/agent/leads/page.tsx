@@ -801,7 +801,7 @@ function AgentLeads() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 min-w-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Salon Creation</h1>
@@ -849,7 +849,7 @@ function AgentLeads() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
         <button
           onClick={() => setMainTab("google")}
           className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
@@ -874,15 +874,15 @@ function AgentLeads() {
       <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
         {mainTab === 'google' ? (
           <>
-            <div className="p-5 border-b border-zinc-50 flex items-center justify-between gap-4">
-              <div>
+            <div className="p-5 border-b border-zinc-50 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="min-w-0">
                 <h3 className="font-bold text-[#1A1C29] text-base">My Assigned Salons</h3>
                 <p className="text-zinc-400 text-xs mt-0.5">Click a salon name to open the Field Editor. Double-click cells to edit inline.</p>
               </div>
-              <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl shrink-0">
+              <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl w-full lg:w-auto overflow-x-auto scrollbar-none shrink-0">
                 <button
                   onClick={() => setActiveTab("assigned")}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
                     activeTab === "assigned" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
                   }`}
                 >
@@ -890,7 +890,7 @@ function AgentLeads() {
                 </button>
                 <button
                   onClick={() => setActiveTab("verified")}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
                     // @ts-ignore
                     activeTab === "verified" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
                   }`}
@@ -899,7 +899,7 @@ function AgentLeads() {
                 </button>
                 <button
                   onClick={() => setActiveTab("invited")}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
                     // @ts-ignore
                     activeTab === "invited" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
                   }`}
@@ -1058,10 +1058,10 @@ function AgentLeads() {
 
       {isModalOpen && selectedLead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl relative border border-zinc-100 flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 max-w-4xl w-full shadow-2xl relative border border-zinc-100 flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[92vh] animate-in zoom-in-95 duration-200 min-w-0">
             
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-zinc-100">
+              <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="text-lg font-black text-zinc-900 tracking-tight">Field Editor</h3>
                   <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getStatusBadge(formData.onboarding_status)}`}>
@@ -1455,21 +1455,21 @@ function AgentLeads() {
                 }`}>{completionScore(formData)}%</span>
               </div>
 
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
                 <Button
                   variant="outline"
                   onClick={() => { setIsModalOpen(false); setSelectedLead(null); }}
-                  className="rounded-xl font-bold h-10 border-zinc-200 text-zinc-500 text-xs"
+                  className="rounded-xl font-bold h-10 border-zinc-200 text-zinc-500 text-xs w-full sm:w-auto"
                 >
                   Close
                 </Button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   <Button
                     onClick={() => handleSave()}
                     disabled={updating}
                     variant="outline"
-                    className="rounded-xl font-bold h-10 px-4 border-zinc-200 text-xs"
+                    className="rounded-xl font-bold h-10 px-4 border-zinc-200 text-xs w-full sm:w-auto"
                   >
                     {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                   </Button>
@@ -1478,7 +1478,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleSendToOwner}
                       disabled={updating || !formData.phone || !formData.owner_gmail}
-                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <Send className="w-4 h-4" /> Send to Salon Owner for Review
                     </Button>
@@ -1488,7 +1488,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleSendInvitation}
                       disabled={updating || !formData.phone || !formData.owner_gmail}
-                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Send Invitation
                     </Button>
@@ -1498,7 +1498,7 @@ function AgentLeads() {
                     <Button
                       onClick={handleAgentApproval}
                       disabled={updating}
-                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                       <CheckCircle2 className="w-4 h-4" /> Enable Booking & Send to Admin
                     </Button>
@@ -1506,15 +1506,15 @@ function AgentLeads() {
 
                   {/* Pending status display */}
                   {["OWNER_INVITED"].includes(formData.onboarding_status) && (
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-amber-50 text-amber-600 border border-amber-200 font-bold text-[10px] px-3 py-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                      <Badge className="bg-amber-50 text-amber-600 border border-amber-200 font-bold text-[10px] px-3 py-2 justify-center">
                         ⏳ Owner Invited
                       </Badge>
                       <Button
                         onClick={handleSendInvitation}
                         disabled={updating || !formData.phone || !formData.owner_gmail}
                         variant="outline"
-                        className="text-amber-600 border-amber-200 hover:bg-amber-50 rounded-xl font-bold h-10 px-4 text-xs flex items-center gap-2"
+                        className="text-amber-600 border-amber-200 hover:bg-amber-50 rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                       >
                         <Send className="w-3.5 h-3.5" /> Resend Invitation
                       </Button>
@@ -1522,7 +1522,7 @@ function AgentLeads() {
                   )}
 
                   {["PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(formData.onboarding_status) && (
-                    <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-[10px] px-3 py-2">
+                    <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-[10px] px-3 py-2 justify-center w-full sm:w-auto">
                       ✅ Booking Enabled
                     </Badge>
                   )}

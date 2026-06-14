@@ -129,7 +129,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       </aside>
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="flex-1 min-h-screen pb-20 lg:pb-0 flex flex-col min-w-0">
+      <main className="flex-1 min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 flex flex-col min-w-0 overflow-x-clip trimma-light-context">
 
         {/* Mobile Top Header */}
         <header className="h-16 bg-zinc-50 border-b border-black/10 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
@@ -154,13 +154,13 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </header>
 
         {/* Page Content */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0 overflow-x-hidden">
           {children}
         </div>
       </main>
 
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
-      <nav className="trimma-mobile-bottom-nav trimma-mobile-bottom-nav--light lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-50 border-t border-black/10 flex justify-around items-center px-2 py-2 z-30">
+      <nav className="trimma-mobile-bottom-nav trimma-mobile-bottom-nav--light lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-50 border-t border-black/10 flex justify-around items-center px-1 sm:px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] z-30">
         {bottomNavItems.map((item) => {
           const isActive = pathname === item.path || (item.path !== '/customer' && item.path !== '/' && pathname.startsWith(item.path));
           return (

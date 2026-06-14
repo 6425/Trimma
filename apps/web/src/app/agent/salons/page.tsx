@@ -137,7 +137,7 @@ export default function AgentSalons() {
   }, [salons, activeTab, searchTerm]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 min-w-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">My Salons</h1>
@@ -146,18 +146,18 @@ export default function AgentSalons() {
             {agentEmail ? ` (${agentEmail})` : ""}. Manage them in the Field Editor.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold" })}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold w-full sm:w-auto justify-center" })}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add Salon
           </Link>
-          <Link href={path("/leads")} className={buttonVariants({ variant: "outline", className: "rounded-xl border-zinc-200" })}>
+          <Link href={path("/leads")} className={buttonVariants({ variant: "outline", className: "rounded-xl border-zinc-200 w-full sm:w-auto justify-center" })}>
             Open Field Editor
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total assigned", value: tabCounts.all },
           { label: "In progress", value: tabCounts.active },
@@ -227,7 +227,7 @@ export default function AgentSalons() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-zinc-100 bg-zinc-50/80 text-left">
                   <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Salon</th>

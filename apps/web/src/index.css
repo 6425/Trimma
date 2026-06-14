@@ -1041,6 +1041,29 @@
     color: #f5b700 !important;
   }
 
+  /* Portal dashboard mobile — prevent horizontal overflow and card overlap */
+  .trimma-portal-main {
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .trimma-portal-main .trimma-light-context > *,
+  .trimma-portal-main > .trimma-light-context > * {
+    min-width: 0;
+  }
+
+  .trimma-mobile-bottom-nav :is(a, button) {
+    min-width: 0;
+    max-width: 4.5rem;
+  }
+
+  .trimma-mobile-bottom-nav :is(a, button) span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
   /*
    * Solid brand/yellow panels — never allow white text on the yellow fill itself.
    * Semi-transparent overlays on brand may keep their own contrast.

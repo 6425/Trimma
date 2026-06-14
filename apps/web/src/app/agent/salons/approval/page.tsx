@@ -53,7 +53,7 @@ export default function AgentSalonApprovalList() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-180px)] min-h-[500px]">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col max-h-[calc(100dvh-13rem)] lg:h-[calc(100vh-180px)] min-h-[320px]">
         <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -83,7 +83,7 @@ export default function AgentSalonApprovalList() {
               <p className="text-sm font-medium max-w-md mt-2">There are no salons pending approval at the moment.</p>
             </div>
           ) : (
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full min-w-[640px] text-left text-sm border-collapse">
               <thead className="bg-white sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="px-6 py-4 font-black text-[10px] uppercase tracking-widest text-zinc-400">Salon Details</th>

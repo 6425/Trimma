@@ -141,7 +141,7 @@ export default function BillingPage() {
             </p>
           </div>
 
-          <div className="relative z-10 bg-black/10 rounded-2xl p-4 border border-black/10 text-right min-w-[200px]">
+          <div className="relative z-10 bg-black/10 rounded-2xl p-4 border border-black/10 text-left sm:text-right min-w-0 w-full sm:min-w-[200px] sm:w-auto">
             <span className="text-[10px] font-bold text-black/60 uppercase block">Next Invoice Date</span>
             <div className="text-base font-extrabold mt-0.5 text-black">June 01, 2026</div>
             <div className="text-xs text-black/80 mt-1">

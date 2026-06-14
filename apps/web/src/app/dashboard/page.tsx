@@ -218,7 +218,7 @@ export default function Dashboard() {
 
       <SalonSetupChecklist services={allServices} staff={allStaff} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card title="Total Bookings" value={stats.totalBookings.toLocaleString()} />
         <Card title="Active Services" value={stats.activeServices.toLocaleString()} />
         <Card title="Total Staff" value={stats.totalStaff.toLocaleString()} />

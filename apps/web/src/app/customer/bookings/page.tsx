@@ -289,7 +289,7 @@ function BookingsListContent() {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-stretch gap-2 md:items-end min-w-[180px]">
+                <div className="flex flex-col items-stretch gap-2 md:items-end min-w-0 w-full sm:min-w-[180px] sm:w-auto shrink-0">
                   {renderReviewSection(booking)}
                 </div>
               </div>

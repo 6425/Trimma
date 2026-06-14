@@ -117,7 +117,7 @@ export default function AgentCommissions() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto p-4">
+    <div className="space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto min-w-0">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">

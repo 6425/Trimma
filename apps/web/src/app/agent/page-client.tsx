@@ -132,7 +132,7 @@ export default function AgentDashboard() {
   }
 
   return (
-    <div className="space-y-6 lg:space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-6 lg:space-y-8 max-w-6xl mx-auto min-w-0 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-zinc-900 mb-1">Agent Cockpit</h1>
@@ -150,14 +150,14 @@ export default function AgentDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {[
           { title: "Assigned Salons", value: stats.assignedCount, trend: "Managed by you", icon: <Users className="w-5 h-5 text-indigo-500" /> },
           { title: "In Progress", value: stats.assignedCount - stats.convertedCount, trend: "Still onboarding", icon: <Rocket className="w-5 h-5 text-amber-500" /> },
           { title: "Live Salons", value: stats.convertedCount, trend: "Approved / verified", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> },
           { title: "Total Earnings", value: `Rs ${totalEarnings.toLocaleString()}`, trend: `${stats.commissionRate}% commission tier`, icon: <Target className="w-5 h-5 text-sky-500" /> },
         ].map((kpi, i) => (
-          <div key={i} className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+          <div key={i} className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden min-w-0">
             <div
               className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10 ${
                 i === 0 ? "bg-indigo-500" : i === 1 ? "bg-amber-500" : i === 2 ? "bg-emerald-500" : "bg-sky-500"
@@ -166,7 +166,7 @@ export default function AgentDashboard() {
             <div className="flex justify-between items-start mb-3">
               <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">{kpi.icon}</div>
             </div>
-            <div className="text-2xl lg:text-3xl font-bold text-zinc-900 tracking-tight mb-1">{kpi.value}</div>
+            <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900 tracking-tight mb-1 break-words">{kpi.value}</div>
             <div className="text-xs lg:text-sm font-medium text-zinc-500">{kpi.title}</div>
             <div className="text-[10px] lg:text-xs text-zinc-400 font-semibold mt-2 flex items-center">
               <ArrowUpRight className="w-3 h-3 mr-1 text-emerald-500" /> {kpi.trend}
@@ -207,12 +207,12 @@ export default function AgentDashboard() {
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-5 lg:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <div>
+            <div className="p-5 lg:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50/50">
+              <div className="min-w-0">
                 <h2 className="text-lg font-bold text-zinc-900">Recent Assigned Salons</h2>
                 <p className="text-sm text-zinc-500 mt-0.5">Quick access to salons managed by you</p>
               </div>
-              <Link href={path("/salons")} className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline">
+              <Link href={path("/salons")} className="text-sm font-semibold text-brand flex items-center gap-1 hover:underline shrink-0">
                 View all salons &rarr;
               </Link>
             </div>
@@ -224,10 +224,10 @@ export default function AgentDashboard() {
               ) : (
                 stats.hotLeads.map((lead) => (
                   <div key={lead.id} className="p-4 lg:p-5 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-1">
-                        <h3 className="font-bold text-zinc-900 text-base">{lead.name}</h3>
-                        <Badge variant="secondary" className={`shadow-none font-bold text-[9px] uppercase px-2.5 py-0.5 ${getAgentSalonStatusClass(lead.onboarding_status)}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-zinc-900 text-base min-w-0 flex-1">{lead.name}</h3>
+                        <Badge variant="secondary" className={`shadow-none font-bold text-[9px] uppercase px-2.5 py-0.5 shrink-0 ${getAgentSalonStatusClass(lead.onboarding_status)}`}>
                           {getAgentSalonStatusLabel(lead.onboarding_status)}
                         </Badge>
                       </div>
@@ -308,7 +308,7 @@ export default function AgentDashboard() {
               <p className="text-sm text-zinc-500">All assigned salons are live or up to date.</p>
             ) : (
               stats.upcomingTasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-3">
+                <div key={task.id} className="flex flex-wrap items-center gap-3">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                       task.type === "call"
@@ -330,7 +330,7 @@ export default function AgentDashboard() {
                     <div className="font-semibold text-sm text-zinc-900 truncate">{task.task}</div>
                     <div className="text-xs text-zinc-500">Assigned {task.time}</div>
                   </div>
-                  <Badge variant="outline" className="border-slate-200 text-zinc-500 font-bold text-[9px] uppercase">
+                  <Badge variant="outline" className="border-slate-200 text-zinc-500 font-bold text-[9px] uppercase shrink-0 ml-auto sm:ml-0">
                     {getAgentSalonStatusLabel(task.status)}
                   </Badge>
                 </div>

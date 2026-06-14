@@ -193,7 +193,7 @@ function TerritoryExplorerContent() {
   const leadsCount = businesses.filter(b => !b.is_verified || b.status === 'pending').length;
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-[1400px] mx-auto space-y-6 animate-in fade-in duration-500 min-w-0">
       
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-100 pb-5">
@@ -206,7 +206,7 @@ function TerritoryExplorerContent() {
             Explore businesses within your assigned territories and discover growth opportunities.
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Button onClick={handleSearch} variant="outline" size="sm" className="h-9 rounded-xl font-bold text-xs text-zinc-700 border-zinc-200 hover:bg-zinc-50" disabled={searching}>
             <RefreshCw className={`w-3.5 h-3.5 mr-2 ${searching ? 'animate-spin' : ''}`} /> Refresh Map
           </Button>

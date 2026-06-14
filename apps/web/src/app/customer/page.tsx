@@ -136,7 +136,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 md:space-y-12">
+    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 md:space-y-12 min-w-0">
       <section className="bg-white rounded-3xl p-6 md:p-10 text-zinc-900 relative overflow-hidden shadow-sm border border-zinc-200">
         <div className="absolute inset-0 bg-gradient-to-r from-white to-zinc-50 z-0"></div>
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#F5B700]/10 blur-3xl rounded-full z-0"></div>
@@ -176,7 +176,7 @@ function DashboardContent() {
         </div>
       </section>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: "Total Bookings", value: bookingStats.total },
           { label: "Upcoming", value: bookingStats.upcoming },
@@ -209,9 +209,9 @@ function DashboardContent() {
               return (
                 <div
                   key={booking.id}
-                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#F5B700]/50 hover:bg-[#F5B700]/5 transition-all flex justify-between items-center gap-4"
+                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#F5B700]/50 hover:bg-[#F5B700]/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-zinc-900">{booking.salons?.name || "Trimma Partner Salon"}</h3>
                     <div className="flex items-center gap-2 mt-1 text-sm text-zinc-600">
                       <CalendarDays className="w-4 h-4 text-[#F5B700]/80" />
@@ -221,7 +221,7 @@ function DashboardContent() {
                     </div>
                     {booking.salons?.city ? <p className="text-xs text-zinc-500 mt-1">{booking.salons.city}</p> : null}
                   </div>
-                  <div className="text-right flex flex-col items-end gap-1.5 max-w-[240px]">
+                  <div className="text-left sm:text-right flex flex-col items-start sm:items-end gap-1.5 w-full sm:w-auto sm:max-w-[240px] shrink-0">
                     <span className="font-bold text-zinc-900">Total: Rs. {formatLkr(total)}</span>
 
                     {["confirmed", "pending", "reservation_paid"].includes(String(booking.status || "").toLowerCase()) ? (
