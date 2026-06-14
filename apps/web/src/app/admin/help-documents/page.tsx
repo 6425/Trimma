@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { FileText, Download, ExternalLink, RefreshCw, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,22 +39,25 @@ export default function AdminHelpDocumentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const result = await fetchAdminHelpDocuments();
-    if (result.success === true) {
-      setDocs(result.documents);
-    } else {
-      setError(result.error);
-      setDocs([]);
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await fetchAdminHelpDocuments();
+      if (result.success === true) {
+        setDocs(result.documents);
+      } else {
+        setError(result.error);
+        setDocs([]);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  };
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void Promise.resolve().then(() => fetchDocuments());
+  }, []);
 
   const publicShareUrl = (doc: HelpDoc) => {
     const path = doc.file_url?.startsWith("http")
@@ -79,7 +82,7 @@ export default function AdminHelpDocumentsPage() {
           type="button"
           variant="outline"
           className="rounded-xl border-zinc-200"
-          onClick={() => void load()}
+          onClick={() => void fetchDocuments()}
           disabled={loading}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -88,10 +91,9 @@ export default function AdminHelpDocumentsPage() {
       </div>
 
       <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-900">
-        <strong>Regenerate PDFs:</strong> Run{" "}
-        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">node apps/web/scripts/generate-booking-guide-docx.mjs</code>{" "}
-        locally, then{" "}
-        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">--upload</code> with Supabase env vars to sync storage + DB.
+        <strong>Regenerate guides:</strong> Run{" "}
+        <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">npm run generate:booking-guides</code>{" "}
+        locally. Run <code className="bg-white/80 px-1.5 py-0.5 rounded text-xs">packages/db/HELP_DOCUMENTS_DOCX_UPDATE.sql</code> in Supabase if download links still point to PDF.
       </div>
 
       {loading ? (

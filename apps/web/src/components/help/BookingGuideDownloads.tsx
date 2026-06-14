@@ -23,12 +23,13 @@ function formatSize(bytes: number | null) {
 
 export function BookingGuideDownloads() {
   const [docs, setDocs] = useState<BookingGuideDocument[]>(BOOKING_GUIDE_FALLBACKS);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/public/help-documents?document_type=booking_guide")
+    void Promise.resolve().then(() => {
+      fetch("/api/public/help-documents?document_type=booking_guide")
       .then(async (r) => {
         if (!r.ok) return BOOKING_GUIDE_FALLBACKS;
         const data = (await r.json()) as { documents?: BookingGuideDocument[] };
@@ -43,6 +44,7 @@ export function BookingGuideDownloads() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+    });
     return () => {
       cancelled = true;
     };
