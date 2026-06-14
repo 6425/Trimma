@@ -40,6 +40,11 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
+      {
+        source: '/help',
+        destination: '/cancellation-help',
+        permanent: true,
+      },
     ]
   },
   images: {

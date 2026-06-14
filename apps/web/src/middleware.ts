@@ -53,7 +53,7 @@ const hasPermission = (userRole: UserRole | null | undefined, route: string): bo
 };
 
 // Define public routes that do not require authentication
-const publicRoutes = ['/', '/search', '/login', '/signup', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/pricing', '/deals', '/categories', '/styles', '/unauthorized', '/onboarding', '/privacy-policy', '/terms', '/cookies', '/careers', '/data-deletion', '/customer-help', '/help', '/safety', '/features'];
+const publicRoutes = ['/', '/search', '/login', '/signup', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/pricing', '/deals', '/categories', '/styles', '/unauthorized', '/onboarding', '/privacy-policy', '/terms', '/cookies', '/careers', '/data-deletion', '/customer-help', '/cancellation-help', '/safety', '/features'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

@@ -348,14 +348,14 @@ export function CancellationContent() {
               </p>
             </div>
           </div>
-          <div className="mt-10 bg-amber-50 border border-amber-200 rounded-3xl p-8 shadow-sm max-w-3xl">
-            <div className="flex items-start gap-4">
+          <div className="mt-10 mx-auto bg-amber-50 border border-amber-200 rounded-3xl p-8 shadow-sm max-w-3xl text-center">
+            <div className="flex flex-col items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center shrink-0">
                 <Info className="w-6 h-6 text-black" />
               </div>
               <div>
                 <h3 className="font-bold text-zinc-900 mb-3">Important Note</h3>
-                <p className="text-zinc-700 leading-relaxed">
+                <p className="text-zinc-700 leading-relaxed max-w-2xl mx-auto">
                   Trimma acts as a booking platform connecting customers and salons. Appointment
                   attendance and service fulfillment are managed directly by the salon.
                 </p>

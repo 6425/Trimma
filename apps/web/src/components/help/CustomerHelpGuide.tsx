@@ -268,7 +268,7 @@ const FAQS = [
   },
   {
     q: "Can I cancel or reschedule a booking?",
-    a: "Contact the salon directly for urgent changes. Cancellation policies vary by salon. See our Cancellation options page linked in the site footer for general Trimma guidance.",
+    a: "Contact the salon directly for urgent changes. Cancellation policies vary by salon. See our Cancellation options page at /cancellation-help for general Trimma guidance.",
   },
   {
     q: "When can I leave a review?",
