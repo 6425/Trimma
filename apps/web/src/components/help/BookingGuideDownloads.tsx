@@ -3,17 +3,11 @@
 import { useEffect, useState } from "react";
 import { Download, FileText, Loader2, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-type HelpDocument = {
-  id: string;
-  slug: string;
-  language: string;
-  title: string;
-  description: string | null;
-  file_url: string | null;
-  download_url?: string;
-  file_size_bytes: number | null;
-};
+import {
+  BOOKING_GUIDE_FALLBACKS,
+  resolveBookingGuideDocuments,
+  type BookingGuideDocument,
+} from "@/lib/booking-guide-fallback";
 
 const LANG_LABELS: Record<string, string> = {
   en: "English",
@@ -28,19 +22,23 @@ function formatSize(bytes: number | null) {
 }
 
 export function BookingGuideDownloads() {
-  const [docs, setDocs] = useState<HelpDocument[]>([]);
+  const [docs, setDocs] = useState<BookingGuideDocument[]>(BOOKING_GUIDE_FALLBACKS);
   const [loading, setLoading] = useState(true);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/public/help-documents?document_type=booking_guide")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled) setDocs(data.documents || []);
+      .then(async (r) => {
+        if (!r.ok) return BOOKING_GUIDE_FALLBACKS;
+        const data = (await r.json()) as { documents?: BookingGuideDocument[] };
+        return resolveBookingGuideDocuments(data.documents);
+      })
+      .then((resolved) => {
+        if (!cancelled) setDocs(resolved);
       })
       .catch(() => {
-        if (!cancelled) setDocs([]);
+        if (!cancelled) setDocs(BOOKING_GUIDE_FALLBACKS);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -50,9 +48,8 @@ export function BookingGuideDownloads() {
     };
   }, []);
 
-  const copyLink = async (doc: HelpDocument) => {
+  const copyLink = async (doc: BookingGuideDocument) => {
     const url = doc.download_url || doc.file_url;
-    if (!url) return;
     const absolute = url.startsWith("http") ? url : `${window.location.origin}${url}`;
     try {
       await navigator.clipboard.writeText(absolute);
@@ -62,17 +59,6 @@ export function BookingGuideDownloads() {
       /* ignore */
     }
   };
-
-  if (loading) {
-    return (
-      <section className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8 flex items-center justify-center gap-2 text-sm text-zinc-500">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        Loading booking guides…
-      </section>
-    );
-  }
-
-  if (docs.length === 0) return null;
 
   return (
     <section id="pdf-guides" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -89,13 +75,19 @@ export function BookingGuideDownloads() {
               Share these professional step-by-step guides with new customers and salon partners.
               Available in English, Sinhala, and Tamil — with screenshots for every stage of the booking journey.
             </p>
+            {loading && (
+              <p className="text-xs text-zinc-400 mt-2 flex items-center gap-1.5">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Syncing latest links…
+              </p>
+            )}
           </div>
         </div>
       </div>
 
       <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-4">
         {docs.map((doc) => {
-          const href = doc.download_url || doc.file_url || "#";
+          const href = doc.download_url || doc.file_url;
           const size = formatSize(doc.file_size_bytes);
           return (
             <div
