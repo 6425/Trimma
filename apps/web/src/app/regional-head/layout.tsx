@@ -176,7 +176,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
           </div>
         </aside>
 
-        <main className="flex-1 lg:ml-64 min-h-screen flex flex-col bg-slate-50 text-zinc-900 pb-20 lg:pb-0">
+        <main className="trimma-portal-main flex-1 lg:ml-64 min-h-screen flex flex-col bg-slate-50 text-zinc-900 trimma-light-context pb-20 lg:pb-0">
           <header className="h-16 bg-[#0B0B0B] border-b border-white/8 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-6">
             <div className="flex items-center gap-3">
               <div className="hidden lg:block text-sm font-bold text-white">Regional Head Portal</div>
@@ -218,7 +218,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
           <div className="p-4 sm:p-6 lg:p-8 flex-1">{children}</div>
         </main>
 
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-2 py-2 z-30">
+        <nav className="trimma-mobile-bottom-nav trimma-mobile-bottom-nav--dark lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-2 py-2 z-30">
           {[
             { name: "Home", path: BASE, icon: <Home className="w-5 h-5" /> },
             { name: "Salons", path: `${BASE}/salons`, icon: <Building2 className="w-5 h-5" /> },
@@ -232,13 +232,11 @@ export default function RegionalHeadLayout({ children }: { children: React.React
                 key={item.name}
                 href={item.path}
                 className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                  isActive ? "text-[#F5B700]" : "text-zinc-600 hover:text-zinc-400"
+                  isActive ? "is-active-nav text-[#F5B700]" : "text-white/70 hover:text-white"
                 }`}
               >
                 {item.icon}
-                <span
-                  className={`text-[10px] font-semibold ${isActive ? "text-[#F5B700]" : "text-zinc-600"}`}
-                >
+                <span className={`text-[10px] font-semibold ${isActive ? "text-[#F5B700]" : ""}`}>
                   {item.name}
                 </span>
               </Link>

@@ -886,7 +886,7 @@ export default function Salons() {
               <Button 
                 onClick={handleSaveEdit}
                 disabled={isSavingEdit}
-                className="rounded-xl bg-slate-50 hover:bg-zinc-800 text-zinc-900 font-bold px-6 h-11 shadow-lg shadow-zinc-900/20"
+                className="rounded-xl bg-slate-50 hover:bg-zinc-800 hover:text-white text-zinc-900 font-bold px-6 h-11 shadow-lg shadow-zinc-900/20"
               >
                 {isSavingEdit ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -472,7 +472,7 @@ export default function AdminBookings() {
                 size="sm"
                 onClick={handleRescheduleSave}
                 disabled={actioningId === reschedulingBooking.id || !newDate || !newTime}
-                className="bg-white hover:bg-zinc-800 text-zinc-900 font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
+                className="bg-white hover:bg-zinc-800 hover:text-white text-zinc-900 font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
               >
                 {actioningId === reschedulingBooking.id ? (
                   <>

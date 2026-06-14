@@ -186,7 +186,7 @@ export default function CommissionManagement() {
           <p className="text-zinc-500 text-sm mt-1">Manage global financial ledger rules, agent tiers, and settlement logic.</p>
         </div>
         <div className="flex gap-2">
-           <Button className="bg-white hover:bg-zinc-800 text-zinc-900 font-bold rounded-xl shadow-md h-10 px-4 flex items-center gap-2">
+           <Button className="bg-white hover:bg-zinc-800 hover:text-white text-zinc-900 font-bold rounded-xl shadow-md h-10 px-4 flex items-center gap-2">
              <FileText className="w-4 h-4" /> Audit Logs
            </Button>
         </div>

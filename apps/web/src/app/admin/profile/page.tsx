@@ -424,7 +424,7 @@ export default function AdminProfilePage() {
                 <Button 
                   type="submit"
                   disabled={savingProfile}
-                  className="bg-slate-50 hover:bg-zinc-800 text-zinc-900 rounded-xl font-bold h-11 px-5 flex items-center gap-2"
+                  className="bg-slate-50 hover:bg-zinc-800 hover:text-white text-zinc-900 rounded-xl font-bold h-11 px-5 flex items-center gap-2"
                 >
                   {savingProfile ? (
                     <>

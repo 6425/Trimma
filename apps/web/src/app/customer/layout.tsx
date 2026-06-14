@@ -41,7 +41,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex font-sans">
+    <div className="min-h-screen bg-zinc-50 flex font-sans trimma-light-context">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -160,18 +160,18 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       </main>
 
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-50 border-t border-black/10 flex justify-around items-center px-2 py-2 z-30">
+      <nav className="trimma-mobile-bottom-nav trimma-mobile-bottom-nav--light lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-50 border-t border-black/10 flex justify-around items-center px-2 py-2 z-30">
         {bottomNavItems.map((item) => {
           const isActive = pathname === item.path || (item.path !== '/customer' && item.path !== '/' && pathname.startsWith(item.path));
           return (
             <Link key={item.name}
               href={item.path}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                isActive ? "text-[#F5B700]" : "text-zinc-600 hover:text-zinc-400"
+                isActive ? "is-active-nav text-[#F5B700]" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               {item.icon}
-              <span className={`text-[10px] font-semibold ${isActive ? "text-[#F5B700]" : "text-zinc-600"}`}>
+              <span className={`text-[10px] font-semibold ${isActive ? "text-[#F5B700]" : ""}`}>
                 {item.name}
               </span>
             </Link>

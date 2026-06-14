@@ -983,6 +983,88 @@
   }
 
   /*
+   * Portal dashboards — light main column inside dark agent/regional-head shells.
+   * Keeps shadcn tokens, inputs, and ghost buttons readable on white/slate surfaces.
+   */
+  .trimma-dark-context .trimma-portal-main.trimma-light-context,
+  .trimma-dark-context .trimma-light-context.trimma-portal-main {
+    --background: #f8fafc;
+    --foreground: #18181b;
+    --card: #ffffff;
+    --card-foreground: #18181b;
+    --popover: #ffffff;
+    --popover-foreground: #18181b;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #e4e4e7;
+    --accent-foreground: #18181b;
+    --border: rgba(0, 0, 0, 0.08);
+    --input: rgba(0, 0, 0, 0.06);
+    color: #18181b;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context :is(
+    h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
+  ):not([class*="text-white"]):not([class*="text-[#F5B700]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-green"]):not([class*="text-blue"]) {
+    color: inherit;
+  }
+
+  /* Mobile bottom nav — dark bar (agent / regional-head) */
+  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav),
+  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav) span {
+    color: rgba(255, 255, 255, 0.72) !important;
+  }
+
+  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav):is(:hover, :focus-visible),
+  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav):is(:hover, :focus-visible) span {
+    color: #ffffff !important;
+  }
+
+  .trimma-mobile-bottom-nav--dark :is(a, button).is-active-nav,
+  .trimma-mobile-bottom-nav--dark :is(a, button).is-active-nav span {
+    color: #f5b700 !important;
+  }
+
+  /* Mobile bottom nav — light bar (customer) */
+  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav),
+  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav) span {
+    color: #52525b !important;
+  }
+
+  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav):is(:hover, :focus-visible),
+  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav):is(:hover, :focus-visible) span {
+    color: #18181b !important;
+  }
+
+  .trimma-mobile-bottom-nav--light :is(a, button).is-active-nav,
+  .trimma-mobile-bottom-nav--light :is(a, button).is-active-nav span {
+    color: #f5b700 !important;
+  }
+
+  /*
+   * Solid brand/yellow panels — never allow white text on the yellow fill itself.
+   * Semi-transparent overlays on brand may keep their own contrast.
+   */
+  :is(.bg-brand, .bg-\[\#F5B700\]):not([class*="bg-brand/"]):not([class*="bg-\[\#F5B700\]/"]):not([class*="bg-brand/1"]):not([class*="bg-\[\#F5B700\]/1"]) :is(
+    h1, h2, h3, h4, h5, h6, p, span, label, div, a, button
+  ):is([class*="text-white"]) {
+    color: #000000 !important;
+  }
+
+  /*
+   * Admin / dashboard invert-hover buttons (light default → dark on hover).
+   */
+  .trimma-light-context :is(
+    button, a, [role="button"], [data-slot="button"]
+  ):is(
+    [class*="bg-white"], [class*="bg-slate-50"], [class*="bg-zinc-50"]
+  ):is(
+    [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"], [class*="hover:bg-black"]
+  ):is(:hover, :focus-visible, :active) {
+    color: #ffffff !important;
+  }
+
+  /*
    * Admin light sidebar — explicit contrast on default, hover, focus, and active
    * (mobile drawer + desktop fixed nav).
    */

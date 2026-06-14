@@ -126,14 +126,14 @@ export default function BillingPage() {
 
       {activePlan && (
         <div className="bg-brand text-black p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute right-0 top-0 w-64 h-64 bg-black/5 rounded-full blur-3xl pointer-events-none"></div>
 
           <div className="relative z-10 space-y-2">
-            <span className="inline-flex bg-white/10 text-white px-3.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-1">
+            <span className="inline-flex bg-black/10 text-black px-3.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-1">
               Active Membership Tier
             </span>
-            <h2 className="text-2xl font-black">{activePlan.name} Plan</h2>
-            <p className="text-white/70 text-xs">
+            <h2 className="text-2xl font-black text-black">{activePlan.name} Plan</h2>
+            <p className="text-black/70 text-xs">
               Supports up to {activePlan.max_staff} staff,{" "}
               {activePlan.max_services >= 9999 ? "unlimited" : activePlan.max_services} services,{" "}
               {activePlan.max_images} images, and{" "}
@@ -141,10 +141,10 @@ export default function BillingPage() {
             </p>
           </div>
 
-          <div className="relative z-10 bg-white/10 rounded-2xl p-4 border border-white/10 text-right min-w-[200px]">
-            <span className="text-[10px] font-bold text-white/60 uppercase block">Next Invoice Date</span>
-            <div className="text-base font-extrabold mt-0.5">June 01, 2026</div>
-            <div className="text-xs text-white/80 mt-1">
+          <div className="relative z-10 bg-black/10 rounded-2xl p-4 border border-black/10 text-right min-w-[200px]">
+            <span className="text-[10px] font-bold text-black/60 uppercase block">Next Invoice Date</span>
+            <div className="text-base font-extrabold mt-0.5 text-black">June 01, 2026</div>
+            <div className="text-xs text-black/80 mt-1">
               {formatLkr(getDisplayMonthlyPrice(activePlan, billingCycle))} / month
             </div>
           </div>
