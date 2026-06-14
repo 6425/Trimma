@@ -246,8 +246,8 @@ export default function SalonsClient({
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      {/* HERO — unchanged search bar */}
-      <section className="relative overflow-hidden bg-dark-gradient border-b border-white/5 py-10 md:py-14">
+      {/* HERO */}
+      <section className="relative overflow-hidden bg-primary-gradient border-b border-brand/30 py-10 md:py-14">
         <div className="absolute inset-0 z-0">
           <img
             src={HERO_BACKGROUND}
@@ -256,21 +256,23 @@ export default function SalonsClient({
             height={720}
             decoding="async"
             fetchPriority="high"
-            className="w-full h-full object-cover opacity-50"
+            className="w-full h-full object-cover opacity-25 mix-blend-multiply"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/55 to-zinc-950/25" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#F5B700]/80 via-[#FFC947]/50 to-[#FFC947]/30" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge className="bg-brand/15 text-brand border border-brand/20 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-brand mr-1.5 animate-pulse inline" />
+          <Badge className="bg-black/10 text-zinc-900 border border-black/10 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-900 mr-1.5 animate-pulse inline" />
             Discover Premium Grooming
           </Badge>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
             Best Salons &amp; Spas <br />
             in{" "}
-            <span className="text-gradient bg-primary-gradient">Sri Lanka</span>
+            <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">
+              Sri Lanka
+            </span>
           </h1>
 
           <div className="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100 mt-8">
