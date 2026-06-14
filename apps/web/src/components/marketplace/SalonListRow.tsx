@@ -35,11 +35,20 @@ type SalonListRowProps = {
 const FALLBACK_SALON_IMAGE =
   "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=75";
 
+function toOriginalSupabaseUrl(url: string): string | null {
+  const match = url.match(
+    /^(https:\/\/[^/]+\.supabase\.co)\/storage\/v1\/render\/image\/public\/([^?]+)/i
+  );
+  if (!match) return null;
+  return `${match[1]}/storage/v1/object/public/${match[2]}`;
+}
+
 export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = salon.isVerified !== false;
   const locationLabel = salon.location || salon.city;
-  const [imageSrc, setImageSrc] = useState(salon.image || FALLBACK_SALON_IMAGE);
+  const originalImage = salon.image || FALLBACK_SALON_IMAGE;
+  const [imageSrc, setImageSrc] = useState(originalImage);
 
   return (
     <article className="group flex flex-col md:flex-row gap-0 md:gap-4 bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 transition-all">
@@ -51,8 +60,13 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
           sizes="(max-width: 768px) 100vw, 300px"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
-          className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+          className="object-contain object-center p-0.5 group-hover:scale-[1.01] transition-transform duration-500"
           onError={() => {
+            const original = toOriginalSupabaseUrl(imageSrc);
+            if (original && imageSrc.includes("/render/image/")) {
+              setImageSrc(original);
+              return;
+            }
             if (imageSrc !== FALLBACK_SALON_IMAGE) {
               setImageSrc(FALLBACK_SALON_IMAGE);
             }

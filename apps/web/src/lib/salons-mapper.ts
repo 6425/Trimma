@@ -43,7 +43,7 @@ export function mapSalonRowToUI(s: any, idx: number) {
 
   const image = optimizeListingImageUrl(
     getSalonListingImage(s, fallbackImages[idx % fallbackImages.length]),
-    600
+    640
   );
 
   return {
