@@ -33,12 +33,14 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   useEffect(() => {
-    if (isRegionalHead && pathname.startsWith("/agent")) {
+    if (isRegionalHead && pathname.startsWith("/agent") && pathname !== "/agent/login") {
       router.replace(remapAgentPortalPath(pathname, "/regional-head"));
     }
   }, [isRegionalHead, pathname, router]);
 
   useEffect(() => {
+    if (pathname === "/agent/login") return;
+
     void (async () => {
       try {
         const result = await tryAgentData(getAgentProfile, fetchAgentProfileClient, {
@@ -62,7 +64,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
     };
     window.addEventListener("trimma_agent_avatar_update", handleAvatarUpdate);
     return () => window.removeEventListener("trimma_agent_avatar_update", handleAvatarUpdate);
-  }, []);
+  }, [pathname]);
 
   const handleLogout = () => {
     void signOutTrimmaSession();
@@ -93,6 +95,10 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       items: [{ name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> }],
     },
   ];
+
+  if (pathname === "/agent/login") {
+    return <>{children}</>;
+  }
 
   return (
     <AgentPortalProvider>
