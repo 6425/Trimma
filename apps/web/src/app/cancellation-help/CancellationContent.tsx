@@ -189,45 +189,23 @@ function HeroIllustration() {
   );
 }
 
-function CalendarIllustration() {
+function RescheduleIllustration() {
   return (
-    <div className="relative bg-white rounded-3xl border border-zinc-200 shadow-sm p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center">
-          <CalendarDays className="w-5 h-5 text-amber-600" />
-        </div>
-        <div>
-          <p className="font-bold text-zinc-900 text-sm">Flexible Rescheduling</p>
-          <p className="text-xs text-zinc-500">Coordinate directly with your salon</p>
-        </div>
+    <div className="relative w-full max-w-md mx-auto lg:max-w-none">
+      <div className="absolute -inset-4 rounded-[2rem] bg-amber-400/10 blur-3xl pointer-events-none" />
+      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-white">
+        <Image
+          src="/assets/help/reschedule-appointment-card.png"
+          alt="Trimma reschedule appointment form with date, time, and confirm options"
+          width={900}
+          height={700}
+          className="w-full h-auto"
+        />
       </div>
-      <div className="grid grid-cols-7 gap-1.5 mb-4">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
-          <div key={day} className="text-center text-[10px] font-semibold text-zinc-400 py-1">
-            {day}
-          </div>
-        ))}
-        {Array.from({ length: 28 }, (_, i) => (
-          <div
-            key={i}
-            className={`aspect-square rounded-lg flex items-center justify-center text-xs font-medium ${
-              i === 12
-                ? "bg-amber-400 text-black font-bold"
-                : i === 18
-                  ? "bg-amber-50 text-amber-700 border border-amber-200"
-                  : "text-zinc-400"
-            }`}
-          >
-            {i + 1}
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center gap-2 text-xs text-zinc-500">
-        <span className="w-3 h-3 rounded bg-amber-400" />
-        <span>Original appointment</span>
-        <span className="w-3 h-3 rounded bg-amber-50 border border-amber-200 ml-2" />
-        <span>New time</span>
-      </div>
+      <p className="mt-4 text-center text-xs font-semibold text-zinc-500">
+        Salon owners can reschedule appointments directly — customers receive updated details
+        automatically.
+      </p>
     </div>
   );
 }
@@ -385,7 +363,7 @@ export function CancellationContent() {
               arrangements efficiently.
             </p>
           </div>
-          <CalendarIllustration />
+          <RescheduleIllustration />
         </div>
       </section>
 
