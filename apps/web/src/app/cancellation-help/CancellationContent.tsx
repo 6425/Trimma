@@ -3,10 +3,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { EMAIL_BODY_DEFAULTS } from "@/lib/email-templates";
+import {
+  EMAIL_BODY_DEFAULTS_SINHALA,
+  EMAIL_BODY_DEFAULTS_TAMIL,
+} from "@/lib/email-multilingual-defaults";
 import {
   ArrowRight,
   CalendarClock,
-  CalendarDays,
   CheckCircle2,
   ChevronDown,
   ClipboardList,
@@ -119,6 +123,92 @@ const FAQS = [
   },
 ];
 
+const RESERVATION_DEMO_VARS = {
+  customer_name: "John Client",
+  salon_name: "Sampath Barber Saloon",
+  booking_no: "TRM-342201",
+  booking_date: "2026-06-14",
+  booking_time: "17:30:00",
+  service_name: "Classic Haircut",
+  deposit_paid: "360",
+  balance_to_pay: "1,440",
+  dashboard_link: "https://beta.trimma.io/customer",
+};
+
+type NotificationLang = "en" | "si" | "ta";
+
+const NOTIFICATION_TABS: { key: NotificationLang; label: string }[] = [
+  { key: "en", label: "English" },
+  { key: "si", label: "Sinhala" },
+  { key: "ta", label: "Tamil" },
+];
+
+const NOTIFICATION_BODIES: Record<NotificationLang, string> = {
+  en: EMAIL_BODY_DEFAULTS.reservationPaid,
+  si: EMAIL_BODY_DEFAULTS_SINHALA.reservationPaid,
+  ta: EMAIL_BODY_DEFAULTS_TAMIL.reservationPaid,
+};
+
+function fillNotificationTemplate(template: string) {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => {
+    return RESERVATION_DEMO_VARS[key as keyof typeof RESERVATION_DEMO_VARS] ?? `{${key}}`;
+  });
+}
+
+function ReservationNotificationPreview() {
+  const [lang, setLang] = useState<NotificationLang>("en");
+  const body = fillNotificationTemplate(NOTIFICATION_BODIES[lang]);
+
+  return (
+    <div className="relative w-full max-w-md mx-auto">
+      <div className="absolute inset-0 rounded-3xl bg-amber-400/15 blur-3xl scale-110 pointer-events-none" />
+      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-white">
+        <div className="bg-zinc-950 px-6 py-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 mb-2">
+            Trimma
+          </p>
+          <p className="text-white font-bold text-base leading-snug">
+            Reservation payment received &bull; {RESERVATION_DEMO_VARS.booking_no}
+          </p>
+        </div>
+
+        <div className="flex border-b border-zinc-200 bg-zinc-50">
+          {NOTIFICATION_TABS.map((tab) => {
+            const active = lang === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setLang(tab.key)}
+                className={`flex-1 px-3 py-3 text-xs font-bold transition-colors ${
+                  active
+                    ? "bg-white text-zinc-900 border-b-2 border-amber-400"
+                    : "text-zinc-500 hover:text-zinc-700 hover:bg-white/70"
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="px-6 py-5">
+          <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{body}</p>
+          <button
+            type="button"
+            className="mt-6 inline-flex items-center justify-center bg-amber-400 hover:bg-amber-500 text-zinc-900 font-bold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+          >
+            View my bookings
+          </button>
+        </div>
+      </div>
+      <p className="mt-4 text-center text-xs font-semibold text-zinc-500">
+        Customers receive reservation confirmations by email in English, Sinhala, or Tamil.
+      </p>
+    </div>
+  );
+}
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -138,52 +228,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         className={`overflow-hidden transition-all duration-300 ease-in-out ${open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
       >
         <p className="px-6 pb-5 text-zinc-600 text-sm leading-relaxed">{a}</p>
-      </div>
-    </div>
-  );
-}
-
-function HeroIllustration() {
-  return (
-    <div className="relative w-full max-w-md mx-auto">
-      <div className="absolute inset-0 rounded-3xl bg-amber-400/20 blur-3xl scale-110 pointer-events-none" />
-      <div className="relative bg-white rounded-3xl shadow-2xl border border-zinc-100 p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center">
-              <CalendarDays className="w-4 h-4 text-black" />
-            </div>
-            <span className="font-bold text-zinc-900 text-sm">Appointment Reserved</span>
-          </div>
-          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-semibold flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" />
-            Confirmed
-          </span>
-        </div>
-        <div className="bg-zinc-50 rounded-2xl p-4 space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500">Service</span>
-            <span className="font-semibold text-zinc-900">Hair Styling</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500">Date &amp; Time</span>
-            <span className="font-semibold text-zinc-900">Sat, 14 Jun · 2:00 PM</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-500">Reservation Fee</span>
-            <span className="font-semibold text-amber-600">20% of total</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-          <Shield className="w-5 h-5 text-amber-600 shrink-0" />
-          <p className="text-xs text-amber-800 leading-relaxed">
-            Your slot is secured. The salon has committed staff and availability for your visit.
-          </p>
-        </div>
-      </div>
-      <div className="absolute -top-3 -right-3 bg-amber-400 text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-        <Sparkles className="w-3.5 h-3.5" />
-        Fair &amp; Transparent
       </div>
     </div>
   );
@@ -241,7 +285,7 @@ export function CancellationContent() {
               ))}
             </div>
           </div>
-          <HeroIllustration />
+          <ReservationNotificationPreview />
         </div>
       </section>
 
