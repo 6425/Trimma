@@ -75,7 +75,7 @@ export default function AgentDashboard() {
           return;
         }
         
-        router.replace(`/login?redirectTo=${path()}`);
+        router.replace(`/agent/login?redirectTo=${path()}`);
         return;
       }
       

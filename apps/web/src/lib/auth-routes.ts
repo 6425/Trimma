@@ -43,7 +43,7 @@ export function isSafeInternalPath(path: string | null | undefined): path is str
   return Boolean(path && path.startsWith("/") && !path.startsWith("//"));
 }
 
-const LOOP_PATH_PREFIXES = ["/login", "/admin/login", "/auth/callback", "/signup"];
+const LOOP_PATH_PREFIXES = ["/login", "/admin/login", "/agent/login", "/auth/callback", "/signup"];
 
 /** Strip auth-loop paths so OAuth cannot bounce between login and callback. */
 export function sanitizeNextPath(path: string | null | undefined): string | null {

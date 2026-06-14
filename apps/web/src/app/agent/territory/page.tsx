@@ -85,7 +85,7 @@ function TerritoryExplorerContent() {
         setCategories([...new Set((res.categories || []).filter(Boolean))]);
       } else {
         if (res.error?.includes("Not authenticated")) {
-          router.replace(`/login?redirectTo=${path("/territory")}`);
+          router.replace(`/agent/login?redirectTo=${path("/territory")}`);
           return;
         }
         const msg = res.error || "Failed to load territories";

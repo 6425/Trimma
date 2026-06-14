@@ -56,7 +56,7 @@ export default function RegionalHeadCommissionsPage() {
       });
       if (!result.success) {
         if (result.error?.includes("Not authenticated")) {
-          router.replace("/login?redirectTo=/regional-head/commissions");
+          router.replace("/agent/login?redirectTo=/regional-head/commissions");
         }
         return;
       }

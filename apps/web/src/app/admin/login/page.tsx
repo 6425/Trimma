@@ -18,7 +18,7 @@ import type { Session } from "@supabase/supabase-js";
 
 /**
  * Admin portal: email + password only (no Google OAuth).
- * Customers/salon owners use /login (+ Google). Agents use /login (password).
+ * Customers/salon owners use /login (Google). Agents/regional heads use /agent/login (password).
  */
 export default function AdminLogin() {
   const [loading, setLoading] = useState(false);

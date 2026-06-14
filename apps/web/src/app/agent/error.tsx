@@ -18,7 +18,7 @@ export default function AgentError({
       </p>
       <div className="flex flex-wrap gap-3 justify-center">
         <Button onClick={() => reset()}>Try again</Button>
-        <Link href="/login?redirectTo=/agent">
+        <Link href="/agent/login?redirectTo=/agent">
           <Button variant="outline">Sign in again</Button>
         </Link>
       </div>

@@ -92,6 +92,18 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Agent / regional-head login: email + password only
+  if (pathname === "/agent/login") {
+    const userRole = readRoleCookie(roleCookie?.value);
+    if (sessionCookie && userRole === "regional_head") {
+      return NextResponse.redirect(new URL("/regional-head", req.url));
+    }
+    if (sessionCookie && userRole === "agent") {
+      return NextResponse.redirect(new URL("/agent", req.url));
+    }
+    return NextResponse.next();
+  }
+
   // 2. Allow public routes (exact match or ending in login/signup)
   if (
     publicRoutes.includes(pathname) || 
@@ -112,6 +124,8 @@ export async function middleware(req: NextRequest) {
     let loginPath = "/login";
     if (pathname.startsWith("/admin")) {
       loginPath = "/admin/login";
+    } else if (pathname.startsWith("/agent") || pathname.startsWith("/regional-head")) {
+      loginPath = "/agent/login";
     }
 
     const loginUrl = new URL(loginPath, req.url);
@@ -119,8 +133,17 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (pathname === "/login" && readRoleCookie(roleCookie?.value) === "salon_owner") {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+  if (pathname === "/login") {
+    const loginRole = readRoleCookie(roleCookie?.value);
+    if (loginRole === "salon_owner") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+    if (loginRole === "agent") {
+      return NextResponse.redirect(new URL("/agent", req.url));
+    }
+    if (loginRole === "regional_head") {
+      return NextResponse.redirect(new URL("/regional-head", req.url));
+    }
   }
 
   // 4. Role Validation (RBAC)

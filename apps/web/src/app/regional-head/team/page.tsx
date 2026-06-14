@@ -26,7 +26,7 @@ export default function RegionalHeadTeamPage() {
       if (!result.success) {
         setError(result.error);
         if (result.error?.includes("authenticated")) {
-          router.replace("/login?redirectTo=/regional-head/team");
+          router.replace("/agent/login?redirectTo=/regional-head/team");
         }
         return;
       }

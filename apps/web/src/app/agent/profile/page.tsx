@@ -36,7 +36,7 @@ function ProfileFormContent() {
 
       if (!result.success) {
         if (result.error?.includes("Not authenticated")) {
-          router.replace(`/login?redirectTo=${path("/profile")}`);
+          router.replace(`/agent/login?redirectTo=${path("/profile")}`);
           return;
         }
         throw new Error(result.error);

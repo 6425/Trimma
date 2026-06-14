@@ -14,6 +14,7 @@ const FORCE_CLEAR_KEY = 'sb-force-clear';
 function isAuthPath(pathname: string): boolean {
   return (
     pathname === '/login' ||
+    pathname === '/agent/login' ||
     pathname.startsWith('/auth/') ||
     pathname === '/signup' ||
     pathname.startsWith('/admin/login')

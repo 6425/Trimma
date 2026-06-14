@@ -48,7 +48,7 @@ export default function AgentCommissions() {
       });
       if (!result.success) {
         if (result.error?.includes("Not authenticated")) {
-          router.replace(`/login?redirectTo=${path("/commissions")}`);
+          router.replace(`/agent/login?redirectTo=${path("/commissions")}`);
         }
         return;
       }

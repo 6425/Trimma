@@ -69,10 +69,10 @@ function AuthCallbackContent() {
             window.setTimeout(() => redirectAfterAuth("/admin/login"), 2500);
             return;
           }
-          if (result.role === "agent") {
+          if (result.role === "agent" || result.role === "regional_head") {
             await supabase.auth.signOut();
-            setErrorMessage("Agents must sign in at /login with email and password.");
-            window.setTimeout(() => redirectAfterAuth("/login"), 2500);
+            setErrorMessage("Agents and Regional Heads must sign in at /agent/login with email and password.");
+            window.setTimeout(() => redirectAfterAuth("/agent/login"), 2500);
             return;
           }
 

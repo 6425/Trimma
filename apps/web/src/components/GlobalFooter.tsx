@@ -36,7 +36,7 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Partner with us</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/login" className="hover:text-[#F5B700] transition-colors">Partner portal login</Link></li>
+              <li><Link href="/agent/login" className="hover:text-[#F5B700] transition-colors">Partner portal login</Link></li>
               <li><Link href="/onboarding" className="hover:text-[#F5B700] transition-colors">Add your salon</Link></li>
               <li><Link href="/about" className="hover:text-[#F5B700] transition-colors">About Trimma</Link></li>
               <li><Link href="/careers" className="hover:text-[#F5B700] transition-colors">Careers</Link></li>

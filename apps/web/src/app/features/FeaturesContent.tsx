@@ -319,7 +319,7 @@ const USE_CASES = [
     description:
       "Onboard salons, manage leads, explore territories on the map, and help local businesses go digital with Trimma.",
     bullets: ["Lead management", "Territory explorer", "Salon onboarding tools", "Commission tracking"],
-    cta: { label: "Partner Portal", href: "/login" },
+    cta: { label: "Partner Portal", href: "/agent/login" },
   },
 ];
 
