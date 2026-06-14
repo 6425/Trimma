@@ -43,7 +43,7 @@ export default function AdminHelpDocumentsPage() {
     setLoading(true);
     setError(null);
     const result = await fetchAdminHelpDocuments();
-    if (result.success) {
+    if (result.success === true) {
       setDocs(result.documents);
     } else {
       setError(result.error);
