@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { resolveBookingGuideDocuments } from "@/lib/booking-guide-fallback";
 import { resolvePortalGuideDocuments } from "@/lib/portal-guide-fallback";
+import { resolveSalonOwnerGuideDocuments } from "@/lib/salon-owner-guide-fallback";
 
-const PORTAL_GUIDE_TYPES = new Set(["agent_guide", "regional_head_guide"]);
+const PORTAL_GUIDE_TYPES = new Set(["agent_guide", "regional_head_guide", "salon_owner_guide"]);
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -31,15 +32,21 @@ export async function GET(req: Request) {
       console.warn("[public/help-documents] DB fallback:", error.message);
     }
 
-    const documents = PORTAL_GUIDE_TYPES.has(documentType)
-      ? resolvePortalGuideDocuments(documentType, data, language)
-      : resolveBookingGuideDocuments(data, language);
+    const documents =
+      documentType === "salon_owner_guide"
+        ? resolveSalonOwnerGuideDocuments(data, language)
+        : PORTAL_GUIDE_TYPES.has(documentType)
+          ? resolvePortalGuideDocuments(documentType, data, language)
+          : resolveBookingGuideDocuments(data, language);
     return NextResponse.json({ documents });
   } catch (error) {
     console.error("[public/help-documents]", error);
-    const documents = PORTAL_GUIDE_TYPES.has(documentType)
-      ? resolvePortalGuideDocuments(documentType, null, language)
-      : resolveBookingGuideDocuments(null, language);
+    const documents =
+      documentType === "salon_owner_guide"
+        ? resolveSalonOwnerGuideDocuments(null, language)
+        : PORTAL_GUIDE_TYPES.has(documentType)
+          ? resolvePortalGuideDocuments(documentType, null, language)
+          : resolveBookingGuideDocuments(null, language);
     return NextResponse.json({ documents });
   }
 }

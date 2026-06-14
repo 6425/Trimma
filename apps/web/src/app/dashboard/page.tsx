@@ -8,6 +8,7 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { Loader2, RefreshCw } from "lucide-react";
 import { BookingCommissionTable } from "../../components/dashboard/BookingCommissionTable";
 import { SalonSetupChecklist } from "../../components/dashboard/SalonSetupChecklist";
+import { SalonDashboardGuideCard } from "../../components/dashboard/SalonDashboardGuideCard";
 import { StaffCommissionDaywiseTable } from "../../components/dashboard/StaffCommissionDaywiseTable";
 import { StaffBookingTrendChart } from "../../components/dashboard/StaffBookingTrendChart";
 import { RevenueTrendChart } from "../../components/dashboard/RevenueTrendChart";
@@ -217,6 +218,8 @@ export default function Dashboard() {
       </div>
 
       <SalonSetupChecklist services={allServices} staff={allStaff} />
+
+      <SalonDashboardGuideCard />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card title="Total Bookings" value={stats.totalBookings.toLocaleString()} />

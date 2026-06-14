@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SalonOwnerGuideDownloads } from "../help/SalonOwnerGuideDownloads";
 
 const SALON = {
   name: "Sampath Barber Saloon",
@@ -68,6 +69,7 @@ const NAV_SECTIONS = [
   { id: "profile", label: "Salon Profile" },
   { id: "settings", label: "Settings" },
   { id: "commission", label: "Commission Model" },
+  { id: "guides", label: "Download Handbook" },
   { id: "faq", label: "FAQ" },
   { id: "support", label: "Support" },
 ] as const;
@@ -915,6 +917,8 @@ export function SalonOwnerHelpGuide() {
               </table>
             </div>
           </section>
+
+          <SalonOwnerGuideDownloads />
 
           {/* FAQ */}
           <section id="faq" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
