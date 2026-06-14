@@ -472,6 +472,96 @@ export async function sendBookingCancelledEmail(bookingNo: string) {
   });
 }
 
+export async function sendBookingNoShowEmail(bookingNo: string) {
+  const supabase = getSupabaseAdmin();
+  const { data: booking } = await supabase
+    .from("bookings")
+    .select("customer_email, booking_date, booking_time, salons(name)")
+    .eq("booking_no", bookingNo)
+    .maybeSingle();
+  if (!booking?.customer_email) return { success: false, error: "Not found", skipped: true };
+
+  const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+  const { data: customer } = await supabase
+    .from("users")
+    .select("full_name")
+    .eq("email", booking.customer_email)
+    .maybeSingle();
+
+  const config = await getEmailConfig();
+  if (!config.enabled) {
+    return { success: false, error: "Email notifications are disabled.", skipped: true };
+  }
+  if (!config.bookingCancelledEnabled) {
+    return { success: false, error: "This email trigger is disabled.", skipped: true };
+  }
+
+  const rate = checkEmailRateLimit(`no-show:${bookingNo}`);
+  if (!rate.allowed) {
+    return {
+      success: false,
+      error: "Email rate limit exceeded. Please try again later.",
+      rateLimited: true,
+      retryAfterSec: rate.retryAfterSec,
+    };
+  }
+
+  const variables = {
+    customer_name: customer?.full_name || "Valued Client",
+    salon_name: salon?.name || "Partner Salon",
+    booking_date: booking.booking_date || "",
+    booking_time: booking.booking_time || "",
+    service_name: "Salon service",
+  };
+
+  const subject = "Your Trimma appointment was marked as a no-show";
+  const body = `Hello ${variables.customer_name},
+
+Your appointment at ${variables.salon_name} was marked as a no-show because you did not attend the scheduled visit.
+
+Original date: ${variables.booking_date}
+Original time: ${variables.booking_time}
+Service: ${variables.service_name}
+
+The online reservation deposit is non-refundable. Contact ${variables.salon_name} directly with any questions.`;
+
+  const credentials = resolveResendCredentials(config);
+  if (!credentials.apiKey) {
+    return {
+      success: false,
+      error: "Resend API key is not configured. Add it in Admin → Global Settings → Resend Email.",
+    };
+  }
+
+  try {
+    const resend = createResendClient(credentials.apiKey);
+    const { data, error } = await resend.emails.send({
+      from: credentials.from,
+      to: [booking.customer_email.trim().toLowerCase()],
+      subject,
+      react: DynamicTrimmaEmail({
+        preview: subject,
+        title: subject,
+        body,
+      }),
+      tags: [{ name: "trigger", value: "no-show" }],
+    });
+
+    if (error) {
+      return { success: false, error: error.message || "Resend rejected the email." };
+    }
+    if (!data?.id) {
+      return { success: false, error: "Resend did not return a message id." };
+    }
+    return { success: true, id: data.id };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send email.",
+    };
+  }
+}
+
 export async function sendReviewRequestEmail(bookingNo: string) {
   const supabase = getSupabaseAdmin();
   const { data: booking } = await supabase

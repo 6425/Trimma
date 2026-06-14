@@ -8,8 +8,8 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { sendWhatsAppCancellationNotification } from "@/app/actions/whatsapp";
-import { sendBookingCancelledEmail } from "@/app/actions/email-settings";
+import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } from "@/app/actions/whatsapp";
+import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
 import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
 
@@ -121,6 +121,11 @@ export default function BookingDetailPage() {
       if (action === "cancel" && booking?.booking_no) {
         await sendWhatsAppCancellationNotification(booking.booking_no);
         await sendBookingCancelledEmail(booking.booking_no);
+      }
+
+      if (action === "no_show" && booking?.booking_no) {
+        await sendWhatsAppNoShowNotification(booking.booking_no);
+        await sendBookingNoShowEmail(booking.booking_no);
       }
 
       toast.success(`Booking updated to "${Object.values(updatePayload)[0]}"!`);

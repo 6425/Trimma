@@ -893,6 +893,89 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
 }
 
 /**
+ * Triggers an instant WhatsApp alert when an appointment is marked as a no-show.
+ */
+export async function sendWhatsAppNoShowNotification(bookingNo: string) {
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    bookingCancelledEnabled,
+  } = await getWhatsAppMessagingConfig();
+
+  if (!enabled) return { success: true, message: "Disabled" };
+  if (!bookingCancelledEnabled) return { success: true, message: "No-Show Alerts Disabled" };
+
+  if (!phoneId || !accessToken) {
+    return { success: false, error: "WhatsApp credentials not configured." };
+  }
+
+  try {
+    const { data: booking, error: bookingErr } = await getSupabaseAdmin()
+      .from("bookings")
+      .select("*, salons(name), services(name)")
+      .eq("booking_no", bookingNo)
+      .single();
+
+    if (bookingErr || !booking) return { success: false, error: "Booking not found." };
+
+    const { data: customer } = await getSupabaseAdmin()
+      .from("users")
+      .select("full_name, phone")
+      .eq("email", booking.customer_email)
+      .single();
+
+    if (!customer || !customer.phone) return { success: false, error: "Customer phone is missing." };
+
+    const customerPhone = cleanPhoneNumber(customer.phone);
+    const customerName = customer.full_name || "Valued Client";
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
+    const serviceName = booking.services?.name || "Premium Styling Service";
+
+    const variables = {
+      customer_name: customerName,
+      salon_name: salonName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      service_name: serviceName,
+    };
+
+    const noShowMessage = parseTemplate(D.noShow, variables);
+
+    console.log(`⚠️ Dispatching WhatsApp No-Show alert to ${customerPhone}:`);
+
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${phoneId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: customerPhone,
+          type: "text",
+          text: {
+            preview_url: false,
+            body: noShowMessage,
+          },
+        }),
+      }
+    );
+
+    const result = await response.json();
+    if (!response.ok) return { success: false, error: formatWhatsAppApiError(result) };
+
+    return { success: true, messageId: result.messages?.[0]?.id };
+  } catch (err: any) {
+    console.error("❌ Unhandled no-show WhatsApp error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Triggers an instant WhatsApp alert when an appointment is rescheduled.
  */
 export async function sendWhatsAppRescheduleNotification(bookingNo: string) {

@@ -11,8 +11,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { sendWhatsAppCancellationNotification } from "@/app/actions/whatsapp";
-import { sendBookingCancelledEmail } from "@/app/actions/email-settings";
+import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } from "@/app/actions/whatsapp";
+import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
 import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +72,7 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   const isProcessing = processingId === booking.id;
   const status = (booking.status || 'pending').toLowerCase();
   const paymentStatus = (booking.payment_status || 'unpaid').toLowerCase();
+  const isTerminal = ['completed', 'canceled', 'cancelled', 'no_show'].includes(status);
 
   // Build context-aware lifecycle actions based on current status
   const lifecycleActions: { key: string; label: string; color: string; hoverBg: string }[] = [];
@@ -83,11 +84,14 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   if (status === 'confirmed') {
     lifecycleActions.push({ key: 'in_progress', label: 'Start Service', color: 'text-indigo-700', hoverBg: 'hover:bg-indigo-50' });
     lifecycleActions.push({ key: 'reschedule', label: 'Reschedule', color: 'text-blue-700', hoverBg: 'hover:bg-blue-50' });
-    lifecycleActions.push({ key: 'no_show', label: 'Mark No-Show', color: 'text-amber-700', hoverBg: 'hover:bg-amber-50' });
-    lifecycleActions.push({ key: 'cancel', label: 'Cancel Booking', color: 'text-rose-600', hoverBg: 'hover:bg-rose-50' });
   }
   if (status === 'in_progress') {
     lifecycleActions.push({ key: 'complete', label: 'Complete Service', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
+  }
+
+  if (!isTerminal) {
+    lifecycleActions.push({ key: 'no_show', label: 'Mark No-Show', color: 'text-amber-700', hoverBg: 'hover:bg-amber-50' });
+    lifecycleActions.push({ key: 'cancel', label: 'Cancel Booking', color: 'text-rose-600', hoverBg: 'hover:bg-rose-50' });
   }
 
   // Build context-aware payment actions
@@ -99,8 +103,6 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   if (paymentStatus === 'unpaid' || paymentStatus === 'reservation_paid') {
     paymentActions.push({ key: 'mark_paid', label: 'Mark Fully Paid', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
   }
-
-  const isTerminal = ['completed', 'canceled', 'no_show'].includes(status);
 
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
@@ -233,6 +235,11 @@ export default function DashboardBookings() {
           break;
         case 'no_show': 
           updatePayload.status = 'no_show'; 
+          if (bookingNo) {
+            await sendWhatsAppNoShowNotification(bookingNo);
+            await sendBookingNoShowEmail(bookingNo);
+          }
+          void markBookingNotificationsReadForOwner(bookingId);
           break;
         case 'cancel': 
           updatePayload.status = 'canceled'; 

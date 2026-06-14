@@ -45,6 +45,18 @@ Your appointment at *{salon_name}* has been *rescheduled* to a new date and time
 
 Thank you for choosing Trimma! ✂️`,
 
+  noShow: `Hello {customer_name},
+
+Your appointment at *{salon_name}* was marked as a *no-show* because you did not attend the scheduled visit.
+
+📅 *Original date:* {booking_date}
+⏰ *Original time:* {booking_time}
+💇 *Service:* {service_name}
+
+Your 20% online reservation deposit is non-refundable. Please contact *{salon_name}* directly with any questions.
+
+Trimma Notification Services ✂️`,
+
   cancelled: `Hello {customer_name},
 
 Your appointment at *{salon_name}* has been *cancelled* by the salon.
