@@ -692,7 +692,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                       className="h-11 w-11 shrink-0"
                     />
                     <Button
-                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? 'bg-brand hover:bg-brand-hover text-black shadow-lg shadow-rose-900/25' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? 'hero-btn-primary' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                       onClick={() => handleBookService()}
                       disabled={!salon.booking_enabled}
                     >
@@ -795,7 +795,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
               <Button
                 size="lg" 
                 disabled={!isBookable}
-                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${isBookable ? 'bg-brand hover:bg-brand-hover text-black shadow-brand/20' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
+                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${isBookable ? 'hero-btn-primary' : 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700'}`} 
                 onClick={() => handleBookService()}
               >
                 {!isBookable ? "Booking Unavailable" : "Book Appointment Now"}

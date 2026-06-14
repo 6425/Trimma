@@ -131,6 +131,45 @@ function SalonOwnerDashboardShowcase() {
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
+const STEP_SCREENSHOTS = {
+  step1: [
+    {
+      src: "/assets/features/steps/step-1-search.png",
+      alt: "Search salons by service and location on Trimma",
+      tab: "Search & Explore",
+    },
+    {
+      src: "/assets/features/steps/step-1-salon-card.png",
+      alt: "Verified salon listing with ratings, pricing, and availability",
+      tab: "Salon Results",
+    },
+  ],
+  step2: {
+    src: "/assets/features/steps/step-2-services.png",
+    alt: "Browse salon service menus with pricing and durations",
+  },
+  step3: {
+    src: "/assets/features/steps/step-3-booking-form.png",
+    alt: "Select service, stylist, date, and time in the booking form",
+  },
+  step4: {
+    src: "/assets/features/steps/step-4-reserve-slot.png",
+    alt: "Reserve your slot with transparent deposit and balance breakdown",
+  },
+  step5: [
+    {
+      src: "/assets/features/steps/step-5-payment-email.png",
+      alt: "Reservation payment confirmation email from Trimma",
+      tab: "Payment Received",
+    },
+    {
+      src: "/assets/features/steps/step-5-confirmed-email.png",
+      alt: "Appointment confirmed email with booking details",
+      tab: "Confirmed",
+    },
+  ],
+} as const;
+
 const HOW_IT_WORKS = [
   {
     step: 1,
@@ -138,10 +177,6 @@ const HOW_IT_WORKS = [
     description:
       "Search by location, service, style, or salon name. Browse verified profiles, ratings, and real customer reviews.",
     icon: MapPin,
-    preview: {
-      label: "Search & Explore",
-      lines: ["Colombo · Haircut", "12 salons found", "★ 4.8 Glamour Lounge · 2.1 km"],
-    },
   },
   {
     step: 2,
@@ -149,10 +184,6 @@ const HOW_IT_WORKS = [
     description:
       "View detailed service menus, pricing, staff portfolios, and style galleries before you book.",
     icon: Search,
-    preview: {
-      label: "Service Menu",
-      lines: ["Women's Cut — LKR 3,500", "Balayage Color — LKR 12,000", "Keratin Treatment — LKR 8,500"],
-    },
   },
   {
     step: 3,
@@ -160,32 +191,20 @@ const HOW_IT_WORKS = [
     description:
       "See real-time availability across stylists and chairs. No phone calls — just tap the slot that works for you.",
     icon: CalendarClock,
-    preview: {
-      label: "Live Availability",
-      lines: ["Today · 2:30 PM — Available", "Today · 4:00 PM — Available", "Tomorrow · 10:00 AM — Available"],
-    },
   },
   {
     step: 4,
     title: "Confirm Instantly",
     description:
-      "Secure your appointment with instant confirmation via email and WhatsApp. Reschedule anytime from your account.",
+      "Secure your appointment with a small deposit — see exactly what you pay today and the balance due at the salon.",
     icon: CalendarCheck,
-    preview: {
-      label: "Booking Confirmed",
-      lines: ["✓ Appointment locked", "✓ Deposit processed", "✓ Reminder scheduled"],
-    },
   },
   {
     step: 5,
     title: "Show Up & Glow",
     description:
-      "Arrive at your salon, enjoy your service, and leave a verified review to help the community discover great spots.",
+      "Get instant email and WhatsApp confirmations, arrive at your salon, enjoy your service, and leave a verified review.",
     icon: Sparkles,
-    preview: {
-      label: "Your Experience",
-      lines: ["Check in at salon", "Enjoy your treatment", "Rate & review your visit"],
-    },
   },
 ];
 
@@ -397,7 +416,21 @@ const FAQS = [
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function SectionBadge({ children }: { children: React.ReactNode }) {
+function SectionBadge({
+  children,
+  hero = false,
+}: {
+  children: React.ReactNode;
+  hero?: boolean;
+}) {
+  if (hero) {
+    return (
+      <div className="hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-5">
+        <Sparkles className="w-4 h-4" />
+        {children}
+      </div>
+    );
+  }
   return (
     <div className="inline-flex items-center gap-2 bg-[#F5B700]/10 border border-[#F5B700]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
       <Sparkles className="w-4 h-4 text-[#F5B700]" />
@@ -429,31 +462,87 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function StepPreview({ label, lines }: { label: string; lines: string[] }) {
+function StepScreenshot({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
   return (
-    <div className="relative w-full max-w-lg mx-auto">
-      <div className="absolute inset-0 rounded-3xl bg-[#F5B700]/15 blur-3xl scale-110 pointer-events-none" />
-      <div className="relative bg-[#0B0B0B] rounded-3xl shadow-2xl border border-white/10 p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#F5B700] flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-black" />
-            </div>
-            <span className="font-bold text-white text-sm">Trimma</span>
+    <div className={`overflow-hidden rounded-xl border border-zinc-200/80 bg-white shadow-sm ${className}`}>
+      <Image
+        src={src}
+        alt={alt}
+        width={1200}
+        height={800}
+        sizes="(max-width: 1024px) 100vw, 50vw"
+        className="h-auto w-full"
+      />
+    </div>
+  );
+}
+
+function StepVisual({ stepIndex }: { stepIndex: number }) {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const stepNumber = stepIndex + 1;
+
+  return (
+    <div className="relative w-full max-w-xl mx-auto">
+      <div className="absolute inset-0 rounded-[2rem] bg-[#F5B700]/12 blur-3xl scale-105 pointer-events-none" />
+      <div className="relative overflow-hidden rounded-[1.75rem] border border-zinc-200 bg-white shadow-2xl shadow-zinc-200/70">
+        <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           </div>
-          <span className="text-xs text-[#F5B700] bg-[#F5B700]/10 px-2 py-1 rounded-full font-semibold">
-            {label}
-          </span>
+          <div className="mx-auto flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold text-zinc-500">
+            <Sparkles className="h-3.5 w-3.5 text-[#F5B700]" />
+            trimma.io — Step {stepNumber}
+          </div>
         </div>
-        <div className="space-y-2.5">
-          {lines.map((line) => (
-            <div
-              key={line}
-              className="rounded-xl px-4 py-3 text-sm bg-[#151515] border border-white/5 text-zinc-300"
-            >
-              {line}
+
+        <div className="p-3 sm:p-4">
+          {stepNumber === 1 && (
+            <div className="space-y-3">
+              {STEP_SCREENSHOTS.step1.map((shot) => (
+                <StepScreenshot key={shot.src} src={shot.src} alt={shot.alt} />
+              ))}
             </div>
-          ))}
+          )}
+
+          {stepNumber === 2 && (
+            <StepScreenshot src={STEP_SCREENSHOTS.step2.src} alt={STEP_SCREENSHOTS.step2.alt} />
+          )}
+
+          {stepNumber === 3 && (
+            <StepScreenshot src={STEP_SCREENSHOTS.step3.src} alt={STEP_SCREENSHOTS.step3.alt} />
+          )}
+
+          {stepNumber === 4 && (
+            <StepScreenshot src={STEP_SCREENSHOTS.step4.src} alt={STEP_SCREENSHOTS.step4.alt} />
+          )}
+
+          {stepNumber === 5 && (
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                {STEP_SCREENSHOTS.step5.map((shot, index) => (
+                  <button
+                    key={shot.src}
+                    type="button"
+                    onClick={() => setActiveTab(index)}
+                    className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                      activeTab === index
+                        ? "bg-zinc-900 text-white shadow-md"
+                        : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                    }`}
+                  >
+                    {shot.tab}
+                  </button>
+                ))}
+              </div>
+              <StepScreenshot
+                src={STEP_SCREENSHOTS.step5[activeTab].src}
+                alt={STEP_SCREENSHOTS.step5[activeTab].alt}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -465,7 +554,6 @@ function StepPreview({ label, lines }: { label: string; lines: string[] }) {
 export function FeaturesContent() {
   const [activeStep, setActiveStep] = useState(0);
   const [activeUseCase, setActiveUseCase] = useState(USE_CASES[0].id);
-  const currentStep = HOW_IT_WORKS[activeStep];
   const currentUseCase = USE_CASES.find((u) => u.id === activeUseCase) ?? USE_CASES[0];
 
   return (
@@ -474,28 +562,26 @@ export function FeaturesContent() {
       <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <SectionBadge>#1 Salon Booking Platform</SectionBadge>
+            <SectionBadge hero>#1 Salon Booking Platform</SectionBadge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-[1.1] mb-6 tracking-tight">
               Find. Book.{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFC947] to-[#F5B700]">
-                Glow.
-              </span>
+              <span className="hero-accent">Glow.</span>
             </h1>
-            <p className="text-lg text-zinc-500 leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
               Sri Lanka&apos;s beauty &amp; wellness marketplace and salon operating system — discover top salons,
               book instantly, and power your business with Trimma OS.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/search"
-                className="inline-flex items-center justify-center gap-2 bg-[#F5B700] hover:bg-[#FFC947] text-black font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-[#F5B700]/25 hover:scale-[1.02]"
+                className="hero-btn-primary px-8 py-4 rounded-2xl"
               >
                 <Search className="w-4 h-4" />
                 Explore Salons
               </Link>
               <Link
                 href="/onboarding"
-                className="inline-flex items-center justify-center gap-2 bg-white border-2 border-zinc-200 hover:border-[#F5B700]/50 text-zinc-900 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-[1.02]"
+                className="hero-btn-secondary px-8 py-4 rounded-2xl"
               >
                 <Store className="w-4 h-4" />
                 List Your Business
@@ -567,7 +653,7 @@ export function FeaturesContent() {
                 {activeStep + 1} / {HOW_IT_WORKS.length}
               </p>
             </div>
-            <StepPreview label={currentStep.preview.label} lines={currentStep.preview.lines} />
+            <StepVisual key={activeStep} stepIndex={activeStep} />
           </div>
         </div>
       </section>

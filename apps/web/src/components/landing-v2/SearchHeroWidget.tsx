@@ -80,13 +80,13 @@ export function SearchHeroWidget() {
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
               <Link
                 href="/"
-                className="bg-[#F5B700] hover:bg-[#E6AC00] active:bg-[#CC9B00] text-black font-bold min-h-[56px] h-14 px-8 rounded-xl transition-colors text-lg flex items-center justify-center shadow-lg hover:scale-105 transform duration-200"
+                className="hero-btn-primary min-h-[56px] h-14 px-8 rounded-xl text-lg"
               >
                 Book Now
               </Link>
               <Link
                 href="/signup"
-                className="border border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] active:bg-[#F5B700]/30 backdrop-blur-sm font-bold min-h-[56px] h-14 px-8 rounded-xl transition-all text-lg flex items-center justify-center shadow-lg hover:scale-105 transform duration-200"
+                className="hero-btn-secondary min-h-[56px] h-14 px-8 rounded-xl text-lg"
               >
                 List Your Business
               </Link>
@@ -139,7 +139,7 @@ export function SearchHeroWidget() {
           {/* Search Button */}
           <button
             type="submit"
-            className="bg-[#F5B700] hover:bg-[#E6AC00] active:bg-[#CC9B00] text-black font-bold min-h-[52px] h-14 px-8 rounded-xl md:rounded-md transition-colors text-lg md:text-xl w-full md:w-auto md:min-w-[148px] shrink-0 shadow-sm md:shadow-none touch-manipulation"
+            className="hero-btn-primary hero-btn-compact min-h-[52px] h-14 px-8 rounded-xl md:rounded-md text-lg md:text-xl w-full md:w-auto md:min-w-[148px] shrink-0 touch-manipulation"
           >
             Search
           </button>

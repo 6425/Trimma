@@ -155,7 +155,7 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
                 
                 <Link 
                   href={`/search?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
-                  className="h-12 px-8 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold border-none shadow-md shadow-brand-pink/20 flex items-center justify-center text-sm"
+                  className="h-12 px-8 rounded-xl hero-btn-primary hero-btn-compact font-bold border-none shadow-md flex items-center justify-center text-sm"
                 >
                   Search
                 </Link>

@@ -302,24 +302,21 @@ export function CustomerHelpGuide() {
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">
             Trimma Booking Guide
           </h1>
-          <p className="text-sm text-zinc-700 leading-relaxed mb-4">
+          <p className="text-sm text-zinc-800 leading-relaxed mb-4">
             Everything you need to find, book, and enjoy beauty & wellness services in Sri Lanka.
-            Examples use <strong className="text-zinc-900">{CUSTOMER.name}</strong> booking{" "}
-            <strong className="text-white">{SALON.service}</strong> at{" "}
-            <strong className="text-white">{SALON.name}</strong> ({SALON.location}).
-            This guide is <strong className="text-white">public</strong> — no login required to read it.
+            Examples use <strong className="text-zinc-950">{CUSTOMER.name}</strong> booking{" "}
+            <strong className="text-zinc-950">{SALON.service}</strong> at{" "}
+            <strong className="text-zinc-950">{SALON.name}</strong> ({SALON.location}).
+            This guide is <strong className="text-zinc-950">public</strong> — no login required to read it.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/">
-              <Button className="h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold">
+              <Button className="h-9 rounded-xl hero-btn-primary hero-btn-compact text-xs font-bold">
                 Find a salon
               </Button>
             </Link>
             <Link href="/signup">
-              <Button
-                variant="outline"
-                className="h-9 rounded-xl border-[#F5B700]/50 bg-[#F5B700]/10 !text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:!text-[#FFC947] text-xs font-bold"
-              >
+              <Button className="h-9 rounded-xl hero-btn-secondary text-xs font-bold px-4">
                 Create free account
               </Button>
             </Link>

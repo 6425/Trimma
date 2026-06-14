@@ -247,28 +247,28 @@ export default function ContactPage() {
       <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-4 h-4" />
               Contact Us
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6">
               Let&apos;s Connect
             </h1>
-            <p className="text-lg text-zinc-500 leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
               Whether you&apos;re a salon owner looking to grow your business, a customer seeking support,
               or a partner interested in working with us, our team is ready to help.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href="#contact-form"
-                className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-amber-200 hover:scale-[1.02]"
+                className="hero-btn-primary px-8 py-4 rounded-2xl"
               >
                 <Mail className="w-4 h-4" />
                 Contact Our Team
               </a>
               <a
                 href="#contact-form"
-                className="inline-flex items-center justify-center gap-2 bg-white border-2 border-zinc-200 hover:border-zinc-300 text-zinc-900 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-[1.02]"
+                className="hero-btn-secondary px-8 py-4 rounded-2xl"
               >
                 <Mail className="w-4 h-4" />
                 Contact Us

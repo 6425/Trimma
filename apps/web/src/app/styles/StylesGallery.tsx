@@ -70,7 +70,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
           </p>
           <Link
             href="/customer/styles"
-            className="inline-flex mt-6 text-sm font-bold text-[#F5B700] hover:underline underline-offset-4"
+            className="inline-flex mt-6 text-sm font-bold text-zinc-900 hover:underline underline-offset-4"
           >
             View my saved styles →
           </Link>

@@ -302,14 +302,14 @@ export function CancellationContent() {
       <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-4 h-4" />
               Booking Policy
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6">
               Cancellation &amp; Reservation Policy
             </h1>
-            <p className="text-lg text-zinc-500 leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
               Transparent policies designed to protect customers, salon owners, and appointment
               availability for everyone.
             </p>

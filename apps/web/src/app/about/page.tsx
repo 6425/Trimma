@@ -60,28 +60,28 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
             <Sparkles className="w-4 h-4" />
             About Trimma
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6 max-w-4xl mx-auto">
             The Salon Engine for Modern Beauty &amp; Wellness
           </h1>
-          <p className="text-lg text-zinc-500 leading-relaxed max-w-2xl mx-auto mb-10">
+          <p className="text-lg hero-lead leading-relaxed max-w-2xl mx-auto mb-10">
             Trimma is an AI-powered appointment booking and business management platform helping salons,
             spas, and wellness businesses attract customers, streamline operations, and grow revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/onboarding"
-              className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-amber-200 hover:scale-[1.02]"
+              className="hero-btn-primary px-8 py-4 rounded-2xl"
             >
               <Building2 className="w-4 h-4" />
               List Your Salon
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 bg-white border-2 border-zinc-200 hover:border-zinc-300 text-zinc-900 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-[1.02]"
+              className="hero-btn-secondary px-8 py-4 rounded-2xl"
             >
               Contact Us
               <ArrowRight className="w-4 h-4" />

@@ -166,7 +166,21 @@ const FAQS = [
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function SectionBadge({ children }: { children: React.ReactNode }) {
+function SectionBadge({
+  children,
+  hero = false,
+}: {
+  children: React.ReactNode;
+  hero?: boolean;
+}) {
+  if (hero) {
+    return (
+      <div className="hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-5">
+        <Sparkles className="w-4 h-4" />
+        {children}
+      </div>
+    );
+  }
   return (
     <div className="inline-flex items-center gap-2 bg-[#F5B700]/10 border border-[#F5B700]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
       <Sparkles className="w-4 h-4 text-[#F5B700]" />
@@ -208,14 +222,12 @@ export function CareersContent() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <SectionBadge>Agent Careers</SectionBadge>
+              <SectionBadge hero>Agent Careers</SectionBadge>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-[1.1] mb-6 tracking-tight">
                 Grow Your Career{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFC947] to-[#F5B700]">
-                  With Trimma
-                </span>
+                <span className="hero-accent">With Trimma</span>
               </h1>
-              <p className="text-lg text-zinc-500 leading-relaxed mb-8 max-w-lg">
+              <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
                 Join the Trimma Agent program and earn commission by onboarding salons in your territory.
                 Use powerful field tools, track earnings in real time, and build a recurring income stream.
               </p>
@@ -237,14 +249,14 @@ export function CareersContent() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
                   href="#apply"
-                  className="inline-flex items-center justify-center gap-2 bg-[#F5B700] hover:bg-[#FFC947] text-black font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-[#F5B700]/25 hover:scale-[1.02]"
+                  className="hero-btn-primary px-8 py-4 rounded-2xl"
                 >
                   <Briefcase className="w-4 h-4" />
                   Become an Agent
                 </a>
                 <a
                   href="#how-it-works"
-                  className="inline-flex items-center justify-center gap-2 bg-white border-2 border-zinc-200 hover:border-[#F5B700]/50 text-zinc-900 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-[1.02]"
+                  className="hero-btn-secondary px-8 py-4 rounded-2xl"
                 >
                   Learn More
                   <ArrowRight className="w-4 h-4" />

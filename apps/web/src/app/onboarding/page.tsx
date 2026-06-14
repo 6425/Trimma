@@ -26,9 +26,9 @@ export default async function OnboardingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <a 
+            <a
               href="#onboarding-form"
-              className="px-8 py-4 bg-brand text-black rounded-xl font-bold text-lg hover:bg-brand-pink/90 transition-all shadow-lg shadow-brand-pink/20 w-full sm:w-auto"
+              className="hero-btn-primary px-8 py-4 rounded-xl text-lg w-full sm:w-auto"
             >
               Start Your Onboarding
             </a>

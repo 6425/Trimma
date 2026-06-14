@@ -138,7 +138,7 @@ function SearchPageInner() {
                </select>
              </div>
              
-             <Button onClick={fetchLiveSalons} size="lg" className="h-12 px-8 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold border-none shadow-md shadow-brand-pink/20">
+             <Button onClick={fetchLiveSalons} size="lg" className="h-12 px-8 rounded-xl hero-btn-primary hero-btn-compact font-bold border-none shadow-md">
                Search
              </Button>
           </div>

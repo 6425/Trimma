@@ -62,14 +62,14 @@ export default function DealsClient({ deals, categories, locations }: Props) {
       {/* Hero */}
       <section className="page-hero-light pt-20 pb-16 lg:pt-24 lg:pb-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
             <Gift className="w-4 h-4" />
             Salon Deals &amp; Packages
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-5">
             Deals
           </h1>
-          <p className="text-lg text-zinc-500 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg hero-lead leading-relaxed max-w-2xl mx-auto">
             Promotion packages published by salon owners, browsable by location and category.
           </p>
         </div>

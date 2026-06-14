@@ -279,14 +279,14 @@ export function SafetyContent() {
       {/* 1. Hero */}
       <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
             <Shield className="w-4 h-4" />
             Safety &amp; Trust
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6 max-w-4xl mx-auto">
             Safety &amp; Trust Center
           </h1>
-          <p className="text-lg text-zinc-500 leading-relaxed max-w-2xl mx-auto mb-10">
+          <p className="text-lg hero-lead leading-relaxed max-w-2xl mx-auto mb-10">
             Trimma is committed to protecting customers and salon partners. This center explains
             how we verify listings, secure payments, handle privacy, and resolve concerns with
             transparency and care.
@@ -294,14 +294,14 @@ export function SafetyContent() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="#report-safety"
-              className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-8 py-4 rounded-2xl transition-all shadow-lg shadow-amber-200 hover:scale-[1.02]"
+              className="hero-btn-primary px-8 py-4 rounded-2xl"
             >
               <ShieldAlert className="w-4 h-4" />
               Report an Issue
             </a>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 bg-white border-2 border-zinc-200 hover:border-zinc-300 text-zinc-900 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-[1.02]"
+              className="hero-btn-secondary px-8 py-4 rounded-2xl"
             >
               <Headphones className="w-4 h-4" />
               Contact Support
