@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
-import { PortalGuideDownloads } from "@/components/help/PortalGuideDownloads";
+import { PortalGuideDownloads } from "../help/PortalGuideDownloads";
 
 const AGENT = {
   name: "Nimal Fernando",
