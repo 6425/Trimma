@@ -11,12 +11,29 @@ export function mapVerifiedSalonListingStats(salon: {
   return { rating, reviews };
 }
 
+function salonImageTimestamp(url: string): number {
+  const match = url.trim().match(/_(\d{10,})\./);
+  return match ? Number(match[1]) : 0;
+}
+
 export function getSalonListingImage(
   salon: { cover_url?: string | null; hero_url?: string | null },
   fallback: string
 ): string {
-  const image = (salon.cover_url || salon.hero_url || "").trim();
-  return image || fallback;
+  const cover = (salon.cover_url || "").trim();
+  const hero = (salon.hero_url || "").trim();
+
+  if (!cover && !hero) return fallback;
+  if (!cover) return hero;
+  if (!hero) return cover;
+
+  const coverTs = salonImageTimestamp(cover);
+  const heroTs = salonImageTimestamp(hero);
+  if (coverTs !== heroTs) {
+    return heroTs > coverTs ? hero : cover;
+  }
+
+  return cover;
 }
 
 export function mapSalonRowToUI(s: any, idx: number) {

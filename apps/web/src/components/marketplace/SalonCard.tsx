@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,17 +26,46 @@ export interface SalonCardInternalProps {
   };
 }
 
+const FALLBACK_SALON_IMAGE =
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&auto=format&fit=crop&q=75";
+
+function toOriginalSupabaseUrl(url: string): string | null {
+  const match = url.match(
+    /^(https:\/\/[^/]+\.supabase\.co)\/storage\/v1\/render\/image\/public\/([^?]+)/i
+  );
+  if (!match) return null;
+  return `${match[1]}/storage/v1/object/public/${match[2]}`;
+}
+
 export function SalonCard(props: SalonCardInternalProps) {
   const { salon } = props;
   const linkTarget = `/salons/${salon.slug || salon.id}`;
-  const isVerified = salon.isVerified !== false; // Default to true if missing
+  const isVerified = salon.isVerified !== false;
+  const originalImage = salon.image || FALLBACK_SALON_IMAGE;
+  const [imageSrc, setImageSrc] = useState(originalImage);
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative">
       <div className="relative h-56 overflow-hidden bg-slate-100">
-        <Image src={salon.image} alt={salon.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent" />
-        
+        <Image
+          src={imageSrc}
+          alt={salon.name}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-contain object-center p-0.5 group-hover:scale-[1.01] transition-transform duration-500"
+          onError={() => {
+            const original = toOriginalSupabaseUrl(imageSrc);
+            if (original && imageSrc.includes("/render/image/")) {
+              setImageSrc(original);
+              return;
+            }
+            if (imageSrc !== FALLBACK_SALON_IMAGE) {
+              setImageSrc(FALLBACK_SALON_IMAGE);
+            }
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent pointer-events-none" />
+
         {!isVerified && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
             <Badge className="bg-rose-500/90 hover:bg-rose-500 text-white border-rose-400 font-black text-xs uppercase tracking-widest px-4 py-1.5 shadow-xl">
@@ -64,7 +96,7 @@ export function SalonCard(props: SalonCardInternalProps) {
             <MapPin className="w-4 h-4 mr-1 text-zinc-400" /> {salon.city}
           </div>
         </div>
-        
+
         <div className="flex flex-wrap gap-2 mb-6">
           {salon.categories.map(cat => (
             <Badge key={cat} variant="secondary" className="bg-slate-100 text-zinc-600 font-medium hover:bg-slate-200 border-none shadow-none">{cat}</Badge>
@@ -75,20 +107,20 @@ export function SalonCard(props: SalonCardInternalProps) {
           <div className="flex items-center gap-2 text-sm font-medium text-amber-700 bg-amber-50 px-3 py-2 rounded-lg mb-4 border border-amber-100">
             <CalendarDays className="w-4 h-4" /> Next available: {salon.nextAvailable}
           </div>
-          
+
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
              <div className="font-medium text-zinc-500 text-sm">
                From <span className="text-lg font-bold text-zinc-900">LKR {salon.priceFrom}</span>
              </div>
              <div className="flex gap-2">
-               <Link 
+               <Link
                  href={linkTarget}
                  className="hidden sm:inline-flex items-center justify-center rounded-xl font-bold border border-slate-200 text-zinc-700 h-10 px-4 transition-colors hover:bg-slate-50"
                >
                  View
                </Link>
                {isVerified ? (
-                 <Link 
+                 <Link
                    href={`${linkTarget}?action=book`}
                    className="inline-flex items-center justify-center rounded-xl px-5 sm:px-6 bg-primary-gradient hover:opacity-95 text-white font-bold shadow-md transition-colors h-10 border-none"
                  >

@@ -20,8 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/config/supabase";
-import { filterPublicSalons } from "@/lib/salon-list-filters";
-import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { 
   FeaturedSalonsSection, 
   PopularSalonsSection, 
@@ -60,18 +58,28 @@ export default function CategoryPage() {
   const fetchLiveSalons = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("salons")
-        .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured")
-        .limit(10);
+      const categoryLabel =
+        categories.find((c) => c.slug === slug)?.name ||
+        String(slug || "")
+          .replace(/-/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase());
 
-      if (error) throw error;
+      const params = new URLSearchParams({
+        limit: "48",
+        category: categoryLabel,
+      });
+      if (searchQuery.trim()) params.set("q", searchQuery.trim());
+      if (selectedLocation.trim()) params.set("location", selectedLocation.trim());
 
-      const formatted = filterPublicSalons(data || []).map((s: any, idx: number) => mapSalonRowToUI(s, idx));
+      const res = await fetch(`/api/salons/search?${params.toString()}`);
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || "Failed to load salons");
 
-      setSalons(formatted);
-    } catch (err) {
-      console.error("Failed to load category page salons:", err.message || err);
+      setSalons(payload.salons || []);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Failed to load category page salons:", message);
+      setSalons([]);
     } finally {
       setLoading(false);
     }
@@ -80,9 +88,13 @@ export default function CategoryPage() {
   useEffect(() => {
     void Promise.resolve().then(() => {
       fetchCategories();
-      fetchLiveSalons();
     });
-  }, [slug]);
+  }, []);
+
+  useEffect(() => {
+    if (!slug) return;
+    void fetchLiveSalons();
+  }, [slug, categories]);
 
   const renderIcon = (iconName: string) => {
     const IconComponent = IconMap[iconName] || Sparkles;
@@ -97,21 +109,17 @@ export default function CategoryPage() {
   const heroImage = currentCategory?.image_url || "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
   const categoryName = currentCategory?.name || (slug ? (slug as string).split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Salons & Spas");
 
-  // Filter salons based on category slug matching tags/category & live search query
-  const filteredSalons = salons.filter(salon => {
-    // Check if category name matches or any tags match the category slug
-    const matchesCategory = !slug || 
-      salon.category.toLowerCase().includes((slug as string).replace("-", " ").toLowerCase()) ||
-      salon.tags.some((t: string) => t.toLowerCase().includes((slug as string).replace("-", " ").toLowerCase()));
-
-    const matchesSearch = searchQuery === "" || 
-      salon.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredSalons = salons.filter((salon) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      salon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       salon.popularService.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesLocation = selectedLocation === "" || 
+    const matchesLocation =
+      selectedLocation === "" ||
       salon.location.toLowerCase().includes(selectedLocation.toLowerCase());
 
-    return matchesCategory && matchesSearch && matchesLocation;
+    return matchesSearch && matchesLocation;
   });
 
   return (

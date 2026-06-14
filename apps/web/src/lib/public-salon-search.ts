@@ -42,9 +42,6 @@ export async function fetchPublicSalons(
   if (location) {
     query = query.or(`city.ilike.%${location}%,district.ilike.%${location}%`);
   }
-  if (category) {
-    query = query.ilike("category", `%${category}%`);
-  }
   if (minRating > 0) {
     query = query.gt("review_count", 0).gte("rating", minRating);
   }
@@ -60,15 +57,36 @@ export async function fetchPublicSalons(
     query = query.order("is_featured", { ascending: false }).order("rating", { ascending: false });
   }
 
-  query = query.range(offset, offset + limit - 1);
+  const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
+  const categoryFilterActive = normalizedCategory.length > 0;
+  const fetchLimit = categoryFilterActive ? Math.max(limit * 8, 100) : limit;
+  const fetchOffset = categoryFilterActive ? 0 : offset;
+
+  query = query.range(fetchOffset, fetchOffset + fetchLimit - 1);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const salons = (data || []).map((row, idx) => mapSalonRowToUI(row, idx + offset));
+  let rows = data || [];
+  if (categoryFilterActive) {
+    rows = rows.filter((row) => {
+      const salonCategory = String(row.category || "").toLowerCase();
+      if (salonCategory.includes(normalizedCategory)) return true;
+
+      const services = Array.isArray(row.services) ? row.services : [];
+      return services.some((service) =>
+        String(service?.category || "").toLowerCase().includes(normalizedCategory)
+      );
+    });
+  }
+
+  const pagedRows = categoryFilterActive ? rows.slice(offset, offset + limit) : rows;
+  const salons = pagedRows.map((row, idx) => mapSalonRowToUI(row, idx + offset));
 
   return {
     salons,
-    hasMore: salons.length === limit,
+    hasMore: categoryFilterActive
+      ? rows.length > offset + limit
+      : salons.length === limit,
   };
 }
