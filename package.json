@@ -16,7 +16,8 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "generate:booking-guides": "node apps/web/scripts/generate-booking-guide-docx.mjs",
-    "generate:booking-guides:upload": "node apps/web/scripts/generate-booking-guide-docx.mjs --upload"
+    "generate:booking-guides:upload": "node apps/web/scripts/generate-booking-guide-docx.mjs --upload",
+    "generate:portal-guides": "node apps/web/scripts/generate-portal-guide-docx.mjs"
   },
   "devDependencies": {
     "puppeteer": "^25.1.0",

@@ -72,7 +72,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
       items: [
         { name: "Dashboard", path: BASE, icon: <Home className="w-4 h-4" /> },
         { name: "My Profile", path: `${BASE}/profile`, icon: <User className="w-4 h-4" /> },
-        { name: "Agent Help", path: `${BASE}/help`, icon: <HelpCircle className="w-4 h-4" /> },
+        { name: "Regional Head Help", path: `${BASE}/help`, icon: <HelpCircle className="w-4 h-4" /> },
       ],
     },
     {

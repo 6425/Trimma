@@ -25,10 +25,12 @@ import {
   ClipboardList,
   ArrowRight,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
+import { PortalGuideDownloads } from "@/components/help/PortalGuideDownloads";
 
 const AGENT = {
   name: "Nimal Fernando",
@@ -45,8 +47,9 @@ const SALON = {
   servicePrice: 750,
 };
 
-const NAV_SECTIONS = [
+const AGENT_NAV_SECTIONS = [
   { id: "overview", label: "Overview" },
+  { id: "roles", label: "Role & Responsibilities" },
   { id: "layout", label: "Layout & Header" },
   { id: "dashboard", label: "Agent Cockpit" },
   { id: "my-salons", label: "My Salons" },
@@ -59,6 +62,27 @@ const NAV_SECTIONS = [
   { id: "tasks", label: "Work Queue" },
   { id: "profile", label: "My Profile" },
   { id: "pipeline", label: "Onboarding Pipeline" },
+  { id: "guides", label: "Download Guide" },
+  { id: "faq", label: "FAQ" },
+  { id: "support", label: "Support" },
+] as const;
+
+const REGIONAL_HEAD_NAV_SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "roles", label: "Role & Responsibilities" },
+  { id: "layout", label: "Layout & Header" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "my-team", label: "My Team" },
+  { id: "my-salons", label: "My Salons" },
+  { id: "salon-creation", label: "Salon Creation" },
+  { id: "manual-lead", label: "Add Manual Lead" },
+  { id: "field-editor", label: "Field Editor" },
+  { id: "territory", label: "Territory Explorer" },
+  { id: "approval", label: "Salon Approval" },
+  { id: "commissions", label: "Commissions" },
+  { id: "profile", label: "My Profile" },
+  { id: "pipeline", label: "Onboarding Pipeline" },
+  { id: "guides", label: "Download Guide" },
   { id: "faq", label: "FAQ" },
   { id: "support", label: "Support" },
 ] as const;
@@ -289,7 +313,7 @@ function SectionCard({
   );
 }
 
-const FAQS = [
+const AGENT_FAQS = [
   {
     q: "What is the difference between Google Leads and Manual Salon Leads?",
     a: "Google Leads are salons assigned to you by admin from territory discovery data. Manual Salon Leads are businesses you add yourself via Add Manual Lead when you find them in the field. Both open in the same Field Editor for verification and owner invitation.",
@@ -316,8 +340,85 @@ const FAQS = [
   },
 ];
 
+const REGIONAL_HEAD_FAQS = [
+  ...AGENT_FAQS,
+  {
+    q: "How do I sign in as a Regional Head?",
+    a: "Use trimma.io/agent/login with your regional head email and password (same login page as field agents). After login you are redirected to /regional-head — your dedicated portal with My Team and regional commission tools.",
+  },
+  {
+    q: "What is My Team and how do commission splits work?",
+    a: "My Team lists every sub-agent assigned under you. For each agent you set a split percentage (0–100) — the share of their booking and subscription commission they keep. Save per agent. Review splits monthly and align with Trimma admin commission policy.",
+  },
+  {
+    q: "Can I onboard salons myself as a Regional Head?",
+    a: "Yes. You have the full agent toolkit — Territory Explorer, Add Manual Lead, Salon Creation, Field Editor, and Salon Approval. Use the same onboarding pipeline as your sub-agents and coach them using this guide.",
+  },
+];
+
+function RegionalHeadSidebarMockup() {
+  const items = [
+    { label: "Dashboard", active: false },
+    { label: "My Profile", active: false },
+    { label: "Regional Head Help", active: true },
+    { label: "My Salons", active: false },
+    { label: "Territory Explorer", active: false },
+    { label: "Salon Creation", active: false },
+    { label: "Commissions", active: false },
+    { label: "My Team", active: false },
+  ];
+
+  return (
+    <div className="rounded-xl bg-[#0B0B0B] p-3 text-white w-full max-w-[220px] shrink-0">
+      <div className="text-[9px] font-bold uppercase tracking-widest text-white/50 mb-2 px-2">
+        Regional Head Portal
+      </div>
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
+            item.active ? "bg-[#F5B700] text-black" : "text-white/80"
+          }`}
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${item.active ? "bg-black" : "bg-white/30"}`} />
+          {item.label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TeamMockup() {
+  return (
+    <div className="space-y-2 text-[10px]">
+      <div className="flex justify-between items-center">
+        <span className="font-black text-zinc-900">My Team</span>
+        <span className="text-zinc-400">3 sub-agents</span>
+      </div>
+      {[
+        { name: "Kasun Perera", salons: 12, live: 5, split: 70 },
+        { name: "Dilani Silva", salons: 8, live: 3, split: 65 },
+      ].map((a) => (
+        <div key={a.name} className="rounded-lg border border-slate-200 bg-white p-2 flex items-center justify-between gap-2">
+          <div>
+            <div className="font-bold text-zinc-900">{a.name}</div>
+            <div className="text-zinc-500">{a.salons} salons · {a.live} live</div>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="font-bold text-brand">{a.split}%</span>
+            <span className="px-2 py-1 rounded bg-[#F5B700] text-black font-bold">Save</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AgentHelpGuide() {
-  const { path } = useAgentPortal();
+  const { path, base } = useAgentPortal();
+  const isRegionalHead = base === "/regional-head";
+  const navSections = isRegionalHead ? REGIONAL_HEAD_NAV_SECTIONS : AGENT_NAV_SECTIONS;
+  const faqs = isRegionalHead ? REGIONAL_HEAD_FAQS : AGENT_FAQS;
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeNav, setActiveNav] = useState<string>("overview");
 
@@ -334,20 +435,39 @@ export function AgentHelpGuide() {
         <div className="relative z-10 max-w-2xl">
           <span className="inline-flex items-center gap-1.5 bg-[#F5B700]/15 text-[#F5B700] border border-[#F5B700]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
             <BookOpen className="w-3.5 h-3.5" />
-            Agent Field Handbook
+            {isRegionalHead ? "Regional Head Handbook" : "Agent Field Handbook"}
           </span>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">
-            Trimma Agent Portal Guide
+            {isRegionalHead ? "Trimma Regional Head Portal Guide" : "Trimma Agent Portal Guide"}
           </h1>
           <p className="text-sm text-white/70 leading-relaxed mb-4">
-            Everything in your agent workspace — explained step by step. Examples use{" "}
-            <strong className="text-white">{SALON.name}</strong> ({SALON.location}) and agent{" "}
-            <strong className="text-white">{AGENT.name}</strong> ({AGENT.territory}) so you can
-            follow real workflows from lead assignment to live salon and commission payout.
+            {isRegionalHead ? (
+              <>
+                Lead your agent team, onboard salons, and grow your territory — explained step by step.
+                Examples use <strong className="text-white">{SALON.name}</strong> ({SALON.location}) so you
+                can coach sub-agents and follow the same pipeline from lead to live salon and commission payout.
+              </>
+            ) : (
+              <>
+                Everything in your agent workspace — explained step by step. Examples use{" "}
+                <strong className="text-white">{SALON.name}</strong> ({SALON.location}) and agent{" "}
+                <strong className="text-white">{AGENT.name}</strong> ({AGENT.territory}) so you can follow
+                real workflows from lead assignment to live salon and commission payout.
+              </>
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
+            {isRegionalHead ? (
+              <Link href={path("/team")}>
+                <Button className="h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold">
+                  Open My Team
+                </Button>
+              </Link>
+            ) : null}
             <Link href={path("/leads")}>
-              <Button className="h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold">
+              <Button
+                className={`h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold ${isRegionalHead ? "" : ""}`}
+              >
                 Open Salon Creation
               </Button>
             </Link>
@@ -369,7 +489,7 @@ export function AgentHelpGuide() {
           <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 px-2 py-1 mb-1">
             On this page
           </p>
-          {NAV_SECTIONS.map(({ id, label }) => (
+          {navSections.map(({ id, label }) => (
             <button
               key={id}
               type="button"
@@ -390,9 +510,9 @@ export function AgentHelpGuide() {
           <section id="overview" className="scroll-mt-24 space-y-4">
             <h2 className="text-xl font-bold text-zinc-900">Getting started</h2>
             <p className="text-sm text-zinc-600 leading-relaxed">
-              Your Agent Portal is the sales operating system for Trimma field agents. Discover
-              salons in your territory, verify business details, invite owners, enable bookings, and
-              track referral commissions — all from one workspace.
+              {isRegionalHead
+                ? "Your Regional Head Portal extends the agent workspace with team management. Onboard salons directly, coach sub-agents, set commission splits, and monitor territory performance — all from one workspace. Sign in at trimma.io/agent/login with your regional head credentials."
+                : "Your Agent Portal is the sales operating system for Trimma field agents. Sign in at trimma.io/agent/login with your agent email and password. Discover salons in your territory, verify business details, invite owners, enable bookings, and track referral commissions — all from one workspace."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
@@ -414,14 +534,53 @@ export function AgentHelpGuide() {
             </div>
           </section>
 
+          <section id="roles" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
+            <h2 className="text-lg font-bold text-zinc-900 mb-2">Your role & responsibilities</h2>
+            <p className="text-sm text-zinc-600 mb-6">
+              {isRegionalHead
+                ? "As a Trimma Regional Head you lead field agents in your province or district. You onboard salons yourself and ensure every sub-agent follows the same professional onboarding standard."
+                : "As a Trimma Field Agent you are the on-the-ground partner for salon owners. Your job is to discover, verify, invite, and support salons until they are live on the marketplace."}
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {(isRegionalHead
+                ? [
+                    "Sign in at /agent/login — redirected to /regional-head after authentication",
+                    "Lead and coach sub-agents assigned under your regional structure",
+                    "Set commission split % per sub-agent on My Team (0–100)",
+                    "Onboard salons directly — Territory Explorer, Manual Lead, Field Editor",
+                    "Monitor team pipeline — ensure no salon stalls at Owner invited or activated",
+                    "Review Salon Approval queue for salons in your regional scope",
+                    "Earn personal referral commissions plus oversight of team activity",
+                    "Escalate territory, commission, or admin approval issues to agents@trimma.com",
+                  ]
+                : [
+                    "Sign in at /agent/login with email and password (not Google)",
+                    "Work only in territories assigned to you by Trimma admin",
+                    "Discover salons via Territory Explorer or admin-assigned Google leads",
+                    "Verify business data on site using the 5-section Field Editor",
+                    "Invite owners via their real Gmail — salon owners sign in with Google only",
+                    "Follow up until owner activates their Trimma salon dashboard",
+                    "Enable booking and submit complete profiles to Trimma admin",
+                    "Track weekly booking + subscription commissions on the Commissions page",
+                  ]
+              ).map((item) => (
+                <div key={item} className="flex items-start gap-2 text-sm text-zinc-700 rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section id="layout" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
             <h2 className="text-lg font-bold text-zinc-900 mb-2">Layout & header</h2>
             <p className="text-sm text-zinc-600 mb-6">
-              The agent portal uses a dark sidebar on desktop and a bottom nav on mobile. All tools
-              are grouped under Overview, Salons, and Performance.
+              {isRegionalHead
+                ? "The regional head portal uses a dark sidebar on desktop and a bottom nav on mobile. Overview, Salons, and Performance sections include My Team — unique to regional heads."
+                : "The agent portal uses a dark sidebar on desktop and a bottom nav on mobile. All tools are grouped under Overview, Salons, and Performance."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <AgentSidebarMockup />
+              {isRegionalHead ? <RegionalHeadSidebarMockup /> : <AgentSidebarMockup />}
               <div className="flex-1 space-y-3">
                 <div className="rounded-xl bg-[#0B0B0B] border border-white/10 px-3 py-2 flex items-center justify-between text-white text-[10px]">
                   <span className="font-bold">Sales Operating System</span>
@@ -436,14 +595,24 @@ export function AgentHelpGuide() {
               </div>
             </div>
             <ul className="grid sm:grid-cols-2 gap-2 text-sm text-zinc-700">
-              {[
-                "Sidebar — Dashboard, Profile, Salons, Territory, Leads, Approval, Commissions, Agent Help",
-                "Header search (desktop) — quick lookup for leads and salons",
-                "Notification bell — alerts for assignments and owner actions",
-                "Mobile bottom nav — Home, Salons, Editor, Profile",
-                "Logout — bottom of sidebar; ends your session securely",
-                "Active page — highlighted in brand yellow with black text",
-              ].map((item) => (
+              {(isRegionalHead
+                ? [
+                    "Sidebar — Dashboard, Profile, Regional Head Help, Salons tools, Commissions, My Team",
+                    "My Team — sub-agent list, salon counts, commission split % editor",
+                    "Header search (desktop) — quick lookup for leads and salons",
+                    "Notification bell — alerts for assignments and owner actions",
+                    "Mobile bottom nav — Home, Salons, Editor, Team, Profile",
+                    "Logout — bottom of sidebar; ends your session securely",
+                  ]
+                : [
+                    "Sidebar — Dashboard, Profile, Salons, Territory, Leads, Approval, Commissions, Agent Help",
+                    "Header search (desktop) — quick lookup for leads and salons",
+                    "Notification bell — alerts for assignments and owner actions",
+                    "Mobile bottom nav — Home, Salons, Editor, Profile",
+                    "Logout — bottom of sidebar; ends your session securely",
+                    "Active page — highlighted in brand yellow with black text",
+                  ]
+              ).map((item) => (
                 <li key={item} className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                   {item}
@@ -473,6 +642,29 @@ export function AgentHelpGuide() {
             ]}
             mockup={<CockpitMockup />}
           />
+
+          {isRegionalHead ? (
+            <SectionCard
+              id="my-team"
+              icon={Users}
+              title="My Team"
+              path="/agent/team"
+              description="Manage sub-agents under your regional structure. View their salon pipeline, live count, booking volume, and set commission split percentages."
+              features={[
+                "Sub-agent table — name, email, assigned salons, live salons, booking volume",
+                "Commission split % — editable per agent (0–100); share they keep from their commission",
+                "Save per agent — persists split to Trimma admin commission structure",
+                "Team earnings visibility — monitor which agents need coaching on stalled pipelines",
+                "Regional commission view — your share and team splits also appear on Commissions page",
+              ]}
+              tips={[
+                "Review split percentages monthly and align with Trimma admin policy.",
+                "Share the Agent Portal Guide Word doc with new sub-agents so they follow the same onboarding steps.",
+                "Follow up when an agent has many salons stuck at Owner invited.",
+              ]}
+              mockup={<TeamMockup />}
+            />
+          ) : null}
 
           <SectionCard
             id="my-salons"
@@ -608,8 +800,12 @@ export function AgentHelpGuide() {
             id="commissions"
             icon={Wallet}
             title="Commissions"
-            path="/regional-head/commissions"
-            description="Weekly referral ledger for booking commissions and subscription conversion rewards from salons you brought to Trimma."
+            path="/agent/commissions"
+            description={
+              isRegionalHead
+                ? "Weekly referral ledger for your personal salons plus regional head share. Sub-agent splits are managed on My Team and reflected in team commission breakdowns."
+                : "Weekly referral ledger for booking commissions and subscription conversion rewards from salons you brought to Trimma."
+            }
             features={[
               "Referral Ledger badge — shows your booking % and subscription % rates",
               "Week navigator — This Week / previous weeks with date range",
@@ -625,38 +821,40 @@ export function AgentHelpGuide() {
             ]}
           />
 
-          <SectionCard
-            id="tasks"
-            icon={Target}
-            title="Dynamic Work Queue"
-            path="/agent/tasks"
-            description="Operational command centre with prioritized work items generated from real salon and commission states."
-            features={[
-              "KPI row — Assigned Leads, Verified Salons, Pending Commissions, Performance Score",
-              "Tabs — All Work · Leads · Salons · Commissions · Alerts",
-              "Search work items by business name or status",
-              "Priority badges — HIGH (red), MEDIUM (amber), LOW (emerald)",
-              "Recommended action button — navigates to the right page for each item",
-              "Recent Network Activity timeline",
-              "Queue Health — Lead Conversion % and Pending Payouts (LKR)",
-              "Refresh Sync — reload work items from server",
-            ]}
-            tips={[
-              "HIGH priority items are time-sensitive owner follow-ups or stalled onboarding.",
-            ]}
-          />
+          {!isRegionalHead ? (
+            <SectionCard
+              id="tasks"
+              icon={Target}
+              title="Dynamic Work Queue"
+              path="/agent/tasks"
+              description="Operational command centre with prioritized work items generated from real salon and commission states."
+              features={[
+                "KPI row — Assigned Leads, Verified Salons, Pending Commissions, Performance Score",
+                "Tabs — All Work · Leads · Salons · Commissions · Alerts",
+                "Search work items by business name or status",
+                "Priority badges — HIGH (red), MEDIUM (amber), LOW (emerald)",
+                "Recommended action button — navigates to the right page for each item",
+                "Recent Network Activity timeline",
+                "Queue Health — Lead Conversion % and Pending Payouts (LKR)",
+                "Refresh Sync — reload work items from server",
+              ]}
+              tips={[
+                "HIGH priority items are time-sensitive owner follow-ups or stalled onboarding.",
+              ]}
+            />
+          ) : null}
 
           <SectionCard
             id="profile"
             icon={User}
             title="My Profile"
             path="/agent/profile"
-            description={`Manage ${AGENT.name}'s account — photo, contact details, and view assigned territories.`}
+            description={`Manage your account — photo, contact details, and view assigned territories.`}
             features={[
               "Profile photo — upload and crop to 500×500; updates sidebar avatar instantly",
               "Editable — Full Name, Phone (+947 prefix, 8 digits)",
               "Locked — Email (login identity), Assigned Territories (set by admin)",
-              "Role badge — Field Agent",
+              isRegionalHead ? "Role badge — Regional Head" : "Role badge — Field Agent",
               "Save Changes — persists name and phone",
             ]}
             tips={[
@@ -697,11 +895,21 @@ export function AgentHelpGuide() {
             </div>
           </section>
 
+          <PortalGuideDownloads
+            documentType={isRegionalHead ? "regional_head_guide" : "agent_guide"}
+            title={isRegionalHead ? "Download Regional Head Guide (Word)" : "Download Agent Guide (Word)"}
+            description={
+              isRegionalHead
+                ? "Share or save the full regional head walkthrough — role, My Team, salon onboarding, and commissions — in English, Sinhala, or Tamil."
+                : "Share or save the full agent walkthrough — roles, salon onboarding pipeline, and commissions — in English, Sinhala, or Tamil."
+            }
+          />
+
           {/* FAQ */}
           <section id="faq" className="scroll-mt-24 space-y-4">
             <h2 className="text-xl font-bold text-zinc-900">Frequently asked questions</h2>
             <div className="space-y-3">
-              {FAQS.map((faq, idx) => {
+              {faqs.map((faq, idx) => {
                 const isOpen = openFaq === idx;
                 return (
                   <div
@@ -737,12 +945,13 @@ export function AgentHelpGuide() {
               <div className="relative z-10 grid sm:grid-cols-2 gap-6 items-center">
                 <div>
                   <span className="inline-flex bg-white/10 text-white px-3.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-3">
-                    Agent support
+                    {isRegionalHead ? "Regional head support" : "Agent support"}
                   </span>
                   <h3 className="text-xl font-bold mb-2">Need more help?</h3>
                   <p className="text-white/60 text-sm leading-relaxed">
-                    Trimma supports field agents across Sri Lanka — territory setup, lead
-                    assignments, owner invitations, and commission questions.
+                    {isRegionalHead
+                      ? "Trimma supports regional heads across Sri Lanka — team splits, territory setup, salon onboarding, and commission questions."
+                      : "Trimma supports field agents across Sri Lanka — territory setup, lead assignments, owner invitations, and commission questions."}
                   </p>
                 </div>
                 <div className="space-y-4">
@@ -759,7 +968,7 @@ export function AgentHelpGuide() {
                   </div>
                   <Link href={path("/profile")}>
                     <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
-                      Update {AGENT.name}&apos;s profile
+                      Update your profile
                     </Button>
                   </Link>
                 </div>
