@@ -13,7 +13,7 @@ export function optimizeListingImageUrl(url: string, width = 640): string {
     const params = new URLSearchParams({
       width: String(width),
       height: String(height),
-      resize: "contain",
+      resize: "cover",
       quality: "82",
     });
     return `${origin}/storage/v1/render/image/public/${objectPath}?${params.toString()}`;

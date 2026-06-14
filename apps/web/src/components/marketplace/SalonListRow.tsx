@@ -52,7 +52,7 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
 
   return (
     <article className="group flex flex-col md:flex-row gap-0 md:gap-4 bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 transition-all">
-      <div className="relative w-full md:w-[280px] lg:w-[300px] shrink-0 aspect-[4/3] md:aspect-auto md:min-h-[200px] bg-slate-100">
+      <div className="relative w-full md:w-[280px] lg:w-[300px] shrink-0 aspect-[4/3] overflow-hidden bg-slate-100">
         <Image
           src={imageSrc}
           alt={salon.name}
@@ -60,7 +60,7 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
           sizes="(max-width: 768px) 100vw, 300px"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
-          className="object-contain object-center p-0.5 group-hover:scale-[1.01] transition-transform duration-500"
+          className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
           onError={() => {
             const original = toOriginalSupabaseUrl(imageSrc);
             if (original && imageSrc.includes("/render/image/")) {

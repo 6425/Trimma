@@ -31,70 +31,86 @@ import { SalonCard } from "../../../components/marketplace/SalonCard";
 
 export default function CategoryPage() {
   const { slug } = useParams();
-  
+  const slugStr = String(slug || "");
+
   const [salons, setSalons] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedLocation, setAppliedLocation] = useState("");
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
+  const [loadedFetchKey, setLoadedFetchKey] = useState("");
 
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      if (data) {
-        setCategories(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch categories:", err);
-    }
-  };
+  const categoryLabel =
+    categories.find((c) => c.slug === slug)?.name ||
+    slugStr
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
 
-  const fetchLiveSalons = async () => {
-    try {
-      setLoading(true);
-      const categoryLabel =
-        categories.find((c) => c.slug === slug)?.name ||
-        String(slug || "")
-          .replace(/-/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase());
-
-      const params = new URLSearchParams({
-        limit: "48",
-        category: categoryLabel,
-      });
-      if (searchQuery.trim()) params.set("q", searchQuery.trim());
-      if (selectedLocation.trim()) params.set("location", selectedLocation.trim());
-
-      const res = await fetch(`/api/salons/search?${params.toString()}`);
-      const payload = await res.json();
-      if (!res.ok) throw new Error(payload.error || "Failed to load salons");
-
-      setSalons(payload.salons || []);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error("Failed to load category page salons:", message);
-      setSalons([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchKey = `${slugStr}|${categoryLabel}|${appliedSearch}|${appliedLocation}`;
+  const loading = Boolean(slugStr) && loadedFetchKey !== fetchKey;
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      fetchCategories();
+      void (async () => {
+        try {
+          const { data, error } = await supabase
+            .from("categories")
+            .select("*")
+            .order("name");
+          if (error) throw error;
+          if (data) {
+            setCategories(data);
+          }
+        } catch (err) {
+          console.error("Failed to fetch categories:", err);
+        }
+      })();
     });
   }, []);
 
   useEffect(() => {
-    if (!slug) return;
-    void fetchLiveSalons();
-  }, [slug, categories]);
+    if (!slugStr) return;
+
+    let cancelled = false;
+    const key = fetchKey;
+
+    void (async () => {
+      try {
+        const params = new URLSearchParams({
+          limit: "48",
+          category: categoryLabel,
+        });
+        if (appliedSearch) params.set("q", appliedSearch);
+        if (appliedLocation) params.set("location", appliedLocation);
+
+        const res = await fetch(`/api/salons/search?${params.toString()}`);
+        const payload = await res.json();
+        if (cancelled) return;
+        if (!res.ok) throw new Error(payload.error || "Failed to load salons");
+
+        setSalons(payload.salons || []);
+        setLoadedFetchKey(key);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("Failed to load category page salons:", message);
+        setSalons([]);
+        setLoadedFetchKey(key);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slugStr, categoryLabel, appliedSearch, appliedLocation, fetchKey]);
+
+  const handleSearch = () => {
+    setAppliedSearch(searchQuery.trim());
+    setAppliedLocation(selectedLocation.trim());
+  };
 
   const renderIcon = (iconName: string) => {
     const IconComponent = IconMap[iconName] || Sparkles;
@@ -109,18 +125,7 @@ export default function CategoryPage() {
   const heroImage = currentCategory?.image_url || "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
   const categoryName = currentCategory?.name || (slug ? (slug as string).split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Salons & Spas");
 
-  const filteredSalons = salons.filter((salon) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      salon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      salon.popularService.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesLocation =
-      selectedLocation === "" ||
-      salon.location.toLowerCase().includes(selectedLocation.toLowerCase());
-
-    return matchesSearch && matchesLocation;
-  });
+  const filteredSalons = salons;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -185,7 +190,7 @@ export default function CategoryPage() {
                </select>
              </div>
              
-             <Button onClick={fetchLiveSalons} size="lg" className="h-12 px-8 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold border-none shadow-md shadow-brand-pink/20">
+             <Button onClick={handleSearch} size="lg" className="h-12 px-8 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold border-none shadow-md shadow-brand-pink/20">
                Search
              </Button>
           </div>

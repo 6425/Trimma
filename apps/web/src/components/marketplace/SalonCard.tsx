@@ -46,13 +46,13 @@ export function SalonCard(props: SalonCardInternalProps) {
 
   return (
     <div className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative">
-      <div className="relative h-56 overflow-hidden bg-slate-100">
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
         <Image
           src={imageSrc}
           alt={salon.name}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-contain object-center p-0.5 group-hover:scale-[1.01] transition-transform duration-500"
+          className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
           onError={() => {
             const original = toOriginalSupabaseUrl(imageSrc);
             if (original && imageSrc.includes("/render/image/")) {
