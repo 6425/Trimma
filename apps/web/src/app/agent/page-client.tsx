@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { getAgentDashboardData } from "@/app/actions/agent-dashboard";
 import { loadAgentDashboardFromClient, tryAgentData } from "@/lib/agent-client-data";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
+import { AgentDashboardGuideCard } from "../../components/agent/AgentDashboardGuideCard";
 
 type AssignedSalon = {
   id: string;
@@ -149,6 +150,8 @@ export default function AgentDashboard() {
           </Button>
         </div>
       </div>
+
+      {!isRegionalHead ? <AgentDashboardGuideCard /> : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {[

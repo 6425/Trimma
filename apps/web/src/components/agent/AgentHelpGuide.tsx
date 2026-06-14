@@ -901,7 +901,7 @@ export function AgentHelpGuide() {
             description={
               isRegionalHead
                 ? "Share or save the full regional head walkthrough — role, My Team, salon onboarding, and commissions — in English, Sinhala, or Tamil."
-                : "Share or save the full agent walkthrough — roles, salon onboarding pipeline, and commissions — in English, Sinhala, or Tamil."
+                : "Share or save the comprehensive 30-step agent handbook — role, salon onboarding, Field Editor, commissions, and daily workflow — in English, Sinhala, or Tamil."
             }
           />
 

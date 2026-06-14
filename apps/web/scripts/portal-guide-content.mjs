@@ -2,6 +2,10 @@
  * Trilingual Word guide content for Agent and Regional Head portals.
  */
 
+import { AGENT_GUIDE_STEPS } from "./agent-guide-steps.mjs";
+
+export { AGENT_GUIDE_STEPS };
+
 export const AGENT_GUIDE_META = {
   en: {
     fileName: "trimma-agent-guide-en.docx",
@@ -17,7 +21,7 @@ export const AGENT_GUIDE_META = {
     fileName: "trimma-agent-guide-si.docx",
     coverTitle: "ට්‍රිම්මා Agent Portal මාර්ගෝපදේශය",
     coverSubtitle: "Field Agent Handbook — සැලුන් Onboard කර Commissions උපයන්න",
-    coverTagline: "ශ්‍රී ලanka Trimma field agents සඳහා සම්පූර්ණ මාර්ගෝපදේශය",
+    coverTagline: "ශ්‍රී ලංකා Trimma field agents සඳහා සම්පූර්ණ මාර්ගෝපදේශය",
     footer: "© Trimma — The Salon Engine · trimma.io · agents@trimma.com",
     stepsLabel: "පියවර",
     tipLabel: "උපදෙස්",
@@ -66,61 +70,6 @@ export const REGIONAL_HEAD_GUIDE_META = {
     tipLabel: "உதவிக்குறிப்பு",
     screenLabel: "திரை",
   },
-};
-
-/** @type {Record<'en'|'si'|'ta', Array<{ title: string; body: string; tip?: string; screen?: string }>>} */
-export const AGENT_GUIDE_STEPS = {
-  en: [
-    { title: "Sign in to the Agent Portal", body: "Go to trimma.io/agent/login. Sign in with the email and password provided by Trimma admin. Customers and salon owners use Google — agents and regional heads use email/password only.", screen: "Agent login page — email + password" },
-    { title: "Your role & responsibilities", body: "As a Trimma Field Agent you: discover salons in assigned territories, verify business data on site, invite owners via Gmail, enable bookings after owner activation, submit salons to admin, and earn booking + subscription commissions on referred salons.", tip: "You only see salons and territories assigned to you by admin." },
-    { title: "Agent Cockpit (Dashboard)", body: "Start each day on the Dashboard. Review KPI cards: Assigned Salons, In Progress, Live Salons, Total Earnings. Use Today's Priorities and Recent Assigned Salons to plan field visits and owner follow-ups.", screen: "Agent Cockpit — KPI cards and priorities" },
-    { title: "My Salons", body: "View every salon assigned to you. Filter by All, In progress, Needs action, or Live. Search by name, phone, owner Gmail, or address. Use Manage to open the Field Editor or View for live marketplace listings.", screen: "My Salons table with status badges" },
-    { title: "Territory Explorer", body: "Discover unlisted businesses on the map. Select category, assigned territory, and result limit (10–250). Click Search Businesses, review results in the sidebar, and export CSV for field planning.", tip: "Contact admin if no territories appear — they must assign your district first.", screen: "Map + business results sidebar" },
-    { title: "Add Manual Lead", body: "Found a salon in the field? Create a manual lead with salon name, category, address, WhatsApp, owner Gmail, up to 6 services, 2 staff, and amenities. Save as Draft or Send to Salon Owner for Review.", screen: "Add Manual Lead form" },
-    { title: "Salon Creation (Field Editor hub)", body: "Process Google leads assigned by admin and your manual leads in one place. Google Leads tab shows admin assignments; Salon Leads tab shows your manual entries. Open any card to launch the Field Editor.", screen: "Salon Creation — Google + Manual tabs" },
-    { title: "Field Editor — 5 sections", body: "Section 1: Salon & Owner Details. Section 2: Agent Field Data (hours, map link, notes). Section 3: Services (up to 6). Section 4: Staff (up to 2). Section 5: Amenities. Save draft anytime.", screen: "Field Editor modal — 5 sections" },
-    { title: "Invite the salon owner", body: "After completing the Field Editor with owner Gmail and WhatsApp, use Send to Salon Owner for Review or Send Invitation. Owner receives email + WhatsApp to activate their Trimma account.", tip: "Always use the owner's real Gmail — login is Google-only for salon owners.", screen: "Send Invitation button" },
-    { title: "Salon Approval queue", body: "When owner status is Owner activated, review their profile on Salon Approval. Verify services, bank details, and branding. Use Enable Booking & Send to Admin in the Field Editor to queue admin verification.", screen: "Salon Approval — Pending Review list" },
-    { title: "Admin verification → Live salon", body: "After you submit, Trimma admin reviews the listing. When status becomes Verified, the salon is public on the marketplace and can receive customer bookings. You earn commissions on those bookings.", screen: "Live / Verified status badge" },
-    { title: "Commissions", body: "Track weekly booking commissions (% of reservation fees) and subscription conversion rewards. Navigate weeks, view per-booking cuts, and check your commission tier badge at the top.", screen: "Commissions ledger — weekly grid" },
-    { title: "Work Queue (Tasks)", body: "Prioritized work items from real salon states: owner follow-ups, stalled onboarding, commission alerts. Filter by All, Leads, Salons, Commissions, or Alerts. Click recommended actions to jump to the right page.", screen: "Dynamic Work Queue tabs" },
-    { title: "My Profile", body: "Update your photo, full name, and phone (+947). Email and assigned territories are set by admin and are read-only.", screen: "Agent profile form" },
-    { title: "Onboarding pipeline summary", body: "Assigned → Field verified → Owner invited → Owner activated → Pending admin verification → Live/Verified. Status badges on My Salons map to these stages. Rejected salons need admin follow-up.", screen: "Pipeline status flow" },
-  ],
-  si: [
-    { title: "Agent Portal වෙත Sign in කරන්න", body: "trimma.io/agent/login වෙත යන්න. Trimma admin ලබා දුන් email සහ password මගින් sign in කරන්න.", screen: "Agent login — email + password" },
-    { title: "ඔබගේ role සහ වගකීම්", body: "Trimma Field Agent ලෙස: assigned territories හි සැලුන් සොයන්න, site එකේ verify කරන්න, Gmail හරහා owners ආරාධනා කරන්න, owner activate කිරීමෙන් පසු bookings enable කරන්න, admin වෙත submit කරන්න, commissions උපයන්න.", tip: "Admin විසින් assign කළ salons සහ territories පමණක් දකින්න." },
-    { title: "Agent Cockpit (Dashboard)", body: "සෑම දිනකම Dashboard හි ආරම්භ කරන්න. KPI cards, Today's Priorities, Recent Assigned Salons සමාලෝචනය කරන්න.", screen: "Agent Cockpit" },
-    { title: "My Salons", body: "ඔබට assign කළ සියලු සැලුන් බලන්න. Filter, search, Manage හෝ View භාවිතා කරන්න.", screen: "My Salons table" },
-    { title: "Territory Explorer", body: "Map මත unlisted businesses සොයන්න. Category, territory, result limit තෝරා Search Businesses ඔබන්න.", screen: "Territory Explorer map" },
-    { title: "Add Manual Lead", body: "Field එකේ සැලුනක් හමු වුවහොත් manual lead සාදන්න. Services, staff, amenities ඇතුළත් කර owner ආරාධනා කරන්න.", screen: "Add Manual Lead form" },
-    { title: "Salon Creation", body: "Google leads සහ manual leads එකම ස්ථානයක process කරන්න. Field Editor විවෘත කිරීමට card එක ඔබන්න.", screen: "Salon Creation tabs" },
-    { title: "Field Editor — කොටස් 5", body: "Salon & Owner, Agent Field Data, Services, Staff, Amenities. ඕනෑම වේලාවක Save කරන්න.", screen: "Field Editor" },
-    { title: "Salon owner ආරාධනා කරන්න", body: "Owner Gmail සහ WhatsApp සම්පූර්ණ කර Send Invitation භාවිතා කරන්න.", tip: "Owner ගේ සැබෑ Gmail භාවිතා කරන්න.", screen: "Send Invitation" },
-    { title: "Salon Approval queue", body: "Owner activated වූ පසු Salon Approval හි review කර Enable Booking & Send to Admin භාවිතා කරන්න.", screen: "Salon Approval" },
-    { title: "Admin verification → Live salon", body: "Admin approve කළ පසු salon marketplace හි public වී bookings ලබා ගනී.", screen: "Verified status" },
-    { title: "Commissions", body: "Weekly booking commissions සහ subscription rewards track කරන්න.", screen: "Commissions ledger" },
-    { title: "Work Queue", body: "Prioritized tasks — owner follow-ups, stalled onboarding, alerts.", screen: "Work Queue" },
-    { title: "My Profile", body: "Photo, name, phone update කරන්න. Email සහ territories admin විසින් set කරයි.", screen: "Profile" },
-    { title: "Onboarding pipeline", body: "Assigned → Field verified → Owner invited → Owner activated → Admin verification → Live/Verified.", screen: "Pipeline flow" },
-  ],
-  ta: [
-    { title: "Agent Portal இல் Sign in செய்யுங்கள்", body: "trimma.io/agent/login க்குச் செல்லுங்கள். Trimma admin வழங்கிய email மற்றும் password மூலம் sign in செய்யுங்கள்.", screen: "Agent login" },
-    { title: "உங்கள் பாத்திரம் & பொறுப்புகள்", body: "Trimma Field Agent ஆக: territories இல் சலூன்களைக் கண்டறியுங்கள், verify செய்யுங்கள், owners ஐ invite செய்யுங்கள், bookings enable செய்யுங்கள், commissions சம்பாதியுங்கள்.", tip: "Admin assign செய்த salons மட்டுமே காண்பீர்கள்." },
-    { title: "Agent Cockpit (Dashboard)", body: "ஒவ்வொரு நாளும் Dashboard இல் தொடங்குங்கள். KPI cards மற்றும் priorities மதிப்பாய்வு செய்யுங்கள்.", screen: "Agent Cockpit" },
-    { title: "My Salons", body: "உங்களுக்கு assign செய்யப்பட்ட அனைத்து salons ஐயும் காணுங்கள். Filter, search, Manage பயன்படுத்துங்கள்.", screen: "My Salons" },
-    { title: "Territory Explorer", body: "Map இல் unlisted businesses கண்டறியுங்கள். Search Businesses அழுத்துங்கள்.", screen: "Territory Explorer" },
-    { title: "Add Manual Lead", body: "Field இல் salon கண்டால் manual lead உருவாக்குங்கள். Owner ஐ invite செய்யுங்கள்.", screen: "Add Manual Lead" },
-    { title: "Salon Creation", body: "Google leads மற்றும் manual leads ஐ ஒரே இடத்தில் process செய்யுங்கள்.", screen: "Salon Creation" },
-    { title: "Field Editor — 5 பிரிவுகள்", body: "Salon & Owner, Field Data, Services, Staff, Amenities.", screen: "Field Editor" },
-    { title: "Salon owner ஐ invite செய்யுங்கள்", body: "Owner Gmail + WhatsApp பூர்த்தி செய்து Send Invitation பயன்படுத்துங்கள்.", screen: "Send Invitation" },
-    { title: "Salon Approval queue", body: "Owner activated பிறகு review செய்து Enable Booking & Send to Admin செய்யுங்கள்.", screen: "Salon Approval" },
-    { title: "Admin verification → Live", body: "Admin approve செய்த பிறகு salon marketplace இல் public ஆகிறது.", screen: "Verified status" },
-    { title: "Commissions", body: "Weekly booking commissions மற்றும் subscription rewards track செய்யுங்கள்.", screen: "Commissions" },
-    { title: "Work Queue", body: "Prioritized tasks — follow-ups, alerts, stalled onboarding.", screen: "Work Queue" },
-    { title: "My Profile", body: "Photo, name, phone update செய்யுங்கள்.", screen: "Profile" },
-    { title: "Onboarding pipeline", body: "Assigned → Field verified → Owner invited → Owner activated → Verified.", screen: "Pipeline" },
-  ],
 };
 
 /** @type {Record<'en'|'si'|'ta', Array<{ title: string; body: string; tip?: string; screen?: string }>>} */
