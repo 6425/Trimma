@@ -632,7 +632,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans">
       
       {/* 1. DYNAMIC FULL-WIDTH INTEGRATED HERO BANNER */}
-      <div className="relative w-full page-hero-shell text-zinc-900 overflow-hidden shadow-sm">
+      <div className="relative w-full page-hero-shell text-black overflow-hidden shadow-sm">
         <div className="absolute inset-0 z-0">
           <img 
             src={salon.hero_url || salon.cover_url || mockExtraData.gallery[0]} 
@@ -659,25 +659,25 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                     </Avatar>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-zinc-900 leading-tight">
+                        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-black leading-tight">
                           {salon.name}
                         </h1>
                         {salon.is_verified && (
-                          <ShieldCheck className="w-5 h-5 text-brand" />
+                          <ShieldCheck className="w-5 h-5 text-black" />
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         {salon.is_verified ? (
-                          <Badge className="bg-brand/20 text-brand border border-brand/30 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Badge className="bg-black/10 text-black border border-black/20 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                             Verified
                           </Badge>
                         ) : (
-                          <Badge className="bg-amber-500/20 text-amber-500 border border-amber-500/30 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Badge className="bg-black/10 text-black border border-black/20 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                             Unverified
                           </Badge>
                         )}
-                        <div className={`flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'Open Now' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${currentStatus === 'Open Now' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-500'}`} />
+                        <div className={`flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider text-black ${currentStatus === 'Open Now' ? 'bg-black/10 border-black/20' : 'bg-black/10 border-black/20'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${currentStatus === 'Open Now' ? 'bg-emerald-600 animate-pulse' : 'bg-amber-600'}`} />
                           {currentStatus}
                         </div>
                       </div>
@@ -702,34 +702,34 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-zinc-700">
-                  <div className="flex items-center text-zinc-900 bg-black/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-black/10">
-                    <Star className="w-4 h-4 mr-1.5 fill-amber-500 text-amber-500" />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-black">
+                  <div className="flex items-center text-black bg-black/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-black/10">
+                    <Star className="w-4 h-4 mr-1.5 fill-amber-600 text-amber-600" />
                     {displayRating > 0 ? displayRating.toFixed(1) : "New"}{" "}
-                    <span className="font-normal text-zinc-600 ml-1">
+                    <span className="font-normal text-black/70 ml-1">
                       ({displayReviewCount} review{displayReviewCount === 1 ? "" : "s"})
                     </span>
                   </div>
-                  <div className="flex items-center hover:text-zinc-900 transition-colors cursor-pointer" title={salon.address}>
-                    <MapPin className="w-4 h-4 mr-1.5 text-brand" />
+                  <div className="flex items-center text-black transition-colors cursor-pointer" title={salon.address}>
+                    <MapPin className="w-4 h-4 mr-1.5 text-black" />
                     <span>{salon.district || salon.city || salon.address || "Address not provided"}</span>
                   </div>
                   <button
-                    className="flex items-center text-zinc-900 bg-black/10 hover:bg-black/15 transition-colors px-2.5 py-1 rounded-lg border border-black/10 cursor-pointer"
+                    className="flex items-center text-black bg-black/10 hover:bg-black/15 transition-colors px-2.5 py-1 rounded-lg border border-black/10 cursor-pointer"
                     onClick={() => {
                       const url = getSalonDirectionsUrl(salon);
                       if (url) window.open(url, "_blank", "noopener,noreferrer");
                       else toast.message("Directions are not available for this salon yet.");
                     }}
                   >
-                    <Navigation2 className="w-4 h-4 mr-1.5 text-blue-400" />
+                    <Navigation2 className="w-4 h-4 mr-1.5 text-black" />
                     Get Directions
                   </button>
                 </div>
                 
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {serviceCategories.filter(c => c !== "All").map(c => (
-                    <Badge key={c} variant="secondary" className="bg-black/10 hover:bg-black/15 text-zinc-800 border border-black/10 font-semibold text-[9px] uppercase tracking-wider rounded-lg px-2.5 py-0.5">
+                    <Badge key={c} variant="secondary" className="bg-black/10 hover:bg-black/15 text-black border border-black/10 font-semibold text-[9px] uppercase tracking-wider rounded-lg px-2.5 py-0.5">
                       {c}
                     </Badge>
                   ))}
@@ -737,8 +737,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
                 {/* WORKING HOURS ROW */}
                 <div className="pt-4 pb-2">
-                  <h3 className="text-xs font-bold text-zinc-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5" /> Working Hours
+                  <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5 text-black" /> Working Hours
                   </h3>
                   <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">
                     {parsedWorkingHours.map((h: any, i: number) => {
@@ -749,20 +749,20 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                           key={i} 
                           className={`flex flex-col shrink-0 px-3.5 py-2.5 rounded-xl border snap-start min-w-[120px] backdrop-blur-md transition-all ${
                             isToday 
-                              ? 'bg-emerald-500/20 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+                              ? 'bg-black/15 border-black/30 shadow-[0_0_15px_rgba(0,0,0,0.08)]' 
                               : isClosed
-                                ? 'bg-zinc-900/60 border-zinc-800 opacity-60'
-                                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                ? 'bg-black/5 border-black/10 opacity-70'
+                                : 'bg-black/5 border-black/10 hover:bg-black/10 hover:border-black/20'
                           }`}
                         >
-                          <span className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 ${
-                            isToday ? 'text-emerald-400' : isClosed ? 'text-zinc-500' : 'text-zinc-400'
+                          <span className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 text-black ${
+                            isClosed ? 'text-black/60' : ''
                           }`}>
                             {h.day}
-                            {isToday && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                            {isToday && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-700 animate-pulse" />}
                           </span>
-                          <span className={`text-xs font-semibold whitespace-nowrap ${
-                            isToday ? 'text-emerald-50' : isClosed ? 'text-zinc-500 line-through decoration-zinc-600/50' : 'text-zinc-200'
+                          <span className={`text-xs font-semibold whitespace-nowrap text-black ${
+                            isClosed ? 'text-black/60 line-through decoration-black/40' : ''
                           }`}>
                             {h.time}
                           </span>
@@ -774,13 +774,13 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
                 {/* UNVERIFIED / BOOKING UNAVAILABLE NOTICE */}
                 {!isBookable && (
-                  <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 backdrop-blur-md max-w-2xl">
-                    <Shield className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="mt-4 bg-black/10 border border-black/20 rounded-xl p-4 flex items-start gap-3 backdrop-blur-md max-w-2xl">
+                    <Shield className="w-5 h-5 text-black shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="text-amber-500 font-extrabold text-sm uppercase tracking-wide">
+                      <h4 className="text-black font-extrabold text-sm uppercase tracking-wide">
                         {!salon.booking_enabled ? "Verification in Progress" : "Missing Contact Details"}
                       </h4>
-                      <p className="text-amber-500/90 text-xs mt-1.5 font-medium leading-relaxed">
+                      <p className="text-black/80 text-xs mt-1.5 font-medium leading-relaxed">
                         {!salon.booking_enabled 
                           ? (salon.booking_disabled_message || "This salon is currently completing our verification process to ensure the highest quality standards. Online bookings will be automatically enabled once the owner's verification is complete.")
                           : "This salon is verified but is missing an email address or WhatsApp number. Online booking will be enabled once the owner updates their business profile."}

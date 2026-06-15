@@ -31,8 +31,8 @@ export function SalonFavoriteButton({
         ? "bg-white text-red-500 border-white shadow-sm hover:bg-white"
         : "bg-white/20 text-white border-white/20 hover:bg-white hover:text-red-500"
       : favorited
-        ? "bg-red-500/10 text-red-500 border-red-500/30 hover:bg-red-500/15"
-        : "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:text-red-400";
+        ? "bg-red-500/10 text-red-600 border-red-500/30 hover:bg-red-500/15"
+        : "bg-black/10 text-black border-black/10 hover:bg-black/15 hover:text-red-600";
 
   return (
     <button
