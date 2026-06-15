@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Heart, MapPin, Star, Scissors, Loader2, AlertTriangle } from "lucide-react";
-import { VerifiedSalonBadge } from "@/components/marketplace/VerifiedSalonBadge";
+import { VerifiedSalonBadge } from "../../../components/marketplace/VerifiedSalonBadge";
 import { toast } from "sonner";
 import {
   fetchCustomerFavoritesPage,
