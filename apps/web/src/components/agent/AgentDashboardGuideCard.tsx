@@ -12,6 +12,10 @@ const LANG_OPTIONS = [
   { code: "ta", label: "Tamil", native: "தமிழ்" },
 ] as const;
 
+const GUIDE_FALLBACK_EXTENSIONS: Record<string, string> = {
+  si: "pdf",
+};
+
 export function AgentDashboardGuideCard() {
   const { path } = useAgentPortal();
   const docsByLang = Object.fromEntries(AGENT_GUIDE_FALLBACKS.map((d) => [d.language, d]));
@@ -58,7 +62,8 @@ export function AgentDashboardGuideCard() {
         <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {LANG_OPTIONS.map(({ code, native }) => {
             const doc = docsByLang[code];
-            const href = doc?.download_url || doc?.file_url || `/help/agent-guide/trimma-agent-guide-${code}.docx`;
+            const ext = GUIDE_FALLBACK_EXTENSIONS[code] || "docx";
+            const href = doc?.download_url || doc?.file_url || `/help/agent-guide/trimma-agent-guide-${code}.${ext}`;
             return (
               <a
                 key={code}

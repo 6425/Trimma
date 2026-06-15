@@ -151,8 +151,6 @@ export default function AgentDashboard() {
         </div>
       </div>
 
-      {!isRegionalHead ? <AgentDashboardGuideCard /> : null}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         {[
           { title: "Assigned Salons", value: stats.assignedCount, trend: "Managed by you", icon: <Users className="w-5 h-5 text-indigo-500" /> },
@@ -342,6 +340,8 @@ export default function AgentDashboard() {
           </div>
         </div>
       </div>
+
+      {!isRegionalHead ? <AgentDashboardGuideCard /> : null}
     </div>
   );
 }

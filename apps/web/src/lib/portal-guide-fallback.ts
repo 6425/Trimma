@@ -13,8 +13,12 @@ export type PortalGuideDocument = {
   download_url: string;
 };
 
+function guidePath(folder: string, language: string, ext: "docx" | "pdf" = "docx") {
+  return `/help/${folder}/trimma-${folder}-${language}.${ext}`;
+}
+
 function docxPath(folder: string, language: string) {
-  return `/help/${folder}/trimma-${folder}-${language}.docx`;
+  return guidePath(folder, language, "docx");
 }
 
 export const AGENT_GUIDE_FALLBACKS: PortalGuideDocument[] = [
@@ -39,12 +43,12 @@ export const AGENT_GUIDE_FALLBACKS: PortalGuideDocument[] = [
     language: "si",
     title: "ට්‍රිම්මා Agent Portal මාර්ගෝපදේශය",
     description: "සම්පූර්ණ field agent මාර්ගෝපදේශය — role, salon onboarding, Field Editor, commissions (පියවර 30).",
-    file_path: "agent-guide/trimma-agent-guide-si.docx",
-    file_url: docxPath("agent-guide", "si"),
+    file_path: "agent-guide/trimma-agent-guide-si.pdf",
+    file_url: guidePath("agent-guide", "si", "pdf"),
     file_size_bytes: null,
-    version: 2,
+    version: 3,
     is_published: true,
-    download_url: docxPath("agent-guide", "si"),
+    download_url: guidePath("agent-guide", "si", "pdf"),
   },
   {
     id: "agent-ta",
@@ -136,14 +140,16 @@ export function resolvePortalGuideDocuments(
   const source =
     rows && rows.length > 0
       ? rows.map((row) => {
-          const fallbackPath = `/help/${folder}/trimma-${folder}-${row.language}.docx`;
+          const defaultExt = row.language === "si" && documentType === "agent_guide" ? "pdf" : "docx";
+          const fallbackPath = row.file_path
+            ? `/help/${row.file_path}`
+            : `/help/${folder}/trimma-${folder}-${row.language}.${defaultExt}`;
           const rawUrl = row.file_url?.startsWith("http") ? row.file_url : row.file_url || fallbackPath;
-          const fileUrl = rawUrl.endsWith(".pdf") ? fallbackPath : rawUrl;
           return {
             ...row,
             description: row.description || "",
-            file_url: fileUrl,
-            download_url: fileUrl,
+            file_url: rawUrl,
+            download_url: rawUrl,
           };
         })
       : fallbacks;
