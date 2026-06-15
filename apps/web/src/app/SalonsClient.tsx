@@ -36,6 +36,7 @@ interface Salon {
   startingPrice: number;
   tags: string[];
   nextSlot: string;
+  status?: "Open Now" | "Closed";
   popularService: string;
   isVerified?: boolean;
 }
@@ -206,7 +207,7 @@ export default function SalonsClient({
     slug: s.slug,
     name: s.name,
     image: s.image,
-    status: s.openNow ? "Open Now" : "Closed",
+    status: s.status || (s.openNow ? "Open Now" : "Closed"),
     rating: s.rating,
     reviews: s.reviews,
     city: s.location.split(",")[0].trim(),

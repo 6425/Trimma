@@ -30,7 +30,7 @@ export async function fetchPublicSalons(
     .select(`
       id, name, slug, rating, review_count,
       city, district, category, logo_url, cover_url, hero_url,
-      is_featured, is_verified,
+      is_featured, is_verified, working_hours,
       services ( id, name, price, category )
     `);
 

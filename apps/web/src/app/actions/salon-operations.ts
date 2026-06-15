@@ -19,6 +19,7 @@ import {
   type SalonStaffForAllocation,
 } from "@/lib/staff-allocation";
 import { normalizeSalonStaffInsertRow } from "@/lib/salon-staff-insert";
+import { syncSalonOperatingHours, syncStaffSchedules } from "@/lib/salon-operating-hours";
 
 function revalidateOwnerSalonPage(salon: Record<string, unknown>) {
   const slug = typeof salon.slug === "string" ? salon.slug.trim() : "";
@@ -267,6 +268,9 @@ export async function insertSalonStaff(payload: Record<string, unknown>) {
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    if (payload.working_hours != null) {
+      await syncStaffSchedules(supabase, data.id as string, payload.working_hours);
+    }
     revalidateOwnerSalonPage(ctx.salon);
     return { staffId: data.id as string };
   });
@@ -279,6 +283,9 @@ export async function updateSalonStaff(staffId: string, payload: Record<string, 
     await assertSalonStaffMember(supabase, ctx, staffId);
     const { error } = await supabase.from("salon_staff").update(payload).eq("id", staffId);
     if (error) throw new Error(error.message);
+    if (payload.working_hours != null) {
+      await syncStaffSchedules(supabase, staffId, payload.working_hours);
+    }
     revalidateOwnerSalonPage(ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
@@ -420,6 +427,10 @@ export async function saveSalonProfile(input: {
         .eq("id", ctx.salonId);
       if (profileError) throw new Error(profileError.message);
 
+      if (profile.working_hours != null) {
+        await syncSalonOperatingHours(supabase, ctx.salonId, profile.working_hours);
+      }
+
       if (Object.keys(salonSchedule).length > 0) {
         const { data: staffList, error: staffReadError } = await supabase
           .from("salon_staff")
@@ -462,16 +473,19 @@ export async function saveSalonProfile(input: {
 
           if (!staffModified) continue;
 
+          const nextWorkingHours = {
+            ...workingHours,
+            schedule: currentStaffSchedule,
+          };
+
           const { error: staffUpdateError } = await supabase
             .from("salon_staff")
             .update({
-              working_hours: {
-                ...workingHours,
-                schedule: currentStaffSchedule,
-              },
+              working_hours: nextWorkingHours,
             })
             .eq("id", staff.id);
           if (staffUpdateError) throw new Error(staffUpdateError.message);
+          await syncStaffSchedules(supabase, staff.id, nextWorkingHours);
         }
       }
 
@@ -545,6 +559,10 @@ export async function saveOwnerVerificationData(
 
     if (updateError) throw new Error(updateError.message);
 
+    if (finalPayload.working_hours != null) {
+      await syncSalonOperatingHours(supabase, ctx.salonId, finalPayload.working_hours);
+    }
+
     // 2. Sync Services
     if (servicesData) {
       if (servicesData.svcsToRemoveIds.length > 0) {
@@ -570,8 +588,16 @@ export async function saveOwnerVerificationData(
         .map((staff) => normalizeSalonStaffInsertRow(staff, ctx.salonId))
         .filter((row): row is Record<string, unknown> => row !== null);
       if (newStaffRows.length > 0) {
-        const { error: staffErr } = await supabase.from("salon_staff").insert(newStaffRows);
+        const { data: insertedStaff, error: staffErr } = await supabase
+          .from("salon_staff")
+          .insert(newStaffRows)
+          .select("id, working_hours");
         if (staffErr) throw new Error(staffErr.message);
+        for (const staff of insertedStaff || []) {
+          if (staff.working_hours != null) {
+            await syncStaffSchedules(supabase, staff.id as string, staff.working_hours);
+          }
+        }
       }
     }
 

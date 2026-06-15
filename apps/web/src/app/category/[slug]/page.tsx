@@ -278,7 +278,7 @@ export default function CategoryPage() {
                 name: s.name,
                 image: s.image,
                 logo: s.logo,
-                status: s.openNow ? "Open Now" : "Closed",
+                status: s.status || (s.openNow ? "Open Now" : "Closed"),
                 rating: s.rating,
                 reviews: s.reviews,
                 city: s.location.split(',')[0].trim(),

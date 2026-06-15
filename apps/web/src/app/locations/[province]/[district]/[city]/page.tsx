@@ -9,7 +9,7 @@ import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Heart
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
-import { mapVerifiedSalonListingStats, getSalonListingImage } from "@/lib/salons-mapper";
+import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import {
   getDistrictBySlugs,
   normalizeProvinceSlug,
@@ -91,39 +91,19 @@ export default function CityDetailPage() {
         setLoading(true);
         const { data: dbSalons, error } = await supabase
           .from("salons")
-          .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured")
+          .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured, working_hours, services ( price, name, category )")
         .limit(10);
 
         if (error) throw error;
 
         // Transform DB records into UI formats
-        const formatted = (dbSalons || []).map((s: any) => {
-          const prices = s.services?.map((ser: any) => Number(ser.price)) || [];
-          const startingPrice = prices.length > 0 ? Math.min(...prices) : 1500;
-          const popularService = s.services?.[0]?.name || "Premium Cut & Style";
-          const tags = Array.from(new Set(s.services?.map((ser: any) => ser.category) || ["Salon", "Grooming"]));
-
+        const formatted = (dbSalons || []).map((s: any, idx: number) => {
+          const mapped = mapSalonRowToUI(s, idx);
           return {
-            id: s.id,
-            slug: s.slug,
-            name: s.name,
-            ...mapVerifiedSalonListingStats(s),
-            location: `${s.city || 'Colombo'}, ${s.district || 'Western Province'}`,
-            city: s.city || 'Colombo',
-            district: s.district || 'Western Province',
-            tags: tags.slice(0, 3),
-            categories: tags.slice(0, 3),
-            category: s.category || (tags[0] as string) || "Beauty Lounge",
-            logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
-            image: getSalonListingImage(
-              s,
-              "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80"
-            ),
-            featured: s.is_featured === true,
-            openNow: true,
-            startingPrice,
-            nextSlot: "Today 4:00 PM",
-            popularService,
+            ...mapped,
+            city: s.city || "Colombo",
+            district: s.district || "Western Province",
+            categories: mapped.tags,
           };
         });
 

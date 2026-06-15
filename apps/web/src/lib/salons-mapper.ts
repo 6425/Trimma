@@ -1,4 +1,5 @@
 import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
+import { computeSalonListingAvailability } from "@/lib/salon-operating-hours";
 
 export function mapVerifiedSalonListingStats(salon: {
   rating?: number | string | null;
@@ -63,6 +64,9 @@ export function mapSalonRowToUI(s: any, idx: number) {
     640
   );
 
+  const operatingRows = Array.isArray(s.salon_operating_hours) ? s.salon_operating_hours : null;
+  const availability = computeSalonListingAvailability(operatingRows, s.working_hours);
+
   return {
     id: s.id,
     name,
@@ -74,10 +78,11 @@ export function mapSalonRowToUI(s: any, idx: number) {
     logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
     image,
     featured: s.is_featured === true,
-    openNow: true,
+    openNow: availability.openNow,
     startingPrice,
     tags: tags.slice(0, 3),
-    nextSlot: "Today 4:00 PM",
+    nextSlot: availability.nextSlot,
+    status: availability.status,
     popularService,
     isVerified: s.is_verified,
   };

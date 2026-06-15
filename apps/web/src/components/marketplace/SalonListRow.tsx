@@ -147,9 +147,16 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
           ))}
         </div>
 
-        <div className="mt-auto flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50/80 border border-emerald-100 rounded-lg px-2.5 py-1.5 w-fit">
+        <div
+          className={cn(
+            "mt-auto flex flex-wrap items-center gap-2 text-xs font-semibold rounded-lg px-2.5 py-1.5 w-fit border",
+            salon.status === "Open Now"
+              ? "text-emerald-700 bg-emerald-50/80 border-emerald-100"
+              : "text-zinc-600 bg-slate-50 border-slate-200"
+          )}
+        >
           <CalendarDays className="w-3.5 h-3.5" />
-          {salon.status === "Open Now" ? "Open now" : salon.status} · Next slot {salon.nextAvailable}
+          {salon.status === "Open Now" ? "Open now" : "Closed"} · Next slot {salon.nextAvailable}
         </div>
       </div>
 

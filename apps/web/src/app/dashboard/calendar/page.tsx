@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { addDays, subDays, format, startOfWeek, isSameDay, endOfWeek } from "date-fns";
 import { fetchSalonCalendarBookings } from "@/app/actions/salon-dashboard-data";
 import { AddBookingModal } from "../../../components/modals/AddBookingModal";
+import { normalizeSalonWeeklySchedule } from "@/lib/salon-operating-hours";
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -108,33 +109,18 @@ export default function CalendarPage() {
   
   if (salon?.working_hours) {
     try {
-      const scheduleStr = salon.working_hours;
-      const schedule = typeof scheduleStr === "string" ? JSON.parse(scheduleStr) : scheduleStr;
-      
+      const schedule = normalizeSalonWeeklySchedule(salon.working_hours);
       let earliest = 24;
       let latest = 0;
-      
-      if (Array.isArray(schedule)) {
-        // Google Places Format: [{ open: { time: "0900" }, close: { time: "1800" } }]
-        for (const slot of schedule) {
-          if (slot.open?.time) {
-            const h = parseInt(slot.open.time.substring(0, 2), 10);
-            if (!isNaN(h) && h < earliest) earliest = h;
-          }
-          if (slot.close?.time) {
-            const h = parseInt(slot.close.time.substring(0, 2), 10);
-            if (!isNaN(h) && h > latest) latest = h;
-          }
-        }
-      } else {
-        // Trimma Format: { monday: { isWorking: true, start: "09:00", end: "18:00" } }
-        for (const day of Object.values<any>(schedule)) {
+
+      if (schedule) {
+        for (const day of Object.values(schedule)) {
           if (day.isWorking && day.start && day.end) {
             const [startH] = day.start.split(":");
             const [endH] = day.end.split(":");
             const s = parseInt(startH, 10);
             const e = parseInt(endH, 10);
-            
+
             if (!isNaN(s) && s < earliest) earliest = s;
             if (!isNaN(e) && e > latest) latest = e;
           }

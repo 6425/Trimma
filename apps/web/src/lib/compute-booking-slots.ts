@@ -1,6 +1,11 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { getBlockedDisplaySlots } from "@/lib/booking-availability";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
+import {
+  resolveSalonHoursForBooking,
+  SALON_DAY_NAMES,
+} from "@/lib/salon-operating-hours";
+import { parseStaffWorkingHours } from "@/lib/salon-staff-insert";
 
 export type ComputeBookingSlotsInput = {
   salonId: string;
@@ -30,23 +35,22 @@ export async function computeBookingSlots(
   try {
     const supabase = createSupabaseAdminClient();
 
-    const { data: operatingHours } = await supabase
-      .from("salon_operating_hours")
-      .select("*")
-      .eq("salon_id", salonId)
-      .eq("day_of_week", dayOfWeek)
-      .maybeSingle();
+    const [{ data: operatingRows }, { data: salon }] = await Promise.all([
+      supabase.from("salon_operating_hours").select("*").eq("salon_id", salonId),
+      supabase.from("salons").select("working_hours").eq("id", salonId).maybeSingle(),
+    ]);
 
-    if (operatingHours?.is_closed) {
+    const salonHours = resolveSalonHoursForBooking(
+      dayOfWeek,
+      operatingRows || [],
+      salon?.working_hours
+    );
+
+    if (salonHours.isClosed) {
       return { success: true, slots: [], closed: true, reason: "Salon is closed on this day." };
     }
 
-    let startHour = 9;
-    let endHour = 19;
-    if (operatingHours?.opening_time && operatingHours?.closing_time) {
-      startHour = parseInt(operatingHours.opening_time.split(":")[0], 10);
-      endHour = parseInt(operatingHours.closing_time.split(":")[0], 10);
-    }
+    const { startHour, endHour, closingMinutes } = salonHours;
 
     const baseSlots: string[] = [];
     for (let h = startHour; h < endHour; h++) {
@@ -61,13 +65,29 @@ export async function computeBookingSlots(
     let schedule: { is_working?: boolean; end_time?: string } | null = null;
 
     if (staffId && staffId !== "any") {
-      const { data: sData } = await supabase
-        .from("staff_schedules")
-        .select("*")
-        .eq("staff_id", staffId)
-        .eq("day_of_week", dayOfWeek)
-        .maybeSingle();
+      const [{ data: sData }, { data: staffRow }] = await Promise.all([
+        supabase
+          .from("staff_schedules")
+          .select("*")
+          .eq("staff_id", staffId)
+          .eq("day_of_week", dayOfWeek)
+          .maybeSingle(),
+        supabase.from("salon_staff").select("working_hours").eq("id", staffId).maybeSingle(),
+      ]);
       schedule = sData;
+      if (!schedule) {
+        const parsed = parseStaffWorkingHours(staffRow?.working_hours);
+        const dayName = SALON_DAY_NAMES[dayOfWeek];
+        const day = dayName
+          ? (parsed?.schedule?.[dayName] as { isWorking?: boolean; start?: string; end?: string } | undefined)
+          : undefined;
+        if (day) {
+          schedule = {
+            is_working: !!day.isWorking,
+            end_time: day.end ? `${day.end}:00`.replace(/:00:00$/, ":00") : undefined,
+          };
+        }
+      }
       if (schedule && schedule.is_working === false) staffWorking = false;
 
       const { data: staffBreaks } = await supabase
@@ -107,12 +127,7 @@ export async function computeBookingSlots(
       .select("*")
       .eq("booking_date", dateISO);
 
-    const closingMinutes = operatingHours?.closing_time
-      ? (() => {
-          const [h, m] = operatingHours.closing_time.split(":").map(Number);
-          return h * 60 + m;
-        })()
-      : endHour * 60;
+    const closingMinutesResolved = closingMinutes;
 
     const bufferTime = 15;
 
@@ -126,7 +141,7 @@ export async function computeBookingSlots(
       const slotMinutes = hh * 60 + mm;
       const totalRequiredMinutes = slotMinutes + totalDurationMinutes + bufferTime;
 
-      if (totalRequiredMinutes > closingMinutes) return false;
+      if (totalRequiredMinutes > closingMinutesResolved) return false;
 
       if (staffId && staffId !== "any" && schedule?.end_time) {
         const [sEndH, sEndM] = schedule.end_time.split(":").map(Number);

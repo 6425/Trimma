@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { DistrictDetailTemplate, DistrictData } from "../../../../components/marketplace/DistrictDetailTemplate";
 import { supabase } from "@/config/supabase";
-import { mapVerifiedSalonListingStats, getSalonListingImage } from "@/lib/salons-mapper";
+import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import {
   buildCityCards,
   getDistrictBySlugs,
@@ -57,33 +57,20 @@ export default function DistrictDetailPage() {
       setLoading(true);
       const { data: dbSalons, error } = await supabase
       .from("salons")
-      .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured")
+      .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured, working_hours, services ( price, name, category )")
       .limit(50);
       
       if (error) throw error;
       
-      const formatted = (dbSalons || []).map((s: any) => ({
-      id: s.id,
-      slug: s.slug,
-      name: s.name,
-      ...mapVerifiedSalonListingStats(s),
-      location: `${s.city || districtMeta.name}, ${s.district || provinceMeta.name}`,
-      city: s.city || districtMeta.name,
-      district: s.district || districtMeta.name,
-      tags: [s.category || "Salon", "Grooming"],
-      categories: [s.category || "Salon", "Grooming"],
-      category: s.category || "Beauty Lounge",
-      logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
-      image: getSalonListingImage(
-        s,
-        "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=800&q=80"
-      ),
-      featured: s.is_featured === true,
-      openNow: true,
-      startingPrice: 1500,
-      nextSlot: "Today 4:00 PM",
-      popularService: "Premium Cut & Style",
-      }));
+      const formatted = (dbSalons || []).map((s: any, idx: number) => {
+        const mapped = mapSalonRowToUI(s, idx);
+        return {
+          ...mapped,
+          city: s.city || districtMeta.name,
+          district: s.district || districtMeta.name,
+          categories: mapped.tags,
+        };
+      });
       
       setSalons(formatted);
       } catch (err) {
