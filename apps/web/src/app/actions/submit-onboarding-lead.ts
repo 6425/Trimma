@@ -1,7 +1,10 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { sendTriggeredEmail } from "@/app/actions/email-settings";
+import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { APP_BASE_URL } from "@/lib/email/config";
 
 export async function submitOnboardingLead(formData: {
   businessName: string;
@@ -19,12 +22,9 @@ export async function submitOnboardingLead(formData: {
   const supabase = createSupabaseAdminClient();
 
   try {
-    // 1. Determine Lead Assignment
-    // Hardcoded logic based on district. In a real scenario, this could query a territory_assignments table.
     let assignedAgent = null;
     const districtLower = formData.district.toLowerCase();
 
-    // Map districts to agent emails (replace with real agent emails)
     const agentMap: Record<string, string> = {
       colombo: "agent-colombo@trimma.io",
       gampaha: "agent-gampaha@trimma.io",
@@ -37,15 +37,15 @@ export async function submitOnboardingLead(formData: {
     }
 
     const isWaitingList = !assignedAgent;
+    const applicantEmail = normalizeEmail(formData.email);
 
-    // 2. Insert into salon_leads
     const { data: newLead, error: insertError } = await supabase
       .from("salon_leads")
       .insert({
         name: formData.businessName,
         owner_name: formData.ownerName,
-        owner_email: normalizeEmail(formData.email),
-        phone: formData.whatsapp, // Assuming phone column is used for WhatsApp
+        owner_email: applicantEmail,
+        phone: formData.whatsapp,
         whatsapp_number: formData.whatsapp,
         province: formData.province,
         district: formData.district,
@@ -53,11 +53,11 @@ export async function submitOnboardingLead(formData: {
         address: formData.address,
         latitude: formData.latitude,
         longitude: formData.longitude,
-        summary: formData.notes, // Notes map to summary
+        summary: formData.notes,
         assign_to: assignedAgent,
         status: isWaitingList ? "new" : "assigned",
         lead_status: isWaitingList ? "NEW" : "ASSIGNED_TO_AGENT",
-        onboarding_stage: "NOT_STARTED"
+        onboarding_stage: "NOT_STARTED",
       })
       .select("id")
       .single();
@@ -67,17 +67,39 @@ export async function submitOnboardingLead(formData: {
       throw insertError;
     }
 
-    // 3. Stub for Email Notifications
-    // TODO: Send confirmation email to formData.email
-    // TODO: Notify assignedAgent if applicable
-    console.log(`[Email Stub] Sending confirmation to ${formData.email}`);
+    const salonAddress = [formData.address, formData.city, formData.district, formData.province]
+      .filter(Boolean)
+      .join(", ");
+
+    if (applicantEmail) {
+      void sendTriggeredEmail({
+        triggerId: "partner-lead-received",
+        to: applicantEmail,
+        variables: {
+          owner_name: formData.ownerName || formData.businessName,
+          salon_name: formData.businessName,
+          salon_address: salonAddress || "Sri Lanka",
+        },
+        rateLimitKey: `partner-lead:${newLead.id}`,
+        idempotencyKey: `partner-lead/${newLead.id}`,
+      }).catch((err) => console.error("Partner lead confirmation email failed:", err));
+    }
+
     if (assignedAgent) {
-      console.log(`[Email Stub] Notifying agent ${assignedAgent} about new lead ${newLead.id}`);
+      void notifyAgentLeadAssigned(supabase, {
+        salonId: newLead.id,
+        salonName: formData.businessName,
+        salonAddress,
+        assignToEmail: assignedAgent,
+        onboardingStatus: "ASSIGNED_TO_AGENT",
+        dashboardLink: `${APP_BASE_URL}/agent/leads`,
+      }).catch((err) => console.error("Agent lead assignment notification failed:", err));
     }
 
     return { success: true as const, leadId: newLead.id, isWaitingList };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Failed to submit onboarding lead:", err);
-    return { success: false as const, error: err.message || "Failed to submit lead." };
+    const message = err instanceof Error ? err.message : "Failed to submit lead.";
+    return { success: false as const, error: message };
   }
 }

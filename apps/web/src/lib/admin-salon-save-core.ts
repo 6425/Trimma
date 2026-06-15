@@ -3,6 +3,8 @@ import { mapAdminDbError } from "@/lib/with-admin-db";
 import { sanitizeAdminSalonPayload } from "@/lib/admin-salon-update";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
+import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export type AdminSalonSaveResult =
   | { success: true }
@@ -21,7 +23,7 @@ export async function saveAdminSalonRecord(
 
     const { data: existing, error: readError } = await supabase
       .from("salons")
-      .select("owner_email, owner_gmail, name, phone")
+      .select("owner_email, owner_gmail, name, phone, assign_to, address, city, district, onboarding_status")
       .eq("id", salonId)
       .maybeSingle();
     if (readError) {
@@ -62,6 +64,32 @@ export async function saveAdminSalonRecord(
     const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);
     if (error) {
       return { success: false, error: mapAdminDbError(error.message) };
+    }
+
+    const nextAssignTo = normalizeEmail(
+      typeof sanitized.assign_to === "string" ? sanitized.assign_to : ""
+    );
+    const previousAssignTo = normalizeEmail(existing?.assign_to || "");
+    if (nextAssignTo && nextAssignTo !== previousAssignTo) {
+      const salonAddress = [
+        typeof sanitized.address === "string" ? sanitized.address : existing?.address,
+        typeof sanitized.city === "string" ? sanitized.city : existing?.city,
+        typeof sanitized.district === "string" ? sanitized.district : existing?.district,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      void notifyAgentLeadAssigned(supabase, {
+        salonId,
+        salonName:
+          (typeof sanitized.name === "string" && sanitized.name) || existing?.name || "Salon lead",
+        salonAddress: salonAddress || null,
+        assignToEmail: nextAssignTo,
+        onboardingStatus:
+          (typeof sanitized.onboarding_status === "string" && sanitized.onboarding_status) ||
+          existing?.onboarding_status ||
+          "ASSIGNED_TO_AGENT",
+      }).catch((err) => console.error("Agent lead assignment notification failed:", err));
     }
 
     return { success: true };

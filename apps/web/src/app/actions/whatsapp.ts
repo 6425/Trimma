@@ -650,6 +650,72 @@ export async function sendWhatsAppReservationPaidNotification(
 }
 
 /**
+ * Alerts the salon owner when a new paid booking needs confirmation.
+ */
+export async function sendOwnerBookingRequestWhatsApp(
+  bookingNo: string,
+  paymentStatus = "reservation_paid"
+) {
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    bookingCreatedEnabled,
+    templateBookingCreatedOwner,
+  } = await getWhatsAppMessagingConfig();
+
+  if (!enabled || !bookingCreatedEnabled || !phoneId || !accessToken) {
+    return { success: true, message: "Disabled" };
+  }
+
+  try {
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone)");
+    if (!booking) return { success: false, error: "Booking not found." };
+
+    const ownerPhone = booking.salons?.phone ? cleanPhoneNumber(booking.salons.phone) : null;
+    if (!ownerPhone) return { success: false, error: "Salon phone is missing.", skipped: true };
+
+    const customer = await fetchCustomerContact(booking.customer_email);
+    const customerName = customer?.full_name || "Customer";
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
+    const serviceName = await resolveServiceName(booking.id, booking.services?.name);
+
+    const ownerMsg = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, {
+      customer_name: customerName,
+      salon_name: salonName,
+      service_name: serviceName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      payment_status: paymentStatus,
+    });
+
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: ownerPhone,
+        type: "text",
+        text: { preview_url: false, body: ownerMsg },
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      return { success: false, error: formatWhatsAppApiError(result) };
+    }
+
+    return { success: true, messageId: result.messages?.[0]?.id };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send owner booking alert.",
+    };
+  }
+}
+
+/**
  * Salon confirmation notification sender (after owner confirms a reserved booking).
  */
 export async function sendWhatsAppNotification(
@@ -1441,7 +1507,16 @@ export async function sendWelcomeCustomerWhatsApp(customerName: string, rawPhone
   }
 }
 
-export async function sendAgentLeadAssignedWhatsApp(agentName: string, rawAgentPhone: string, salonName: string) {
+export async function sendAgentLeadAssignedWhatsApp(
+  agentName: string,
+  rawAgentPhone: string,
+  salonName: string,
+  options?: {
+    salonAddress?: string;
+    onboardingStatus?: string;
+    dashboardLink?: string;
+  }
+) {
   const { enabled, phoneId, accessToken, agentLeadAssignedEnabled, templateAgentLeadAssigned } = await getWhatsAppMessagingConfig();
   if (!enabled || !agentLeadAssignedEnabled || !phoneId || !accessToken) return { success: false };
 
@@ -1452,9 +1527,9 @@ export async function sendAgentLeadAssignedWhatsApp(agentName: string, rawAgentP
     const msg = parseTemplate(templateAgentLeadAssigned || D.agentLeadAssigned, {
       agent_name: agentName,
       salon_name: salonName,
-      salon_address: "",
-      onboarding_status: "Pending",
-      dashboard_link: APP_BASE_URL,
+      salon_address: options?.salonAddress || "",
+      onboarding_status: options?.onboardingStatus || "Pending",
+      dashboard_link: options?.dashboardLink || APP_BASE_URL,
     });
 
     await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {

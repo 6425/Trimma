@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { APP_BASE_URL } from "@/lib/email/config";
-import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
+import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -60,19 +59,14 @@ export async function POST(request: Request) {
       notes: `Agent created manual lead "${data.name}".`,
     });
 
-    void sendTriggeredEmail({
-      triggerId: "agent-lead-assigned",
-      to: agentEmail,
-      variables: {
-        agent_name: agentEmail,
-        salon_name: data.name,
-        salon_address: String(body.address || "TBD"),
-        onboarding_status: "ASSIGNED_TO_AGENT",
-        dashboard_link: `${APP_BASE_URL}/agent/leads?open=${data.id}`,
-      },
-      rateLimitKey: buildEmailRateLimitKey(getClientIp(request), agentEmail),
-      idempotencyKey: `agent-lead/${data.id}`,
-    }).catch((err) => console.error("Agent lead assignment email failed:", err));
+    void notifyAgentLeadAssigned(supabaseAdmin, {
+      salonId: data.id,
+      salonName: data.name,
+      salonAddress: String(body.address || "TBD"),
+      assignToEmail: agentEmail,
+      onboardingStatus: "ASSIGNED_TO_AGENT",
+      dashboardLink: `${APP_BASE_URL}/agent/leads?open=${data.id}`,
+    }).catch((err) => console.error("Agent lead assignment notification failed:", err));
 
     return NextResponse.json({ success: true, salon: data });
   } catch (error: unknown) {

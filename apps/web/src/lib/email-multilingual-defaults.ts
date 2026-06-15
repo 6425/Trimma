@@ -102,6 +102,15 @@ Salon browse කර bookings manage කරන්න: {dashboard_link}`,
 නව salon lead එකක් assign කර ඇත: {salon_name}
 Location: {salon_address}
 Status: {onboarding_status}`,
+
+  partnerLeadReceived: `Hi {owner_name},
+
+Trimma partner application ලැබුණා.
+
+Business: {salon_name}
+Location: {salon_address}
+
+අපි ඉක්මනින් සම්බන්ධ වෙමු.`,
 } as const;
 
 export const EMAIL_BODY_DEFAULTS_TAMIL = {
@@ -197,4 +206,13 @@ Explore: {dashboard_link}`,
 புதிய lead assign: {salon_name}
 Location: {salon_address}
 Status: {onboarding_status}`,
+
+  partnerLeadReceived: `வணக்கம் {owner_name},
+
+Trimma partner application பெறப்பட்டது.
+
+Business: {salon_name}
+Location: {salon_address}
+
+விரைவில் தொடர்பு கொள்வோம்.`,
 } as const;

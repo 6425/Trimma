@@ -20,6 +20,7 @@ export const EMAIL_SUBJECT_DEFAULTS = {
   adminApprovalAdmin: "Verified badge granted to {salon_name}",
   welcomeCustomer: "Welcome to Trimma, {customer_name}!",
   agentLeadAssigned: "New salon lead assigned: {salon_name}",
+  partnerLeadReceived: "We received your Trimma partner application",
 } as const;
 
 export const EMAIL_BODY_DEFAULTS = {
@@ -159,6 +160,17 @@ Location: {salon_address}
 Status: {onboarding_status}
 
 Open the field editor: {dashboard_link}`,
+  partnerLeadReceived: `Hi {owner_name},
+
+Thank you for applying to join Trimma as a partner salon.
+
+Business: {salon_name}
+Location: {salon_address}
+
+Our team will review your application and contact you shortly. If an agent is available in your area, they will reach out to help you onboard.
+
+Thank you,
+The Trimma Team`,
 } as const;
 
 export type EmailSubjectKey = keyof typeof EMAIL_SUBJECT_DEFAULTS;
@@ -448,6 +460,21 @@ export const EMAIL_TRIGGER_CATALOG = [
       "{onboarding_status}",
       "{dashboard_link}",
     ],
+  },
+  {
+    id: "partner-lead-received",
+    order: 15,
+    title: "Partner Application Received",
+    recipient: "Salon applicant",
+    whenFired: "When a business submits the public partner onboarding form.",
+    toggleKey: "partnerLeadReceivedEnabled" as const,
+    subjectKey: "subjectPartnerLeadReceived" as const,
+    bodyKey: "templatePartnerLeadReceived" as const,
+    bodyKeySi: "templatePartnerLeadReceivedSi" as const,
+    bodyKeyTa: "templatePartnerLeadReceivedTa" as const,
+    defaultSubject: "partnerLeadReceived" as const,
+    defaultBody: "partnerLeadReceived" as const,
+    mergeTags: ["{owner_name}", "{salon_name}", "{salon_address}"],
   },
 ] as const;
 

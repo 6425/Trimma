@@ -2,6 +2,7 @@ import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { insertBookingRecord, updateBookingAfterPayment } from "@/lib/booking-insert";
 import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
+import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
 import { sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { isEmailSendFailure } from "@/lib/email/result";
@@ -352,6 +353,8 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
       staffName: staffRow?.name || null,
       paymentStatus: "reservation_paid",
     });
+
+    void notifyOwnerPaidBookingRequest(supabase, bookingNo, "reservation_paid");
 
     const emailResult = await sendTriggeredEmail({
       triggerId: "reservation-paid",

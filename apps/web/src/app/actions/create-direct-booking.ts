@@ -7,6 +7,7 @@ import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { insertBookingRecord } from "@/lib/booking-insert";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
 import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
+import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
@@ -327,6 +328,10 @@ export async function createDirectBooking(
         staffName,
         paymentStatus: isPaid ? "reservation_paid" : "unpaid",
       });
+
+      if (isPaid) {
+        void notifyOwnerPaidBookingRequest(supabase, bookingNo, "reservation_paid");
+      }
     } catch {
       // Non-blocking
     }

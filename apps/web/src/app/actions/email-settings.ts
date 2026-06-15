@@ -37,6 +37,7 @@ export type EmailConfig = {
   adminApprovalEnabled: boolean;
   welcomeCustomerEnabled: boolean;
   agentLeadAssignedEnabled: boolean;
+  partnerLeadReceivedEnabled: boolean;
   subjectReservationPaid: string;
   subjectConfirmed: string;
   subjectRescheduled: string;
@@ -51,6 +52,7 @@ export type EmailConfig = {
   subjectAdminApprovalAdmin: string;
   subjectWelcomeCustomer: string;
   subjectAgentLeadAssigned: string;
+  subjectPartnerLeadReceived: string;
   templateReservationPaid: string;
   templateReservationPaidSi: string;
   templateReservationPaidTa: string;
@@ -93,6 +95,9 @@ export type EmailConfig = {
   templateAgentLeadAssigned: string;
   templateAgentLeadAssignedSi: string;
   templateAgentLeadAssignedTa: string;
+  templatePartnerLeadReceived: string;
+  templatePartnerLeadReceivedSi: string;
+  templatePartnerLeadReceivedTa: string;
   resendApiKey: string;
   fromEmail: string;
   fromName: string;

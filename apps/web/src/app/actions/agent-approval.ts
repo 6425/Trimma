@@ -5,6 +5,9 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 
 import { sendAgentApprovalAlerts } from "@/app/actions/whatsapp";
 import { sendAgentApprovalEmail } from "@/app/actions/email-settings";
+import { notifyRegionalHeadOfTeamEvent } from "@/lib/agent-lead-notifications";
+import { APP_BASE_URL } from "@/lib/email/config";
+import { normalizeEmail } from "@/lib/normalize-email";
 
 export async function approveSalon(salonId: string) {
   try {
@@ -23,7 +26,7 @@ export async function approveSalon(salonId: string) {
         verified_at: new Date().toISOString()
       })
       .eq("id", salonId)
-      .select("owner_id, owner_email, phone, name")
+      .select("owner_id, owner_email, phone, name, assign_to")
       .single();
 
     if (updateError) throw updateError;
@@ -46,6 +49,18 @@ export async function approveSalon(salonId: string) {
     }
     if (salon?.owner_email) {
       await sendAgentApprovalEmail(salon.name || "your salon", salon.owner_email);
+    }
+
+    const assignTo = normalizeEmail(salon?.assign_to || "");
+    if (assignTo) {
+      void notifyRegionalHeadOfTeamEvent(
+        supabase,
+        assignTo,
+        salon?.name || "Salon",
+        "Salon approved and live",
+        `${APP_BASE_URL}/regional-head`,
+        salonId
+      ).catch((err) => console.error("Regional head approval notification failed:", err));
     }
 
     return { success: true };
