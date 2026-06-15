@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Heart, MapPin, Star, Scissors, Loader2, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { VerifiedSalonBadge } from "@/components/marketplace/VerifiedSalonBadge";
 import { toast } from "sonner";
 import {
   fetchCustomerFavoritesPage,
@@ -153,9 +153,9 @@ function FavoritesContent() {
                     <Heart className="w-5 h-5 fill-current" />
                   </button>
                   {ui.isVerified && (
-                    <Badge className="absolute top-3 left-3 bg-[#F5B700]/90 text-black border-none text-[10px] font-black uppercase">
-                      Verified
-                    </Badge>
+                    <div className="absolute top-3 left-3">
+                      <VerifiedSalonBadge size="xs" />
+                    </div>
                   )}
                 </div>
 

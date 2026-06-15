@@ -84,6 +84,6 @@ export function mapSalonRowToUI(s: any, idx: number) {
     nextSlot: availability.nextSlot,
     status: availability.status,
     popularService,
-    isVerified: s.is_verified,
+    isVerified: s.is_verified === true,
   };
 }

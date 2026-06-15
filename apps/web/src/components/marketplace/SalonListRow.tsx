@@ -3,11 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Star, MapPin, CalendarDays, ShieldCheck } from "lucide-react";
+import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SalonFavoriteButton } from "./SalonFavoriteButton";
+import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
 
 export type SalonListRowData = {
   id: string;
@@ -45,7 +46,7 @@ function toOriginalSupabaseUrl(url: string): string | null {
 
 export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
   const linkTarget = `/salons/${salon.slug || salon.id}`;
-  const isVerified = salon.isVerified !== false;
+  const isVerified = isSalonVerified(salon.isVerified);
   const locationLabel = salon.location || salon.city;
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
   const [imageSrc, setImageSrc] = useState(originalImage);
@@ -90,12 +91,7 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
           <h2 className="text-lg md:text-xl font-bold text-[#1A1C29] group-hover:text-brand transition-colors leading-snug">
             <Link href={linkTarget}>{salon.name}</Link>
           </h2>
-          {isVerified && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-brand bg-brand/10 border border-brand/20 px-2 py-1 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Verified
-            </span>
-          )}
+          {isVerified && <VerifiedSalonBadge />}
         </div>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm mb-2">

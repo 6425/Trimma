@@ -5,6 +5,7 @@ import * as Icons from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SalonCard } from "./SalonCard";
+import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
 
 interface Salon {
   id: string;
@@ -57,7 +58,7 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {featured.map(salon => {
           const linkTarget = `/salons/${salon.slug || salon.id}`;
-          const isVerified = salon.isVerified !== false;
+          const isVerified = isSalonVerified(salon.isVerified);
           
           return (
             <div 
@@ -82,10 +83,11 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                   </div>
                 )}
                 
-                <div className="absolute top-3 left-3 flex gap-2 z-20">
+                <div className="absolute top-3 left-3 flex gap-2 z-20 flex-wrap">
                   <Badge className="bg-amber-500 font-extrabold border-none shadow-sm text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
                     <Star className="w-3 h-3 mr-1 fill-white" /> Featured Elite
                   </Badge>
+                  {isVerified && <VerifiedSalonBadge size="xs" />}
                   {salon.status === "Open Now" && (
                     <Badge className="bg-emerald-500 text-white font-extrabold border-none text-[10px] uppercase tracking-wider px-2.5 py-1">
                       Open Now
@@ -104,9 +106,11 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                     <h3 className="font-bold text-zinc-900 text-lg group-hover:text-brand-pink transition-colors truncate">
                       <Link href={linkTarget}>{salon.name}</Link>
                     </h3>
-                    <div className="flex items-center text-xs font-semibold text-emerald-600 mt-0.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Open & Verified Partner
-                    </div>
+                    {isVerified ? (
+                      <div className="flex items-center text-xs font-semibold text-zinc-700 mt-0.5">
+                        <VerifiedSalonBadge size="xs" className="rounded-lg" />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 

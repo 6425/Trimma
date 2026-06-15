@@ -7,6 +7,7 @@ import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SalonFavoriteButton } from "./SalonFavoriteButton";
+import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
 
 export interface SalonCardInternalProps {
   key?: string;
@@ -40,7 +41,7 @@ function toOriginalSupabaseUrl(url: string): string | null {
 export function SalonCard(props: SalonCardInternalProps) {
   const { salon } = props;
   const linkTarget = `/salons/${salon.slug || salon.id}`;
-  const isVerified = salon.isVerified !== false;
+  const isVerified = isSalonVerified(salon.isVerified);
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
   const [imageSrc, setImageSrc] = useState(originalImage);
 
@@ -75,11 +76,14 @@ export function SalonCard(props: SalonCardInternalProps) {
         )}
 
         <SalonFavoriteButton salonId={salon.id} salonName={salon.name} />
-        {salon.status === "Open Now" && (
-          <div className="absolute top-4 left-4 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm z-20">
-            Open Now
-          </div>
-        )}
+        <div className="absolute top-4 left-4 z-20 flex flex-wrap gap-2 max-w-[calc(100%-4rem)]">
+          {isVerified && <VerifiedSalonBadge size="xs" />}
+          {salon.status === "Open Now" && (
+            <div className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm">
+              Open Now
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-[var(--trimma-card-padding)] flex flex-col flex-1 trimma-surface-light">
         <div className="flex justify-between items-start mb-2">

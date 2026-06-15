@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SalonLocationMap } from "../../../components/SalonLocationMap";
 import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
+import { VerifiedSalonBadge } from "../../../components/marketplace/VerifiedSalonBadge";
 import { supabase } from "../../../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { fetchAvailableBookingSlots, validateBookingSlotSelection } from "@/app/actions/booking-slots";
@@ -671,11 +672,9 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
                         {salon.is_verified ? (
-                          <Badge className="bg-black/10 text-black border border-black/20 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
-                            Verified
-                          </Badge>
+                          <VerifiedSalonBadge size="xs" />
                         ) : (
-                          <Badge className="bg-black/10 text-black border border-black/20 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Badge className="bg-zinc-600 text-white border-zinc-600 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
                             Unverified
                           </Badge>
                         )}
