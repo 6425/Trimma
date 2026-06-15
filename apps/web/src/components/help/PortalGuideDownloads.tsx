@@ -25,9 +25,15 @@ type PortalGuideDownloadsProps = {
   documentType: "agent_guide" | "regional_head_guide";
   title: string;
   description: string;
+  formatLabel?: "Word" | "PDF";
 };
 
-export function PortalGuideDownloads({ documentType, title, description }: PortalGuideDownloadsProps) {
+export function PortalGuideDownloads({
+  documentType,
+  title,
+  description,
+  formatLabel = "Word",
+}: PortalGuideDownloadsProps) {
   const [docs, setDocs] = useState<PortalGuideDocument[]>(() => getPortalGuideFallbacks(documentType));
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
@@ -96,13 +102,13 @@ export function PortalGuideDownloads({ documentType, title, description }: Porta
                 {doc.description && (
                   <p className="text-xs text-zinc-500 mt-1 leading-relaxed line-clamp-3">{doc.description}</p>
                 )}
-                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} Word doc</p>}
+                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} {formatLabel}</p>}
               </div>
               <div className="flex flex-col gap-2 mt-auto">
                 <a href={href} target="_blank" rel="noopener noreferrer" download>
                   <Button className="w-full h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
                     <Download className="w-4 h-4 mr-2" />
-                    Download Word Guide
+                    Download {formatLabel} Guide
                   </Button>
                 </a>
                 <Button

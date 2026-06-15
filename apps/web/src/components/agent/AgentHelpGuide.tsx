@@ -659,7 +659,7 @@ export function AgentHelpGuide() {
               ]}
               tips={[
                 "Review split percentages monthly and align with Trimma admin policy.",
-                "Share the Agent Portal Guide Word doc with new sub-agents so they follow the same onboarding steps.",
+                "Share the Agent Portal Guide PDF with new sub-agents so they follow the same onboarding steps.",
                 "Follow up when an agent has many salons stuck at Owner invited.",
               ]}
               mockup={<TeamMockup />}
@@ -897,7 +897,8 @@ export function AgentHelpGuide() {
 
           <PortalGuideDownloads
             documentType={isRegionalHead ? "regional_head_guide" : "agent_guide"}
-            title={isRegionalHead ? "Download Regional Head Guide (Word)" : "Download Agent Guide (Word)"}
+            formatLabel={isRegionalHead ? "Word" : "PDF"}
+            title={isRegionalHead ? "Download Regional Head Guide (Word)" : "Download Agent Guide (PDF)"}
             description={
               isRegionalHead
                 ? "Share or save the full regional head walkthrough — role, My Team, salon onboarding, and commissions — in English, Sinhala, or Tamil."
