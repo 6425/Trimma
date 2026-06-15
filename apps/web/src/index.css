@@ -1444,3 +1444,44 @@
 .trimma-dark-context .trimma-light-context :is(button, [data-slot="button"]).hover\:bg-zinc-800:hover {
   color: #ffffff !important;
 }
+
+/* Customer toast notifications — black surface, white text */
+[data-sonner-toaster] [data-sonner-toast],
+[data-sonner-toaster] [data-sonner-toast].trimma-toast {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  border: 1px solid #262626 !important;
+}
+[data-sonner-toaster] [data-sonner-toast] [data-title],
+[data-sonner-toaster] [data-sonner-toast] [data-description],
+[data-sonner-toaster] [data-sonner-toast] [data-content] {
+  color: #ffffff !important;
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="success"],
+[data-sonner-toaster] [data-sonner-toast][data-type="error"],
+[data-sonner-toaster] [data-sonner-toast][data-type="info"],
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
+  background: #0a0a0a !important;
+  color: #ffffff !important;
+  border-color: #262626 !important;
+}
+
+/* Single salon page — force black CTA buttons with white labels (overrides hero yellow text) */
+.trimma-salon-page .page-hero-shell :is(button, [data-slot="button"]).hero-btn-primary,
+.trimma-salon-page .page-hero-shell :is(button, [data-slot="button"])[class*="bg-black"],
+.trimma-salon-page :is(button, [data-slot="button"])[class*="bg-black"] {
+  background-color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+.trimma-salon-page .page-hero-shell :is(button, [data-slot="button"]):is(:hover, :focus-visible, :active),
+.trimma-salon-page :is(button, [data-slot="button"])[class*="bg-black"]:is(:hover, :focus-visible, :active) {
+  background-color: #1a1a1a !important;
+  border-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+.trimma-salon-page .page-hero-shell :is(button, [data-slot="button"]) :is(svg, span, [class*="lucide"]),
+.trimma-salon-page :is(button, [data-slot="button"])[class*="bg-black"] :is(svg, span, [class*="lucide"]) {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}

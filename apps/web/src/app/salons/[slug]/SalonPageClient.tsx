@@ -33,6 +33,9 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
+
+const SALON_ACTION_BTN =
+  "bg-black !text-white hover:bg-zinc-800 hover:!text-white border-black [&_svg]:!text-white disabled:bg-zinc-700 disabled:!text-zinc-300";
 import {
   getDiscountedServicePrice,
   getServiceDiscountLabel,
@@ -443,12 +446,12 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
           </p>
           <div className="w-full space-y-3">
             <Link href="/" className="block w-full">
-              <Button className="w-full rounded-2xl bg-brand hover:bg-brand-hover text-black font-bold h-12 transition-all active:scale-[0.98] border-none">
+              <Button className={`w-full rounded-2xl font-bold h-12 transition-all active:scale-[0.98] ${SALON_ACTION_BTN}`}>
                 Explore Active Salons
               </Button>
             </Link>
             <Link href="/" className="block w-full">
-              <Button variant="outline" className="w-full rounded-2xl border-slate-200 text-zinc-700 font-bold h-12">
+              <Button variant="outline" className={`w-full rounded-2xl font-bold h-12 ${SALON_ACTION_BTN}`}>
                 Back to Home
               </Button>
             </Link>
@@ -629,7 +632,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans">
+    <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans trimma-salon-page">
       
       {/* 1. DYNAMIC FULL-WIDTH INTEGRATED HERO BANNER */}
       <div className="relative w-full page-hero-shell text-black overflow-hidden shadow-sm">
@@ -689,11 +692,10 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                       salonId={salon.id}
                       salonName={salon.name}
                       variant="hero"
-                      className="h-11 w-11 shrink-0"
+                      className={`h-11 w-11 shrink-0 ${SALON_ACTION_BTN}`}
                     />
                     <Button
-                      variant={isBookable ? "hero" : "default"}
-                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? "" : "bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700"}`} 
+                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`} 
                       onClick={() => handleBookService()}
                       disabled={!salon.booking_enabled}
                     >
@@ -715,14 +717,14 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                     <span>{salon.district || salon.city || salon.address || "Address not provided"}</span>
                   </div>
                   <button
-                    className="flex items-center text-black bg-black/10 hover:bg-black/15 transition-colors px-2.5 py-1 rounded-lg border border-black/10 cursor-pointer"
+                    className={`flex items-center transition-colors px-2.5 py-1 rounded-lg border cursor-pointer ${SALON_ACTION_BTN}`}
                     onClick={() => {
                       const url = getSalonDirectionsUrl(salon);
                       if (url) window.open(url, "_blank", "noopener,noreferrer");
                       else toast.message("Directions are not available for this salon yet.");
                     }}
                   >
-                    <Navigation2 className="w-4 h-4 mr-1.5 text-black" />
+                    <Navigation2 className="w-4 h-4 mr-1.5 text-white" />
                     Get Directions
                   </button>
                 </div>
@@ -795,9 +797,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
             <div className="hidden sm:flex md:w-[280px] shrink-0 pt-4">
               <Button
                 size="lg"
-                variant={isBookable ? "hero" : "default"}
                 disabled={!isBookable}
-                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${isBookable ? "" : "bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700"}`} 
+                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`} 
                 onClick={() => handleBookService()}
               >
                 {!isBookable ? "Booking Unavailable" : "Book Appointment Now"}
@@ -822,10 +823,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`snap-start shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedCategory === cat 
-                        ? 'bg-zinc-900 text-white shadow-md' 
-                        : 'bg-white border border-slate-200 text-zinc-600 hover:border-zinc-300'
+                    className={`snap-start shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${SALON_ACTION_BTN} ${
+                      selectedCategory === cat ? "ring-2 ring-white/40" : "opacity-90"
                     }`}
                   >
                     {cat}
@@ -873,7 +872,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                             <div className="font-bold text-lg text-zinc-900">LKR {service.price}</div>
                           )}
                         </div>
-                        <Button className="rounded-full shadow-sm px-6" onClick={() => handleBookService(service.name)} disabled={!salon.booking_enabled}>
+                        <Button className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`} onClick={() => handleBookService(service.name)} disabled={!salon.booking_enabled}>
                           {!salon.booking_enabled ? "Unavailable" : "Book Now"}
                         </Button>
                       </div>
@@ -951,7 +950,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                                 )}
                               </div>
                               <Button
-                                className="rounded-full shadow-sm px-6 bg-brand hover:bg-[#c21b52]"
+                                className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`}
                                 onClick={() => handleBookPromotion(promotion)}
                                 disabled={!salon.booking_enabled}
                               >
@@ -1280,7 +1279,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
                   {/* 6. SUBMIT BUTTON */}
                   <Button 
-                    className="w-full h-12 text-xs font-bold bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl shadow-md transition-transform active:scale-[0.98]"
+                    className={`w-full h-12 text-xs font-bold rounded-xl shadow-md transition-transform active:scale-[0.98] ${SALON_ACTION_BTN}`}
                     onClick={handleInlineBookSubmit}
                     disabled={
                       isProcessing ||
@@ -1322,7 +1321,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
       {/* MOBILE STICKY BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 lg:hidden flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 pb-safe">
-        <Button className="flex-1 h-12 text-base font-semibold bg-zinc-900 text-white rounded-xl shadow-md" onClick={() => handleBookService()}>
+        <Button className={`flex-1 h-12 text-base font-semibold rounded-xl shadow-md ${SALON_ACTION_BTN}`} onClick={() => handleBookService()}>
           Book Now
         </Button>
       </div>
@@ -1400,7 +1399,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
             </div>
 
             <Button 
-              className="w-full text-sm h-12 bg-zinc-950 text-white rounded-xl shadow-lg font-bold hover:bg-zinc-800 transition-colors" 
+              className={`w-full text-sm h-12 rounded-xl shadow-lg font-bold transition-colors ${SALON_ACTION_BTN}`} 
               onClick={() => {
                 setShowSuccessModal(false);
                 setConfirmedBookingDetails(null);

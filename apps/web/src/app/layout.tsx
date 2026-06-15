@@ -36,7 +36,17 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
         <SiteChrome>{children}</SiteChrome>
-        <Toaster position="top-center" richColors />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            className: "trimma-toast",
+            style: {
+              background: "#0a0a0a",
+              color: "#ffffff",
+              border: "1px solid #262626",
+            },
+          }}
+        />
       </body>
     </html>
   )
