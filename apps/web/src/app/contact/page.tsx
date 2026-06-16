@@ -238,20 +238,39 @@ export default function ContactPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (error) setError(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setSubmitting(false);
-    setSubmitted(true);
-    setForm(EMPTY_FORM);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/public/salon-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to send message.");
+      }
+
+      setSubmitted(true);
+      setForm(EMPTY_FORM);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send message.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -398,7 +417,10 @@ export default function ContactPage() {
                     <LkPhoneInput
                       theme="light"
                       value={form.phone}
-                      onChange={(phone) => setForm((prev) => ({ ...prev, phone }))}
+                      onChange={(phone) => {
+                        setForm((prev) => ({ ...prev, phone }));
+                        if (error) setError(null);
+                      }}
                       className="rounded-xl"
                       inputClassName="py-3"
                     />
@@ -476,6 +498,12 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
+
+              {error ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              ) : null}
 
               <button
                 type="submit"

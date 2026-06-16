@@ -110,7 +110,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ]
     },
     { name: "Global Staff Categories", href: "/admin/staff-roles", icon: <UserPlus className="w-4 h-4" /> },
-    { name: "Salon Mgmt", href: "/admin/salons", icon: <Store className="w-4 h-4" /> },
+    {
+      name: "Salon Mgmt",
+      href: "/admin/salons",
+      icon: <Store className="w-4 h-4" />,
+      children: [
+        { name: "All Salons", href: "/admin/salons" },
+        { name: "Salon Requests", href: "/admin/salon-requests" },
+      ],
+    },
     { name: "Booking Mgmt", href: "/admin/bookings", icon: <Calendar className="w-4 h-4" /> },
     { name: "Review Moderation", href: "/admin/reviews", icon: <Star className="w-4 h-4" /> },
     { 
@@ -249,11 +257,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {item.children ? (
                   <Collapsible
                     key={`${item.name}-${pathname?.includes(item.href)}`}
-                    defaultOpen={pathname?.includes(item.href)}
+                    defaultOpen={
+                      Boolean(pathname?.includes(item.href)) ||
+                      item.children.some((child: { href: string }) => {
+                        const childPath = child.href.split("?")[0];
+                        return pathname === childPath || pathname?.startsWith(`${childPath}/`);
+                      })
+                    }
                     className="space-y-0.5"
                   >
                     <CollapsibleTrigger
-                      className={navParentTriggerClass(Boolean(pathname?.startsWith(item.href)))}
+                      className={navParentTriggerClass(
+                        Boolean(
+                          pathname?.startsWith(item.href) ||
+                            item.children.some((child: { href: string }) => {
+                              const childPath = child.href.split("?")[0];
+                              return pathname === childPath || pathname?.startsWith(`${childPath}/`);
+                            })
+                        )
+                      )}
                     >
                       <div className="flex items-center gap-3">
                         {item.icon}
