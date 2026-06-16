@@ -103,20 +103,20 @@ function MarketplaceMockup() {
   return (
     <div className="rounded-xl bg-[#0B0B0B] p-4 text-white space-y-3">
       <div className="text-xs font-black">Sri Lanka&apos;s Beauty & Wellness Marketplace</div>
-      <div className="bg-[#f9e000] rounded-lg p-1.5 space-y-1 border-2 border-white/20">
+      <div className="bg-[#ffc800] rounded-lg p-1.5 space-y-1 border-2 border-white/20">
         <div className="bg-white rounded-md px-2 py-1.5 text-[9px] text-zinc-500 flex items-center gap-1">
           <MapPin className="w-3 h-3" /> Where are you?
         </div>
         <div className="bg-white rounded-md px-2 py-1.5 text-[9px] text-zinc-500 flex items-center gap-1">
           <Search className="w-3 h-3" /> Haircut, colour, spa…
         </div>
-        <div className="bg-[#dfc900] text-black text-[9px] font-bold py-1.5 rounded-md text-center">
+        <div className="bg-[#e6b400] text-black text-[9px] font-bold py-1.5 rounded-md text-center">
           Search
         </div>
       </div>
       <div className="flex gap-2">
-        <span className="bg-[#f9e000] text-black text-[9px] font-bold px-2 py-1 rounded-md">Book Now</span>
-        <span className="border border-[#f9e000]/50 bg-[#f9e000]/10 text-[#f9e000] text-[9px] font-bold px-2 py-1 rounded-md">
+        <span className="bg-[#ffc800] text-black text-[9px] font-bold px-2 py-1 rounded-md">Book Now</span>
+        <span className="border border-[#ffc800]/50 bg-[#ffc800]/10 text-[#ffc800] text-[9px] font-bold px-2 py-1 rounded-md">
           List Your Business
         </span>
       </div>
@@ -143,7 +143,7 @@ function BookingSheetMockup() {
         <div className="pt-1 font-bold text-zinc-900">
           {SALON.service} — LKR {SALON.price}
         </div>
-        <div className="bg-[#f9e000] text-black text-center py-1.5 rounded-lg font-bold">Continue</div>
+        <div className="bg-[#ffc800] text-black text-center py-1.5 rounded-lg font-bold">Continue</div>
       </div>
     </div>
   );
@@ -166,7 +166,7 @@ function CustomerSidebarMockup() {
         <div
           key={item.label}
           className={`px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
-            item.active ? "bg-[#f9e000] text-black" : "text-zinc-600"
+            item.active ? "bg-[#ffc800] text-black" : "text-zinc-600"
           }`}
         >
           {item.label}
@@ -693,7 +693,7 @@ export function CustomerHelpGuide() {
                 <div className="space-y-4">
                   <a
                     href="mailto:support@trimma.io"
-                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#f9e000] transition-colors"
+                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#ffc800] transition-colors"
                   >
                     <Mail className="w-5 h-5 text-brand" />
                     support@trimma.io
@@ -703,7 +703,7 @@ export function CustomerHelpGuide() {
                     WhatsApp Customer Support
                   </div>
                   <Link href="/customer/support">
-                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black font-bold text-xs">
+                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
                       Open support centre
                     </Button>
                   </Link>

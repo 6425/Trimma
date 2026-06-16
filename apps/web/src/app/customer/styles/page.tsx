@@ -84,7 +84,7 @@ function SavedStylesContent() {
 
         <Link
           href="/styles"
-          className="inline-flex shrink-0 items-center justify-center bg-[#f9e000] hover:bg-[#f9e000]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all"
+          className="inline-flex shrink-0 items-center justify-center bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all"
         >
           <Scissors className="w-4 h-4 mr-2" />
           Browse Latest Styles
@@ -93,7 +93,7 @@ function SavedStylesContent() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-[#f9e000]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#ffc800]" />
           <p className="text-sm text-zinc-400 font-bold">Loading your saved styles...</p>
         </div>
       ) : loadError ? (
@@ -113,7 +113,7 @@ function SavedStylesContent() {
           </p>
           <Link
             href="/styles"
-            className="inline-flex mt-6 bg-[#f9e000] hover:bg-[#f9e000]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all"
+            className="inline-flex mt-6 bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all"
           >
             Explore Styles
           </Link>
@@ -127,7 +127,7 @@ function SavedStylesContent() {
             return (
               <div
                 key={row.id}
-                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#f9e000]/50 transition-all shadow-sm"
+                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#ffc800]/50 transition-all shadow-sm"
               >
                 <div className="relative aspect-[4/5] bg-zinc-100">
                   <Image
@@ -141,7 +141,7 @@ function SavedStylesContent() {
                     type="button"
                     disabled={removingId === row.id}
                     onClick={() => handleRemove(row.id, style.id, style.title)}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md text-[#f9e000] hover:bg-white border border-white transition-colors disabled:opacity-50"
+                    className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md text-[#ffc800] hover:bg-white border border-white transition-colors disabled:opacity-50"
                     aria-label={`Remove ${style.title} from saved styles`}
                   >
                     <Bookmark className="w-5 h-5 fill-current" />

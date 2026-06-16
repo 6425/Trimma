@@ -96,7 +96,7 @@ export function DealsDiscountSection() {
             </p>
             <Link
               href="/deals"
-              className="inline-block mt-4 text-sm font-semibold text-[#f9e000] hover:underline"
+              className="inline-block mt-4 text-sm font-semibold text-[#ffc800] hover:underline"
             >
               Browse all deals
             </Link>
@@ -116,7 +116,7 @@ export function DealsDiscountSection() {
                 <Link
                   key={deal.id}
                   href={`/salons/${salon.slug}`}
-                  className="bg-[#f9e000] rounded-3xl border border-amber-500/50 shadow-md shadow-amber-200/60 overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  className="bg-[#ffc800] rounded-3xl border border-amber-500/50 shadow-md shadow-amber-200/60 overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
                   <div className="p-6 relative min-h-[140px]">
                     <div className="absolute top-4 right-4 bg-black/10 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 text-zinc-950">

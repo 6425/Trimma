@@ -210,7 +210,7 @@ function SubscriptionCheckoutForm() {
       <CheckoutStyles />
 
       <div className="min-h-screen flex flex-col lg:flex-row font-sans text-gray-800 antialiased bg-white">
-        <div className="w-full lg:w-1/2 bg-[#f9e000] flex flex-col items-center justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#dfc900] text-zinc-950">
+        <div className="w-full lg:w-1/2 bg-[#ffc800] flex flex-col items-center justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#e6b400] text-zinc-950">
           <div className="w-full max-w-md">
             <Link
               href="/dashboard/billing"

@@ -88,7 +88,7 @@ export default async function OnboardingPage() {
             ))}
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-xl text-sm max-w-3xl mx-auto">
+          <div className="bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto">
             <strong>Notice:</strong> We are currently providing dedicated onboarding support only in the above districts to ensure a high-quality experience. Additional districts will be added soon. You may still apply, and you will be added to our waiting list.
           </div>
         </div>

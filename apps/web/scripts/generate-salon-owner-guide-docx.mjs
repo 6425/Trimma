@@ -23,7 +23,7 @@ import {
 import { SALON_OWNER_GUIDE_META, SALON_OWNER_GUIDE_STEPS } from "./salon-owner-guide-content.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const GOLD = "F5B700";
+const GOLD = "FFC800";
 const INK = "1A1C29";
 
 function tipBox(label, text) {

@@ -46,7 +46,7 @@ function NotificationCard({
   return (
     <div
       className={`rounded-xl border p-3 transition-colors ${
-        item.readAt ? "border-white/8 bg-white/3" : "border-[#f9e000]/30 bg-[#f9e000]/5"
+        item.readAt ? "border-white/8 bg-white/3" : "border-[#ffc800]/30 bg-[#ffc800]/5"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -54,7 +54,7 @@ function NotificationCard({
           <p className="text-xs font-bold text-white leading-snug">{item.title}</p>
           <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">{item.body}</p>
         </div>
-        {!item.readAt && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#f9e000]" />}
+        {!item.readAt && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#ffc800]" />}
       </div>
 
       {!isGeneric && (
@@ -89,13 +89,13 @@ function NotificationCard({
             size="sm"
             disabled={isProcessing}
             onClick={() => onConfirm(item)}
-            className="h-7 flex-1 rounded-lg bg-[#f9e000] text-[10px] font-bold text-black hover:bg-[#f9e000]/90"
+            className="h-7 flex-1 rounded-lg bg-[#ffc800] text-[10px] font-bold text-black hover:bg-[#ffc800]/90"
           >
             {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
             Approve Booking
           </Button>
         ) : item.bookingStatus === "confirmed" ? (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#f9e000]">Confirmed</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffc800]">Confirmed</span>
         ) : null}
         {!item.readAt && (
           <button
@@ -196,7 +196,7 @@ export function SalonOwnerNotificationBell() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#f9e000] text-black text-[10px] font-black flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ffc800] text-black text-[10px] font-black flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -216,7 +216,7 @@ export function SalonOwnerNotificationBell() {
             <button
               type="button"
               onClick={() => void handleMarkAllRead()}
-              className="text-[10px] font-bold text-[#f9e000] hover:text-[#ffd54d] transition-colors"
+              className="text-[10px] font-bold text-[#ffc800] hover:text-[#ffd54d] transition-colors"
             >
               Mark all read
             </button>

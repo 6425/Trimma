@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export const VERIFIED_SALON_BADGE_CLASS =
-  "trimma-verified-badge bg-[#f9e000] text-black border-[#f9e000] font-bold uppercase tracking-wider shrink-0 [&_svg]:text-black";
+  "trimma-verified-badge bg-[#ffc800] text-black border-[#ffc800] font-bold uppercase tracking-wider shrink-0 [&_svg]:text-black";
 
 export function isSalonVerified(isVerified?: boolean | null) {
   return isVerified === true;

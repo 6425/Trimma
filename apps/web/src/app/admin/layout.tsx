@@ -336,7 +336,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <input
                 type="search"
                 placeholder="Search..."
-                className="h-9 w-full rounded-lg bg-slate-100 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-600 outline-none focus:border-[#f9e000]/50 focus:ring-1 focus:ring-[#f9e000]/30 transition-all"
+                className="h-9 w-full rounded-lg bg-slate-100 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-600 outline-none focus:border-[#ffc800]/50 focus:ring-1 focus:ring-[#ffc800]/30 transition-all"
               />
             </div>
           </div>
@@ -360,7 +360,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Bell */}
             <button type="button" className="trimma-admin-icon-btn relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#f9e000]" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffc800]" />
             </button>
 
             <div className="w-px h-6 bg-slate-100 mx-1" />
@@ -374,9 +374,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
                 <div className="text-xs text-zinc-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
-              <Avatar className="h-8 w-8 border-2 border-[#f9e000]/30">
+              <Avatar className="h-8 w-8 border-2 border-[#ffc800]/30">
                 <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'admin' ? 'Admin' : 'Salon'}`} />
-                <AvatarFallback className="bg-[#f9e000] text-black text-xs font-bold">
+                <AvatarFallback className="bg-[#ffc800] text-black text-xs font-bold">
                   {role === 'admin' ? 'AD' : 'SA'}
                 </AvatarFallback>
               </Avatar>

@@ -81,7 +81,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
                 href={item.path}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-[#f9e000] text-black font-semibold"
+                    ? "bg-[#ffc800] text-black font-semibold"
                     : "text-zinc-500 hover:bg-black/5 hover:text-black"
                 }`}
               >
@@ -104,7 +104,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
                   href={item.path}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? "bg-[#f9e000] text-black font-semibold"
+                      ? "bg-[#ffc800] text-black font-semibold"
                       : "text-zinc-500 hover:bg-black/5 hover:text-black"
                   }`}
                 >
@@ -150,7 +150,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             {/* Bell */}
             <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#f9e000]" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffc800]" />
             </button>
           </div>
         </header>
@@ -169,11 +169,11 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             <Link key={item.name}
               href={item.path}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                isActive ? "is-active-nav text-[#f9e000]" : "text-zinc-600 hover:text-zinc-900"
+                isActive ? "is-active-nav text-[#ffc800]" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               {item.icon}
-              <span className={`text-[10px] font-semibold ${isActive ? "text-[#f9e000]" : ""}`}>
+              <span className={`text-[10px] font-semibold ${isActive ? "text-[#ffc800]" : ""}`}>
                 {item.name}
               </span>
             </Link>

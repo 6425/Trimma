@@ -62,8 +62,8 @@
     --spacing-trimma-2xl: var(--space-2xl);
     
     /* Official Trimma Branding Colors */
-    --color-brand-pink: #f9e000;
-    --color-brand-purple: #fff033;
+    --color-brand-pink: #ffc800;
+    --color-brand-purple: #ffd633;
     --color-brand-dark: #0B0B0B;
     --color-brand-surface-dark: #151515;
     --color-brand-surface-light: #151515;
@@ -72,8 +72,8 @@
     --color-brand-secondary-text: #B3B3B3;
 
     /* Semantic Aliases for script replacements */
-    --color-brand: #f9e000;
-    --color-brand-hover: #fff033;
+    --color-brand: #ffc800;
+    --color-brand-hover: #ffd633;
 
     /* Globally alias pink variations to yellow (amber) per user request */
     --color-rose-50: var(--color-amber-50);
@@ -102,10 +102,10 @@
 }
 
 :root {
-    --trimma-yellow: #f9e000;
-    --trimma-yellow-hover: #fff033;
-    --trimma-yellow-soft: #fff566;
-    --trimma-yellow-deep: #dfc900;
+    --trimma-yellow: #ffc800;
+    --trimma-yellow-hover: #ffd633;
+    --trimma-yellow-soft: #ffe066;
+    --trimma-yellow-deep: #e6b400;
     --background: #0B0B0B;
     --foreground: #FFFFFF;
     --card: #151515;
@@ -114,11 +114,11 @@
     --popover-foreground: #FFFFFF;
     
     /* Primary brand color for buttons, selections, etc. */
-    --primary: #f9e000;
+    --primary: #ffc800;
     --primary-foreground: #000000;
     
     /* Secondary brand color */
-    --secondary: #fff033;
+    --secondary: #ffd633;
     --secondary-foreground: #000000;
     
     --muted: #151515;
@@ -128,9 +128,9 @@
     --destructive: #EF4444;
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
-    --ring: #f9e000;
-    --chart-1: #f9e000;
-    --chart-2: #fff033;
+    --ring: #ffc800;
+    --chart-1: #ffc800;
+    --chart-2: #ffd633;
     --chart-3: #6366F1;
     --chart-4: #F59E0B;
     --chart-5: #10B981;
@@ -163,12 +163,12 @@
     
     --sidebar: #151515;
     --sidebar-foreground: #FFFFFF;
-    --sidebar-primary: #f9e000;
+    --sidebar-primary: #ffc800;
     --sidebar-primary-foreground: #000000;
     --sidebar-accent: #151515;
-    --sidebar-accent-foreground: #f9e000;
+    --sidebar-accent-foreground: #ffc800;
     --sidebar-border: rgba(255, 255, 255, 0.08);
-    --sidebar-ring: #f9e000;
+    --sidebar-ring: #ffc800;
 
     /* Completely Banish Pink & Rose via CSS Variables Override */
     --color-pink-50: var(--color-yellow-50) !important;
@@ -176,8 +176,8 @@
     --color-pink-200: var(--color-yellow-200) !important;
     --color-pink-300: var(--color-yellow-300) !important;
     --color-pink-400: var(--color-yellow-400) !important;
-    --color-pink-500: #f9e000 !important;
-    --color-pink-600: #dfc900 !important;
+    --color-pink-500: #ffc800 !important;
+    --color-pink-600: #e6b400 !important;
     --color-pink-700: var(--color-yellow-700) !important;
     --color-pink-800: var(--color-yellow-800) !important;
     --color-pink-900: var(--color-yellow-900) !important;
@@ -188,8 +188,8 @@
     --color-rose-200: var(--color-yellow-200) !important;
     --color-rose-300: var(--color-yellow-300) !important;
     --color-rose-400: var(--color-yellow-400) !important;
-    --color-rose-500: #f9e000 !important;
-    --color-rose-600: #dfc900 !important;
+    --color-rose-500: #ffc800 !important;
+    --color-rose-600: #e6b400 !important;
     --color-rose-700: var(--color-yellow-700) !important;
     --color-rose-800: var(--color-yellow-800) !important;
     --color-rose-900: var(--color-yellow-900) !important;
@@ -201,9 +201,9 @@
     --color-blue-200: var(--color-yellow-200) !important;
     --color-blue-300: var(--color-yellow-300) !important;
     --color-blue-400: var(--color-yellow-400) !important;
-    --color-blue-500: #f9e000 !important;
-    --color-blue-600: #f9e000 !important;
-    --color-blue-700: #dfc900 !important;
+    --color-blue-500: #ffc800 !important;
+    --color-blue-600: #ffc800 !important;
+    --color-blue-700: #e6b400 !important;
     --color-blue-800: var(--color-yellow-800) !important;
     --color-blue-900: var(--color-yellow-900) !important;
     --color-blue-950: var(--color-yellow-950) !important;
@@ -217,10 +217,10 @@
     --popover: #151515;
     --popover-foreground: #FFFFFF;
     
-    --primary: #f9e000;
+    --primary: #ffc800;
     --primary-foreground: #000000;
     
-    --secondary: #fff033;
+    --secondary: #ffd633;
     --secondary-foreground: #000000;
     
     --muted: #1A1A1A;
@@ -230,21 +230,21 @@
     --destructive: #EF4444;
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
-    --ring: #f9e000;
-    --chart-1: #f9e000;
-    --chart-2: #fff033;
+    --ring: #ffc800;
+    --chart-1: #ffc800;
+    --chart-2: #ffd633;
     --chart-3: #6366F1;
     --chart-4: #F59E0B;
     --chart-5: #10B981;
     
     --sidebar: #151515;
     --sidebar-foreground: #FFFFFF;
-    --sidebar-primary: #f9e000;
+    --sidebar-primary: #ffc800;
     --sidebar-primary-foreground: #000000;
     --sidebar-accent: #1A1A1A;
-    --sidebar-accent-foreground: #f9e000;
+    --sidebar-accent-foreground: #ffc800;
     --sidebar-border: rgba(255, 255, 255, 0.08);
-    --sidebar-ring: #f9e000;
+    --sidebar-ring: #ffc800;
 
     /* Completely Banish Pink & Rose via CSS Variables Override */
     --color-pink-50: var(--color-yellow-50) !important;
@@ -252,8 +252,8 @@
     --color-pink-200: var(--color-yellow-200) !important;
     --color-pink-300: var(--color-yellow-300) !important;
     --color-pink-400: var(--color-yellow-400) !important;
-    --color-pink-500: #f9e000 !important;
-    --color-pink-600: #dfc900 !important;
+    --color-pink-500: #ffc800 !important;
+    --color-pink-600: #e6b400 !important;
     --color-pink-700: var(--color-yellow-700) !important;
     --color-pink-800: var(--color-yellow-800) !important;
     --color-pink-900: var(--color-yellow-900) !important;
@@ -264,8 +264,8 @@
     --color-rose-200: var(--color-yellow-200) !important;
     --color-rose-300: var(--color-yellow-300) !important;
     --color-rose-400: var(--color-yellow-400) !important;
-    --color-rose-500: #f9e000 !important;
-    --color-rose-600: #dfc900 !important;
+    --color-rose-500: #ffc800 !important;
+    --color-rose-600: #e6b400 !important;
     --color-rose-700: var(--color-yellow-700) !important;
     --color-rose-800: var(--color-yellow-800) !important;
     --color-rose-900: var(--color-yellow-900) !important;
@@ -277,9 +277,9 @@
     --color-blue-200: var(--color-yellow-200) !important;
     --color-blue-300: var(--color-yellow-300) !important;
     --color-blue-400: var(--color-yellow-400) !important;
-    --color-blue-500: #f9e000 !important;
-    --color-blue-600: #f9e000 !important;
-    --color-blue-700: #dfc900 !important;
+    --color-blue-500: #ffc800 !important;
+    --color-blue-600: #ffc800 !important;
+    --color-blue-700: #e6b400 !important;
     --color-blue-800: var(--color-yellow-800) !important;
     --color-blue-900: var(--color-yellow-900) !important;
     --color-blue-950: var(--color-yellow-950) !important;
@@ -372,7 +372,7 @@
     [class*="bg-gradient-to"][class*="from-[#1A1C29]"]
   ) :where(
     h1, h2, h3, h4, h5, h6, p, span, label, button, a, li, td, th, svg
-  ):not([class*="bg-[#f9e000]"]):not([class*="bg-brand"]):not([class*="bg-primary"]):not([class*="text-[#f9e000]"]):not([class*="text-brand"]) {
+  ):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-primary"]):not([class*="text-[#ffc800]"]):not([class*="text-brand"]) {
     color: inherit;
   }
 
@@ -388,7 +388,7 @@
     [class*="hover:bg-accent"]:hover,
     [class*="focus:bg-accent"]:focus,
     [class*="focus:bg-accent"]:focus-visible
-  ):not([class*="bg-[#f9e000]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
+  ):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
     color: var(--text-dark) !important;
   }
 
@@ -408,7 +408,7 @@
     [class*="hover:bg-[#1A1C29]"]:hover,
     [class*="focus:bg-accent"]:focus,
     [class*="focus:bg-accent"]:focus-visible
-  ):not([class*="bg-[#f9e000]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
+  ):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
     color: var(--text-light) !important;
   }
 
@@ -425,8 +425,8 @@
   }
 
   /* Yellow/Brand backgrounds must have dark text (default + hover) */
-  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#f9e000\],
-  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#f9e000\]:hover, .hover\:bg-\[\#fff033\]:hover,
+  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#ffc800\],
+  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#ffc800\]:hover, .hover\:bg-\[\#ffd633\]:hover,
   .hover\:bg-blue-500:hover, .hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover,
   .bg-primary-gradient, [class*="bg-primary-gradient"] {
     color: #000000 !important;
@@ -481,22 +481,22 @@
     .hover\:bg-blue-500:hover, .hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover,
     .hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover
   ) {
-    background-color: #f9e000 !important;
-    border-color: #f9e000 !important;
+    background-color: #ffc800 !important;
+    border-color: #ffc800 !important;
     color: #000000 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
     .hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover
   ) {
-    background-color: #fff033 !important;
-    border-color: #fff033 !important;
+    background-color: #ffd633 !important;
+    border-color: #ffd633 !important;
     color: #000000 !important;
   }
 
   /* Brand token alias — always yellow, never pink */
   .text-brand-pink, .text-brand-purple {
-    color: #f9e000 !important;
+    color: #ffc800 !important;
   }
 
   /*
@@ -504,58 +504,58 @@
    * Excludes low-opacity brand tints (/10, /20) used for outline secondary on dark panels.
    */
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .bg-brand, .bg-\[\#f9e000\], .bg-brand-hover, .bg-primary-gradient, [class*="bg-primary-gradient"]
-  ):not(.hero-btn-primary):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#f9e000]/1"]):not([class*="bg-[#f9e000]/2"]):not([class*="bg-[#f9e000]/3"]),
-  :is(.bg-brand, .bg-\[\#f9e000\], .bg-primary-gradient):not(.hero-btn-primary):not(.hero-btn-secondary)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#f9e000]/1"]),
-  :is(.bg-brand, .bg-\[\#f9e000\]):not(.hero-btn-primary):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#f9e000]/1"]):not([class*="bg-[#f9e000]/2"]) {
+    .bg-brand, .bg-\[\#ffc800\], .bg-brand-hover, .bg-primary-gradient, [class*="bg-primary-gradient"]
+  ):not(.hero-btn-primary):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#ffc800]/1"]):not([class*="bg-[#ffc800]/2"]):not([class*="bg-[#ffc800]/3"]),
+  :is(.bg-brand, .bg-\[\#ffc800\], .bg-primary-gradient):not(.hero-btn-primary):not(.hero-btn-secondary)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#ffc800]/1"]),
+  :is(.bg-brand, .bg-\[\#ffc800\]):not(.hero-btn-primary):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#ffc800]/1"]):not([class*="bg-[#ffc800]/2"]) {
     color: #000000 !important;
   }
 
   /* Outline secondary on dark surfaces — yellow label must stay readable */
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    [class*="bg-[#f9e000]/10"], [class*="bg-[#f9e000]/20"],
+    [class*="bg-[#ffc800]/10"], [class*="bg-[#ffc800]/20"],
     [class*="bg-brand/10"], [class*="bg-brand/20"]
   ),
-  :is(button, a, [role="button"], [data-slot="button"])[class~="text-[#f9e000]"],
-  :is(button, a, [role="button"], [data-slot="button"])[class~="text-brand"]:not(.bg-brand):not(.bg-\[\#f9e000\]) {
-    color: #f9e000 !important;
+  :is(button, a, [role="button"], [data-slot="button"])[class~="text-[#ffc800]"],
+  :is(button, a, [role="button"], [data-slot="button"])[class~="text-brand"]:not(.bg-brand):not(.bg-\[\#ffc800\]) {
+    color: #ffc800 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    [class*="hover:bg-[#f9e000]/20"], [class*="hover:bg-brand/20"]
+    [class*="hover:bg-[#ffc800]/20"], [class*="hover:bg-brand/20"]
   ):hover,
-  :is(button, a, [role="button"], [data-slot="button"])[class*="hover:text-[#fff033]"]:hover {
-    color: #fff033 !important;
+  :is(button, a, [role="button"], [data-slot="button"])[class*="hover:text-[#ffd633]"]:hover {
+    color: #ffd633 !important;
   }
 
   /* Secondary actions on dark panels — yellow outline, never white ghost */
   :is(button, a, [role="button"], [data-slot="button"])[class*="border-white/20"][class*="bg-white/5"][class*="text-white"]:not(.trimma-sidebar-nav-item),
   :is(button, a, [role="button"], [data-slot="button"])[class*="bg-white/10"][class*="text-white"]:not([class*="bg-zinc-9"]):not([class*="bg-black"]):not(.trimma-sidebar-nav-item) {
-    border-color: rgba(249, 224, 0, 0.5) !important;
-    background-color: rgba(249, 224, 0, 0.1) !important;
-    color: #f9e000 !important;
+    border-color: rgba(255, 200, 0, 0.5) !important;
+    background-color: rgba(255, 200, 0, 0.1) !important;
+    color: #ffc800 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"])[class*="border-white/20"][class*="bg-white/5"][class*="text-white"]:not(.trimma-sidebar-nav-item):hover,
   :is(button, a, [role="button"], [data-slot="button"])[class*="bg-white/10"][class*="text-white"]:not([class*="bg-zinc-9"]):not([class*="bg-black"]):not(.trimma-sidebar-nav-item):hover {
-    background-color: rgba(249, 224, 0, 0.2) !important;
-    border-color: #f9e000 !important;
-    color: #fff033 !important;
+    background-color: rgba(255, 200, 0, 0.2) !important;
+    border-color: #ffc800 !important;
+    color: #ffd633 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .bg-brand, .bg-\[\#f9e000\], .bg-brand-hover
-  ):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#f9e000]/1"]):not([class*="bg-[#f9e000]/2"]),
-  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-[#f9e000]/90"]:hover) {
-    background-color: #fff033 !important;
+    .bg-brand, .bg-\[\#ffc800\], .bg-brand-hover
+  ):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#ffc800]/1"]):not([class*="bg-[#ffc800]/2"]),
+  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-[#ffc800]/90"]:hover) {
+    background-color: #ffd633 !important;
     color: #000000 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    [class*="hover:bg-[#f9e000]/20"], [class*="hover:bg-brand/20"]
+    [class*="hover:bg-[#ffc800]/20"], [class*="hover:bg-brand/20"]
   ):hover {
-    background-color: rgba(249, 224, 0, 0.2) !important;
-    color: #fff033 !important;
+    background-color: rgba(255, 200, 0, 0.2) !important;
+    color: #ffd633 !important;
   }
 
   /* Remove legacy pink button hovers */
@@ -563,7 +563,7 @@
   .hover\:bg-\[\#b01849\]:hover,
   [class*="hover:bg-[#c21b52]"]:hover,
   [class*="hover:bg-[#b01849]"]:hover {
-    background-color: #fff033 !important;
+    background-color: #ffd633 !important;
     color: #000000 !important;
   }
 
@@ -572,7 +572,7 @@
     :is(button, a, [role="button"], [data-slot="button"])[class*="hover:bg-rose-50"]:hover,
   :is(.bg-white, .bg-zinc-50, .bg-slate-50, .trimma-light-context)
     :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-rose-50:hover {
-    background-color: rgba(249, 224, 0, 0.1) !important;
+    background-color: rgba(255, 200, 0, 0.1) !important;
     color: var(--text-dark) !important;
   }
 
@@ -592,22 +592,22 @@
 
 @layer utilities {
   .bg-primary-gradient {
-    background: linear-gradient(135deg, #fff033 0%, #f9e000 100%);
+    background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%);
   }
   .bg-dark-gradient {
-    background: linear-gradient(135deg, #fff033 0%, #f9e000 100%);
+    background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%);
   }
   .page-hero-shell {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #fff033 0%, #f9e000 100%);
+    background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%);
     border-bottom: 1px solid rgb(245 183 0 / 0.3);
     color: #0a0a0a;
   }
   .page-hero-light {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #fff033 0%, #f9e000 100%);
+    background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%);
     border-bottom: 1px solid rgb(245 183 0 / 0.2);
     color: #0a0a0a;
   }
@@ -618,13 +618,13 @@
     gap: 0.5rem;
     background-color: #0a0a0a !important;
     border: 1px solid #0a0a0a !important;
-    color: #f9e000 !important;
+    color: #ffc800 !important;
     box-shadow: 0 4px 14px -6px rgb(0 0 0 / 0.4);
   }
   .hero-badge :is(svg, [class*="lucide"]),
   .hero-eyebrow :is(svg, [class*="lucide"]) {
-    color: #f9e000 !important;
-    stroke: #f9e000 !important;
+    color: #ffc800 !important;
+    stroke: #ffc800 !important;
   }
   .hero-eyebrow {
     font-weight: 800;
@@ -636,11 +636,11 @@
   :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) {
     background-color: #0a0a0a !important;
     border-color: #0a0a0a !important;
-    color: #f9e000 !important;
+    color: #ffc800 !important;
   }
   :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) :is(svg, [class*="lucide"]) {
-    color: #f9e000 !important;
-    stroke: #f9e000 !important;
+    color: #ffc800 !important;
+    stroke: #ffc800 !important;
   }
   .hero-lead {
     color: rgb(0 0 0 / 0.72);
@@ -659,7 +659,7 @@
     justify-content: center;
     gap: 0.5rem;
     background-color: #0a0a0a !important;
-    color: #f9e000 !important;
+    color: #ffc800 !important;
     font-weight: 700;
     border: none !important;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
@@ -672,16 +672,16 @@
   .hero-btn-primary:active,
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
     background-color: #1a1a1a !important;
-    color: #fff033 !important;
+    color: #ffd633 !important;
     transform: scale(1.02);
   }
   .hero-btn-primary :is(svg, span),
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
-    color: #f9e000 !important;
+    color: #ffc800 !important;
   }
   .hero-btn-primary:hover :is(svg, span),
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
-    color: #fff033 !important;
+    color: #ffd633 !important;
   }
   .hero-btn-secondary,
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-secondary {
@@ -709,21 +709,21 @@
     font-size: 0.875rem;
   }
   .page-hero-overlay {
-    background: linear-gradient(to top, rgba(249, 224, 0, 0.82), rgba(255, 240, 51, 0.52), rgba(255, 240, 51, 0.28));
+    background: linear-gradient(to top, rgba(255, 200, 0, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28));
   }
   .page-hero-image {
     @apply w-full h-full object-cover opacity-25 mix-blend-multiply;
   }
   .text-gradient {
-    background: linear-gradient(135deg, #fff033 0%, #f9e000 100%);
+    background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .shadow-soft-glow {
-    box-shadow: 0 0 20px rgba(249, 224, 0, 0.15);
+    box-shadow: 0 0 20px rgba(255, 200, 0, 0.15);
   }
   .hover-glow:hover {
-    box-shadow: 0 0 25px rgba(249, 224, 0, 0.25);
+    box-shadow: 0 0 25px rgba(255, 200, 0, 0.25);
     transform: translateY(-1px);
   }
   .glassmorphism {
@@ -784,16 +784,16 @@
 
   /* ── Replace ALL remaining pink/rose Tailwind classes with brand yellow ──
      This is a CSS-level safeguard for any inline classes not yet converted. */
-  .text-pink-500, .text-rose-500 { color: #f9e000 !important; }
-  .text-pink-600, .text-rose-600 { color: #dfc900 !important; }
-  .text-pink-400, .text-rose-400 { color: #fff033 !important; }
-  .bg-pink-500,   .bg-rose-500   { background-color: #f9e000 !important; color: #000000 !important; }
-  .bg-pink-600,   .bg-rose-600   { background-color: #dfc900 !important; color: #000000 !important; }
-  .bg-pink-100,   .bg-rose-100   { background-color: rgba(245,183,0,0.12) !important; color: #000000 !important; }
+  .text-pink-500, .text-rose-500 { color: #ffc800 !important; }
+  .text-pink-600, .text-rose-600 { color: #e6b400 !important; }
+  .text-pink-400, .text-rose-400 { color: #ffd633 !important; }
+  .bg-pink-500,   .bg-rose-500   { background-color: #ffc800 !important; color: #000000 !important; }
+  .bg-pink-600,   .bg-rose-600   { background-color: #e6b400 !important; color: #000000 !important; }
+  .bg-pink-100,   .bg-rose-100   { background-color: rgba(255,200,0,0.12) !important; color: #000000 !important; }
   .bg-pink-50,    .bg-rose-50,
-  .hover\:bg-rose-50:hover, .hover\:bg-pink-50:hover { background-color: rgba(245,183,0,0.08) !important; }
-  .border-pink-500, .border-rose-500 { border-color: #f9e000 !important; }
-  .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #f9e000 !important; }
+  .hover\:bg-rose-50:hover, .hover\:bg-pink-50:hover { background-color: rgba(255,200,0,0.08) !important; }
+  .border-pink-500, .border-rose-500 { border-color: #ffc800 !important; }
+  .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #ffc800 !important; }
 
   /* Blue Tailwind fills on interactive controls → brand yellow + black text */
   :is(button, a, [role="button"], [data-slot="button"]).bg-blue-500,
@@ -801,36 +801,36 @@
   :is(button, a, [role="button"], [data-slot="button"]).bg-blue-700,
   :is(button, a, [role="button"], [data-slot="button"]).bg-indigo-600,
   :is(button, a, [role="button"], [data-slot="button"]).bg-indigo-700 {
-    background-color: #f9e000 !important;
-    border-color: #f9e000 !important;
+    background-color: #ffc800 !important;
+    border-color: #ffc800 !important;
     color: #000000 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-blue-700:hover,
   :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-indigo-700:hover {
-    background-color: #fff033 !important;
-    border-color: #fff033 !important;
+    background-color: #ffd633 !important;
+    border-color: #ffd633 !important;
     color: #000000 !important;
   }
 
   /* Override hardcoded Booking.com blues to Yellow */
-  .bg-\[\#003B95\] { background-color: #f9e000 !important; color: #000000 !important; }
-  .text-\[\#003B95\] { color: #f9e000 !important; }
+  .bg-\[\#003B95\] { background-color: #ffc800 !important; color: #000000 !important; }
+  .text-\[\#003B95\] { color: #ffc800 !important; }
   
-  .bg-\[\#006CE4\] { background-color: #f9e000 !important; color: #000000 !important; }
+  .bg-\[\#006CE4\] { background-color: #ffc800 !important; color: #000000 !important; }
   .text-\[\#006CE4\] { color: #000000 !important; } /* In footer, links are this color, dark text */
   
-  .hover\:bg-\[\#0057b8\]:hover { background-color: #dfc900 !important; }
+  .hover\:bg-\[\#0057b8\]:hover { background-color: #e6b400 !important; }
   
-  .bg-\[\#00224F\] { background-color: #dfc900 !important; color: #000000 !important; }
+  .bg-\[\#00224F\] { background-color: #e6b400 !important; color: #000000 !important; }
   
   /* The CTA section */
   .bg-\[\#001D40\] { background-color: #0B0B0B !important; color: #FFFFFF !important; }
   .text-\[\#001D40\] { color: #0B0B0B !important; }
   
   /* Gradients that use the blue */
-  .from-\[\#003B95\] { --tw-gradient-from: #f9e000 var(--tw-gradient-from-position); }
-  .via-\[\#003B95\]\/80 { --tw-gradient-to: rgba(249, 224, 0, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgba(249, 224, 0, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+  .from-\[\#003B95\] { --tw-gradient-from: #ffc800 var(--tw-gradient-from-position); }
+  .via-\[\#003B95\]\/80 { --tw-gradient-to: rgba(255, 200, 0, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgba(255, 200, 0, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to); }
   
   .from-\[\#001D40\] { --tw-gradient-from: #0B0B0B var(--tw-gradient-from-position); }
 
@@ -961,7 +961,7 @@
   }
 
   .trimma-sidebar-nav-item:not(.is-active-nav):is(:hover, :focus-visible) {
-    color: #f9e000 !important;
+    color: #ffc800 !important;
     background-color: rgba(255, 255, 255, 0.08) !important;
   }
 
@@ -970,9 +970,9 @@
     stroke: currentColor !important;
   }
 
-  .trimma-sidebar-nav-item.is-active-nav:is([class*="bg-[#f9e000]"], .bg-\[\#f9e000\]):not([class*="bg-[#f9e000]/"]) {
+  .trimma-sidebar-nav-item.is-active-nav:is([class*="bg-[#ffc800]"], .bg-\[\#ffc800\]):not([class*="bg-[#ffc800]/"]) {
     color: #000000 !important;
-    background-color: #f9e000 !important;
+    background-color: #ffc800 !important;
   }
 
   .trimma-sidebar-nav-item.is-active-nav :is(svg, path) {
@@ -1014,7 +1014,7 @@
 
   .trimma-dark-context .trimma-portal-main.trimma-light-context :is(
     h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
-  ):not([class*="text-white"]):not([class*="text-[#f9e000]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-green"]):not([class*="text-blue"]) {
+  ):not([class*="text-white"]):not([class*="text-[#ffc800]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-green"]):not([class*="text-blue"]) {
     color: inherit;
   }
 
@@ -1031,7 +1031,7 @@
 
   .trimma-mobile-bottom-nav--dark :is(a, button).is-active-nav,
   .trimma-mobile-bottom-nav--dark :is(a, button).is-active-nav span {
-    color: #f9e000 !important;
+    color: #ffc800 !important;
   }
 
   /* Mobile bottom nav — light bar (customer) */
@@ -1047,7 +1047,7 @@
 
   .trimma-mobile-bottom-nav--light :is(a, button).is-active-nav,
   .trimma-mobile-bottom-nav--light :is(a, button).is-active-nav span {
-    color: #f9e000 !important;
+    color: #ffc800 !important;
   }
 
   /* Portal dashboard mobile — prevent horizontal overflow and card overlap */
@@ -1077,7 +1077,7 @@
    * Solid brand/yellow panels — never allow white text on the yellow fill itself.
    * Semi-transparent overlays on brand may keep their own contrast.
    */
-  :is(.bg-brand, .bg-\[\#f9e000\]):not([class*="bg-brand/"]):not([class*="bg-\[\#f9e000\]/"]):not([class*="bg-brand/1"]):not([class*="bg-\[\#f9e000\]/1"]) :is(
+  :is(.bg-brand, .bg-\[\#ffc800\]):not([class*="bg-brand/"]):not([class*="bg-\[\#ffc800\]/"]):not([class*="bg-brand/1"]):not([class*="bg-\[\#ffc800\]/1"]) :is(
     h1, h2, h3, h4, h5, h6, p, span, label, div, a, button
   ):is([class*="text-white"]) {
     color: #000000 !important;
@@ -1128,14 +1128,14 @@
     :focus,
     :focus-visible
   ) {
-    background-color: #f9e000 !important;
+    background-color: #ffc800 !important;
     color: #18181b !important;
   }
 
   .trimma-admin-sidebar .trimma-admin-nav-child.is-active {
     background-color: #f1f5f9 !important;
     color: #18181b !important;
-    box-shadow: inset 3px 0 0 #f9e000;
+    box-shadow: inset 3px 0 0 #ffc800;
   }
 
   .trimma-admin-sidebar .trimma-admin-nav-child.is-active:is(:hover, :focus, :focus-visible) {
@@ -1285,7 +1285,7 @@
   ):not(
     .hero-btn-secondary,
     [class*="bg-white"],
-    [class*="bg-[#f9e000]"],
+    [class*="bg-[#ffc800]"],
     [class*="bg-brand"],
     [class*="bg-primary-gradient"],
     [class*="bg-amber-"],
@@ -1311,12 +1311,12 @@
     button, a, [role="button"], [data-slot="button"]
   ):is(
     .hero-btn-primary,
-    .bg-brand, .bg-\[\#f9e000\], .bg-primary-gradient, [class*="bg-primary-gradient"],
+    .bg-brand, .bg-\[\#ffc800\], .bg-primary-gradient, [class*="bg-primary-gradient"],
     .bg-amber-400, .bg-amber-500
-  ):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-[#f9e000]/1"]) {
+  ):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-[#ffc800]/1"]) {
     background-color: #0a0a0a !important;
     border-color: #0a0a0a !important;
-    color: #f9e000 !important;
+    color: #ffc800 !important;
   }
 
   :is(.page-hero-shell, .page-hero-light) :is(
@@ -1329,12 +1329,12 @@
     button, a, [role="button"], [data-slot="button"]
   ):is(
     .hero-btn-primary,
-    .bg-brand, .bg-\[\#f9e000\], .bg-primary-gradient, [class*="bg-primary-gradient"],
+    .bg-brand, .bg-\[\#ffc800\], .bg-primary-gradient, [class*="bg-primary-gradient"],
     .bg-amber-400, .bg-amber-500
-  ):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-[#f9e000]/1"]) {
+  ):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-[#ffc800]/1"]) {
     background-color: #1a1a1a !important;
     border-color: #1a1a1a !important;
-    color: #fff033 !important;
+    color: #ffd633 !important;
   }
 
   :is(.page-hero-shell, .page-hero-light) :is(
@@ -1347,10 +1347,10 @@
     button, a, [role="button"], [data-slot="button"]
   ):is(
     .hero-btn-primary,
-    .bg-brand, .bg-\[\#f9e000\], .bg-primary-gradient, [class*="bg-primary-gradient"]
+    .bg-brand, .bg-\[\#ffc800\], .bg-primary-gradient, [class*="bg-primary-gradient"]
   ):not(.hero-btn-secondary) :is(svg, [class*="lucide"]) {
-    color: #f9e000 !important;
-    stroke: #f9e000 !important;
+    color: #ffc800 !important;
+    stroke: #ffc800 !important;
   }
 
 }
@@ -1365,18 +1365,18 @@
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
   background-color: #0a0a0a !important;
   border-color: #0a0a0a !important;
-  color: #f9e000 !important;
+  color: #ffc800 !important;
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover,
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:focus-visible,
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
-  color: #fff033 !important;
+  color: #ffd633 !important;
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
-  color: #f9e000 !important;
+  color: #ffc800 !important;
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
-  color: #fff033 !important;
+  color: #ffd633 !important;
 }
 
 /*
@@ -1407,13 +1407,13 @@
   .bg-white, .bg-slate-50, .bg-zinc-50, .bg-zinc-100, .bg-slate-100
 ) :is(
   [class*="text-white"], .text-white
-):not([class*="bg-\[#0B0B0B\]"]):not([class*="bg-\[#1A1C29\]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-brand"]):not([class*="bg-\[#f9e000\]"]) {
+):not([class*="bg-\[#0B0B0B\]"]):not([class*="bg-\[#1A1C29\]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-brand"]):not([class*="bg-\[#ffc800\]"]) {
   color: #18181b !important;
 }
 
 .trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
-  [class*="bg-brand"], [class*="bg-\[#f9e000\]"], [class*="text-\[#f9e000\]"], [class*="text-brand"],
+  [class*="bg-brand"], [class*="bg-\[#ffc800\]"], [class*="text-\[#ffc800\]"], [class*="text-brand"],
   [class*="text-white"], .trimma-sidebar-nav-item
 ) {
   color: #3f3f46 !important;
@@ -1421,7 +1421,7 @@
 
 .trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
   [class*="bg-white"], .bg-white
-):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#f9e000\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
+):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#ffc800\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
   color: #18181b !important;
   background-color: #ffffff !important;
   border-color: #e4e4e7 !important;
@@ -1436,8 +1436,8 @@
 
 .trimma-dark-context .trimma-light-context [data-slot="button"]:is(:hover, :focus-visible):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
-  [class*="bg-brand"], [class*="bg-\[#f9e000\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
-  [class*="hover:bg-black"], [class*="text-\[#f9e000\]"], [class*="text-brand"], [class*="text-white"]
+  [class*="bg-brand"], [class*="bg-\[#ffc800\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
+  [class*="hover:bg-black"], [class*="text-\[#ffc800\]"], [class*="text-brand"], [class*="text-white"]
 ) {
   color: #18181b !important;
 }
@@ -1493,9 +1493,9 @@
 /* Verified salon badge — brand yellow surface, black label everywhere */
 .trimma-verified-badge,
 .trimma-verified-badge:hover {
-  background-color: #f9e000 !important;
+  background-color: #ffc800 !important;
   color: #0a0a0a !important;
-  border-color: #f9e000 !important;
+  border-color: #ffc800 !important;
 }
 .trimma-verified-badge :is(svg, [class*="lucide"]) {
   color: #0a0a0a !important;

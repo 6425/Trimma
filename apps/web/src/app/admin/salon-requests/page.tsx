@@ -148,7 +148,7 @@ export default function AdminSalonRequestsPage() {
               onClick={() => setStatusFilter(status)}
               className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-colors ${
                 statusFilter === status
-                  ? "bg-[#f9e000] text-black"
+                  ? "bg-[#ffc800] text-black"
                   : "bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-300"
               }`}
             >
@@ -162,7 +162,7 @@ export default function AdminSalonRequestsPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search name, email, business, message..."
-          className="h-10 w-full sm:w-72 rounded-xl border border-zinc-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#f9e000]/40"
+          className="h-10 w-full sm:w-72 rounded-xl border border-zinc-200 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800]/40"
         />
       </div>
 
@@ -321,7 +321,7 @@ export default function AdminSalonRequestsPage() {
 
                 <div className="flex gap-2 pt-2">
                   <Button
-                    className="flex-1 bg-[#f9e000] hover:bg-[#fff033] text-black font-bold"
+                    className="flex-1 bg-[#ffc800] hover:bg-[#ffd633] text-black font-bold"
                     onClick={() => void handleSave()}
                     disabled={saving}
                   >

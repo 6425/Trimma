@@ -213,12 +213,12 @@ export default function GlobalHeader() {
                             onMouseEnter={() => setActiveProvince(prov.name)}
                             className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
                               activeProvince === prov.name 
-                                ? 'bg-white text-[#f9e000] font-bold shadow-[inset_2px_0_0_#f9e000]' 
+                                ? 'bg-white text-[#ffc800] font-bold shadow-[inset_2px_0_0_#ffc800]' 
                                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
                             }`}
                           >
                             <span className="truncate">{prov.name.replace(" Province", "")}</span>
-                            {activeProvince === prov.name && <span className="text-[#f9e000] text-[10px] shrink-0">▶</span>}
+                            {activeProvince === prov.name && <span className="text-[#ffc800] text-[10px] shrink-0">▶</span>}
                           </div>
                         ))}
                       </div>
@@ -230,7 +230,7 @@ export default function GlobalHeader() {
                             <Link
                               key={dist}
                               href={`/?l=${encodeURIComponent(dist)}`}
-                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#f9e000] transition-colors"
+                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#ffc800] transition-colors"
                             >
                               {dist}
                             </Link>

@@ -78,13 +78,13 @@ function SignupForm() {
   return (
     <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#121212]">
       <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:h-[100dvh] lg:w-1/2 lg:fixed lg:top-0 lg:left-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[#f9e000]" aria-hidden="true">
+        <div className="absolute inset-0 bg-[#ffc800]" aria-hidden="true">
           <img
             src={SIGNUP_HERO_IMAGE}
             alt=""
             className="h-full w-full object-cover object-center grayscale opacity-15 mix-blend-multiply scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#f9e000]/40 via-[#f9e000]/70 to-[#f9e000]/95" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#ffc800]/40 via-[#ffc800]/70 to-[#ffc800]/95" />
         </div>
 
         <Link
@@ -182,7 +182,7 @@ function SignupForm() {
               Trimma Agent or Regional Head?{" "}
               <Link
                 href="/agent/login"
-                className="font-medium text-[#f9e000] hover:text-[#fff033] hover:underline"
+                className="font-medium text-[#ffc800] hover:text-[#ffd633] hover:underline"
               >
                 Partner portal login
               </Link>
@@ -191,7 +191,7 @@ function SignupForm() {
 
           <div className="text-center text-sm text-zinc-400">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-[#f9e000] hover:text-[#fff033] hover:underline">
+            <Link href="/login" className="font-medium text-[#ffc800] hover:text-[#ffd633] hover:underline">
               Sign in
             </Link>
           </div>

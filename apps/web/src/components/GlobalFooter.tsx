@@ -14,10 +14,10 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Support</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/customer-help" className="hover:text-[#f9e000] transition-colors">Customer Help</Link></li>
-              <li><Link href="/cancellation-help" className="hover:text-[#f9e000] transition-colors">Cancellation options</Link></li>
-              <li><Link href="/safety" className="hover:text-[#f9e000] transition-colors">Safety Resource Center</Link></li>
-              <li><Link href="/contact" className="hover:text-[#f9e000] transition-colors">Contact</Link></li>
+              <li><Link href="/customer-help" className="hover:text-[#ffc800] transition-colors">Customer Help</Link></li>
+              <li><Link href="/cancellation-help" className="hover:text-[#ffc800] transition-colors">Cancellation options</Link></li>
+              <li><Link href="/safety" className="hover:text-[#ffc800] transition-colors">Safety Resource Center</Link></li>
+              <li><Link href="/contact" className="hover:text-[#ffc800] transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -25,10 +25,10 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Discover</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/" className="hover:text-[#f9e000] transition-colors">All Salons</Link></li>
-              <li><Link href="/locations" className="hover:text-[#f9e000] transition-colors">Locations</Link></li>
-              <li><Link href="/pricing" className="hover:text-[#f9e000] transition-colors">Pricing Plans</Link></li>
-              <li><Link href="/features" className="hover:text-[#f9e000] transition-colors">Features</Link></li>
+              <li><Link href="/" className="hover:text-[#ffc800] transition-colors">All Salons</Link></li>
+              <li><Link href="/locations" className="hover:text-[#ffc800] transition-colors">Locations</Link></li>
+              <li><Link href="/pricing" className="hover:text-[#ffc800] transition-colors">Pricing Plans</Link></li>
+              <li><Link href="/features" className="hover:text-[#ffc800] transition-colors">Features</Link></li>
             </ul>
           </div>
 
@@ -36,10 +36,10 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Partner with us</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/agent/login" className="hover:text-[#f9e000] transition-colors">Partner portal login</Link></li>
-              <li><Link href="/onboarding" className="hover:text-[#f9e000] transition-colors">Add your salon</Link></li>
-              <li><Link href="/about" className="hover:text-[#f9e000] transition-colors">About Trimma</Link></li>
-              <li><Link href="/careers" className="hover:text-[#f9e000] transition-colors">Careers</Link></li>
+              <li><Link href="/agent/login" className="hover:text-[#ffc800] transition-colors">Partner portal login</Link></li>
+              <li><Link href="/onboarding" className="hover:text-[#ffc800] transition-colors">Add your salon</Link></li>
+              <li><Link href="/about" className="hover:text-[#ffc800] transition-colors">About Trimma</Link></li>
+              <li><Link href="/careers" className="hover:text-[#ffc800] transition-colors">Careers</Link></li>
               {/* Affiliate program temporarily removed from public access (page retained at /affiliates) */}
             </ul>
           </div>
@@ -48,10 +48,10 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Useful Links</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/terms" className="hover:text-[#f9e000] transition-colors">Terms &amp; Conditions</Link></li>
-              <li><Link href="/privacy-policy" className="hover:text-[#f9e000] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/cookies" className="hover:text-[#f9e000] transition-colors">Cookie Policy</Link></li>
-              <li><Link href="/data-deletion" className="hover:text-[#f9e000] transition-colors">Data Deletion</Link></li>
+              <li><Link href="/terms" className="hover:text-[#ffc800] transition-colors">Terms &amp; Conditions</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-[#ffc800] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookies" className="hover:text-[#ffc800] transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/data-deletion" className="hover:text-[#ffc800] transition-colors">Data Deletion</Link></li>
             </ul>
           </div>
 
@@ -61,9 +61,9 @@ export default function GlobalFooter() {
               <Logo iconSize={36} />
             </Link>
             <div className="flex items-center gap-4">
-              <a href="https://www.facebook.com/profile.php?id=61590121154154" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#f9e000] transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="https://www.youtube.com/@Trimma-io" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#f9e000] transition-colors"><Youtube className="w-5 h-5" /></a>
-              <a href="https://www.instagram.com/trimmaio/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#f9e000] transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/profile.php?id=61590121154154" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#ffc800] transition-colors"><Facebook className="w-5 h-5" /></a>
+              <a href="https://www.youtube.com/@Trimma-io" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#ffc800] transition-colors"><Youtube className="w-5 h-5" /></a>
+              <a href="https://www.instagram.com/trimmaio/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#ffc800] transition-colors"><Instagram className="w-5 h-5" /></a>
             </div>
           </div>
 

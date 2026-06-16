@@ -48,8 +48,8 @@ const CONTACT_OPTIONS = [
     description: "For general questions about Trimma and platform services.",
     action: "Email Us",
     href: "mailto:hello@trimma.io",
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
+    iconBg: "bg-[#ffc800]/10",
+    iconColor: "text-[#ffc800]",
   },
   {
     icon: Handshake,
@@ -171,11 +171,11 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 function HeroIllustration() {
   return (
     <div className="relative w-full max-w-md mx-auto">
-      <div className="absolute inset-0 rounded-3xl bg-amber-400/20 blur-3xl scale-110 pointer-events-none" />
+      <div className="absolute inset-0 rounded-3xl bg-[#ffc800]/20 blur-3xl scale-110 pointer-events-none" />
       <div className="relative bg-white rounded-3xl shadow-2xl border border-zinc-100 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-[#ffc800] flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-black" />
             </div>
             <span className="font-bold text-zinc-900 text-sm">Trimma Support</span>
@@ -195,7 +195,7 @@ function HeroIllustration() {
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
                   msg.from === "user"
-                    ? "bg-amber-400 text-black font-medium"
+                    ? "bg-[#ffc800] text-black font-medium"
                     : "bg-zinc-100 text-zinc-700"
                 }`}
               >
@@ -209,12 +209,12 @@ function HeroIllustration() {
         </div>
         <div className="flex items-center gap-2 bg-zinc-50 rounded-xl px-4 py-2.5">
           <div className="flex-1 text-xs text-zinc-400">Type a message...</div>
-          <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-[#ffc800] flex items-center justify-center">
             <Send className="w-3.5 h-3.5 text-black" />
           </div>
         </div>
       </div>
-      <div className="absolute -top-3 -right-3 bg-amber-400 text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+      <div className="absolute -top-3 -right-3 bg-[#ffc800] text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5" />
         Avg. reply &lt; 2h
       </div>
@@ -337,7 +337,7 @@ export default function ContactPage() {
                 </div>
                 <a
                   href={card.href}
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-zinc-900 group-hover:text-amber-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-zinc-900 group-hover:text-[#ffc800] transition-colors"
                 >
                   {card.action}
                   <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -356,7 +356,7 @@ export default function ContactPage() {
             <p className="text-zinc-500 text-lg">We typically respond within one business day.</p>
           </div>
 
-          <div className="max-w-3xl mx-auto mb-10 bg-amber-50/80 border border-amber-200/80 rounded-2xl px-6 py-5 shadow-sm">
+          <div className="max-w-3xl mx-auto mb-10 bg-[#ffc800]/10/80 border border-[#ffc800]/30/80 rounded-2xl px-6 py-5 shadow-sm">
             <p className="text-sm text-zinc-700 leading-relaxed text-center sm:text-left">{LEGAL_DISCLAIMER}</p>
           </div>
 
@@ -373,7 +373,7 @@ export default function ContactPage() {
               <button
                 type="button"
                 onClick={() => setSubmitted(false)}
-                className="text-sm font-bold text-amber-600 hover:underline"
+                className="text-sm font-bold text-[#ffc800] hover:underline"
               >
                 Send another message
               </button>
@@ -397,7 +397,7 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       placeholder="Your full name"
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -409,7 +409,7 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       placeholder="you@example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent transition"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -443,7 +443,7 @@ export default function ContactPage() {
                       value={form.business}
                       onChange={handleChange}
                       placeholder="Your salon or business"
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition"
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent transition"
                     />
                   </div>
                   <div>
@@ -452,7 +452,7 @@ export default function ContactPage() {
                       name="type"
                       value={form.type}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent transition appearance-none cursor-pointer"
                     >
                       <option value="">Select business type</option>
                       {BUSINESS_TYPES.map((t) => (
@@ -476,7 +476,7 @@ export default function ContactPage() {
                       value={form.inquiry}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition appearance-none cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent transition appearance-none cursor-pointer"
                     >
                       <option value="">Select inquiry type</option>
                       {INQUIRY_TYPES.map((t) => (
@@ -493,7 +493,7 @@ export default function ContactPage() {
                       required
                       rows={5}
                       placeholder="Tell us how we can help..."
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition resize-none"
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent transition resize-none"
                     />
                   </div>
                 </div>
@@ -508,7 +508,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2.5 bg-amber-400 hover:bg-amber-500 disabled:bg-amber-200 text-black font-bold py-4 rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-amber-100"
+                className="w-full flex items-center justify-center gap-2.5 bg-[#ffc800] hover:bg-[#ffd633] disabled:bg-[#ffc800]/30 text-black font-bold py-4 rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-[#ffc800]/20"
               >
                 {submitting ? (
                   <>
@@ -536,8 +536,8 @@ export default function ContactPage() {
           </div>
           <div className="max-w-2xl mx-auto bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
             <div className="flex items-center gap-3 pb-6 mb-6 border-b border-zinc-100">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
-                <Sparkles className="w-6 h-6 text-amber-600" />
+              <div className="w-12 h-12 rounded-2xl bg-[#ffc800]/10 flex items-center justify-center shrink-0">
+                <Sparkles className="w-6 h-6 text-[#ffc800]" />
               </div>
               <div>
                 <div className="font-extrabold text-zinc-950 text-lg">Trimma</div>
@@ -547,8 +547,8 @@ export default function ContactPage() {
             <div className="space-y-5">
               {BUSINESS_INFO.map(({ icon: Icon, label, value, href }) => (
                 <div key={label} className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                    <Icon className="w-5 h-5 text-amber-600" />
+                  <div className="w-10 h-10 rounded-xl bg-[#ffc800]/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-[#ffc800]" />
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-0.5">{label}</div>
@@ -557,7 +557,7 @@ export default function ContactPage() {
                         href={href}
                         target={href.startsWith("http") ? "_blank" : undefined}
                         rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-                        className="text-zinc-900 font-medium text-sm hover:text-amber-600 transition-colors whitespace-pre-line"
+                        className="text-zinc-900 font-medium text-sm hover:text-[#ffc800] transition-colors whitespace-pre-line"
                       >
                         {value}
                       </a>
@@ -595,8 +595,8 @@ export default function ContactPage() {
             </div>
             <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm flex flex-col justify-between gap-6">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                  <MapPin className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-xl bg-[#ffc800]/10 flex items-center justify-center shrink-0">
+                  <MapPin className="w-5 h-5 text-[#ffc800]" />
                 </div>
                 <div>
                   <div className="font-bold text-zinc-900 text-lg mb-1">{COMPANY_OPERATOR}</div>
@@ -610,7 +610,7 @@ export default function ContactPage() {
                 href={OFFICE_MAP_DIRECTIONS}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-6 py-3 rounded-xl transition-all text-sm w-full sm:w-auto"
+                className="inline-flex items-center justify-center gap-2 bg-[#ffc800] hover:bg-[#ffd633] text-black font-bold px-6 py-3 rounded-xl transition-all text-sm w-full sm:w-auto"
               >
                 <Navigation2 className="w-4 h-4" />
                 Get Directions
@@ -635,8 +635,8 @@ export default function ContactPage() {
                 key={item.label}
                 className="bg-white border border-zinc-200 rounded-2xl px-5 py-5 flex items-start gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                  <item.icon className="w-5 h-5 text-amber-600" />
+                <div className="w-10 h-10 rounded-xl bg-[#ffc800]/10 flex items-center justify-center shrink-0">
+                  <item.icon className="w-5 h-5 text-[#ffc800]" />
                 </div>
                 <div>
                   <div className="font-bold text-zinc-900 text-sm leading-snug mb-1">{item.label}</div>
@@ -652,7 +652,7 @@ export default function ContactPage() {
       <section className="py-24 bg-zinc-50">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold px-4 py-2 rounded-full mb-5">
+            <div className="inline-flex items-center gap-2 bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#8a7600] text-sm font-semibold px-4 py-2 rounded-full mb-5">
               <HelpCircle className="w-4 h-4" />
               FAQ
             </div>
@@ -670,7 +670,7 @@ export default function ContactPage() {
 
       {/* ── Partner CTA ── */}
       <section className="py-24 bg-zinc-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(245,183,0,0.18)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,200,0,0.18)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-6">
             Ready to Grow Your Business?
@@ -682,7 +682,7 @@ export default function ContactPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/onboarding"
-              className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-amber-900/30"
+              className="inline-flex items-center justify-center gap-2 bg-[#ffc800] hover:bg-[#ffd633] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#ffc800]/20"
             >
               <Users className="w-4 h-4" />
               Become a Partner

@@ -26,7 +26,7 @@ import { GUIDE_META, GUIDE_STEPS } from "./booking-guide-content.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(__dirname, "../public/help/booking-guide");
 
-const GOLD = "F5B700";
+const GOLD = "FFC800";
 const INK = "1A1C29";
 
 const VISUAL_CAPTIONS = {

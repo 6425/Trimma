@@ -150,7 +150,7 @@ export default function AboutPage() {
 
       {/* Industries */}
       <section className="py-20 bg-zinc-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(245,183,0,0.15)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,200,0,0.15)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-6 lg:px-12 text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">Built for Every Beauty &amp; Wellness Business</h2>
           <p className="text-zinc-400 max-w-xl mx-auto mb-10">

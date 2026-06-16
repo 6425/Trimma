@@ -113,7 +113,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                   required
                   value={form.firstName}
                   onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent"
                   placeholder="First name"
                 />
               </div>
@@ -123,7 +123,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                   required
                   value={form.lastName}
                   onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent"
                   placeholder="Last name"
                 />
               </div>
@@ -137,7 +137,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent"
                   placeholder="you@example.com"
                 />
               </div>
@@ -146,7 +146,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                 <input
                   value={form.phone}
                   onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent"
                   placeholder="+94 7X XXX XXXX"
                 />
               </div>
@@ -169,7 +169,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                 rows={3}
                 value={form.address}
                 onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent resize-none"
                 placeholder="Street address, area, postal code"
               />
             </div>
@@ -180,7 +180,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                 required
                 value={form.nicNo}
                 onChange={(e) => setForm((p) => ({ ...p, nicNo: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent"
                 placeholder="National Identity Card number"
               />
             </div>
@@ -192,7 +192,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
                 rows={4}
                 value={form.accountDetails}
                 onChange={(e) => setForm((p) => ({ ...p, accountDetails: e.target.value }))}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700] focus:border-transparent resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffc800] focus:border-transparent resize-none"
                 placeholder="Bank name, branch, account holder name, account number"
               />
             </div>
@@ -206,7 +206,7 @@ export function AgentApplicationForm({ variant = "section" }: AgentApplicationFo
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2.5 bg-[#F5B700] hover:bg-[#FFC947] disabled:opacity-60 text-black font-bold py-4 rounded-2xl transition-all shadow-lg shadow-[#F5B700]/20"
+              className="w-full flex items-center justify-center gap-2.5 bg-[#ffc800] hover:bg-[#ffd633] disabled:opacity-60 text-black font-bold py-4 rounded-2xl transition-all shadow-lg shadow-[#ffc800]/20"
             >
               {submitting ? (
                 <>

@@ -127,7 +127,7 @@ function SidebarMockup() {
           <div
             key={label}
             className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium ${
-              active ? "bg-[#f9e000] text-black font-semibold" : "text-white/90"
+              active ? "bg-[#ffc800] text-black font-semibold" : "text-white/90"
             }`}
           >
             <Icon className="w-3 h-3 shrink-0" />
@@ -160,7 +160,7 @@ function HeaderMockup() {
         </button>
         <div className="relative p-1.5">
           <Bell className="w-4 h-4 text-white" />
-          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#f9e000]" />
+          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#ffc800]" />
         </div>
         <div className="flex items-center gap-2 pl-2 border-l border-white/10">
           <div className="text-right hidden sm:block">
@@ -169,7 +169,7 @@ function HeaderMockup() {
             </div>
             <div className="text-[9px] text-white/50">Business Plan</div>
           </div>
-          <div className="w-7 h-7 rounded-full bg-[#f9e000] text-black text-[9px] font-black flex items-center justify-center border-2 border-[#f9e000]/30">
+          <div className="w-7 h-7 rounded-full bg-[#ffc800] text-black text-[9px] font-black flex items-center justify-center border-2 border-[#ffc800]/30">
             SA
           </div>
         </div>
@@ -502,9 +502,9 @@ export function SalonOwnerHelpGuide() {
     <div className="max-w-6xl mx-auto p-4 pb-16 space-y-8">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 border border-white/10">
-        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#f9e000]/10" />
+        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#ffc800]/10" />
         <div className="relative z-10 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 bg-[#f9e000]/15 text-[#f9e000] border border-[#f9e000]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-[#ffc800]/15 text-[#ffc800] border border-[#ffc800]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
             <BookOpen className="w-3.5 h-3.5" />
             Salon Owner Handbook
           </span>
@@ -518,14 +518,14 @@ export function SalonOwnerHelpGuide() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/profile">
-              <Button className="h-9 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black text-xs font-bold">
+              <Button className="h-9 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black text-xs font-bold">
                 Complete {SALON.name} profile
               </Button>
             </Link>
             <Link href={`/salons/${SALON.slug}`} target="_blank">
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-[#f9e000]/50 bg-[#f9e000]/10 !text-[#f9e000] hover:bg-[#f9e000]/20 hover:border-[#f9e000] hover:!text-[#fff033] text-xs font-bold"
+                className="h-9 rounded-xl border-[#ffc800]/50 bg-[#ffc800]/10 !text-[#ffc800] hover:bg-[#ffc800]/20 hover:border-[#ffc800] hover:!text-[#ffd633] text-xs font-bold"
               >
                 View public listing
               </Button>
@@ -974,7 +974,7 @@ export function SalonOwnerHelpGuide() {
                 <div className="space-y-4">
                   <a
                     href="mailto:support@trimma.com"
-                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#f9e000] transition-colors"
+                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#ffc800] transition-colors"
                   >
                     <Mail className="w-5 h-5 text-brand" />
                     support@trimma.com
@@ -984,7 +984,7 @@ export function SalonOwnerHelpGuide() {
                     WhatsApp Live Chat
                   </div>
                   <Link href="/dashboard/profile">
-                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black font-bold text-xs">
+                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
                       Return to {SALON.name} profile
                     </Button>
                   </Link>

@@ -28,7 +28,7 @@ import {
 } from "./portal-guide-content.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const GOLD = "F5B700";
+const GOLD = "FFC800";
 const INK = "1A1C29";
 
 function tipBox(label, text) {

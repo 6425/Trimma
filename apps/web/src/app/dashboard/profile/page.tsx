@@ -309,7 +309,7 @@ export default function SalonProfilePage() {
         <Button
           onClick={handleCompleteOnboarding}
           disabled={saving}
-          className="bg-[#f9e000] hover:bg-[#f9e000]/90 text-black shadow-md shadow-[#f9e000]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+          className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black shadow-md shadow-[#ffc800]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} 
           {onboardingStatus === "OWNER_ACTIVATED" ? "Resend For Approval" : "Send For Approval"}
@@ -778,7 +778,7 @@ export default function SalonProfilePage() {
             <Button 
               onClick={handleSave} 
               disabled={saving}
-              className="bg-[#f9e000] hover:bg-[#f9e000]/90 text-black shadow-md shadow-[#f9e000]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+              className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black shadow-md shadow-[#ffc800]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
             >
               {saving ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
@@ -1455,7 +1455,7 @@ export default function SalonProfilePage() {
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-zinc-900 shadow-sm flex items-center gap-1">
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> {rating ? `${rating} verified` : "New"}
                 </div>
-                <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${status === 'active' ? 'bg-[#f9e000] text-black' : 'bg-amber-600 text-white'}`}>
+                <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${status === 'active' ? 'bg-[#ffc800] text-black' : 'bg-amber-600 text-white'}`}>
                   {status === 'active' ? 'LIVE NOW' : 'DRAFT'}
                 </div>
               </div>
@@ -1528,7 +1528,7 @@ export default function SalonProfilePage() {
                 <Button 
                   onClick={() => window.open(`/salons/${slug}`, "_blank")}
                   variant="ghost" 
-                  className="w-full border border-[#f9e000]/50 bg-[#f9e000]/10 text-[#f9e000] hover:bg-[#f9e000]/20 hover:border-[#f9e000] hover:text-[#fff033] font-bold h-12 rounded-xl flex items-center justify-center gap-2"
+                  className="w-full border border-[#ffc800]/50 bg-[#ffc800]/10 text-[#ffc800] hover:bg-[#ffc800]/20 hover:border-[#ffc800] hover:text-[#ffd633] font-bold h-12 rounded-xl flex items-center justify-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4 text-brand" /> Open Live Page
                 </Button>

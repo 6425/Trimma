@@ -165,7 +165,7 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                       return (
                         <article
                           key={deal.id}
-                          className="group bg-[#f9e000] border border-amber-500/50 rounded-3xl p-6 shadow-md shadow-amber-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                          className="group bg-[#ffc800] border border-amber-500/50 rounded-3xl p-6 shadow-md shadow-amber-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
                           <div className="flex flex-col gap-4">
                             <div className="min-w-0 flex-1">

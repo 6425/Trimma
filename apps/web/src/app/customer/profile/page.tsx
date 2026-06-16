@@ -104,7 +104,7 @@ function ProfileFormContent() {
               setLoading(true);
               void loadProfile();
             }}
-            className="bg-[#f9e000] hover:bg-[#f9e000]/90 text-black rounded-xl font-bold"
+            className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -118,14 +118,14 @@ function ProfileFormContent() {
             
             {/* AVATAR BANNER */}
             <div className="flex items-center gap-4 border-b border-zinc-200 pb-6">
-              <div className="w-16 h-16 rounded-full bg-[#f9e000] text-black font-black text-xl flex items-center justify-center shadow-md">
+              <div className="w-16 h-16 rounded-full bg-[#ffc800] text-black font-black text-xl flex items-center justify-center shadow-md">
                 {firstName[0] || "U"}{lastName[0] || ""}
               </div>
               <div>
                 <h3 className="font-extrabold text-zinc-900 text-lg">
                   {firstName && lastName ? `${firstName} ${lastName}` : "Trimma Member"}
                 </h3>
-                <span className="inline-flex items-center gap-1.5 text-xs text-[#f9e000] bg-[#f9e000]/10 px-2.5 py-0.5 rounded-full font-bold mt-1">
+                <span className="inline-flex items-center gap-1.5 text-xs text-[#ffc800] bg-[#ffc800]/10 px-2.5 py-0.5 rounded-full font-bold mt-1">
                   <ShieldCheck className="w-3.5 h-3.5" /> Verified Customer Account
                 </span>
               </div>
@@ -143,7 +143,7 @@ function ProfileFormContent() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#f9e000] rounded-xl"
+                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#ffc800] rounded-xl"
                   />
                 </div>
               </div>
@@ -157,7 +157,7 @@ function ProfileFormContent() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#f9e000] rounded-xl"
+                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#ffc800] rounded-xl"
                   />
                 </div>
               </div>
@@ -200,7 +200,7 @@ function ProfileFormContent() {
             <Button 
               type="submit" 
               disabled={saving}
-              className="bg-[#f9e000] hover:bg-[#f9e000]/90 text-black rounded-xl font-bold h-11 px-6 flex items-center gap-2"
+              className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold h-11 px-6 flex items-center gap-2"
             >
               {saving ? (
                 <>

@@ -143,7 +143,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
                       href={item.path}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        isActive ? "is-active-nav bg-[#f9e000] text-black font-semibold" : ""
+                        isActive ? "is-active-nav bg-[#ffc800] text-black font-semibold" : ""
                       }`}
                     >
                       {item.icon}
@@ -161,9 +161,9 @@ export default function RegionalHeadLayout({ children }: { children: React.React
               onClick={() => void signOutTrimmaSession()}
               className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
             >
-              <Avatar className="w-8 h-8 border border-[#f9e000]/30">
+              <Avatar className="w-8 h-8 border border-[#ffc800]/30">
                 {agentAvatar ? <AvatarImage src={agentAvatar} alt={agentName} /> : null}
-                <AvatarFallback className="bg-[#f9e000]/10 text-[#f9e000] text-xs font-bold">
+                <AvatarFallback className="bg-[#ffc800]/10 text-[#ffc800] text-xs font-bold">
                   {agentName.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -185,7 +185,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
               </div>
             </div>
 
-            <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#f9e000]/50 focus-within:ring-1 focus-within:ring-[#f9e000]/30 transition-all">
+            <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#ffc800]/50 focus-within:ring-1 focus-within:ring-[#ffc800]/30 transition-all">
               <Search className="w-4 h-4 text-white/80 mr-2 shrink-0" />
               <input
                 type="text"
@@ -209,7 +209,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
               >
                 <Bell className="w-5 h-5" />
                 {hasUnreadNotifications ? (
-                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#f9e000]" />
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffc800]" />
                 ) : null}
               </button>
             </div>
@@ -232,11 +232,11 @@ export default function RegionalHeadLayout({ children }: { children: React.React
                 key={item.name}
                 href={item.path}
                 className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                  isActive ? "is-active-nav text-[#f9e000]" : "text-white/70 hover:text-white"
+                  isActive ? "is-active-nav text-[#ffc800]" : "text-white/70 hover:text-white"
                 }`}
               >
                 {item.icon}
-                <span className={`text-[10px] font-semibold ${isActive ? "text-[#f9e000]" : ""}`}>
+                <span className={`text-[10px] font-semibold ${isActive ? "text-[#ffc800]" : ""}`}>
                   {item.name}
                 </span>
               </Link>
