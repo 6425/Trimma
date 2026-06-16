@@ -7,10 +7,34 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getStripePromise } from "@/lib/stripe-js-client";
 import type { CheckoutCustomerDetails } from "./StripeCheckoutCustomerForm";
+
+const ACCEPTED_CARD_BRANDS = [
+  { src: "/payments/visa.svg", alt: "Visa" },
+  { src: "/payments/mastercard.svg", alt: "Mastercard" },
+  { src: "/payments/amex.svg", alt: "American Express" },
+] as const;
+
+function AcceptedCardBrands() {
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-3">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mr-1">
+        Accepted
+      </span>
+      {ACCEPTED_CARD_BRANDS.map((brand) => (
+        <img
+          key={brand.alt}
+          src={brand.src}
+          alt={brand.alt}
+          className="h-6 w-auto object-contain"
+        />
+      ))}
+    </div>
+  );
+}
 
 type StripePayButtonProps = {
   returnUrl: string;
@@ -121,7 +145,7 @@ export function StripeCardCheckout({
   customerForm,
   onPaymentError,
 }: StripeCardCheckoutProps) {
-  const stripePromise = useMemo(() => loadStripe(publishableKey), [publishableKey]);
+  const stripePromise = useMemo(() => getStripePromise(publishableKey), [publishableKey]);
 
   if (!publishableKey || !clientSecret) {
     return (
@@ -137,13 +161,29 @@ export function StripeCardCheckout({
       options={{
         clientSecret,
         appearance: { theme: "stripe" },
+        loader: "auto",
       }}
     >
       <div className="space-y-8">
         <section>
+          <AcceptedCardBrands />
           <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <PaymentElement options={{ layout: "tabs" }} />
+            <PaymentElement
+              options={{
+                layout: "accordion",
+                wallets: {
+                  applePay: "never",
+                  googlePay: "never",
+                },
+                fields: {
+                  billingDetails: "never",
+                },
+              }}
+            />
           </div>
+          <p className="mt-2 text-[11px] text-zinc-500">
+            Visa, Mastercard, and American Express are accepted through Stripe.
+          </p>
         </section>
 
         {customerForm}
@@ -161,7 +201,7 @@ export function StripeCardCheckout({
 
 export function StripeCheckoutLoading() {
   return (
-    <div className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500">
+    <div className="flex flex-col items-center justify-center gap-2 py-10 text-sm text-zinc-500">
       <Loader2 className="w-4 h-4 animate-spin" />
       Loading secure card form…
     </div>

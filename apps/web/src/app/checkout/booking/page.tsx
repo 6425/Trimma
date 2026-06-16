@@ -18,6 +18,8 @@ import {
   calculateBalanceDue,
   RESERVATION_DEPOSIT_PERCENT,
 } from "@/lib/booking-pricing";
+import { buildBookingStripePayload } from "@/lib/booking-stripe-session";
+import { preloadStripe } from "@/lib/stripe-js-client";
 import { ArrowLeft, CalendarRange, Clock, Loader2, Scissors, User } from "lucide-react";
 
 type LoadedBookingCheckout = {
@@ -74,6 +76,17 @@ function BookingCheckoutForm() {
       }
 
       try {
+        const nameParts = splitCustomerName(draft.customerDetails.fullName || "");
+        const initialCustomer = {
+          firstName: nameParts.firstName,
+          lastName: nameParts.lastName,
+          email: draft.customerDetails.email || "",
+          phone: draft.customerDetails.phone || "",
+          address: "Trimma Online Booking",
+          city: "Colombo",
+          country: "LK",
+        };
+
         const result = await withTimeout(
           fetchBookingCheckoutData({
             salonId: draft.salonId,
@@ -85,6 +98,7 @@ function BookingCheckoutForm() {
             promotionPackageName: draft.promotionPackageName,
             promotionPackagePrice: draft.promotionPackagePrice,
             promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
+            customer: initialCustomer,
           }),
           20000,
           "Checkout timed out. Please refresh and try again."
@@ -104,6 +118,13 @@ function BookingCheckoutForm() {
         draft.serviceIds = result.resolvedServiceIds;
         setStripeEnabled(result.stripeEnabled);
         setStripeEnvironment(result.stripeEnvironment);
+        setStripePublishableKey(result.stripePublishableKey);
+        setStripeClientSecret(result.stripeClientSecret);
+        setStripePendingId(result.stripePendingId);
+        if (result.stripeSessionError) {
+          setStripeError(result.stripeSessionError);
+        }
+        preloadStripe(result.stripePublishableKey);
         setCheckoutData({
           draft,
           salon: result.salon,
@@ -114,13 +135,12 @@ function BookingCheckoutForm() {
           rates: result.rates,
         });
 
-        const nameParts = splitCustomerName(draft.customerDetails.fullName || "");
         setCustomerDetails((prev) => ({
           ...prev,
-          firstName: nameParts.firstName,
-          lastName: nameParts.lastName,
-          email: draft.customerDetails.email || prev.email,
-          phone: draft.customerDetails.phone || prev.phone,
+          firstName: initialCustomer.firstName,
+          lastName: initialCustomer.lastName,
+          email: initialCustomer.email,
+          phone: initialCustomer.phone,
         }));
       } catch (error) {
         console.error("Error loading booking checkout:", error);
@@ -160,37 +180,22 @@ function BookingCheckoutForm() {
   const buildStripeSessionBody = (
     data: LoadedBookingCheckout,
     customer: typeof customerDetails
-  ) => {
-    const { draft, salon, services, staffMember, reservationFee, serviceTotal, rates } = data;
-    return {
-      draft: {
-        salonId: draft.salonId,
-        serviceIds: draft.serviceIds,
-        staffId: draft.staffId,
-        bookingDate: draft.bookingDate,
-        timeSlot: draft.timeSlot,
-        promotionPackageId: draft.promotionPackageId,
-        promotionPackageName: draft.promotionPackageName,
-        promotionPackagePrice: draft.promotionPackagePrice,
-        promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
-      },
+  ) =>
+    buildBookingStripePayload({
+      draft: data.draft,
       customer,
-      reservationFee,
-      serviceTotal,
-      rates,
-      salon: {
-        id: salon.id,
-        onboarding_agent_email: salon.onboarding_agent_email,
-        assign_to: salon.assign_to,
-      },
-      services,
-      staffMemberId: staffMember?.id || null,
+      reservationFee: data.reservationFee,
+      serviceTotal: data.serviceTotal,
+      rates: data.rates,
+      salon: data.salon,
+      services: data.services,
+      staffMemberId: data.staffMember?.id || null,
       totalDuration,
-    };
-  };
+    });
 
   useEffect(() => {
     if (!checkoutData || !stripeEnabled) return;
+    if (stripeClientSecret && stripePublishableKey) return;
 
     let cancelled = false;
 
@@ -216,6 +221,7 @@ function BookingCheckoutForm() {
         setStripePublishableKey(result.publishableKey);
         setStripePendingId(result.pendingId || null);
         setStripeEnvironment(result.environment || stripeEnvironment);
+        preloadStripe(result.publishableKey);
       } catch (error) {
         if (!cancelled) {
           setStripeError(getErrorMessage(error) || "Could not load Stripe checkout.");
@@ -229,7 +235,7 @@ function BookingCheckoutForm() {
       cancelled = true;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkoutData, stripeEnabled]);
+  }, [checkoutData, stripeEnabled, stripeClientSecret, stripePublishableKey]);
 
   useEffect(() => {
     if (!stripePendingId || !checkoutData) return;

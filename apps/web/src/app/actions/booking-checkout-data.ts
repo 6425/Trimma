@@ -14,6 +14,9 @@ import {
 } from "@/lib/promotion-booking";
 import { mapSalonPromotionRows } from "@/lib/deals";
 import { calculateReservationFee, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
+import { resolveStripeKeys } from "@/lib/stripe-env";
+import { buildBookingStripePayload, type BookingStripeCustomer } from "@/lib/booking-stripe-session";
+import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
 export type CheckoutDataInput = {
   salonId: string;
@@ -25,6 +28,7 @@ export type CheckoutDataInput = {
   promotionPackageName?: string;
   promotionPackagePrice?: number;
   promotionPackageIncludedServices?: string[];
+  customer?: BookingStripeCustomer;
 };
 
 export type CheckoutDataResult =
@@ -39,6 +43,10 @@ export type CheckoutDataResult =
       resolvedServiceIds: string[];
       stripeEnabled: boolean;
       stripeEnvironment: string;
+      stripePublishableKey: string | null;
+      stripeClientSecret: string | null;
+      stripePendingId: string | null;
+      stripeSessionError: string | null;
     }
   | { success: false; missingDraft?: boolean; error: string };
 
@@ -191,6 +199,68 @@ export async function fetchBookingCheckoutData(
 
     const stripeEnvironment =
       paymentSettings?.stripe_environment === "live" ? "live" : "sandbox";
+    const stripeEnabled = paymentSettings?.stripe_enabled !== false;
+    const stripeKeys = resolveStripeKeys(stripeEnvironment, paymentSettings || undefined);
+    const totalDuration =
+      services.reduce(
+        (sum, service) => sum + parseInt(String(service.duration || service.duration_min || "30"), 10),
+        0
+      ) || 30;
+
+    let stripeClientSecret: string | null = null;
+    let stripePendingId: string | null = null;
+    let stripeSessionError: string | null = null;
+
+    if (stripeEnabled && stripeKeys.publishableKey && draft.customer?.email?.trim()) {
+      try {
+        const serviceLabel =
+          draft.promotionPackageName ||
+          services.map((service) => service.name).filter(Boolean).join(" + ") ||
+          "Salon booking deposit";
+
+        const stripePayload = buildBookingStripePayload({
+          draft: {
+            salonId: draft.salonId,
+            serviceIds: resolvedServiceIds,
+            staffId: draft.staffId || resolvedStaffId,
+            bookingDate: draft.bookingDate,
+            timeSlot: draft.timeSlot,
+            promotionPackageId: draft.promotionPackageId,
+            promotionPackageName: draft.promotionPackageName,
+            promotionPackagePrice: draft.promotionPackagePrice,
+            promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
+            customerDetails: {
+              fullName: `${draft.customer.firstName} ${draft.customer.lastName}`.trim(),
+              email: draft.customer.email,
+              phone: draft.customer.phone,
+            },
+          },
+          customer: draft.customer,
+          reservationFee,
+          serviceTotal,
+          rates,
+          salon: salon as Record<string, unknown>,
+          services,
+          staffMemberId: (staffMember?.id as string | null) || null,
+          totalDuration,
+        });
+
+        const stripeSession = await createStripePaymentIntent({
+          checkoutType: "booking",
+          amount: reservationFee,
+          description: `Trimma booking deposit — ${serviceLabel}`,
+          customerEmail: draft.customer.email.trim(),
+          payload: stripePayload,
+        });
+
+        stripeClientSecret = stripeSession.clientSecret;
+        stripePendingId = stripeSession.pendingId;
+      } catch (error) {
+        stripeSessionError =
+          error instanceof Error ? error.message : "Could not prepare Stripe checkout.";
+        console.warn("[fetchBookingCheckoutData] Stripe session:", stripeSessionError);
+      }
+    }
 
     return {
       success: true,
@@ -201,8 +271,12 @@ export async function fetchBookingCheckoutData(
       serviceTotal,
       rates,
       resolvedServiceIds,
-      stripeEnabled: paymentSettings?.stripe_enabled !== false,
+      stripeEnabled,
       stripeEnvironment,
+      stripePublishableKey: stripeKeys.publishableKey,
+      stripeClientSecret,
+      stripePendingId,
+      stripeSessionError,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load checkout.";
