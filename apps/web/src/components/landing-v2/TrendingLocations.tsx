@@ -105,7 +105,7 @@ export function TrendingLocations() {
             {locations.map((loc, i) => (
               <Link 
                 key={i}
-                href={`/search?l=${loc.slug}`}
+                href={`/?l=${loc.slug}`}
                 className="snap-start shrink-0 group relative h-64 w-[280px] sm:w-[320px] rounded-lg overflow-hidden shadow-sm !text-white block"
               >
                 <Image 

@@ -663,7 +663,7 @@ export function SalonOwnerHelpGuide() {
             ]}
             tips={[
               "Approve pending bookings quickly from the notification bell or Bookings tab.",
-              "Reschedule from the action menu is marked coming soon; use status workflow until then.",
+              "Reschedule from the action menu, or approve customer requests from the bookings banner.",
             ]}
             mockup={<BookingsMockup />}
           />

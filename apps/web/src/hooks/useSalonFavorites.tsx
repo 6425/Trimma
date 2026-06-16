@@ -87,7 +87,7 @@ export function SalonFavoritesProvider({ children }: { children: ReactNode }) {
         const redirectTo = encodeURIComponent(
           typeof window !== "undefined"
             ? window.location.pathname + window.location.search
-            : "/search"
+            : "/"
         );
         router.push(`/login?redirectTo=${redirectTo}`);
         return false;

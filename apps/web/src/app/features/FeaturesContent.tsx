@@ -297,7 +297,7 @@ const USE_CASES = [
     description:
       "Discover top-rated salons, compare services and prices, and lock your appointment without picking up the phone.",
     bullets: ["Instant confirmation", "Verified reviews", "Flexible rescheduling", "Zero booking fees"],
-    cta: { label: "Find a Salon", href: "/search" },
+    cta: { label: "Find a Salon", href: "/" },
   },
   {
     id: "owners",
@@ -573,7 +573,7 @@ export function FeaturesContent() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
-                href="/search"
+                href="/"
                 className="hero-btn-primary px-8 py-4 rounded-2xl"
               >
                 <Search className="w-4 h-4" />
@@ -964,7 +964,7 @@ export function FeaturesContent() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/search"
+              href="/"
               className="inline-flex items-center justify-center gap-2 bg-[#f9e000] hover:bg-[#fff033] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#f9e000]/20"
             >
               <Search className="w-4 h-4" />

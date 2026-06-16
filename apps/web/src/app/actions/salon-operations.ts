@@ -138,7 +138,7 @@ export async function rescheduleOwnerBooking(
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: booking, error: readErr } = await supabase
       .from("bookings")
-      .select("id, salon_id, booking_no, status")
+      .select("id, salon_id, booking_no, status, reschedule_requested, reschedule_status")
       .eq("id", bookingId)
       .maybeSingle();
     if (readErr) throw new Error(readErr.message);
@@ -151,11 +151,15 @@ export async function rescheduleOwnerBooking(
       throw new Error("Completed or cancelled bookings cannot be rescheduled.");
     }
 
+    const hadPendingRescheduleRequest = booking.reschedule_requested === true;
+
     const { error } = await supabase
       .from("bookings")
       .update({
         booking_date: bookingDate,
         booking_time: bookingTime,
+        reschedule_requested: false,
+        reschedule_status: hadPendingRescheduleRequest ? "approved" : booking.reschedule_status || "none",
       })
       .eq("id", bookingId);
     if (error) throw new Error(error.message);
@@ -172,6 +176,37 @@ export async function rescheduleOwnerBooking(
   }
 
   return { success: true as const, bookingNo };
+}
+
+export async function rejectOwnerRescheduleRequest(bookingId: string) {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: booking, error: readErr } = await supabase
+      .from("bookings")
+      .select("id, salon_id, reschedule_requested")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!booking || booking.salon_id !== ctx.salonId) {
+      throw new Error("Booking not found for your salon.");
+    }
+    if (booking.reschedule_requested !== true) {
+      throw new Error("This booking has no pending reschedule request.");
+    }
+
+    const { error } = await supabase
+      .from("bookings")
+      .update({
+        reschedule_requested: false,
+        reschedule_status: "rejected",
+      })
+      .eq("id", bookingId);
+    if (error) throw new Error(error.message);
+
+    await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return { success: true as const };
 }
 
 export async function insertSalonPromotionPackages(payloads: Record<string, unknown>[]) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
-import { confirmOwnerBooking, rescheduleOwnerBooking, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { confirmOwnerBooking, rescheduleOwnerBooking, rejectOwnerRescheduleRequest, updateOwnerBooking } from "@/app/actions/salon-operations";
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
@@ -287,8 +287,31 @@ export default function DashboardBookings() {
     }
   };
 
-  const handleActionReschedule = async (_bookingId: string, _status: 'approved' | 'rejected') => {
-    toast.info("Reschedule requests are not enabled on this schema yet.");
+  const handleActionReschedule = async (bookingId: string, status: "approved" | "rejected") => {
+    if (status === "approved") {
+      const booking = bookings.find((b) => b.id === bookingId);
+      if (!booking) {
+        toast.error("Booking not found.");
+        return;
+      }
+      setReschedulingBooking(booking);
+      setNewDate(booking.booking_date || "");
+      setNewTime((booking.booking_time || "12:00:00").slice(0, 5));
+      toast.info("Choose the new date and time, then confirm to approve the reschedule request.");
+      return;
+    }
+
+    setProcessingId(bookingId);
+    try {
+      const result = await rejectOwnerRescheduleRequest(bookingId);
+      if (result.success === false) throw new Error(result.error);
+      toast.success("Reschedule request declined.");
+      await fetchBookings();
+    } catch (e: any) {
+      toast.error("Failed to decline request: " + e.message);
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleRescheduleSave = async () => {
@@ -324,7 +347,16 @@ export default function DashboardBookings() {
     {} as Record<BookingStatusTab, number>
   );
 
-  const pendingRequests: any[] = [];
+  const pendingRequests = useMemo(
+    () =>
+      bookings.filter(
+        (b) =>
+          b.reschedule_requested === true &&
+          b.reschedule_status !== "approved" &&
+          b.reschedule_status !== "rejected"
+      ),
+    [bookings]
+  );
 
   const renderStatusBadge = (status: string) => {
     const s = (status || 'pending').toLowerCase();
@@ -382,7 +414,7 @@ export default function DashboardBookings() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <Button size="sm" disabled={processingId === req.id} onClick={() => handleActionReschedule(req.id, 'approved')} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 h-8 rounded-lg">Approve</Button>
+                  <Button size="sm" disabled={processingId === req.id} onClick={() => handleActionReschedule(req.id, 'approved')} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 h-8 rounded-lg">Approve & Reschedule</Button>
                   <Button size="sm" variant="outline" disabled={processingId === req.id} onClick={() => handleActionReschedule(req.id, 'rejected')} className="border-rose-100 text-rose-600 hover:bg-rose-50 text-xs font-bold px-3 py-1.5 h-8 rounded-lg">Decline</Button>
                 </div>
               </div>
