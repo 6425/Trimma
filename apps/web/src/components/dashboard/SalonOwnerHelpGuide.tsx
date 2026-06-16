@@ -849,7 +849,7 @@ export function SalonOwnerHelpGuide() {
               "Quick-add services and staff from profile",
               "Amenities checklist with quantities (parking, Wi-Fi, etc.)",
               "Marketplace live preview panel",
-              "Store QR Flyer — A4 print poster (coming soon)",
+              "Store QR Flyer — A4 print poster with your booking QR code",
               "Save Operations — persists all operational fields",
               "Tab: Business Info — legal/registration details",
               "Tab: Bank Info — payout account for reservation settlements",

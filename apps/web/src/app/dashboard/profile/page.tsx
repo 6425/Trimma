@@ -35,6 +35,12 @@ import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
 import { BankInfoForm } from "../../../components/forms/BankInfoForm";
 import { Plus, Users, Globe, ClipboardList, Tag, FileText, Landmark } from "lucide-react";
 import { supabase } from "@/config/supabase";
+import {
+  buildQrCodeImageUrl,
+  buildSalonPublicUrl,
+  printSalonQrFlyer,
+  resolveSalonPublicBaseUrl,
+} from "@/lib/salon-qr-flyer";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -78,6 +84,7 @@ export default function SalonProfilePage() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [rating, setRating] = useState("");
+  const [publicBaseUrl] = useState(() => resolveSalonPublicBaseUrl());
   const [status, setStatus] = useState("pending");
   const [onboardingStatus, setOnboardingStatus] = useState("DISCOVERED");
   const [isVerified, setIsVerified] = useState(false);
@@ -277,6 +284,9 @@ export default function SalonProfilePage() {
     void Promise.resolve().then(() => fetchSalonProfile());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const salonPublicUrl = slug ? buildSalonPublicUrl(slug, publicBaseUrl) : "";
+  const qrPreviewUrl = salonPublicUrl ? buildQrCodeImageUrl(salonPublicUrl, 150) : "";
 
   const calculateCompletion = () => {
     let completed = 0;
@@ -707,8 +717,18 @@ export default function SalonProfilePage() {
   };
 
   const handlePrintFlyer = () => {
-    toast.info("QR Flyer generation is coming soon!");
-    // window.print();
+    try {
+      printSalonQrFlyer({
+        name: name || salon?.name || "Your Salon",
+        slug,
+        address,
+        phone: contact,
+        logoUrl: logoUrl || undefined,
+        tagline: description || undefined,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not open QR flyer print view.");
+    }
   };
 
   const handleCompleteOnboarding = async () => {
@@ -1484,11 +1504,17 @@ export default function SalonProfilePage() {
 
               {/* Minimalist QR Frame Preview */}
               <div className="bg-white rounded-2xl p-6 max-w-[170px] mx-auto text-zinc-900 text-center shadow-md">
-                 <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/salons/' + slug)}`} 
-                    alt="QR"
-                    className="w-32 h-32 mx-auto rounded-lg"
-                 />
+                 {qrPreviewUrl ? (
+                   <img
+                     src={qrPreviewUrl}
+                     alt="Salon booking QR code"
+                     className="w-32 h-32 mx-auto rounded-lg"
+                   />
+                 ) : (
+                   <div className="w-32 h-32 mx-auto rounded-lg bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-zinc-400 px-2">
+                     Save slug to preview
+                   </div>
+                 )}
                  <span className="text-[9px] font-extrabold tracking-widest text-brand uppercase block mt-3">Scan to Book</span>
               </div>
 
