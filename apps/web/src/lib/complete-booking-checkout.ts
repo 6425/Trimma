@@ -12,7 +12,7 @@ import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
 } from "@/lib/booking-availability";
-import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
+import { filterStaffQualifiedForServices, computeBookingStaffCommission } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
@@ -185,6 +185,29 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
   }
 
+  const { data: staffProfile } = resolvedStaffId
+    ? await supabase
+        .from("salon_staff")
+        .select("id, name, commission_rate, working_hours")
+        .eq("id", resolvedStaffId)
+        .maybeSingle()
+    : { data: null };
+
+  const staffCommission = staffProfile
+    ? computeBookingStaffCommission(
+        staffProfile,
+        {
+          amount: serviceTotal,
+          service_id: bookingServiceLines[0]?.service_id || primaryServiceId,
+          booking_services: bookingServiceLines.map((line) => ({
+            service_id: line.service_id,
+            price: line.price,
+          })),
+        },
+        staffProfile ? [staffProfile] : []
+      )
+    : null;
+
   const { data: newBooking } = await insertBookingRecord(supabase, {
     booking_no: bookingNo,
     salon_id: salon.id,
@@ -205,6 +228,8 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     field_agent_email: fieldAgentEmail,
     agent_commission_percent: agentCommissionPct,
     agent_commission_amount: agentCommissionAmount,
+    staff_commission_percent: staffCommission?.rate ?? 0,
+    staff_commission_amount: staffCommission?.amount ?? 0,
     promotion_package_id: draft.promotionPackageId || null,
   });
 

@@ -1,6 +1,5 @@
 import {
-  computeStaffCommissionAmount,
-  getBookingServiceIds,
+  computeBookingStaffCommission,
   inferStaffAllocations,
   resolveStaffMemberFromBooking,
   type SalonStaffForAllocation,
@@ -228,10 +227,16 @@ export function resolveBookingStaffCommission(
     amount?: number | string | null;
     service_id?: string | null;
     staff_id?: string | null;
+    staff_commission_amount?: number | string | null;
+    staff_commission_percent?: number | string | null;
     salon_staff?: SalonStaffForAllocation | null;
     booking_services?: Array<{
       service_id?: string | null;
-      services?: { id?: string } | { id?: string }[] | null;
+      price?: number | string | null;
+      services?:
+        | { id?: string; global_service_id?: string | null }
+        | { id?: string; global_service_id?: string | null }[]
+        | null;
     }> | null;
     booking_staff?: Array<{
       staff_id?: string | null;
@@ -243,19 +248,27 @@ export function resolveBookingStaffCommission(
     inferredStaff?: SalonStaffForAllocation | null;
   }
 ): { amount: number; rate: number } | null {
+  if (
+    booking.staff_commission_amount != null &&
+    booking.staff_commission_percent != null
+  ) {
+    const amount = Number(booking.staff_commission_amount);
+    const rate = Number(booking.staff_commission_percent);
+    if (Number.isFinite(amount) && Number.isFinite(rate) && (amount > 0 || rate > 0)) {
+      return { amount, rate };
+    }
+  }
+
   const servicePrice = Number(booking.amount || 0);
   if (!servicePrice) return null;
 
   const allStaff = context?.allStaff || [];
-  let staffMember =
+  const staffMember =
     resolveStaffMemberFromBooking(booking, allStaff) || context?.inferredStaff || null;
 
   if (!staffMember) return null;
 
-  const serviceIds = getBookingServiceIds(booking);
-  const serviceId = serviceIds[0] || null;
-
-  return computeStaffCommissionAmount(staffMember, serviceId, servicePrice);
+  return computeBookingStaffCommission(staffMember, booking, allStaff);
 }
 
 /** Bookings in the 7-day commission window (by created_at), aligned with Booking Income Breakdown. */

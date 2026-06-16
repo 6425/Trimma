@@ -2,7 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { parseDisplayTimeSlot, resolveStaffForBookingSlot } from "@/lib/booking-availability";
-import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
+import { filterStaffQualifiedForServices, computeBookingStaffCommission } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { insertBookingRecord } from "@/lib/booking-insert";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
@@ -225,6 +225,27 @@ export async function createDirectBooking(
       proposedDurationMinutes: totalDuration,
     });
 
+    const { data: staffProfile } = await supabase
+      .from("salon_staff")
+      .select("id, name, commission_rate, working_hours")
+      .eq("id", resolvedStaffId)
+      .maybeSingle();
+
+    const staffCommission = staffProfile
+      ? computeBookingStaffCommission(
+          staffProfile,
+          {
+            amount: totalPrice,
+            service_id: processedServices[0]?.id || null,
+            booking_services: processedServices.map((service) => ({
+              service_id: service.id,
+              price: service.price,
+            })),
+          },
+          staffProfile ? [staffProfile] : []
+        )
+      : null;
+
     const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
     const isPaid = paymentMethod === "paypal";
 
@@ -248,6 +269,8 @@ export async function createDirectBooking(
       field_agent_email: fieldAgentEmail,
       agent_commission_percent: agentCommissionPct,
       agent_commission_amount: agentCommissionAmount,
+      staff_commission_percent: staffCommission?.rate ?? 0,
+      staff_commission_amount: staffCommission?.amount ?? 0,
       promotion_package_id: promotionPackageId || null,
     });
 

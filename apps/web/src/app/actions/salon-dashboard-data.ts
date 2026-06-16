@@ -43,10 +43,10 @@ export async function fetchSalonDashboardPage() {
       supabase
         .from("bookings")
         .select(
-          `id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, status, booking_date, booking_time, created_at, customer_email, staff_id, service_id,
+          `id, booking_no, amount, total_reservation_fee, salon_upfront_amount, platform_commission_amount, agent_commission_amount, staff_commission_amount, staff_commission_percent, status, booking_date, booking_time, created_at, customer_email, staff_id, service_id,
           services (id, name),
           salon_staff (id, name, commission_rate, working_hours),
-          booking_services (service_id, duration_min, services (id, name)),
+          booking_services (service_id, price, duration_min, services (id, name, global_service_id)),
           booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))`
         )
         .eq("salon_id", ctx.salonId)
@@ -164,7 +164,7 @@ export async function fetchSalonFinancePage() {
           *,
           services (id, name),
           salon_staff (id, name, commission_rate, working_hours),
-          booking_services (service_id, duration_min, services (id, name)),
+          booking_services (service_id, price, duration_min, services (id, name, global_service_id)),
           booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
         `)
           .eq("salon_id", ctx.salonId)

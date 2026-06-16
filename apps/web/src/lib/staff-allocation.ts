@@ -3,6 +3,7 @@ import {
   resolveAvailableStaffId,
   type BookingConflictRow,
 } from "@/lib/booking-availability";
+import { parseStaffWorkingHours } from "@/lib/salon-staff-insert";
 
 export type StaffAssignedService = {
   service_id: string;
@@ -74,12 +75,17 @@ export type BookingForAllocation = {
   booking_time?: string | null;
   staff_id?: string | null;
   service_id?: string | null;
+  amount?: number | string | null;
   status?: string | null;
   salon_staff?: SalonStaffForAllocation | null;
   booking_services?: Array<{
     service_id?: string | null;
+    price?: number | string | null;
     duration_min?: number | string | null;
-    services?: { id?: string } | { id?: string }[] | null;
+    services?:
+      | { id?: string; global_service_id?: string | null }
+      | Array<{ id?: string; global_service_id?: string | null }>
+      | null;
   }> | null;
   booking_staff?: Array<{
     staff_id?: string | null;
@@ -111,11 +117,52 @@ export function getBookingServiceIds(booking: BookingForAllocation): string[] {
   for (const row of booking.booking_services || []) {
     if (row.service_id) ids.add(row.service_id);
     const svc = row.services;
-    const svcId = Array.isArray(svc) ? svc[0]?.id : svc?.id;
-    if (svcId) ids.add(svcId);
+    const nested = Array.isArray(svc) ? svc[0] : svc;
+    if (nested?.id) ids.add(nested.id);
+    if (nested?.global_service_id) ids.add(nested.global_service_id);
   }
 
   return [...ids];
+}
+
+/** Merge nested booking staff with the salon directory and parse working_hours JSON. */
+export function normalizeStaffForCommission(
+  staffMember: SalonStaffForAllocation | null | undefined,
+  allStaff: SalonStaffForAllocation[] = []
+): SalonStaffForAllocation | null {
+  if (!staffMember?.id) return null;
+
+  const directory = allStaff.find((member) => member.id === staffMember.id);
+  const parsedHours =
+    parseStaffWorkingHours(staffMember.working_hours) ||
+    parseStaffWorkingHours(directory?.working_hours) ||
+    staffMember.working_hours ||
+    directory?.working_hours;
+
+  return {
+    ...(directory || {}),
+    ...staffMember,
+    commission_rate: staffMember.commission_rate ?? directory?.commission_rate ?? 0,
+    working_hours: parsedHours as SalonStaffForAllocation["working_hours"],
+  };
+}
+
+function findAssignedCommissionRate(
+  assigned: StaffAssignedService[] | null | undefined,
+  serviceIds: string[]
+): number | null {
+  if (!assigned?.length || !serviceIds.length) return null;
+
+  for (const serviceId of serviceIds) {
+    for (const row of assigned) {
+      if (row.enabled === false || !row.service_id) continue;
+      if (row.service_id === serviceId && row.commission_rate != null) {
+        return Number(row.commission_rate);
+      }
+    }
+  }
+
+  return null;
 }
 
 export function getBookingDurationMinutes(booking: BookingForAllocation): number {
@@ -138,27 +185,29 @@ export function resolveStaffMemberFromBooking(
   booking: BookingForAllocation,
   allStaff: SalonStaffForAllocation[] = []
 ): SalonStaffForAllocation | null {
-  if (booking.salon_staff && typeof booking.salon_staff === "object") {
-    return booking.salon_staff;
+  let resolved: SalonStaffForAllocation | null = null;
+
+  if (booking.salon_staff && typeof booking.salon_staff === "object" && !Array.isArray(booking.salon_staff)) {
+    resolved = booking.salon_staff;
   }
 
-  if (booking.booking_staff?.length) {
+  if (!resolved?.id && booking.booking_staff?.length) {
     const raw = booking.booking_staff[0].salon_staff;
     const fromJunction = Array.isArray(raw) ? raw[0] : raw;
-    if (fromJunction && typeof fromJunction === "object" && "commission_rate" in fromJunction) {
-      return fromJunction as SalonStaffForAllocation;
+    if (fromJunction && typeof fromJunction === "object") {
+      resolved = fromJunction as SalonStaffForAllocation;
     }
     const staffId = booking.booking_staff[0].staff_id;
-    if (staffId) {
-      return allStaff.find((member) => member.id === staffId) || null;
+    if (!resolved?.id && staffId) {
+      resolved = allStaff.find((member) => member.id === staffId) || null;
     }
   }
 
-  if (booking.staff_id) {
-    return allStaff.find((member) => member.id === booking.staff_id) || null;
+  if (!resolved?.id && booking.staff_id) {
+    resolved = allStaff.find((member) => member.id === booking.staff_id) || null;
   }
 
-  return null;
+  return normalizeStaffForCommission(resolved, allStaff);
 }
 
 function toConflictRow(
@@ -233,20 +282,72 @@ export function inferStaffAllocations(
 
 export function computeStaffCommissionAmount(
   staffMember: SalonStaffForAllocation,
-  serviceId: string | null,
-  servicePrice: number
+  serviceIds: string | string[] | null,
+  servicePrice: number,
+  allStaff: SalonStaffForAllocation[] = []
 ): { amount: number; rate: number } {
-  let rate = Number(staffMember.commission_rate || 0);
-  const assigned = staffMember.working_hours?.assigned_services;
-  if (serviceId && Array.isArray(assigned)) {
-    const match = assigned.find((row) => row.service_id === serviceId);
-    if (match?.commission_rate != null) {
-      rate = Number(match.commission_rate);
-    }
-  }
+  const normalized = normalizeStaffForCommission(staffMember, allStaff) || staffMember;
+  const ids = Array.isArray(serviceIds) ? serviceIds : serviceIds ? [serviceIds] : [];
+  let rate = Number(normalized.commission_rate || 0);
+  const perServiceRate = findAssignedCommissionRate(
+    normalized.working_hours?.assigned_services,
+    ids
+  );
+  if (perServiceRate != null) rate = perServiceRate;
 
   return {
     rate,
     amount: Math.round((servicePrice * rate) / 100),
   };
+}
+
+export function computeBookingStaffCommission(
+  staffMember: SalonStaffForAllocation | null | undefined,
+  booking: BookingForAllocation,
+  allStaff: SalonStaffForAllocation[] = []
+): { amount: number; rate: number } | null {
+  const normalized = normalizeStaffForCommission(staffMember, allStaff);
+  if (!normalized) return null;
+
+  const lines: Array<{ serviceIds: string[]; price: number }> = [];
+  for (const row of booking.booking_services || []) {
+    const serviceIds = new Set<string>();
+    if (row.service_id) serviceIds.add(row.service_id);
+    const svc = row.services;
+    const nested = Array.isArray(svc) ? svc[0] : svc;
+    if (nested?.id) serviceIds.add(nested.id);
+    if (nested?.global_service_id) serviceIds.add(nested.global_service_id);
+
+    const price = Number(row.price ?? 0);
+    if (serviceIds.size && price > 0) {
+      lines.push({ serviceIds: [...serviceIds], price });
+    }
+  }
+
+  if (!lines.length) {
+    const price = Number(booking.amount || 0);
+    if (!price) return null;
+    return computeStaffCommissionAmount(
+      normalized,
+      getBookingServiceIds(booking),
+      price,
+      allStaff
+    );
+  }
+
+  let totalAmount = 0;
+  let totalPrice = 0;
+  let lastRate = Number(normalized.commission_rate || 0);
+
+  for (const line of lines) {
+    const result = computeStaffCommissionAmount(normalized, line.serviceIds, line.price, allStaff);
+    totalAmount += result.amount;
+    totalPrice += line.price;
+    lastRate = result.rate;
+  }
+
+  const blendedRate =
+    totalPrice > 0 ? Math.round((totalAmount / totalPrice) * 10000) / 100 : lastRate;
+
+  return { amount: totalAmount, rate: blendedRate };
 }
