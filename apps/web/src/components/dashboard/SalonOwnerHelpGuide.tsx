@@ -37,6 +37,7 @@ import {
   Menu,
   ExternalLink,
 } from "lucide-react";
+import { VerifiedSalonBadge } from "../marketplace/VerifiedSalonBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonOwnerGuideDownloads } from "../help/SalonOwnerGuideDownloads";
@@ -321,9 +322,7 @@ function ListingMockup() {
       <div className="flex-1 p-3 min-w-0">
         <div className="flex items-start justify-between gap-1">
           <span className="text-xs font-bold text-zinc-900 truncate">{SALON.name}</span>
-          <span className="shrink-0 text-[8px] font-bold uppercase text-brand bg-brand/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-            <ShieldCheck className="w-2.5 h-2.5" /> Verified
-          </span>
+          <VerifiedSalonBadge size="xs" className="shrink-0 scale-90 origin-right" />
         </div>
         <div className="flex items-center gap-2 mt-1 text-[9px] text-zinc-500">
           <span className="font-bold bg-slate-100 text-zinc-600 px-1.5 py-0.5 rounded uppercase">

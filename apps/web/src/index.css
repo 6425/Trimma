@@ -1486,14 +1486,14 @@
   stroke: #ffffff !important;
 }
 
-/* Verified salon badge — black surface, white label everywhere */
+/* Verified salon badge — brand yellow surface, black label everywhere */
 .trimma-verified-badge,
 .trimma-verified-badge:hover {
-  background-color: #0a0a0a !important;
-  color: #ffffff !important;
-  border-color: #0a0a0a !important;
+  background-color: #f5b700 !important;
+  color: #0a0a0a !important;
+  border-color: #f5b700 !important;
 }
 .trimma-verified-badge :is(svg, [class*="lucide"]) {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
+  color: #0a0a0a !important;
+  stroke: #0a0a0a !important;
 }

@@ -82,7 +82,7 @@ const SalonsMockup = () => (
             <div className="text-[8px] text-zinc-500 font-bold flex items-center gap-0.5 mt-0.5"><MapPin className="w-2 h-2" /> Colombo 07</div>
             <div className="flex gap-1 mt-1.5">
                <div className="text-[6px] font-bold bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-sm">Hair</div>
-               <div className="text-[6px] font-bold bg-[#F5B700]/10 text-black border border-[#F5B700]/20 px-1.5 py-0.5 rounded-sm">Verified</div>
+               <div className="text-[6px] font-bold bg-[#F5B700] text-black border border-[#F5B700] px-1.5 py-0.5 rounded-sm">Verified</div>
             </div>
           </div>
         </div>

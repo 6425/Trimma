@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { VerifiedSalonBadge } from "../../components/marketplace/VerifiedSalonBadge";
 import {
   AlertTriangle,
   ArrowRight,
@@ -403,10 +404,7 @@ export function SafetyContent() {
           </div>
           <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
             <div className="flex flex-wrap gap-3 mb-6">
-              <span className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Verified Partner
-              </span>
+              <VerifiedSalonBadge size="sm" className="rounded-full" />
               <span className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full">
                 <BadgeCheck className="w-3.5 h-3.5" />
                 Profile Reviewed
@@ -420,8 +418,7 @@ export function SafetyContent() {
               <p className="text-sm font-bold text-zinc-900">Sampath Barber Saloon</p>
               <p className="text-xs text-zinc-500">Colombo · Barber Salon</p>
               <div className="flex items-center gap-2 pt-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-semibold text-emerald-700">Trimma Verified</span>
+                <VerifiedSalonBadge size="xs" />
               </div>
             </div>
             <p className="mt-4 text-xs text-zinc-500 leading-relaxed">
