@@ -675,7 +675,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                           <VerifiedSalonBadge size="xs" />
                         ) : (
                           <Badge className="bg-zinc-600 text-white border-zinc-600 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
-                            Unverified
+                            Not Verified
                           </Badge>
                         )}
                         <div className={`flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider text-black ${currentStatus === 'Open Now' ? 'bg-black/10 border-black/20' : 'bg-black/10 border-black/20'}`}>

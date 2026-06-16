@@ -4,13 +4,15 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { Search, MapPin, Star, Filter, ArrowRight, Grid, SlidersHorizontal, CheckCircle2, Clock, Scissors, Loader2, Sparkles, MapIcon } from "lucide-react";
+import { Search, MapPin, Star, Filter, ArrowRight, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, MapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/config/supabase";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
+import { SalonCard } from "../../components/marketplace/SalonCard";
+import { VerifiedSalonBadge, isSalonVerified } from "../../components/marketplace/VerifiedSalonBadge";
 
 function SearchPageInner() {
   const params = useParams();
@@ -56,10 +58,6 @@ function SearchPageInner() {
   useEffect(() => {
     void Promise.resolve().then(() => fetchLiveSalons());
   }, []);
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR', minimumFractionDigits: 0 }).format(price);
-  };
 
   const categoryName = slug ? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Salons & Spas";
 
@@ -232,9 +230,13 @@ function SearchPageInner() {
                             </Avatar>
                             <div>
                               <h3 className="font-bold text-zinc-900 text-lg group-hover:underline decoration-zinc-300 underline-offset-2 w-full truncate">{salon.name}</h3>
-                              <div className="flex items-center text-sm font-medium text-emerald-600 mt-0.5">
-                                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Open & Verified
-                              </div>
+                              {isSalonVerified(salon.isVerified) ? (
+                                <VerifiedSalonBadge className="mt-1" />
+                              ) : (
+                                <div className="flex items-center text-sm font-medium text-zinc-500 mt-0.5">
+                                  <Clock className="w-3.5 h-3.5 mr-1" /> {salon.status || (salon.openNow ? "Open Now" : "Closed")}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -250,86 +252,26 @@ function SearchPageInner() {
                 <h2 className="text-2xl font-bold tracking-tight text-zinc-900">All Registered Salons ({filteredSalons.length})</h2>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredSalons.map(salon => (
-                   <div key={salon.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group relative">
-                     
-                     {/* Top: Image & Badges */}
-                     <Link href={`/salons/${salon.slug}`} className="relative h-56 overflow-hidden block">
-                       <img src={salon.image} alt={salon.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/40 to-transparent" />
-                       
-                       <div className="absolute top-3 left-3 flex gap-2">
-                         {salon.featured && (
-                           <Badge className="bg-zinc-900 text-white border-zinc-700 font-semibold shadow-sm">
-                             Trimma Premium
-                           </Badge>
-                         )}
-                       </div>
-                       
-                       {/* Avatar floating */}
-                       <div className="absolute -bottom-6 right-4 z-10">
-                         <Avatar className="w-16 h-16 border-4 border-white shadow-md rounded-2xl bg-white">
-                            <AvatarImage src={salon.logo} className="object-cover" />
-                            <AvatarFallback>{salon.name[0]}</AvatarFallback>
-                         </Avatar>
-                       </div>
-                     </Link>
-
-                     {/* Middle: Info */}
-                     <div className="p-6 pb-4 flex-1 flex flex-col mt-2">
-                       <div className="mb-1">
-                         <div className="flex items-center text-sm font-semibold text-zinc-900 mb-2">
-                           <Star className="w-4 h-4 mr-1 text-amber-500 fill-amber-500" />
-                           {salon.rating} <span className="text-zinc-400 font-normal ml-1">({salon.reviews})</span>
-                         </div>
-                         <Link href={`/salons/${salon.slug}`}>
-                           <h3 className="font-bold text-xl text-zinc-900 leading-tight mb-1 group-hover:underline">{salon.name}</h3>
-                         </Link>
-                         <div className="flex items-center text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">
-                           <MapPin className="w-3.5 h-3.5 mr-1 text-zinc-400" /> {salon.location}
-                         </div>
-                       </div>
-
-                       <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
-                         {salon.tags.map((tag: string) => (
-                           <Badge key={tag} variant="secondary" className="bg-slate-100 text-zinc-600 hover:bg-slate-200 rounded-md font-medium px-2 shadow-none border border-slate-200/50">
-                             {tag}
-                           </Badge>
-                         ))}
-                       </div>
-
-                       {/* Service Preview */}
-                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-0">
-                         <div className="flex justify-between items-center mb-2">
-                           <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Starts From</span>
-                           <span className="font-black text-sm text-zinc-900">{formatPrice(salon.startingPrice)}</span>
-                         </div>
-                         <div className="flex justify-between items-center">
-                           <span className="text-xs text-zinc-600 truncate mr-2"><span className="text-zinc-400 mr-1">Popular:</span>{salon.popularService}</span>
-                           <span className="text-[9px] font-bold text-emerald-600 whitespace-nowrap bg-emerald-50 px-2 py-0.5 rounded flex items-center uppercase tracking-wider">
-                             <Clock className="w-3 h-3 mr-1" /> {salon.nextSlot}
-                           </span>
-                         </div>
-                       </div>
-                     </div>
-
-                     {/* Bottom: CTA */}
-                     <div className="p-4 pt-0 border-t border-slate-50 mt-4 flex gap-3">
-                       <Link 
-                         href={`/salons/${salon.slug}`}
-                         className="flex-1 inline-flex items-center justify-center rounded-xl h-12 font-semibold text-zinc-700 bg-white hover:bg-slate-50 hover:text-zinc-900 border border-slate-200 transition-colors text-xs"
-                       >
-                         View Salon
-                       </Link>
-                       <Link
-                         href={`/salons/${salon.slug}`}
-                         className="flex-1 inline-flex items-center justify-center rounded-xl h-12 font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow-md text-xs text-center"
-                       >
-                         Book Now
-                       </Link>
-                     </div>
-                   </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {filteredSalons.map((salon) => (
+                  <SalonCard
+                    key={salon.id}
+                    salon={{
+                      id: salon.id,
+                      slug: salon.slug,
+                      name: salon.name,
+                      image: salon.image,
+                      status: salon.status || (salon.openNow ? "Open Now" : "Closed"),
+                      rating: salon.rating,
+                      reviews: salon.reviews,
+                      city: salon.location.split(",")[0].trim(),
+                      categories: salon.tags,
+                      nextAvailable: salon.nextSlot,
+                      priceFrom: salon.startingPrice,
+                      featured: salon.featured,
+                      isVerified: salon.isVerified,
+                    } as any}
+                  />
                 ))}
               </div>
             </section>
