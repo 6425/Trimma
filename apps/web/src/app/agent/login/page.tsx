@@ -141,7 +141,7 @@ function AgentLoginForm() {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-[#121212] text-zinc-400">
         <div className="flex flex-col items-center">
-          <div className="w-8 h-8 border-4 border-[#F5B700] border-t-transparent rounded-full animate-spin mb-4" />
+          <div className="w-8 h-8 border-4 border-[#f9e000] border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-sm font-semibold text-white/70">Authenticating...</p>
         </div>
       </div>
@@ -151,13 +151,13 @@ function AgentLoginForm() {
   return (
     <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#121212]">
       <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:h-[100dvh] lg:w-1/2 lg:fixed lg:top-0 lg:left-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[#F5B700]" aria-hidden="true">
+        <div className="absolute inset-0 bg-[#f9e000]" aria-hidden="true">
           <img
             src={AGENT_LOGIN_HERO_IMAGE}
             alt=""
             className="h-full w-full object-cover object-center grayscale opacity-15 mix-blend-multiply scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#F5B700]/40 via-[#F5B700]/70 to-[#F5B700]/95" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#f9e000]/40 via-[#f9e000]/70 to-[#f9e000]/95" />
         </div>
 
         <Link
@@ -197,7 +197,7 @@ function AgentLoginForm() {
                   type="email"
                   placeholder="agent@trimma.io"
                   required
-                  className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30"
+                  className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#f9e000] focus-visible:ring-[#f9e000]/30"
                 />
               </div>
               <div className="space-y-2">
@@ -207,7 +207,7 @@ function AgentLoginForm() {
                   </Label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline"
+                    className="text-xs font-medium text-[#f9e000] hover:text-[#fff033] hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -216,7 +216,7 @@ function AgentLoginForm() {
                   id="password"
                   type="password"
                   required
-                  className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#F5B700] focus-visible:ring-[#F5B700]/30"
+                  className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#f9e000] focus-visible:ring-[#f9e000]/30"
                 />
               </div>
             </div>
@@ -224,7 +224,7 @@ function AgentLoginForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-11 w-full rounded-md bg-[#F5B700] text-black hover:bg-[#FFC947] hover:text-black font-bold disabled:opacity-50"
+              className="h-11 w-full rounded-md bg-[#f9e000] text-black hover:bg-[#fff033] hover:text-black font-bold disabled:opacity-50"
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
@@ -232,7 +232,7 @@ function AgentLoginForm() {
 
           <p className="text-center text-sm text-zinc-400">
             Customer or salon owner?{" "}
-            <Link href="/login" className="font-medium text-[#F5B700] hover:text-[#FFC947] hover:underline">
+            <Link href="/login" className="font-medium text-[#f9e000] hover:text-[#fff033] hover:underline">
               Sign in with Google
             </Link>
           </p>

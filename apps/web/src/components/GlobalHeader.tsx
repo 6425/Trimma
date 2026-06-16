@@ -6,6 +6,7 @@ import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Dro
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
 import Logo from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 
 const IconMap: Record<string, any> = {
   Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
@@ -123,8 +124,8 @@ export default function GlobalHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200 trimma-light-context">
-      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white">
+    <header className="sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200 trimma-light-context dark:bg-[#0b0b0b] dark:text-zinc-100 dark:border-white/10">
+      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white dark:bg-[#0b0b0b] dark:border-white/10">
         <div className="mx-auto max-w-7xl px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           <Link href="/" className="hover:opacity-90 transition-opacity shrink-0">
             <Logo iconSize={32} />
@@ -212,12 +213,12 @@ export default function GlobalHeader() {
                             onMouseEnter={() => setActiveProvince(prov.name)}
                             className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
                               activeProvince === prov.name 
-                                ? 'bg-white text-[#F5B700] font-bold shadow-[inset_2px_0_0_#F5B700]' 
+                                ? 'bg-white text-[#f9e000] font-bold shadow-[inset_2px_0_0_#f9e000]' 
                                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
                             }`}
                           >
                             <span className="truncate">{prov.name.replace(" Province", "")}</span>
-                            {activeProvince === prov.name && <span className="text-[#F5B700] text-[10px] shrink-0">▶</span>}
+                            {activeProvince === prov.name && <span className="text-[#f9e000] text-[10px] shrink-0">▶</span>}
                           </div>
                         ))}
                       </div>
@@ -229,7 +230,7 @@ export default function GlobalHeader() {
                             <Link
                               key={dist}
                               href={`/?l=${encodeURIComponent(dist)}`}
-                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#F5B700] transition-colors"
+                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#f9e000] transition-colors"
                             >
                               {dist}
                             </Link>
@@ -278,6 +279,7 @@ export default function GlobalHeader() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              <ThemeToggle className="w-9 h-9 p-0 hidden sm:inline-flex" />
               {user ? (
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link

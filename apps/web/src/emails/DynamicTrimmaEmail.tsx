@@ -52,7 +52,7 @@ const paragraphStyle: React.CSSProperties = {
 };
 
 const buttonStyle: React.CSSProperties = {
-  backgroundColor: "#F5B700",
+  backgroundColor: "#f9e000",
   borderRadius: "12px",
   color: "#18181b",
   display: "inline-block",

@@ -823,7 +823,7 @@ export default function AdminAgents() {
                                       {agent.agent_tier === "field_agent" && agent.reports_to_email && (
                                         <Badge
                                           variant="secondary"
-                                          className="px-1.5 py-0 border-none bg-[#F5B700]/15 text-[#9A7200] font-bold text-[9px]"
+                                          className="px-1.5 py-0 border-none bg-[#f9e000]/15 text-[#8a7600] font-bold text-[9px]"
                                         >
                                           → {agent.reports_to_email}
                                         </Badge>
@@ -839,7 +839,7 @@ export default function AdminAgents() {
                                   {agent.territory && (
                                     <Badge
                                       variant="secondary"
-                                      className="px-1.5 py-0 border-none bg-[#F5B700]/20 text-[#F5B700] font-bold text-[9px] mr-1"
+                                      className="px-1.5 py-0 border-none bg-[#f9e000]/20 text-[#f9e000] font-bold text-[9px] mr-1"
                                     >
                                       {agent.territory}
                                     </Badge>
@@ -1501,7 +1501,7 @@ export default function AdminAgents() {
                   onChange={(e) =>
                     setEditAgentTier(e.target.value === "field_agent" ? "field_agent" : "regional_head")
                   }
-                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#F5B700]/20"
+                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#f9e000]/20"
                 >
                   <option value="regional_head">Regional Head</option>
                   <option value="field_agent">Sub-Agent (Field Agent)</option>
@@ -1515,7 +1515,7 @@ export default function AdminAgents() {
                     <select
                       value={editReportsToAgentId}
                       onChange={(e) => setEditReportsToAgentId(e.target.value)}
-                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#F5B700]/20"
+                      className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#f9e000]/20"
                     >
                       <option value="">Select regional head...</option>
                       {regionalHeadOptions.map((head) => (
@@ -1545,7 +1545,7 @@ export default function AdminAgents() {
                 <select
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#F5B700]/20"
+                  className="w-full h-10 px-3 border border-slate-200 focus:outline-none rounded-xl text-xs font-bold bg-white text-zinc-700 focus:ring-2 focus:ring-[#f9e000]/20"
                 >
                   <option value="active">Active (Authorized to Prospect)</option>
                   <option value="inactive">Inactive (Suspended)</option>

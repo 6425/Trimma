@@ -160,7 +160,7 @@ export default function RegionalHeadCommissionsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider bg-[#F5B700]/15 text-[#9A7200] uppercase rounded-full">
+            <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider bg-[#f9e000]/15 text-[#8a7600] uppercase rounded-full">
               Regional Head
             </span>
             <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400">
@@ -192,14 +192,14 @@ export default function RegionalHeadCommissionsPage() {
         <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h2 className="font-bold text-zinc-900 flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#9A7200]" />
+              <Users className="w-4 h-4 text-[#8a7600]" />
               Assigned Sub-Agents
             </h2>
             <p className="text-xs text-zinc-500 mt-0.5">
               Set each sub-agent&apos;s share of your gross agent commission on bookings and subscriptions.
             </p>
           </div>
-          <Badge className="bg-[#F5B700]/15 text-[#9A7200] border-none font-bold">
+          <Badge className="bg-[#f9e000]/15 text-[#8a7600] border-none font-bold">
             {subAgents.length} assigned
           </Badge>
         </div>

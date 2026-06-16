@@ -60,7 +60,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
               aria-label="Toggle annual billing"
             >
               <div
-                className={`w-6 h-6 bg-[#F5B700] rounded-full shadow-md transform transition-transform duration-300 ${
+                className={`w-6 h-6 bg-[#f9e000] rounded-full shadow-md transform transition-transform duration-300 ${
                   isAnnual ? "translate-x-8" : "translate-x-0"
                 }`}
               />

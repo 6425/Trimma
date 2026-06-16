@@ -126,7 +126,7 @@ function DashboardContent() {
             setLoading(true);
             void loadDashboard();
           }}
-          className="inline-flex items-center gap-2 bg-[#F5B700] text-black font-bold rounded-xl px-4 py-2"
+          className="inline-flex items-center gap-2 bg-[#f9e000] text-black font-bold rounded-xl px-4 py-2"
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -139,7 +139,7 @@ function DashboardContent() {
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 md:space-y-12 min-w-0">
       <section className="bg-white rounded-3xl p-6 md:p-10 text-zinc-900 relative overflow-hidden shadow-sm border border-zinc-200">
         <div className="absolute inset-0 bg-gradient-to-r from-white to-zinc-50 z-0"></div>
-        <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#F5B700]/10 blur-3xl rounded-full z-0"></div>
+        <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#f9e000]/10 blur-3xl rounded-full z-0"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
@@ -152,7 +152,7 @@ function DashboardContent() {
                 {getGreeting()}, {userName} 👋
               </h1>
               <div className="flex items-center gap-3 text-sm text-zinc-600">
-                <Badge variant="secondary" className="bg-[#F5B700]/10 text-[#F5B700] border border-[#F5B700]/20 font-semibold text-xs px-2.5 py-0.5">
+                <Badge variant="secondary" className="bg-[#f9e000]/10 text-[#f9e000] border border-[#f9e000]/20 font-semibold text-xs px-2.5 py-0.5">
                   {userRole}
                 </Badge>
               </div>
@@ -161,16 +161,16 @@ function DashboardContent() {
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#f9e000]/10 hover:text-[#f9e000] hover:border-[#f9e000]/30 h-12 rounded-xl w-full transition-all">
             Book Now
           </Link>
-          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#f9e000]/10 hover:text-[#f9e000] hover:border-[#f9e000]/30 h-12 rounded-xl w-full transition-all">
             Find Salons
           </Link>
-          <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#f9e000]/10 hover:text-[#f9e000] hover:border-[#f9e000]/30 h-12 rounded-xl w-full transition-all">
             Saved Styles
           </Link>
-          <Link href="/customer/bookings" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#F5B700]/10 hover:text-[#F5B700] hover:border-[#F5B700]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/bookings" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#f9e000]/10 hover:text-[#f9e000] hover:border-[#f9e000]/30 h-12 rounded-xl w-full transition-all">
             History
           </Link>
         </div>
@@ -195,7 +195,7 @@ function DashboardContent() {
           <div className="text-center py-12 text-zinc-500">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
             <p>You have no upcoming bookings.</p>
-            <Link href="/" className="inline-flex mt-2 text-[#F5B700] hover:text-[#F5B700]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
+            <Link href="/" className="inline-flex mt-2 text-[#f9e000] hover:text-[#f9e000]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
               Browse salons to book
             </Link>
           </div>
@@ -209,12 +209,12 @@ function DashboardContent() {
               return (
                 <div
                   key={booking.id}
-                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#F5B700]/50 hover:bg-[#F5B700]/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#f9e000]/50 hover:bg-[#f9e000]/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-zinc-900">{booking.salons?.name || "Trimma Partner Salon"}</h3>
                     <div className="flex items-center gap-2 mt-1 text-sm text-zinc-600">
-                      <CalendarDays className="w-4 h-4 text-[#F5B700]/80" />
+                      <CalendarDays className="w-4 h-4 text-[#f9e000]/80" />
                       <span>
                         {booking.booking_date} at {booking.booking_time}
                       </span>
@@ -226,7 +226,7 @@ function DashboardContent() {
 
                     {["confirmed", "pending", "reservation_paid"].includes(String(booking.status || "").toLowerCase()) ? (
                       <>
-                        <Badge className="bg-[#F5B700]/10 hover:bg-[#F5B700]/20 text-[#F5B700] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
+                        <Badge className="bg-[#f9e000]/10 hover:bg-[#f9e000]/20 text-[#f9e000] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
                           Deposit Paid (Rs. {formatLkr(paid)})
                         </Badge>
                         <span className="text-[9px] text-zinc-500 font-medium text-right">

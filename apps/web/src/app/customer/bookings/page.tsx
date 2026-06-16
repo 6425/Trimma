@@ -110,7 +110,7 @@ function BookingsListContent() {
       return (
         <Button
           onClick={() => openReviewDialog(booking)}
-          className="bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold rounded-xl h-10 px-4"
+          className="bg-[#f9e000] hover:bg-[#f9e000]/90 text-black font-bold rounded-xl h-10 px-4"
         >
           <Star className="w-4 h-4 mr-2" />
           {reviewState.actionLabel}
@@ -155,8 +155,8 @@ function BookingsListContent() {
   const tabButtonClass = (tab: BookingTab) =>
     `rounded-xl px-4 py-2 text-xs font-bold transition-all ${
       validTab === tab
-        ? "bg-[#F5B700] text-black shadow-sm"
-        : "bg-white text-zinc-600 border border-zinc-200 hover:border-[#F5B700]/40"
+        ? "bg-[#f9e000] text-black shadow-sm"
+        : "bg-white text-zinc-600 border border-zinc-200 hover:border-[#f9e000]/40"
     }`;
 
   return (
@@ -167,15 +167,15 @@ function BookingsListContent() {
           <p className="text-sm text-zinc-500 mt-1">View, track, and review your salon appointments.</p>
         </div>
 
-        <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all">
+        <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-[#f9e000] hover:bg-[#f9e000]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all">
           <Scissors className="w-4 h-4 mr-2" />
           Book New Appointment
         </Link>
       </div>
 
       {!loading && bookings.length > 0 ? (
-        <div className="rounded-2xl border border-[#F5B700]/20 bg-[#F5B700]/5 px-4 py-3 flex gap-3 items-start">
-          <Star className="w-4 h-4 text-[#F5B700] shrink-0 mt-0.5" />
+        <div className="rounded-2xl border border-[#f9e000]/20 bg-[#f9e000]/5 px-4 py-3 flex gap-3 items-start">
+          <Star className="w-4 h-4 text-[#f9e000] shrink-0 mt-0.5" />
           <p className="text-xs text-zinc-700 leading-relaxed">
             <span className="font-bold text-zinc-900">How reviews work:</span> Once your confirmed appointment time has
             passed, a <span className="font-bold">Leave review</span> button appears here. You can rate the salon and
@@ -200,7 +200,7 @@ function BookingsListContent() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#F5B700]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#f9e000]"></div>
           <p className="text-sm text-zinc-400 font-bold">Loading your appointments...</p>
         </div>
       ) : bookings.length === 0 ? (
@@ -210,7 +210,7 @@ function BookingsListContent() {
           <p className="text-sm text-zinc-500 mt-2 max-w-sm mx-auto leading-relaxed">
             You don&apos;t have any bookings yet. Find a professional salon nearby and book your first experience.
           </p>
-          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full mt-6 bg-[#F5B700] hover:bg-[#F5B700]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all">
+          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full mt-6 bg-[#f9e000] hover:bg-[#f9e000]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all">
             Explore Salons
           </Link>
         </div>
@@ -229,7 +229,7 @@ function BookingsListContent() {
             <button
               type="button"
               onClick={() => setTab("all")}
-              className="mt-6 text-xs font-bold text-[#F5B700] hover:underline"
+              className="mt-6 text-xs font-bold text-[#f9e000] hover:underline"
             >
               View all bookings
             </button>
@@ -240,7 +240,7 @@ function BookingsListContent() {
           {filteredBookings.map((booking) => (
             <div
               key={booking.id}
-              className="bg-white rounded-2xl border border-zinc-200 hover:border-[#F5B700]/50 hover:bg-[#F5B700]/5 transition-all p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm"
+              className="bg-white rounded-2xl border border-zinc-200 hover:border-[#f9e000]/50 hover:bg-[#f9e000]/5 transition-all p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 flex items-center justify-center shrink-0">
@@ -254,7 +254,7 @@ function BookingsListContent() {
                       variant={booking.status === "confirmed" ? "default" : booking.status === "pending" ? "secondary" : "outline"}
                       className={`text-[9px] font-black uppercase px-2 py-0.5 tracking-wide rounded-md border-none ${
                         booking.status === "confirmed"
-                          ? "bg-[#F5B700]/10 text-[#F5B700]"
+                          ? "bg-[#f9e000]/10 text-[#f9e000]"
                           : booking.status === "pending"
                             ? "bg-amber-500/10 text-amber-500"
                             : booking.status === "completed"
@@ -267,7 +267,7 @@ function BookingsListContent() {
                   </div>
 
                   <div className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#F5B700]/80" />
+                    <MapPin className="w-3.5 h-3.5 text-[#f9e000]/80" />
                     <span>{booking.salonSlug ? booking.salonName : "Sri Lanka"}</span>
                   </div>
 
@@ -280,7 +280,7 @@ function BookingsListContent() {
               <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start sm:items-center md:items-end lg:items-center gap-4 sm:gap-10 md:gap-4 lg:gap-10 pt-4 md:pt-0 border-t border-zinc-200 md:border-t-0 justify-between">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 text-zinc-800 text-xs font-extrabold">
-                    <CalendarDays className="w-4 h-4 text-[#F5B700]" />
+                    <CalendarDays className="w-4 h-4 text-[#f9e000]" />
                     <span>{booking.bookingDate}</span>
                   </div>
                   <div className="flex items-center gap-2 text-zinc-600 text-xs font-semibold">

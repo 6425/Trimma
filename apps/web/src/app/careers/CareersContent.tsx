@@ -182,8 +182,8 @@ function SectionBadge({
     );
   }
   return (
-    <div className="inline-flex items-center gap-2 bg-[#F5B700]/10 border border-[#F5B700]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
-      <Sparkles className="w-4 h-4 text-[#F5B700]" />
+    <div className="inline-flex items-center gap-2 bg-[#f9e000]/10 border border-[#f9e000]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
+      <Sparkles className="w-4 h-4 text-[#f9e000]" />
       {children}
     </div>
   );
@@ -238,7 +238,7 @@ export function CareersContent() {
                     key={stat.label}
                     className="bg-zinc-50 border border-zinc-200 rounded-2xl px-3 py-4 text-center"
                   >
-                    <div className="text-lg sm:text-xl font-black text-[#F5B700]">{stat.value}</div>
+                    <div className="text-lg sm:text-xl font-black text-[#f9e000]">{stat.value}</div>
                     <div className="text-[10px] sm:text-xs font-semibold text-zinc-500 mt-1 leading-tight">
                       {stat.label}
                     </div>
@@ -265,7 +265,7 @@ export function CareersContent() {
             </div>
 
             <div className="relative">
-              <div className="absolute -inset-4 rounded-[2rem] bg-[#F5B700]/10 blur-2xl pointer-events-none" />
+              <div className="absolute -inset-4 rounded-[2rem] bg-[#f9e000]/10 blur-2xl pointer-events-none" />
               <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-zinc-50">
                 <Image
                   src="/assets/trimma-os-dashboard.png"
@@ -301,12 +301,12 @@ export function CareersContent() {
                 key={tier.label}
                 className={`relative bg-white rounded-3xl border p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
                   tier.popular
-                    ? "border-[#F5B700] shadow-lg shadow-[#F5B700]/15 ring-2 ring-[#F5B700]/20"
+                    ? "border-[#f9e000] shadow-lg shadow-[#f9e000]/15 ring-2 ring-[#f9e000]/20"
                     : "border-zinc-200 shadow-sm"
                 }`}
               >
                 {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#F5B700] text-black text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#f9e000] text-black text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-full">
                     Most Popular
                   </div>
                 )}
@@ -315,7 +315,7 @@ export function CareersContent() {
                 <div className="text-sm text-zinc-400 mb-4">{tier.period}</div>
                 <div
                   className={`inline-block text-xs font-bold px-3 py-1 rounded-full ${
-                    tier.popular ? "bg-[#F5B700]/15 text-[#B8860B]" : "bg-zinc-100 text-zinc-600"
+                    tier.popular ? "bg-[#f9e000]/15 text-[#B8860B]" : "bg-zinc-100 text-zinc-600"
                   }`}
                 >
                   {tier.label}
@@ -345,11 +345,11 @@ export function CareersContent() {
               const Icon = item.icon;
               return (
                 <div key={item.step} className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[#F5B700] text-black font-black text-xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#F5B700]/25">
+                  <div className="w-14 h-14 rounded-2xl bg-[#f9e000] text-black font-black text-xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#f9e000]/25">
                     {item.step}
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-[#F5B700]/10 flex items-center justify-center mx-auto mb-4">
-                    <Icon className="w-6 h-6 text-[#F5B700]" />
+                  <div className="w-12 h-12 rounded-xl bg-[#f9e000]/10 flex items-center justify-center mx-auto mb-4">
+                    <Icon className="w-6 h-6 text-[#f9e000]" />
                   </div>
                   <h3 className="font-bold text-zinc-900 text-xl mb-3">{item.title}</h3>
                   <p className="text-zinc-500 text-sm leading-relaxed">{item.description}</p>
@@ -379,16 +379,16 @@ export function CareersContent() {
                     key={label}
                     className="flex items-center gap-2.5 bg-white border border-zinc-200 rounded-xl px-3 py-3"
                   >
-                    <Icon className="w-4 h-4 text-[#F5B700] shrink-0" />
+                    <Icon className="w-4 h-4 text-[#f9e000] shrink-0" />
                     <span className="text-xs font-semibold text-zinc-800">{label}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="bg-[#0B0B0B] rounded-3xl p-8 border border-[#F5B700]/20 relative overflow-hidden">
+            <div className="bg-[#0B0B0B] rounded-3xl p-8 border border-[#f9e000]/20 relative overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(245,183,0,0.12)_0%,_transparent_55%)] pointer-events-none" />
               <div className="relative space-y-4">
-                <div className="text-xs font-bold uppercase tracking-widest text-[#F5B700] mb-2">
+                <div className="text-xs font-bold uppercase tracking-widest text-[#f9e000] mb-2">
                   Onboarding Pipeline
                 </div>
                 {[
@@ -400,13 +400,13 @@ export function CareersContent() {
                     key={step}
                     className="flex items-center gap-3 bg-[#151515] border border-white/5 rounded-xl px-4 py-3"
                   >
-                    <Check className="w-4 h-4 text-[#F5B700] shrink-0" />
+                    <Check className="w-4 h-4 text-[#f9e000] shrink-0" />
                     <span className="text-sm text-zinc-300 font-medium">{step}</span>
                   </div>
                 ))}
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-[#F5B700] hover:text-[#FFC947] transition-colors"
+                  className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-[#f9e000] hover:text-[#fff033] transition-colors"
                 >
                   Access Agent Portal
                   <ArrowRight className="w-4 h-4" />
@@ -435,10 +435,10 @@ export function CareersContent() {
               return (
                 <div
                   key={item.title}
-                  className="group bg-white border border-zinc-200 hover:border-[#F5B700]/40 rounded-3xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  className="group bg-white border border-zinc-200 hover:border-[#f9e000]/40 rounded-3xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-[#F5B700]/10 flex items-center justify-center mb-4 group-hover:bg-[#F5B700]/20 transition-colors">
-                    <Icon className="w-6 h-6 text-[#F5B700]" />
+                  <div className="w-12 h-12 rounded-2xl bg-[#f9e000]/10 flex items-center justify-center mb-4 group-hover:bg-[#f9e000]/20 transition-colors">
+                    <Icon className="w-6 h-6 text-[#f9e000]" />
                   </div>
                   <h3 className="font-bold text-zinc-900 text-lg mb-2">{item.title}</h3>
                   <p className="text-zinc-500 text-sm leading-relaxed">{item.description}</p>
@@ -465,8 +465,8 @@ export function CareersContent() {
                   key={stat.label}
                   className="bg-white border border-zinc-200 rounded-2xl p-6 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#F5B700]/10 flex items-center justify-center mx-auto mb-3">
-                    <Icon className="w-5 h-5 text-[#F5B700]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#f9e000]/10 flex items-center justify-center mx-auto mb-3">
+                    <Icon className="w-5 h-5 text-[#f9e000]" />
                   </div>
                   <div className="text-2xl font-black text-zinc-950 mb-1">{stat.value}</div>
                   <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">{stat.label}</div>
@@ -484,8 +484,8 @@ export function CareersContent() {
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 bg-[#F5B700]/10 border border-[#F5B700]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
-              <HelpCircle className="w-4 h-4 text-[#F5B700]" />
+            <div className="inline-flex items-center gap-2 bg-[#f9e000]/10 border border-[#f9e000]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
+              <HelpCircle className="w-4 h-4 text-[#f9e000]" />
               FAQ
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
@@ -514,7 +514,7 @@ export function CareersContent() {
           </p>
           <a
             href="#apply"
-            className="inline-flex items-center justify-center gap-2 bg-[#F5B700] hover:bg-[#FFC947] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#F5B700]/20 mb-8"
+            className="inline-flex items-center justify-center gap-2 bg-[#f9e000] hover:bg-[#fff033] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#f9e000]/20 mb-8"
           >
             <Briefcase className="w-4 h-4" />
             Apply to Become an Agent
@@ -522,7 +522,7 @@ export function CareersContent() {
           <div className="flex flex-wrap justify-center gap-6 text-sm font-semibold text-zinc-500">
             {["Free to apply", "10% commission tier", "Real-time earnings dashboard"].map((item) => (
               <span key={item} className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-[#F5B700]" />
+                <Check className="w-4 h-4 text-[#f9e000]" />
                 {item}
               </span>
             ))}

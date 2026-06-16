@@ -160,7 +160,7 @@ export function LkPhoneInput({
 
   const wrapperTheme =
     theme === "dark"
-      ? "rounded-xl border border-white/10 bg-[#0B0B0B] focus-within:border-[#F5B700]/60 focus-within:ring-[#F5B700]/20"
+      ? "rounded-xl border border-white/10 bg-[#0B0B0B] focus-within:border-[#f9e000]/60 focus-within:ring-[#f9e000]/20"
       : theme === "light"
       ? "rounded-xl border border-zinc-200 bg-white focus-within:border-zinc-900 focus-within:ring-zinc-900/10"
       : "rounded-md border border-gray-300 bg-white focus-within:border-zinc-900 focus-within:ring-zinc-900/10";

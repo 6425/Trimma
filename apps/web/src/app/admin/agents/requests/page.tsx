@@ -220,7 +220,7 @@ export default function AdminAgentRequestsPage() {
             onClick={() => setStatusFilter(status)}
             className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-colors ${
               statusFilter === status
-                ? "bg-[#F5B700] text-black"
+                ? "bg-[#f9e000] text-black"
                 : "bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-300"
             }`}
           >
@@ -460,7 +460,7 @@ export default function AdminAgentRequestsPage() {
                 </Button>
                 {form.status !== "provisioned" && (
                   <Button
-                    className="bg-[#F5B700] hover:bg-[#FFC947] text-black"
+                    className="bg-[#f9e000] hover:bg-[#fff033] text-black"
                     onClick={() => void handleProvision()}
                     disabled={saving || provisioning}
                   >

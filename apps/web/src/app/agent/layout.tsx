@@ -153,7 +153,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                     onClick={() => setMobileMenuOpen(false)}
                     className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                        ? "is-active-nav bg-[#f9e000] text-black font-semibold"
                         : ""
                     }`}
                   >
@@ -173,9 +173,9 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >
-            <Avatar className="w-8 h-8 border border-[#F5B700]/30">
+            <Avatar className="w-8 h-8 border border-[#f9e000]/30">
               {agentAvatar && <AvatarImage src={agentAvatar} alt={agentName} />}
-              <AvatarFallback className="bg-[#F5B700]/10 text-[#F5B700] text-xs font-bold">
+              <AvatarFallback className="bg-[#f9e000]/10 text-[#f9e000] text-xs font-bold">
                 {agentName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -203,7 +203,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Center: Search (desktop only) */}
-          <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#F5B700]/50 focus-within:ring-1 focus-within:ring-[#F5B700]/30 transition-all">
+          <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#f9e000]/50 focus-within:ring-1 focus-within:ring-[#f9e000]/30 transition-all">
             <Search className="w-4 h-4 text-white/80 mr-2 shrink-0" />
             <input
               type="text"
@@ -226,7 +226,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/8 transition-colors">
               <Bell className="w-5 h-5" />
               {hasUnreadNotifications && (
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#F5B700]" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#f9e000]" />
               )}
             </button>
           </div>
@@ -252,11 +252,11 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
               key={item.name}
               href={item.path}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                isActive ? "is-active-nav text-[#F5B700]" : "text-white/70 hover:text-white"
+                isActive ? "is-active-nav text-[#f9e000]" : "text-white/70 hover:text-white"
               }`}
             >
               {item.icon}
-              <span className={`text-[10px] font-semibold ${isActive ? "text-[#F5B700]" : ""}`}>{item.name}</span>
+              <span className={`text-[10px] font-semibold ${isActive ? "text-[#f9e000]" : ""}`}>{item.name}</span>
             </Link>
           );
         })}

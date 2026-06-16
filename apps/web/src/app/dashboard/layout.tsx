@@ -204,7 +204,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <CollapsibleTrigger
                       className={`trimma-sidebar-nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         pathname?.startsWith(item.href)
-                          ? "is-active-nav bg-[#F5B700] text-black"
+                          ? "is-active-nav bg-[#f9e000] text-black"
                           : ""
                       }`}
                     >
@@ -220,7 +220,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           href={child.href}
                           className={`trimma-sidebar-nav-item flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                             isActive(child.href)
-                              ? "is-active-nav text-[#F5B700] bg-[#F5B700]/10"
+                              ? "is-active-nav text-[#f9e000] bg-[#f9e000]/10"
                               : ""
                           }`}
                         >
@@ -233,7 +233,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link href={item.href}
                     className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive(item.href)
-                        ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                        ? "is-active-nav bg-[#f9e000] text-black font-semibold"
                         : ""
                     }`}
                   >
@@ -251,7 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
-                ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                ? "is-active-nav bg-[#f9e000] text-black font-semibold"
                 : ""
             }`}
           >
@@ -263,7 +263,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/dashboard/help"
               className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 pathname === "/dashboard/help"
-                  ? "is-active-nav bg-[#F5B700] text-black font-semibold"
+                  ? "is-active-nav bg-[#f9e000] text-black font-semibold"
                   : ""
               }`}
             >
@@ -298,7 +298,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <input
                 type="search"
                 placeholder="Search..."
-                className="h-9 w-full rounded-lg bg-white/6 border border-white/8 pl-9 pr-4 text-sm text-white placeholder:text-white/60 outline-none focus:border-[#F5B700]/50 focus:ring-1 focus:ring-[#F5B700]/30 transition-all"
+                className="h-9 w-full rounded-lg bg-white/6 border border-white/8 pl-9 pr-4 text-sm text-white placeholder:text-white/60 outline-none focus:border-[#f9e000]/50 focus:ring-1 focus:ring-[#f9e000]/30 transition-all"
               />
             </div>
           </div>
@@ -332,9 +332,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="text-sm font-semibold text-white">{role === 'admin' ? 'Platform Admin' : salonName}</div>
                 <div className="text-xs text-white/80">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
-              <Avatar className="h-8 w-8 border-2 border-[#F5B700]/30 bg-[#F5B700]">
+              <Avatar className="h-8 w-8 border-2 border-[#f9e000]/30 bg-[#f9e000]">
                 <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(role === 'admin' ? 'Admin' : salonName)}`} />
-                <AvatarFallback className="bg-[#F5B700] text-black text-xs font-bold">
+                <AvatarFallback className="bg-[#f9e000] text-black text-xs font-bold">
                   {role === 'admin' ? 'AD' : 'SA'}
                 </AvatarFallback>
               </Avatar>

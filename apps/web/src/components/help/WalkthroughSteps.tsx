@@ -14,12 +14,12 @@ const LandingMockup = () => (
       <p className="text-zinc-700 text-[10px] mb-4 max-w-[250px] leading-relaxed">Book salon, spa, barber, nail, skincare, and wellness appointments instantly.</p>
       
       <div className="flex gap-2 mb-8">
-         <div className="bg-[#F5B700] text-black text-[10px] font-bold px-3 py-1.5 rounded-md">Book Now</div>
+         <div className="bg-[#f9e000] text-black text-[10px] font-bold px-3 py-1.5 rounded-md">Book Now</div>
          <div className="bg-black/10 text-zinc-900 text-[10px] font-bold px-3 py-1.5 rounded-md border border-black/10">List Your Business</div>
       </div>
       
       {/* Search Widget */}
-      <div className="w-[90%] bg-[#F5B700] rounded-lg p-1 flex flex-col gap-1 border-2 border-white">
+      <div className="w-[90%] bg-[#f9e000] rounded-lg p-1 flex flex-col gap-1 border-2 border-white">
         <div className="bg-white flex items-center gap-2 px-2 py-1.5 rounded-md">
           <MapPin className="w-3 h-3 text-zinc-400" />
           <div className="text-[10px] text-zinc-500">Where are you?</div>
@@ -28,7 +28,7 @@ const LandingMockup = () => (
           <Search className="w-3 h-3 text-zinc-400" />
           <div className="text-[10px] text-zinc-500">What are you looking for?</div>
         </div>
-        <div className="bg-[#E6AC00] text-black font-bold text-[10px] py-1.5 rounded-md text-center mt-1">
+        <div className="bg-[#dfc900] text-black font-bold text-[10px] py-1.5 rounded-md text-center mt-1">
           Search
         </div>
       </div>
@@ -51,10 +51,10 @@ const SalonsMockup = () => (
         {/* Miniature Search Bar */}
         <div className="bg-white rounded-lg p-1 flex gap-1 mx-2">
           <div className="flex-1 bg-zinc-50 rounded-md flex items-center px-2 py-1 gap-1">
-             <Search className="w-3 h-3 text-[#F5B700]" />
+             <Search className="w-3 h-3 text-[#f9e000]" />
              <div className="text-[8px] text-zinc-400 font-bold">Haircut, color, spa...</div>
           </div>
-          <div className="bg-[#F5B700] text-black font-bold text-[8px] px-3 py-1 rounded-md flex items-center justify-center">Search</div>
+          <div className="bg-[#f9e000] text-black font-bold text-[8px] px-3 py-1 rounded-md flex items-center justify-center">Search</div>
         </div>
       </div>
     </div>
@@ -66,7 +66,7 @@ const SalonsMockup = () => (
          <div className="font-black text-[10px] text-zinc-900 border-b border-slate-100 pb-1">Filters</div>
          <div className="space-y-1">
            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm border border-zinc-300"></div><div className="text-[8px] font-bold text-zinc-600">Open Now</div></div>
-           <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#F5B700] border border-[#F5B700]"></div><div className="text-[8px] font-bold text-zinc-600">Verified Only</div></div>
+           <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#f9e000] border border-[#f9e000]"></div><div className="text-[8px] font-bold text-zinc-600">Verified Only</div></div>
          </div>
       </div>
 
@@ -77,12 +77,12 @@ const SalonsMockup = () => (
           <div className="flex-1">
             <div className="flex justify-between items-start">
               <div className="font-black text-[10px] text-zinc-900">Sampath Salon</div>
-              <div className="flex items-center gap-0.5 text-[8px] font-black text-zinc-900"><Star className="w-2 h-2 text-[#F5B700] fill-[#F5B700]" /> 4.9</div>
+              <div className="flex items-center gap-0.5 text-[8px] font-black text-zinc-900"><Star className="w-2 h-2 text-[#f9e000] fill-[#f9e000]" /> 4.9</div>
             </div>
             <div className="text-[8px] text-zinc-500 font-bold flex items-center gap-0.5 mt-0.5"><MapPin className="w-2 h-2" /> Colombo 07</div>
             <div className="flex gap-1 mt-1.5">
                <div className="text-[6px] font-bold bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-sm">Hair</div>
-               <div className="text-[6px] font-bold bg-[#F5B700] text-black border border-[#F5B700] px-1.5 py-0.5 rounded-sm">Verified</div>
+               <div className="text-[6px] font-bold bg-[#f9e000] text-black border border-[#f9e000] px-1.5 py-0.5 rounded-sm">Verified</div>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ const SearchBarMockup = () => (
 const SelectSalonMockup = () => (
   <div className="w-full h-[400px] bg-zinc-50 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 flex flex-col relative mx-auto font-sans">
     <div className="p-6 h-full flex flex-col justify-center">
-      <div className="bg-white rounded-2xl border border-[#F5B700] overflow-hidden shadow-[0_10px_40px_rgba(245,183,0,0.15)] transform scale-105 transition-transform">
+      <div className="bg-white rounded-2xl border border-[#f9e000] overflow-hidden shadow-[0_10px_40px_rgba(245,183,0,0.15)] transform scale-105 transition-transform">
         <div className="h-24 bg-zinc-800 relative">
            <div className="absolute -bottom-6 left-4 w-12 h-12 bg-white rounded-xl border-2 border-white flex items-center justify-center font-bold text-xs">SS</div>
         </div>
@@ -159,7 +159,7 @@ const SalonPageMockup = () => (
           </div>
           <div className="flex flex-col items-end gap-1">
             <div className="font-bold text-sm text-zinc-900">LKR 1,500</div>
-            <div className="px-3 py-1 bg-[#F5B700] text-black text-[10px] font-bold rounded-md">Add</div>
+            <div className="px-3 py-1 bg-[#f9e000] text-black text-[10px] font-bold rounded-md">Add</div>
           </div>
         </div>
         <div className="bg-white p-3 rounded-xl border border-zinc-200 flex justify-between items-center shadow-sm">
@@ -193,7 +193,7 @@ const BookingProcessMockup = () => (
         <div className="grid grid-cols-3 gap-2">
           <div className="py-2 text-center rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-400">09:00</div>
           <div className="py-2 text-center rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-400">10:00</div>
-          <div className="py-2 text-center rounded-lg bg-[#F5B700] text-black border border-[#F5B700] text-xs font-bold shadow-sm">11:00</div>
+          <div className="py-2 text-center rounded-lg bg-[#f9e000] text-black border border-[#f9e000] text-xs font-bold shadow-sm">11:00</div>
         </div>
       </div>
       <div>
@@ -226,7 +226,7 @@ const CheckoutMockup = () => (
         </div>
       </div>
 
-      <div className="bg-[#F5B700]/10 border border-[#F5B700]/30 p-4 rounded-xl space-y-2">
+      <div className="bg-[#f9e000]/10 border border-[#f9e000]/30 p-4 rounded-xl space-y-2">
         <div className="flex justify-between items-center">
            <div className="text-xs font-bold text-zinc-900">Required Deposit (20%)</div>
            <div className="font-black text-sm text-zinc-900">LKR 300</div>
@@ -298,7 +298,7 @@ const WhatsAppConfirmedMockup = () => (
 const VisitMockup = () => (
   <div className="w-full h-[400px] bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-zinc-800 flex flex-col relative mx-auto font-sans">
     <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-white">
-      <CheckCircle2 className="w-12 h-12 text-[#F5B700] mb-4" />
+      <CheckCircle2 className="w-12 h-12 text-[#f9e000] mb-4" />
       <h3 className="text-xl font-bold mb-1">Service Complete</h3>
       <p className="text-xs text-zinc-400 mb-8">Hope you enjoyed your new look!</p>
       
@@ -313,8 +313,8 @@ const VisitMockup = () => (
         </div>
         <div className="h-px bg-zinc-700 w-full mb-3"></div>
         <div className="flex justify-between items-center">
-           <div className="text-sm font-bold text-[#F5B700]">Paid at Salon</div>
-           <div className="text-sm font-black text-[#F5B700]">LKR 1,200</div>
+           <div className="text-sm font-bold text-[#f9e000]">Paid at Salon</div>
+           <div className="text-sm font-black text-[#f9e000]">LKR 1,200</div>
         </div>
       </div>
     </div>
@@ -331,7 +331,7 @@ const ReviewMockup = () => (
       
       <div className="flex gap-1.5">
         {[1,2,3,4,5].map(i => (
-          <Star key={i} className={`w-8 h-8 ${i <= 5 ? "text-[#F5B700] fill-[#F5B700]" : "text-zinc-100 fill-zinc-100"}`} />
+          <Star key={i} className={`w-8 h-8 ${i <= 5 ? "text-[#f9e000] fill-[#f9e000]" : "text-zinc-100 fill-zinc-100"}`} />
         ))}
       </div>
       
@@ -427,7 +427,7 @@ export function WalkthroughSteps() {
     <div className="w-full max-w-6xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden flex min-h-[600px] h-[700px]">
       
       {/* Left Sidebar - Navigation (Scrollable) */}
-      <div className="w-1/3 bg-[#F5B700] py-6 relative overflow-y-auto custom-scrollbar">
+      <div className="w-1/3 bg-[#f9e000] py-6 relative overflow-y-auto custom-scrollbar">
         {/* Connection Line */}
         <div className="absolute left-[39px] top-10 bottom-10 w-0.5 bg-black/10 z-0"></div>
 
@@ -441,7 +441,7 @@ export function WalkthroughSteps() {
                 className={`flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-colors ${isActive ? 'bg-black/10' : 'hover:bg-black/5'}`}
               >
                 {/* Step Number Circle */}
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 z-10 transition-colors ${isActive ? 'bg-black text-[#F5B700]' : 'bg-[#F5B700] border border-black/20 text-black/60'}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 z-10 transition-colors ${isActive ? 'bg-black text-[#f9e000]' : 'bg-[#f9e000] border border-black/20 text-black/60'}`}>
                   {idx + 1}
                 </div>
                 
@@ -475,14 +475,14 @@ export function WalkthroughSteps() {
            {activeStep < steps.length - 1 ? (
              <button 
                onClick={() => setActiveStep(prev => Math.min(steps.length - 1, prev + 1))}
-               className="bg-[#F5B700] text-black font-bold hover:opacity-90 px-6 py-3 rounded-xl transition-opacity shadow-sm"
+               className="bg-[#f9e000] text-black font-bold hover:opacity-90 px-6 py-3 rounded-xl transition-opacity shadow-sm"
              >
                Next Step
              </button>
            ) : (
              <Link 
                href="/" 
-               className="bg-zinc-900 text-[#F5B700] font-bold hover:opacity-90 px-6 py-3 rounded-xl transition-opacity shadow-sm inline-block"
+               className="bg-zinc-900 text-[#f9e000] font-bold hover:opacity-90 px-6 py-3 rounded-xl transition-opacity shadow-sm inline-block"
              >
                Find your Salon
              </Link>

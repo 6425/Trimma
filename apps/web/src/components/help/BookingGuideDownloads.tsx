@@ -108,7 +108,7 @@ export function BookingGuideDownloads() {
               </div>
               <div className="flex flex-col gap-2 mt-auto">
                 <a href={href} target="_blank" rel="noopener noreferrer" download>
-                  <Button className="w-full h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
+                  <Button className="w-full h-10 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black font-bold text-xs">
                     <Download className="w-4 h-4 mr-2" />
                     Download PDF Guide
                   </Button>

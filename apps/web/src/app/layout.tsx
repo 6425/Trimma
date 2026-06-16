@@ -2,6 +2,7 @@ import '../index.css';
 import SiteChrome from '../components/SiteChrome';
 import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
+import { ThemeProvider } from '../providers/ThemeProvider';
 
 const supabaseOrigin = (() => {
   try {
@@ -28,6 +29,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${inter.variable}`}>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('trimma-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}catch(e){}})();`,
+          }}
+        />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
         {supabaseOrigin ? (
           <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
@@ -35,18 +41,20 @@ export default function RootLayout({
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
       </head>
       <body className={`font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
-        <SiteChrome>{children}</SiteChrome>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            className: "trimma-toast",
-            style: {
-              background: "#0a0a0a",
-              color: "#ffffff",
-              border: "1px solid #262626",
-            },
-          }}
-        />
+        <ThemeProvider>
+          <SiteChrome>{children}</SiteChrome>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              className: "trimma-toast",
+              style: {
+                background: "#0a0a0a",
+                color: "#ffffff",
+                border: "1px solid #262626",
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   )

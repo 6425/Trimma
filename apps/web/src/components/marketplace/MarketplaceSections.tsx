@@ -352,7 +352,7 @@ export function SalonOnboardingCTA() {
             </Link>
             <Link 
               href="/pricing"
-              className="inline-flex items-center justify-center rounded-xl border border-[#F5B700]/50 bg-[#F5B700]/10 text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:text-[#FFC947] font-bold text-sm h-11 px-6 backdrop-blur-md transition-colors"
+              className="inline-flex items-center justify-center rounded-xl border border-[#f9e000]/50 bg-[#f9e000]/10 text-[#f9e000] hover:bg-[#f9e000]/20 hover:border-[#f9e000] hover:text-[#fff033] font-bold text-sm h-11 px-6 backdrop-blur-md transition-colors"
             >
               Explore Pricing
             </Link>

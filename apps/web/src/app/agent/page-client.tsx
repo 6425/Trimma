@@ -144,7 +144,7 @@ export default function AgentDashboard() {
         <div className="w-full sm:w-auto">
           <Button
             onClick={() => router.push(path("/leads"))}
-            className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-extrabold shadow-sm transition-all"
+            className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black font-extrabold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4 mr-2" /> View Lead Sheet
           </Button>

@@ -147,7 +147,7 @@ export default function AgentSalons() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#F5B700] hover:bg-[#E6AC00] text-black font-bold w-full sm:w-auto justify-center" })}>
+          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#f9e000] hover:bg-[#dfc900] text-black font-bold w-full sm:w-auto justify-center" })}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add Salon
           </Link>
@@ -188,7 +188,7 @@ export default function AgentSalons() {
                 onClick={() => setActiveTab(key)}
                 className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
                   activeTab === key
-                    ? "bg-[#F5B700] text-black shadow-sm"
+                    ? "bg-[#f9e000] text-black shadow-sm"
                     : "bg-zinc-100 text-zinc-500 hover:text-zinc-900"
                 }`}
               >
@@ -204,7 +204,7 @@ export default function AgentSalons() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name, phone, Gmail..."
-              className="w-full h-10 pl-10 pr-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5B700]/30"
+              className="w-full h-10 pl-10 pr-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#f9e000]/30"
             />
           </div>
         </div>

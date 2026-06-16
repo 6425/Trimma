@@ -142,7 +142,7 @@ function AgentSidebarMockup() {
         <div
           key={item.label}
           className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
-            item.active ? "bg-[#F5B700] text-black" : "text-white/80"
+            item.active ? "bg-[#f9e000] text-black" : "text-white/80"
           }`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${item.active ? "bg-black" : "bg-white/30"}`} />
@@ -164,7 +164,7 @@ function CockpitMockup() {
           <div className="text-sm font-black text-zinc-900">Agent Cockpit</div>
           <div className="text-[10px] text-zinc-500">Welcome back, {AGENT.name}</div>
         </div>
-        <div className="bg-[#F5B700] text-black text-[9px] font-bold px-3 py-1.5 rounded-lg">
+        <div className="bg-[#f9e000] text-black text-[9px] font-bold px-3 py-1.5 rounded-lg">
           View Lead Sheet
         </div>
       </div>
@@ -207,7 +207,7 @@ function FieldEditorMockup() {
           <span className="flex-1 text-center py-1.5 rounded-lg border border-slate-200 font-bold text-zinc-600">
             Save Draft
           </span>
-          <span className="flex-1 text-center py-1.5 rounded-lg bg-[#F5B700] text-black font-bold">
+          <span className="flex-1 text-center py-1.5 rounded-lg bg-[#f9e000] text-black font-bold">
             Send to Owner
           </span>
         </div>
@@ -222,7 +222,7 @@ function PipelineMockup() {
       {PIPELINE_STEPS.map((step, i) => (
         <div key={step.code} className="flex items-start gap-3">
           <div className="flex flex-col items-center">
-            <div className="w-6 h-6 rounded-full bg-[#F5B700]/20 border border-[#F5B700]/40 text-[#F5B700] text-[9px] font-black flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-[#f9e000]/20 border border-[#f9e000]/40 text-[#f9e000] text-[9px] font-black flex items-center justify-center">
               {i + 1}
             </div>
             {i < PIPELINE_STEPS.length - 1 && (
@@ -377,7 +377,7 @@ function RegionalHeadSidebarMockup() {
         <div
           key={item.label}
           className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
-            item.active ? "bg-[#F5B700] text-black" : "text-white/80"
+            item.active ? "bg-[#f9e000] text-black" : "text-white/80"
           }`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${item.active ? "bg-black" : "bg-white/30"}`} />
@@ -406,7 +406,7 @@ function TeamMockup() {
           </div>
           <div className="flex items-center gap-1">
             <span className="font-bold text-brand">{a.split}%</span>
-            <span className="px-2 py-1 rounded bg-[#F5B700] text-black font-bold">Save</span>
+            <span className="px-2 py-1 rounded bg-[#f9e000] text-black font-bold">Save</span>
           </div>
         </div>
       ))}
@@ -431,9 +431,9 @@ export function AgentHelpGuide() {
     <div className="max-w-6xl mx-auto p-4 pb-16 space-y-8">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 border border-white/10">
-        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#F5B700]/10" />
+        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#f9e000]/10" />
         <div className="relative z-10 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 bg-[#F5B700]/15 text-[#F5B700] border border-[#F5B700]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-[#f9e000]/15 text-[#f9e000] border border-[#f9e000]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
             <BookOpen className="w-3.5 h-3.5" />
             {isRegionalHead ? "Regional Head Handbook" : "Agent Field Handbook"}
           </span>
@@ -459,14 +459,14 @@ export function AgentHelpGuide() {
           <div className="flex flex-wrap gap-2">
             {isRegionalHead ? (
               <Link href={path("/team")}>
-                <Button className="h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold">
+                <Button className="h-9 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black text-xs font-bold">
                   Open My Team
                 </Button>
               </Link>
             ) : null}
             <Link href={path("/leads")}>
               <Button
-                className={`h-9 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black text-xs font-bold ${isRegionalHead ? "" : ""}`}
+                className={`h-9 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black text-xs font-bold ${isRegionalHead ? "" : ""}`}
               >
                 Open Salon Creation
               </Button>
@@ -474,7 +474,7 @@ export function AgentHelpGuide() {
             <Link href={path("/salons")}>
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-[#F5B700]/50 bg-[#F5B700]/10 !text-[#F5B700] hover:bg-[#F5B700]/20 hover:border-[#F5B700] hover:!text-[#FFC947] text-xs font-bold"
+                className="h-9 rounded-xl border-[#f9e000]/50 bg-[#f9e000]/10 !text-[#f9e000] hover:bg-[#f9e000]/20 hover:border-[#f9e000] hover:!text-[#fff033] text-xs font-bold"
               >
                 View My Salons
               </Button>
@@ -958,7 +958,7 @@ export function AgentHelpGuide() {
                 <div className="space-y-4">
                   <a
                     href="mailto:agents@trimma.com"
-                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#F5B700] transition-colors"
+                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#f9e000] transition-colors"
                   >
                     <Mail className="w-5 h-5 text-brand" />
                     agents@trimma.com
@@ -968,7 +968,7 @@ export function AgentHelpGuide() {
                     WhatsApp Agent Support Line
                   </div>
                   <Link href={path("/profile")}>
-                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#F5B700] hover:bg-[#F5B700]/90 text-black font-bold text-xs">
+                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#f9e000] hover:bg-[#f9e000]/90 text-black font-bold text-xs">
                       Update your profile
                     </Button>
                   </Link>

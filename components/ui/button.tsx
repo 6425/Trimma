@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils"
 /**
  * Trimma Global Button Component
  * 
- * Brand colors: Yellow (#F5B700) on Black, never pink.
+ * Brand colors: Yellow (#f9e000) on Black, never pink.
  * All buttons are constrained to their container — they will never overflow a card.
  * 
  * Variants:
- *   default   – Solid yellow (#F5B700) fill, black text. Primary CTA.
+ *   default   – Solid yellow (#f9e000) fill, black text. Primary CTA.
  *   hero      – Black fill on yellow hero sections, white text.
  *   secondary – Dark surface (#1A1A1A) with yellow text. Secondary action.
  *   outline   – Transparent with yellow border + yellow text. Tertiary action.
@@ -23,7 +23,7 @@ const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center max-w-full " +
   "rounded-lg border border-transparent bg-clip-padding text-sm font-semibold whitespace-nowrap " +
   "transition-all duration-200 outline-none select-none cursor-pointer " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F5B700]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f9e000]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " +
   "active:not-aria-[haspopup]:scale-[0.98] " +
   "disabled:pointer-events-none disabled:opacity-40 " +
   "aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/30 " +
@@ -33,11 +33,11 @@ const buttonVariants = cva(
       variant: {
         // ── Primary: Yellow fill, black text ──
         default:
-          "bg-[#F5B700] !text-black border-[#F5B700] hover:bg-[#FFC947] hover:!text-black hover:border-[#FFC947] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
+          "bg-[#f9e000] !text-black border-[#f9e000] hover:bg-[#fff033] hover:!text-black hover:border-[#fff033] shadow-[0_2px_8px_rgba(245,183,0,0.25)] hover:shadow-[0_4px_16px_rgba(245,183,0,0.35)]",
 
         // ── Hero: Black fill, brand-yellow text/icons on yellow hero panels ──
         hero:
-          "hero-btn-primary !text-[#F5B700] hover:!text-[#FFC947] bg-transparent border-transparent shadow-none hover:shadow-none [&_svg]:!text-[#F5B700] hover:[&_svg]:!text-[#FFC947]",
+          "hero-btn-primary !text-[#f9e000] hover:!text-[#fff033] bg-transparent border-transparent shadow-none hover:shadow-none [&_svg]:!text-[#f9e000] hover:[&_svg]:!text-[#fff033]",
 
         // ── Secondary: explicit light-surface secondary ──
         secondary:
@@ -45,7 +45,7 @@ const buttonVariants = cva(
 
         // ── Outline: Transparent, yellow border + text ──
         outline:
-          "bg-transparent text-[#F5B700] border-[#F5B700]/50 hover:bg-[#F5B700]/10 hover:border-[#F5B700] hover:text-[#E6AC00]",
+          "bg-transparent text-[#f9e000] border-[#f9e000]/50 hover:bg-[#f9e000]/10 hover:border-[#f9e000] hover:text-[#dfc900]",
 
         // ── Ghost: explicit readable gray on light dashboards ──
         ghost:
@@ -57,7 +57,7 @@ const buttonVariants = cva(
 
         // ── Link: Underline only ──
         link:
-          "bg-transparent text-[#F5B700] border-transparent underline-offset-4 hover:underline hover:text-[#FFC947]",
+          "bg-transparent text-[#f9e000] border-transparent underline-offset-4 hover:underline hover:text-[#fff033]",
       },
       size: {
         default: "h-9 gap-2 px-4",
