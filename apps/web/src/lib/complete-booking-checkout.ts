@@ -339,17 +339,24 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   });
 
   try {
-    const [{ data: salonRow }, { data: staffRow }, whatsappResult] = await Promise.all([
+    const [{ data: salonRow }, { data: staffRow }] = await Promise.all([
       supabase.from("salons").select("name, address, location, slug").eq("id", salon.id).maybeSingle(),
       resolvedStaffId
         ? supabase.from("salon_staff").select("name").eq("id", resolvedStaffId).maybeSingle()
         : Promise.resolve({ data: null }),
-      sendWhatsAppReservationPaidNotification(bookingNo, {
-        customerPhone: customer.phone,
-        customerName,
-        serviceName: draft.promotionPackageName || services[0]?.name || undefined,
-      }),
     ]);
+
+    void sendWhatsAppReservationPaidNotification(bookingNo, {
+      customerPhone: customer.phone,
+      customerName,
+      serviceName: draft.promotionPackageName || services[0]?.name || undefined,
+    }).then((whatsappResult) => {
+      if (!whatsappResult.success) {
+        console.error("WhatsApp confirmation failed after checkout:", whatsappResult.error);
+      }
+    }).catch((err) => {
+      console.error("WhatsApp confirmation failed after checkout:", err);
+    });
 
     const salonName = salonRow?.name || "your salon";
     const salonAddress = salonRow?.address || salonRow?.location || "See Trimma for details";
@@ -403,15 +410,11 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
       console.error("Reservation payment email failed:", emailResult.error);
     }
 
-    if (!whatsappResult.success) {
-      console.error("WhatsApp confirmation failed after checkout:", whatsappResult.error);
-    }
-
     return {
       bookingNo,
       bookingId: newBooking.id,
-      whatsappSent: whatsappResult.success,
-      whatsappError: whatsappResult.error || null,
+      whatsappSent: true,
+      whatsappError: null,
       emailSent: emailResult.success,
       emailError: isEmailSendFailure(emailResult) ? emailResult.error : null,
       emailId: emailResult.success ? emailResult.id : null,

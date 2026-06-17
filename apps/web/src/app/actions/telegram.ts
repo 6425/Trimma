@@ -97,45 +97,97 @@ async function fetchBookingByNumber(
   return booking as unknown as BookingTelegramRow;
 }
 
+function isMissingTelegramSchemaError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("telegram_") &&
+    (lower.includes("does not exist") ||
+      lower.includes("could not find") ||
+      (lower.includes("schema cache") && lower.includes("column")))
+  );
+}
+
 async function fetchCustomerContact(email: string) {
   const supabase = getSupabaseAdmin();
   const { data: customer, error } = await supabase
     .from("users")
-    .select("full_name, phone, telegram_chat_id")
+    .select("full_name, phone")
     .eq("email", email)
     .maybeSingle();
 
   if (error) {
     console.error("Failed to fetch customer contact for Telegram:", error);
+    return null;
   }
 
   return customer;
 }
 
+async function lookupTelegramChatIdByEmail(email: string): Promise<string | null> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("users")
+      .select("telegram_chat_id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (error) {
+      if (!isMissingTelegramSchemaError(error.message)) {
+        console.error("Failed to fetch Telegram chat ID:", error);
+      }
+      return null;
+    }
+
+    return data?.telegram_chat_id?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 async function resolveTelegramChatId(
   rawPhoneOrChatId: string | null | undefined,
-  explicitChatId?: string | null
+  explicitChatId?: string | null,
+  emailForLookup?: string | null
 ): Promise<string | null> {
   if (explicitChatId?.trim()) return explicitChatId.trim();
-  if (!rawPhoneOrChatId?.trim()) return null;
+  if (!rawPhoneOrChatId?.trim() && !emailForLookup?.trim()) return null;
 
-  const raw = rawPhoneOrChatId.trim();
-  if (isChatId(raw)) return raw;
+  const raw = rawPhoneOrChatId?.trim() || "";
+  if (raw && isChatId(raw)) return raw;
 
-  const clean = cleanPhoneNumber(raw);
-  const supabase = getSupabaseAdmin();
-  const { data: users } = await supabase
-    .from("users")
-    .select("telegram_chat_id, phone")
-    .not("telegram_chat_id", "is", null);
+  if (emailForLookup?.trim()) {
+    const byEmail = await lookupTelegramChatIdByEmail(emailForLookup.trim());
+    if (byEmail) return byEmail;
+  }
 
-  const match = (users || []).find((user) => {
-    if (!user.phone) return false;
-    const userClean = cleanPhoneNumber(user.phone);
-    return userClean === clean || user.phone.trim() === raw;
-  });
+  if (!raw) return null;
 
-  return match?.telegram_chat_id?.trim() || null;
+  try {
+    const clean = cleanPhoneNumber(raw);
+    const supabase = getSupabaseAdmin();
+    const { data: users, error } = await supabase
+      .from("users")
+      .select("telegram_chat_id, phone")
+      .not("telegram_chat_id", "is", null);
+
+    if (error) {
+      if (!isMissingTelegramSchemaError(error.message)) {
+        console.error("Failed to resolve Telegram chat ID by phone:", error);
+      }
+      return null;
+    }
+
+    const match = (users || []).find((user) => {
+      if (!user.phone) return false;
+      const userClean = cleanPhoneNumber(user.phone);
+      return userClean === clean || user.phone.trim() === raw;
+    });
+
+    return match?.telegram_chat_id?.trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 function formatTelegramApiError(result: { description?: string; error_code?: number }): string {
@@ -288,7 +340,12 @@ export async function getTelegramConfig() {
         dbSettings.telegram_template_agent_lead_assigned || D.agentLeadAssigned,
     };
   } catch (err) {
-    console.warn("Failed to load Telegram settings from DB, using defaults:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    if (isMissingTelegramSchemaError(message)) {
+      console.warn("Telegram settings columns missing. Run packages/db/TELEGRAM_SETTINGS_PATCH.sql");
+    } else {
+      console.warn("Failed to load Telegram settings from DB, using defaults:", err);
+    }
     const { botToken, apiId, apiHash, source, tokenFromEnv } = resolveEffectiveTelegramCredentials(
       "",
       "",
@@ -485,7 +542,8 @@ export async function sendTelegramReservationPaidNotification(
     const customerName = overrides?.customerName || customer?.full_name || "Valued Client";
     const chatId = await resolveTelegramChatId(
       overrides?.customerPhone || customer?.phone,
-      customer?.telegram_chat_id
+      undefined,
+      booking.customer_email
     );
     if (!chatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
@@ -563,7 +621,8 @@ export async function sendTelegramNotification(
     const customerName = overrides?.customerName || customer?.full_name || "Valued Client";
     const chatId = await resolveTelegramChatId(
       overrides?.customerPhone || customer?.phone,
-      customer?.telegram_chat_id
+      undefined,
+      booking.customer_email
     );
     if (!chatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
@@ -625,7 +684,7 @@ export async function sendTelegramCancellationNotification(bookingNo: string) {
     if (!booking) return { success: false, error: "Booking not found." };
 
     const customer = await fetchCustomerContact(booking.customer_email);
-    const chatId = await resolveTelegramChatId(customer?.phone, customer?.telegram_chat_id);
+    const chatId = await resolveTelegramChatId(customer?.phone, undefined, booking.customer_email);
     if (!chatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
     const cancelMessage = parseTemplate(templateCancelled || D.cancelled, {
@@ -654,7 +713,7 @@ export async function sendTelegramNoShowNotification(bookingNo: string) {
     if (!booking) return { success: false, error: "Booking not found." };
 
     const customer = await fetchCustomerContact(booking.customer_email);
-    const chatId = await resolveTelegramChatId(customer?.phone, customer?.telegram_chat_id);
+    const chatId = await resolveTelegramChatId(customer?.phone, undefined, booking.customer_email);
     if (!chatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
     const noShowMessage = parseTemplate(D.noShow, {
@@ -684,7 +743,7 @@ export async function sendTelegramRescheduleNotification(bookingNo: string) {
     if (!booking) return { success: false, error: "Booking record not found." };
 
     const customer = await fetchCustomerContact(booking.customer_email);
-    const chatId = await resolveTelegramChatId(customer?.phone, customer?.telegram_chat_id);
+    const chatId = await resolveTelegramChatId(customer?.phone, undefined, booking.customer_email);
     if (!chatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
     const salonName = booking.salons?.name || "Trimma Partner Salon";
@@ -731,7 +790,11 @@ export async function sendBookingCreatedTelegramAlert(bookingNo: string) {
     if (!booking) return { success: false };
 
     const customer = await fetchCustomerContact(booking.customer_email);
-    const customerChatId = await resolveTelegramChatId(customer?.phone, customer?.telegram_chat_id);
+    const customerChatId = await resolveTelegramChatId(
+      customer?.phone,
+      undefined,
+      booking.customer_email
+    );
     if (!customerChatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
     const customerName = customer?.full_name || "Customer";
@@ -784,7 +847,7 @@ export async function sendReviewRequestTelegramAlert(bookingNo: string) {
     if (!booking) return { success: false };
 
     const customer = await fetchCustomerContact(booking.customer_email);
-    const chatId = await resolveTelegramChatId(customer?.phone, customer?.telegram_chat_id);
+    const chatId = await resolveTelegramChatId(customer?.phone, undefined, booking.customer_email);
     if (!chatId) return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
 
     const { buildCustomerReviewLink } = await import("@/lib/reviews");
