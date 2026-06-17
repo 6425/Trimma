@@ -16,7 +16,7 @@ export function ThemeToggle({ className = "", showLabel = false }: ThemeTogglePr
     <button
       type="button"
       onClick={toggleTheme}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 transition-colors dark:border-[#ffc800]/25 dark:bg-[#ffc800]/10 dark:text-[#ffc800] dark:hover:bg-[#ffc800]/15 ${className}`}
+      className={`trimma-header-icon-btn inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100 transition-colors dark:border-[#ffc800]/35 dark:bg-transparent dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black ${className}`}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}
     >

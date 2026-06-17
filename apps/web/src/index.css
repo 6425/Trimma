@@ -1584,7 +1584,29 @@ html.dark header.trimma-light-context :is(a, button)[class*="bg-zinc-100"] {
   color: #0a0a0a !important;
 }
 
-html.dark header.trimma-light-context :is(a, button) :is(svg, [class*="lucide"]) {
+/* Icon-only header controls — yellow icon at rest, black icon on yellow hover */
+html.dark header.trimma-light-context .trimma-header-icon-btn {
+  background-color: transparent !important;
+  color: #ffc800 !important;
+}
+
+html.dark header.trimma-light-context .trimma-header-icon-btn:hover,
+html.dark header.trimma-light-context .trimma-header-icon-btn:focus-visible {
+  background-color: #ffc800 !important;
+  color: #0a0a0a !important;
+}
+
+html.dark header.trimma-light-context .trimma-header-icon-btn :is(svg, [class*="lucide"]) {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+html.dark header.trimma-light-context .trimma-header-icon-btn:is(:hover, :focus-visible) :is(svg, [class*="lucide"]) {
+  color: #0a0a0a !important;
+  stroke: #0a0a0a !important;
+}
+
+html.dark header.trimma-light-context :is(a, button):not(.trimma-header-icon-btn) :is(svg, [class*="lucide"]) {
   color: currentColor !important;
   stroke: currentColor !important;
 }

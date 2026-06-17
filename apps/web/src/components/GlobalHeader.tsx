@@ -290,7 +290,7 @@ export default function GlobalHeader() {
                   <button
                     type="button"
                     onClick={() => { void signOutTrimmaSession(); }}
-                    className="flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
+                    className="trimma-header-icon-btn flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
                     title="Sign Out"
                   >
                     <LogOut className="w-4 h-4" />
