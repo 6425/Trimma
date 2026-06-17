@@ -262,16 +262,16 @@ export default function SalonsClient({
           <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
-        <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
+        <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl hero-ink">
           <Badge variant="hero" className="px-3 py-1 mb-4">
             <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
             Discover Premium Grooming
           </Badge>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-black mb-4 leading-tight">
             Best Salons &amp; Spas <br />
             in{" "}
-            <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">
+            <span className="text-black underline decoration-black/20 decoration-4 underline-offset-4">
               Sri Lanka
             </span>
           </h1>

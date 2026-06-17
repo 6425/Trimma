@@ -611,6 +611,10 @@
     border-bottom: 1px solid rgb(245 183 0 / 0.2);
     color: #0a0a0a;
   }
+  .hero-ink,
+  :is(.page-hero-shell, .page-hero-light) .hero-ink :is(h1, h2, h3, h4, p, span, label, a:not([class*="hero-btn"])) {
+    color: #0a0a0a !important;
+  }
   .hero-badge,
   .hero-eyebrow {
     display: inline-flex;
@@ -1531,11 +1535,11 @@ html.dark .trimma-marketplace-shell :is(
   .text-[#1A1C29],
   .dark\:text-zinc-100,
   .text-zinc-100
-):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not(.text-white) {
+):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not(.text-white) {
   color: #ffc800 !important;
 }
 
-html.dark .trimma-marketplace-shell :is(.text-zinc-500, .text-zinc-400, .text-zinc-300) {
+html.dark .trimma-marketplace-shell :is(.text-zinc-500, .text-zinc-400, .text-zinc-300):not(:is(.page-hero-shell *, .page-hero-light *)) {
   color: #ffd633 !important;
 }
 
