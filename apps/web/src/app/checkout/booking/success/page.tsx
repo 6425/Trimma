@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, MessageCircle, Home, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
+import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { clearBookingCheckoutDraft } from "@/lib/booking-checkout";
 
 function BookingSuccessContent() {
@@ -129,6 +130,12 @@ function BookingSuccessContent() {
             </span>
           </p>
         )}
+
+        <ConnectTelegramCard
+          compact
+          title="Also get alerts on Telegram?"
+          description="Optional — one tap connects Telegram to your Trimma account. We still use your booking phone for WhatsApp."
+        />
 
         <div className="grid grid-cols-1 gap-3 pt-2">
           <Link

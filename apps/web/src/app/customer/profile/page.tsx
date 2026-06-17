@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { fetchCustomerProfileViaApi, patchCustomerProfileViaApi } from "@/lib/customer-profile-api-client";
+import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { withTimeout } from "@/lib/promise-timeout";
 
 function ProfileFormContent() {
@@ -191,6 +192,8 @@ function ProfileFormContent() {
                 </div>
                 <p className="text-[10px] text-zinc-400 font-medium">Your email is used for sign-in and booking confirmations and can&apos;t be changed here.</p>
               </div>
+
+              <ConnectTelegramCard className="mt-2" />
 
             </div>
           </div>

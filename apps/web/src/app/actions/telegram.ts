@@ -13,6 +13,7 @@ const D = TELEGRAM_TEMPLATE_DEFAULTS;
 type BookingSalonJoin = {
   name?: string | null;
   phone?: string | null;
+  owner_email?: string | null;
   address?: string | null;
   location?: string | null;
   slug?: string | null;
@@ -490,6 +491,9 @@ export async function saveTelegramSettings(
       });
 
     if (error) throw error;
+    void import("@/app/actions/telegram-connect").then((mod) =>
+      mod.registerTelegramBotWebhook(trimmedBotToken)
+    );
     return { success: true };
   } catch (err: unknown) {
     console.error("Failed to save Telegram configuration:", err);
@@ -651,7 +655,7 @@ export async function sendTelegramReservationPaidNotification(
   }
 
   try {
-    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, address, location)");
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, owner_email, address, location)");
     if (!booking) return { success: false, error: "Booking record not found." };
 
     const customer = await fetchCustomerContact(booking.customer_email);
@@ -696,10 +700,14 @@ export async function sendOwnerBookingRequestTelegram(bookingNo: string, payment
   if (!enabled || !bookingCreatedEnabled || !botToken) return { success: true, message: "Disabled" };
 
   try {
-    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone)");
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, owner_email)");
     if (!booking) return { success: false, error: "Booking not found." };
 
-    const ownerChatId = await resolveTelegramChatId(booking.salons?.phone);
+    const ownerChatId = await resolveTelegramChatId(
+      booking.salons?.phone,
+      undefined,
+      booking.salons?.owner_email
+    );
     if (!ownerChatId) return { success: false, error: "Salon Telegram chat ID is missing.", skipped: true };
 
     const customer = await fetchCustomerContact(booking.customer_email);
@@ -730,7 +738,7 @@ export async function sendTelegramNotification(
   if (!enabled || !bookingConfirmedEnabled || !botToken) return { success: true, message: "Disabled" };
 
   try {
-    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, address, location)");
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, owner_email, address, location)");
     if (!booking) return { success: false, error: "Booking record not found." };
 
     const customer = await fetchCustomerContact(booking.customer_email);
@@ -775,7 +783,11 @@ export async function sendTelegramNotification(
     const result = await sendTelegramText(botToken, chatId, customerMessage);
     if (!result.success) return result;
 
-    const ownerChatId = await resolveTelegramChatId(booking.salons?.phone);
+    const ownerChatId = await resolveTelegramChatId(
+      booking.salons?.phone,
+      undefined,
+      booking.salons?.owner_email
+    );
     if (ownerChatId) {
       const ownerMessage = `🔔 *BOOKING CONFIRMED* 🔔\n\nYou confirmed the booking from *${customerName}*.\n\n📋 Ref: ${bookingNo}\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${serviceName}\n\nPlease prepare for their arrival! ✂️`;
       await sendTelegramText(botToken, ownerChatId, ownerMessage);
@@ -855,7 +867,7 @@ export async function sendTelegramRescheduleNotification(bookingNo: string) {
   if (!enabled || !bookingRescheduledEnabled || !botToken) return { success: true, message: "Disabled" };
 
   try {
-    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, address, location)");
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, owner_email, address, location)");
     if (!booking) return { success: false, error: "Booking record not found." };
 
     const customer = await fetchCustomerContact(booking.customer_email);
@@ -902,7 +914,7 @@ export async function sendBookingCreatedTelegramAlert(bookingNo: string) {
   if (!enabled || !bookingCreatedEnabled || !botToken) return { success: false, message: "Disabled" };
 
   try {
-    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone)");
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, owner_email)");
     if (!booking) return { success: false };
 
     const customer = await fetchCustomerContact(booking.customer_email);
@@ -927,7 +939,11 @@ export async function sendBookingCreatedTelegramAlert(bookingNo: string) {
 
     await sendTelegramText(botToken, customerChatId, customerMsg);
 
-    const ownerChatId = await resolveTelegramChatId(booking.salons?.phone);
+    const ownerChatId = await resolveTelegramChatId(
+      booking.salons?.phone,
+      undefined,
+      booking.salons?.owner_email
+    );
     if (ownerChatId) {
       const ownerMsg = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, {
         customer_name: customerName,

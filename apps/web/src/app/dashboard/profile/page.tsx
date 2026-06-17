@@ -29,6 +29,7 @@ import {
 import { formatServerActionError } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
+import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
 import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
@@ -1153,6 +1154,10 @@ export default function SalonProfilePage() {
                   />
                 </div>
               </div>
+              <ConnectTelegramCard
+                title="Salon owner Telegram alerts (optional)"
+                description="WhatsApp uses your salon contact number above. Connect Telegram once for backup booking alerts — no separate number or chat ID."
+              />
             </div>
 
             {/* Section 5: Salon Operations & Staff */}
