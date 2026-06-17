@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { sendBookingConfirmedEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
 import { sendWhatsAppNotification, sendWhatsAppRescheduleNotification } from "@/app/actions/whatsapp";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
+import {
+  readBookingRescheduleState,
+  rescheduleColumnsMissingMessage,
+  updateBookingSchedule,
+} from "@/lib/booking-reschedule-db";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
 import {
   applySalonSlugOnNameChange,
@@ -138,7 +143,7 @@ export async function rescheduleOwnerBooking(
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: booking, error: readErr } = await supabase
       .from("bookings")
-      .select("id, salon_id, booking_no, status, reschedule_requested, reschedule_status")
+      .select("id, salon_id, booking_no, status")
       .eq("id", bookingId)
       .maybeSingle();
     if (readErr) throw new Error(readErr.message);
@@ -151,20 +156,15 @@ export async function rescheduleOwnerBooking(
       throw new Error("Completed or cancelled bookings cannot be rescheduled.");
     }
 
-    const hadPendingRescheduleRequest = booking.reschedule_requested === true;
+    const rescheduleState = await readBookingRescheduleState(supabase, bookingId);
+    const hadPendingRescheduleRequest = rescheduleState?.rescheduleRequested === true;
 
-    const { error } = await supabase
-      .from("bookings")
-      .update({
-        booking_date: bookingDate,
-        booking_time: bookingTime,
-        reschedule_requested: false,
-        reschedule_status: hadPendingRescheduleRequest ? "approved" : booking.reschedule_status || "none",
-        requested_booking_date: null,
-        requested_booking_time: null,
-      })
-      .eq("id", bookingId);
-    if (error) throw new Error(error.message);
+    await updateBookingSchedule(supabase, bookingId, {
+      bookingDate,
+      bookingTime,
+      approvePendingRequest: hadPendingRescheduleRequest,
+      clearRescheduleRequest: hadPendingRescheduleRequest,
+    });
 
     bookingNo = booking.booking_no as string;
     await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
@@ -184,27 +184,30 @@ export async function rejectOwnerRescheduleRequest(bookingId: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: booking, error: readErr } = await supabase
       .from("bookings")
-      .select("id, salon_id, reschedule_requested")
+      .select("id, salon_id, booking_date, booking_time")
       .eq("id", bookingId)
       .maybeSingle();
     if (readErr) throw new Error(readErr.message);
     if (!booking || booking.salon_id !== ctx.salonId) {
       throw new Error("Booking not found for your salon.");
     }
-    if (booking.reschedule_requested !== true) {
+
+    const rescheduleState = await readBookingRescheduleState(supabase, bookingId);
+    if (!rescheduleState) {
+      throw new Error(rescheduleColumnsMissingMessage());
+    }
+    if (rescheduleState.rescheduleRequested !== true) {
       throw new Error("This booking has no pending reschedule request.");
     }
 
-    const { error } = await supabase
-      .from("bookings")
-      .update({
-        reschedule_requested: false,
-        reschedule_status: "rejected",
-        requested_booking_date: null,
-        requested_booking_time: null,
-      })
-      .eq("id", bookingId);
-    if (error) throw new Error(error.message);
+    const updateResult = await updateBookingSchedule(supabase, bookingId, {
+      bookingDate: String(booking.booking_date || ""),
+      bookingTime: String(booking.booking_time || "12:00:00"),
+      rejectPendingRequest: true,
+    });
+    if (!updateResult.rescheduleColumnsAvailable) {
+      throw new Error(rescheduleColumnsMissingMessage());
+    }
 
     await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
   });
