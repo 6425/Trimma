@@ -4,7 +4,7 @@ import Logo from "./Logo";
 
 export default function GlobalFooter() {
   return (
-    <footer className="bg-white border-t border-zinc-100">
+    <footer className="bg-white border-t border-zinc-100 dark:bg-[#0b0b0b] dark:border-[#ffc800]/15">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

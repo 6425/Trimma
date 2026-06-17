@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
+import { useTheme } from "@/providers/ThemeProvider";
 
 interface LogoProps {
   className?: string;
@@ -44,6 +45,8 @@ export default function Logo({
   title,
   tagline: propTagline,
 }: LogoProps) {
+  const { theme } = useTheme();
+  const isDarkTheme = theme === "dark";
   const [defaultTagline, setDefaultTagline] = useState(DEFAULT_TAGLINE);
 
   useEffect(() => {
@@ -99,9 +102,23 @@ export default function Logo({
 
   const displayTagline = propTagline ?? (showTagline ? defaultTagline : null);
   const logoHeight = Math.max(iconSize * 1.2, 32);
-  // inverse=true means dark background → use white logo (logo-dark.svg)
-  // inverse=false means light background → use dark logo (logo-light.svg)
-  const logoSrc = inverse ? "/logo-dark.svg" : "/logo-light.svg";
+  const logoSrc = isDarkTheme
+    ? "/logo-yellow.png"
+    : inverse
+      ? "/logo-dark.svg"
+      : "/logo-light.svg";
+
+  const betaBadgeClass = isDarkTheme
+    ? "bg-[#ffc800]/15 text-[#ffc800] border-[#ffc800]/35"
+    : inverse
+      ? "bg-white/10 text-white/90 border-white/20"
+      : "bg-slate-100 text-slate-500 border-slate-200";
+
+  const taglineClass = isDarkTheme
+    ? "text-[#ffc800]/75"
+    : inverse
+      ? "text-white/60"
+      : "text-zinc-500";
 
   return (
     <div className={`flex flex-col select-none ${className}`}>
@@ -114,15 +131,13 @@ export default function Logo({
         fetchPriority="high"
         draggable={false}
       />
-        <span className={`ml-1.5 mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${inverse ? 'bg-white/10 text-white/90 border-white/20' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+        <span className={`ml-1.5 mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}>
           Beta
         </span>
       </div>
       {displayTagline ? (
         <span
-          className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${
-            inverse ? "text-white/60" : "text-zinc-500"
-          }`}
+          className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${taglineClass}`}
           style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
         >
           {displayTagline}

@@ -40,7 +40,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
       ) : (
         <SalonFavoritesProvider>
           <SavedStylesProvider>
-            <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-zinc-100">
+            <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-[#ffc800]">
               <GlobalHeader />
               <main className="flex-1">{children}</main>
               <GlobalFooter />

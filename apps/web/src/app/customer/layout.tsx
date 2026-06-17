@@ -42,7 +42,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex font-sans trimma-light-context trimma-marketplace-shell dark:bg-[#0b0b0b] dark:text-zinc-100">
+    <div className="min-h-screen bg-zinc-50 flex font-sans trimma-light-context trimma-marketplace-shell dark:bg-[#0b0b0b] dark:text-[#ffc800]">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (

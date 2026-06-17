@@ -124,8 +124,8 @@ export default function GlobalHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200 trimma-light-context dark:bg-[#0b0b0b] dark:text-zinc-100 dark:border-white/10">
-      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white dark:bg-[#0b0b0b] dark:border-white/10">
+    <header className="sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200 trimma-light-context dark:bg-[#0b0b0b] dark:text-[#ffc800] dark:border-[#ffc800]/15">
+      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white dark:bg-[#0b0b0b] dark:border-[#ffc800]/15">
         <div className="mx-auto max-w-7xl px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
           <Link href="/" className="hover:opacity-90 transition-opacity shrink-0">
             <Logo iconSize={32} />
@@ -327,7 +327,7 @@ export default function GlobalHeader() {
 
       {/* Desktop category icon + name row — PC/laptop only (lg+) */}
       {navCategories.length > 0 && (
-        <div className="hidden lg:block bg-white dark:bg-[#0b0b0b] border-b border-zinc-100 dark:border-white/10">
+            <div className="hidden lg:block bg-white dark:bg-[#0b0b0b] border-b border-zinc-100 dark:border-[#ffc800]/15">
           <div className="mx-auto max-w-7xl px-4 py-2">
             <nav
               className="flex items-center gap-2 overflow-x-auto hide-scrollbar"
@@ -357,7 +357,7 @@ export default function GlobalHeader() {
       )}
 
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-zinc-100 dark:border-white/10 bg-white dark:bg-[#111111] pb-4 max-h-[70vh] overflow-y-auto">
+        <div className="lg:hidden border-t border-zinc-100 dark:border-[#ffc800]/15 bg-white dark:bg-[#111111] pb-4 max-h-[70vh] overflow-y-auto">
           <nav className="px-4 pt-2 pb-4 flex flex-col gap-1" aria-label="Site navigation">
             <Link
               href="/features"
