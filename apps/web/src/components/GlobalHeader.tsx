@@ -24,6 +24,30 @@ const PROVINCES = [
   { name: "Sabaragamuwa Province", districts: ["Ratnapura", "Kegalle"] },
 ];
 
+const navDesktopClass = (active: boolean) =>
+  `text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
+    active
+      ? "text-zinc-900 bg-zinc-100 dark:bg-[#ffc800] dark:text-black"
+      : "text-zinc-700 hover:bg-zinc-100 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
+  }`;
+
+const navMobileClass = (active: boolean) =>
+  `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+    active
+      ? "text-zinc-900 bg-zinc-100 dark:bg-[#ffc800] dark:text-black"
+      : "text-zinc-700 hover:bg-zinc-100 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
+  }`;
+
+const navCategoryPillClass = (active: boolean) =>
+  `flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-full transition-colors border whitespace-nowrap shrink-0 ${
+    active
+      ? "text-zinc-900 bg-zinc-100 border-zinc-200 dark:bg-[#ffc800] dark:text-black dark:border-[#ffc800]"
+      : "text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black dark:hover:border-[#ffc800]"
+  }`;
+
+const navActionClass =
+  "text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black";
+
 export default function GlobalHeader() {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("customer");
@@ -134,12 +158,7 @@ export default function GlobalHeader() {
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             {/* Main nav — Categories submenus live here only */}
             <div className="hidden lg:flex items-center gap-1">
-              <Link
-                href="/features"
-                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                  isFeaturesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
+              <Link href="/features" className={navDesktopClass(isFeaturesActive)}>
                 Features
               </Link>
               <div
@@ -151,11 +170,7 @@ export default function GlobalHeader() {
                   type="button"
                   aria-haspopup="true"
                   aria-expanded={categoriesOpen}
-                  className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                    isCategoryActive
-                      ? 'text-zinc-900 bg-zinc-100'
-                      : 'text-zinc-700 hover:bg-zinc-100'
-                  }`}
+                  className={`flex items-center gap-1.5 ${navDesktopClass(isCategoryActive)}`}
                 >
                   Categories
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
@@ -194,9 +209,7 @@ export default function GlobalHeader() {
                   type="button"
                   aria-haspopup="true"
                   aria-expanded={locationsOpen}
-                  className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                    locationsOpen ? 'text-zinc-900 bg-zinc-100' : 'text-zinc-700 hover:bg-zinc-100'
-                  }`}
+                  className={`flex items-center gap-1.5 ${navDesktopClass(locationsOpen || false)}`}
                 >
                   Locations
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${locationsOpen ? 'rotate-180' : ''}`} />
@@ -246,34 +259,19 @@ export default function GlobalHeader() {
                 )}
               </div>
 
-              <Link
-                href="/styles"
-                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                  isStylesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
+              <Link href="/styles" className={navDesktopClass(isStylesActive)}>
                 Styles
               </Link>
-              <Link
-                href="/deals"
-                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                  isDealsActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
+              <Link href="/deals" className={navDesktopClass(isDealsActive)}>
                 Deals
               </Link>
-              <Link
-                href="/contact"
-                className={`text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
-                  isContactActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-                }`}
-              >
+              <Link href="/contact" className={navDesktopClass(isContactActive)}>
                 Contact
               </Link>
             </div>
 
             <div className="hidden md:flex items-center gap-2">
-              <Link href="/onboarding" className="text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors hidden lg:block">
+              <Link href="/onboarding" className={`${navActionClass} hidden lg:block`}>
                 List your salon
               </Link>
             </div>
@@ -284,7 +282,7 @@ export default function GlobalHeader() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href={getDashboardLink()}
-                    className="text-xs sm:text-sm font-medium flex items-center gap-2 text-zinc-800 bg-zinc-100 hover:bg-zinc-200 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors border border-zinc-200"
+                    className="text-xs sm:text-sm font-medium flex items-center gap-2 text-zinc-800 bg-zinc-100 hover:bg-zinc-200 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors border border-zinc-200 dark:text-black dark:bg-[#ffc800] dark:border-[#ffc800] dark:hover:bg-[#ffd633]"
                   >
                     <Building2 className="w-4 h-4 shrink-0" />
                     <span className="hidden sm:inline">Dashboard</span>
@@ -292,7 +290,7 @@ export default function GlobalHeader() {
                   <button
                     type="button"
                     onClick={() => { void signOutTrimmaSession(); }}
-                    className="flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100"
+                    className="flex items-center justify-center text-zinc-500 hover:text-zinc-900 transition-colors p-2 rounded-lg hover:bg-zinc-100 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
                     title="Sign Out"
                   >
                     <LogOut className="w-4 h-4" />
@@ -302,7 +300,7 @@ export default function GlobalHeader() {
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href="/login"
-                    className="text-xs sm:text-sm font-normal text-zinc-600 hover:text-zinc-900 bg-transparent hover:bg-zinc-100 transition-colors px-2 sm:px-3 py-1.5 sm:py-2 rounded-md whitespace-nowrap"
+                    className="text-xs sm:text-sm font-normal text-zinc-600 hover:text-zinc-900 bg-transparent hover:bg-zinc-100 transition-colors px-2 sm:px-3 py-1.5 sm:py-2 rounded-md whitespace-nowrap dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
                   >
                     Sign in
                   </Link>
@@ -310,7 +308,7 @@ export default function GlobalHeader() {
               )}
 
               <button
-                className="lg:hidden flex items-center justify-center p-2 -mr-1 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors shrink-0"
+                className="lg:hidden flex items-center justify-center p-2 -mr-1 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors shrink-0 dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black"
                 onClick={() => {
                   window.dispatchEvent(new Event("trimma:close-dashboard-menu"));
                   setMobileMenuOpen(!mobileMenuOpen);
@@ -340,11 +338,7 @@ export default function GlobalHeader() {
                   <Link
                     key={cat.id}
                     href={`/category/${cat.slug}`}
-                    className={`flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-full transition-colors border whitespace-nowrap shrink-0 ${
-                      active
-                        ? "text-zinc-900 bg-zinc-100 border-zinc-200"
-                        : "text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200"
-                    }`}
+                    className={navCategoryPillClass(active)}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span>{cat.name}</span>
@@ -362,9 +356,7 @@ export default function GlobalHeader() {
             <Link
               href="/features"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isFeaturesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-              }`}
+              className={navMobileClass(isFeaturesActive)}
             >
               <Sparkles className="w-4 h-4 shrink-0" />
               Features
@@ -372,7 +364,7 @@ export default function GlobalHeader() {
             <button
               type="button"
               onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}
-              className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors w-full"
+              className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full ${navActionClass}`}
               aria-expanded={mobileCategoriesOpen}
             >
               <span className="flex items-center gap-3">
@@ -402,7 +394,7 @@ export default function GlobalHeader() {
             <button
               type="button"
               onClick={() => setMobileLocationsOpen(!mobileLocationsOpen)}
-              className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors w-full"
+              className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full ${navActionClass}`}
               aria-expanded={mobileLocationsOpen}
             >
               <span className="flex items-center gap-3">
@@ -445,9 +437,7 @@ export default function GlobalHeader() {
             <Link
               href="/styles"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isStylesActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-              }`}
+              className={navMobileClass(isStylesActive)}
             >
               <Scissors className="w-4 h-4 shrink-0" />
               Styles
@@ -455,7 +445,7 @@ export default function GlobalHeader() {
             <Link
               href="/deals"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className={navMobileClass(false)}
             >
               <Gift className="w-4 h-4 shrink-0" />
               Deals
@@ -463,9 +453,7 @@ export default function GlobalHeader() {
             <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
-                isContactActive ? "text-zinc-900 bg-zinc-100" : "text-zinc-700 hover:bg-zinc-100"
-              }`}
+              className={navMobileClass(isContactActive)}
             >
               <Mail className="w-4 h-4 shrink-0" />
               Contact
@@ -474,7 +462,7 @@ export default function GlobalHeader() {
             <Link
               href="/onboarding"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className={navMobileClass(false)}
             >
               <Building2 className="w-4 h-4 shrink-0" />
               List your salon

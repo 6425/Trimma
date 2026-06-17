@@ -1547,7 +1547,7 @@ html.dark .trimma-marketplace-shell :is(.border-zinc-200, .border-zinc-100, .bor
   border-color: rgba(255, 200, 0, 0.18) !important;
 }
 
-html.dark .trimma-marketplace-shell :is(.hover\:bg-zinc-100:hover, .hover\:bg-zinc-50:hover, .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover) {
+html.dark .trimma-marketplace-shell :is(.hover\:bg-zinc-100:hover, .hover\:bg-zinc-50:hover, .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover):not(header *) {
   background-color: rgba(255, 200, 0, 0.08) !important;
 }
 
@@ -1567,6 +1567,26 @@ html.dark .trimma-marketplace-shell .trimma-light-context {
 html.dark .trimma-marketplace-shell header.trimma-light-context,
 html.dark .trimma-marketplace-shell footer {
   color: #ffc800;
+}
+
+/* Dark mode header nav — yellow hover pill with black label (readable on black bar) */
+html.dark header.trimma-light-context :is(a, button):is(
+  [class*="hover:bg-zinc-100"]:hover,
+  [class*="hover:bg-zinc-50"]:hover,
+  [class*="hover:bg-zinc-200"]:hover
+) {
+  background-color: #ffc800 !important;
+  color: #0a0a0a !important;
+}
+
+html.dark header.trimma-light-context :is(a, button)[class*="bg-zinc-100"] {
+  background-color: #ffc800 !important;
+  color: #0a0a0a !important;
+}
+
+html.dark header.trimma-light-context :is(a, button) :is(svg, [class*="lucide"]) {
+  color: currentColor !important;
+  stroke: currentColor !important;
 }
 
 html.dark .trimma-mobile-bottom-nav--light {
