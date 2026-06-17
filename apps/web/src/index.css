@@ -1570,3 +1570,59 @@ html.dark .trimma-mobile-bottom-nav--light {
   border-color: rgba(255, 200, 0, 0.18) !important;
   color: #ffc800 !important;
 }
+
+/* Hero bands stay yellow in dark mode — black type for readability */
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) {
+  background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%) !important;
+  color: #0a0a0a !important;
+  border-bottom-color: rgb(245 183 0 / 0.3) !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
+  .text-zinc-900,
+  .text-zinc-800,
+  .text-zinc-700,
+  .text-zinc-600,
+  .text-zinc-950,
+  .text-black,
+  .text-[#1A1C29],
+  .dark\:text-zinc-100,
+  .text-zinc-100,
+  .hero-accent,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  label,
+  a:not([class*="hero-btn"])
+) {
+  color: #0a0a0a !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
+  .text-zinc-500,
+  .text-zinc-400,
+  .text-zinc-300,
+  .hero-lead
+) {
+  color: rgb(0 0 0 / 0.72) !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .page-hero-overlay {
+  background: linear-gradient(to top, rgba(255, 200, 0, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28)) !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) {
+  background-color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+  color: #ffc800 !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) :is(svg, [class*="lucide"]) {
+  color: #ffc800 !important;
+  stroke: #ffc800 !important;
+}
