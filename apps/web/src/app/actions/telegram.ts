@@ -441,6 +441,15 @@ export async function saveTelegramSettings(
       }
     }
 
+    const trimmedAdminChatId = adminAlertChatId?.trim() || "";
+    if (trimmedAdminChatId && trimmedAdminChatId.replace(/\D/g, "").length < 8) {
+      return {
+        success: false,
+        error:
+          'Admin Chat ID looks invalid (too short). Clear it, open your bot in Telegram, tap Start, click Detect, then Save.',
+      };
+    }
+
     const { error } = await getSupabaseAdmin()
       .from("global_payment_settings")
       .upsert({
@@ -520,7 +529,17 @@ export async function listTelegramBotRecentChats(botTokenOverride?: string) {
   }
 
   try {
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?limit=50`);
+    const webhookRes = await fetch(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+    const webhookInfo = await webhookRes.json();
+    if (webhookInfo.ok && webhookInfo.result?.url) {
+      await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook?drop_pending_updates=false`);
+    }
+
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/getUpdates?limit=100&allowed_updates=${encodeURIComponent(
+        JSON.stringify(["message", "edited_message", "my_chat_member"])
+      )}`
+    );
     const result = await response.json();
 
     if (!response.ok || !result.ok) {
@@ -531,7 +550,8 @@ export async function listTelegramBotRecentChats(botTokenOverride?: string) {
 
     for (const update of result.result || []) {
       const message = update.message || update.edited_message;
-      const chat = message?.chat;
+      const memberUpdate = update.my_chat_member;
+      const chat = message?.chat || memberUpdate?.chat;
       if (!chat?.id) continue;
 
       const chatId = String(chat.id);
@@ -541,8 +561,9 @@ export async function listTelegramBotRecentChats(botTokenOverride?: string) {
         chat.username ||
         chatId;
       const existing = chats.get(chatId);
-      const lastMessageAt = message?.date
-        ? new Date(message.date * 1000).toISOString()
+      const messageDate = message?.date || memberUpdate?.date;
+      const lastMessageAt = messageDate
+        ? new Date(messageDate * 1000).toISOString()
         : undefined;
 
       chats.set(chatId, {
@@ -561,7 +582,7 @@ export async function listTelegramBotRecentChats(botTokenOverride?: string) {
       return {
         success: false as const,
         error:
-          "No one has started your bot yet. Open your bot in Telegram, tap Start, then click Detect again.",
+          "No Telegram starters found yet. Open https://t.me/Trimmaiobot (or your bot link), tap Start, send any message, then click Detect again within 1 minute.",
       };
     }
 
@@ -588,13 +609,25 @@ export async function testTelegramConnection(testChatId: string) {
   const testMessage = `Hello! This is a test message from your *Trimma Admin Settings Panel*.\n\nYour Telegram Bot API configuration is working.\n\nApp API ID: ${config.apiId || "not set"}\nProduction DC: ${config.productionDc}`;
 
   try {
-    return await sendTelegramText(config.botToken, chatId, testMessage);
+    const result = await sendTelegramText(config.botToken, chatId, testMessage);
+    if (!result.success) {
+      return { success: false, error: formatTelegramTestError(chatId, result.error || "Failed to send.") };
+    }
+    return result;
   } catch (err: unknown) {
     return {
       success: false,
       error: err instanceof Error ? err.message : "Telegram test failed.",
     };
   }
+}
+
+function formatTelegramTestError(chatId: string, error: string): string {
+  const lower = error.toLowerCase();
+  if (lower.includes("chat not found")) {
+    return `Bad Request: chat not found. Chat ID "${chatId}" is wrong or this user has not tapped Start on your bot yet. Clear the field, open your bot in Telegram, tap Start, click Detect, Save, then test again.`;
+  }
+  return error;
 }
 
 async function getTelegramMessagingConfig() {

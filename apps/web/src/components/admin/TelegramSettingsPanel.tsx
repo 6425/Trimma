@@ -503,6 +503,7 @@ export function TelegramSettingsPanel() {
                 </div>
                 <p className="text-[10px] text-zinc-500">
                   Tap Start on your Trimma bot in Telegram, then click Detect — no manual lookup needed.
+                  If test says <em>chat not found</em>, clear this field, re-detect, and Save.
                 </p>
                 {recentChats.length > 0 ? (
                   <div className="space-y-1">
