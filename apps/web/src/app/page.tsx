@@ -27,19 +27,22 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
 
   const categories = categoriesResult.data || [];
 
-  const hasSearchFilters = Boolean(sp.q || sp.l || sp.category);
   let initialSalons: Awaited<ReturnType<typeof fetchPublicSalons>>["salons"] = [];
   let initialHasMore = false;
 
-  if (!hasSearchFilters) {
-    try {
-      const listing = await fetchPublicSalons(supabase, { limit: 12, offset: 0 });
-      initialSalons = listing.salons;
-      initialHasMore = listing.hasMore;
-    } catch {
-      initialSalons = [];
-      initialHasMore = false;
-    }
+  try {
+    const listing = await fetchPublicSalons(supabase, {
+      q: sp.q ?? "",
+      location: sp.l ?? "",
+      category: sp.category ?? "",
+      limit: 12,
+      offset: 0,
+    });
+    initialSalons = listing.salons;
+    initialHasMore = listing.hasMore;
+  } catch {
+    initialSalons = [];
+    initialHasMore = false;
   }
 
   return (

@@ -1,0 +1,23 @@
+name: Sync beta branch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  sync-beta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge main into beta and push
+        run: |
+          git fetch origin main beta
+          git checkout beta
+          git merge origin/main --no-edit -m "Sync beta with main"
+          git push origin beta

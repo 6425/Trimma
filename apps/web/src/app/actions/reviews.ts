@@ -49,6 +49,10 @@ export type ReviewableBooking = {
   } | null;
   canReview: boolean;
   reviewPending: boolean;
+  rescheduleRequested?: boolean;
+  rescheduleStatus?: string | null;
+  requestedBookingDate?: string | null;
+  requestedBookingTime?: string | null;
 };
 
 async function getAuthedEmail(accessToken: string) {
@@ -153,7 +157,7 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
     const { data: bookings, error } = await admin
       .from("bookings")
       .select(
-        "id, booking_no, salon_id, staff_id, status, booking_date, booking_time, salons(name, slug), salon_staff(name)"
+        "id, booking_no, salon_id, staff_id, status, booking_date, booking_time, reschedule_requested, reschedule_status, requested_booking_date, requested_booking_time, salons(name, slug), salon_staff(name)"
       )
       .ilike("customer_email", email)
       .order("booking_date", { ascending: false })
@@ -214,6 +218,10 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
           !canReview &&
           isReviewEligibleBookingStatus(booking.status) &&
           !isBookingAppointmentPast(booking.booking_date, booking.booking_time),
+        rescheduleRequested: booking.reschedule_requested === true,
+        rescheduleStatus: booking.reschedule_status || null,
+        requestedBookingDate: booking.requested_booking_date || null,
+        requestedBookingTime: booking.requested_booking_time || null,
       };
     });
   } catch {

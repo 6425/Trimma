@@ -110,6 +110,67 @@ export async function createBookingPendingConfirmNotification(
   }
 }
 
+export async function createRescheduleRequestNotification(
+  supabase: SupabaseClient,
+  input: {
+    salonId: string;
+    bookingId: string;
+    bookingNo: string;
+    customerEmail: string;
+    currentDate: string;
+    currentTime: string;
+    requestedDate: string;
+    requestedTime: string;
+    serviceName: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const ownerEmail = await resolveSalonOwnerEmail(supabase, input.salonId);
+    if (!ownerEmail) {
+      return { success: false, error: "Salon owner email not configured." };
+    }
+
+    const metadata: SalonOwnerNotificationMetadata = {
+      booking_no: input.bookingNo,
+      customer_email: input.customerEmail,
+      booking_date: input.requestedDate,
+      booking_time: input.requestedTime,
+      service_name: input.serviceName,
+      booking_status: "pending_salon",
+    };
+
+    const title = `Reschedule request — ${input.bookingNo}`;
+    const body = `${input.customerEmail} requested to move ${input.serviceName} from ${input.currentDate} at ${input.currentTime} to ${input.requestedDate} at ${input.requestedTime.slice(0, 5)}.`;
+
+    const { error } = await supabase.from("salon_owner_notifications").insert({
+      user_email: ownerEmail,
+      salon_id: input.salonId,
+      booking_id: input.bookingId,
+      notification_type: "booking_reschedule_request",
+      title,
+      body,
+      metadata,
+    });
+
+    if (error) {
+      if (
+        error.message.toLowerCase().includes("does not exist") ||
+        error.message.toLowerCase().includes("schema cache")
+      ) {
+        console.warn("salon_owner_notifications table missing — run SALON_OWNER_NOTIFICATIONS_PATCH.sql");
+        return { success: false, error: error.message };
+      }
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not create notification.";
+    console.error("createRescheduleRequestNotification:", message);
+    return { success: false, error: message };
+  }
+}
+
 export async function markBookingNotificationsRead(
   supabase: SupabaseClient,
   salonId: string,

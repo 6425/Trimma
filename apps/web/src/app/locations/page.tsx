@@ -119,7 +119,7 @@ export default function LocationsHubPage() {
              </div>
              
              <Link 
-               href={`/search?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
+               href={`/?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
                className="h-12 px-8 rounded-xl hero-btn-primary hero-btn-compact font-bold border-none shadow-md flex items-center justify-center text-sm"
              >
                Search

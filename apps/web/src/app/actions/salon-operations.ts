@@ -160,6 +160,8 @@ export async function rescheduleOwnerBooking(
         booking_time: bookingTime,
         reschedule_requested: false,
         reschedule_status: hadPendingRescheduleRequest ? "approved" : booking.reschedule_status || "none",
+        requested_booking_date: null,
+        requested_booking_time: null,
       })
       .eq("id", bookingId);
     if (error) throw new Error(error.message);
@@ -198,6 +200,8 @@ export async function rejectOwnerRescheduleRequest(bookingId: string) {
       .update({
         reschedule_requested: false,
         reschedule_status: "rejected",
+        requested_booking_date: null,
+        requested_booking_time: null,
       })
       .eq("id", bookingId);
     if (error) throw new Error(error.message);

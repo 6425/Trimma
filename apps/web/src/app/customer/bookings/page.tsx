@@ -3,17 +3,28 @@
 import { useState, useEffect, useCallback, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { CalendarDays, MapPin, Scissors, Clock, CheckCircle2, Star, Info } from "lucide-react";
+import { CalendarDays, MapPin, Scissors, Clock, CheckCircle2, Star, Info, CalendarClock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { type ReviewableBooking } from "@/app/actions/reviews";
 import { fetchCustomerBookingsPage } from "@/app/actions/customer-dashboard-data";
+import { requestCustomerReschedule } from "@/app/actions/customer-booking-reschedule";
 import { withTimeout } from "@/lib/promise-timeout";
 import { getCustomerReviewUiState } from "@/lib/reviews";
 import { ReviewFormDialog } from "../../../components/reviews/ReviewFormDialog";
 import { StarRatingDisplay } from "../../../components/reviews/StarRatingInput";
+import { toast } from "sonner";
 
 type BookingTab = "all" | "ready" | "reviewed";
+
+const NON_RESCHEDULABLE_STATUSES = new Set(["completed", "canceled", "cancelled", "no_show"]);
+
+function canRequestReschedule(booking: ReviewableBooking): boolean {
+  const status = String(booking.status || "").toLowerCase();
+  if (NON_RESCHEDULABLE_STATUSES.has(status)) return false;
+  if (booking.rescheduleRequested && booking.rescheduleStatus === "pending_salon") return false;
+  return status === "confirmed" || status === "pending" || status === "rescheduled";
+}
 
 function BookingsListContent() {
   const router = useRouter();
@@ -23,6 +34,10 @@ function BookingsListContent() {
   const [accessToken, setAccessToken] = useState("");
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [activeReviewBooking, setActiveReviewBooking] = useState<ReviewableBooking | null>(null);
+  const [rescheduleBooking, setRescheduleBooking] = useState<ReviewableBooking | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
 
   const activeTab = (searchParams.get("tab") as BookingTab) || "all";
   const validTab: BookingTab = ["all", "ready", "reviewed"].includes(activeTab) ? activeTab : "all";
@@ -100,6 +115,32 @@ function BookingsListContent() {
   const openReviewDialog = (booking: ReviewableBooking) => {
     setActiveReviewBooking(booking);
     setReviewDialogOpen(true);
+  };
+
+  const openRescheduleDialog = (booking: ReviewableBooking) => {
+    setRescheduleBooking(booking);
+    setRescheduleDate(booking.bookingDate || "");
+    setRescheduleTime((booking.bookingTime || "12:00:00").slice(0, 5));
+  };
+
+  const handleRescheduleSubmit = async () => {
+    if (!rescheduleBooking || !rescheduleDate || !rescheduleTime) return;
+    setRescheduleSubmitting(true);
+    try {
+      const result = await requestCustomerReschedule(
+        rescheduleBooking.id,
+        rescheduleDate,
+        rescheduleTime
+      );
+      if (result.success === false) throw new Error(result.error);
+      toast.success("Reschedule request sent to the salon.");
+      setRescheduleBooking(null);
+      await loadBookings();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send reschedule request.");
+    } finally {
+      setRescheduleSubmitting(false);
+    }
   };
 
   const renderReviewSection = (booking: ReviewableBooking) => {
@@ -290,6 +331,22 @@ function BookingsListContent() {
                 </div>
 
                 <div className="flex flex-col items-stretch gap-2 md:items-end min-w-0 w-full sm:min-w-[180px] sm:w-auto shrink-0">
+                  {booking.rescheduleRequested && booking.rescheduleStatus === "pending_salon" ? (
+                    <Badge className="bg-amber-500/10 text-amber-700 border-none text-[10px] font-black uppercase tracking-wide w-fit">
+                      Reschedule pending
+                    </Badge>
+                  ) : null}
+                  {canRequestReschedule(booking) ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => openRescheduleDialog(booking)}
+                      className="rounded-xl border-zinc-200 text-zinc-800 font-bold text-xs h-9"
+                    >
+                      <CalendarClock className="w-4 h-4 mr-2" />
+                      Request reschedule
+                    </Button>
+                  ) : null}
                   {renderReviewSection(booking)}
                 </div>
               </div>
@@ -313,6 +370,76 @@ function BookingsListContent() {
           initialComment={activeReviewBooking.existingReview?.comment || ""}
           onSubmitted={loadBookings}
         />
+      ) : null}
+
+      {rescheduleBooking ? (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-zinc-200 shadow-2xl space-y-6 text-left">
+            <div>
+              <h3 className="text-lg font-black text-zinc-900 tracking-tight flex items-center gap-2">
+                <CalendarClock className="w-5 h-5 text-[#ffc800]" />
+                Request reschedule
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 font-medium">
+                Booking <strong>{rescheduleBooking.bookingNo}</strong> at {rescheduleBooking.salonName}.
+                The salon will review your preferred new time.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  Preferred date
+                </label>
+                <input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="w-full h-11 px-4 border border-zinc-200 focus:border-[#ffc800] rounded-xl text-sm focus:outline-none"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                  Preferred time
+                </label>
+                <input
+                  type="time"
+                  value={rescheduleTime}
+                  onChange={(e) => setRescheduleTime(e.target.value)}
+                  className="w-full h-11 px-4 border border-zinc-200 focus:border-[#ffc800] rounded-xl text-sm focus:outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-4 border-t border-zinc-100 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRescheduleBooking(null)}
+                className="rounded-xl font-bold text-xs h-10"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => void handleRescheduleSubmit()}
+                disabled={rescheduleSubmitting || !rescheduleDate || !rescheduleTime}
+                className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold rounded-xl h-10 px-5 text-xs"
+              >
+                {rescheduleSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2 inline" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send request"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

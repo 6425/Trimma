@@ -295,8 +295,10 @@ export default function DashboardBookings() {
         return;
       }
       setReschedulingBooking(booking);
-      setNewDate(booking.booking_date || "");
-      setNewTime((booking.booking_time || "12:00:00").slice(0, 5));
+      setNewDate(booking.requested_booking_date || booking.booking_date || "");
+      setNewTime(
+        (booking.requested_booking_time || booking.booking_time || "12:00:00").slice(0, 5)
+      );
       toast.info("Choose the new date and time, then confirm to approve the reschedule request.");
       return;
     }
@@ -409,8 +411,21 @@ export default function DashboardBookings() {
                 <div>
                   <div className="font-extrabold text-zinc-900 text-sm">{req.customer_email || 'Walk-in Customer'}</div>
                   <div className="text-[11px] text-zinc-400 mt-1 font-medium">
-                    Booking No: <span className="font-bold text-zinc-700">{req.booking_no}</span> &bull; 
-                    Slot: <span className="font-bold text-zinc-700">{req.booking_date} at {req.booking_time}</span>
+                    Booking No: <span className="font-bold text-zinc-700">{req.booking_no}</span> &bull;{" "}
+                    Current:{" "}
+                    <span className="font-bold text-zinc-700">
+                      {req.booking_date} at {(req.booking_time || "").slice(0, 5)}
+                    </span>
+                    {req.requested_booking_date ? (
+                      <>
+                        {" "}
+                        &bull; Requested:{" "}
+                        <span className="font-bold text-amber-700">
+                          {req.requested_booking_date} at{" "}
+                          {(req.requested_booking_time || "").slice(0, 5)}
+                        </span>
+                      </>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -596,6 +611,17 @@ export default function DashboardBookings() {
               <p className="text-xs text-zinc-500 mt-1 font-medium">
                 Updating schedule for booking reference{" "}
                 <strong>{reschedulingBooking.booking_no}</strong>.
+                {reschedulingBooking.requested_booking_date ? (
+                  <>
+                    {" "}
+                    Customer requested{" "}
+                    <strong>
+                      {reschedulingBooking.requested_booking_date} at{" "}
+                      {(reschedulingBooking.requested_booking_time || "").slice(0, 5)}
+                    </strong>
+                    .
+                  </>
+                ) : null}
               </p>
             </div>
 
