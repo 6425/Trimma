@@ -2,7 +2,7 @@ import { fetchPublicSalonPage } from "@/app/actions/public-salon-page";
 import SalonPage from "./SalonPageClient";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function SalonServerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -21,6 +21,8 @@ export default async function SalonServerPage({ params }: { params: Promise<{ sl
         staff: result.staff,
         amenities: result.amenities,
         promotionPackages: result.promotionPackages,
+        reviewSummary: result.reviewSummary,
+        reviews: result.reviews,
       }}
     />
   );

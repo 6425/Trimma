@@ -86,6 +86,63 @@ function mapPublicReview(
   };
 }
 
+/** Bundled reviews for public salon page (admin client — used during SSR). */
+export async function fetchPublishedSalonReviewsForPage(salonId: string): Promise<{
+  summary: SalonReviewSummary;
+  reviews: PublicSalonReview[];
+}> {
+  try {
+    const admin = createSupabaseAdminClient();
+    const { data: reviews, error } = await admin
+      .from("reviews")
+      .select("id, booking_id, customer_email, rating, comment, created_at, status")
+      .eq("salon_id", salonId)
+      .eq("status", "published")
+      .not("booking_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    const verifiedReviews = (reviews || []).filter((row) => isVerifiedBookingReview(row));
+    const summary = buildReviewSummary(verifiedReviews);
+    if (!verifiedReviews.length) {
+      return { summary, reviews: [] };
+    }
+
+    const emails = [
+      ...new Set(verifiedReviews.map((row) => (row.customer_email || "").toLowerCase()).filter(Boolean)),
+    ];
+    const reviewIds = verifiedReviews.map((row) => row.id);
+
+    const [{ data: users }, { data: replies }] = await Promise.all([
+      emails.length
+        ? admin.from("users").select("email, full_name").in("email", emails)
+        : Promise.resolve({ data: [] as Array<{ email: string; full_name: string | null }> }),
+      reviewIds.length
+        ? admin
+            .from("review_replies")
+            .select("review_id, reply_text, created_at")
+            .in("review_id", reviewIds)
+        : Promise.resolve({ data: [] as Array<{ review_id: string; reply_text: string; created_at: string }> }),
+    ]);
+
+    const nameByEmail = Object.fromEntries(
+      (users || []).map((user) => [user.email.toLowerCase(), user.full_name])
+    );
+    const replyByReviewId = Object.fromEntries(
+      (replies || []).map((reply) => [reply.review_id, reply])
+    );
+
+    return {
+      summary,
+      reviews: verifiedReviews.map((row) => mapPublicReview(row, nameByEmail, replyByReviewId)),
+    };
+  } catch {
+    return { summary: buildReviewSummary([]), reviews: [] };
+  }
+}
+
 export async function getSalonReviewSummary(salonId: string): Promise<SalonReviewSummary> {
   try {
     const supabase = createServerSupabaseClient();

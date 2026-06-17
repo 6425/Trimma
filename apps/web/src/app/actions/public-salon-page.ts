@@ -1,14 +1,21 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { fetchPublishedSalonReviewsForPage, type PublicSalonReview } from "@/app/actions/reviews";
 import { mapSalonPromotionRows, type SalonPromotionPackage } from "@/lib/deals";
 import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { isDummySalonRecord } from "@/lib/salon-list-filters";
 import { filterServicesWithStaffCoverage } from "@/lib/staff-allocation";
 import { dedupeStaffByNameRole } from "@/lib/salon-staff-service-sync";
+import type { SalonReviewSummary } from "@/lib/reviews";
 
 const SALON_COLUMNS =
-  "id, slug, name, city, district, province, address, phone, owner_email, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled";
+  "id, slug, name, city, district, province, address, phone, owner_email, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, description";
+
+const SERVICE_COLUMNS =
+  "id, name, duration_min, price, discount_percentage, discount_end_date, category, description, image_url, status";
+
+const GLOBAL_AMENITY_COLUMNS = "id, name, icon_name, type";
 
 export type PublicSalonService = {
   id: string;
@@ -43,26 +50,14 @@ export type PublicSalonAmenityDisplay = {
 };
 
 async function findSalonBySlugOrId(supabase: ReturnType<typeof createSupabaseAdminClient>, slug: string) {
-  const { data: bySlug, error: slugError } = await supabase
-    .from("salons")
-    .select(SALON_COLUMNS)
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (slugError) throw new Error(slugError.message);
-  if (bySlug) return bySlug;
-
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-  if (!isUuid) return null;
+  let query = supabase.from("salons").select(SALON_COLUMNS);
 
-  const { data: byId, error: idError } = await supabase
-    .from("salons")
-    .select(SALON_COLUMNS)
-    .eq("id", slug)
-    .maybeSingle();
+  query = isUuid ? query.or(`slug.eq.${slug},id.eq.${slug}`) : query.eq("slug", slug);
 
-  if (idError) throw new Error(idError.message);
-  return byId;
+  const { data, error } = await query.maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function fetchPublicSalonPage(slug: string): Promise<
@@ -73,6 +68,8 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       staff: PublicSalonStaff[];
       amenities: PublicSalonAmenityDisplay[];
       promotionPackages: SalonPromotionPackage[];
+      reviewSummary: SalonReviewSummary;
+      reviews: PublicSalonReview[];
     }
   | { success: false; error: string }
 > {
@@ -91,34 +88,50 @@ export async function fetchPublicSalonPage(slug: string): Promise<
 
     const salonId = String(salonData.id);
 
-    const [servicesRes, staffRes, amenitiesRes, globalAmenitiesRes, promotionsRes] =
-      await Promise.all([
-        supabase.from("services").select("*").eq("salon_id", salonId).eq("status", "active"),
-        supabase
-          .from("salon_staff")
-          .select("id, name, role, working_hours, status, avatar_url")
-          .eq("salon_id", salonId)
-          .eq("status", "active"),
-        supabase
-          .from("salon_amenities")
-          .select("*")
-          .eq("salon_id", salonId)
-          .or("value.eq.true,value.gt.0"),
-        supabase.from("global_amenities").select("*"),
-        supabase
-          .from("salon_promotion_packages")
-          .select(
-            "id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type"
-          )
-          .eq("salon_id", salonId)
-          .eq("status", "active"),
-      ]);
+    const [servicesRes, staffRes, amenitiesRes, promotionsRes, reviewsBundle] = await Promise.all([
+      supabase
+        .from("services")
+        .select(SERVICE_COLUMNS)
+        .eq("salon_id", salonId)
+        .eq("status", "active"),
+      supabase
+        .from("salon_staff")
+        .select("id, name, role, working_hours, status, avatar_url")
+        .eq("salon_id", salonId)
+        .eq("status", "active"),
+      supabase
+        .from("salon_amenities")
+        .select("amenity_id, value, quantity, type")
+        .eq("salon_id", salonId)
+        .or("value.eq.true,value.gt.0"),
+      supabase
+        .from("salon_promotion_packages")
+        .select(
+          "id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type"
+        )
+        .eq("salon_id", salonId)
+        .eq("status", "active"),
+      fetchPublishedSalonReviewsForPage(salonId),
+    ]);
 
     if (servicesRes.error) throw new Error(servicesRes.error.message);
     if (staffRes.error) throw new Error(staffRes.error.message);
     if (amenitiesRes.error) throw new Error(amenitiesRes.error.message);
-    if (globalAmenitiesRes.error) throw new Error(globalAmenitiesRes.error.message);
     if (promotionsRes.error) throw new Error(promotionsRes.error.message);
+
+    const amenityIds = [
+      ...new Set((amenitiesRes.data || []).map((row) => row.amenity_id).filter(Boolean)),
+    ] as string[];
+
+    const globalAmenitiesRes =
+      amenityIds.length > 0
+        ? await supabase
+            .from("global_amenities")
+            .select(GLOBAL_AMENITY_COLUMNS)
+            .in("id", amenityIds)
+        : { data: [], error: null };
+
+    if (globalAmenitiesRes.error) throw new Error(globalAmenitiesRes.error.message);
 
     const staffForCoverage = (staffRes.data || []) as Array<{
       id: string;
@@ -180,6 +193,8 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       staff,
       amenities,
       promotionPackages,
+      reviewSummary: reviewsBundle.summary,
+      reviews: reviewsBundle.reviews,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load salon.";
