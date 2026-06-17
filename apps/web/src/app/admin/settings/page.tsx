@@ -11,6 +11,7 @@ import {
 } from "../../actions/whatsapp";
 import { WHATSAPP_TRIGGER_CATALOG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
+import { TelegramSettingsPanel } from "../../../components/admin/TelegramSettingsPanel";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
 function SettingsPanelContent() {
@@ -278,7 +279,7 @@ function SettingsPanelContent() {
             <Settings2 className="w-8 h-8 text-emerald-600" />
             Global Settings
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">Configure WhatsApp, email templates, and third-party integrations.</p>
+          <p className="text-sm text-zinc-500 mt-1">Configure WhatsApp, Telegram, email templates, and third-party integrations.</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -589,7 +590,18 @@ function SettingsPanelContent() {
         </div>
       )}
 
-      {!loading && <EmailSettingsPanel />}
+      {!loading && (
+        <div className="space-y-8 pt-4 border-t border-slate-200">
+          <div>
+            <h2 className="text-xl font-black text-zinc-900 mb-1">Telegram Channel</h2>
+            <p className="text-sm text-zinc-500 mb-6">
+              Secondary messaging channel — mirrors all WhatsApp notification triggers.
+            </p>
+            <TelegramSettingsPanel />
+          </div>
+          <EmailSettingsPanel />
+        </div>
+      )}
 
     </div>
   );

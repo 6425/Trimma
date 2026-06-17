@@ -16,6 +16,21 @@ import {
   resolveWhatsAppPhoneNumberId,
   validateWhatsAppMetaAccount,
 } from "@/lib/whatsapp-meta-resolver";
+import {
+  sendTelegramReservationPaidNotification,
+  sendOwnerBookingRequestTelegram,
+  sendTelegramNotification,
+  sendTelegramCancellationNotification,
+  sendTelegramNoShowNotification,
+  sendTelegramRescheduleNotification,
+  sendBookingCreatedTelegramAlert,
+  sendReviewRequestTelegramAlert,
+  sendOnboardingInviteTelegramAlert,
+  sendAgentApprovalTelegramAlerts,
+  sendAdminApprovalTelegramAlerts,
+  sendWelcomeCustomerTelegram,
+  sendAgentLeadAssignedTelegram,
+} from "./telegram";
 
 const D = WHATSAPP_TEMPLATE_DEFAULTS;
 
@@ -558,6 +573,7 @@ export async function sendWhatsAppReservationPaidNotification(
   bookingNo: string,
   overrides?: { customerPhone?: string; customerName?: string; serviceName?: string }
 ) {
+  void sendTelegramReservationPaidNotification(bookingNo, overrides);
   const {
     enabled,
     phoneId,
@@ -656,6 +672,7 @@ export async function sendOwnerBookingRequestWhatsApp(
   bookingNo: string,
   paymentStatus = "reservation_paid"
 ) {
+  void sendOwnerBookingRequestTelegram(bookingNo, paymentStatus);
   const {
     enabled,
     phoneId,
@@ -722,6 +739,7 @@ export async function sendWhatsAppNotification(
   bookingNo: string,
   overrides?: { customerPhone?: string; customerName?: string; serviceName?: string }
 ) {
+  void sendTelegramNotification(bookingNo, overrides);
   const { 
     enabled, 
     phoneId, 
@@ -874,6 +892,7 @@ export async function sendWhatsAppNotification(
  * Triggers an instant WhatsApp alert when an appointment is cancelled.
  */
 export async function sendWhatsAppCancellationNotification(bookingNo: string) {
+  void sendTelegramCancellationNotification(bookingNo);
   const { 
     enabled, 
     phoneId, 
@@ -962,6 +981,7 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
  * Triggers an instant WhatsApp alert when an appointment is marked as a no-show.
  */
 export async function sendWhatsAppNoShowNotification(bookingNo: string) {
+  void sendTelegramNoShowNotification(bookingNo);
   const {
     enabled,
     phoneId,
@@ -1045,6 +1065,7 @@ export async function sendWhatsAppNoShowNotification(bookingNo: string) {
  * Triggers an instant WhatsApp alert when an appointment is rescheduled.
  */
 export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
+  void sendTelegramRescheduleNotification(bookingNo);
   const { 
     enabled, 
     phoneId, 
@@ -1150,6 +1171,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
  * Sends to BOTH customer and Salon Owner.
  */
 export async function sendBookingCreatedAlert(bookingNo: string) {
+  void sendBookingCreatedTelegramAlert(bookingNo);
   const {
     enabled,
     phoneId,
@@ -1229,6 +1251,7 @@ export async function sendBookingCreatedAlert(bookingNo: string) {
  * Triggers a WhatsApp review request when an appointment is completed.
  */
 export async function sendReviewRequestAlert(bookingNo: string) {
+  void sendReviewRequestTelegramAlert(bookingNo);
   const { enabled, phoneId, accessToken, templateReview, bookingReviewEnabled } = await getWhatsAppMessagingConfig();
   if (!enabled || !bookingReviewEnabled || !phoneId || !accessToken) return { success: false };
 
@@ -1278,6 +1301,7 @@ export async function sendReviewRequestAlert(bookingNo: string) {
  * Triggers an instant WhatsApp alert to invite a Salon Owner when onboarding is completed.
  */
 export async function sendOnboardingInviteAlert(salonId: string, phone: string, ownerGmail: string, salonName: string, slug?: string | null) {
+  void sendOnboardingInviteTelegramAlert(salonId, phone, ownerGmail, salonName, slug);
   const normalizedGmail = normalizeEmail(ownerGmail);
   const cleanPhone = cleanPhoneNumber(phone);
 
@@ -1359,6 +1383,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
  * Triggers WhatsApp alerts when an Agent approves a salon to go Live.
  */
 export async function sendAgentApprovalAlerts(salonId: string, ownerPhone: string, salonName: string) {
+  void sendAgentApprovalTelegramAlerts(salonId, ownerPhone, salonName);
   const {
     enabled,
     phoneId,
@@ -1420,6 +1445,7 @@ export async function sendAgentApprovalAlerts(salonId: string, ownerPhone: strin
  * Triggers WhatsApp alerts when an Admin grants the Approved Badge.
  */
 export async function sendAdminApprovalAlerts(salonId: string, ownerPhone: string, salonName: string) {
+  void sendAdminApprovalTelegramAlerts(salonId, ownerPhone, salonName);
   const {
     enabled,
     phoneId,
@@ -1478,6 +1504,7 @@ export async function sendAdminApprovalAlerts(salonId: string, ownerPhone: strin
 }
 
 export async function sendWelcomeCustomerWhatsApp(customerName: string, rawPhone: string) {
+  void sendWelcomeCustomerTelegram(customerName, rawPhone);
   const { enabled, phoneId, accessToken, welcomeCustomerEnabled, templateWelcomeCustomer } = await getWhatsAppMessagingConfig();
   if (!enabled || !welcomeCustomerEnabled || !phoneId || !accessToken) return { success: false };
 
@@ -1517,6 +1544,7 @@ export async function sendAgentLeadAssignedWhatsApp(
     dashboardLink?: string;
   }
 ) {
+  void sendAgentLeadAssignedTelegram(agentName, rawAgentPhone, salonName, options);
   const { enabled, phoneId, accessToken, agentLeadAssignedEnabled, templateAgentLeadAssigned } = await getWhatsAppMessagingConfig();
   if (!enabled || !agentLeadAssignedEnabled || !phoneId || !accessToken) return { success: false };
 
