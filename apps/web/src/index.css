@@ -1570,7 +1570,7 @@ html.dark .trimma-marketplace-shell footer {
 }
 
 /* Dark mode header nav — yellow hover pill with black label (readable on black bar) */
-html.dark header.trimma-light-context :is(a, button):is(
+html.dark header.trimma-light-context :is(a, button):not(.trimma-header-icon-btn):is(
   [class*="hover:bg-zinc-100"]:hover,
   [class*="hover:bg-zinc-50"]:hover,
   [class*="hover:bg-zinc-200"]:hover
@@ -1584,24 +1584,21 @@ html.dark header.trimma-light-context :is(a, button)[class*="bg-zinc-100"] {
   color: #0a0a0a !important;
 }
 
-/* Icon-only header controls — yellow icon at rest, black icon on yellow hover */
+/* Icon-only header controls — always yellow fill + black glyph in dark mode */
 html.dark header.trimma-light-context .trimma-header-icon-btn {
-  background-color: transparent !important;
-  color: #ffc800 !important;
+  background-color: #ffc800 !important;
+  color: #0a0a0a !important;
+  border-color: #ffc800 !important;
 }
 
 html.dark header.trimma-light-context .trimma-header-icon-btn:hover,
 html.dark header.trimma-light-context .trimma-header-icon-btn:focus-visible {
-  background-color: #ffc800 !important;
+  background-color: #ffd633 !important;
   color: #0a0a0a !important;
+  border-color: #ffd633 !important;
 }
 
 html.dark header.trimma-light-context .trimma-header-icon-btn :is(svg, [class*="lucide"]) {
-  color: currentColor !important;
-  stroke: currentColor !important;
-}
-
-html.dark header.trimma-light-context .trimma-header-icon-btn:is(:hover, :focus-visible) :is(svg, [class*="lucide"]) {
   color: #0a0a0a !important;
   stroke: #0a0a0a !important;
 }
