@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { completeBookingCheckout } from "@/lib/complete-booking-checkout";
 import type { CompleteBookingCheckoutInput } from "@/lib/complete-booking-checkout";
 import { completeSubscriptionCheckout } from "@/lib/complete-subscription-checkout";
-import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
 import { getClientIp } from "@/lib/email/rate-limit";
 import {
   loadStripePendingCheckout,
@@ -13,22 +12,27 @@ import {
   verifyStripePaymentIntent,
 } from "@/lib/stripe-payment-verify";
 
+function enrichBookingPayloadFromPayment(
+  payload: CompleteBookingCheckoutInput,
+  paymentIntent: { receipt_email?: string | null }
+): CompleteBookingCheckoutInput {
+  const receiptEmail = paymentIntent.receipt_email?.trim();
+  if (!receiptEmail) return payload;
+
+  const currentEmail = payload.customer?.email?.trim();
+  if (currentEmail) return payload;
+
+  return {
+    ...payload,
+    customer: {
+      ...payload.customer,
+      email: receiptEmail,
+    },
+  };
+}
+
 export async function POST(request: Request) {
   try {
-    const clientIp = getClientIp(request);
-    const rateLimit = checkCheckoutRateLimit(clientIp);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: "Too many checkout attempts. Please wait and try again." },
-        {
-          status: 429,
-          headers: rateLimit.retryAfterSec
-            ? { "Retry-After": String(rateLimit.retryAfterSec) }
-            : undefined,
-        }
-      );
-    }
-
     const body = await request.json();
     const paymentIntentId = assertValidStripePaymentIntentId(
       String(body.paymentIntentId || body.sessionId || "")
@@ -51,7 +55,11 @@ export async function POST(request: Request) {
         });
       }
 
-      const checkoutPayload = payload as CompleteBookingCheckoutInput;
+      const checkoutPayload = enrichBookingPayloadFromPayment(
+        payload as CompleteBookingCheckoutInput,
+        paymentIntent
+      );
+
       verifyStripePaymentIntent(paymentIntent, {
         expectedAmountLkr: Number(checkoutPayload.reservationFee || 0),
       });
@@ -63,7 +71,7 @@ export async function POST(request: Request) {
           environment,
         },
         payhereEnvironment: environment,
-        clientIp,
+        clientIp: getClientIp(request),
       });
 
       await markStripePendingCompleted(pending.id, {

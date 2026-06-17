@@ -9,9 +9,17 @@ export function assertValidStripePaymentIntentId(paymentIntentId: string) {
   return trimmed;
 }
 
+export function resolveStripePaidAmountCents(paymentIntent: Stripe.PaymentIntent): number {
+  const metadataCents = Number(paymentIntent.metadata?.reservation_fee_cents);
+  if (Number.isFinite(metadataCents) && metadataCents > 0) {
+    return metadataCents;
+  }
+  return Number(paymentIntent.amount || 0);
+}
+
 export function verifyStripePaymentIntent(
   paymentIntent: Stripe.PaymentIntent,
-  input: { expectedAmountLkr: number; expectedCurrency?: string }
+  input: { expectedAmountLkr?: number; expectedCurrency?: string }
 ) {
   if (paymentIntent.status !== "succeeded") {
     throw new Error("Payment has not been completed yet.");
@@ -23,9 +31,19 @@ export function verifyStripePaymentIntent(
     throw new Error("Payment currency does not match checkout.");
   }
 
-  const expectedAmount = toStripeAmountLkr(input.expectedAmountLkr);
-  const actualAmount = Number(paymentIntent.amount || 0);
-  if (!Number.isFinite(actualAmount) || actualAmount !== expectedAmount) {
-    throw new Error("Payment amount does not match reservation fee.");
+  const actualAmount = resolveStripePaidAmountCents(paymentIntent);
+  if (!Number.isFinite(actualAmount) || actualAmount <= 0) {
+    throw new Error("Payment amount is invalid.");
   }
+
+  if (input.expectedAmountLkr != null && Number.isFinite(input.expectedAmountLkr)) {
+    const expectedAmount = toStripeAmountLkr(input.expectedAmountLkr);
+    if (Math.abs(actualAmount - expectedAmount) > 1) {
+      throw new Error("Payment amount does not match reservation fee.");
+    }
+  }
+}
+
+export function stripePaidAmountLkr(paymentIntent: Stripe.PaymentIntent): number {
+  return resolveStripePaidAmountCents(paymentIntent) / 100;
 }

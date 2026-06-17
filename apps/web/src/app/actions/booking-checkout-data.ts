@@ -211,12 +211,22 @@ export async function fetchBookingCheckoutData(
     let stripePendingId: string | null = null;
     let stripeSessionError: string | null = null;
 
-    if (stripeEnabled && stripeKeys.publishableKey && draft.customer?.email?.trim()) {
+    if (stripeEnabled && stripeKeys.publishableKey) {
       try {
         const serviceLabel =
           draft.promotionPackageName ||
           services.map((service) => service.name).filter(Boolean).join(" + ") ||
           "Salon booking deposit";
+
+        const customer = draft.customer || {
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          address: "Trimma Online Booking",
+          city: "Colombo",
+          country: "LK",
+        };
 
         const stripePayload = buildBookingStripePayload({
           draft: {
@@ -230,12 +240,12 @@ export async function fetchBookingCheckoutData(
             promotionPackagePrice: draft.promotionPackagePrice,
             promotionPackageIncludedServices: draft.promotionPackageIncludedServices,
             customerDetails: {
-              fullName: `${draft.customer.firstName} ${draft.customer.lastName}`.trim(),
-              email: draft.customer.email,
-              phone: draft.customer.phone,
+              fullName: `${customer.firstName} ${customer.lastName}`.trim(),
+              email: customer.email,
+              phone: customer.phone,
             },
           },
-          customer: draft.customer,
+          customer,
           reservationFee,
           serviceTotal,
           rates,
@@ -249,7 +259,7 @@ export async function fetchBookingCheckoutData(
           checkoutType: "booking",
           amount: reservationFee,
           description: `Trimma booking deposit — ${serviceLabel}`,
-          customerEmail: draft.customer.email.trim(),
+          customerEmail: customer.email.trim(),
           payload: stripePayload,
         });
 

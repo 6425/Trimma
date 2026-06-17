@@ -54,6 +54,7 @@ export async function createStripePaymentIntent(input: {
       pending_id: pending.id,
       checkout_type: input.checkoutType,
       environment: settings.environment,
+      reservation_fee_cents: String(toStripeAmountLkr(input.amount)),
     },
   });
 

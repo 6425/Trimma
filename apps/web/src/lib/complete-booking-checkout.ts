@@ -90,7 +90,7 @@ function validateCheckoutInput(input: CompleteBookingCheckoutInput) {
   if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
     throw new Error("A valid email address is required.");
   }
-  if (!input.customer.phone?.trim()) {
+  if (!input.stripePayment && !input.customer.phone?.trim()) {
     throw new Error("Phone number is required.");
   }
   if (!input.salon?.id?.trim()) {
@@ -192,7 +192,7 @@ export async function completeBookingCheckout(
     { data: salonResources },
     fallbackServicesResult,
   ] = await Promise.all([
-    upsertCheckoutCustomer(supabase, customerEmail, customerName, customer.phone.trim()),
+    upsertCheckoutCustomer(supabase, customerEmail, customerName, customer.phone?.trim() || ""),
     supabase.from("salon_staff").select("id, working_hours").eq("salon_id", salon.id),
     supabase
       .from("bookings")
@@ -416,7 +416,7 @@ export async function completeBookingCheckout(
     salonId: salon.id,
     customerEmail,
     customerName,
-    customerPhone: customer.phone.trim(),
+    customerPhone: customer.phone?.trim() || "",
     bookingDate: draft.bookingDate,
     bookingTime: formattedTime,
     serviceTotal,

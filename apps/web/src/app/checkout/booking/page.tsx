@@ -32,14 +32,6 @@ type LoadedBookingCheckout = {
   rates: { platform: number; salon: number; agent: number };
 };
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error && "message" in error) {
-    return String((error as { message: unknown }).message);
-  }
-  return "Something went wrong during checkout.";
-}
-
 function BookingCheckoutForm() {
   const [loading, setLoading] = useState(true);
   const [checkoutData, setCheckoutData] = useState<LoadedBookingCheckout | null>(null);
@@ -48,7 +40,6 @@ function BookingCheckoutForm() {
   const [salonBackSlug, setSalonBackSlug] = useState<string | null>(null);
   const [stripeEnabled, setStripeEnabled] = useState(true);
   const [stripeEnvironment, setStripeEnvironment] = useState("sandbox");
-  const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
@@ -193,49 +184,21 @@ function BookingCheckoutForm() {
       totalDuration,
     });
 
-  useEffect(() => {
-    if (!checkoutData || !stripeEnabled) return;
-    if (stripeClientSecret && stripePublishableKey) return;
-
-    let cancelled = false;
-
-    void Promise.resolve().then(async () => {
-      setStripeLoading(true);
-      setStripeError(null);
-
-      try {
-        const response = await fetch("/api/checkout/stripe/booking-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(buildStripeSessionBody(checkoutData, customerDetails)),
-        });
-
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to start Stripe checkout.");
-        }
-
-        if (cancelled) return;
-
-        setStripeClientSecret(result.clientSecret);
-        setStripePublishableKey(result.publishableKey);
-        setStripePendingId(result.pendingId || null);
-        setStripeEnvironment(result.environment || stripeEnvironment);
-        preloadStripe(result.publishableKey);
-      } catch (error) {
-        if (!cancelled) {
-          setStripeError(getErrorMessage(error) || "Could not load Stripe checkout.");
-        }
-      } finally {
-        if (!cancelled) setStripeLoading(false);
-      }
+  const syncPendingCheckout = async () => {
+    if (!stripePendingId || !checkoutData) return;
+    const response = await fetch("/api/checkout/stripe/update-pending", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pendingId: stripePendingId,
+        ...buildStripeSessionBody(checkoutData, customerDetails),
+      }),
     });
-
-    return () => {
-      cancelled = true;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkoutData, stripeEnabled, stripeClientSecret, stripePublishableKey]);
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.error || "Could not save your booking details before payment.");
+    }
+  };
 
   useEffect(() => {
     if (!stripePendingId || !checkoutData) return;
@@ -394,7 +357,7 @@ function BookingCheckoutForm() {
             <StripeCheckoutCustomerForm
               customerDetails={customerDetails}
               setCustomerDetails={setCustomerDetails}
-              stripeLoading={stripeLoading}
+              stripeLoading={false}
               stripeError={stripeError}
               stripeEnabled={stripeEnabled}
               stripeEnvironment={stripeEnvironment}
@@ -403,6 +366,7 @@ function BookingCheckoutForm() {
               returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/checkout/booking/success`}
               amountLabel={formattedReservationFee}
               onPaymentError={setStripeError}
+              onBeforePay={syncPendingCheckout}
             />
           </div>
         </div>
