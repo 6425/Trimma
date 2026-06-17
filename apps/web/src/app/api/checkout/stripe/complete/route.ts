@@ -1,21 +1,38 @@
 import { NextResponse } from "next/server";
 import { completeBookingCheckout } from "@/lib/complete-booking-checkout";
+import type { CompleteBookingCheckoutInput } from "@/lib/complete-booking-checkout";
 import { completeSubscriptionCheckout } from "@/lib/complete-subscription-checkout";
+import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
+import { getClientIp } from "@/lib/email/rate-limit";
 import {
   loadStripePendingCheckout,
   markStripePendingCompleted,
 } from "@/lib/stripe-checkout";
+import {
+  assertValidStripePaymentIntentId,
+  verifyStripePaymentIntent,
+} from "@/lib/stripe-payment-verify";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const paymentIntentId =
-      (body.paymentIntentId as string | undefined) ||
-      (body.sessionId as string | undefined);
-
-    if (!paymentIntentId) {
-      return NextResponse.json({ error: "Missing Stripe payment id." }, { status: 400 });
+    const clientIp = getClientIp(request);
+    const rateLimit = checkCheckoutRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many checkout attempts. Please wait and try again." },
+        {
+          status: 429,
+          headers: rateLimit.retryAfterSec
+            ? { "Retry-After": String(rateLimit.retryAfterSec) }
+            : undefined,
+        }
+      );
     }
+
+    const body = await request.json();
+    const paymentIntentId = assertValidStripePaymentIntentId(
+      String(body.paymentIntentId || body.sessionId || "")
+    );
 
     const { paymentIntent, pending, alreadyCompleted } =
       await loadStripePendingCheckout(paymentIntentId);
@@ -34,13 +51,19 @@ export async function POST(request: Request) {
         });
       }
 
+      const checkoutPayload = payload as CompleteBookingCheckoutInput;
+      verifyStripePaymentIntent(paymentIntent, {
+        expectedAmountLkr: Number(checkoutPayload.reservationFee || 0),
+      });
+
       const result = await completeBookingCheckout({
-        ...(payload as Parameters<typeof completeBookingCheckout>[0]),
+        ...checkoutPayload,
         stripePayment: {
           paymentId: paymentIntent.id,
           environment,
         },
         payhereEnvironment: environment,
+        clientIp,
       });
 
       await markStripePendingCompleted(pending.id, {
@@ -50,8 +73,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         checkoutType: "booking",
         bookingNo: result.bookingNo,
-        whatsappSent: result.whatsappSent,
-        whatsappError: result.whatsappError,
+        notificationsPending: result.notificationsPending,
       });
     }
 
@@ -64,6 +86,10 @@ export async function POST(request: Request) {
           alreadyCompleted: true,
         });
       }
+
+      verifyStripePaymentIntent(paymentIntent, {
+        expectedAmountLkr: Number(payload.chargeAmount || 0),
+      });
 
       const result = await completeSubscriptionCheckout({
         ...(payload as Parameters<typeof completeSubscriptionCheckout>[0]),

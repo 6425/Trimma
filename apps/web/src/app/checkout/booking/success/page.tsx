@@ -15,6 +15,7 @@ function BookingSuccessContent() {
   const bookingNoParam = searchParams.get("booking_no");
   const [bookingNo, setBookingNo] = useState<string | null>(bookingNoParam);
   const [whatsappSent, setWhatsappSent] = useState(searchParams.get("whatsapp_sent") === "true");
+  const [notificationsPending, setNotificationsPending] = useState(false);
   const [whatsappError, setWhatsappError] = useState<string | null>(
     searchParams.get("whatsapp_error")
   );
@@ -39,6 +40,7 @@ function BookingSuccessContent() {
 
         clearBookingCheckoutDraft();
         setBookingNo(result.bookingNo || null);
+        setNotificationsPending(Boolean(result.notificationsPending));
         setWhatsappSent(Boolean(result.whatsappSent));
         setWhatsappError(result.whatsappError || null);
       } catch (err) {
@@ -59,14 +61,18 @@ function BookingSuccessContent() {
       toast.success("Receipt sent to your WhatsApp!", {
         position: "top-center",
       });
+    } else if (notificationsPending) {
+      toast.message("Confirmation is on its way via WhatsApp and email.", {
+        position: "top-center",
+      });
     }
-  }, [bookingNo, whatsappSent]);
+  }, [bookingNo, whatsappSent, notificationsPending]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-900 mb-4" />
-        <p className="text-sm text-zinc-500 font-medium">Confirming your Stripe payment…</p>
+        <p className="text-sm text-zinc-500 font-medium">Finalizing your booking…</p>
       </div>
     );
   }
@@ -116,7 +122,14 @@ function BookingSuccessContent() {
           <p className="font-mono font-black text-lg text-emerald-400 mt-1">{bookingNo}</p>
         </div>
 
-        {!whatsappSent && (
+        {notificationsPending ? (
+          <p className="text-xs text-sky-800 bg-sky-50 border border-sky-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">
+            <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              Your booking reference is saved above. WhatsApp and email confirmations are being sent now.
+            </span>
+          </p>
+        ) : !whatsappSent ? (
           <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">
             <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
@@ -129,7 +142,7 @@ function BookingSuccessContent() {
               )}
             </span>
           </p>
-        )}
+        ) : null}
 
         <ConnectTelegramCard
           compact

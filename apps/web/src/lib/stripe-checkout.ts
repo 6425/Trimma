@@ -105,25 +105,42 @@ export async function updateStripePendingPayload(
 
 export async function loadStripePendingCheckout(paymentIntentId: string) {
   const stripe = await getStripeServerClient();
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  const supabase = createSupabaseAdminClient();
+
+  const [paymentIntent, pendingLookup] = await Promise.all([
+    stripe.paymentIntents.retrieve(paymentIntentId),
+    supabase
+      .from("stripe_checkout_pending")
+      .select("*")
+      .eq("stripe_session_id", paymentIntentId)
+      .maybeSingle(),
+  ]);
 
   if (paymentIntent.status !== "succeeded") {
     throw new Error("Payment has not been completed yet.");
   }
 
-  const pendingId = paymentIntent.metadata?.pending_id;
-  if (!pendingId) {
-    throw new Error("Payment is missing checkout metadata.");
+  let pending = pendingLookup.data;
+  if (pendingLookup.error) {
+    throw new Error(pendingLookup.error.message);
   }
 
-  const supabase = createSupabaseAdminClient();
-  const { data: pending, error } = await supabase
-    .from("stripe_checkout_pending")
-    .select("*")
-    .eq("id", pendingId)
-    .maybeSingle();
+  if (!pending) {
+    const pendingId = paymentIntent.metadata?.pending_id;
+    if (!pendingId) {
+      throw new Error("Payment is missing checkout metadata.");
+    }
 
-  if (error) throw new Error(error.message);
+    const { data: pendingById, error } = await supabase
+      .from("stripe_checkout_pending")
+      .select("*")
+      .eq("id", pendingId)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    pending = pendingById;
+  }
+
   if (!pending) throw new Error("Checkout session expired or not found.");
   if (pending.status === "completed") {
     return { paymentIntent, pending, alreadyCompleted: true as const };

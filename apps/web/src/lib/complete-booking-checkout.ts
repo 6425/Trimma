@@ -1,13 +1,7 @@
 import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { insertBookingRecord, updateBookingAfterPayment } from "@/lib/booking-insert";
-import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
-import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
-import { sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
-import { sendTriggeredEmail } from "@/app/actions/email-settings";
-import { isEmailSendFailure } from "@/lib/email/result";
-import { APP_BASE_URL } from "@/lib/email/config";
-import { buildEmailRateLimitKey } from "@/lib/email/rate-limit";
+import { dispatchBookingCheckoutNotifications } from "@/lib/booking-checkout-notifications";
 import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
@@ -16,6 +10,7 @@ import { filterStaffQualifiedForServices, computeBookingStaffCommission } from "
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
+import { normalizeEmail } from "@/lib/normalize-email";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteBookingCheckoutInput = {
@@ -72,6 +67,17 @@ export type CompleteBookingCheckoutInput = {
   clientIp?: string;
 };
 
+export type CompleteBookingCheckoutResult = {
+  bookingNo: string;
+  bookingId: string;
+  notificationsPending: boolean;
+  whatsappSent: null;
+  whatsappError: null;
+  emailSent: null;
+  emailError: null;
+  emailId: null;
+};
+
 function parseTimeSlot(timeSlot: string) {
   const formattedTime = parseDisplayTimeSlot(timeSlot);
   const hh = parseInt(formattedTime.split(":")[0], 10);
@@ -79,15 +85,37 @@ function parseTimeSlot(timeSlot: string) {
   return { hh, mm, formattedTime };
 }
 
-export async function completeBookingCheckout(input: CompleteBookingCheckoutInput) {
-  const supabase = createSupabaseAdminClient();
-  const { draft, customer, card, stripePayment, payhereEnvironment, reservationFee, serviceTotal, rates, salon, services, staffMemberId, totalDuration, clientIp } = input;
+function validateCheckoutInput(input: CompleteBookingCheckoutInput) {
+  const customerEmail = normalizeEmail(input.customer.email);
+  if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+    throw new Error("A valid email address is required.");
+  }
+  if (!input.customer.phone?.trim()) {
+    throw new Error("Phone number is required.");
+  }
+  if (!input.salon?.id?.trim()) {
+    throw new Error("Salon is required.");
+  }
+  if (!input.draft?.bookingDate || !input.draft?.timeSlot) {
+    throw new Error("Booking date and time are required.");
+  }
+  if (!Number.isFinite(input.reservationFee) || input.reservationFee <= 0) {
+    throw new Error("Invalid reservation fee.");
+  }
+  if (!Number.isFinite(input.serviceTotal) || input.serviceTotal <= 0) {
+    throw new Error("Invalid service total.");
+  }
+  if (!input.stripePayment && !input.card) {
+    throw new Error("Payment details are missing.");
+  }
+}
 
-  const { hh, mm, formattedTime } = parseTimeSlot(draft.timeSlot);
-  const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
-  const customerEmail = customer.email || "guest@trimma.com";
-  const customerName = `${customer.firstName} ${customer.lastName}`.trim() || "Guest Client";
-
+async function upsertCheckoutCustomer(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  customerEmail: string,
+  customerName: string,
+  phone: string
+) {
   const { data: existingUser } = await supabase
     .from("users")
     .select("email")
@@ -95,25 +123,48 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     .maybeSingle();
 
   if (!existingUser) {
-    const { error: userInsertError } = await supabase.from("users").insert({
+    const { error } = await supabase.from("users").insert({
       email: customerEmail,
       full_name: customerName,
-      phone: customer.phone,
+      phone,
       global_role: "customer",
     });
-    if (userInsertError) throw new Error(userInsertError.message);
-  } else {
-    const { error: userUpdateError } = await supabase
-      .from("users")
-      .update({ full_name: customerName, phone: customer.phone })
-      .eq("email", customerEmail);
-    if (userUpdateError) throw new Error(userUpdateError.message);
+    if (error) throw new Error(error.message);
+    return;
   }
 
-  let agentEmail: string | null = null;
-  let fieldAgentEmail: string | null = null;
-  let agentCommissionPct = 0;
-  let agentCommissionAmount = 0;
+  const { error } = await supabase
+    .from("users")
+    .update({ full_name: customerName, phone })
+    .eq("email", customerEmail);
+  if (error) throw new Error(error.message);
+}
+
+export async function completeBookingCheckout(
+  input: CompleteBookingCheckoutInput
+): Promise<CompleteBookingCheckoutResult> {
+  validateCheckoutInput(input);
+
+  const supabase = createSupabaseAdminClient();
+  const {
+    draft,
+    customer,
+    card,
+    stripePayment,
+    payhereEnvironment,
+    serviceTotal,
+    rates,
+    salon,
+    services,
+    staffMemberId,
+    totalDuration,
+    clientIp,
+  } = input;
+
+  const { hh, mm, formattedTime } = parseTimeSlot(draft.timeSlot);
+  const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
+  const customerEmail = normalizeEmail(customer.email);
+  const customerName = `${customer.firstName} ${customer.lastName}`.trim() || "Guest Client";
 
   const primaryServiceId = draft.serviceIds[0] || null;
   const isPromotionBooking = Boolean(draft.promotionPackageId);
@@ -131,15 +182,37 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
         duration_min: parseInt(String(service.duration || service.duration_min || "30"), 10),
       }));
 
-  if (isPromotionBooking && !primaryServiceId) {
-    const { data: fallbackServices } = await supabase
-      .from("services")
-      .select("id")
-      .eq("salon_id", salon.id)
-      .eq("status", "active")
-      .limit(1);
+  const needsFallbackService = isPromotionBooking && !primaryServiceId;
 
-    const fallbackServiceId = fallbackServices?.[0]?.id || null;
+  const [
+    ,
+    { data: salonStaff },
+    { data: existingBookings },
+    attribution,
+    { data: salonResources },
+    fallbackServicesResult,
+  ] = await Promise.all([
+    upsertCheckoutCustomer(supabase, customerEmail, customerName, customer.phone.trim()),
+    supabase.from("salon_staff").select("id, working_hours").eq("salon_id", salon.id),
+    supabase
+      .from("bookings")
+      .select("id, booking_time, staff_id, status, created_at, customer_email, service_id")
+      .eq("salon_id", salon.id)
+      .eq("booking_date", draft.bookingDate),
+    resolveAgentCommissionAttribution(supabase, salon),
+    supabase.from("resources").select("id").eq("salon_id", salon.id),
+    needsFallbackService
+      ? supabase
+          .from("services")
+          .select("id")
+          .eq("salon_id", salon.id)
+          .eq("status", "active")
+          .limit(1)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  if (needsFallbackService) {
+    const fallbackServiceId = fallbackServicesResult?.data?.[0]?.id || null;
     if (!fallbackServiceId) {
       throw new Error("This salon has no active services configured for promotion bookings.");
     }
@@ -150,19 +223,8 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     .map((line) => line.service_id)
     .filter(Boolean) as string[];
 
-  const { data: salonStaff } = await supabase
-    .from("salon_staff")
-    .select("id, working_hours")
-    .eq("salon_id", salon.id);
-
   const qualifiedStaff = filterStaffQualifiedForServices(salonStaff || [], serviceIdsForStaff);
   const staffIds = qualifiedStaff.map((member) => member.id).filter(Boolean);
-
-  const { data: existingBookings } = await supabase
-    .from("bookings")
-    .select("id, booking_time, staff_id, status, created_at, customer_email, service_id")
-    .eq("salon_id", salon.id)
-    .eq("booking_date", draft.bookingDate);
 
   const bookings = await enrichBookingsWithDurations(supabase, existingBookings || []);
 
@@ -177,7 +239,11 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
   const pricing = calculateCommissionSplit(serviceTotal, rates);
   const resolvedReservationFee = pricing.reservationFee;
 
-  const attribution = await resolveAgentCommissionAttribution(supabase, salon);
+  let agentEmail: string | null = null;
+  let fieldAgentEmail: string | null = null;
+  let agentCommissionPct = 0;
+  let agentCommissionAmount = 0;
+
   if (attribution.payeeEmail) {
     agentEmail = attribution.payeeEmail;
     fieldAgentEmail = attribution.fieldAgentEmail;
@@ -204,7 +270,7 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
             price: line.price,
           })),
         },
-        staffProfile ? [staffProfile] : []
+        [staffProfile]
       )
     : null;
 
@@ -233,31 +299,28 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     promotion_package_id: draft.promotionPackageId || null,
   });
 
-  const resolvedPrimaryServiceId = bookingServiceLines[0]?.service_id || primaryServiceId;
+  const bookingLineRows = bookingServiceLines.map((line) => ({
+    booking_id: newBooking.id,
+    service_id: line.service_id,
+    price: line.price,
+    duration_min: line.duration_min,
+  }));
+  const staffLineRows = bookingServiceLines.map((line) => ({
+    booking_id: newBooking.id,
+    staff_id: resolvedStaffId,
+    service_id: line.service_id,
+  }));
 
-  const { error: servicesError } = await supabase.from("booking_services").insert(
-    bookingServiceLines.map((line) => ({
-      booking_id: newBooking.id,
-      service_id: line.service_id,
-      price: line.price,
-      duration_min: line.duration_min,
-    }))
-  );
-  if (servicesError) throw new Error(servicesError.message);
-
-  const { error: staffError } = await supabase.from("booking_staff").insert(
-    bookingServiceLines.map((line) => ({
-      booking_id: newBooking.id,
-      staff_id: resolvedStaffId,
-      service_id: line.service_id,
-    }))
-  );
-  if (staffError) throw new Error(staffError.message);
-
-  const { data: salonResources } = await supabase
-    .from("resources")
-    .select("id")
-    .eq("salon_id", salon.id);
+  const writeTasks = [
+    (async () => {
+      const { error } = await supabase.from("booking_services").insert(bookingLineRows);
+      if (error) throw new Error(error.message);
+    })(),
+    (async () => {
+      const { error } = await supabase.from("booking_staff").insert(staffLineRows);
+      if (error) throw new Error(error.message);
+    })(),
+  ];
 
   if (salonResources?.length) {
     const startMin = hh * 60 + mm;
@@ -266,17 +329,23 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
     const endM = endMin % 60;
     const formattedEndTime = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}:00`;
 
-    const { error: resourceError } = await supabase.from("resource_bookings").insert(
-      salonResources.map((resource) => ({
-        booking_id: newBooking.id,
-        resource_id: resource.id,
-        booking_date: draft.bookingDate,
-        start_time: formattedTime,
-        end_time: formattedEndTime,
-      }))
+    writeTasks.push(
+      (async () => {
+        const { error } = await supabase.from("resource_bookings").insert(
+          salonResources.map((resource) => ({
+            booking_id: newBooking.id,
+            resource_id: resource.id,
+            booking_date: draft.bookingDate,
+            start_time: formattedTime,
+            end_time: formattedEndTime,
+          }))
+        );
+        if (error) throw new Error(error.message);
+      })()
     );
-    if (resourceError) throw new Error(resourceError.message);
   }
+
+  await Promise.all(writeTasks);
 
   const { data: paymentRow, error: paymentInsertError } = await supabase
     .from("payments")
@@ -314,123 +383,58 @@ export async function completeBookingCheckout(input: CompleteBookingCheckoutInpu
         environment: payhereEnvironment,
       });
 
-  const { error: paymentUpdateError } = await supabase
-    .from("payments")
-    .update({
-      status: "success",
-      payment_id: paymentResult.paymentId,
-      provider_payment_id: paymentResult.paymentId,
-      raw_response: {
-        provider: paymentResult.provider,
-        last4: paymentResult.last4,
-        card_type: card?.cardType || null,
-        environment: stripePayment?.environment || payhereEnvironment,
-        stripe_session_id: stripePayment?.paymentId || null,
-      },
-    })
-    .eq("id", paymentRow.id);
+  await Promise.all([
+    (async () => {
+      const { error } = await supabase
+        .from("payments")
+        .update({
+          status: "success",
+          payment_id: paymentResult.paymentId,
+          provider_payment_id: paymentResult.paymentId,
+          raw_response: {
+            provider: paymentResult.provider,
+            last4: paymentResult.last4,
+            card_type: card?.cardType || null,
+            environment: stripePayment?.environment || payhereEnvironment,
+            stripe_session_id: stripePayment?.paymentId || null,
+          },
+        })
+        .eq("id", paymentRow.id);
+      if (error) throw new Error(error.message);
+    })(),
+    updateBookingAfterPayment(supabase, newBooking.id, {
+      status: "pending",
+      payment_status: "reservation_paid",
+      reservation_fee_paid: true,
+    }),
+  ]);
 
-  if (paymentUpdateError) throw new Error(paymentUpdateError.message);
-
-  await updateBookingAfterPayment(supabase, newBooking.id, {
-    status: "pending",
-    payment_status: "reservation_paid",
-    reservation_fee_paid: true,
+  dispatchBookingCheckoutNotifications({
+    supabase,
+    bookingNo,
+    bookingId: newBooking.id,
+    salonId: salon.id,
+    customerEmail,
+    customerName,
+    customerPhone: customer.phone.trim(),
+    bookingDate: draft.bookingDate,
+    bookingTime: formattedTime,
+    serviceTotal,
+    reservationFee: resolvedReservationFee,
+    promotionPackageName: draft.promotionPackageName,
+    services,
+    resolvedStaffId,
+    clientIp,
   });
 
-  try {
-    const [{ data: salonRow }, { data: staffRow }] = await Promise.all([
-      supabase.from("salons").select("name, address, location, slug").eq("id", salon.id).maybeSingle(),
-      resolvedStaffId
-        ? supabase.from("salon_staff").select("name").eq("id", resolvedStaffId).maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-
-    void sendWhatsAppReservationPaidNotification(bookingNo, {
-      customerPhone: customer.phone,
-      customerName,
-      serviceName: draft.promotionPackageName || services[0]?.name || undefined,
-    }).then((whatsappResult) => {
-      if (!whatsappResult.success) {
-        console.error("WhatsApp confirmation failed after checkout:", whatsappResult.error);
-      }
-    }).catch((err) => {
-      console.error("WhatsApp confirmation failed after checkout:", err);
-    });
-
-    const salonName = salonRow?.name || "your salon";
-    const salonAddress = salonRow?.address || salonRow?.location || "See Trimma for details";
-    const mapsLink = salonRow?.slug
-      ? `${APP_BASE_URL}/salons/${salonRow.slug}`
-      : APP_BASE_URL;
-    const serviceName =
-      draft.promotionPackageName ||
-      services
-        .map((service) => service.name)
-        .filter(Boolean)
-        .join(", ") ||
-      "Salon service";
-    const balanceToPay = Math.max(0, serviceTotal - resolvedReservationFee);
-
-    void createBookingPendingConfirmNotification(supabase, {
-      salonId: salon.id,
-      bookingId: newBooking.id,
-      bookingNo,
-      customerEmail,
-      customerName,
-      bookingDate: draft.bookingDate,
-      bookingTime: formattedTime,
-      amount: serviceTotal,
-      serviceName,
-      staffName: staffRow?.name || null,
-      paymentStatus: "reservation_paid",
-    });
-
-    void notifyOwnerPaidBookingRequest(supabase, bookingNo, "reservation_paid");
-
-    const emailResult = await sendTriggeredEmail({
-      triggerId: "reservation-paid",
-      to: customerEmail,
-      variables: {
-        customer_name: customerName,
-        booking_no: bookingNo,
-        salon_name: salonName,
-        booking_date: draft.bookingDate,
-        booking_time: formattedTime,
-        service_name: serviceName,
-        deposit_paid: Number(resolvedReservationFee).toLocaleString("en-LK"),
-        balance_to_pay: balanceToPay.toLocaleString("en-LK"),
-        dashboard_link: `${APP_BASE_URL}/customer`,
-      },
-      rateLimitKey: buildEmailRateLimitKey(clientIp || "checkout", customerEmail),
-      idempotencyKey: `booking-reservation-paid/${bookingNo}`,
-    });
-
-    if (isEmailSendFailure(emailResult) && !emailResult.skipped) {
-      console.error("Reservation payment email failed:", emailResult.error);
-    }
-
-    return {
-      bookingNo,
-      bookingId: newBooking.id,
-      whatsappSent: true,
-      whatsappError: null,
-      emailSent: emailResult.success,
-      emailError: isEmailSendFailure(emailResult) ? emailResult.error : null,
-      emailId: emailResult.success ? emailResult.id : null,
-    };
-  } catch (notificationError) {
-    console.error("Post-checkout notifications failed:", notificationError);
-    return {
-      bookingNo,
-      bookingId: newBooking.id,
-      whatsappSent: false,
-      whatsappError:
-        notificationError instanceof Error ? notificationError.message : "Notification dispatch failed.",
-      emailSent: false,
-      emailError:
-        notificationError instanceof Error ? notificationError.message : "Email dispatch failed.",
-      emailId: null,
-    };
-  }
+  return {
+    bookingNo,
+    bookingId: newBooking.id,
+    notificationsPending: true,
+    whatsappSent: null,
+    whatsappError: null,
+    emailSent: null,
+    emailError: null,
+    emailId: null,
+  };
 }

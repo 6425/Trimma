@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeEmail } from "@/lib/normalize-email";
 
@@ -146,6 +146,13 @@ export function readTelegramWebhookSecret(): string {
     process.env.TRIMMA_TELEGRAM_WEBHOOK_SECRET?.trim() ||
     ""
   );
+}
+
+export function telegramWebhookSecretsMatch(expected: string, received: string): boolean {
+  const expectedBuf = Buffer.from(expected);
+  const receivedBuf = Buffer.from(received);
+  if (expectedBuf.length !== receivedBuf.length) return false;
+  return timingSafeEqual(expectedBuf, receivedBuf);
 }
 
 export function buildTelegramWebhookSecret(botToken: string): string {

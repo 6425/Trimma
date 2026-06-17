@@ -1,10 +1,25 @@
 import { NextResponse } from "next/server";
 import { completeBookingCheckout } from "@/lib/complete-booking-checkout";
+import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
 import { getClientIp } from "@/lib/email/rate-limit";
 import { validateCardPayment, type CardType } from "@/lib/card-payment";
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimit = checkCheckoutRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many checkout attempts. Please wait and try again." },
+        {
+          status: 429,
+          headers: rateLimit.retryAfterSec
+            ? { "Retry-After": String(rateLimit.retryAfterSec) }
+            : undefined,
+        }
+      );
+    }
+
     const body = await request.json();
 
     const cardType = body.card?.cardType as CardType;
@@ -35,7 +50,7 @@ export async function POST(request: Request) {
       services: body.services || [],
       staffMemberId: body.staffMemberId || null,
       totalDuration: Number(body.totalDuration || 0),
-      clientIp: getClientIp(request),
+      clientIp,
     });
 
     return NextResponse.json(result);

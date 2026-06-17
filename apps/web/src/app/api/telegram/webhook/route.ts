@@ -5,6 +5,7 @@ import {
   buildTelegramWebhookSecret,
   parseTelegramConnectStartText,
   completeTelegramConnectToken,
+  telegramWebhookSecretsMatch,
 } from "@/lib/telegram-connect-core";
 
 export async function POST(request: Request) {
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
 
     const expectedSecret = buildTelegramWebhookSecret(config.botToken);
     const receivedSecret = request.headers.get("x-telegram-bot-api-secret-token") || "";
-    if (receivedSecret !== expectedSecret) {
+    if (!telegramWebhookSecretsMatch(expectedSecret, receivedSecret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
