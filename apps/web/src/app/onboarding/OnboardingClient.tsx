@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
-import { submitOnboardingLead } from "../actions/submit-onboarding-lead";
+import type { OnboardingLeadFormInput } from "@/lib/onboarding-lead-insert";
 
 export default function OnboardingClient() {
   const router = useRouter();
@@ -36,22 +36,29 @@ export default function OnboardingClient() {
     setSubmitting(true);
 
     try {
-      const result = await submitOnboardingLead({
+      const payload: OnboardingLeadFormInput = {
         businessName,
         ownerName,
         email,
         whatsapp,
         province,
         district,
-        city: city || address, // Fallback if city not explicitly typed
+        city: city || address,
         address,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         notes,
+      };
+
+      const response = await fetch("/api/onboarding/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      if (!result.success) {
-        throw new Error(result.error);
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to submit your onboarding request.");
       }
 
       setSubmitted(true);
