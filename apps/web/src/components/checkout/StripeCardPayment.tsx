@@ -12,6 +12,38 @@ import { Button } from "@/components/ui/button";
 import { getStripePromise } from "@/lib/stripe-js-client";
 import type { CheckoutCustomerDetails } from "./StripeCheckoutCustomerForm";
 
+function defaultPostalCode(country: string): string {
+  switch (country.trim().toUpperCase()) {
+    case "LK":
+      return "00100";
+    case "US":
+      return "00000";
+    case "GB":
+      return "SW1A 1AA";
+    case "IN":
+      return "110001";
+    default:
+      return "00000";
+  }
+}
+
+function buildConfirmBillingDetails(customerDetails: CheckoutCustomerDetails) {
+  const name = `${customerDetails.firstName} ${customerDetails.lastName}`.trim();
+  const country = customerDetails.country?.trim() || "LK";
+
+  return {
+    name,
+    email: customerDetails.email.trim(),
+    phone: customerDetails.phone.trim(),
+    address: {
+      line1: customerDetails.address?.trim() || "Trimma Online Booking",
+      city: customerDetails.city?.trim() || "Colombo",
+      country,
+      postal_code: defaultPostalCode(country),
+    },
+  };
+}
+
 const ACCEPTED_CARD_BRANDS = [
   { src: "/payments/visa.svg", alt: "Visa" },
   { src: "/payments/mastercard.svg", alt: "Mastercard" },
@@ -88,16 +120,7 @@ function StripePayButton({
         confirmParams: {
           return_url: returnUrl,
           payment_method_data: {
-            billing_details: {
-              name,
-              email: customerDetails.email.trim(),
-              phone: customerDetails.phone.trim(),
-              address: {
-                line1: customerDetails.address || undefined,
-                city: customerDetails.city || undefined,
-                country: customerDetails.country || undefined,
-              },
-            },
+            billing_details: buildConfirmBillingDetails(customerDetails),
           },
         },
       });
@@ -185,6 +208,7 @@ const StripePaymentSection = memo(function StripePaymentSection({
               wallets: {
                 applePay: "never",
                 googlePay: "never",
+                link: "never",
               },
               fields: {
                 billingDetails: "never",
