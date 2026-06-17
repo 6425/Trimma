@@ -12,38 +12,6 @@ import { Button } from "@/components/ui/button";
 import { getStripePromise } from "@/lib/stripe-js-client";
 import type { CheckoutCustomerDetails } from "./StripeCheckoutCustomerForm";
 
-function defaultPostalCode(country: string): string {
-  switch (country.trim().toUpperCase()) {
-    case "LK":
-      return "00100";
-    case "US":
-      return "00000";
-    case "GB":
-      return "SW1A 1AA";
-    case "IN":
-      return "110001";
-    default:
-      return "00000";
-  }
-}
-
-function buildConfirmBillingDetails(customerDetails: CheckoutCustomerDetails) {
-  const name = `${customerDetails.firstName} ${customerDetails.lastName}`.trim();
-  const country = customerDetails.country?.trim() || "LK";
-
-  return {
-    name,
-    email: customerDetails.email.trim(),
-    phone: customerDetails.phone.trim(),
-    address: {
-      line1: customerDetails.address?.trim() || "Trimma Online Booking",
-      city: customerDetails.city?.trim() || "Colombo",
-      country,
-      postal_code: defaultPostalCode(country),
-    },
-  };
-}
-
 const ACCEPTED_CARD_BRANDS = [
   { src: "/payments/visa.svg", alt: "Visa" },
   { src: "/payments/mastercard.svg", alt: "Mastercard" },
@@ -119,9 +87,6 @@ function StripePayButton({
         elements,
         confirmParams: {
           return_url: returnUrl,
-          payment_method_data: {
-            billing_details: buildConfirmBillingDetails(customerDetails),
-          },
         },
       });
 
@@ -168,25 +133,27 @@ function StripePayButton({
   );
 }
 
-type StripePaymentSectionProps = {
+type StripeCardCheckoutProps = {
   publishableKey: string;
   clientSecret: string;
   returnUrl: string;
   customerDetails: CheckoutCustomerDetails;
   amountLabel: string;
+  customerForm: React.ReactNode;
   onPaymentError?: (message: string) => void;
   onBeforePay?: () => Promise<void>;
 };
 
-const StripePaymentSection = memo(function StripePaymentSection({
+const StripeCardCheckout = memo(function StripeCardCheckout({
   publishableKey,
   clientSecret,
   returnUrl,
   customerDetails,
   amountLabel,
+  customerForm,
   onPaymentError,
   onBeforePay,
-}: StripePaymentSectionProps) {
+}: StripeCardCheckoutProps) {
   const stripePromise = useMemo(() => getStripePromise(publishableKey), [publishableKey]);
   const elementsOptions = useMemo(
     () => ({
@@ -197,28 +164,38 @@ const StripePaymentSection = memo(function StripePaymentSection({
     [clientSecret]
   );
 
+  if (!publishableKey || !clientSecret) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        Stripe checkout is not ready. Check payment gateway settings.
+      </div>
+    );
+  }
+
   return (
     <Elements stripe={stripePromise} options={elementsOptions}>
-      <div className="space-y-4">
-        <AcceptedCardBrands />
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <PaymentElement
-            options={{
-              layout: "accordion",
-              wallets: {
-                applePay: "never",
-                googlePay: "never",
-                link: "never",
-              },
-              fields: {
-                billingDetails: "never",
-              },
-            }}
-          />
-        </div>
-        <p className="text-[11px] text-zinc-500">
-          Visa, Mastercard, and American Express are accepted through Stripe.
-        </p>
+      <div className="space-y-8">
+        <section>
+          <AcceptedCardBrands />
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <PaymentElement
+              options={{
+                layout: "accordion",
+                wallets: {
+                  applePay: "never",
+                  googlePay: "never",
+                  link: "never",
+                },
+              }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-zinc-500">
+            Visa, Mastercard, and American Express are accepted through Stripe.
+          </p>
+        </section>
+
+        {customerForm}
+
         <StripePayButton
           returnUrl={returnUrl}
           customerDetails={customerDetails}
@@ -231,22 +208,7 @@ const StripePaymentSection = memo(function StripePaymentSection({
   );
 });
 
-type StripeCardCheckoutProps = {
-  publishableKey: string;
-  clientSecret: string;
-  returnUrl: string;
-  customerDetails: CheckoutCustomerDetails;
-  amountLabel: string;
-  onPaymentError?: (message: string) => void;
-  onBeforePay?: () => Promise<void>;
-};
-
-/** @deprecated Use StripePaymentSection — kept for compatibility */
-export function StripeCardCheckout(props: StripeCardCheckoutProps) {
-  return <StripePaymentSection {...props} />;
-}
-
-export { StripePaymentSection };
+export { StripeCardCheckout };
 
 export function StripeCheckoutLoading() {
   return (
