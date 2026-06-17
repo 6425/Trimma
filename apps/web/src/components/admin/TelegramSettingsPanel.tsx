@@ -20,6 +20,9 @@ import {
   saveTelegramSettings,
   testTelegramConnection,
   validateTelegramCredentials,
+  listTelegramBotRecentChats,
+  getTelegramBotInviteUrl,
+  type TelegramInboxChat,
 } from "@/app/actions/telegram";
 import { TELEGRAM_TRIGGER_CATALOG } from "@/lib/telegram-templates";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -40,6 +43,9 @@ export function TelegramSettingsPanel() {
   const [adminAlertPhone, setAdminAlertPhone] = useState("");
   const [showBotToken, setShowBotToken] = useState(false);
   const [testChatId, setTestChatId] = useState("");
+  const [detectingChats, setDetectingChats] = useState(false);
+  const [recentChats, setRecentChats] = useState<TelegramInboxChat[]>([]);
+  const [botInviteUrl, setBotInviteUrl] = useState<string | null>(null);
   const [tokenStatus, setTokenStatus] = useState<{
     valid: boolean;
     error?: string;
@@ -118,6 +124,12 @@ export function TelegramSettingsPanel() {
           ? { valid: true, botUsername: validation.botUsername }
           : { valid: false, error: validation.error }
       );
+      if (validation.valid && validation.botUsername) {
+        setBotInviteUrl(`https://t.me/${validation.botUsername}`);
+      } else {
+        const invite = await getTelegramBotInviteUrl();
+        if (invite.success) setBotInviteUrl(invite.url);
+      }
       setLoading(false);
     });
   }, []);
@@ -245,6 +257,24 @@ export function TelegramSettingsPanel() {
     }
   };
 
+  const handleDetectChats = async () => {
+    setDetectingChats(true);
+    try {
+      const res = await listTelegramBotRecentChats(botToken || undefined);
+      if (!res.success) throw new Error(res.error);
+      setRecentChats(res.chats);
+      if (!adminAlertChatId && res.chats[0]) {
+        setAdminAlertChatId(res.chats[0].chatId);
+        setTestChatId(res.chats[0].chatId);
+      }
+      toast.success(`Found ${res.chats.length} Telegram contact(s) who started your bot.`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Could not detect Telegram chats.");
+    } finally {
+      setDetectingChats(false);
+    }
+  };
+
   const handleTestSend = async () => {
     if (!testChatId.trim()) {
       toast.error("Enter a Telegram chat ID for the test message.");
@@ -330,6 +360,31 @@ export function TelegramSettingsPanel() {
             </div>
           )}
 
+          <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-bold text-sky-900">Quick setup (no chat IDs needed from customers)</p>
+            <ol className="text-[11px] text-sky-800 space-y-2 list-decimal list-inside leading-relaxed">
+              <li>
+                In Telegram, open <strong>@BotFather</strong> → send <code>/newbot</code> → copy the{" "}
+                <strong>Bot Token</strong> into the field below.
+              </li>
+              <li>
+                Open your new bot (link appears after saving token) and tap <strong>Start</strong>.
+              </li>
+              <li>
+                Click <strong>Detect Admin Chat ID</strong> — Trimma reads your Telegram inbox and fills
+                the admin chat ID automatically.
+              </li>
+              <li>
+                For customers/salon owners: they will tap a <strong>“Connect Telegram”</strong> link after
+                booking (coming next) — they never need to know their chat ID.
+              </li>
+            </ol>
+            <p className="text-[10px] text-sky-700">
+              App API ID / Hash / DC / Public Key are optional (advanced MTProto). For Trimma alerts, only
+              the <strong>Bot Token</strong> is required.
+            </p>
+          </div>
+
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -411,6 +466,15 @@ export function TelegramSettingsPanel() {
               </div>
               <p className="text-[10px] text-zinc-500">
                 From @BotFather. Required to dispatch messages via Telegram Bot API.
+                {botInviteUrl ? (
+                  <>
+                    {" "}
+                    Open bot:{" "}
+                    <a href={botInviteUrl} target="_blank" rel="noreferrer" className="text-sky-600 underline">
+                      {botInviteUrl}
+                    </a>
+                  </>
+                ) : null}
               </p>
             </div>
 
@@ -419,13 +483,45 @@ export function TelegramSettingsPanel() {
                 <Label htmlFor="telegram_admin_chat_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
                   Platform Admin Alert Chat ID
                 </Label>
-                <Input
-                  id="telegram_admin_chat_id"
-                  value={adminAlertChatId}
-                  onChange={(e) => setAdminAlertChatId(e.target.value)}
-                  placeholder="123456789"
-                  className="h-11 border-slate-200 rounded-xl text-sm"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="telegram_admin_chat_id"
+                    value={adminAlertChatId}
+                    onChange={(e) => setAdminAlertChatId(e.target.value)}
+                    placeholder="Auto-detected after you Start the bot"
+                    className="h-11 border-slate-200 rounded-xl text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleDetectChats}
+                    disabled={detectingChats || !botToken && !tokenFromEnv}
+                    className="h-11 shrink-0 rounded-xl text-xs font-bold"
+                  >
+                    {detectingChats ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Detect"}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-zinc-500">
+                  Tap Start on your Trimma bot in Telegram, then click Detect — no manual lookup needed.
+                </p>
+                {recentChats.length > 0 ? (
+                  <div className="space-y-1">
+                    {recentChats.map((chat) => (
+                      <button
+                        key={chat.chatId}
+                        type="button"
+                        onClick={() => {
+                          setAdminAlertChatId(chat.chatId);
+                          setTestChatId(chat.chatId);
+                        }}
+                        className="w-full text-left text-[10px] px-2 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50"
+                      >
+                        {chat.displayName}
+                        {chat.username ? ` (@${chat.username})` : ""} — ID {chat.chatId}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="telegram_admin_phone" className="text-xs font-black uppercase tracking-wider text-zinc-500">
@@ -543,7 +639,8 @@ export function TelegramSettingsPanel() {
               Live Telegram Tester
             </h3>
             <p className="text-xs text-zinc-500 leading-relaxed">
-              Send a test message to a Telegram chat ID. The user must have started your bot first.
+              After you detect your admin chat ID above, send a test message to yourself. Customers will
+              connect via a one-tap link later — not by entering chat IDs.
             </p>
           </div>
 

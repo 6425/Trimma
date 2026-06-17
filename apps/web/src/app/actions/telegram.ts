@@ -491,6 +491,89 @@ export async function saveTelegramSettings(
   }
 }
 
+export async function getTelegramBotInviteUrl(botTokenOverride?: string) {
+  const validation = await validateTelegramCredentials(botTokenOverride);
+  if (!validation.valid || !validation.botUsername) {
+    return { success: false as const, error: validation.error || "Connect a valid bot token first." };
+  }
+  return {
+    success: true as const,
+    url: `https://t.me/${validation.botUsername}`,
+    botUsername: validation.botUsername,
+  };
+}
+
+export type TelegramInboxChat = {
+  chatId: string;
+  displayName: string;
+  username?: string;
+  lastMessageAt?: string;
+};
+
+/** Lists people who recently pressed Start on your Trimma bot (from Telegram getUpdates). */
+export async function listTelegramBotRecentChats(botTokenOverride?: string) {
+  const config = await getTelegramConfig();
+  const botToken = botTokenOverride?.trim() || config.botToken;
+
+  if (!botToken) {
+    return { success: false as const, error: "Save your Bot Token first, then try again." };
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?limit=50`);
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      return { success: false as const, error: formatTelegramApiError(result) };
+    }
+
+    const chats = new Map<string, TelegramInboxChat>();
+
+    for (const update of result.result || []) {
+      const message = update.message || update.edited_message;
+      const chat = message?.chat;
+      if (!chat?.id) continue;
+
+      const chatId = String(chat.id);
+      const displayName =
+        [chat.first_name, chat.last_name].filter(Boolean).join(" ").trim() ||
+        chat.title ||
+        chat.username ||
+        chatId;
+      const existing = chats.get(chatId);
+      const lastMessageAt = message?.date
+        ? new Date(message.date * 1000).toISOString()
+        : undefined;
+
+      chats.set(chatId, {
+        chatId,
+        displayName,
+        username: chat.username || undefined,
+        lastMessageAt: lastMessageAt || existing?.lastMessageAt,
+      });
+    }
+
+    const list = Array.from(chats.values()).sort((a, b) =>
+      (b.lastMessageAt || "").localeCompare(a.lastMessageAt || "")
+    );
+
+    if (!list.length) {
+      return {
+        success: false as const,
+        error:
+          "No one has started your bot yet. Open your bot in Telegram, tap Start, then click Detect again.",
+      };
+    }
+
+    return { success: true as const, chats: list };
+  } catch (err: unknown) {
+    return {
+      success: false as const,
+      error: err instanceof Error ? err.message : "Could not read Telegram bot inbox.",
+    };
+  }
+}
+
 export async function testTelegramConnection(testChatId: string) {
   const config = await getTelegramConfig();
   if (!config.botToken) {
