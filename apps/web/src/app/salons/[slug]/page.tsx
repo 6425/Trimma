@@ -1,17 +1,17 @@
 import { fetchPublicSalonPage } from "@/app/actions/public-salon-page";
 import SalonPage from "./SalonPageClient";
-import { notFound } from "next/navigation";
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 export default async function SalonServerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const result = await fetchPublicSalonPage(slug);
+  const result = await fetchPublicSalonPage(slug).catch(() => null);
 
-  if (result.success === false) {
-    console.error("[salon page]", slug, result.error);
-    notFound();
+  if (!result || result.success === false) {
+    console.error("[salon page]", slug, result && "error" in result ? result.error : "fetch failed");
+    // Fall back to client-side fetch instead of a hard 404 when SSR fails transiently.
+    return <SalonPage />;
   }
 
   return (
@@ -22,8 +22,6 @@ export default async function SalonServerPage({ params }: { params: Promise<{ sl
         staff: result.staff,
         amenities: result.amenities,
         promotionPackages: result.promotionPackages,
-        reviewSummary: result.reviewSummary,
-        reviews: result.reviews,
       }}
     />
   );

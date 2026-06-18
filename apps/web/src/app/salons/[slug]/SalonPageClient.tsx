@@ -10,6 +10,12 @@ import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCirc
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
+import { VerifiedSalonBadge } from "../../../components/marketplace/VerifiedSalonBadge";
+import { supabase } from "../../../config/supabase";
+import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
+import { fetchAvailableBookingSlots, validateBookingSlotSelection } from "@/app/actions/booking-slots";
+import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { getSalonDirectionsUrl } from "@/lib/salon-map";
 import {
   type SalonPromotionPackage,
@@ -21,16 +27,11 @@ import {
 } from "@/lib/promotion-booking";
 import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
 import { toast } from "sonner";
+import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
 import { fetchPublicSalonPage, type PublicSalonService, type PublicSalonStaff, type PublicSalonAmenityDisplay } from "@/app/actions/public-salon-page";
 import { withTimeout } from "@/lib/promise-timeout";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
-import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
-import { VerifiedSalonBadge } from "../../../components/marketplace/VerifiedSalonBadge";
-import { supabase } from "../../../config/supabase";
-import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
-import { fetchAvailableBookingSlots, validateBookingSlotSelection } from "@/app/actions/booking-slots";
-import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-white border-black [&_svg]:!text-white disabled:bg-zinc-700 disabled:!text-zinc-300";
@@ -112,8 +113,6 @@ type SalonPageInitialData = {
   staff: PublicSalonStaff[];
   amenities: PublicSalonAmenityDisplay[];
   promotionPackages: SalonPromotionPackage[];
-  reviewSummary?: SalonReviewSummary;
-  reviews?: import("@/app/actions/reviews").PublicSalonReview[];
 } | null;
 
 export default function SalonPage({ initialData }: { initialData?: SalonPageInitialData }) {
@@ -128,10 +127,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
   const [selectedPromotionPackage, setSelectedPromotionPackage] = useState<SalonPromotionPackage | null>(null);
   const [staff, setStaff] = useState<any[]>(initialData?.staff ?? []);
   const [amenities, setAmenities] = useState<any[]>(initialData?.amenities ?? []);
-  const [salonReviews, setSalonReviews] = useState(initialData?.reviews ?? []);
-  const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(
-    initialData?.reviewSummary ?? buildReviewSummary([])
-  );
+  const [salonReviews, setSalonReviews] = useState<PublicSalonReview[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(buildReviewSummary([]));
   const [loading, setLoading] = useState(initialData == null);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   
@@ -241,6 +238,32 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
+
+  // Reviews use server actions (extra round-trip) — load after the page is visible
+  useEffect(() => {
+    if (!salon?.id) return;
+    let cancelled = false;
+    void (async () => {
+      setReviewsLoading(true);
+      try {
+        const [summary, reviews] = await Promise.all([
+          getSalonReviewSummary(salon.id),
+          getSalonReviews(salon.id),
+        ]);
+        if (!cancelled) {
+          setReviewSummary(summary);
+          setSalonReviews(reviews);
+        }
+      } catch (err) {
+        console.error("Failed to load salon reviews", err);
+      } finally {
+        if (!cancelled) setReviewsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [salon?.id]);
 
   const getPromotionResolution = (promotion: SalonPromotionPackage) =>
     resolvePromotionBookingServices(promotion, services);
@@ -506,9 +529,11 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
 
 
+  const featuredImages = Array.isArray(salon.featured_images)
+    ? salon.featured_images.filter((item: unknown) => typeof item === "string" && item.trim())
+    : [];
   const coverImage = salon.cover_url || mockExtraData.featuredImage;
   const heroImage = salon.hero_url || mockExtraData.gallery[0];
-  const featuredImages = Array.isArray(salon.featured_images) ? salon.featured_images : [];
   const galleryImage1 = featuredImages.length > 0 ? featuredImages[0] : mockExtraData.gallery[1];
   const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=ffc107&textColor=000000`;
   const displayRating = reviewSummary.averageRating;
