@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,12 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { WorkingHoursEditor } from "../../../components/admin/WorkingHoursEditor";
 import { LeadTables } from "../../../components/admin/LeadTables";
 import { LeadEditorModal } from "../../../components/admin/LeadEditorModal";
+import { SalonRequestLeadSheet } from "../../../components/admin/SalonRequestLeadSheet";
+import {
+  assignAdminSalonRequest,
+  fetchAdminSalonRequests,
+  type SalonRequestRow,
+} from "@/app/actions/salon-requests";
 
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
 
@@ -85,6 +92,7 @@ const SRI_LANKA_GEOGRAPHY: any = {
 
 
 export default function Leads() {
+  const searchParams = useSearchParams();
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -92,7 +100,9 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'discovery' | 'draft' | 'pipeline' | 'archived'>('discovery');
+  const [activeTab, setActiveTab] = useState<'discovery' | 'draft' | 'pipeline' | 'archived' | 'salon-requests'>('discovery');
+  const [salonRequests, setSalonRequests] = useState<SalonRequestRow[]>([]);
+  const [salonRequestsLoading, setSalonRequestsLoading] = useState(false);
   
   // Spreadsheet Sheet Editing States
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
@@ -151,6 +161,41 @@ export default function Leads() {
     admin_notes: "",
     owner_gmail: ""
   });
+
+  const fetchSalonRequests = useCallback(async () => {
+    setSalonRequestsLoading(true);
+    try {
+      const result = await fetchAdminSalonRequests();
+      if (result.success === false) {
+        toast.error(result.error);
+        return;
+      }
+      setSalonRequests(result.requests);
+    } finally {
+      setSalonRequestsLoading(false);
+    }
+  }, []);
+
+  const handleAssignSalonRequest = async (input: {
+    id: string;
+    origin: SalonRequestRow["origin"];
+    assignToEmail: string;
+    adminNotes?: string | null;
+  }) => {
+    const result = await assignAdminSalonRequest(input);
+    if (result.success === false) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Salon request assigned successfully.");
+    await fetchSalonRequests();
+  };
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "salon-requests") {
+      setActiveTab("salon-requests");
+    }
+  }, [searchParams]);
 
   const applyLeadsFromSalons = (allSalons: any[], limit?: number) => {
     const pipelineData = (allSalons || []).filter(
@@ -322,6 +367,7 @@ export default function Leads() {
       fetchLeads();
       fetchAgents();
       fetchGlobalRoles();
+      fetchSalonRequests();
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -911,7 +957,9 @@ export default function Leads() {
   const tabLeads = leads.filter(l => {
     const status = l.onboarding_status || "DISCOVERED";
     
-    if (activeTab === "discovery") {
+    if (activeTab === "salon-requests") {
+      return false;
+    } else if (activeTab === "discovery") {
       return status === "DISCOVERED";
     } else if (activeTab === "draft") {
       return ["AUTO_PROVISIONED", "DRAFT_REVIEW"].includes(status);
@@ -955,6 +1003,8 @@ export default function Leads() {
       </div>
 
       {/* STATS CARDS & SEARCH BAR - MOVED ABOVE THE DISCOVERY FORM */}
+      {activeTab !== "salon-requests" ? (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
@@ -1098,6 +1148,18 @@ export default function Leads() {
           </Button>
         </div>
       </Card>
+      </>
+      ) : (
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search salon requests by name, email, business, or message..."
+            className="w-full pl-12 h-14 bg-white border-none shadow-sm rounded-2xl focus:ring-2 focus:ring-brand/20 transition-all font-medium"
+          />
+        </div>
+      )}
 
       {/* PERMANENT INTERACTIVE SPREADSHEET VIEW WITH ALL DB COLUMNS */}
       <LeadTables
@@ -1106,6 +1168,17 @@ export default function Leads() {
         leads={leads}
         filteredLeads={filteredLeads}
         loading={loading}
+        salonRequestCount={salonRequests.length}
+        salonRequestPanel={
+          <SalonRequestLeadSheet
+            requests={salonRequests}
+            loading={salonRequestsLoading}
+            agents={agents}
+            onAssign={handleAssignSalonRequest}
+            onRefresh={() => void fetchSalonRequests()}
+            searchTerm={searchTerm}
+          />
+        }
         editingCell={editingCell}
         setEditingCell={setEditingCell}
         editValue={editValue}

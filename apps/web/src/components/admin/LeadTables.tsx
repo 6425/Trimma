@@ -5,11 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface LeadTablesProps {
-  activeTab: "discovery" | "draft" | "pipeline" | "archived";
-  setActiveTab: React.Dispatch<React.SetStateAction<"discovery" | "draft" | "pipeline" | "archived">>;
+  activeTab: "discovery" | "draft" | "pipeline" | "archived" | "salon-requests";
+  setActiveTab: React.Dispatch<React.SetStateAction<"discovery" | "draft" | "pipeline" | "archived" | "salon-requests">>;
   leads: any[];
   filteredLeads: any[];
   loading: boolean;
+  salonRequestCount?: number;
+  salonRequestPanel?: React.ReactNode;
   editingCell: { id: string, field: string } | null;
   setEditingCell: (cell: { id: string, field: string } | null) => void;
   editValue: string;
@@ -30,6 +32,8 @@ interface LeadTablesProps {
 
 export function LeadTables({
   activeTab, setActiveTab, leads, filteredLeads, loading,
+  salonRequestCount = 0,
+  salonRequestPanel,
   editingCell, setEditingCell, editValue, setEditValue,
   handleSaveCell, handleStartEdit, handleHeroImageUpload,
   agents, handleCreateSalon, handleDeleteLead, handleOpenAssignModal,
@@ -41,8 +45,14 @@ export function LeadTables({
     <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
       <div className="p-5 border-b border-zinc-50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
-          <h3 className="font-bold text-[#1A1C29] text-base">Interactive Lead Sheet</h3>
-          <p className="text-zinc-500 text-xs mt-0.5">Exactly aligned with your DB schema columns. Automatically populated by Google Places searches and fully editable by the admin.</p>
+          <h3 className="font-bold text-[#1A1C29] text-base">
+            {activeTab === "salon-requests" ? "Salon Requests" : "Interactive Lead Sheet"}
+          </h3>
+          <p className="text-zinc-500 text-xs mt-0.5">
+            {activeTab === "salon-requests"
+              ? "Customer onboarding and contact submissions. Assign a field agent or regional head to process each request."
+              : "Exactly aligned with your DB schema columns. Automatically populated by Google Places searches and fully editable by the admin."}
+          </p>
         </div>
         
         <div className="flex flex-wrap items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl shrink-0 self-start xl:self-auto">
@@ -86,9 +96,22 @@ export function LeadTables({
           >
             4. Verified / Archived ({leads.filter(l => ["VERIFIED", "REJECTED", "ON_HOLD"].includes(l.onboarding_status || "DISCOVERED")).length})
           </button>
+          <button
+            onClick={() => setActiveTab("salon-requests")}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+              activeTab === "salon-requests"
+                ? "bg-white text-brand shadow-sm"
+                : "text-zinc-500 hover:text-zinc-950"
+            }`}
+          >
+            Salon Requests ({salonRequestCount})
+          </button>
         </div>
       </div>
       
+      {activeTab === "salon-requests" ? (
+        salonRequestPanel
+      ) : (
       <div className="overflow-x-auto w-full max-h-[600px] border-t border-zinc-50">
         <table className="w-full text-left border-collapse min-w-[2400px] text-xs">
           <thead className="bg-zinc-50/50 sticky top-0 backdrop-blur-md border-b border-zinc-100 z-10">
@@ -671,6 +694,7 @@ export function LeadTables({
           </tbody>
         </table>
       </div>
+      )}
     </Card>
   );
 }

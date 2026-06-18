@@ -2,6 +2,9 @@
 
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
+import { normalizeEmail } from "@/lib/normalize-email";
+import { APP_BASE_URL } from "@/lib/email/config";
 
 export type SalonRequestOrigin = "salon_requests" | "salon_leads";
 
@@ -21,6 +24,7 @@ export type SalonRequestRow = {
   admin_notes: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  assign_to: string | null;
   origin: SalonRequestOrigin;
 };
 
@@ -90,8 +94,9 @@ function mapSalonLeadToRequestRow(lead: Record<string, unknown>): SalonRequestRo
     source: String(lead.lead_source || "onboarding_web"),
     status: mapLeadStatusToRequestStatus(lead.status as string | null),
     admin_notes: notes || null,
-    reviewed_by: (lead.assign_to as string | null) || null,
+    reviewed_by: null,
     reviewed_at: null,
+    assign_to: (lead.assign_to as string | null) || null,
     origin: "salon_leads",
   };
 }
@@ -126,6 +131,7 @@ export async function fetchAdminSalonRequests() {
 
     const requests: SalonRequestRow[] = (requestRows || []).map((row) => ({
       ...(row as Omit<SalonRequestRow, "origin">),
+      assign_to: (row as { assign_to?: string | null }).assign_to || null,
       origin: "salon_requests" as const,
     }));
 
@@ -195,6 +201,134 @@ export async function updateAdminSalonRequest(input: {
       .eq("id", input.id);
 
     if (error) throw new Error(error.message);
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  return { success: true as const };
+}
+
+export async function assignAdminSalonRequest(input: {
+  id: string;
+  origin: SalonRequestOrigin;
+  assignToEmail: string;
+  adminNotes?: string | null;
+}) {
+  const result = await withAdminDb(async (supabase) => {
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) throw new Error(auth.error);
+
+    const assignTo = normalizeEmail(input.assignToEmail);
+    if (!assignTo) throw new Error("Select an agent or regional head.");
+
+    const { data: assignee } = await supabase
+      .from("users")
+      .select("email, global_role, full_name")
+      .eq("email", assignTo)
+      .maybeSingle();
+
+    if (
+      !assignee ||
+      !["agent", "regional_head", "regional_admin"].includes(String(assignee.global_role || "").toLowerCase())
+    ) {
+      throw new Error("Assignee must be a field agent or regional head.");
+    }
+
+    const reviewedBy = await getAdminActorEmail();
+    const reviewedAt = new Date().toISOString();
+    const adminNotes = input.adminNotes?.trim() || null;
+
+    if (input.origin === "salon_leads") {
+      const { data: lead, error: leadError } = await supabase
+        .from("salon_leads")
+        .select("id, name, address, city, district, province")
+        .eq("id", input.id)
+        .maybeSingle();
+
+      if (leadError) throw new Error(leadError.message);
+
+      const { error } = await supabase
+        .from("salon_leads")
+        .update({
+          assign_to: assignTo,
+          status: "assigned",
+          lead_status: "ASSIGNED_TO_AGENT",
+          notes: adminNotes,
+        })
+        .eq("id", input.id);
+
+      if (error) throw new Error(error.message);
+
+      const salonAddress = [lead?.address, lead?.city, lead?.district, lead?.province]
+        .filter(Boolean)
+        .join(", ");
+
+      void notifyAgentLeadAssigned(supabase, {
+        salonId: input.id,
+        salonName: lead?.name || "Salon onboarding request",
+        salonAddress,
+        assignToEmail: assignTo,
+        onboardingStatus: "ASSIGNED_TO_AGENT",
+        dashboardLink: `${APP_BASE_URL}/agent/leads`,
+      }).catch((err) => console.error("Salon request assignment notification failed:", err));
+
+      return;
+    }
+
+    const { data: requestRow, error: requestFetchError } = await supabase
+      .from("salon_requests")
+      .select("id, business_name, full_name, message, admin_notes")
+      .eq("id", input.id)
+      .maybeSingle();
+
+    if (requestFetchError) throw new Error(requestFetchError.message);
+
+    const linkedLeadId = extractLinkedLeadId(requestRow?.admin_notes);
+    const mergedNotes = adminNotes || requestRow?.admin_notes || null;
+
+    const updatePayload: Record<string, unknown> = {
+      status: "reviewing",
+      reviewed_by: reviewedBy,
+      reviewed_at: reviewedAt,
+      admin_notes: mergedNotes,
+    };
+
+    const { error: requestUpdateError } = await supabase
+      .from("salon_requests")
+      .update({ ...updatePayload, assign_to: assignTo })
+      .eq("id", input.id);
+
+    if (requestUpdateError) {
+      const lower = requestUpdateError.message.toLowerCase();
+      if (lower.includes("assign_to") && lower.includes("does not exist")) {
+        const { error: fallbackError } = await supabase
+          .from("salon_requests")
+          .update(updatePayload)
+          .eq("id", input.id);
+        if (fallbackError) throw new Error(fallbackError.message);
+      } else {
+        throw new Error(requestUpdateError.message);
+      }
+    }
+
+    if (linkedLeadId) {
+      await supabase
+        .from("salon_leads")
+        .update({
+          assign_to: assignTo,
+          status: "assigned",
+          lead_status: "ASSIGNED_TO_AGENT",
+        })
+        .eq("id", linkedLeadId);
+    }
+
+    void notifyAgentLeadAssigned(supabase, {
+      salonId: linkedLeadId || input.id,
+      salonName: requestRow?.business_name || requestRow?.full_name || "Salon request",
+      salonAddress: requestRow?.message || "",
+      assignToEmail: assignTo,
+      onboardingStatus: "ASSIGNED_TO_AGENT",
+      dashboardLink: `${APP_BASE_URL}/agent/leads`,
+    }).catch((err) => console.error("Salon request assignment notification failed:", err));
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

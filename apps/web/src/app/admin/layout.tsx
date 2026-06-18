@@ -114,10 +114,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       name: "Salon Mgmt",
       href: "/admin/salons",
       icon: <Store className="w-4 h-4" />,
-      children: [
-        { name: "All Salons", href: "/admin/salons" },
-        { name: "Salon Requests", href: "/admin/salon-requests" },
-      ],
+      children: [{ name: "All Salons", href: "/admin/salons" }],
     },
     { name: "Booking Mgmt", href: "/admin/bookings", icon: <Calendar className="w-4 h-4" /> },
     { name: "Review Moderation", href: "/admin/reviews", icon: <Star className="w-4 h-4" /> },
@@ -152,7 +149,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: 'Cities', href: '/admin/territories/cities' },
       ]
     },
-    { name: "Lead Mgmt", href: "/admin/leads", icon: <MapPin className="w-4 h-4" /> },
+    { 
+      name: "Lead Mgmt", 
+      href: "/admin/leads", 
+      icon: <MapPin className="w-4 h-4" />,
+      children: [
+        { name: "Interactive Lead Sheet", href: "/admin/leads" },
+        { name: "Salon Requests", href: "/admin/leads?tab=salon-requests" },
+      ],
+    },
     {
       name: "Agent Mgmt",
       href: "/admin/agents",
@@ -196,6 +201,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         : pathname === path || pathname.startsWith(`${path}/`) || pathname.startsWith(path);
 
     if (!queryString) {
+      if (path === "/admin/leads" && searchParams.get("tab") === "salon-requests") {
+        return false;
+      }
       if (path === "/admin/agents" && searchParams.get("tab") === "commissions") {
         return false;
       }
