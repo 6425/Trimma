@@ -243,50 +243,50 @@ export default function AdminSalonRequestsPage() {
       )}
 
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && closeDetail()}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto bg-zinc-950 text-white border border-zinc-700 ring-zinc-700 [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]:hover]:bg-zinc-800">
           {selected ? (
             <>
               <DialogHeader>
-                <DialogTitle className="text-xl font-black">{selected.full_name}</DialogTitle>
+                <DialogTitle className="text-xl font-black text-white">{selected.full_name}</DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-sm text-white">
                 <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center gap-2 text-zinc-700">
-                    <Mail className="w-4 h-4 text-zinc-400 shrink-0" />
-                    <a href={`mailto:${selected.email}`} className="font-medium hover:underline">
+                  <div className="flex items-center gap-2 text-white">
+                    <Mail className="w-4 h-4 text-zinc-300 shrink-0" />
+                    <a href={`mailto:${selected.email}`} className="font-medium text-white hover:underline">
                       {selected.email}
                     </a>
                   </div>
                   {selected.phone ? (
-                    <div className="flex items-center gap-2 text-zinc-700">
-                      <Phone className="w-4 h-4 text-zinc-400 shrink-0" />
-                      <span>{selected.phone}</span>
+                    <div className="flex items-center gap-2 text-white">
+                      <Phone className="w-4 h-4 text-zinc-300 shrink-0" />
+                      <span className="text-white">{selected.phone}</span>
                     </div>
                   ) : null}
                   {selected.business_name ? (
-                    <div className="flex items-start gap-2 text-zinc-700">
-                      <Store className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2 text-white">
+                      <Store className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
                       <div>
-                        <div className="font-medium">{selected.business_name}</div>
+                        <div className="font-medium text-white">{selected.business_name}</div>
                         {selected.business_type ? (
-                          <div className="text-xs text-zinc-500">{selected.business_type}</div>
+                          <div className="text-xs text-zinc-300">{selected.business_type}</div>
                         ) : null}
                       </div>
                     </div>
                   ) : null}
-                  <div className="flex items-start gap-2 text-zinc-700">
-                    <MessageSquare className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 text-white">
+                    <MessageSquare className="w-4 h-4 text-zinc-300 shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-bold text-zinc-900">{selected.inquiry_type}</div>
-                      <p className="mt-2 text-zinc-600 whitespace-pre-wrap leading-relaxed">
+                      <div className="font-bold text-white">{selected.inquiry_type}</div>
+                      <p className="mt-2 text-zinc-200 whitespace-pre-wrap leading-relaxed">
                         {selected.message}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-xs text-zinc-400 pt-2 border-t border-zinc-100">
+                <div className="text-xs text-zinc-300 pt-2 border-t border-zinc-700">
                   Submitted {formatDate(selected.created_at)}
                   {selected.reviewed_by ? (
                     <> · Last updated by {selected.reviewed_by}</>
@@ -294,16 +294,16 @@ export default function AdminSalonRequestsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1.5">
                     Status
                   </label>
                   <select
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value as SalonRequestRow["status"])}
-                    className="w-full h-10 rounded-xl border border-zinc-200 px-3 text-sm"
+                    className="w-full h-10 rounded-xl border border-zinc-600 bg-zinc-900 px-3 text-sm text-white"
                   >
                     {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
+                      <option key={s} value={s} className="bg-zinc-900 text-white">
                         {s.charAt(0).toUpperCase() + s.slice(1)}
                       </option>
                     ))}
@@ -311,7 +311,7 @@ export default function AdminSalonRequestsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1.5">
                     Admin notes
                   </label>
                   <textarea
@@ -319,7 +319,7 @@ export default function AdminSalonRequestsPage() {
                     onChange={(e) => setEditNotes(e.target.value)}
                     rows={4}
                     placeholder="Internal notes for your team..."
-                    className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm resize-none"
+                    className="w-full rounded-xl border border-zinc-600 bg-zinc-900 px-3 py-2 text-sm text-white placeholder:text-zinc-400 resize-none"
                   />
                 </div>
 
@@ -338,7 +338,12 @@ export default function AdminSalonRequestsPage() {
                       "Save changes"
                     )}
                   </Button>
-                  <Button type="button" variant="outline" onClick={closeDetail}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeDetail}
+                    className="border-zinc-600 bg-transparent text-white hover:bg-zinc-800 hover:text-white"
+                  >
                     Close
                   </Button>
                 </div>
