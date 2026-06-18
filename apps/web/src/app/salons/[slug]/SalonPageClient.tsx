@@ -26,6 +26,7 @@ import {
   resolvePromotionBookingServices,
 } from "@/lib/promotion-booking";
 import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
+import { toast } from "sonner";
 import {
   getSalonBookabilityMessage,
   getSalonBookingBlockedToast,
