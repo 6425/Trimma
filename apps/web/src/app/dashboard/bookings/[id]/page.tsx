@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchSalonBookingDetail } from "@/app/actions/salon-dashboard-data";
-import { updateOwnerBooking } from "@/app/actions/salon-operations";
+import { confirmOwnerBooking, updateOwnerBooking } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } from "@/app/actions/whatsapp";
 import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
 import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
+import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
 import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
 
 // Timeline step definition
@@ -88,9 +89,13 @@ export default function BookingDetailPage() {
       let updatePayload: any = {};
 
       switch (action) {
-        case "confirm":
-          updatePayload.status = "confirmed";
-          break;
+        case "confirm": {
+          const confirmResult = await confirmOwnerBooking(bookingId);
+          if (confirmResult.success === false) throw new Error(confirmResult.error);
+          toast.success("Booking successfully confirmed!");
+          await fetchBooking();
+          return;
+        }
         case "check_in":
           updatePayload.status = "checked_in";
           break;
@@ -264,8 +269,8 @@ export default function BookingDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <InfoRow icon={<Calendar className="w-4 h-4" />} label="Date" value={booking.booking_date || "—"} />
               <InfoRow icon={<Clock className="w-4 h-4" />} label="Time" value={booking.booking_time || "—"} />
-              <InfoRow icon={<Scissors className="w-4 h-4" />} label="Service" value={booking.services?.name || booking.service_name || "Standard Service"} />
-              <InfoRow icon={<User className="w-4 h-4" />} label="Stylist" value={booking.staff?.name || booking.staff_name || "Unassigned"} />
+              <InfoRow icon={<Scissors className="w-4 h-4" />} label="Service" value={getBookingServiceDisplayName(booking) || booking.service_name || "Standard Service"} />
+              <InfoRow icon={<User className="w-4 h-4" />} label="Stylist" value={resolveStaffMemberFromBooking(booking)?.name || booking.staff_name || "Unassigned"} />
               <InfoRow icon={<Hash className="w-4 h-4" />} label="Booking ID" value={booking.booking_no || booking.id?.slice(0, 8) || "—"} mono />
               <InfoRow icon={<MapPin className="w-4 h-4" />} label="Location" value="Main Salon" />
             </div>

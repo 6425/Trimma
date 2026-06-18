@@ -25,6 +25,24 @@ export const STAFF_REQUIRED_BEFORE_SERVICES_MSG =
 export const SERVICE_NEEDS_STAFF_MSG =
   "Assign this service to at least one staff member in the Staff menu before setting it to Active.";
 
+export const NO_QUALIFIED_STAFF_FOR_SERVICES_MSG =
+  "No staff member is assigned to the selected service(s). Map staff to services in the Staff menu before booking.";
+
+export const STAFF_NOT_ASSIGNED_TO_SERVICE_MSG =
+  "The selected stylist is not assigned to this service.";
+
+function withParsedWorkingHours(member: SalonStaffForAllocation): SalonStaffForAllocation {
+  const parsed = parseStaffWorkingHours(member.working_hours);
+  return parsed ? { ...member, working_hours: parsed } : member;
+}
+
+/** Parse JSON working_hours before coverage checks. */
+export function normalizeStaffListForCoverage(
+  staff: SalonStaffForAllocation[]
+): SalonStaffForAllocation[] {
+  return staff.map(withParsedWorkingHours);
+}
+
 export function isActiveSalonStaff(member: SalonStaffForAllocation): boolean {
   return (member.status || "active").toLowerCase() !== "inactive";
 }
@@ -32,7 +50,7 @@ export function isActiveSalonStaff(member: SalonStaffForAllocation): boolean {
 /** Service IDs explicitly mapped to at least one active staff member. */
 export function getServiceIdsCoveredByStaff(staff: SalonStaffForAllocation[]): Set<string> {
   const covered = new Set<string>();
-  for (const member of staff) {
+  for (const member of normalizeStaffListForCoverage(staff)) {
     if (!isActiveSalonStaff(member)) continue;
     for (const row of member.working_hours?.assigned_services || []) {
       if (row.service_id && row.enabled !== false) {
@@ -83,14 +101,18 @@ export type BookingForAllocation = {
     price?: number | string | null;
     duration_min?: number | string | null;
     services?:
-      | { id?: string; global_service_id?: string | null }
-      | Array<{ id?: string; global_service_id?: string | null }>
+      | { id?: string; name?: string | null; global_service_id?: string | null }
+      | Array<{ id?: string; name?: string | null; global_service_id?: string | null }>
       | null;
   }> | null;
   booking_staff?: Array<{
     staff_id?: string | null;
     salon_staff?: SalonStaffForAllocation | { id?: string }[] | null;
   }> | null;
+  services?:
+    | { name?: string | null }
+    | Array<{ name?: string | null }>
+    | null;
 };
 
 /** Staff must be explicitly mapped to the booked service(s). */
@@ -98,6 +120,7 @@ export function filterStaffQualifiedForServices(
   staff: SalonStaffForAllocation[],
   serviceIds: string[]
 ): SalonStaffForAllocation[] {
+  staff = normalizeStaffListForCoverage(staff);
   if (!serviceIds.length) return staff.filter(isActiveSalonStaff);
 
   return staff.filter((member) => {
@@ -108,6 +131,26 @@ export function filterStaffQualifiedForServices(
       (row) => serviceIds.includes(row.service_id) && row.enabled !== false
     );
   });
+}
+
+/** Active staff who can perform at least one of the given services. */
+export function filterStaffCoveringAnyService(
+  staff: SalonStaffForAllocation[],
+  serviceIds: string[]
+): SalonStaffForAllocation[] {
+  if (!serviceIds.length) return [];
+  return filterStaffQualifiedForServices(staff, serviceIds);
+}
+
+export function assertQualifiedStaffForServices(
+  staff: SalonStaffForAllocation[],
+  serviceIds: string[]
+): SalonStaffForAllocation[] {
+  const qualified = filterStaffQualifiedForServices(staff, serviceIds);
+  if (!qualified.length) {
+    throw new Error(NO_QUALIFIED_STAFF_FOR_SERVICES_MSG);
+  }
+  return qualified;
 }
 
 export function getBookingServiceIds(booking: BookingForAllocation): string[] {
@@ -208,6 +251,30 @@ export function resolveStaffMemberFromBooking(
   }
 
   return normalizeStaffForCommission(resolved, allStaff);
+}
+
+export function getBookingServiceDisplayName(booking: BookingForAllocation): string | null {
+  const names: string[] = [];
+
+  const primary = booking.services as
+    | { name?: string | null }
+    | Array<{ name?: string | null }>
+    | null
+    | undefined;
+  if (primary) {
+    const row = Array.isArray(primary) ? primary[0] : primary;
+    if (row?.name) names.push(row.name);
+  }
+
+  for (const line of booking.booking_services || []) {
+    const nested = line.services;
+    const svc = Array.isArray(nested) ? nested[0] : nested;
+    if (svc?.name && !names.includes(svc.name)) {
+      names.push(svc.name);
+    }
+  }
+
+  return names.length ? names.join(" + ") : null;
 }
 
 function toConflictRow(

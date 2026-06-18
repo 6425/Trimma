@@ -136,17 +136,60 @@ export default function Logo({
           ? "text-white/60"
           : "text-zinc-500";
 
+  const brandTitle = title || "Trimma";
+
+  if (variant === "dark") {
+    return (
+      <div className={`flex flex-col select-none ${className}`}>
+        <div className="flex items-start gap-1.5">
+          <div className="flex items-center gap-2.5" style={{ minHeight: logoHeight }}>
+            <div
+              className="flex shrink-0 items-center justify-center rounded-full bg-black font-black leading-none text-[#febb02]"
+              style={{
+                width: iconSize,
+                height: iconSize,
+                fontSize: Math.round(iconSize * 0.58),
+              }}
+              aria-hidden
+            >
+              t
+            </div>
+            <span
+              className="font-black text-black tracking-tight leading-none"
+              style={{ fontSize: Math.round(iconSize * 0.88) }}
+            >
+              {brandTitle}
+            </span>
+          </div>
+          <span
+            className={`mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}
+          >
+            Beta
+          </span>
+        </div>
+        {displayTagline ? (
+          <span
+            className={`uppercase font-extrabold tracking-widest mt-1 leading-none truncate ${taglineClass}`}
+            style={{ fontSize: Math.max(8, Math.round(iconSize * 0.22)) }}
+          >
+            {displayTagline}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className={`flex flex-col select-none ${className}`}>
       <div className="flex items-start">
         <img
-        src={logoSrc}
-        alt="Trimma Logo"
-        style={{ height: logoHeight }}
-        className="w-auto object-contain"
-        fetchPriority="high"
-        draggable={false}
-      />
+          src={logoSrc}
+          alt="Trimma Logo"
+          style={{ height: logoHeight }}
+          className="w-auto object-contain"
+          fetchPriority="high"
+          draggable={false}
+        />
         <span className={`ml-1.5 mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}>
           Beta
         </span>

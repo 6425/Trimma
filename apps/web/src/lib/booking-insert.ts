@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SLOT_UNAVAILABLE_MESSAGE } from "@/lib/booking-availability";
+import { NO_QUALIFIED_STAFF_FOR_SERVICES_MSG } from "@/lib/staff-allocation";
 
 export type BookingRecordInput = {
   booking_no: string;
@@ -26,21 +27,6 @@ export type BookingRecordInput = {
   promotion_package_id?: string | null;
 };
 
-function getMinimalBookingPayload(payload: BookingRecordInput) {
-  return {
-    booking_no: payload.booking_no,
-    salon_id: payload.salon_id,
-    customer_email: payload.customer_email,
-    service_id: payload.service_id,
-    staff_id: payload.staff_id,
-    booking_date: payload.booking_date,
-    booking_time: payload.booking_time,
-    amount: payload.amount,
-    status: payload.status,
-    payment_status: payload.payment_status,
-  };
-}
-
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "object" && error && "message" in error) {
@@ -62,31 +48,21 @@ export async function insertBookingRecord(
   supabase: SupabaseClient,
   payload: BookingRecordInput
 ) {
-  const fullAttempt = await supabase.from("bookings").insert(payload).select().single();
-  if (!fullAttempt.error && fullAttempt.data) {
-    return { data: fullAttempt.data, error: null as null };
+  if (!payload.staff_id) {
+    throw new Error(NO_QUALIFIED_STAFF_FOR_SERVICES_MSG);
   }
 
-  if (isSlotConflictError(fullAttempt.error)) {
+  const attempt = await supabase.from("bookings").insert(payload).select().single();
+  if (!attempt.error && attempt.data) {
+    return { data: attempt.data, error: null as null };
+  }
+
+  if (isSlotConflictError(attempt.error)) {
     throw new Error(SLOT_UNAVAILABLE_MESSAGE);
   }
 
-  const minimalAttempt = await supabase
-    .from("bookings")
-    .insert(getMinimalBookingPayload(payload))
-    .select()
-    .single();
-
-  if (minimalAttempt.error || !minimalAttempt.data) {
-    const rawError = minimalAttempt.error || fullAttempt.error;
-    if (isSlotConflictError(rawError)) {
-      throw new Error(SLOT_UNAVAILABLE_MESSAGE);
-    }
-    const message = getErrorMessage(rawError);
-    throw new Error(message || "Failed to create booking.");
-  }
-
-  return { data: minimalAttempt.data, error: null as null };
+  const message = getErrorMessage(attempt.error);
+  throw new Error(message || "Failed to create booking.");
 }
 
 export async function updateBookingAfterPayment(
@@ -98,17 +74,8 @@ export async function updateBookingAfterPayment(
     reservation_fee_paid?: boolean;
   }
 ) {
-  const fullAttempt = await supabase.from("bookings").update(updates).eq("id", bookingId);
-  if (!fullAttempt.error) return;
-
-  const safeUpdates: Record<string, string | boolean> = {};
-  if (updates.status) safeUpdates.status = updates.status;
-  if (updates.payment_status) safeUpdates.payment_status = updates.payment_status;
-
-  if (Object.keys(safeUpdates).length === 0) return;
-
-  const fallbackAttempt = await supabase.from("bookings").update(safeUpdates).eq("id", bookingId);
-  if (fallbackAttempt.error) {
-    throw new Error(getErrorMessage(fallbackAttempt.error));
+  const attempt = await supabase.from("bookings").update(updates).eq("id", bookingId);
+  if (attempt.error) {
+    throw new Error(getErrorMessage(attempt.error));
   }
 }

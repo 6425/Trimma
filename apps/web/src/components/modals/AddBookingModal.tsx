@@ -50,31 +50,42 @@ export function AddBookingModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, selectedSlot]);
 
+  async function loadStaffForService(serviceId: string) {
+    const staffRes = await fetchSalonStaffList(serviceId);
+    if (staffRes.success && staffRes.staff) {
+      setStaffList(staffRes.staff);
+      setFormData((prev) => ({
+        ...prev,
+        staff_id: staffRes.staff.some((member) => member.id === prev.staff_id)
+          ? prev.staff_id
+          : staffRes.staff[0]?.id || "",
+      }));
+    }
+  }
+
   async function loadData() {
     setIsLoading(true);
-    const [servicesRes, staffRes] = await Promise.all([
-      fetchSalonServicesList(),
-      fetchSalonStaffList()
-    ]);
+    const servicesRes = await fetchSalonServicesList();
 
     if (servicesRes.success && servicesRes.services) {
       setServices(servicesRes.services);
-      if (servicesRes.services.length > 0 && !formData.service_id) {
-        handleServiceChange(servicesRes.services[0].id, servicesRes.services);
+      const initialServiceId = servicesRes.services[0]?.id || "";
+      if (initialServiceId) {
+        handleServiceChange(initialServiceId, servicesRes.services);
+        await loadStaffForService(initialServiceId);
+      } else {
+        setStaffList([]);
       }
-    }
-
-    if (staffRes.success && staffRes.staff) {
-      setStaffList(staffRes.staff);
     }
 
     setIsLoading(false);
   }
 
-  function handleServiceChange(id: string, srvs: any[] = services) {
+  async function handleServiceChange(id: string, srvs: any[] = services) {
     const srv = srvs.find(s => s.id === id);
     if (srv) {
-      setFormData(prev => ({ ...prev, service_id: id, amount: srv.price || 0 }));
+      setFormData(prev => ({ ...prev, service_id: id, amount: srv.price || 0, staff_id: "" }));
+      await loadStaffForService(id);
     }
   }
 
@@ -82,6 +93,12 @@ export function AddBookingModal({
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
+
+    if (!formData.service_id || !formData.staff_id) {
+      setError("Select a service and an assigned staff member.");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const res = await addManualBooking({
@@ -227,14 +244,17 @@ export function AddBookingModal({
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                  <User className="w-3 h-3" /> Professional (Optional)
+                  <User className="w-3 h-3" /> Assigned Professional
                 </label>
-                <select 
+                <select
+                  required
                   value={formData.staff_id}
                   onChange={e => setFormData({...formData, staff_id: e.target.value})}
                   className="w-full h-10 px-3 text-sm font-bold text-zinc-900 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
                 >
-                  <option value="">Anyone Available</option>
+                  <option value="" disabled>
+                    {staffList.length ? "Select staff" : "No staff mapped to this service"}
+                  </option>
                   {staffList.map(s => (
                     <option key={s.id} value={s.id}>{s.name} {s.role ? `(${s.role})` : ""}</option>
                   ))}
@@ -257,7 +277,7 @@ export function AddBookingModal({
 
               <Button 
                 type="submit" 
-                disabled={isSubmitting || !formData.service_id}
+                disabled={isSubmitting || !formData.service_id || !formData.staff_id}
                 className="w-full h-11 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold shadow-md shadow-brand/20 mt-2"
               >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Capture Booking"}

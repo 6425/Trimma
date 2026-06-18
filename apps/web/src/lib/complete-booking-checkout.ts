@@ -6,7 +6,12 @@ import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
 } from "@/lib/booking-availability";
-import { filterStaffQualifiedForServices, computeBookingStaffCommission } from "@/lib/staff-allocation";
+import {
+  filterStaffQualifiedForServices,
+  assertQualifiedStaffForServices,
+  filterServicesWithStaffCoverage,
+  computeBookingStaffCommission,
+} from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
@@ -204,17 +209,18 @@ export async function completeBookingCheckout(
     needsFallbackService
       ? supabase
           .from("services")
-          .select("id")
+          .select("id, status, global_service_id")
           .eq("salon_id", salon.id)
           .eq("status", "active")
-          .limit(1)
       : Promise.resolve({ data: null }),
   ]);
 
   if (needsFallbackService) {
-    const fallbackServiceId = fallbackServicesResult?.data?.[0]?.id || null;
+    const activeServices = fallbackServicesResult?.data || [];
+    const coveredServices = filterServicesWithStaffCoverage(activeServices, salonStaff || []);
+    const fallbackServiceId = coveredServices[0]?.id || null;
     if (!fallbackServiceId) {
-      throw new Error("This salon has no active services configured for promotion bookings.");
+      throw new Error("This promotion requires at least one active service mapped to staff.");
     }
     bookingServiceLines[0].service_id = fallbackServiceId;
   }
@@ -223,6 +229,7 @@ export async function completeBookingCheckout(
     .map((line) => line.service_id)
     .filter(Boolean) as string[];
 
+  assertQualifiedStaffForServices(salonStaff || [], serviceIdsForStaff);
   const qualifiedStaff = filterStaffQualifiedForServices(salonStaff || [], serviceIdsForStaff);
   const staffIds = qualifiedStaff.map((member) => member.id).filter(Boolean);
 

@@ -4,7 +4,12 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { mapSalonPromotionRows, type SalonPromotionPackage } from "@/lib/deals";
 import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { isDummySalonRecord } from "@/lib/salon-list-filters";
-import { filterServicesWithStaffCoverage } from "@/lib/staff-allocation";
+import {
+  filterServicesWithStaffCoverage,
+  filterStaffCoveringAnyService,
+  normalizeStaffListForCoverage,
+  type SalonStaffForAllocation,
+} from "@/lib/staff-allocation";
 import { dedupeStaffByNameRole } from "@/lib/salon-staff-service-sync";
 
 const SALON_COLUMNS =
@@ -139,22 +144,17 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     if (globalAmenitiesRes.error) throw new Error(globalAmenitiesRes.error.message);
     if (promotionsRes.error) throw new Error(promotionsRes.error.message);
 
-    const staffForCoverage = (staffRes.data || []) as Array<{
-      id: string;
-      status?: string | null;
-      working_hours?: { assigned_services?: Array<{ service_id: string; enabled?: boolean }> } | null;
-    }>;
-    const bookableServices = (() => {
-      const activeServices = (servicesRes.data || []).filter(
-        (svc) => (svc.status || "active").toLowerCase() === "active"
-      );
-      const mapped = filterServicesWithStaffCoverage(activeServices, staffForCoverage);
-      if (mapped.length > 0) return mapped;
-      if (activeServices.length > 0 && staffForCoverage.length > 0) {
-        return activeServices;
-      }
-      return mapped;
-    })();
+    const staffForCoverage = normalizeStaffListForCoverage(
+      (staffRes.data || []) as SalonStaffForAllocation[]
+    );
+    const activeServices = (servicesRes.data || []).filter(
+      (svc) => (svc.status || "active").toLowerCase() === "active"
+    );
+    const bookableServices = filterServicesWithStaffCoverage(activeServices, staffForCoverage);
+    const bookableServiceIds = bookableServices.map((svc) => svc.id);
+    const bookableStaffMembers = filterStaffCoveringAnyService(staffForCoverage, bookableServiceIds);
+    const bookableStaffIds = new Set(bookableStaffMembers.map((member) => member.id));
+    const visibleStaffRows = (staffRes.data || []).filter((row) => bookableStaffIds.has(row.id));
 
     const services: PublicSalonService[] = bookableServices.map((svc) => ({
       id: svc.id,
@@ -169,7 +169,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       popular: false,
     }));
 
-    const staff: PublicSalonStaff[] = dedupeStaffByNameRole(staffRes.data || []).map((member) => ({
+    const staff: PublicSalonStaff[] = dedupeStaffByNameRole(visibleStaffRows).map((member) => ({
       id: member.id,
       name: member.name,
       role: member.role || "Professional",

@@ -20,6 +20,7 @@ import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
 import { confirmOwnerBooking, rescheduleOwnerBooking, rejectOwnerRescheduleRequest, updateOwnerBooking } from "@/app/actions/salon-operations";
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
+import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
 import { toast } from "sonner";
 
 import { ChevronDown } from "lucide-react";
@@ -190,6 +191,7 @@ export default function DashboardBookings() {
       setBookings(result.bookings || []);
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to load bookings.");
     } finally {
       setLoading(false);
     }
@@ -521,9 +523,9 @@ export default function DashboardBookings() {
 
                     {/* Service & Staff */}
                     <td className="px-6 py-4">
-                      <div className="font-bold text-zinc-800 text-sm">{b.services?.name || 'Standard Service'}</div>
+                      <div className="font-bold text-zinc-800 text-sm">{getBookingServiceDisplayName(b) || 'Standard Service'}</div>
                       <div className="text-[11px] text-zinc-400 font-medium mt-1">
-                        Staff: <span className="font-bold text-zinc-600">{b.staff?.name || 'Unassigned'}</span>
+                        Staff: <span className="font-bold text-zinc-600">{resolveStaffMemberFromBooking(b)?.name || 'Unassigned — check staff mapping'}</span>
                       </div>
                     </td>
                     

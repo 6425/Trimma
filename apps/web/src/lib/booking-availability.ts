@@ -222,6 +222,9 @@ export function resolveAvailableStaffId(
 export const SLOT_UNAVAILABLE_MESSAGE =
   "This time slot is no longer available. Please choose another time.";
 
+const STAFF_NOT_ASSIGNED_TO_SERVICE_MSG =
+  "The selected stylist is not assigned to this service.";
+
 /**
  * Resolve which staff member will take the booking and verify the slot is free.
  * Never falls back to a busy stylist — throws if no one is available.
@@ -238,6 +241,9 @@ export function resolveStaffForBookingSlot(params: {
   let resolvedStaffId: string | null = null;
 
   if (preferredStaffId && preferredStaffId !== "any") {
+    if (!staffIds.includes(preferredStaffId)) {
+      throw new Error(STAFF_NOT_ASSIGNED_TO_SERVICE_MSG);
+    }
     resolvedStaffId = preferredStaffId;
   } else {
     resolvedStaffId = resolveAvailableStaffId(

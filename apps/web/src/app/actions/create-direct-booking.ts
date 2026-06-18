@@ -2,7 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { parseDisplayTimeSlot, resolveStaffForBookingSlot } from "@/lib/booking-availability";
-import { filterStaffQualifiedForServices, computeBookingStaffCommission } from "@/lib/staff-allocation";
+import { filterStaffQualifiedForServices, assertQualifiedStaffForServices, filterServicesWithStaffCoverage, computeBookingStaffCommission } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { insertBookingRecord } from "@/lib/booking-insert";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
@@ -106,15 +106,19 @@ export async function createDirectBooking(
       const primaryId = serviceIds[0];
       let resolvedPrimaryId = primaryId;
       if (!resolvedPrimaryId) {
-        const { data: fallback } = await supabase
+        const { data: activeServices } = await supabase
           .from("services")
-          .select("id, duration, duration_min")
+          .select("id, global_service_id, status")
           .eq("salon_id", salonId)
-          .eq("status", "active")
-          .limit(1);
-        resolvedPrimaryId = fallback?.[0]?.id;
+          .eq("status", "active");
+        const { data: salonStaffRows } = await supabase
+          .from("salon_staff")
+          .select("id, status, working_hours")
+          .eq("salon_id", salonId);
+        const covered = filterServicesWithStaffCoverage(activeServices || [], salonStaffRows || []);
+        resolvedPrimaryId = covered[0]?.id;
         if (!resolvedPrimaryId) {
-          return { success: false, error: "No active services for this promotion booking." };
+          return { success: false, error: "No staff-mapped active services for this promotion booking." };
         }
       }
       const duration = 60;
@@ -203,7 +207,7 @@ export async function createDirectBooking(
       .select("id, working_hours")
       .eq("salon_id", salonId);
 
-    const qualifiedStaff = filterStaffQualifiedForServices(
+    const qualifiedStaff = assertQualifiedStaffForServices(
       salonStaff || [],
       processedServices.map((service) => service.id)
     );

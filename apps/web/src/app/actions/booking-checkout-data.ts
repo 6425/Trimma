@@ -7,7 +7,7 @@ import {
   SLOT_UNAVAILABLE_MESSAGE,
 } from "@/lib/booking-availability";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
-import { filterStaffQualifiedForServices } from "@/lib/staff-allocation";
+import { assertQualifiedStaffForServices } from "@/lib/staff-allocation";
 import {
   buildPromotionCheckoutService,
   resolvePromotionBookingServices,
@@ -158,7 +158,7 @@ export async function fetchBookingCheckoutData(
 
     const enrichedBookings = await enrichBookingsWithDurations(supabase, dayBookings || []);
 
-    const qualifiedStaff = filterStaffQualifiedForServices(
+    const qualifiedStaff = assertQualifiedStaffForServices(
       salonStaff || [],
       services.map((service) => service.id)
     );

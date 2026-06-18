@@ -74,11 +74,19 @@ export async function fetchSalonDashboardPage() {
   return { success: true as const, ...result.data };
 }
 
+const SALON_BOOKINGS_SELECT = `
+  *,
+  services (id, name),
+  salon_staff (id, name, commission_rate, working_hours),
+  booking_services (service_id, price, duration_min, services (id, name, global_service_id)),
+  booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
+`;
+
 export async function fetchSalonBookingsPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data, error } = await supabase
       .from("bookings")
-      .select("*")
+      .select(SALON_BOOKINGS_SELECT)
       .eq("salon_id", ctx.salonId)
       .order("booking_date", { ascending: false })
       .order("booking_time", { ascending: false });
@@ -350,7 +358,11 @@ export async function fetchSalonPackagesPage() {
 
 export async function fetchSalonBookingDetail(bookingId: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const { data, error } = await supabase.from("bookings").select("*").eq("id", bookingId).maybeSingle();
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(SALON_BOOKINGS_SELECT)
+      .eq("id", bookingId)
+      .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data || data.salon_id !== ctx.salonId) throw new Error("Booking not found for your salon.");
     return { booking: data };
