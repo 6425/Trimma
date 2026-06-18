@@ -30,6 +30,7 @@ import {
   getSalonBookabilityMessage,
   getSalonBookingBlockedToast,
   isSalonPubliclyBookable,
+  resolvePublicSalonOwnerEmail,
 } from "@/lib/salon-bookability";
 import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
 import { fetchPublicSalonPage, type PublicSalonService, type PublicSalonStaff, type PublicSalonAmenityDisplay } from "@/app/actions/public-salon-page";
@@ -537,6 +538,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
   const isBookable = isSalonPubliclyBookable(salon);
   const bookabilityMessage = getSalonBookabilityMessage(salon);
+  const ownerContactEmail = resolvePublicSalonOwnerEmail(salon.owner_email, salon.owner_gmail);
 
   // --- Dynamic Working Hours & Status Calculation ---
   let parsedWorkingHours = mockExtraData.hours;
@@ -1077,10 +1079,10 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                       <span className="text-sm text-zinc-700">{salon.phone}</span>
                     </div>
                   )}
-                  {salon.owner_email && !salon.owner_email.includes("draft-") && (
+                  {ownerContactEmail && (
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-brand shrink-0" />
-                      <span className="text-sm text-zinc-700">{salon.owner_email}</span>
+                      <span className="text-sm text-zinc-700">{ownerContactEmail}</span>
                     </div>
                   )}
                 </div>
@@ -1289,10 +1291,10 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                       <span className="text-sm text-zinc-700">{salon.phone}</span>
                     </div>
                   )}
-                  {salon.owner_email && !salon.owner_email.includes("draft-") && (
+                  {ownerContactEmail && (
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-brand shrink-0" />
-                      <span className="text-sm text-zinc-700">{salon.owner_email}</span>
+                      <span className="text-sm text-zinc-700">{ownerContactEmail}</span>
                     </div>
                   )}
                  </div>
