@@ -164,14 +164,21 @@ function IncomeTable({ rows, totals }: { rows: BookingIncomeRow[]; totals: Booki
 export function BookingCommissionTable({
   bookings,
   allStaff = [],
+  offsetWeeks,
+  onOffsetWeeksChange,
 }: {
   bookings: any[];
   allStaff?: any[];
+  offsetWeeks?: number;
+  onOffsetWeeksChange?: (value: number) => void;
 }) {
-  const [offsetWeeks, setOffsetWeeks] = useState(0);
+  const [internalOffsetWeeks, setInternalOffsetWeeks] = useState(0);
+  const activeOffsetWeeks = offsetWeeks ?? internalOffsetWeeks;
+  const setActiveOffsetWeeks = onOffsetWeeksChange ?? setInternalOffsetWeeks;
+
   const { rows, totals } = useMemo(
-    () => buildBookingIncomeRows(bookings, allStaff, offsetWeeks),
-    [bookings, allStaff, offsetWeeks]
+    () => buildBookingIncomeRows(bookings, allStaff, activeOffsetWeeks),
+    [bookings, allStaff, activeOffsetWeeks]
   );
 
   if (!bookings || bookings.length === 0) {
@@ -183,7 +190,7 @@ export function BookingCommissionTable({
   }
 
   const weekLabel =
-    offsetWeeks === 0 ? "Last 7 days" : `${offsetWeeks} wk${offsetWeeks > 1 ? "s" : ""} ago`;
+    activeOffsetWeeks === 0 ? "Last 7 days" : `${activeOffsetWeeks} wk${activeOffsetWeeks > 1 ? "s" : ""} ago`;
 
   const toolbar = (
     <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-2 mb-2">
@@ -196,8 +203,8 @@ export function BookingCommissionTable({
       </div>
       <div className="flex items-center justify-between sm:justify-end gap-1.5">
         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-md p-0.5">
-          <button type="button" onClick={() => setOffsetWeeks((p) => p + 1)} className="px-2 py-1 text-[10px] font-medium text-slate-600 hover:bg-slate-200 rounded min-h-[32px]">Prev</button>
-          <button type="button" onClick={() => setOffsetWeeks((p) => Math.max(0, p - 1))} disabled={offsetWeeks === 0} className={`px-2 py-1 text-[10px] font-medium rounded min-h-[32px] ${offsetWeeks === 0 ? "text-slate-300" : "text-slate-600 hover:bg-slate-200"}`}>Next</button>
+          <button type="button" onClick={() => setActiveOffsetWeeks(activeOffsetWeeks + 1)} className="px-2 py-1 text-[10px] font-medium text-slate-600 hover:bg-slate-200 rounded min-h-[32px]">Prev</button>
+          <button type="button" onClick={() => setActiveOffsetWeeks(Math.max(0, activeOffsetWeeks - 1))} disabled={activeOffsetWeeks === 0} className={`px-2 py-1 text-[10px] font-medium rounded min-h-[32px] ${activeOffsetWeeks === 0 ? "text-slate-300" : "text-slate-600 hover:bg-slate-200"}`}>Next</button>
         </div>
         <div className="bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-md text-right">
           <p className="text-[8px] font-bold text-emerald-600 uppercase leading-none">7d Revenue</p>

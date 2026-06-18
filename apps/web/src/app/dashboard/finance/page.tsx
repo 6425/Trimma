@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Calendar, FileText, ArrowRight, Activity, Loader2, TrendingUp, Sparkles, Store, Briefcase, Handshake, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSalonFinancePage } from "@/app/actions/salon-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
+import { buildBookingIncomeRows } from "@/lib/booking-income-rows";
+import { exportFinanceLedgerToExcel } from "@/lib/export-finance-ledger";
+import { toast } from "sonner";
 import { BookingCommissionTable } from "../../../components/dashboard/BookingCommissionTable";
 
 interface BookingWithSplits {
@@ -28,6 +31,7 @@ export default function FinanceDashboard() {
   const [bookings, setBookings] = useState<BookingWithSplits[]>([]);
   const [allStaff, setAllStaff] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>("all");
+  const [offsetWeeks, setOffsetWeeks] = useState(0);
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
 
   // Stats
@@ -138,6 +142,45 @@ export default function FinanceDashboard() {
     return b.status === filter;
   });
 
+  const { rows: exportRows, totals: exportTotals } = useMemo(
+    () => buildBookingIncomeRows(filteredBookings, allStaff, offsetWeeks),
+    [filteredBookings, allStaff, offsetWeeks]
+  );
+
+  const weekLabel =
+    offsetWeeks === 0 ? "Last 7 days" : `${offsetWeeks} week${offsetWeeks > 1 ? "s" : ""} ago`;
+
+  const filterLabel =
+    filter === "all"
+      ? "All bookings"
+      : filter === "completed"
+        ? "Settled"
+        : filter.charAt(0).toUpperCase() + filter.slice(1);
+
+  const handleExportLedger = () => {
+    if (exportRows.length === 0) {
+      toast.error("No ledger rows to export for the selected period.");
+      return;
+    }
+
+    try {
+      exportFinanceLedgerToExcel({
+        salonName: salon?.name || "Salon",
+        filterLabel,
+        weekLabel,
+        globalRates,
+        stats,
+        rows: exportRows,
+        totals: exportTotals,
+        bookings: filteredBookings,
+      });
+      toast.success("Ledger exported to Excel.");
+    } catch (err) {
+      console.error("Failed to export ledger", err);
+      toast.error(err instanceof Error ? err.message : "Could not export ledger.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
@@ -162,7 +205,11 @@ export default function FinanceDashboard() {
           <p className="text-zinc-500 text-sm mt-0.5">Real-time ledger audit showing gross bookings, platform fee deductions, and referrer splits.</p>
         </div>
         <div className="flex gap-2">
-          <Button className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-2xl shadow-sm h-11 px-5 flex items-center gap-2 text-xs transition-all">
+          <Button
+            type="button"
+            onClick={handleExportLedger}
+            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-2xl shadow-sm h-11 px-5 flex items-center gap-2 text-xs transition-all"
+          >
             <FileText className="w-4 h-4" /> Export Ledger
           </Button>
         </div>
@@ -244,7 +291,12 @@ export default function FinanceDashboard() {
           ))}
         </div>
         
-        <BookingCommissionTable bookings={filteredBookings} allStaff={allStaff} />
+        <BookingCommissionTable
+          bookings={filteredBookings}
+          allStaff={allStaff}
+          offsetWeeks={offsetWeeks}
+          onOffsetWeeksChange={setOffsetWeeks}
+        />
       </div>
 
     </div>
