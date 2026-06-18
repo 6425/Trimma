@@ -7,9 +7,10 @@ export const revalidate = 120;
 export default async function SalonServerPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const result = await fetchPublicSalonPage(slug).catch(() => null);
+  const result = await fetchPublicSalonPage(slug);
 
-  if (!result || result.success === false) {
+  if (result.success === false) {
+    console.error("[salon page]", slug, result.error);
     notFound();
   }
 

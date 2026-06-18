@@ -9,8 +9,10 @@ import { filterServicesWithStaffCoverage } from "@/lib/staff-allocation";
 import { dedupeStaffByNameRole } from "@/lib/salon-staff-service-sync";
 import type { SalonReviewSummary } from "@/lib/reviews";
 
-const SALON_COLUMNS =
-  "id, slug, name, city, district, province, address, phone, owner_email, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, description";
+const SALON_COLUMNS_CORE =
+  "id, slug, name, city, district, province, address, phone, owner_email, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled";
+
+const SALON_COLUMNS_EXTENDED = `${SALON_COLUMNS_CORE}, working_hours, description`;
 
 const SERVICE_COLUMNS =
   "id, name, duration_min, price, discount_percentage, discount_end_date, category, description, image_url, status";
@@ -49,15 +51,111 @@ export type PublicSalonAmenityDisplay = {
   type: string;
 };
 
-async function findSalonBySlugOrId(supabase: ReturnType<typeof createSupabaseAdminClient>, slug: string) {
+function isMissingColumnError(message: string) {
+  const lower = message.toLowerCase();
+  return lower.includes("does not exist") || lower.includes("column");
+}
+
+function normalizeFeaturedImages(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+  }
+  if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+      }
+    } catch {
+      return value.trim() ? [value.trim()] : [];
+    }
+  }
+  return [];
+}
+
+function normalizeSalonRecord(salon: Record<string, unknown>) {
+  return {
+    ...salon,
+    featured_images: normalizeFeaturedImages(salon.featured_images),
+  };
+}
+
+async function selectSalonByColumns(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  columns: string,
+  slug: string
+): Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }> {
+  const { data: bySlug, error: slugError } = await supabase
+    .from("salons")
+    .select(columns)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (slugError) return { data: null, error: slugError };
+  if (bySlug) return { data: bySlug as unknown as Record<string, unknown>, error: null };
+
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
-  let query = supabase.from("salons").select(SALON_COLUMNS);
+  if (!isUuid) return { data: null, error: null };
 
-  query = isUuid ? query.or(`slug.eq.${slug},id.eq.${slug}`) : query.eq("slug", slug);
+  const { data: byId, error: idError } = await supabase
+    .from("salons")
+    .select(columns)
+    .eq("id", slug)
+    .maybeSingle();
 
-  const { data, error } = await query.maybeSingle();
-  if (error) throw new Error(error.message);
-  return data;
+  return {
+    data: byId ? (byId as unknown as Record<string, unknown>) : null,
+    error: idError,
+  };
+}
+
+async function findSalonBySlugOrId(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  slug: string
+) {
+  for (const columns of [SALON_COLUMNS_EXTENDED, SALON_COLUMNS_CORE]) {
+    const { data, error } = await selectSalonByColumns(supabase, columns, slug);
+    if (error) {
+      if (isMissingColumnError(error.message) && columns === SALON_COLUMNS_EXTENDED) {
+        continue;
+      }
+      throw new Error(error.message);
+    }
+    if (data) return data;
+  }
+
+  return null;
+}
+
+async function fetchActiveServices(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  salonId: string
+) {
+  const attempts = [
+    () =>
+      supabase
+        .from("services")
+        .select(SERVICE_COLUMNS)
+        .eq("salon_id", salonId)
+        .eq("status", "active"),
+    () => supabase.from("services").select("*").eq("salon_id", salonId).eq("status", "active"),
+    () =>
+      supabase
+        .from("services")
+        .select("id, name, duration_min, price, discount_percentage, discount_end_date, category, description, status")
+        .eq("salon_id", salonId)
+        .eq("status", "active"),
+  ];
+
+  let lastError: string | null = null;
+  for (const run of attempts) {
+    const { data, error } = await run();
+    if (!error) return data || [];
+    lastError = error.message;
+    if (!isMissingColumnError(error.message)) break;
+  }
+
+  throw new Error(lastError || "Could not load salon services.");
 }
 
 export async function fetchPublicSalonPage(slug: string): Promise<
@@ -82,18 +180,14 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     const supabase = createSupabaseAdminClient();
     const salonData = await findSalonBySlugOrId(supabase, normalizedSlug);
 
-    if (!salonData || isDummySalonRecord(salonData)) {
+    if (!salonData || isDummySalonRecord(salonData as { id?: string | null; name?: string | null; slug?: string | null })) {
       return { success: false, error: "Salon not found." };
     }
 
     const salonId = String(salonData.id);
 
-    const [servicesRes, staffRes, amenitiesRes, promotionsRes, reviewsBundle] = await Promise.all([
-      supabase
-        .from("services")
-        .select(SERVICE_COLUMNS)
-        .eq("salon_id", salonId)
-        .eq("status", "active"),
+    const [servicesData, staffRes, amenitiesRes, promotionsRes, reviewsBundle] = await Promise.all([
+      fetchActiveServices(supabase, salonId),
       supabase
         .from("salon_staff")
         .select("id, name, role, working_hours, status, avatar_url")
@@ -114,7 +208,6 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       fetchPublishedSalonReviewsForPage(salonId),
     ]);
 
-    if (servicesRes.error) throw new Error(servicesRes.error.message);
     if (staffRes.error) throw new Error(staffRes.error.message);
     if (amenitiesRes.error) throw new Error(amenitiesRes.error.message);
     if (promotionsRes.error) throw new Error(promotionsRes.error.message);
@@ -139,7 +232,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       working_hours?: { assigned_services?: Array<{ service_id: string; enabled?: boolean }> } | null;
     }>;
     const bookableServices = (() => {
-      const activeServices = (servicesRes.data || []).filter(
+      const activeServices = (servicesData || []).filter(
         (svc) => (svc.status || "active").toLowerCase() === "active"
       );
       const mapped = filterServicesWithStaffCoverage(activeServices, staffForCoverage);
@@ -188,7 +281,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
 
     return {
       success: true,
-      salon: salonData as Record<string, unknown>,
+      salon: normalizeSalonRecord(salonData),
       services,
       staff,
       amenities,
@@ -198,6 +291,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load salon.";
+    console.error("[fetchPublicSalonPage]", normalizedSlug, message);
     return { success: false, error: message };
   }
 }

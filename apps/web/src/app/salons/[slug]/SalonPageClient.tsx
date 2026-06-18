@@ -508,9 +508,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
   const coverImage = salon.cover_url || mockExtraData.featuredImage;
   const heroImage = salon.hero_url || mockExtraData.gallery[0];
-  const galleryImage1 = (salon.featured_images && salon.featured_images.length > 0)
-    ? salon.featured_images[0]
-    : mockExtraData.gallery[1];
+  const featuredImages = Array.isArray(salon.featured_images) ? salon.featured_images : [];
+  const galleryImage1 = featuredImages.length > 0 ? featuredImages[0] : mockExtraData.gallery[1];
   const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=ffc107&textColor=000000`;
   const displayRating = reviewSummary.averageRating;
   const displayReviewCount = reviewSummary.totalReviews;
@@ -976,9 +975,9 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                 </Badge>
               </div>
 
-              {salon.featured_images && salon.featured_images.length > 0 ? (
+              {featuredImages.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {salon.featured_images.map((imgUrl: string, idx: number) => (
+                  {featuredImages.map((imgUrl: string, idx: number) => (
                     <div key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] border border-slate-200 shadow-sm bg-slate-50">
                       <img 
                         src={imgUrl} 
