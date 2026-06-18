@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
+import type { PublicCategory } from "@/lib/public-categories";
 import Logo from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -48,7 +49,7 @@ const navCategoryPillClass = (active: boolean) =>
 const navActionClass =
   "text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors dark:text-[#ffc800] dark:hover:bg-[#ffc800] dark:hover:text-black";
 
-export default function GlobalHeader() {
+export default function GlobalHeader({ navCategories }: { navCategories: PublicCategory[] }) {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("customer");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -58,7 +59,6 @@ export default function GlobalHeader() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [locationsOpen, setLocationsOpen] = useState(false);
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
-  const [navCategories, setNavCategories] = useState<any[]>([]);
   const pathname = usePathname();
 
   const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
@@ -66,6 +66,14 @@ export default function GlobalHeader() {
   const isDealsActive = pathname === "/deals";
   const isStylesActive = pathname === "/styles";
   const isContactActive = pathname === "/contact";
+
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("trimma:nav-categories");
+    } catch {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -105,35 +113,6 @@ export default function GlobalHeader() {
       } else {
         setUserRole("customer");
       }
-    });
-
-    void Promise.resolve().then(() => {
-      const fetchCategories = async () => {
-        const cacheKey = "trimma:nav-categories";
-        try {
-          const cached = sessionStorage.getItem(cacheKey);
-          if (cached) {
-            const parsed = JSON.parse(cached) as { ts: number; data: Array<{ id: string; name: string; slug: string; icon: string }> };
-            if (Date.now() - parsed.ts < 5 * 60 * 1000 && Array.isArray(parsed.data)) {
-              setNavCategories(parsed.data);
-              return;
-            }
-          }
-        } catch {
-          // ignore cache parse errors
-        }
-
-        const { data } = await supabase.from('categories').select('id, name, slug, icon').order('name');
-        if (data) {
-          setNavCategories(data);
-          try {
-            sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
-          } catch {
-            // ignore quota errors
-          }
-        }
-      };
-      fetchCategories();
     });
 
     return () => subscription.unsubscribe();

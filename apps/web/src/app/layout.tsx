@@ -1,5 +1,5 @@
 import '../index.css';
-import SiteChrome from '../components/SiteChrome';
+import SiteChromeLoader from '../components/SiteChromeLoader';
 import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
@@ -42,7 +42,7 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
         <ThemeProvider>
-          <SiteChrome>{children}</SiteChrome>
+          <SiteChromeLoader>{children}</SiteChromeLoader>
           <Toaster
             position="top-center"
             toastOptions={{

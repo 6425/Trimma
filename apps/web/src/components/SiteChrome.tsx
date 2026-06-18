@@ -6,8 +6,15 @@ import GlobalFooter from "./GlobalFooter";
 import { SalonFavoritesProvider } from "@/hooks/useSalonFavorites";
 import { SavedStylesProvider } from "@/hooks/useSavedStyles";
 import { AuthProvider } from "@/providers/AuthProvider";
+import type { PublicCategory } from "@/lib/public-categories";
 
-export default function SiteChrome({ children }: { children: React.ReactNode }) {
+export default function SiteChrome({
+  children,
+  navCategories,
+}: {
+  children: React.ReactNode;
+  navCategories: PublicCategory[];
+}) {
   const pathname = usePathname();
   const isCheckout = pathname?.startsWith("/checkout");
   const usesDashboardShell =
@@ -41,7 +48,7 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
         <SalonFavoritesProvider>
           <SavedStylesProvider>
             <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-[#ffc800]">
-              <GlobalHeader />
+              <GlobalHeader navCategories={navCategories} />
               <main className="flex-1">{children}</main>
               <GlobalFooter />
             </div>

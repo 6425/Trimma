@@ -3,6 +3,7 @@
 
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
+import { fetchPublicCategories } from "@/lib/public-categories";
 import SalonsClient from "./SalonsClient";
 
 export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
@@ -19,31 +20,25 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const supabase = createServerSupabaseClient();
 
-  // Fetch categories on the server; salon list loads via /api/salons/search on the client
-  const categoriesResult = await supabase
-    .from("categories")
-    .select("slug, name, icon")
-    .order("name");
+  const [categories, listingResult] = await Promise.all([
+    fetchPublicCategories(),
+    (async () => {
+      try {
+        return await fetchPublicSalons(supabase, {
+          q: sp.q ?? "",
+          location: sp.l ?? "",
+          category: sp.category ?? "",
+          limit: 12,
+          offset: 0,
+        });
+      } catch {
+        return { salons: [], hasMore: false };
+      }
+    })(),
+  ]);
 
-  const categories = categoriesResult.data || [];
-
-  let initialSalons: Awaited<ReturnType<typeof fetchPublicSalons>>["salons"] = [];
-  let initialHasMore = false;
-
-  try {
-    const listing = await fetchPublicSalons(supabase, {
-      q: sp.q ?? "",
-      location: sp.l ?? "",
-      category: sp.category ?? "",
-      limit: 12,
-      offset: 0,
-    });
-    initialSalons = listing.salons;
-    initialHasMore = listing.hasMore;
-  } catch {
-    initialSalons = [];
-    initialHasMore = false;
-  }
+  const initialSalons = listingResult.salons;
+  const initialHasMore = listingResult.hasMore;
 
   return (
     <SalonsClient
