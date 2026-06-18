@@ -109,6 +109,7 @@ export default function AdminSalonRequestsPage() {
     try {
       const result = await updateAdminSalonRequest({
         id: selected.id,
+        origin: selected.origin,
         status: editStatus,
         admin_notes: editNotes,
       });
@@ -130,7 +131,7 @@ export default function AdminSalonRequestsPage() {
         <div>
           <h1 className="text-2xl lg:text-3xl font-black text-zinc-900">Salon Requests</h1>
           <p className="text-sm text-zinc-500 font-medium mt-1">
-            Contact form submissions from the public site — sales, support, and partnership inquiries.
+            Onboarding requests and contact form submissions from the public site.
           </p>
         </div>
         <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
@@ -174,7 +175,7 @@ export default function AdminSalonRequestsPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center text-zinc-500">
           {requests.length === 0
-            ? "No contact form submissions yet. Run packages/db/SALON_REQUESTS_PATCH.sql if the table is missing."
+            ? "No salon requests yet. Run packages/db/SALON_REQUESTS_PATCH.sql in Supabase if the table is missing, then submit a test from /onboarding or /contact."
             : "No requests match your filters."}
         </div>
       ) : (
@@ -215,6 +216,9 @@ export default function AdminSalonRequestsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="font-medium text-zinc-800">{row.inquiry_type}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold mt-0.5">
+                        {row.source.replace(/_/g, " ")}
+                      </div>
                       <div className="text-xs text-zinc-500 line-clamp-2 max-w-xs mt-1">{row.message}</div>
                     </td>
                     <td className="px-4 py-4">

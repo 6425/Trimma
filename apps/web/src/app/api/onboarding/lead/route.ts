@@ -6,6 +6,7 @@ import {
   insertOnboardingSalonLead,
   type OnboardingLeadFormInput,
 } from "@/lib/onboarding-lead-insert";
+import { mirrorOnboardingLeadToSalonRequests } from "@/lib/salon-request-insert";
 import { APP_BASE_URL } from "@/lib/email/config";
 
 export async function POST(request: Request) {
@@ -17,6 +18,8 @@ export async function POST(request: Request) {
       supabase,
       body
     );
+
+    await mirrorOnboardingLeadToSalonRequests(supabase, body, leadId);
 
     const salonAddress = [body.address, body.city, body.district, body.province]
       .filter(Boolean)
