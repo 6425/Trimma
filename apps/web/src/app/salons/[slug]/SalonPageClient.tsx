@@ -26,7 +26,11 @@ import {
   resolvePromotionBookingServices,
 } from "@/lib/promotion-booking";
 import { formatDisplayDate, getRemainingDaysLabel } from "@/lib/promotion-package-dates";
-import { toast } from "sonner";
+import {
+  getSalonBookabilityMessage,
+  getSalonBookingBlockedToast,
+  isSalonPubliclyBookable,
+} from "@/lib/salon-bookability";
 import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
 import { fetchPublicSalonPage, type PublicSalonService, type PublicSalonStaff, type PublicSalonAmenityDisplay } from "@/app/actions/public-salon-page";
 import { withTimeout } from "@/lib/promise-timeout";
@@ -461,11 +465,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
   const handleBookService = (serviceName?: string) => {
     if (!isBookable) {
-      if (!salon.booking_enabled) {
-        toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
-      } else {
-        toast.error("Booking is unavailable because the salon has not provided a valid email address and WhatsApp number.");
-      }
+      toast.error(getSalonBookingBlockedToast(salon));
       return;
     }
 
@@ -496,11 +496,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
 
   const handleBookPromotion = (promotion: SalonPromotionPackage) => {
     if (!isBookable) {
-      if (!salon.booking_enabled) {
-        toast.error("This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.");
-      } else {
-        toast.error("Booking is unavailable because the salon has not provided a valid email address and WhatsApp number.");
-      }
+      toast.error(getSalonBookingBlockedToast(salon));
       return;
     }
 
@@ -539,8 +535,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
   const displayRating = reviewSummary.averageRating;
   const displayReviewCount = reviewSummary.totalReviews;
 
-  const hasContactInfo = Boolean(salon.phone && salon.owner_email && !salon.owner_email.includes("draft-"));
-  const isBookable = salon.booking_enabled && hasContactInfo;
+  const isBookable = isSalonPubliclyBookable(salon);
+  const bookabilityMessage = getSalonBookabilityMessage(salon);
 
   // --- Dynamic Working Hours & Status Calculation ---
   let parsedWorkingHours = mockExtraData.hours;
@@ -686,9 +682,9 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                     <Button
                       className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`} 
                       onClick={() => handleBookService()}
-                      disabled={!salon.booking_enabled}
+                      disabled={!isBookable}
                     >
-                      {salon.booking_enabled ? "Book" : "Unavailable"}
+                      {isBookable ? "Book" : "Unavailable"}
                     </Button>
                   </div>
                 </div>
@@ -764,17 +760,15 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                 </div>
 
                 {/* UNVERIFIED / BOOKING UNAVAILABLE NOTICE */}
-                {!isBookable && (
+                {!isBookable && bookabilityMessage && (
                   <div className="mt-4 bg-black/10 border border-black/20 rounded-xl p-4 flex items-start gap-3 backdrop-blur-md max-w-2xl">
                     <Shield className="w-5 h-5 text-black shrink-0 mt-0.5" />
                     <div>
                       <h4 className="text-black font-extrabold text-sm uppercase tracking-wide">
-                        {!salon.booking_enabled ? "Verification in Progress" : "Missing Contact Details"}
+                        {bookabilityMessage.title}
                       </h4>
                       <p className="text-black/80 text-xs mt-1.5 font-medium leading-relaxed">
-                        {!salon.booking_enabled 
-                          ? (salon.booking_disabled_message || "This salon is currently completing our verification process to ensure the highest quality standards. Online bookings will be automatically enabled once the owner's verification is complete.")
-                          : "This salon is verified but is missing an email address or WhatsApp number. Online booking will be enabled once the owner updates their business profile."}
+                        {bookabilityMessage.body}
                       </p>
                     </div>
                   </div>
@@ -861,8 +855,8 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                             <div className="font-bold text-lg text-zinc-900">LKR {service.price}</div>
                           )}
                         </div>
-                        <Button className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`} onClick={() => handleBookService(service.name)} disabled={!salon.booking_enabled}>
-                          {!salon.booking_enabled ? "Unavailable" : "Book Now"}
+                        <Button className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`} onClick={() => handleBookService(service.name)} disabled={!isBookable}>
+                          {!isBookable ? "Unavailable" : "Book Now"}
                         </Button>
                       </div>
                     </div>
@@ -941,9 +935,9 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                               <Button
                                 className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`}
                                 onClick={() => handleBookPromotion(promotion)}
-                                disabled={!salon.booking_enabled}
+                                disabled={!isBookable}
                               >
-                                {!salon.booking_enabled ? "Unavailable" : "Book Deal"}
+                                {!isBookable ? "Unavailable" : "Book Deal"}
                               </Button>
                             </div>
                           </div>

@@ -91,7 +91,7 @@ function SignupForm() {
           href="/"
           className="absolute left-6 top-6 z-20 hover:opacity-90 transition-opacity sm:left-10 sm:top-8 lg:left-14 lg:top-10"
         >
-          <Logo iconSize={40} />
+          <Logo iconSize={40} variant="dark" />
         </Link>
 
         <div className="relative z-10 flex w-full max-w-xl flex-col items-center text-center pt-14 sm:pt-16 lg:pt-0">

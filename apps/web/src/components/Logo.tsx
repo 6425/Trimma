@@ -10,6 +10,8 @@ interface LogoProps {
   iconSize?: number;
   showTagline?: boolean;
   inverse?: boolean;
+  /** Force logo asset on branded panels (e.g. yellow login hero). */
+  variant?: "auto" | "dark" | "light" | "yellow";
   title?: string;
   tagline?: string;
 }
@@ -42,6 +44,7 @@ export default function Logo({
   iconSize = 32,
   showTagline = false,
   inverse = false,
+  variant = "auto",
   title,
   tagline: propTagline,
 }: LogoProps) {
@@ -102,23 +105,36 @@ export default function Logo({
 
   const displayTagline = propTagline ?? (showTagline ? defaultTagline : null);
   const logoHeight = Math.max(iconSize * 1.2, 32);
-  const logoSrc = isDarkTheme
-    ? "/logo-yellow.png"
-    : inverse
+  const logoSrc =
+    variant === "dark"
       ? "/logo-dark.svg"
-      : "/logo-light.svg";
+      : variant === "light"
+        ? "/logo-light.svg"
+        : variant === "yellow"
+          ? "/logo-yellow.png"
+          : isDarkTheme
+            ? "/logo-yellow.png"
+            : inverse
+              ? "/logo-dark.svg"
+              : "/logo-light.svg";
 
-  const betaBadgeClass = isDarkTheme
-    ? "bg-[#ffc800]/15 text-[#ffc800] border-[#ffc800]/35"
-    : inverse
-      ? "bg-white/10 text-white/90 border-white/20"
-      : "bg-slate-100 text-slate-500 border-slate-200";
+  const betaBadgeClass =
+    variant === "dark"
+      ? "bg-black/10 text-black/80 border-black/20"
+      : isDarkTheme
+        ? "bg-[#ffc800]/15 text-[#ffc800] border-[#ffc800]/35"
+        : inverse
+          ? "bg-white/10 text-white/90 border-white/20"
+          : "bg-slate-100 text-slate-500 border-slate-200";
 
-  const taglineClass = isDarkTheme
-    ? "text-[#ffc800]/75"
-    : inverse
-      ? "text-white/60"
-      : "text-zinc-500";
+  const taglineClass =
+    variant === "dark"
+      ? "text-black/70"
+      : isDarkTheme
+        ? "text-[#ffc800]/75"
+        : inverse
+          ? "text-white/60"
+          : "text-zinc-500";
 
   return (
     <div className={`flex flex-col select-none ${className}`}>
