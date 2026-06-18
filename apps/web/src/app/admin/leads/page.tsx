@@ -1,8 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,6 +92,9 @@ const SRI_LANKA_GEOGRAPHY: any = {
 
 export default function Leads() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const tabQuery = searchParams.get("tab");
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -100,7 +102,19 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<any | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'discovery' | 'draft' | 'pipeline' | 'archived' | 'salon-requests'>('discovery');
+  const [activeTabState, setActiveTabState] = useState<'discovery' | 'draft' | 'pipeline' | 'archived' | 'salon-requests'>('discovery');
+  const activeTab = tabQuery === "salon-requests" ? "salon-requests" : activeTabState;
+  const setActiveTab = useCallback((
+    tab: React.SetStateAction<'discovery' | 'draft' | 'pipeline' | 'archived' | 'salon-requests'>
+  ) => {
+    setActiveTabState((prev) => {
+      const nextTab = typeof tab === "function" ? tab(prev) : tab;
+      if (tabQuery === "salon-requests" && nextTab !== "salon-requests") {
+        router.replace(pathname);
+      }
+      return nextTab;
+    });
+  }, [pathname, router, tabQuery]);
   const [salonRequests, setSalonRequests] = useState<SalonRequestRow[]>([]);
   const [salonRequestsLoading, setSalonRequestsLoading] = useState(false);
   
@@ -190,12 +204,6 @@ export default function Leads() {
     toast.success("Salon request assigned successfully.");
     await fetchSalonRequests();
   };
-
-  useEffect(() => {
-    if (searchParams.get("tab") === "salon-requests") {
-      setActiveTab("salon-requests");
-    }
-  }, [searchParams]);
 
   const applyLeadsFromSalons = (allSalons: any[], limit?: number) => {
     const pipelineData = (allSalons || []).filter(
