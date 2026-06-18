@@ -298,7 +298,7 @@ export function CustomerHelpGuide() {
       <div className="relative overflow-hidden rounded-3xl bg-primary-gradient text-zinc-900 p-6 sm:p-10 border border-brand/20">
         <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-black/10" />
         <div className="relative z-10 max-w-2xl">
-          <span className="hero-badge hero-eyebrow px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider mb-4">
+          <span className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-4">
             <BookOpen className="w-3.5 h-3.5" />
             Customer Handbook
           </span>

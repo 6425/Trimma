@@ -60,8 +60,8 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
-            <Sparkles className="w-4 h-4" />
+          <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
             About Trimma
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6 max-w-4xl mx-auto">

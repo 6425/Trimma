@@ -62,8 +62,8 @@ export default function DealsClient({ deals, categories, locations }: Props) {
       {/* Hero */}
       <section className="page-hero-light pt-20 pb-16 lg:pt-24 lg:pb-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="inline-flex items-center gap-2 hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-6">
-            <Gift className="w-4 h-4" />
+          <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+            <Gift className="w-3.5 h-3.5" />
             Salon Deals &amp; Packages
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-5">

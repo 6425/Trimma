@@ -425,8 +425,8 @@ function SectionBadge({
 }) {
   if (hero) {
     return (
-      <div className="hero-badge text-sm font-semibold px-4 py-2 rounded-full mb-5">
-        <Sparkles className="w-4 h-4" />
+      <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+        <Sparkles className="w-3.5 h-3.5" />
         {children}
       </div>
     );

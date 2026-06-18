@@ -612,8 +612,38 @@
     color: #0a0a0a;
   }
   .hero-ink,
-  :is(.page-hero-shell, .page-hero-light) .hero-ink :is(h1, h2, h3, h4, p, span, label, a:not([class*="hero-btn"])) {
+  :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    p,
+    span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]),
+    label,
+    a:not([class*="hero-btn"])
+  ) {
     color: #0a0a0a !important;
+  }
+  :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
+    .hero-badge,
+    .hero-eyebrow,
+    [class*="hero-badge"],
+    [class*="hero-eyebrow"],
+    [data-slot="badge"]
+  ) {
+    background-color: #0a0a0a !important;
+    border-color: #0a0a0a !important;
+    color: #ffc800 !important;
+  }
+  :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
+    .hero-badge,
+    .hero-eyebrow,
+    [class*="hero-badge"],
+    [class*="hero-eyebrow"],
+    [data-slot="badge"]
+  ) :is(svg, [class*="lucide"]) {
+    color: #ffc800 !important;
+    stroke: #ffc800 !important;
   }
   .hero-badge,
   .hero-eyebrow {
@@ -1639,11 +1669,32 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
   h5,
   h6,
   p,
-  span,
+  span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]),
   label,
   a:not([class*="hero-btn"])
 ) {
   color: #0a0a0a !important;
+}
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
+  .hero-badge,
+  .hero-eyebrow,
+  [class*="hero-badge"],
+  [class*="hero-eyebrow"],
+  [data-slot="badge"]
+) {
+  background-color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+  color: #ffc800 !important;
+}
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
+  .hero-badge,
+  .hero-eyebrow,
+  [class*="hero-badge"],
+  [class*="hero-eyebrow"],
+  [data-slot="badge"]
+) :is(svg, [class*="lucide"]) {
+  color: #ffc800 !important;
+  stroke: #ffc800 !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(

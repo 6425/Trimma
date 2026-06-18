@@ -40,7 +40,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
         <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-white/15 rounded-full blur-[120px] -translate-y-1/2"></div>
 
         <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="hero-badge hero-eyebrow px-4 py-1.5 text-xs font-bold tracking-widest uppercase mb-6">
+          <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
             <Scissors className="w-3.5 h-3.5 animate-spin-slow" /> Introductory Discounts Available Now
           </div>
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6 text-zinc-900">

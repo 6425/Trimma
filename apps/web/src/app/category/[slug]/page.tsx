@@ -142,7 +142,7 @@ export default function CategoryPage() {
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge variant="hero" className="px-3 py-1 mb-4">
+          <Badge variant="hero" className="mb-6">
             <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
           </Badge>
           
@@ -156,7 +156,7 @@ export default function CategoryPage() {
           </p>
           
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
-             <span className="hero-eyebrow font-extrabold px-3 py-1">{filteredSalons.length} Salons Available</span>
+             <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
              <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
           </div>

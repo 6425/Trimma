@@ -263,7 +263,7 @@ export default function SalonsClient({
         </div>
 
         <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl hero-ink">
-          <Badge variant="hero" className="px-3 py-1 mb-4">
+          <Badge variant="hero" className="mb-6">
             <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
             Discover Premium Grooming
           </Badge>

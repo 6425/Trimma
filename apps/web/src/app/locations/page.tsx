@@ -75,7 +75,7 @@ export default function LocationsHubPage() {
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center w-full">
-          <Badge variant="hero" className="px-3 py-1 mb-4">
+          <Badge variant="hero" className="mb-6">
             <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> Islandwide Discovery Hub
           </Badge>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
