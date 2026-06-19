@@ -1,12 +1,11 @@
 "use client";
 
 import { LifeBuoy, Mail, MessageSquare, Phone } from "lucide-react";
+import { CustomerHelpFaq } from "@/components/help/CustomerHelpFaq";
 
 export default function CustomerSupportPage() {
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
-      
-      {/* HEADER */}
       <div className="border-b border-zinc-200 pb-6">
         <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
           <LifeBuoy className="w-8 h-8 text-[#ffc800]" />
@@ -16,7 +15,6 @@ export default function CustomerSupportPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {/* Contact Option: Email */}
         <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex items-start gap-4 shadow-sm hover:border-[#ffc800]/50 transition-all cursor-default">
           <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
             <Mail className="w-6 h-6 text-zinc-600" />
@@ -30,7 +28,6 @@ export default function CustomerSupportPage() {
           </div>
         </div>
 
-        {/* Contact Option: WhatsApp */}
         <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex items-start gap-4 shadow-sm hover:border-[#ffc800]/50 transition-all cursor-default">
           <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
             <MessageSquare className="w-6 h-6 text-zinc-600" />
@@ -44,7 +41,6 @@ export default function CustomerSupportPage() {
           </div>
         </div>
 
-        {/* Contact Option: Phone */}
         <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex items-start gap-4 shadow-sm hover:border-[#ffc800]/50 transition-all cursor-default">
           <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
             <Phone className="w-6 h-6 text-zinc-600" />
@@ -59,13 +55,10 @@ export default function CustomerSupportPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-50 rounded-2xl border border-zinc-200 p-8 mt-12 text-center shadow-sm">
-        <h3 className="text-lg font-bold text-zinc-900 mb-2">Frequently Asked Questions</h3>
-        <p className="text-sm text-zinc-500 max-w-lg mx-auto">
-          We are currently building our comprehensive FAQ section to help you navigate your appointments and manage your profile easily. Stay tuned!
-        </p>
-      </div>
-
+      <section className="space-y-4 pt-4">
+        <h2 className="text-lg font-bold text-zinc-900">Frequently asked questions</h2>
+        <CustomerHelpFaq defaultOpenIndex={null} />
+      </section>
     </div>
   );
 }

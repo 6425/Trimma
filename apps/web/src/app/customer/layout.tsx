@@ -95,7 +95,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-2">Account</div>
             {[
               { name: "Profile", path: "/customer/profile", icon: <User className="w-5 h-5" /> },
-              { name: "Customer Help", path: "/customer-help", icon: <HelpCircle className="w-5 h-5" /> },
+              { name: "Help", path: "/customer/help", icon: <HelpCircle className="w-5 h-5" /> },
               { name: "Support", path: "/customer/support", icon: <LifeBuoy className="w-5 h-5" /> },
             ].map((item) => {
               const isActive = pathname === item.path;

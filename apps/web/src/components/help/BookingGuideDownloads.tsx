@@ -74,8 +74,8 @@ export function BookingGuideDownloads() {
               Download Booking Guide (PDF)
             </h2>
             <p className="text-sm text-zinc-600 leading-relaxed max-w-2xl">
-              Share these professional step-by-step guides with new customers and salon partners.
-              Available in English, Sinhala, and Tamil — open on any phone, tablet, or computer.
+              Customer booking guides in English, Sinhala, and Tamil — find salons, pay your
+              deposit, manage appointments, and leave reviews. Open on any phone, tablet, or computer.
             </p>
             {loading && (
               <p className="text-xs text-zinc-400 mt-2 flex items-center gap-1.5">

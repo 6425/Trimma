@@ -3,29 +3,23 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
-  ChevronDown,
-  ChevronRight,
   BookOpen,
   Sparkles,
   MessageCircle,
   Mail,
   Search,
   MapPin,
-  Store,
   Calendar,
   CreditCard,
   CheckCircle2,
-  Star,
-  Heart,
-  Scissors,
-  User,
-  LayoutDashboard,
   Bell,
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookingGuideDownloads } from "./BookingGuideDownloads";
+import { CustomerHelpFaq } from "./CustomerHelpFaq";
+import { CUSTOMER_DASHBOARD_OPTIONS } from "@/lib/customer-help-faq";
 
 const CUSTOMER = {
   name: "Nimal Perera",
@@ -47,22 +41,14 @@ const SALON = {
 
 const NAV_SECTIONS = [
   { id: "overview", label: "Overview" },
-  { id: "marketplace", label: "Marketplace" },
-  { id: "search", label: "Search & Filters" },
-  { id: "salon-page", label: "Salon Profile" },
+  { id: "dashboard-menu", label: "Customer Dashboard" },
+  { id: "discover", label: "Find a Salon" },
   { id: "booking", label: "Book Appointment" },
   { id: "checkout", label: "Checkout & Deposit" },
   { id: "notifications", label: "Notifications" },
-  { id: "account", label: "Your Account" },
-  { id: "dashboard", label: "Customer Dashboard" },
-  { id: "bookings", label: "My Bookings" },
-  { id: "favorites", label: "Favorite Salons" },
-  { id: "styles", label: "Saved Styles" },
-  { id: "profile", label: "Profile" },
-  { id: "reviews", label: "Reviews" },
   { id: "journey", label: "Booking Journey" },
   { id: "faq", label: "FAQ" },
-  { id: "guides", label: "Download Guides" },
+  { id: "guides", label: "Download Guide" },
   { id: "support", label: "Support" },
 ] as const;
 
@@ -150,27 +136,40 @@ function BookingSheetMockup() {
 }
 
 function CustomerSidebarMockup() {
-  const items = [
-    { label: "Dashboard", active: true },
-    { label: "My Bookings", active: false },
-    { label: "Favorite Salons", active: false },
-    { label: "Saved Styles", active: false },
-    { label: "Profile", active: false },
-    { label: "Customer Help", active: false },
-    { label: "Support", active: false },
+  const menuItems = CUSTOMER_DASHBOARD_OPTIONS.slice(0, 4);
+  const accountItems = [
+    { title: "Profile", path: "/customer/profile" },
+    { title: "Help", path: "/customer/help" },
+    { title: "Support", path: "/customer/support" },
   ];
+
   return (
-    <div className="rounded-xl bg-zinc-50 border border-slate-200 p-3 w-full max-w-[200px] shrink-0">
+    <div className="rounded-xl bg-zinc-50 border border-slate-200 p-3 w-full max-w-[220px] shrink-0">
       <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-1">Menu</div>
-      {items.map((item) => (
-        <div
-          key={item.label}
-          className={`px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
-            item.active ? "bg-[#ffc800] text-black" : "text-zinc-600"
+      {menuItems.map((item, index) => (
+        <Link
+          key={item.path}
+          href={item.path}
+          className={`block px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
+            index === 0 ? "bg-[#ffc800] text-black" : "text-zinc-600 hover:bg-zinc-100"
           }`}
         >
-          {item.label}
-        </div>
+          {item.title}
+        </Link>
+      ))}
+      <div className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mt-3 mb-2 px-1">
+        Account
+      </div>
+      {accountItems.map((item) => (
+        <Link
+          key={item.path}
+          href={item.path}
+          className={`block px-2 py-1.5 rounded-lg text-[10px] font-semibold mb-0.5 ${
+            item.path === "/customer/help" ? "bg-[#ffc800] text-black" : "text-zinc-600 hover:bg-zinc-100"
+          }`}
+        >
+          {item.title}
+        </Link>
       ))}
     </div>
   );
@@ -256,35 +255,7 @@ function SectionCard({
   );
 }
 
-const FAQS = [
-  {
-    q: "Do I need an account to browse salons?",
-    a: "No. Anyone can visit Trimma, search salons, view profiles, and read this help guide without signing in. You can complete a booking as a guest by entering your details in the booking sheet. Sign in with Google at /login when you want to manage bookings, save favorites, or leave reviews in your dashboard.",
-  },
-  {
-    q: "How much do I pay online vs at the salon?",
-    a: `For a LKR ${SALON.price} service like ${SALON.service}, you typically pay a 20% reservation deposit online (LKR ${SALON.deposit}) to lock your slot. The remaining balance (LKR ${SALON.balance}) is paid at the salon after your service.`,
-  },
-  {
-    q: "When will I receive booking confirmations?",
-    a: "After checkout you receive a pending notification by email and WhatsApp (if your number is on file). Once the salon confirms, you get a second confirmation message with your appointment details.",
-  },
-  {
-    q: "Can I cancel or reschedule a booking?",
-    a: "Contact the salon directly for urgent changes. Cancellation policies vary by salon. See our Cancellation options page at /cancellation-help for general Trimma guidance.",
-  },
-  {
-    q: "When can I leave a review?",
-    a: "Reviews unlock once your confirmed appointment time has passed. Go to My Bookings → Ready to review tab to rate the salon and stylist. You can edit your review anytime.",
-  },
-  {
-    q: "How do Favorite Salons work?",
-    a: "Tap the heart on any salon listing or profile while signed in. Your saved salons appear under Favorite Salons in your customer dashboard for quick rebooking.",
-  },
-];
-
 export function CustomerHelpGuide() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeNav, setActiveNav] = useState<string>("overview");
 
   const scrollTo = (id: string) => {
@@ -376,67 +347,53 @@ export function CustomerHelpGuide() {
             </div>
           </section>
 
+          <section id="dashboard-menu" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8 space-y-6">
+            <div>
+              <h2 className="text-lg font-bold text-zinc-900 mb-2">Customer dashboard</h2>
+              <p className="text-sm text-zinc-600 leading-relaxed">
+                After you sign in, these are the sections in your customer account. Open{" "}
+                <Link href="/customer/help" className="text-brand font-bold hover:underline">
+                  Help
+                </Link>{" "}
+                inside the dashboard for quick links to each area.
+              </p>
+            </div>
+            <div className="flex flex-col lg:flex-row gap-6">
+              <CustomerSidebarMockup />
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {CUSTOMER_DASHBOARD_OPTIONS.map((item) => (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 hover:border-brand/40 transition-colors"
+                  >
+                    <h3 className="text-sm font-bold text-zinc-900">{item.title}</h3>
+                    <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{item.description}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+
           <SectionCard
-            id="marketplace"
-            icon={Store}
-            title="Marketplace"
+            id="discover"
+            icon={Search}
+            title="Find a Salon"
             path="/"
             publicOnly
-            description="The Trimma home page and salon listings — open to everyone. Start here to explore what's available near you."
+            description="Browse the Trimma marketplace, search by service and location, open a salon profile, then tap Book to start your appointment."
             features={[
-              "Hero search widget — location, service query, and optional date",
-              "Book Now — jump into salon discovery",
-              "Browse by category — hair, nails, spa, barber, wellness",
-              "Locations hub — provinces, districts, and cities",
+              "Home and search — filter by service, category, and location",
+              "Locations hub — provinces, districts, and cities across Sri Lanka",
+              "Salon profile — services, staff, gallery, reviews, hours, and Book button",
               "Deals page — promotional packages from partner salons",
-              "Verified badge — salons reviewed and approved by Trimma",
-              "Ratings — real review averages; unrated salons show as New",
+              "Favorite heart — save salons when signed in",
             ]}
             tips={[
-              "Use Locations if you know your area but not a specific salon name.",
-              "Verified salons have completed Trimma onboarding and identity checks.",
+              `Example: search near ${SALON.location} to find salons like ${SALON.name}.`,
+              "Check salon working hours before choosing a time slot.",
             ]}
             mockup={<MarketplaceMockup />}
-          />
-
-          <SectionCard
-            id="search"
-            icon={Search}
-            title="Search & Filters"
-            path="/search"
-            publicOnly
-            description="Search salons by service and location. Province location pages add district, city, category, and open-now filters plus map and list views."
-            features={[
-              "Search page — filter by service name, popular service, or category tags",
-              "Location dropdown — narrow results to Colombo, Gampaha, Kandy, and more",
-              "Location pages — district, city, category, and open-now filter chips",
-              "Map and list toggle — switch views on province location pages",
-              "Salon cards — photo, rating, location, category tags, verified badge",
-            ]}
-            tips={[
-              `Searching near ${SALON.location} surfaces local options like ${SALON.name}.`,
-            ]}
-          />
-
-          <SectionCard
-            id="salon-page"
-            icon={MapPin}
-            title="Salon Profile"
-            path={`/salons/${SALON.slug}`}
-            publicOnly
-            description={`Each salon has a public profile — services, team, gallery, reviews, hours, and a Book button. Example: ${SALON.name}.`}
-            features={[
-              "Cover image, logo, address, and contact shortcuts",
-              "Service menu — name, duration, price; add to booking cart",
-              "Staff profiles — stylists with ratings and specialties",
-              "Gallery and amenities (AC, parking, WiFi, etc.)",
-              "Reviews from verified completed bookings only",
-              "Favorite heart — save salon when signed in",
-              "Share and directions links",
-            ]}
-            tips={[
-              "Check working hours before picking a time slot — they drive availability.",
-            ]}
           />
 
           <SectionCard
@@ -488,135 +445,14 @@ export function CustomerHelpGuide() {
             publicOnly
             description="Stay informed from booking through your visit."
             features={[
-              "Email confirmation — immediately after successful deposit payment",
-              "WhatsApp pending message — booking awaiting salon approval",
-              "WhatsApp confirmed message — when salon accepts your slot",
-              "Reminder messages — before your appointment (when salon enables WhatsApp)",
-              "Review invitation — after service completion",
+              "Reservation paid — email and WhatsApp right after checkout",
+              "Salon confirms — email and WhatsApp when the owner accepts your slot",
+              "Reschedule or cancellation — messages if your appointment changes",
+              "Review invitation — after your visit is marked completed",
+              "Optional Telegram alerts if you connect Telegram to your Trimma account",
             ]}
             tips={[
               "Add your Sri Lankan mobile number in booking Step 4 for WhatsApp updates.",
-            ]}
-          />
-
-          <section id="account" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
-            <h2 className="text-lg font-bold text-zinc-900 mb-2">Your account</h2>
-            <p className="text-sm text-zinc-600 mb-6">
-              Sign in with Google to manage bookings, save favorites, and leave reviews — free for customers.
-              New customers sign up at <Link href="/signup" className="text-brand font-bold hover:underline">/signup</Link>;
-              returning users log in at <Link href="/login" className="text-brand font-bold hover:underline">/login</Link>.
-              You can book as a guest without an account; use the same Google email later to see your appointments.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <CustomerSidebarMockup />
-              <ul className="flex-1 grid sm:grid-cols-2 gap-2 text-sm text-zinc-700">
-                {[
-                  "Light sidebar — Dashboard, Bookings, Favorites, Styles",
-                  "Account section — Profile, Customer Help, and Support links",
-                  "Mobile bottom nav — Dashboard, Bookings, Explore, Favorites, Profile",
-                  "Notification bell — booking updates",
-                  "Logout — ends session securely",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          <SectionCard
-            id="dashboard"
-            icon={LayoutDashboard}
-            title="Customer Dashboard"
-            path="/customer"
-            description={`${CUSTOMER.name}'s home after signing in — upcoming appointments, stats, and quick links.`}
-            features={[
-              "Welcome header with profile avatar",
-              "Booking stats — total, upcoming, completed",
-              "Upcoming appointments list with salon, service, date, deposit/balance",
-              "Payment success toast after checkout redirect",
-              "WhatsApp receipt dispatch on successful payment",
-              "Quick link to explore more salons",
-            ]}
-          />
-
-          <SectionCard
-            id="bookings"
-            icon={Calendar}
-            title="My Bookings"
-            path="/customer/bookings"
-            description="Full history and review management for every appointment."
-            features={[
-              "Tabs — All · Ready to review · My reviews",
-              "Each card — salon, service, stylist, date/time, status badge",
-              "Status labels — Pending, Confirmed, Completed, Cancelled",
-              "Deposit paid and balance due amounts",
-              "Leave review button — opens after your confirmed appointment time passes",
-              "Deep link — /customer/bookings?review={id} from email",
-            ]}
-            tips={[
-              "Reviews unlock once your confirmed visit time has passed — salon completion is not required first.",
-            ]}
-          />
-
-          <SectionCard
-            id="favorites"
-            icon={Heart}
-            title="Favorite Salons"
-            path="/customer/favorites"
-            description="Salons you've saved with the heart icon — quick access for rebooking."
-            features={[
-              "Grid of saved salons with photo, rating, location",
-              "Remove from favorites anytime",
-              "Book Again — opens salon profile",
-              "Empty state — explore marketplace to find salons",
-            ]}
-          />
-
-          <SectionCard
-            id="styles"
-            icon={Scissors}
-            title="Saved Styles"
-            path="/customer/styles"
-            description="Inspiration board for haircut and style references you save from the Styles gallery."
-            features={[
-              "Browse community and salon style posts on /styles",
-              "Save styles to your personal collection",
-              "Show your stylist reference photos at appointment time",
-              "Remove saved styles from your dashboard",
-            ]}
-          />
-
-          <SectionCard
-            id="profile"
-            icon={User}
-            title="Profile"
-            path="/customer/profile"
-            description={`Update ${CUSTOMER.name}'s contact details used for bookings and notifications.`}
-            features={[
-              "Edit first name, last name, phone (+947 format)",
-              "Email — login identity (read-only)",
-              "Save Changes — updates profile for future bookings",
-              "Account security note — verified Trimma customer account",
-            ]}
-          />
-
-          <SectionCard
-            id="reviews"
-            icon={Star}
-            title="Reviews"
-            description="Help the community by rating salons and stylists after real visits."
-            features={[
-              "Star rating (1–5) with optional written comment (20+ characters)",
-              "Staff-specific rating when a stylist was assigned",
-              "One review per booking appointment — prevents fake ratings",
-              "Reviews appear on salon marketplace profile after submission",
-              "Legacy ratings without bookings are not shown publicly",
-            ]}
-            tips={[
-              "Honest reviews help salons like Sampath Barber Saloon grow on Trimma.",
             ]}
           />
 
@@ -644,35 +480,7 @@ export function CustomerHelpGuide() {
 
           <section id="faq" className="scroll-mt-24 space-y-4">
             <h2 className="text-xl font-bold text-zinc-900">Frequently asked questions</h2>
-            <div className="space-y-3">
-              {FAQS.map((faq, idx) => {
-                const isOpen = openFaq === idx;
-                return (
-                  <div
-                    key={faq.q}
-                    className="border border-zinc-100 rounded-2xl overflow-hidden bg-zinc-50/50"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaq(isOpen ? null : idx)}
-                      className="w-full p-4 flex items-center justify-between font-bold text-sm text-zinc-800 text-left hover:bg-zinc-100/50 transition-colors"
-                    >
-                      <span>{faq.q}</span>
-                      {isOpen ? (
-                        <ChevronDown className="w-4 h-4 text-zinc-400 shrink-0" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-zinc-400 shrink-0" />
-                      )}
-                    </button>
-                    {isOpen && (
-                      <div className="px-4 pb-4 text-sm text-zinc-600 leading-relaxed border-t border-zinc-100 bg-white">
-                        {faq.a}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <CustomerHelpFaq defaultOpenIndex={0} />
           </section>
 
           <BookingGuideDownloads />
@@ -706,6 +514,12 @@ export function CustomerHelpGuide() {
                     <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
                       Open support centre
                     </Button>
+                  </Link>
+                  <Link
+                    href="/customer/help"
+                    className="block text-xs font-semibold text-white/70 hover:text-[#ffc800] transition-colors"
+                  >
+                    Signed in? Open dashboard help →
                   </Link>
                 </div>
               </div>
