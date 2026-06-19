@@ -68,42 +68,44 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       )}
 
       {/* ── SIDEBAR (Desktop in-flow | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffc800] border-r border-black/10 flex flex-col transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
+      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffc800] border-r border-black/10 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:h-auto lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
         mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0'
       }`}>
 
-        {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-black/10 shrink-0">
-          <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo iconSize={32} />
-          </Link>
-          <button
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <X className="w-4 h-4" />
-          </button>
+        <div className="trimma-dashboard-sidebar-head shrink-0">
+          {/* Sidebar Header */}
+          <div className="h-16 flex items-center justify-between px-5 border-b border-black/10">
+            <Link href="/" className="hover:opacity-90 transition-opacity">
+              <Logo iconSize={32} />
+            </Link>
+            <button
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {staffPortal ? (
+            <div className="px-3 pt-3 pb-1">
+              <Link
+                href={staffPortal.href}
+                className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  pathname === staffPortal.href || (pathname?.startsWith(`${staffPortal.href}/`) ?? false)
+                    ? "is-active-nav font-semibold"
+                    : ""
+                }`}
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                {staffPortal.label}
+              </Link>
+            </div>
+          ) : null}
         </div>
 
-        {staffPortal ? (
-          <div className="px-3 pt-3 pb-1 shrink-0">
-            <Link
-              href={staffPortal.href}
-              className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                pathname === staffPortal.href || (pathname?.startsWith(`${staffPortal.href}/`) ?? false)
-                  ? "is-active-nav font-semibold"
-                  : ""
-              }`}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              {staffPortal.label}
-            </Link>
-          </div>
-        ) : null}
-
         {/* Nav Items */}
-        <div className="trimma-dashboard-sidebar-nav flex-1 overflow-y-auto pt-4 pb-4 px-3 space-y-0.5 scrollbar-none lg:pt-6">
+        <div className="trimma-dashboard-sidebar-nav flex-1 min-h-0 overflow-y-auto pt-2 pb-4 px-3 space-y-0.5 scrollbar-none lg:pt-4">
           <div className="text-[10px] font-bold text-black uppercase tracking-widest px-3 mb-3 pt-1">Menu</div>
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/customer' && item.path !== '/' && pathname.startsWith(item.path));
@@ -143,7 +145,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-black/10">
+        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-black/10 bg-[#ffc800]">
           <button
             type="button"
             onClick={handleLogout}

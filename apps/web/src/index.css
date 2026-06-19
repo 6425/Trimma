@@ -1021,14 +1021,14 @@
     color: #000000 !important;
   }
 
-  .trimma-sidebar-nav-item:not([class*="text-red"]):not(.trimma-admin-nav-logout) {
+  .trimma-sidebar-nav-item:not([class*="text-red"]):not(.trimma-admin-nav-logout):not(.trimma-sidebar-nav-logout) {
     color: #000000 !important;
     background-color: transparent !important;
     border-color: transparent !important;
   }
 
-  .trimma-sidebar-nav-item:not([class*="text-red"]):not(.trimma-admin-nav-logout):is(:hover, :focus-visible),
-  .trimma-sidebar-nav-item.is-active-nav:not([class*="text-red"]) {
+  .trimma-sidebar-nav-item:not([class*="text-red"]):not(.trimma-admin-nav-logout):not(.trimma-sidebar-nav-logout):is(:hover, :focus-visible),
+  .trimma-sidebar-nav-item.is-active-nav:not([class*="text-red"]):not(.trimma-sidebar-nav-logout) {
     color: #ffffff !important;
     background-color: #000000 !important;
   }
@@ -1057,13 +1057,27 @@
     color: currentColor !important;
   }
 
+  .trimma-dashboard-sidebar-head {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #ffc800 !important;
+  }
+
   .trimma-dashboard-sidebar .trimma-sidebar-nav-logout {
-    color: #dc2626 !important;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+  }
+
+  .trimma-dashboard-sidebar .trimma-sidebar-nav-logout :is(svg, span) {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
   }
 
   .trimma-dashboard-sidebar .trimma-sidebar-nav-logout:is(:hover, :focus-visible) {
-    background-color: rgba(0, 0, 0, 0.08) !important;
-    color: #991b1b !important;
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
   }
 
   .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]):not(.trimma-admin-nav-logout) {

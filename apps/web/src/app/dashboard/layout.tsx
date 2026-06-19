@@ -176,36 +176,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
+      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:translate-x-0 lg:h-auto lg:max-h-[calc(100dvh-8rem)] ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
         
-        {/* Sidebar Header */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-white/8 shrink-0 py-4">
-          <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo variant="dark" iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
-          </Link>
-          <button
-            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white hover:text-white hover:bg-white/10 transition-colors"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        <div className="trimma-dashboard-sidebar-head shrink-0">
+          {/* Sidebar Header */}
+          <div className="h-20 flex items-center justify-between px-6 border-b border-white/8 py-4">
+            <Link href="/" className="hover:opacity-90 transition-opacity">
+              <Logo variant="dark" iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
+            </Link>
+            <button
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white hover:text-white hover:bg-white/10 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-        <div className="px-3 pt-3 pb-1 shrink-0">
-          <Link
-            href={CUSTOMER_DASHBOARD_HREF}
-            className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
-            }`}
-          >
-            <CalendarDays className="w-4 h-4" />
-            {CUSTOMER_DASHBOARD_LABEL}
-          </Link>
+          <div className="px-3 pt-3 pb-1">
+            <Link
+              href={CUSTOMER_DASHBOARD_HREF}
+              className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              {CUSTOMER_DASHBOARD_LABEL}
+            </Link>
+          </div>
         </div>
 
         {/* Nav Items */}
-        <div className="p-3 pt-2 flex-1 overflow-y-auto scrollbar-none">
+        <div className="trimma-dashboard-sidebar-nav p-3 pt-2 flex-1 min-h-0 overflow-y-auto scrollbar-none">
           <div className="text-[10px] font-bold text-black uppercase tracking-widest mb-2 px-3 pt-1">
             {isAd ? 'Administration' : 'Workspace'}
           </div>
@@ -264,7 +266,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         
         {/* Sidebar Footer */}
-        <div className="trimma-dashboard-sidebar-footer p-3 border-t border-white/8 space-y-0.5">
+        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-white/8 space-y-0.5 bg-[#ffc800]">
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
@@ -291,7 +293,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
+            className="trimma-sidebar-nav-item trimma-sidebar-nav-logout w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all"
           >
             <LogOut className="w-4 h-4" />
             Logout
