@@ -13,7 +13,7 @@ import {
   resolvePromotionBookingServices,
 } from "@/lib/promotion-booking";
 import { mapSalonPromotionRows } from "@/lib/deals";
-import { calculateReservationFee, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
+import { calculateReservationFee, getReservationDepositPercentForSalon, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveStripeKeys } from "@/lib/stripe-env";
 import { buildBookingStripePayload, type BookingStripeCustomer } from "@/lib/booking-stripe-session";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
@@ -38,6 +38,7 @@ export type CheckoutDataResult =
       services: any[];
       staffMember: Record<string, unknown> | null;
       reservationFee: number;
+      reservationDepositPercent: number;
       serviceTotal: number;
       rates: { platform: number; salon: number; agent: number };
       resolvedServiceIds: string[];
@@ -195,7 +196,8 @@ export async function fetchBookingCheckoutData(
       typeof draft.promotionPackagePrice === "number" && draft.promotionPackagePrice > 0
         ? draft.promotionPackagePrice
         : services.reduce((sum, service) => sum + parseFloat(service.price || 0), 0);
-    const reservationFee = calculateReservationFee(serviceTotal);
+    const depositPercent = getReservationDepositPercentForSalon(salon || undefined);
+    const reservationFee = calculateReservationFee(serviceTotal, depositPercent);
 
     const stripeEnvironment =
       paymentSettings?.stripe_environment === "live" ? "live" : "sandbox";
@@ -278,6 +280,7 @@ export async function fetchBookingCheckoutData(
       services,
       staffMember,
       reservationFee,
+      reservationDepositPercent: depositPercent,
       serviceTotal,
       rates,
       resolvedServiceIds,

@@ -1318,6 +1318,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
         initialServiceName={initialBookingService} 
         salonId={salon.id}
         salonSlug={slug}
+        salonRecord={salon}
         services={services}
         staff={staff}
       />

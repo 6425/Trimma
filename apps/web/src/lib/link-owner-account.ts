@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { provisionSelfServeSalonOwner } from "@/lib/provision-self-serve-salon";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { pickHighestRole } from "@/lib/trimma-role";
@@ -40,7 +41,8 @@ export async function linkInvitedOwnerAccount(
   authUserId: string,
   email: string | null | undefined,
   fullName?: string | null,
-  avatarUrl?: string | null
+  avatarUrl?: string | null,
+  options?: { salonOwnerIntent?: boolean }
 ): Promise<LinkOwnerResult> {
   const normalizedEmail = normalizeEmail(email);
   const fallbackRole: TrimmaUserRole = "customer";
@@ -64,7 +66,19 @@ export async function linkInvitedOwnerAccount(
 
   let role = (await resolveDbRole(admin, authUserId, normalizedEmail)) || fallbackRole;
 
-  const { linked, salonId } = await ensureSalonOwnerAccess(admin, normalizedEmail);
+  let { linked, salonId } = await ensureSalonOwnerAccess(admin, normalizedEmail);
+
+  if (!linked && options?.salonOwnerIntent) {
+    const provisioned = await provisionSelfServeSalonOwner(
+      admin,
+      authUserId,
+      normalizedEmail,
+      fullName
+    );
+    salonId = provisioned.salonId;
+    linked = true;
+    role = "salon_owner";
+  }
 
   if (linked && salonId && role !== "admin" && role !== "agent" && role === "customer") {
     role = "salon_owner";

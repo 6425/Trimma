@@ -69,11 +69,12 @@ function LoginForm() {
       searchParams.get("redirect") ||
       searchParams.get("next")
   );
+  const salonOwnerIntent = searchParams.get("intent") === "salon-owner";
 
   const completeGoogleSession = useCallback(
     async (session: Session, isCancelled: () => boolean) => {
       try {
-        const result = await completeOAuthLogin(session.access_token);
+        const result = await completeOAuthLogin(session.access_token, { salonOwnerIntent });
         if (isCancelled()) return;
 
         if (result.success) {
@@ -125,7 +126,7 @@ function LoginForm() {
       setTrimmaMiddlewareCookies(session.access_token, role);
       redirectAfterAuth(resolveAuthenticatedDestination({ role, nextPath: redirectTo }));
     },
-    [redirectTo]
+    [redirectTo, salonOwnerIntent]
   );
 
   useEffect(() => {
@@ -151,9 +152,15 @@ function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const oauthRedirect = redirectTo
-      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`
-      : `${window.location.origin}/auth/callback`;
+    const oauthRedirect = (() => {
+      const params = new URLSearchParams();
+      if (redirectTo) params.set("next", redirectTo);
+      if (salonOwnerIntent) params.set("intent", "salon-owner");
+      const query = params.toString();
+      return query
+        ? `${window.location.origin}/auth/callback?${query}`
+        : `${window.location.origin}/auth/callback`;
+    })();
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -212,9 +219,13 @@ function LoginForm() {
       <div className="flex flex-1 lg:ml-[50%] min-h-[100dvh] items-center justify-center bg-[#121212] p-6 sm:p-8 lg:p-12 trimma-dark-context">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center md:text-left">
-            <h2 className="text-2xl font-bold tracking-tight text-white">Welcome back</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-white">
+              {salonOwnerIntent ? "Salon owner sign in" : "Welcome back"}
+            </h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Sign in with Google to book appointments as a customer or manage your salon as an owner.
+              {salonOwnerIntent
+                ? "Continue with Google to set up operational details, business info, and bank verification in your dashboard."
+                : "Sign in with Google to book appointments as a customer or manage your salon as an owner."}
             </p>
           </div>
 

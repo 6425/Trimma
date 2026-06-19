@@ -1,4 +1,5 @@
 export const RESERVATION_DEPOSIT_PERCENT = 20;
+export const VERIFIED_RESERVATION_DEPOSIT_PERCENT = 50;
 export const DEFAULT_BOOKING_AGENT_PERCENT = 20;
 
 /** commission_master may seed booking agent % as 0 — treat that as "use default". */
@@ -12,19 +13,38 @@ export type BookingCommissionRates = {
   salon: number;
 };
 
-export function calculateReservationFee(serviceTotal: number): number {
-  return serviceTotal * (RESERVATION_DEPOSIT_PERCENT / 100);
+import type { SalonOnboardingSnapshot } from "@/lib/salon-onboarding-progress";
+import { canCollectVerifiedReservationDeposit } from "@/lib/salon-onboarding-progress";
+
+export function getReservationDepositPercentForSalon(
+  salon: SalonOnboardingSnapshot | null | undefined
+): number {
+  if (salon && canCollectVerifiedReservationDeposit(salon)) {
+    return VERIFIED_RESERVATION_DEPOSIT_PERCENT;
+  }
+  return RESERVATION_DEPOSIT_PERCENT;
 }
 
-export function calculateBalanceDue(serviceTotal: number): number {
-  return serviceTotal - calculateReservationFee(serviceTotal);
+export function calculateReservationFee(
+  serviceTotal: number,
+  depositPercent: number = RESERVATION_DEPOSIT_PERCENT
+): number {
+  return serviceTotal * (depositPercent / 100);
+}
+
+export function calculateBalanceDue(
+  serviceTotal: number,
+  depositPercent: number = RESERVATION_DEPOSIT_PERCENT
+): number {
+  return serviceTotal - calculateReservationFee(serviceTotal, depositPercent);
 }
 
 export function calculateCommissionSplit(
   serviceTotal: number,
-  rates: BookingCommissionRates
+  rates: BookingCommissionRates,
+  depositPercent: number = RESERVATION_DEPOSIT_PERCENT
 ) {
-  const reservationFee = calculateReservationFee(serviceTotal);
+  const reservationFee = calculateReservationFee(serviceTotal, depositPercent);
 
   return {
     reservationFee,

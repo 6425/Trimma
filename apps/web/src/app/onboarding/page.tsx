@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
-import OnboardingClient from "./OnboardingClient";
+import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
 
 export const metadata: Metadata = {
   title: "List Your Salon | Trimma",
@@ -130,11 +130,13 @@ export default async function OnboardingPage() {
         <div className="max-w-3xl mx-auto">
           <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200">
             <div className="mb-10 text-center">
-              <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Request Salon Onboarding</h2>
-              <p className="text-zinc-500">Submit your salon information below and a regional Trimma specialist will contact you shortly.</p>
+              <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Start Salon Owner Onboarding</h2>
+              <p className="text-zinc-500">
+                Sign in with Google, complete your profile, and submit for Trimma booking approval.
+              </p>
             </div>
             
-            <OnboardingClient />
+            <OnboardingOwnerSignup />
           </div>
         </div>
       </section>

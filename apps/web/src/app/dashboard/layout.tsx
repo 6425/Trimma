@@ -8,6 +8,8 @@ import { signOutTrimmaSession } from "../../config/supabase";
 import { readRoleFromCookie } from "@/lib/client-auth-cookie";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import { fetchSalonLayoutShell } from "@/app/actions/salon-dashboard-data";
+import { SalonOnboardingProgressBanner } from "../../components/dashboard/SalonOnboardingProgressBanner";
+import type { SalonOnboardingSnapshot } from "@/lib/salon-onboarding-progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
@@ -25,6 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [salonName, setSalonName] = useState<string>("My Salon");
   const [onboardingStatus, setOnboardingStatus] = useState<string | null>(null);
+  const [onboardingSnapshot, setOnboardingSnapshot] = useState<SalonOnboardingSnapshot | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setSalonName(result.salonName);
         if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
         if (result.onboardingStatus) setOnboardingStatus(result.onboardingStatus);
+        if (result.onboardingSnapshot) setOnboardingSnapshot(result.onboardingSnapshot);
       }
     });
 
@@ -356,13 +360,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span className="font-medium">
-                Your salon is currently in Draft mode. Please review your services, staff, and profile.
+                Welcome! Complete operational details, business info, and bank verification in Salon Profile.
               </span>
             </div>
             <Link href="/dashboard/profile" className="mt-2 sm:mt-0 font-bold underline hover:text-emerald-100 whitespace-nowrap">
-              Go to Profile to Activate &rarr;
+              Go to Salon Profile &rarr;
             </Link>
           </div>
+        )}
+
+        {role === "salon_owner" && onboardingSnapshot && !onboardingSnapshot.is_verified && (
+          <SalonOnboardingProgressBanner salon={onboardingSnapshot} />
         )}
 
         {/* Page Content */}

@@ -272,8 +272,22 @@ export function BankInfoForm({
               <FileCheck className="w-5 h-5 text-indigo-500" /> Section E: Verification Documents
             </h3>
             <p className="text-xs text-zinc-500 mb-4">
-              Please upload clear, legible copies of the following documents to verify your business and identity. Supports PDF, JPG, PNG up to 10MB.
+              Upload the documents required for your business type. Agents, regional heads, and Trimma admins can review these securely.
             </p>
+            {(() => {
+              const businessType = String(salon?.business_info_extended?.business_type || "").toLowerCase();
+              const isCompany =
+                businessType.includes("company") ||
+                businessType.includes("private limited") ||
+                businessType.includes("plc");
+              return (
+                <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4">
+                  {isCompany
+                    ? "Company account: upload Business Registration (BR) and bank statement. Owner NIC front is recommended."
+                    : "Sole proprietor / partnership: upload Owner NIC (front & back), Regional Business Registration (BR), and bank statement."}
+                </p>
+              );
+            })()}
 
             <div className="space-y-4">
               <DocumentUploadSlot

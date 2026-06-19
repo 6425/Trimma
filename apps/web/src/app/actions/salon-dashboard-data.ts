@@ -34,6 +34,19 @@ export async function fetchSalonLayoutShell() {
     salonName: (salon.name as string) || "My Salon",
     avatarUrl: (salon.logo_url as string | null) || null,
     onboardingStatus: (salon.onboarding_status as string | null) || null,
+    onboardingSnapshot: {
+      name: salon.name as string | null,
+      description: salon.description as string | null,
+      phone: salon.phone as string | null,
+      address: salon.address as string | null,
+      logo_url: salon.logo_url as string | null,
+      cover_url: salon.cover_url as string | null,
+      working_hours: salon.working_hours,
+      business_info_extended: (salon.business_info_extended as Record<string, unknown> | null) || null,
+      bank_info: (salon.bank_info as Record<string, unknown> | null) || null,
+      is_verified: salon.is_verified as boolean | null,
+      onboarding_status: salon.onboarding_status as string | null,
+    },
   };
 }
 

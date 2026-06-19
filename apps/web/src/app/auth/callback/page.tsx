@@ -16,6 +16,7 @@ function AuthCallbackContent() {
       searchParams.get("redirectTo") ||
       searchParams.get("redirect")
   );
+  const salonOwnerIntent = searchParams.get("intent") === "salon-owner";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ function AuthCallbackContent() {
           return;
         }
 
-        const result = await completeOAuthLogin(session.access_token);
+        const result = await completeOAuthLogin(session.access_token, { salonOwnerIntent });
         if (cancelled) return;
 
         if (result.success) {
@@ -105,7 +106,7 @@ function AuthCallbackContent() {
     return () => {
       cancelled = true;
     };
-  }, [nextPath]);
+  }, [nextPath, salonOwnerIntent]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative z-50">

@@ -313,7 +313,7 @@ export default function SalonProfilePage() {
           className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black shadow-md shadow-[#ffc800]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} 
-          {onboardingStatus === "OWNER_ACTIVATED" ? "Resend For Approval" : "Send For Approval"}
+          {onboardingStatus === "OWNER_ACTIVATED" ? "Resubmit Booking Approval" : "Submit for Booking Approval"}
         </Button>
       )}
       {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (

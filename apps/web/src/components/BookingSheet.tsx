@@ -16,7 +16,7 @@ import {
 } from "@/app/actions/booking-slots";
 import { withTimeout } from "@/lib/promise-timeout";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
-import { calculateCommissionSplit, calculateReservationFee, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
+import { calculateCommissionSplit, calculateReservationFee, getReservationDepositPercentForSalon, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 
@@ -37,6 +37,7 @@ export function BookingSheet({
   initialServiceName,
   salonId,
   salonSlug,
+  salonRecord,
   services = [],
   staff = []
 }: { 
@@ -45,6 +46,7 @@ export function BookingSheet({
   initialServiceName?: string;
   salonId?: string;
   salonSlug?: string;
+  salonRecord?: Record<string, unknown> | null;
   services?: any[];
   staff?: any[];
 }) {
@@ -227,8 +229,11 @@ export function BookingSheet({
   
   const totalPrice = basePrice;
 
-  const reservationFee = calculateReservationFee(totalPrice);
-  const pricing = calculateCommissionSplit(totalPrice, globalRates);
+  const depositPercent = getReservationDepositPercentForSalon(
+    (salonRecord as Parameters<typeof getReservationDepositPercentForSalon>[0]) || null
+  );
+  const reservationFee = calculateReservationFee(totalPrice, depositPercent);
+  const pricing = calculateCommissionSplit(totalPrice, globalRates, depositPercent);
   const remainingBalance = totalPrice - reservationFee;
   const selectedStaffObj = activeStaff.find(s => s.id === selectedStaffId);
 
@@ -765,7 +770,7 @@ export function BookingSheet({
                  <div className="p-5 border-2 border-zinc-900 ring-1 ring-zinc-900 rounded-2xl bg-white shadow-md flex flex-col gap-3">
                    <div className="flex items-start justify-between">
                      <div>
-                       <div className="font-extrabold text-zinc-900 text-base">Upfront Reservation Fee (20%)</div>
+                       <div className="font-extrabold text-zinc-900 text-base">Upfront Reservation Fee ({depositPercent}%)</div>
                        <div className="text-xs text-zinc-400 font-medium mt-1">Paid securely online to lock your slot</div>
                      </div>
                      <span className="font-black text-zinc-900 text-lg">{formatPrice(reservationFee)}</span>
@@ -791,7 +796,7 @@ export function BookingSheet({
                 </div>
                 
                 <p className="text-xs text-rose-700/90 font-medium leading-relaxed">
-                  The 20% reservation fee acts as a commitment guarantee and slot reservation protection. It is **100% non-refundable by default**.
+                  The {depositPercent}% reservation fee acts as a commitment guarantee and slot reservation protection. It is **100% non-refundable by default**.
                 </p>
 
                 <div className="text-[11px] text-rose-600/90 font-semibold bg-white/70 border border-rose-100/50 px-3.5 py-2.5 rounded-xl leading-relaxed">
@@ -811,7 +816,7 @@ export function BookingSheet({
                     onChange={(e) => setUnderstandRefund(e.target.checked)}
                   />
                   <span className="text-xs font-semibold text-zinc-700 leading-normal">
-                    I understand and agree that the 20% reservation fee is **non-refundable** under all standard booking circumstances.
+                    I understand and agree that the {depositPercent}% reservation fee is **non-refundable** under all standard booking circumstances.
                   </span>
                 </label>
 

@@ -28,6 +28,7 @@ type LoadedBookingCheckout = {
   services: any[];
   staffMember: any | null;
   reservationFee: number;
+  reservationDepositPercent: number;
   serviceTotal: number;
   rates: { platform: number; salon: number; agent: number };
 };
@@ -122,6 +123,7 @@ function BookingCheckoutForm() {
           services: result.services,
           staffMember: result.staffMember,
           reservationFee: result.reservationFee,
+          reservationDepositPercent: result.reservationDepositPercent,
           serviceTotal: result.serviceTotal,
           rates: result.rates,
         });
@@ -254,7 +256,7 @@ function BookingCheckoutForm() {
     );
   }
 
-  const { draft, salon, staffMember, reservationFee, serviceTotal } = checkoutData;
+  const { draft, salon, staffMember, reservationFee, reservationDepositPercent, serviceTotal } = checkoutData;
   const formattedReservationFee = formatLkr(reservationFee, 2);
   const formattedServiceTotal = formatLkr(serviceTotal, 2);
   const formattedBalanceDue = formatLkr(calculateBalanceDue(serviceTotal), 2);
@@ -333,13 +335,13 @@ function BookingCheckoutForm() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-zinc-900 font-semibold">
-                  Reservation deposit ({RESERVATION_DEPOSIT_PERCENT}%)
+                  Reservation deposit ({reservationDepositPercent}%)
                 </span>
                 <span className="text-zinc-950 font-bold">{formattedReservationFee}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-zinc-900 font-semibold">
-                  Balance due at salon ({100 - RESERVATION_DEPOSIT_PERCENT}%)
+                  Balance due at salon ({100 - reservationDepositPercent}%)
                 </span>
                 <span className="text-zinc-950 font-bold">{formattedBalanceDue}</span>
               </div>

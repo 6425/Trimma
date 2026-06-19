@@ -39,7 +39,10 @@ export async function resolveLoginRole(accessToken: string) {
  * Links an invited salon-owner account when applicable and resolves the role +
  * onboarding status. No /api route is involved.
  */
-export async function completeOAuthLogin(accessToken: string) {
+export async function completeOAuthLogin(
+  accessToken: string,
+  options?: { salonOwnerIntent?: boolean }
+) {
   if (!accessToken?.trim()) {
     return { success: false as const, error: "Missing session token. Please sign in again." };
   }
@@ -56,7 +59,13 @@ export async function completeOAuthLogin(accessToken: string) {
     let isNewUser = false;
 
     try {
-      const linkResult = await linkInvitedOwnerAccount(verified.userId, verified.email);
+      const linkResult = await linkInvitedOwnerAccount(
+        verified.userId,
+        verified.email,
+        verified.userMetadata?.full_name || verified.userMetadata?.first_name,
+        verified.userMetadata?.avatar_url,
+        { salonOwnerIntent: options?.salonOwnerIntent }
+      );
       onboardingStatus = linkResult.onboardingStatus;
       linkedRole = linkResult.role;
       isNewUser = linkResult.isNewUser;
@@ -64,7 +73,7 @@ export async function completeOAuthLogin(accessToken: string) {
       console.error("Owner link step failed:", linkErr);
     }
 
-    if (isNewUser && verified.email) {
+    if (isNewUser && verified.email && !options?.salonOwnerIntent) {
       const fullName = verified.userMetadata?.full_name || verified.userMetadata?.first_name || verified.email.split("@")[0];
       const phone = verified.userMetadata?.phone || verified.phone || null;
       if (phone) {
@@ -76,7 +85,7 @@ export async function completeOAuthLogin(accessToken: string) {
     const role =
       linkedRole ??
       (await resolveTrimmaUserRoleServer(verified.userId, verified.email)) ??
-      "customer";
+      (options?.salonOwnerIntent ? "salon_owner" : "customer");
 
     return { success: true as const, role, onboardingStatus };
   } catch (err) {

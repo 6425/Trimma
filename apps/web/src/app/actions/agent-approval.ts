@@ -18,12 +18,11 @@ export async function approveSalon(salonId: string) {
       .from("salons")
       .update({ 
         onboarding_status: "AGENT_APPROVED",
-        is_verified: true,
+        is_verified: false,
         status: "active",
         activation_status: "ACTIVE",
         booking_enabled: true,
-        public_visibility: true,
-        verified_at: new Date().toISOString()
+        public_visibility: "preview",
       })
       .eq("id", salonId)
       .select("owner_id, owner_email, phone, name, assign_to")
@@ -38,7 +37,7 @@ export async function approveSalon(salonId: string) {
         user_email: salon.owner_email,
         notification_type: "SALON_APPROVED",
         title: "Salon Approved!",
-        body: `Your salon profile for ${salon.name} has been approved and is now live on Trimma.`,
+        body: `Your operational profile for ${salon.name} was approved. Service bookings can start after contact details are complete. Complete business and bank verification to earn your verified badge and 50% reservation deposits.`,
         metadata: {}
       });
     }

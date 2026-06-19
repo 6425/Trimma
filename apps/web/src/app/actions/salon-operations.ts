@@ -25,6 +25,29 @@ import {
 } from "@/lib/staff-allocation";
 import { normalizeSalonStaffInsertRow } from "@/lib/salon-staff-insert";
 import { syncSalonOperatingHours, syncStaffSchedules } from "@/lib/salon-operating-hours";
+import {
+  calculateSalonOnboardingScore,
+  isOperationsComplete,
+  type SalonOnboardingSnapshot,
+} from "@/lib/salon-onboarding-progress";
+
+async function refreshSalonOnboardingScore(
+  supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
+  salonId: string
+) {
+  const { data, error } = await supabase
+    .from("salons")
+    .select(
+      "name, description, phone, address, logo_url, cover_url, working_hours, business_info_extended, bank_info, is_verified, onboarding_status"
+    )
+    .eq("id", salonId)
+    .single();
+
+  if (error || !data) return;
+
+  const score = calculateSalonOnboardingScore(data as SalonOnboardingSnapshot);
+  await supabase.from("salons").update({ onboarding_completion_score: score }).eq("id", salonId);
+}
 
 function revalidateOwnerSalonPage(salon: Record<string, unknown>) {
   const slug = typeof salon.slug === "string" ? salon.slug.trim() : "";
@@ -550,6 +573,8 @@ export async function saveSalonProfile(input: {
         const { error: insertAmenitiesError } = await supabase.from("salon_amenities").insert(rows);
         if (insertAmenitiesError) throw new Error(insertAmenitiesError.message);
       }
+
+      await refreshSalonOnboardingScore(supabase, ctx.salonId);
     });
 
     if (!isSalonDbSuccess(result)) {
@@ -564,15 +589,33 @@ export async function saveSalonProfile(input: {
 
 export async function completeSalonOwnerOnboarding(ownerEmail: string | null | undefined) {
   const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: salon, error: readError } = await supabase
+      .from("salons")
+      .select(
+        "name, description, phone, address, logo_url, cover_url, working_hours, business_info_extended, bank_info, is_verified, onboarding_status"
+      )
+      .eq("id", ctx.salonId)
+      .single();
+
+    if (readError) throw new Error(readError.message);
+    if (!isOperationsComplete(salon as SalonOnboardingSnapshot)) {
+      throw new Error(
+        "Complete operational details (description, contact, address, logo, cover, and working hours) before submitting for booking approval."
+      );
+    }
+
     const { error } = await supabase
       .from("salons")
       .update({
         onboarding_status: "OWNER_ACTIVATED",
         owner_activated_at: new Date().toISOString(),
         owner_email: ownerEmail || ctx.email,
+        booking_enabled: false,
       })
       .eq("id", ctx.salonId);
     if (error) throw new Error(error.message);
+
+    await refreshSalonOnboardingScore(supabase, ctx.salonId);
   });
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
@@ -647,6 +690,8 @@ export async function saveOwnerVerificationData(
     if (amenitiesData) {
       await syncSalonAmenitiesForSalon(supabase, ctx.salonId, amenitiesData);
     }
+
+    await refreshSalonOnboardingScore(supabase, ctx.salonId);
   });
 
   if (!isSalonDbSuccess(result)) {
