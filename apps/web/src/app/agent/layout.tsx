@@ -95,16 +95,6 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       title: "Performance",
       items: [{ name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> }],
     },
-    {
-      title: "Personal",
-      items: [
-        {
-          name: CUSTOMER_DASHBOARD_LABEL,
-          path: CUSTOMER_DASHBOARD_HREF,
-          icon: <CalendarDays className="w-4 h-4" />,
-        },
-      ],
-    },
   ];
 
   if (pathname === "/agent/login") {
@@ -140,6 +130,19 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           >
             <X className="w-4 h-4" />
           </button>
+        </div>
+
+        <div className="px-3 pt-3 pb-1 shrink-0">
+          <Link
+            href={CUSTOMER_DASHBOARD_HREF}
+            onClick={() => setMobileMenuOpen(false)}
+            className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            {CUSTOMER_DASHBOARD_LABEL}
+          </Link>
         </div>
 
         {/* Nav Items */}

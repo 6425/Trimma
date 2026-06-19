@@ -18,7 +18,10 @@ export function resolveAuthenticatedDestination({
     return "/admin";
   }
 
-  if (salonOwnerIntent && role === "salon_owner") {
+  if (salonOwnerIntent) {
+    if (role === "agent" || role === "regional_head") {
+      return resolvePostAuthRedirect(role, sanitizeNextPath(nextPath));
+    }
     return sanitizeNextPath(nextPath) || "/dashboard/profile";
   }
 

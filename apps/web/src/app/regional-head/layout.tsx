@@ -94,16 +94,6 @@ export default function RegionalHeadLayout({ children }: { children: React.React
         { name: "My Team", path: `${BASE}/team`, icon: <Users className="w-4 h-4" /> },
       ],
     },
-    {
-      title: "Personal",
-      items: [
-        {
-          name: CUSTOMER_DASHBOARD_LABEL,
-          path: CUSTOMER_DASHBOARD_HREF,
-          icon: <CalendarDays className="w-4 h-4" />,
-        },
-      ],
-    },
   ];
 
   const isNavActive = (path: string) => {
@@ -139,6 +129,19 @@ export default function RegionalHeadLayout({ children }: { children: React.React
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          <div className="px-3 pt-3 pb-1 shrink-0">
+            <Link
+              href={CUSTOMER_DASHBOARD_HREF}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              {CUSTOMER_DASHBOARD_LABEL}
+            </Link>
           </div>
 
           <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">

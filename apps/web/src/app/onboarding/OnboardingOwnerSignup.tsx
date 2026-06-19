@@ -9,6 +9,7 @@ import {
   completeSalonOwnerGoogleSession,
   startSalonOwnerGoogleOAuth,
 } from "@/lib/salon-owner-oauth";
+import { markOnboardingSalonOwnerIntent } from "@/lib/salon-owner-oauth-intent";
 
 function GoogleIcon() {
   return (
@@ -38,6 +39,7 @@ export default function OnboardingOwnerSignup() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
+    markOnboardingSalonOwnerIntent();
     let cancelled = false;
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {

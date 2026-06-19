@@ -1,5 +1,6 @@
 import {
   clearSalonOwnerOAuthIntent,
+  markOnboardingSalonOwnerIntent,
   persistSalonOwnerOAuthIntent,
 } from "@/lib/salon-owner-oauth-intent";
 import type { Session } from "@supabase/supabase-js";
@@ -12,11 +13,7 @@ import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role
 export const SALON_OWNER_LOGIN_REDIRECT = "/dashboard/profile";
 
 export function buildSalonOwnerOAuthRedirectUrl(origin: string = window.location.origin): string {
-  const params = new URLSearchParams({
-    next: SALON_OWNER_LOGIN_REDIRECT,
-    intent: "salon-owner",
-  });
-  return `${origin}/auth/callback?${params.toString()}`;
+  return `${origin}/auth/callback/salon-owner`;
 }
 
 export function resolveSalonOwnerOAuthRole(
@@ -67,6 +64,7 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
 }
 
 export async function startSalonOwnerGoogleOAuth(): Promise<{ ok: boolean; error?: string }> {
+  markOnboardingSalonOwnerIntent(SALON_OWNER_LOGIN_REDIRECT);
   persistSalonOwnerOAuthIntent(SALON_OWNER_LOGIN_REDIRECT);
   const redirectTo = buildSalonOwnerOAuthRedirectUrl();
 

@@ -168,15 +168,16 @@ function LoginForm() {
     if (salonOwnerIntent) {
       persistSalonOwnerOAuthIntent(redirectTo || "/dashboard/profile");
     }
-    const oauthRedirect = (() => {
-      const params = new URLSearchParams();
-      if (redirectTo) params.set("next", redirectTo);
-      if (salonOwnerIntent) params.set("intent", "salon-owner");
-      const query = params.toString();
-      return query
-        ? `${window.location.origin}/auth/callback?${query}`
-        : `${window.location.origin}/auth/callback`;
-    })();
+    const oauthRedirect = salonOwnerIntent
+      ? `${window.location.origin}/auth/callback/salon-owner`
+      : (() => {
+          const params = new URLSearchParams();
+          if (redirectTo) params.set("next", redirectTo);
+          const query = params.toString();
+          return query
+            ? `${window.location.origin}/auth/callback?${query}`
+            : `${window.location.origin}/auth/callback`;
+        })();
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

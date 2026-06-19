@@ -1,7 +1,6 @@
 import '../index.css';
 import SiteChromeLoader from '../components/SiteChromeLoader';
 import { CookieConsentBanner } from '@/components/legal/CookieConsentBanner';
-import { CookieSettingsControl } from '@/components/legal/CookieSettingsControl';
 import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
@@ -52,7 +51,6 @@ export default function RootLayout({
         <ThemeProvider>
           <SiteChromeLoader>{children}</SiteChromeLoader>
           <CookieConsentBanner />
-          <CookieSettingsControl />
           <Toaster
             position="top-center"
             toastOptions={{

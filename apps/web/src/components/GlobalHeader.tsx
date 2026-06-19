@@ -250,7 +250,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             </div>
 
             <div className="hidden md:flex items-center gap-2">
-              <Link href="/onboarding#salon-owner-signup" className={`${navActionClass} hidden lg:block`}>
+              <Link href="/onboarding" className={`${navActionClass} hidden lg:block`}>
                 List your salon
               </Link>
             </div>
@@ -439,7 +439,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             </Link>
             <div className="h-px bg-zinc-100 my-2" />
             <Link
-              href="/onboarding#salon-owner-signup"
+              href="/onboarding"
               onClick={() => setMobileMenuOpen(false)}
               className={navMobileClass(false)}
             >

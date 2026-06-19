@@ -192,8 +192,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
         </div>
 
+        <div className="px-3 pt-3 pb-1 shrink-0">
+          <Link
+            href={CUSTOMER_DASHBOARD_HREF}
+            className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            {CUSTOMER_DASHBOARD_LABEL}
+          </Link>
+        </div>
+
         {/* Nav Items */}
-        <div className="p-3 flex-1 overflow-y-auto scrollbar-none">
+        <div className="p-3 pt-2 flex-1 overflow-y-auto scrollbar-none">
           <div className="text-[10px] font-bold text-black uppercase tracking-widest mb-2 px-3 pt-1">
             {isAd ? 'Administration' : 'Workspace'}
           </div>
@@ -253,17 +265,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         {/* Sidebar Footer */}
         <div className="trimma-dashboard-sidebar-footer p-3 border-t border-white/8 space-y-0.5">
-          <Link
-            href={CUSTOMER_DASHBOARD_HREF}
-            className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              pathname.startsWith("/customer")
-                ? "is-active-nav font-semibold"
-                : ""
-            }`}
-          >
-            <CalendarDays className="w-4 h-4" />
-            {CUSTOMER_DASHBOARD_LABEL}
-          </Link>
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
+import { OnboardingHeroCta } from "./OnboardingHeroCta";
 
 export const metadata: Metadata = {
   title: "List Your Salon | Trimma",
@@ -26,12 +27,7 @@ export default async function OnboardingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <a
-              href="#salon-owner-signup"
-              className="hero-btn-primary px-8 py-4 rounded-xl text-lg w-full sm:w-auto"
-            >
-              Start Your Onboarding
-            </a>
+            <OnboardingHeroCta />
           </div>
 
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-zinc-600">

@@ -28,12 +28,15 @@ async function resolveDbRole(
   authUserId: string,
   normalizedEmail: string
 ): Promise<TrimmaUserRole | null> {
-  const [{ data: roleRows }, { data: userRow }] = await Promise.all([
+  const [{ data: roleRows }, { data: userRows }] = await Promise.all([
     admin.from("user_roles").select("role").eq("user_id", authUserId),
-    admin.from("users").select("global_role").eq("email", normalizedEmail).maybeSingle(),
+    admin.from("users").select("global_role").ilike("email", normalizedEmail),
   ]);
 
-  return pickHighestRole(...(roleRows || []).map((row) => row.role), userRow?.global_role);
+  return pickHighestRole(
+    ...(roleRows || []).map((row) => row.role),
+    ...(userRows || []).map((row) => row.global_role)
+  );
 }
 
 /** Link salon owner account, sync roles, and ensure subscription plan on sign-in. */
@@ -59,11 +62,13 @@ export async function linkInvitedOwnerAccount(
     return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null, isNewUser: false };
   }
 
-  const { data: userRow } = await admin
+  const { data: userRows } = await admin
     .from("users")
     .select("global_role, full_name")
-    .eq("email", normalizedEmail)
-    .maybeSingle();
+    .ilike("email", normalizedEmail)
+    .limit(1);
+
+  const userRow = userRows?.[0] ?? null;
 
   const isNewUser = !userRow;
 
