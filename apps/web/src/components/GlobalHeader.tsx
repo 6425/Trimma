@@ -8,6 +8,7 @@ import { supabase, signOutTrimmaSession } from "@/config/supabase";
 import type { PublicCategory } from "@/lib/public-categories";
 import Logo from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
+import { SALON_OWNER_ONBOARDING_FLAG_KEY } from "@/lib/salon-owner-oauth-intent";
 
 const IconMap: Record<string, any> = {
   Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
@@ -89,6 +90,21 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   }, []);
 
   const fetchUserRole = async (userId: string, email?: string | null) => {
+    const cookieRole = (() => {
+      if (typeof document === "undefined") return null;
+      const match = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
+      if (!match) return null;
+      try {
+        return decodeURIComponent(match);
+      } catch {
+        return match;
+      }
+    })();
+
+    if (cookieRole) {
+      setUserRole(cookieRole);
+    }
+
     const { data: roleRow } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
     if (roleRow?.role) {
       setUserRole(roleRow.role);
@@ -119,6 +135,13 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   }, []);
 
   const getDashboardLink = () => {
+    if (typeof window !== "undefined") {
+      const onboardingPath = localStorage.getItem(SALON_OWNER_ONBOARDING_FLAG_KEY);
+      if (onboardingPath) {
+        return onboardingPath.startsWith("/") ? onboardingPath : "/dashboard/profile";
+      }
+    }
+
     if (userRole === 'admin') return '/admin';
     if (userRole === 'salon_owner') return '/dashboard';
     if (userRole === 'agent') return '/agent';

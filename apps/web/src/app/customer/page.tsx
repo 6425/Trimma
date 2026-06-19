@@ -152,7 +152,7 @@ function DashboardContent() {
                 {getGreeting()}, {userName} 👋
               </h1>
               <div className="flex items-center gap-3 text-sm text-zinc-600">
-                <Badge variant="secondary" className="bg-[#ffc800]/10 text-[#ffc800] border border-[#ffc800]/20 font-semibold text-xs px-2.5 py-0.5">
+                <Badge variant="secondary" className="bg-[#ffc800] text-black border border-black/10 font-semibold text-xs px-2.5 py-0.5">
                   {userRole}
                 </Badge>
               </div>
@@ -161,16 +161,16 @@ function DashboardContent() {
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
             Book Now
           </Link>
-          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
             Find Salons
           </Link>
-          <Link href="/customer/styles" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/styles" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
             Saved Styles
           </Link>
-          <Link href="/customer/bookings" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/bookings" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
             History
           </Link>
         </div>

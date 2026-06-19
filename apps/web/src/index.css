@@ -1057,6 +1057,15 @@
     color: currentColor !important;
   }
 
+  .trimma-dashboard-sidebar .trimma-sidebar-nav-logout {
+    color: #dc2626 !important;
+  }
+
+  .trimma-dashboard-sidebar .trimma-sidebar-nav-logout:is(:hover, :focus-visible) {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+    color: #991b1b !important;
+  }
+
   .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]):not(.trimma-admin-nav-logout) {
     color: #000000 !important;
     background-color: transparent !important;
@@ -1662,6 +1671,18 @@ html.dark .trimma-mobile-bottom-nav--light {
   background-color: #ffc800 !important;
   border-color: rgba(0, 0, 0, 0.12) !important;
   color: #000000 !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-customer-action-btn {
+  color: #18181b !important;
+  background-color: #f4f4f5 !important;
+  border-color: #e4e4e7 !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focus-visible) {
+  color: #0a0a0a !important;
+  background-color: rgba(255, 200, 0, 0.25) !important;
+  border-color: rgba(255, 200, 0, 0.45) !important;
 }
 
 /* Hero bands stay yellow in dark mode — black type for readability */

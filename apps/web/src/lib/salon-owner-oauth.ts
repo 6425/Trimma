@@ -6,7 +6,7 @@ import {
 import type { Session } from "@supabase/supabase-js";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { supabase } from "@/config/supabase";
-import { completeOAuthLogin } from "@/app/actions/login-session";
+import { claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
 
@@ -30,18 +30,18 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
   ok: boolean;
   error?: string;
 }> {
-  const result = await completeOAuthLogin(session.access_token, { salonOwnerIntent: true });
+  const claimResult = await claimSalonOwnerFromOnboarding(session.access_token);
 
-  if (!result.success) {
-    return { ok: false, error: result.error || "Could not complete salon owner sign-in." };
+  if (!claimResult.success) {
+    return { ok: false, error: claimResult.error || "Could not complete salon owner sign-in." };
   }
 
-  if (result.role === "admin") {
+  if (claimResult.role === "admin") {
     await supabase.auth.signOut();
     return { ok: false, error: "Admins must sign in at /admin/login with email and password." };
   }
 
-  if (result.role === "agent" || result.role === "regional_head") {
+  if (claimResult.role === "agent" || claimResult.role === "regional_head") {
     await supabase.auth.signOut();
     return {
       ok: false,
@@ -49,7 +49,7 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
     };
   }
 
-  const role = resolveSalonOwnerOAuthRole(result.role, true);
+  const role = resolveSalonOwnerOAuthRole(claimResult.role, true);
   clearSalonOwnerOAuthIntent();
   setTrimmaMiddlewareCookies(session.access_token, role);
   redirectAfterAuth(

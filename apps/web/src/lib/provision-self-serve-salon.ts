@@ -73,6 +73,21 @@ export async function provisionSelfServeSalonOwner(
   const displayName = (fullName || normalizedEmail.split("@")[0] || "My Salon").trim();
   const slug = await uniqueSalonSlug(supabase, slugifySalonName(displayName));
 
+  const { error: userUpsertError } = await supabase.from("users").upsert(
+    {
+      email: normalizedEmail,
+      full_name: displayName,
+      global_role: "salon_owner",
+    },
+    { onConflict: "email" }
+  );
+
+  if (userUpsertError) {
+    throw new Error(userUpsertError.message);
+  }
+
+  await syncUserRolesForGlobalRole(supabase, normalizedEmail, "salon_owner", authUserId);
+
   const { data: salon, error } = await supabase
     .from("salons")
     .insert({
@@ -108,17 +123,6 @@ export async function provisionSelfServeSalonOwner(
     String(salon.id),
     (freePlan?.id as string | null | undefined) ?? null
   );
-
-  await supabase.from("users").upsert(
-    {
-      email: normalizedEmail,
-      full_name: displayName,
-      global_role: "salon_owner",
-    },
-    { onConflict: "email" }
-  );
-
-  await syncUserRolesForGlobalRole(supabase, normalizedEmail, "salon_owner", authUserId);
 
   await supabase.from("onboarding_logs").insert({
     salon_id: salon.id,

@@ -6,15 +6,29 @@ import { useState, useEffect } from "react";
 import { 
   Home, CalendarDays, Heart, 
   User, LifeBuoy,
-  LogOut, Scissors, Menu, X, Bell
+  LogOut, Scissors, Menu, X, Bell, LayoutDashboard
 } from "lucide-react";
 import { signOutTrimmaSession } from "@/config/supabase";
 import Logo from "../../components/Logo";
 import { ThemeToggle } from "../../components/ThemeToggle";
+import OnboardingSalonOwnerRecovery from "@/components/customer/OnboardingSalonOwnerRecovery";
+import { resolveStaffPortalHome } from "@/lib/staff-portal-nav";
+
+function readRoleFromCookie(): string | null {
+  if (typeof document === "undefined") return null;
+  const roleFromCookie = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
+  if (!roleFromCookie) return null;
+  try {
+    return decodeURIComponent(roleFromCookie);
+  } catch {
+    return roleFromCookie;
+  }
+}
 
 export default function CustomerDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [staffPortal] = useState(() => resolveStaffPortalHome(readRoleFromCookie()));
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -43,6 +57,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
 
   return (
     <div className="min-h-screen bg-zinc-50 flex font-sans trimma-light-context trimma-marketplace-shell dark:bg-[#0b0b0b] dark:text-[#ffc800]">
+      <OnboardingSalonOwnerRecovery />
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -70,6 +85,22 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {staffPortal ? (
+          <div className="px-3 pt-3 pb-1 shrink-0">
+            <Link
+              href={staffPortal.href}
+              className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                pathname === staffPortal.href || (pathname?.startsWith(`${staffPortal.href}/`) ?? false)
+                  ? "is-active-nav font-semibold"
+                  : ""
+              }`}
+            >
+              <LayoutDashboard className="w-5 h-5" />
+              {staffPortal.label}
+            </Link>
+          </div>
+        ) : null}
 
         {/* Nav Items */}
         <div className="trimma-dashboard-sidebar-nav flex-1 overflow-y-auto pt-4 pb-4 px-3 space-y-0.5 scrollbar-none lg:pt-6">
@@ -116,7 +147,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
+            className="trimma-sidebar-nav-item trimma-sidebar-nav-logout flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium transition-all"
           >
             <LogOut className="w-5 h-5" />
             Log out

@@ -4,6 +4,8 @@ import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
 import { linkInvitedOwnerAccount } from "@/lib/link-owner-account";
+import { forceSalonOwnerUpgrade } from "@/lib/force-salon-owner-upgrade";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendWelcomeCustomerWhatsApp } from "@/app/actions/whatsapp";
 import { sendWelcomeCustomerEmail } from "@/app/actions/email-settings";
 
@@ -119,6 +121,52 @@ export async function completeOAuthLogin(
     return { success: true as const, role, onboardingStatus };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not complete sign-in.";
+    return { success: false as const, error: message };
+  }
+}
+
+/** Dedicated salon-owner claim for /onboarding and recovery on /customer. */
+export async function claimSalonOwnerFromOnboarding(accessToken: string) {
+  if (!accessToken?.trim()) {
+    return { success: false as const, error: "Missing session token. Please sign in again." };
+  }
+
+  try {
+    const verified = await verifyAccessToken(accessToken);
+    if (!verified) {
+      return { success: false as const, error: "Invalid or expired session. Please sign in again." };
+    }
+
+    const admin = createSupabaseAdminClient();
+    const existingRole =
+      (await resolveTrimmaUserRoleServer(verified.userId, verified.email)) ?? "customer";
+
+    if (existingRole === "admin" || existingRole === "agent" || existingRole === "regional_head") {
+      return { success: true as const, role: existingRole, onboardingStatus: null, salonId: null };
+    }
+
+    const { salonId } = await forceSalonOwnerUpgrade(
+      admin,
+      verified.userId,
+      verified.email,
+      verified.userMetadata?.full_name || verified.userMetadata?.first_name,
+      verified.userMetadata?.avatar_url
+    );
+
+    const { data: salon } = await admin
+      .from("salons")
+      .select("onboarding_status")
+      .eq("id", salonId)
+      .maybeSingle();
+
+    return {
+      success: true as const,
+      role: "salon_owner" as const,
+      onboardingStatus: salon?.onboarding_status ?? null,
+      salonId,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not upgrade to salon owner.";
     return { success: false as const, error: message };
   }
 }

@@ -7,7 +7,7 @@ import { supabase } from "@/config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
-import { completeOAuthLogin } from "@/app/actions/login-session";
+import { completeOAuthLogin, claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
 import {
   clearSalonOwnerOAuthIntent,
   readSalonOwnerOAuthIntent,
@@ -83,7 +83,9 @@ function OAuthCallbackRunner({
           return;
         }
 
-        const result = await completeOAuthLogin(session.access_token, { salonOwnerIntent });
+        const result = salonOwnerIntent
+          ? await claimSalonOwnerFromOnboarding(session.access_token)
+          : await completeOAuthLogin(session.access_token, { salonOwnerIntent });
         if (cancelled) return;
 
         if (result.success) {

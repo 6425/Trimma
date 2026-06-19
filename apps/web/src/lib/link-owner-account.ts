@@ -1,7 +1,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
+import { forceSalonOwnerUpgrade } from "@/lib/force-salon-owner-upgrade";
 import { normalizeEmail } from "@/lib/normalize-email";
-import { provisionSelfServeSalonOwner } from "@/lib/provision-self-serve-salon";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { pickHighestRole } from "@/lib/trimma-role";
@@ -73,23 +73,8 @@ export async function linkInvitedOwnerAccount(
   const isNewUser = !userRow;
 
   let role = (await resolveDbRole(admin, authUserId, normalizedEmail)) || fallbackRole;
-
-  let { linked, salonId } = await ensureSalonOwnerAccess(admin, normalizedEmail);
-
-  if (options?.salonOwnerIntent && !salonId) {
-    const provisioned = await provisionSelfServeSalonOwner(
-      admin,
-      authUserId,
-      normalizedEmail,
-      fullName
-    );
-    salonId = provisioned.salonId;
-    linked = true;
-  }
-
-  if (linked && salonId && role !== "admin" && role !== "agent" && role !== "regional_head" && role === "customer") {
-    role = "salon_owner";
-  }
+  let linked = false;
+  let salonId: string | null = null;
 
   if (
     options?.salonOwnerIntent &&
@@ -97,21 +82,42 @@ export async function linkInvitedOwnerAccount(
     role !== "agent" &&
     role !== "regional_head"
   ) {
+    const upgraded = await forceSalonOwnerUpgrade(
+      admin,
+      authUserId,
+      normalizedEmail,
+      fullName || userRow?.full_name,
+      avatarUrl
+    );
     role = "salon_owner";
-  }
+    salonId = upgraded.salonId;
+    linked = true;
+  } else {
+    const access = await ensureSalonOwnerAccess(admin, normalizedEmail);
+    linked = access.linked;
+    salonId = access.salonId;
 
-  await admin.from("users").upsert(
-    {
-      email: normalizedEmail,
-      full_name: fullName || userRow?.full_name || normalizedEmail.split("@")[0],
-      avatar_url: avatarUrl || null,
-      global_role: role,
-    },
-    { onConflict: "email" }
-  );
+    if (linked && salonId && role !== "admin" && role !== "agent" && role !== "regional_head" && role === "customer") {
+      role = "salon_owner";
+    }
 
-  if (role === "salon_owner") {
-    await syncUserRolesForGlobalRole(admin, normalizedEmail, "salon_owner", authUserId);
+    const { error: upsertError } = await admin.from("users").upsert(
+      {
+        email: normalizedEmail,
+        full_name: fullName || userRow?.full_name || normalizedEmail.split("@")[0],
+        avatar_url: avatarUrl || null,
+        global_role: role,
+      },
+      { onConflict: "email" }
+    );
+
+    if (upsertError) {
+      throw new Error(upsertError.message);
+    }
+
+    if (role === "salon_owner") {
+      await syncUserRolesForGlobalRole(admin, normalizedEmail, "salon_owner", authUserId);
+    }
   }
 
   let linkedSalon: { id: string; name: string | null; onboarding_status: string | null } | null = null;
