@@ -1,14 +1,21 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import {
   buildAgentTerritories,
+  buildTerritorySearchScopes,
+  businessMatchesTerritoryScopes,
   ensureAgentRecord,
   findAgentRecord,
   resolveAgentMapAgentId,
   territorySearchOrClause,
 } from "@/lib/agent-territory-resolve";
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import {
+  fetchGooglePlaceContactDetails,
+  pickGooglePlacePhone,
+} from "@/lib/google-place-details";
+import { getGoogleMapsApiKey } from "@/lib/google-place-images";
 import { normalizeEmail } from "@/lib/normalize-email";
 
 function normalizeBusinessName(value: string): string {
@@ -33,7 +40,12 @@ function businessNameMatches(
   return place.includes(term) || term.includes(place);
 }
 
-function mapGooglePlace(place: any, category: string, territoryName: string) {
+function mapGooglePlace(
+  place: any,
+  category: string,
+  territoryName: string,
+  phone: string | null = null
+) {
   return {
     id: place.place_id,
     slug: place.place_id,
@@ -41,7 +53,7 @@ function mapGooglePlace(place: any, category: string, territoryName: string) {
     category,
     address: place.formatted_address,
     city: territoryName,
-    phone: null,
+    phone,
     latitude: place.geometry?.location?.lat || null,
     longitude: place.geometry?.location?.lng || null,
     location: null,
@@ -65,6 +77,32 @@ async function fetchGoogleTextSearch(query: string, apiKey: string) {
   return [];
 }
 
+async function enrichGooglePlacesWithContactDetails(
+  places: any[],
+  apiKey: string
+): Promise<any[]> {
+  const unique = new Map<string, any>();
+  for (const place of places) {
+    if (place?.place_id && !unique.has(place.place_id)) {
+      unique.set(place.place_id, place);
+    }
+  }
+
+  const enriched = await Promise.all(
+    [...unique.values()].map(async (place) => {
+      const details = await fetchGooglePlaceContactDetails(place.place_id, apiKey);
+      const phone = pickGooglePlacePhone(details);
+      return {
+        ...place,
+        formatted_address: details?.formatted_address || place.formatted_address,
+        formatted_phone_number: phone,
+      };
+    })
+  );
+
+  return enriched;
+}
+
 async function resolveTerritoryNames(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   territoryIds: string[]
@@ -84,6 +122,15 @@ async function resolveTerritoryNames(
   }
 
   return [...new Set(terrNames.filter(Boolean))];
+}
+
+function applyTerritoryScope<T extends Record<string, unknown>>(
+  rows: T[],
+  territoryNames: string[]
+): T[] {
+  if (territoryNames.length === 0) return rows;
+  const scopes = buildTerritorySearchScopes(territoryNames);
+  return rows.filter((row) => businessMatchesTerritoryScopes(row as any, scopes));
 }
 
 export async function getAgentMapData() {
@@ -122,25 +169,24 @@ export async function searchBusinessesInTerritories(
   const supabase = createSupabaseAdminClient();
   const trimmedName = businessName?.trim();
   const terrNames = await resolveTerritoryNames(supabase, territoryIds);
+  const territoryScopes = buildTerritorySearchScopes(terrNames);
 
   let query = supabase
     .from("salons")
-    .select("id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to");
+    .select(
+      "id, slug, name, category, address, city, district, province, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to"
+    );
 
-  // Apply result limit only after Google merge when searching by business name.
-  if (limit > 0 && !trimmedName) query = query.limit(limit);
+  if (limit > 0 && !trimmedName) query = query.limit(Math.max(limit * 3, limit));
 
   const leadsQuery = supabase.from("salon_leads").select("name, address, assign_to");
 
-  // Territory filter applies to broad browse searches, not explicit business-name lookups.
-  if (!trimmedName) {
-    if (terrNames.length > 0) {
-      const orClause = territorySearchOrClause(terrNames);
-      if (orClause) query = query.or(orClause);
-    } else {
-      const email = normalizeEmail(auth.email) || auth.email;
-      query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
-    }
+  if (terrNames.length > 0) {
+    const orClause = territorySearchOrClause(terrNames);
+    if (orClause) query = query.or(orClause);
+  } else {
+    const email = normalizeEmail(auth.email) || auth.email;
+    query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
   }
 
   if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
@@ -157,49 +203,52 @@ export async function searchBusinessesInTerritories(
     return { success: false as const, error: error.message };
   }
 
-  let businesses: any[] = dbData || [];
+  let businesses: any[] = applyTerritoryScope(dbData || [], terrNames);
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (apiKey) {
+  const apiKey = getGoogleMapsApiKey();
+  if (apiKey && terrNames.length > 0) {
     const googlePromises: Promise<any[]>[] = [];
-    const searchContexts = terrNames.length > 0 ? terrNames : ["Sri Lanka"];
+    const searchCategories =
+      categories.length > 0 && !categories.includes("All Categories")
+        ? categories
+        : ["Salon", "Spa"];
 
     if (trimmedName) {
       const queries = new Set<string>();
-      for (const territoryName of searchContexts) {
+      for (const territoryName of terrNames) {
         queries.add(`${trimmedName} in ${territoryName}, Sri Lanka`);
         queries.add(`${trimmedName} ${territoryName} Sri Lanka`);
       }
-      queries.add(`${trimmedName} Sri Lanka`);
-      queries.add(trimmedName);
 
       for (const searchQuery of queries) {
-        googlePromises.push(
-          fetchGoogleTextSearch(searchQuery, apiKey).then((results) =>
-            results.map((place) => mapGooglePlace(place, "Business", searchContexts[0]))
-          )
-        );
+        googlePromises.push(fetchGoogleTextSearch(searchQuery, apiKey));
       }
-    } else if (terrNames.length > 0) {
-      const searchCategories =
-        categories.length > 0 && !categories.includes("All Categories")
-          ? categories
-          : ["Salon", "Spa"];
-
+    } else {
       for (const territoryName of terrNames) {
         for (const category of searchCategories) {
-          const searchQuery = `${category} in ${territoryName}, Sri Lanka`;
           googlePromises.push(
-            fetchGoogleTextSearch(searchQuery, apiKey).then((results) =>
-              results.map((place) => mapGooglePlace(place, category, territoryName))
-            )
+            fetchGoogleTextSearch(`${category} in ${territoryName}, Sri Lanka`, apiKey)
           );
         }
       }
     }
 
     const googleResultsArray = await Promise.all(googlePromises);
-    const googleBusinesses = googleResultsArray.flat();
+    const rawGooglePlaces = googleResultsArray.flat();
+    const scopedGooglePlaces = applyTerritoryScope(rawGooglePlaces, terrNames);
+    const enrichedGooglePlaces = await enrichGooglePlacesWithContactDetails(
+      scopedGooglePlaces.slice(0, Math.max(limit || 12, 12)),
+      apiKey
+    );
+
+    const googleBusinesses = enrichedGooglePlaces.map((place) =>
+      mapGooglePlace(
+        place,
+        trimmedName ? "Business" : searchCategories[0] || "Salon",
+        terrNames[0] || "Sri Lanka",
+        place.formatted_phone_number || null
+      )
+    );
 
     const { data: localLeads } = await leadsQuery;
 
@@ -212,6 +261,7 @@ export async function searchBusinessesInTerritories(
     const seenGoogle = new Set<string>();
     for (const gb of googleBusinesses) {
       if (trimmedName && !businessNameMatches(gb.name, trimmedName)) continue;
+      if (!businessMatchesTerritoryScopes(gb, territoryScopes)) continue;
 
       const key = (gb.id || gb.name || "").toLowerCase();
       const nameKey = gb.name?.toLowerCase() || "";

@@ -3,6 +3,10 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
+import {
+  fetchGooglePlaceContactDetails,
+  pickGooglePlacePhone,
+} from "@/lib/google-place-details";
 
 function slugify(value: string) {
   const base = value
@@ -42,6 +46,12 @@ export async function createLeadFromGooglePlaces(businessData: {
       return { success: false as const, error: "A lead for this business already exists." };
     }
 
+    let phone = businessData.phone?.trim() || null;
+    if (!phone && businessData.place_id) {
+      const details = await fetchGooglePlaceContactDetails(businessData.place_id);
+      phone = pickGooglePlacePhone(details);
+    }
+
     const slug = `${slugify(businessData.name)}-${Date.now()}`;
     const payload = {
       place_id: businessData.place_id,
@@ -52,7 +62,7 @@ export async function createLeadFromGooglePlaces(businessData: {
       onboarding_status: "ASSIGNED_TO_AGENT",
       activation_status: "INACTIVE",
       source_type: "GOOGLE_PLACES",
-      phone: businessData.phone,
+      phone,
       address: businessData.address,
       category: businessData.category,
       latitude: businessData.latitude,

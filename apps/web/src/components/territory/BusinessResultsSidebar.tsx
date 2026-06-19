@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, MapPin, Star, Building2, ExternalLink, Navigation, Lock } from "lucide-react";
+import { Search, MapPin, Star, Building2, ExternalLink, Navigation, Lock, Phone } from "lucide-react";
 import { BusinessResult } from "./MapComponent";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -146,6 +146,12 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
                   <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                   <p className="text-[10px] leading-relaxed line-clamp-2 font-medium">{biz.address || biz.location || "Address not provided"}</p>
                 </div>
+                {biz.phone && (
+                  <div className="mt-2 flex items-center gap-1.5 text-zinc-600">
+                    <Phone className="w-3 h-3 shrink-0" />
+                    <p className="text-[10px] font-semibold">{biz.phone}</p>
+                  </div>
+                )}
 
                 {isSelected && (
                   <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-200">

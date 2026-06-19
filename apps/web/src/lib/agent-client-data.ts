@@ -8,6 +8,8 @@ import type { TrimmaUserRole } from "@/lib/auth-routes";
 import type { WorkItem } from "@/app/actions/agent-work-queue";
 import {
   buildAgentTerritories,
+  buildTerritorySearchScopes,
+  businessMatchesTerritoryScopes,
   findAgentRecord,
   formatAgentTerritoryLabel,
   resolveAgentMapAgentId,
@@ -398,10 +400,10 @@ export async function searchBusinessesInTerritoriesClient(
   let query = supabase
     .from("salons")
     .select(
-      "id, slug, name, category, address, city, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to"
+      "id, slug, name, category, address, city, district, province, phone, latitude, longitude, location, logo_url, is_verified, rating, review_count, status, assign_to"
     );
 
-  if (limit > 0 && !trimmedName) query = query.limit(limit);
+  if (limit > 0 && !trimmedName) query = query.limit(Math.max(limit * 3, limit));
 
   if (territoryIds.length > 0) {
     const realIds = territoryIds.filter((id) => !id.startsWith("primary-"));
@@ -416,13 +418,11 @@ export async function searchBusinessesInTerritoriesClient(
     }
   }
 
-  if (!trimmedName) {
-    if (terrNames.length > 0) {
-      const orClause = territorySearchOrClause(terrNames);
-      if (orClause) query = query.or(orClause);
-    } else {
-      query = query.or(`assign_to.eq.${auth.email},assign_to.ilike.${auth.email}`);
-    }
+  if (terrNames.length > 0) {
+    const orClause = territorySearchOrClause(terrNames);
+    if (orClause) query = query.or(orClause);
+  } else {
+    query = query.or(`assign_to.eq.${auth.email},assign_to.ilike.${auth.email}`);
   }
 
   if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
@@ -437,7 +437,19 @@ export async function searchBusinessesInTerritoriesClient(
   const { data, error } = await query;
   if (error) return { success: false as const, error: error.message };
 
-  const businesses = data || [];
+  const scopes = buildTerritorySearchScopes(terrNames);
+  let businesses = (data || []).filter((row) =>
+    terrNames.length === 0 ? true : businessMatchesTerritoryScopes(row, scopes)
+  );
+
+  if (trimmedName) {
+    businesses = businesses.filter((row) =>
+      String(row.name || "")
+        .toLowerCase()
+        .includes(trimmedName.toLowerCase())
+    );
+  }
+
   return {
     success: true as const,
     businesses: limit > 0 ? businesses.slice(0, limit) : businesses,
