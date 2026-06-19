@@ -39,6 +39,7 @@ export default function GlobalFooter() {
             <ul className="space-y-3 text-sm text-zinc-600">
               <li><Link href="/agent/login" className="hover:text-[#ffc800] transition-colors">Partner portal login</Link></li>
               <li><Link href="/onboarding" className="hover:text-[#ffc800] transition-colors">Add your salon</Link></li>
+              <li><Link href="/dashboard/help" className="hover:text-[#ffc800] transition-colors">Salon owner help</Link></li>
               <li><Link href="/about" className="hover:text-[#ffc800] transition-colors">About Trimma</Link></li>
               <li><Link href="/careers" className="hover:text-[#ffc800] transition-colors">Careers</Link></li>
               {/* Affiliate program temporarily removed from public access (page retained at /affiliates) */}
