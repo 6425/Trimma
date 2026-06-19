@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/config/supabase";
+import {
+  completeSalonOwnerGoogleSession,
+  startSalonOwnerGoogleOAuth,
+} from "@/lib/salon-owner-oauth";
 
 function GoogleIcon() {
   return (
@@ -30,17 +34,54 @@ function GoogleIcon() {
 }
 
 export default function OnboardingOwnerSignup() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
-  const handleGoogleSignup = () => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      redirectTo: "/dashboard/profile",
-      intent: "salon-owner",
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (cancelled) return;
+
+      if (!session?.access_token) {
+        setCheckingSession(false);
+        return;
+      }
+
+      setLoading(true);
+      const result = await completeSalonOwnerGoogleSession(session);
+      if (cancelled) return;
+
+      if (!result.ok) {
+        alert(result.error || "Could not open your salon dashboard. Please try again.");
+        setLoading(false);
+      }
+
+      setCheckingSession(false);
     });
-    router.push(`/login?${params.toString()}`);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleGoogleSignup = async () => {
+    setLoading(true);
+    const result = await startSalonOwnerGoogleOAuth();
+    if (!result.ok) {
+      alert(result.error || "Google sign-in failed.");
+      setLoading(false);
+    }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
+        <p className="text-sm text-zinc-500">Opening your salon dashboard…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 text-center">
@@ -64,7 +105,7 @@ export default function OnboardingOwnerSignup() {
         ) : (
           <>
             <GoogleIcon />
-            Continue with Google
+            Continue with Google — Salon Dashboard
           </>
         )}
       </Button>
@@ -85,7 +126,10 @@ export default function OnboardingOwnerSignup() {
 
       <p className="text-xs text-zinc-500">
         Already invited by a Trimma agent? Use the same Google email from your invitation.{" "}
-        <Link href="/login?redirectTo=/dashboard/profile" className="font-semibold text-zinc-800 underline">
+        <Link
+          href="/login?redirectTo=/dashboard/profile&intent=salon-owner"
+          className="font-semibold text-zinc-800 underline"
+        >
           Salon owner sign in
         </Link>
       </p>

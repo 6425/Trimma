@@ -57,6 +57,7 @@ export async function completeOAuthLogin(
     let linkedRole: TrimmaUserRole | null = null;
 
     let isNewUser = false;
+    let linkError: string | null = null;
 
     try {
       const linkResult = await linkInvitedOwnerAccount(
@@ -68,18 +69,27 @@ export async function completeOAuthLogin(
       );
       onboardingStatus = linkResult.onboardingStatus;
       linkedRole = linkResult.role;
+      isNewUser = linkResult.isNewUser;
+
       if (
         options?.salonOwnerIntent &&
-        linkResult.linked &&
+        !linkResult.salonId &&
         linkResult.role !== "admin" &&
         linkResult.role !== "agent" &&
         linkResult.role !== "regional_head"
       ) {
-        linkedRole = "salon_owner";
+        linkError = "Could not create or link your salon owner account. Please try again.";
       }
-      isNewUser = linkResult.isNewUser;
     } catch (linkErr) {
+      const message = linkErr instanceof Error ? linkErr.message : "Owner account link failed.";
       console.error("Owner link step failed:", linkErr);
+      if (options?.salonOwnerIntent) {
+        return { success: false as const, error: message };
+      }
+    }
+
+    if (linkError && options?.salonOwnerIntent) {
+      return { success: false as const, error: linkError };
     }
 
     if (isNewUser && verified.email && !options?.salonOwnerIntent) {
@@ -91,10 +101,19 @@ export async function completeOAuthLogin(
       await sendWelcomeCustomerEmail(fullName, verified.email);
     }
 
-    const role =
+    let role: TrimmaUserRole =
       linkedRole ??
       (await resolveTrimmaUserRoleServer(verified.userId, verified.email)) ??
-      (options?.salonOwnerIntent ? "salon_owner" : "customer");
+      "customer";
+
+    if (
+      options?.salonOwnerIntent &&
+      role !== "admin" &&
+      role !== "agent" &&
+      role !== "regional_head"
+    ) {
+      role = "salon_owner";
+    }
 
     return { success: true as const, role, onboardingStatus };
   } catch (err) {

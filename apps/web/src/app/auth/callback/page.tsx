@@ -90,8 +90,12 @@ function AuthCallbackContent() {
         } else {
           console.error("OAuth completion failed:", result.error);
           setErrorMessage("Could not complete sign-in. Please try again.");
-          const loginNext = nextPath ? `?redirectTo=${encodeURIComponent(nextPath)}` : "";
-          window.setTimeout(() => redirectAfterAuth(`/login${loginNext}`), 2000);
+          const loginPath = salonOwnerIntent
+            ? `/login?redirectTo=${encodeURIComponent(nextPath || "/dashboard/profile")}&intent=salon-owner`
+            : nextPath
+              ? `/login?redirectTo=${encodeURIComponent(nextPath)}`
+              : "/login";
+          window.setTimeout(() => redirectAfterAuth(loginPath), 2000);
         }
       } catch (err) {
         console.error("Auth callback failed:", err);

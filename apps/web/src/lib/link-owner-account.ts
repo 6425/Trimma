@@ -53,6 +53,9 @@ export async function linkInvitedOwnerAccount(
 
   const admin = getAdminClient();
   if (!admin) {
+    if (options?.salonOwnerIntent) {
+      throw new Error("Salon owner sign-in is temporarily unavailable. Please try again shortly.");
+    }
     return { linked: false, role: fallbackRole, onboardingStatus: null, salonId: null, salonName: null, isNewUser: false };
   }
 
@@ -68,7 +71,7 @@ export async function linkInvitedOwnerAccount(
 
   let { linked, salonId } = await ensureSalonOwnerAccess(admin, normalizedEmail);
 
-  if (!linked && options?.salonOwnerIntent) {
+  if (options?.salonOwnerIntent && !salonId) {
     const provisioned = await provisionSelfServeSalonOwner(
       admin,
       authUserId,
@@ -77,7 +80,6 @@ export async function linkInvitedOwnerAccount(
     );
     salonId = provisioned.salonId;
     linked = true;
-    role = "salon_owner";
   }
 
   if (linked && salonId && role !== "admin" && role !== "agent" && role !== "regional_head" && role === "customer") {
@@ -86,7 +88,6 @@ export async function linkInvitedOwnerAccount(
 
   if (
     options?.salonOwnerIntent &&
-    salonId &&
     role !== "admin" &&
     role !== "agent" &&
     role !== "regional_head"
@@ -119,7 +120,7 @@ export async function linkInvitedOwnerAccount(
   }
 
   return {
-    linked: Boolean(linkedSalon),
+    linked: Boolean(linkedSalon || salonId),
     role,
     onboardingStatus: linkedSalon?.onboarding_status ?? null,
     salonId: linkedSalon?.id ?? null,

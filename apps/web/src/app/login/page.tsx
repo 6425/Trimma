@@ -109,6 +109,15 @@ function LoginForm() {
       let role: TrimmaUserRole | null =
         (await resolveTrimmaUserRole(session.user.id, session.user.email)) ?? "customer";
 
+      if (
+        salonOwnerIntent &&
+        role !== "admin" &&
+        role !== "agent" &&
+        role !== "regional_head"
+      ) {
+        role = "salon_owner";
+      }
+
       if (isCancelled()) return;
 
       if (role === "admin") {
@@ -125,7 +134,9 @@ function LoginForm() {
       }
 
       setTrimmaMiddlewareCookies(session.access_token, role);
-      redirectAfterAuth(resolveAuthenticatedDestination({ role, nextPath: redirectTo }));
+      redirectAfterAuth(
+        resolveAuthenticatedDestination({ role, nextPath: redirectTo, salonOwnerIntent })
+      );
     },
     [redirectTo, salonOwnerIntent]
   );
