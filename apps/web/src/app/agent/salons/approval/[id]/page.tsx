@@ -7,6 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/config/supabase";
 import { BusinessInfoForm } from "../../../../../components/forms/BusinessInfoForm";
 import { BankInfoForm } from "../../../../../components/forms/BankInfoForm";
+import { SalonVerificationDocumentsPanel } from "@/components/salon/SalonVerificationDocumentsPanel";
 import { approveSalon, rejectSalon } from "@/app/actions/agent-approval";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -248,11 +249,15 @@ export default function AgentSalonApprovalReview() {
         )}
         
         {activeTab === "bank" && (
-          <BankInfoForm 
-            salon={salon} 
-            readOnly={true} 
-            onSave={async () => {}} 
-          />
+          <div className="space-y-6">
+            <SalonVerificationDocumentsPanel salonId={salon.id} />
+            <BankInfoForm
+              salon={salon}
+              readOnly
+              hideVerificationDocuments
+              onSave={async () => {}}
+            />
+          </div>
         )}
       </div>
     </div>

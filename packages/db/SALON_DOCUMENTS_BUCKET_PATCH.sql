@@ -30,18 +30,20 @@ DROP POLICY IF EXISTS "Authenticated delete documents" ON storage.objects;
 
 -- 3. Create RLS Policies for `salon-documents`
 
--- Allow Authenticated Users (Agents & Admins) to read documents
+-- Allow platform admins, agents, and regional heads to read verification documents
 CREATE POLICY "Agents and Admins can read all documents"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'salon-documents' AND (
-      EXISTS (
-        SELECT 1 FROM public.users 
-        WHERE id = auth.uid() AND global_role = 'admin'
-      ) OR 
-      EXISTS (
+      public.is_platform_admin()
+      OR EXISTS (
         SELECT 1 FROM public.user_roles
-        WHERE user_id = auth.uid() AND role IN ('admin', 'agent')
+        WHERE user_id = auth.uid() AND role IN ('admin', 'agent', 'regional_head', 'regional_admin')
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.users
+        WHERE email = auth.jwt() ->> 'email'
+          AND global_role IN ('admin', 'superadmin', 'agent', 'regional_head', 'regional_admin')
       )
     )
   );

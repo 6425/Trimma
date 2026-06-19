@@ -18,11 +18,13 @@ export function BankInfoForm({
   salon,
   onSave,
   readOnly = false,
+  hideVerificationDocuments = false,
   children
 }: {
   salon: any;
   onSave: (payload: any) => Promise<void>;
   readOnly?: boolean;
+  hideVerificationDocuments?: boolean;
   children?: React.ReactNode;
 }) {
   const [loading, setLoading] = useState(false);
@@ -264,56 +266,54 @@ export function BankInfoForm({
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
-          <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-4">
-            <FileCheck className="w-5 h-5 text-indigo-500" /> Section E: Verification Documents
-          </h3>
-          <p className="text-xs text-zinc-500 mb-4">
-            Please upload clear, legible copies of the following documents to verify your business and identity. Supports PDF, JPG, PNG up to 10MB.
-          </p>
+        {!hideVerificationDocuments && (
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-4">
+              <FileCheck className="w-5 h-5 text-indigo-500" /> Section E: Verification Documents
+            </h3>
+            <p className="text-xs text-zinc-500 mb-4">
+              Please upload clear, legible copies of the following documents to verify your business and identity. Supports PDF, JPG, PNG up to 10MB.
+            </p>
 
-          <div className="space-y-4">
-            {/* Owner NIC Front */}
-            <DocumentUploadSlot
-              title="Owner NIC (Front)"
-              url={nicFrontUrl}
-              readOnly={readOnly}
-              inputRef={nicFrontInputRef}
-              onClear={() => { setNicFrontUrl(""); setNicFrontFile(null); }}
-              onChange={(e) => handleFileUpload(e, setNicFrontFile, setNicFrontUrl)}
-            />
+            <div className="space-y-4">
+              <DocumentUploadSlot
+                title="Owner NIC (Front)"
+                url={nicFrontUrl}
+                readOnly={readOnly}
+                inputRef={nicFrontInputRef}
+                onClear={() => { setNicFrontUrl(""); setNicFrontFile(null); }}
+                onChange={(e) => handleFileUpload(e, setNicFrontFile, setNicFrontUrl)}
+              />
 
-            {/* Owner NIC Back */}
-            <DocumentUploadSlot
-              title="Owner NIC (Back)"
-              url={nicBackUrl}
-              readOnly={readOnly}
-              inputRef={nicBackInputRef}
-              onClear={() => { setNicBackUrl(""); setNicBackFile(null); }}
-              onChange={(e) => handleFileUpload(e, setNicBackFile, setNicBackUrl)}
-            />
+              <DocumentUploadSlot
+                title="Owner NIC (Back)"
+                url={nicBackUrl}
+                readOnly={readOnly}
+                inputRef={nicBackInputRef}
+                onClear={() => { setNicBackUrl(""); setNicBackFile(null); }}
+                onChange={(e) => handleFileUpload(e, setNicBackFile, setNicBackUrl)}
+              />
 
-            {/* Business Registration */}
-            <DocumentUploadSlot
-              title="Business Registration (BR)"
-              url={bizRegUrl}
-              readOnly={readOnly}
-              inputRef={bizRegInputRef}
-              onClear={() => { setBizRegUrl(""); setBizRegFile(null); }}
-              onChange={(e) => handleFileUpload(e, setBizRegFile, setBizRegUrl)}
-            />
+              <DocumentUploadSlot
+                title="Business Registration (BR)"
+                url={bizRegUrl}
+                readOnly={readOnly}
+                inputRef={bizRegInputRef}
+                onClear={() => { setBizRegUrl(""); setBizRegFile(null); }}
+                onChange={(e) => handleFileUpload(e, setBizRegFile, setBizRegUrl)}
+              />
 
-            {/* Bank Statement */}
-            <DocumentUploadSlot
-              title="Bank Statement or Passbook"
-              url={verificationDocUrl}
-              readOnly={readOnly}
-              inputRef={docInputRef}
-              onClear={() => { setVerificationDocUrl(""); setVerificationDocFile(null); }}
-              onChange={(e) => handleFileUpload(e, setVerificationDocFile, setVerificationDocUrl)}
-            />
+              <DocumentUploadSlot
+                title="Bank Statement or Passbook"
+                url={verificationDocUrl}
+                readOnly={readOnly}
+                inputRef={docInputRef}
+                onClear={() => { setVerificationDocUrl(""); setVerificationDocFile(null); }}
+                onChange={(e) => handleFileUpload(e, setVerificationDocFile, setVerificationDocUrl)}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {!readOnly && (

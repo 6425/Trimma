@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { sendAdminApprovalEmail } from "@/app/actions/email-settings";
+import { SalonVerificationDocumentsPanel } from "@/components/salon/SalonVerificationDocumentsPanel";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -775,6 +776,12 @@ export default function Salons() {
                   </div>
                 </div>
               </div>
+
+              <SalonVerificationDocumentsPanel
+                salonId={selectedSalon.id}
+                compact
+                className="rounded-2xl p-4"
+              />
 
               <div className="space-y-3">
                 <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">

@@ -24,16 +24,16 @@ CREATE TABLE IF NOT EXISTS public.salon_requests (
     CHECK (status IN ('new', 'reviewing', 'contacted', 'converted', 'closed', 'spam')),
   admin_notes TEXT,
   reviewed_by TEXT,
-  reviewed_at TIMESTAMPTZ,
-  assign_to TEXT
+  reviewed_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_salon_requests_status ON public.salon_requests (status);
 CREATE INDEX IF NOT EXISTS idx_salon_requests_email ON public.salon_requests (lower(email));
 CREATE INDEX IF NOT EXISTS idx_salon_requests_created_at ON public.salon_requests (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_salon_requests_assign_to ON public.salon_requests (assign_to);
 
 ALTER TABLE public.salon_requests ADD COLUMN IF NOT EXISTS assign_to TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_salon_requests_assign_to ON public.salon_requests (assign_to);
 
 CREATE OR REPLACE FUNCTION public.touch_salon_requests_updated_at()
 RETURNS TRIGGER
