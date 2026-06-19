@@ -5,6 +5,7 @@ import { CookieSettingsControl } from '@/components/legal/CookieSettingsControl'
 import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
+import { getSiteUrl } from '@/lib/site-url';
 
 const supabaseOrigin = (() => {
   try {
@@ -16,8 +17,13 @@ const supabaseOrigin = (() => {
 })();
 
 export const metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: 'Trimma OS - Find. Book. Glow.',
   description: 'The intelligent operating system for a salon marketplace.',
+  robots: {
+    index: true,
+    follow: true,
+  },
   icons: {
     icon: '/favicon.svg',
   }

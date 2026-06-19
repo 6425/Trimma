@@ -47,6 +47,37 @@ const nextConfig = {
       },
     ]
   },
+  async headers() {
+    return [
+      {
+        source: '/sitemap.xml',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/robots.txt',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
+  },
   images: {
     // Skip _next/image proxy — Supabase and other remote images were timing out in production.
     unoptimized: true,

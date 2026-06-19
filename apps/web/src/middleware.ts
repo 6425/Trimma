@@ -1,5 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { isNoindexRoute } from '@/lib/site-seo';
+
+function withRouteHeaders(pathname: string, response: NextResponse): NextResponse {
+  if (isNoindexRoute(pathname)) {
+    response.headers.set('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  }
+  return response;
+}
 
 // Define roles and permissions inline to avoid module resolution issues in Edge Runtime
 type UserRole = 'admin' | 'regional_head' | 'salon_owner' | 'agent' | 'customer';
@@ -89,7 +99,7 @@ export async function middleware(req: NextRequest) {
     if (sessionCookie && userRole === "admin") {
       return NextResponse.redirect(new URL("/admin", req.url));
     }
-    return NextResponse.next();
+    return withRouteHeaders(pathname, NextResponse.next());
   }
 
   // Agent / regional-head login: email + password only
@@ -101,7 +111,7 @@ export async function middleware(req: NextRequest) {
     if (sessionCookie && userRole === "agent") {
       return NextResponse.redirect(new URL("/agent", req.url));
     }
-    return NextResponse.next();
+    return withRouteHeaders(pathname, NextResponse.next());
   }
 
   // 2. Allow public routes (exact match or ending in login/signup)
@@ -116,7 +126,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/deals') ||
     pathname.startsWith('/checkout')
   ) {
-    return NextResponse.next();
+    return withRouteHeaders(pathname, NextResponse.next());
   }
 
   // 3. Check Authentication
@@ -130,7 +140,7 @@ export async function middleware(req: NextRequest) {
 
     const loginUrl = new URL(loginPath, req.url);
     loginUrl.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(loginUrl);
+    return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
   }
 
   if (pathname === "/login") {
@@ -159,20 +169,20 @@ export async function middleware(req: NextRequest) {
 
   // Agent / regional-head routes: shell loads for signed-in users; server actions enforce role.
   if (pathname.startsWith("/agent") || pathname.startsWith("/regional-head")) {
-    return NextResponse.next();
+    return withRouteHeaders(pathname, NextResponse.next());
   }
 
   if (!hasPermission(userRole, pathname)) {
     if (pathname.startsWith("/admin")) {
       const loginUrl = new URL("/admin/login", req.url);
       loginUrl.searchParams.set("redirectTo", pathname);
-      return NextResponse.redirect(loginUrl);
+      return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
     }
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
+    return withRouteHeaders(pathname, NextResponse.redirect(new URL("/unauthorized", req.url)));
   }
 
   // Allow access
-  return NextResponse.next();
+  return withRouteHeaders(pathname, NextResponse.next());
 }
 
 export const config = {
