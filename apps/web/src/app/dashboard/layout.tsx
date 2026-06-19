@@ -85,12 +85,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Staff", href: "/dashboard/staff", icon: <UserPlus className="w-4 h-4" /> },
     { name: "Services", href: "/dashboard/services", icon: <Scissors className="w-4 h-4" /> },
     { name: "Packages", href: "/dashboard/packages", icon: <Tag className="w-4 h-4" /> },
+    { name: "CRM", href: "/dashboard/crm", icon: <MessageSquare className="w-4 h-4" /> },
+    { name: "Marketing", href: "/dashboard/marketing", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Social Media", href: "/dashboard/social", icon: <Share2 className="w-4 h-4" /> },
     { name: "Reviews", href: "/dashboard/reviews", icon: <Star className="w-4 h-4" /> },
+    { name: "AI Assistant", href: "/dashboard/ai", icon: <Bot className="w-4 h-4" /> },
     { name: "Reports & Analytics", href: "/dashboard/analytics", icon: <BarChart3 className="w-4 h-4" /> },
     { name: "Finance & Commissions", href: "/dashboard/finance", icon: <DollarSign className="w-4 h-4" /> },
     { name: "Subscription & Billing", href: "/dashboard/billing", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Salon Profile", href: "/dashboard/profile", icon: <Store className="w-4 h-4" /> },
+    { name: "Help Center", href: "/dashboard/help", icon: <HelpCircle className="w-4 h-4" /> },
   ];
 
   const adminItems = [
@@ -176,7 +180,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:translate-x-0 lg:h-auto lg:max-h-[calc(100dvh-8rem)] ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
+      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:sticky lg:top-0 lg:self-start lg:h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full lg:translate-x-0'}`}>
         
         <div className="trimma-dashboard-sidebar-head shrink-0">
           {/* Sidebar Header */}
