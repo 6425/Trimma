@@ -118,7 +118,7 @@ export async function provisionSelfServeSalonOwner(
     { onConflict: "email" }
   );
 
-  await syncUserRolesForGlobalRole(supabase, normalizedEmail, "salon_owner");
+  await syncUserRolesForGlobalRole(supabase, normalizedEmail, "salon_owner", authUserId);
 
   await supabase.from("onboarding_logs").insert({
     salon_id: salon.id,

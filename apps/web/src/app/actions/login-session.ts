@@ -74,6 +74,7 @@ export async function completeOAuthLogin(
       if (
         options?.salonOwnerIntent &&
         !linkResult.salonId &&
+        linkResult.role !== "salon_owner" &&
         linkResult.role !== "admin" &&
         linkResult.role !== "agent" &&
         linkResult.role !== "regional_head"

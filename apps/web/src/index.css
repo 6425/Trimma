@@ -985,33 +985,125 @@
   }
 
   /*
-   * Sidebar nav items — WHITE text + icons by default, YELLOW only on hover.
-   * Uses .trimma-sidebar-nav-item to opt out of global ghost-button yellow tint.
+   * Dashboard portal menus — yellow sidebar, black labels,
+   * black pill on hover/active with white text (same design for both).
    */
-  .trimma-sidebar-nav-item:not(.is-active-nav) {
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar, .trimma-admin-sidebar),
+  .trimma-marketplace-shell > aside {
+    background-color: #ffc800 !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #000000;
+  }
+
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar, .trimma-admin-sidebar)
+    :is([class*="border-white"], [class*="border-slate"], [class*="border-black"]) {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+  }
+
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar) :is(.text-white, .text-zinc-400, .text-zinc-500),
+  .trimma-admin-sidebar .trimma-admin-nav-label,
+  .trimma-marketplace-shell > aside .text-zinc-600 {
+    color: #000000 !important;
+  }
+
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar) button.lg\:hidden,
+  .trimma-admin-sidebar .trimma-admin-icon-btn {
+    color: #000000 !important;
+  }
+
+  :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar) button.lg\:hidden:is(:hover, :focus-visible),
+  .trimma-admin-sidebar .trimma-admin-icon-btn:is(:hover, :focus-visible) {
+    background-color: #000000 !important;
     color: #ffffff !important;
+  }
+
+  .trimma-agent-sidebar-footer .text-white {
+    color: #000000 !important;
+  }
+
+  .trimma-sidebar-nav-item:not([class*="text-red"]):not(.trimma-admin-nav-logout) {
+    color: #000000 !important;
     background-color: transparent !important;
     border-color: transparent !important;
   }
 
-  .trimma-sidebar-nav-item:not(.is-active-nav):is(:hover, :focus-visible) {
-    color: #ffc800 !important;
-    background-color: rgba(255, 255, 255, 0.08) !important;
+  .trimma-sidebar-nav-item:not([class*="text-red"]):not(.trimma-admin-nav-logout):is(:hover, :focus-visible),
+  .trimma-sidebar-nav-item.is-active-nav:not([class*="text-red"]) {
+    color: #ffffff !important;
+    background-color: #000000 !important;
   }
 
-  .trimma-sidebar-nav-item:not(.is-active-nav) :is(svg, path) {
+  .trimma-sidebar-nav-item:not([class*="text-red"]) :is(svg, path) {
     color: currentColor !important;
     stroke: currentColor !important;
   }
 
-  .trimma-sidebar-nav-item.is-active-nav:is([class*="bg-[#ffc800]"], .bg-\[\#ffc800\]):not([class*="bg-[#ffc800]/"]) {
+  .trimma-sidebar-nav-item.is-active-nav :is(span, svg) {
+    color: currentColor !important;
+  }
+
+  .trimma-dashboard-sidebar-nav :is(a, button):not([class*="text-red"]) {
     color: #000000 !important;
-    background-color: #ffc800 !important;
+    background-color: transparent !important;
   }
 
-  .trimma-sidebar-nav-item.is-active-nav :is(svg, path) {
+  .trimma-dashboard-sidebar-nav :is(a, button):not([class*="text-red"]):is(:hover, :focus-visible),
+  .trimma-dashboard-sidebar-nav :is(a, button).is-active-nav {
+    color: #ffffff !important;
+    background-color: #000000 !important;
+  }
+
+  .trimma-dashboard-sidebar-nav :is(a, button):not([class*="text-red"]) :is(svg, span) {
     color: currentColor !important;
-    stroke: currentColor !important;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]):not(.trimma-admin-nav-logout) {
+    color: #000000 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]):not(.trimma-admin-nav-logout):is(
+    :hover,
+    :focus,
+    :focus-visible,
+    .is-active
+  ) {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"])
+    :is(svg, [class*="text-white"], [class*="text-black"]) {
+    color: currentColor !important;
+  }
+
+  .trimma-admin-sidebar :is(a, button, [data-slot="collapsible-trigger"]):not(.is-active)[class*="text-white"] {
+    color: #000000 !important;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-logout {
+    color: #dc2626 !important;
+  }
+
+  .trimma-admin-sidebar .trimma-admin-nav-logout:is(:hover, :focus, :focus-visible) {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
+  }
+
+  .trimma-admin-shell header .trimma-admin-icon-btn {
+    color: #52525b;
+  }
+
+  .trimma-admin-shell header .trimma-admin-icon-btn:is(:hover, :focus-visible) {
+    background-color: #f1f5f9 !important;
+    color: #18181b !important;
+  }
+
+  .trimma-admin-shell header .trimma-admin-nav-logout:is(:hover, :focus, :focus-visible) {
+    background-color: #fef2f2 !important;
+    color: #b91c1c !important;
   }
 
   /* Customer / dashboard sidebars — keep menu items clear of site header overlap */
@@ -1052,36 +1144,30 @@
     color: inherit;
   }
 
-  /* Mobile bottom nav — dark bar (agent / regional-head) */
-  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav),
-  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav) span {
-    color: rgba(255, 255, 255, 0.72) !important;
+  /* Mobile bottom nav — yellow bar, black default, black hover/active with white text */
+  .trimma-mobile-bottom-nav {
+    background-color: #ffc800 !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
   }
 
-  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav):is(:hover, :focus-visible),
-  .trimma-mobile-bottom-nav--dark :is(a, button):not(.is-active-nav):is(:hover, :focus-visible) span {
+  .trimma-mobile-bottom-nav :is(a, button):not(.is-active-nav),
+  .trimma-mobile-bottom-nav :is(a, button):not(.is-active-nav) span {
+    color: #000000 !important;
+    background-color: transparent !important;
+  }
+
+  .trimma-mobile-bottom-nav :is(a, button):not(.is-active-nav):is(:hover, :focus-visible),
+  .trimma-mobile-bottom-nav :is(a, button):not(.is-active-nav):is(:hover, :focus-visible) span,
+  .trimma-mobile-bottom-nav :is(a, button).is-active-nav,
+  .trimma-mobile-bottom-nav :is(a, button).is-active-nav span {
     color: #ffffff !important;
+    background-color: #000000 !important;
+    border-radius: 0.5rem;
   }
 
-  .trimma-mobile-bottom-nav--dark :is(a, button).is-active-nav,
-  .trimma-mobile-bottom-nav--dark :is(a, button).is-active-nav span {
-    color: #ffc800 !important;
-  }
-
-  /* Mobile bottom nav — light bar (customer) */
-  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav),
-  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav) span {
-    color: #52525b !important;
-  }
-
-  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav):is(:hover, :focus-visible),
-  .trimma-mobile-bottom-nav--light :is(a, button):not(.is-active-nav):is(:hover, :focus-visible) span {
-    color: #18181b !important;
-  }
-
-  .trimma-mobile-bottom-nav--light :is(a, button).is-active-nav,
-  .trimma-mobile-bottom-nav--light :is(a, button).is-active-nav span {
-    color: #ffc800 !important;
+  .trimma-mobile-bottom-nav :is(a, button).is-active-nav :is(svg, path) {
+    color: currentColor !important;
+    stroke: currentColor !important;
   }
 
   /* Portal dashboard mobile — prevent horizontal overflow and card overlap */
@@ -1118,7 +1204,7 @@
   }
 
   /*
-   * Admin / dashboard invert-hover buttons (light default → dark on hover).
+   * Admin invert-hover buttons (light default → dark on hover).
    */
   .trimma-light-context :is(
     button, a, [role="button"], [data-slot="button"]
@@ -1130,85 +1216,6 @@
     color: #ffffff !important;
   }
 
-  /*
-   * Admin light sidebar — explicit contrast on default, hover, focus, and active
-   * (mobile drawer + desktop fixed nav).
-   */
-  .trimma-admin-sidebar {
-    background-color: #f8fafc;
-    color: #18181b;
-  }
-
-  .trimma-admin-sidebar .trimma-admin-nav-label {
-    color: #52525b;
-  }
-
-  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]) {
-    color: #3f3f46;
-  }
-
-  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]):is(
-    :hover,
-    :focus,
-    :focus-visible
-  ):not(.is-active) {
-    background-color: #f1f5f9 !important;
-    color: #18181b !important;
-  }
-
-  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]).is-active,
-  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"]).is-active:is(
-    :hover,
-    :focus,
-    :focus-visible
-  ) {
-    background-color: #ffc800 !important;
-    color: #18181b !important;
-  }
-
-  .trimma-admin-sidebar .trimma-admin-nav-child.is-active {
-    background-color: #f1f5f9 !important;
-    color: #18181b !important;
-    box-shadow: inset 3px 0 0 #ffc800;
-  }
-
-  .trimma-admin-sidebar .trimma-admin-nav-child.is-active:is(:hover, :focus, :focus-visible) {
-    background-color: #e2e8f0 !important;
-    color: #18181b !important;
-  }
-
-  .trimma-admin-sidebar :is(.trimma-admin-nav-item, .trimma-admin-nav-child, [data-slot="collapsible-trigger"])
-    :is(svg, [class*="text-white"], [class*="text-black"]) {
-    color: currentColor;
-  }
-
-  .trimma-admin-sidebar :is(a, button, [data-slot="collapsible-trigger"]):not(.is-active)[class*="text-white"] {
-    color: #3f3f46 !important;
-  }
-
-  .trimma-admin-sidebar .trimma-admin-nav-logout {
-    color: #dc2626 !important;
-  }
-
-  .trimma-admin-sidebar .trimma-admin-nav-logout:is(:hover, :focus, :focus-visible) {
-    background-color: #fef2f2 !important;
-    color: #b91c1c !important;
-  }
-
-  .trimma-admin-shell :is(.trimma-admin-sidebar, header) .trimma-admin-icon-btn {
-    color: #52525b;
-  }
-
-  .trimma-admin-shell :is(.trimma-admin-sidebar, header) .trimma-admin-icon-btn:is(:hover, :focus, :focus-visible) {
-    background-color: #f1f5f9 !important;
-    color: #18181b !important;
-  }
-
-  .trimma-admin-shell header .trimma-admin-nav-logout:is(:hover, :focus, :focus-visible) {
-    background-color: #fef2f2 !important;
-    color: #b91c1c !important;
-  }
-
   .trimma-card-standard {
     padding: var(--trimma-card-padding);
     border-radius: var(--radius-lg);
@@ -1217,6 +1224,19 @@
 }
 
 @layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-transform: capitalize;
+  }
+
+  .trimma-salon-name {
+    text-transform: capitalize;
+  }
+
   [data-slot="card"] {
     box-shadow: var(--shadow-sm);
   }
@@ -1639,9 +1659,9 @@ html.dark header.trimma-light-context :is(a, button):not(.trimma-header-icon-btn
 }
 
 html.dark .trimma-mobile-bottom-nav--light {
-  background-color: #111111 !important;
-  border-color: rgba(255, 200, 0, 0.18) !important;
-  color: #ffc800 !important;
+  background-color: #ffc800 !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  color: #000000 !important;
 }
 
 /* Hero bands stay yellow in dark mode — black type for readability */

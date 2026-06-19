@@ -181,7 +181,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-white/8 shrink-0 py-4">
           <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo inverse iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
+            <Logo variant="dark" iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
           </Link>
           <button
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white hover:text-white hover:bg-white/10 transition-colors"
@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav Items */}
         <div className="p-3 flex-1 overflow-y-auto scrollbar-none">
-          <div className="text-[10px] font-bold text-white uppercase tracking-widest mb-2 px-3 pt-1">
+          <div className="text-[10px] font-bold text-black uppercase tracking-widest mb-2 px-3 pt-1">
             {isAd ? 'Administration' : 'Workspace'}
           </div>
           <nav className="space-y-0.5">
@@ -209,7 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <CollapsibleTrigger
                       className={`trimma-sidebar-nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         pathname?.startsWith(item.href)
-                          ? "is-active-nav bg-[#ffc800] text-black"
+                          ? "is-active-nav font-semibold"
                           : ""
                       }`}
                     >
@@ -225,7 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           href={child.href}
                           className={`trimma-sidebar-nav-item flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                             isActive(child.href)
-                              ? "is-active-nav text-[#ffc800] bg-[#ffc800]/10"
+                              ? "is-active-nav font-semibold"
                               : ""
                           }`}
                         >
@@ -238,7 +238,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link href={item.href}
                     className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive(item.href)
-                        ? "is-active-nav bg-[#ffc800] text-black font-semibold"
+                        ? "is-active-nav font-semibold"
                         : ""
                     }`}
                   >
@@ -257,7 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             href={CUSTOMER_DASHBOARD_HREF}
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname.startsWith("/customer")
-                ? "is-active-nav bg-[#ffc800] text-black font-semibold"
+                ? "is-active-nav font-semibold"
                 : ""
             }`}
           >
@@ -267,7 +267,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
-                ? "is-active-nav bg-[#ffc800] text-black font-semibold"
+                ? "is-active-nav font-semibold"
                 : ""
             }`}
           >
@@ -279,7 +279,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/dashboard/help"
               className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 pathname === "/dashboard/help"
-                  ? "is-active-nav bg-[#ffc800] text-black font-semibold"
+                  ? "is-active-nav font-semibold"
                   : ""
               }`}
             >
@@ -345,7 +345,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <div className="hidden lg:block text-right">
-                <div className="text-sm font-semibold text-white">{role === 'admin' ? 'Platform Admin' : salonName}</div>
+                <div className="trimma-salon-name text-sm font-semibold text-white">{role === 'admin' ? 'Platform Admin' : salonName}</div>
                 <div className="text-xs text-white/80">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
               <Avatar className="h-8 w-8 border-2 border-[#ffc800]/30 bg-[#ffc800]">

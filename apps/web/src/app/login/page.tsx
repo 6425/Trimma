@@ -16,6 +16,7 @@ import {
 } from "@/lib/trimma-role";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { completeOAuthLogin } from "@/app/actions/login-session";
+import { persistSalonOwnerOAuthIntent } from "@/lib/salon-owner-oauth-intent";
 import type { Session } from "@supabase/supabase-js";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 
@@ -164,6 +165,9 @@ function LoginForm() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    if (salonOwnerIntent) {
+      persistSalonOwnerOAuthIntent(redirectTo || "/dashboard/profile");
+    }
     const oauthRedirect = (() => {
       const params = new URLSearchParams();
       if (redirectTo) params.set("next", redirectTo);

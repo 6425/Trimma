@@ -131,7 +131,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         {/* Sidebar Header */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
           <Link href="/agent" className="hover:opacity-90 transition-opacity">
-            <Logo iconSize={32} inverse tagline="Agent Portal" />
+            <Logo iconSize={32} variant="dark" tagline="Agent Portal" />
           </Link>
           <button
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
@@ -146,7 +146,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">
           {menuSections.map((section, idx) => (
             <div key={idx} className="space-y-0.5">
-              <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-1.5">
+              <div className="text-[10px] font-bold text-black uppercase tracking-widest px-3 mb-1.5">
                 {section.title}
               </div>
               {section.items.map((item) => {
@@ -164,7 +164,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                     onClick={() => setMobileMenuOpen(false)}
                     className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? "is-active-nav bg-[#ffc800] text-black font-semibold"
+                        ? "is-active-nav font-semibold"
                         : ""
                     }`}
                   >
@@ -263,11 +263,11 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
               key={item.name}
               href={item.path}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                isActive ? "is-active-nav text-[#ffc800]" : "text-white/70 hover:text-white"
+                isActive ? "is-active-nav font-semibold" : ""
               }`}
             >
               {item.icon}
-              <span className={`text-[10px] font-semibold ${isActive ? "text-[#ffc800]" : ""}`}>{item.name}</span>
+              <span className="text-[10px] font-semibold">{item.name}</span>
             </Link>
           );
         })}

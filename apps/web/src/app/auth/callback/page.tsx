@@ -8,19 +8,27 @@ import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
 import { completeOAuthLogin } from "@/app/actions/login-session";
+import {
+  clearSalonOwnerOAuthIntent,
+  readSalonOwnerOAuthIntent,
+} from "@/lib/salon-owner-oauth-intent";
+import { resolveSalonOwnerOAuthRole } from "@/lib/salon-owner-oauth";
 
 function AuthCallbackContent() {
   const searchParams = useSearchParams();
-  const nextPath = sanitizeNextPath(
-    searchParams.get("next") ||
-      searchParams.get("redirectTo") ||
-      searchParams.get("redirect")
-  );
-  const salonOwnerIntent = searchParams.get("intent") === "salon-owner";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const storedIntent = readSalonOwnerOAuthIntent();
+    const salonOwnerIntent =
+      searchParams.get("intent") === "salon-owner" || storedIntent.salonOwnerIntent;
+    const nextPath = sanitizeNextPath(
+      searchParams.get("next") ||
+        searchParams.get("redirectTo") ||
+        searchParams.get("redirect") ||
+        storedIntent.nextPath
+    );
 
     async function waitForSession(maxAttempts = 20): Promise<Session | null> {
       const params = new URLSearchParams(window.location.search);
@@ -77,10 +85,15 @@ function AuthCallbackContent() {
             return;
           }
 
-          setTrimmaMiddlewareCookies(session.access_token, result.role);
+          const role = salonOwnerIntent
+            ? resolveSalonOwnerOAuthRole(result.role, true)
+            : result.role;
+
+          clearSalonOwnerOAuthIntent();
+          setTrimmaMiddlewareCookies(session.access_token, role);
 
           const destination = resolveAuthenticatedDestination({
-            role: result.role,
+            role,
             nextPath,
             onboardingStatus: result.onboardingStatus,
             salonOwnerIntent,
@@ -101,7 +114,10 @@ function AuthCallbackContent() {
         console.error("Auth callback failed:", err);
         if (!cancelled) {
           setErrorMessage(err instanceof Error ? err.message : "Authentication failed.");
-          window.setTimeout(() => redirectAfterAuth("/login"), 2000);
+          const loginPath = salonOwnerIntent
+            ? `/login?redirectTo=${encodeURIComponent(nextPath || "/dashboard/profile")}&intent=salon-owner`
+            : "/login";
+          window.setTimeout(() => redirectAfterAuth(loginPath), 2000);
         }
       }
     }
@@ -111,7 +127,7 @@ function AuthCallbackContent() {
     return () => {
       cancelled = true;
     };
-  }, [nextPath, salonOwnerIntent]);
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative z-50">

@@ -106,7 +106,7 @@ export async function linkInvitedOwnerAccount(
   );
 
   if (role === "salon_owner") {
-    await syncUserRolesForGlobalRole(admin, normalizedEmail, "salon_owner");
+    await syncUserRolesForGlobalRole(admin, normalizedEmail, "salon_owner", authUserId);
   }
 
   let linkedSalon: { id: string; name: string | null; onboarding_status: string | null } | null = null;
@@ -123,7 +123,7 @@ export async function linkInvitedOwnerAccount(
     linked: Boolean(linkedSalon || salonId),
     role,
     onboardingStatus: linkedSalon?.onboarding_status ?? null,
-    salonId: linkedSalon?.id ?? null,
+    salonId: linkedSalon?.id ?? salonId ?? null,
     salonName: linkedSalon?.name ?? null,
     isNewUser,
   };

@@ -27,7 +27,7 @@ export default async function OnboardingPage() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <a
-              href="#onboarding-form"
+              href="#salon-owner-signup"
               className="hero-btn-primary px-8 py-4 rounded-xl text-lg w-full sm:w-auto"
             >
               Start Your Onboarding
@@ -126,7 +126,7 @@ export default async function OnboardingPage() {
       </section>
 
       {/* Salon Lead Submission Form */}
-      <section id="onboarding-form" className="py-24 px-4 bg-slate-50">
+      <section id="salon-owner-signup" className="py-24 px-4 bg-slate-50">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200">
             <div className="mb-10 text-center">

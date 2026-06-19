@@ -173,7 +173,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Finance & Commission", href: "/admin/finance", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Branding Settings", href: "/admin/branding", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Admin Profile", href: "/admin/profile", icon: <User className="w-4 h-4" /> },
-    { name: CUSTOMER_DASHBOARD_LABEL, href: CUSTOMER_DASHBOARD_HREF, icon: <Calendar className="w-4 h-4" /> },
     { name: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -256,8 +255,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
 
+        <div className="px-3 pt-3 pb-1 shrink-0">
+          <Link
+            href={CUSTOMER_DASHBOARD_HREF}
+            className={navItemClass(isActive(CUSTOMER_DASHBOARD_HREF))}
+          >
+            <Calendar className="w-4 h-4" />
+            {CUSTOMER_DASHBOARD_LABEL}
+          </Link>
+        </div>
+
         {/* Nav Items */}
-        <div className="p-3 flex-1 overflow-y-auto scrollbar-none">
+        <div className="p-3 pt-2 flex-1 overflow-y-auto scrollbar-none">
           <div className="trimma-admin-nav-label text-[10px] font-bold uppercase tracking-widest mb-2 px-3 pt-1">
             {isAd ? 'Administration' : 'Workspace'}
           </div>
@@ -381,7 +390,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <div className="hidden lg:block text-right">
-                <div className="text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
+                <div className="trimma-salon-name text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
                 <div className="text-xs text-zinc-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
               <Avatar className="h-8 w-8 border-2 border-[#ffc800]/30">

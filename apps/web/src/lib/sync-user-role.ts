@@ -48,24 +48,25 @@ export async function findAuthUserIdByEmail(
 export async function syncUserRolesForGlobalRole(
   supabase: SupabaseClient,
   email: string,
-  globalRole: string
+  globalRole: string,
+  authUserId?: string | null
 ): Promise<void> {
   const normalized = normalizeEmail(email);
   if (!normalized) return;
 
   const role = normalizeGlobalRoleForSync(globalRole);
 
-  const authUserId = await findAuthUserIdByEmail(supabase, normalized);
-  if (!authUserId) return;
+  const resolvedAuthUserId = authUserId ?? (await findAuthUserIdByEmail(supabase, normalized));
+  if (!resolvedAuthUserId) return;
 
-  const { error: deleteError } = await supabase.from("user_roles").delete().eq("user_id", authUserId);
+  const { error: deleteError } = await supabase.from("user_roles").delete().eq("user_id", resolvedAuthUserId);
   if (deleteError && !deleteError.message.toLowerCase().includes("does not exist")) {
     throw new Error(deleteError.message);
   }
 
   const { error: upsertError } = await supabase
     .from("user_roles")
-    .upsert({ user_id: authUserId, role }, { onConflict: "user_id,role" });
+    .upsert({ user_id: resolvedAuthUserId, role }, { onConflict: "user_id,role" });
 
   if (upsertError) {
     const lower = upsertError.message.toLowerCase();

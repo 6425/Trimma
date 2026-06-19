@@ -53,7 +53,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       )}
 
       {/* ── SIDEBAR (Desktop in-flow | Mobile sliding drawer) ── */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-zinc-50 border-r border-black/10 flex flex-col transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
+      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffc800] border-r border-black/10 flex flex-col transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
         mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0'
       }`}>
 
@@ -73,26 +73,24 @@ export default function CustomerDashboardLayout({ children }: { children: React.
 
         {/* Nav Items */}
         <div className="trimma-dashboard-sidebar-nav flex-1 overflow-y-auto pt-4 pb-4 px-3 space-y-0.5 scrollbar-none lg:pt-6">
-          <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-3 pt-1">Menu</div>
+          <div className="text-[10px] font-bold text-black uppercase tracking-widest px-3 mb-3 pt-1">Menu</div>
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path !== '/customer' && item.path !== '/' && pathname.startsWith(item.path));
             return (
               <Link key={item.name}
                 href={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-[#ffc800] text-black font-semibold"
-                    : "text-zinc-500 hover:bg-black/5 hover:text-black"
+                className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive ? "is-active-nav font-semibold" : ""
                 }`}
               >
-                <span className={isActive ? "text-black" : "text-zinc-500"}>{item.icon}</span>
+                {item.icon}
                 {item.name}
               </Link>
             );
           })}
 
           <div className="pt-4 pb-1">
-            <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-3 mb-2">Account</div>
+            <div className="text-[10px] font-bold text-black uppercase tracking-widest px-3 mb-2">Account</div>
             {[
               { name: "Profile", path: "/customer/profile", icon: <User className="w-5 h-5" /> },
               { name: "Support", path: "/customer/support", icon: <LifeBuoy className="w-5 h-5" /> },
@@ -101,13 +99,11 @@ export default function CustomerDashboardLayout({ children }: { children: React.
               return (
                 <Link key={item.name}
                   href={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-[#ffc800] text-black font-semibold"
-                      : "text-zinc-500 hover:bg-black/5 hover:text-black"
+                  className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    isActive ? "is-active-nav font-semibold" : ""
                   }`}
                 >
-                  <span className={isActive ? "text-black" : "text-zinc-500"}>{item.icon}</span>
+                  {item.icon}
                   {item.name}
                 </Link>
               );
@@ -168,11 +164,11 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             <Link key={item.name}
               href={item.path}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg transition-all ${
-                isActive ? "is-active-nav text-[#ffc800]" : "text-zinc-600 hover:text-zinc-900"
+                isActive ? "is-active-nav font-semibold" : ""
               }`}
             >
               {item.icon}
-              <span className={`text-[10px] font-semibold ${isActive ? "text-[#ffc800]" : ""}`}>
+              <span className="text-[10px] font-semibold">
                 {item.name}
               </span>
             </Link>

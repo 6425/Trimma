@@ -1,3 +1,7 @@
+import {
+  clearSalonOwnerOAuthIntent,
+  persistSalonOwnerOAuthIntent,
+} from "@/lib/salon-owner-oauth-intent";
 import type { Session } from "@supabase/supabase-js";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { supabase } from "@/config/supabase";
@@ -49,6 +53,7 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
   }
 
   const role = resolveSalonOwnerOAuthRole(result.role, true);
+  clearSalonOwnerOAuthIntent();
   setTrimmaMiddlewareCookies(session.access_token, role);
   redirectAfterAuth(
     resolveAuthenticatedDestination({
@@ -62,6 +67,7 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
 }
 
 export async function startSalonOwnerGoogleOAuth(): Promise<{ ok: boolean; error?: string }> {
+  persistSalonOwnerOAuthIntent(SALON_OWNER_LOGIN_REDIRECT);
   const redirectTo = buildSalonOwnerOAuthRedirectUrl();
 
   const { error } = await supabase.auth.signInWithOAuth({
