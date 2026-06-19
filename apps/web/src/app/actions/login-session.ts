@@ -68,6 +68,15 @@ export async function completeOAuthLogin(
       );
       onboardingStatus = linkResult.onboardingStatus;
       linkedRole = linkResult.role;
+      if (
+        options?.salonOwnerIntent &&
+        linkResult.linked &&
+        linkResult.role !== "admin" &&
+        linkResult.role !== "agent" &&
+        linkResult.role !== "regional_head"
+      ) {
+        linkedRole = "salon_owner";
+      }
       isNewUser = linkResult.isNewUser;
     } catch (linkErr) {
       console.error("Owner link step failed:", linkErr);

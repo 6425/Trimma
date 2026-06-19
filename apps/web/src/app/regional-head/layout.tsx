@@ -19,7 +19,9 @@ import {
   Bell,
   CheckCircle2,
   HelpCircle,
+  CalendarDays,
 } from "lucide-react";
+import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "../../components/Logo";
@@ -90,6 +92,16 @@ export default function RegionalHeadLayout({ children }: { children: React.React
       items: [
         { name: "Commissions", path: `${BASE}/commissions`, icon: <Wallet className="w-4 h-4" /> },
         { name: "My Team", path: `${BASE}/team`, icon: <Users className="w-4 h-4" /> },
+      ],
+    },
+    {
+      title: "Personal",
+      items: [
+        {
+          name: CUSTOMER_DASHBOARD_LABEL,
+          path: CUSTOMER_DASHBOARD_HREF,
+          icon: <CalendarDays className="w-4 h-4" />,
+        },
       ],
     },
   ];

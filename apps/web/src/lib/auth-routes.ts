@@ -5,6 +5,7 @@ export function canAccessTrimmaRoute(
   route: string
 ): boolean {
   if (!role) return false;
+  if (route.startsWith("/customer")) return true;
   if (role === "admin") return true;
   if (role === "salon_owner") {
     return (

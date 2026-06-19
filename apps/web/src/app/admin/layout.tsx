@@ -8,6 +8,7 @@ import { signOutTrimmaSession } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
+import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -172,6 +173,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: "Finance & Commission", href: "/admin/finance", icon: <CreditCard className="w-4 h-4" /> },
     { name: "Branding Settings", href: "/admin/branding", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Admin Profile", href: "/admin/profile", icon: <User className="w-4 h-4" /> },
+    { name: CUSTOMER_DASHBOARD_LABEL, href: CUSTOMER_DASHBOARD_HREF, icon: <Calendar className="w-4 h-4" /> },
     { name: "Settings", href: "/admin/settings", icon: <Settings className="w-4 h-4" /> },
   ];
 

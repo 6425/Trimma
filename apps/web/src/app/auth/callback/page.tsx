@@ -83,6 +83,7 @@ function AuthCallbackContent() {
             role: result.role,
             nextPath,
             onboardingStatus: result.onboardingStatus,
+            salonOwnerIntent,
           });
 
           redirectAfterAuth(destination);

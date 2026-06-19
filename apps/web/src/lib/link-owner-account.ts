@@ -80,7 +80,17 @@ export async function linkInvitedOwnerAccount(
     role = "salon_owner";
   }
 
-  if (linked && salonId && role !== "admin" && role !== "agent" && role === "customer") {
+  if (linked && salonId && role !== "admin" && role !== "agent" && role !== "regional_head" && role === "customer") {
+    role = "salon_owner";
+  }
+
+  if (
+    options?.salonOwnerIntent &&
+    salonId &&
+    role !== "admin" &&
+    role !== "agent" &&
+    role !== "regional_head"
+  ) {
     role = "salon_owner";
   }
 

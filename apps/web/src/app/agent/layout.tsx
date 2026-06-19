@@ -6,8 +6,9 @@ import { useState, useEffect } from "react";
 import { 
   Home, Map, UserPlus, Building2,
   Wallet, MapPin, User, LogOut, Search,
-  KanbanSquare, Menu, X, Bell, CheckCircle2, HelpCircle
+  KanbanSquare, Menu, X, Bell, CheckCircle2, HelpCircle, CalendarDays
 } from "lucide-react";
+import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { signOutTrimmaSession } from "@/config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Logo from "../../components/Logo";
@@ -93,6 +94,16 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
     {
       title: "Performance",
       items: [{ name: "Commissions", path: "/agent/commissions", icon: <Wallet className="w-4 h-4" /> }],
+    },
+    {
+      title: "Personal",
+      items: [
+        {
+          name: CUSTOMER_DASHBOARD_LABEL,
+          path: CUSTOMER_DASHBOARD_HREF,
+          icon: <CalendarDays className="w-4 h-4" />,
+        },
+      ],
     },
   ];
 

@@ -97,6 +97,7 @@ function LoginForm() {
               role: result.role,
               nextPath: redirectTo,
               onboardingStatus: result.onboardingStatus,
+              salonOwnerIntent,
             })
           );
           return;

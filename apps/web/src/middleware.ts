@@ -19,20 +19,33 @@ const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> =
     canAccess: (route: string) => true, // Admins can access everything
   },
   salon_owner: {
-    canAccess: (route: string) => route.startsWith('/dashboard') || route.startsWith('/salon') || route.startsWith('/appointments') || route.startsWith('/staff'),
+    canAccess: (route: string) =>
+      route.startsWith('/dashboard') ||
+      route.startsWith('/customer') ||
+      route.startsWith('/salon') ||
+      route.startsWith('/appointments') ||
+      route.startsWith('/staff'),
   },
   agent: {
-    canAccess: (route: string) => route.startsWith('/agent') || route.startsWith('/leads') || route.startsWith('/dashboard'),
+    canAccess: (route: string) =>
+      route.startsWith('/agent') ||
+      route.startsWith('/leads') ||
+      route.startsWith('/dashboard') ||
+      route.startsWith('/customer'),
   },
   regional_head: {
     canAccess: (route: string) =>
       route.startsWith('/agent') ||
       route.startsWith('/regional-head') ||
       route.startsWith('/leads') ||
-      route.startsWith('/dashboard'),
+      route.startsWith('/dashboard') ||
+      route.startsWith('/customer'),
   },
   customer: {
-    canAccess: (route: string) => route.startsWith('/profile') || route.startsWith('/bookings') || route.startsWith('/customer'),
+    canAccess: (route: string) =>
+      route.startsWith('/profile') ||
+      route.startsWith('/bookings') ||
+      route.startsWith('/customer'),
   }
 };
 

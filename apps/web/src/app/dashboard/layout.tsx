@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, CalendarDays } from "lucide-react";
+import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { readRoleFromCookie } from "@/lib/client-auth-cookie";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
@@ -252,6 +253,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         {/* Sidebar Footer */}
         <div className="trimma-dashboard-sidebar-footer p-3 border-t border-white/8 space-y-0.5">
+          <Link
+            href={CUSTOMER_DASHBOARD_HREF}
+            className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+              pathname.startsWith("/customer")
+                ? "is-active-nav bg-[#ffc800] text-black font-semibold"
+                : ""
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            {CUSTOMER_DASHBOARD_LABEL}
+          </Link>
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
