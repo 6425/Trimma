@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Facebook, Instagram, Youtube } from "lucide-react";
 import Logo from "./Logo";
+import { CookieSettingsLink } from "@/components/legal/CookieSettingsLink";
 
 export default function GlobalFooter() {
   return (
@@ -51,6 +52,7 @@ export default function GlobalFooter() {
               <li><Link href="/terms" className="hover:text-[#ffc800] transition-colors">Terms &amp; Conditions</Link></li>
               <li><Link href="/privacy-policy" className="hover:text-[#ffc800] transition-colors">Privacy Policy</Link></li>
               <li><Link href="/cookies" className="hover:text-[#ffc800] transition-colors">Cookie Policy</Link></li>
+              <li><CookieSettingsLink className="hover:text-[#ffc800] transition-colors" /></li>
               <li><Link href="/data-deletion" className="hover:text-[#ffc800] transition-colors">Data Deletion</Link></li>
             </ul>
           </div>
