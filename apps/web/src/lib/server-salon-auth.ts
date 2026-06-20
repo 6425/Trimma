@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
+import { forceSalonOwnerUpgrade } from "@/lib/force-salon-owner-upgrade";
 import { normalizeEmail } from "@/lib/normalize-email";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -96,6 +97,26 @@ export async function requireSalonOwnerFromCookies(): Promise<
   try {
     await ensureSalonOwnerAccess(supabase, email);
     salon = await findOwnerSalon(supabase, email);
+
+    if (!salon?.id) {
+      const upgraded = await forceSalonOwnerUpgrade(
+        supabase,
+        user.id,
+        email,
+        (user.user_metadata?.full_name as string | undefined) ||
+          (user.user_metadata?.first_name as string | undefined),
+        (user.user_metadata?.avatar_url as string | undefined) ?? null
+      );
+
+      salon =
+        (await findOwnerSalon(supabase, email)) ||
+        (await supabase
+          .from("salons")
+          .select("*")
+          .eq("id", upgraded.salonId)
+          .maybeSingle()
+          .then(({ data }) => (data as Record<string, unknown> | null) ?? null));
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not load your salon.";
     return { error: message };
