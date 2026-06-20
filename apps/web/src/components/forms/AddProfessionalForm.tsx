@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   buildStaffServicesConfigFromMember,
   buildDefaultStaffServiceConfig,
@@ -130,7 +130,7 @@ export function AddProfessionalForm({
       initialStaff?.general_buffer_time ?? initialStaff?.working_hours?.general_buffer_time;
     return saved != null ? String(saved) : "";
   });
-  const [selectedServices, setSelectedServices] = useState<any>(() =>
+  const [serviceEdits, setServiceEdits] = useState<any>(() =>
     buildServicesConfig(initialStaff, salonServices)
   );
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(() => initialStaff?.avatar_url || "");
@@ -143,11 +143,10 @@ export function AddProfessionalForm({
     [newCommission, generalBufferTime]
   );
 
-  useEffect(() => {
-    setSelectedServices((prev) =>
-      mergeSalonServicesIntoStaffConfig(prev, salonServices, currentProfile)
-    );
-  }, [salonServices, currentProfile.commissionRate, currentProfile.generalBufferTime]);
+  const selectedServices = useMemo(
+    () => mergeSalonServicesIntoStaffConfig(serviceEdits, salonServices, currentProfile),
+    [serviceEdits, salonServices, currentProfile]
+  );
 
   const resolveServiceDefaults = (serviceId: string) => {
     const service = salonServices.find((s) => s.id === serviceId);
@@ -163,7 +162,7 @@ export function AddProfessionalForm({
   };
 
   const handleServiceCheckboxChange = (serviceId: string, checked: boolean) => {
-    setSelectedServices((prev: any) => {
+    setServiceEdits((prev: any) => {
       const defaults = resolveServiceDefaults(serviceId);
       const existing = prev[serviceId];
 
@@ -194,15 +193,15 @@ export function AddProfessionalForm({
   };
 
   const handleServiceDurationChange = (serviceId: string, val: string) => {
-    setSelectedServices((prev: any) => ({ ...prev, [serviceId]: { ...prev[serviceId], duration: val } }));
+    setServiceEdits((prev: any) => ({ ...prev, [serviceId]: { ...prev[serviceId], duration: val } }));
   };
 
   const handleServiceCommissionChange = (serviceId: string, val: string) => {
-    setSelectedServices((prev: any) => ({ ...prev, [serviceId]: { ...prev[serviceId], commission: val } }));
+    setServiceEdits((prev: any) => ({ ...prev, [serviceId]: { ...prev[serviceId], commission: val } }));
   };
 
   const handleServiceBufferChange = (serviceId: string, val: string) => {
-    setSelectedServices((prev: any) => ({ ...prev, [serviceId]: { ...prev[serviceId], buffer: val } }));
+    setServiceEdits((prev: any) => ({ ...prev, [serviceId]: { ...prev[serviceId], buffer: val } }));
   };
 
   // --- IMAGE CROP HELPERS ---
@@ -439,7 +438,7 @@ export function AddProfessionalForm({
                       commissionRate: parseFloat(newCommission) || DEFAULT_STAFF_COMMISSION_RATE,
                       generalBufferTime: parseFloat(newBuf) || 0,
                     };
-                    setSelectedServices((prev) =>
+                    setServiceEdits((prev) =>
                       applyStaffProfileRatesToServiceConfig(prev, salonServices, profile)
                     );
                   }}
@@ -461,7 +460,7 @@ export function AddProfessionalForm({
                       commissionRate: parseFloat(newComm) || DEFAULT_STAFF_COMMISSION_RATE,
                       generalBufferTime: parseFloat(generalBufferTime) || 0,
                     };
-                    setSelectedServices((prev) =>
+                    setServiceEdits((prev) =>
                       applyStaffProfileRatesToServiceConfig(prev, salonServices, profile)
                     );
                   }}
