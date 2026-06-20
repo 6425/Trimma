@@ -398,7 +398,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
 
         {/* Page Content */}
-        <main className="trimma-portal-main flex-1 overflow-x-clip overflow-y-auto bg-slate-50 text-zinc-900 trimma-page-shell trimma-light-context min-w-0">
+        <main className="trimma-portal-main flex-1 overflow-x-clip overflow-y-auto bg-white text-zinc-900 trimma-page-shell trimma-light-context min-w-0">
           <div className="trimma-light-context min-w-0">
             {children}
           </div>

@@ -86,7 +86,7 @@ export default function ReviewsPage() {
     <div className="space-y-6 max-w-6xl mx-auto p-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 text-zinc-900 flex items-center justify-center">
             <Star className="w-6 h-6 text-brand" />
           </div>
           <div>
@@ -137,13 +137,13 @@ export default function ReviewsPage() {
           })}
         </div>
 
-        <div className="bg-zinc-900 text-white p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 text-zinc-900 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
           <div>
-            <span className="inline-flex bg-white/10 text-white px-3 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider mb-2">
+            <span className="inline-flex bg-zinc-100 text-zinc-600 px-3 py-0.5 rounded-full text-[8px] font-extrabold uppercase tracking-wider mb-2">
               Trust signal
             </span>
-            <h3 className="text-sm font-bold">Verified review system</h3>
-            <p className="text-white/60 text-[10px] mt-1.5 leading-relaxed">
+            <h3 className="text-sm font-bold text-zinc-900">Verified review system</h3>
+            <p className="text-zinc-500 text-[10px] mt-1.5 leading-relaxed">
               Every review is tied to a real completed booking. Reply publicly to show professionalism and care.
             </p>
           </div>

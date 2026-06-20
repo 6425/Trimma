@@ -64,7 +64,7 @@ export default function CRMPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-zinc-950 text-white flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 text-zinc-900 flex items-center justify-center">
             <MessageSquare className="w-6 h-6 text-brand" />
           </div>
           <div>
@@ -131,31 +131,31 @@ export default function CRMPage() {
 
         {/* Right Column: Customer Tiers Metrics */}
         <div className="space-y-6">
-          <div className="bg-zinc-900 text-white p-6 rounded-3xl shadow-sm relative overflow-hidden">
-            <Award className="absolute -right-6 -bottom-6 w-32 h-32 text-white/5 rotate-12" />
+          <div className="bg-white border border-slate-200 text-zinc-900 p-6 rounded-3xl shadow-sm relative overflow-hidden">
+            <Award className="absolute -right-6 -bottom-6 w-32 h-32 text-zinc-100 rotate-12" />
             
             <div className="relative z-10 space-y-6">
               <div>
-                <span className="inline-flex bg-white/10 text-white px-3.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
+                <span className="inline-flex bg-zinc-100 text-zinc-600 px-3.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
                   Client Retention
                 </span>
-                <h3 className="text-base font-bold">VIP Loyalty Tiers</h3>
-                <p className="text-white/60 text-[10px] mt-1.5 leading-relaxed">
+                <h3 className="text-base font-bold text-zinc-900">VIP Loyalty Tiers</h3>
+                <p className="text-zinc-500 text-[10px] mt-1.5 leading-relaxed">
                   Automatically categorize your client base by lifetime spend to deliver exclusive seasonal discount cards.
                 </p>
               </div>
 
               <div className="space-y-3.5 pt-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-white/70 font-medium">👑 Royal Diamond (10+ visits)</span>
+                  <span className="text-zinc-600 font-medium">👑 Royal Diamond (10+ visits)</span>
                   <span className="font-black text-brand">{clientTiers.royal} clients</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-white/70 font-medium">⭐ Elite Platinum (5+ visits)</span>
+                  <span className="text-zinc-600 font-medium">⭐ Elite Platinum (5+ visits)</span>
                   <span className="font-black text-amber-500">{clientTiers.elite} clients</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-white/70 font-medium">💅 Premium Gold (2+ visits)</span>
+                  <span className="text-zinc-600 font-medium">💅 Premium Gold (2+ visits)</span>
                   <span className="font-black text-emerald-400">{clientTiers.premium} clients</span>
                 </div>
               </div>

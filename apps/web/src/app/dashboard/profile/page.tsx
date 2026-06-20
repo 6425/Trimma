@@ -1425,16 +1425,16 @@ export default function SalonProfilePage() {
           </div>
 
           {/* Card 2: Print QR Code Flyer */}
-          <div className="bg-zinc-900 text-white rounded-3xl p-8 relative overflow-hidden shadow-lg">
-            <QrCode className="absolute -right-8 -bottom-8 w-44 h-44 text-white/5 rotate-12" />
+          <div className="bg-white border border-slate-200 text-zinc-900 rounded-3xl p-8 relative overflow-hidden shadow-sm">
+            <QrCode className="absolute -right-8 -bottom-8 w-44 h-44 text-zinc-100 rotate-12" />
             
             <div className="relative z-10 space-y-6">
               <div>
-                <span className="inline-flex bg-white/10 text-white px-3.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-3">
+                <span className="inline-flex bg-zinc-100 text-zinc-600 px-3.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-3">
                   Store QR Flyer
                 </span>
-                <h3 className="text-xl font-bold">Print Professional Flyer</h3>
-                <p className="text-white/60 text-xs mt-1.5 leading-relaxed">
+                <h3 className="text-xl font-bold text-zinc-900">Print Professional Flyer</h3>
+                <p className="text-zinc-500 text-xs mt-1.5 leading-relaxed">
                   Generate a beautiful, premium A4 printed poster featuring your QR Code. Hang it in your physical storefront windows so walk-ins can scan and book instantly!
                 </p>
               </div>

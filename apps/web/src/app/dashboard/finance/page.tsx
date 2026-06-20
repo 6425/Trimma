@@ -232,16 +232,16 @@ export default function FinanceDashboard() {
         </div>
 
         {/* Platform Share */}
-        <div className="bg-[#1A1C29] border border-[#1A1C29] rounded-3xl p-5 shadow-xl space-y-3 relative overflow-hidden group hover:-translate-y-0.5 transition-all text-white">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-3 relative overflow-hidden group hover:shadow-md transition-all text-zinc-900">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">Platform Fee ({globalRates.platform}%)</span>
-            <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center text-white">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Platform Fee ({globalRates.platform}%)</span>
+            <div className="w-7 h-7 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-black text-white">{formatLKR(stats.platformComm)}</h3>
-            <p className="text-[10px] text-white/50">Base engine fee applied</p>
+            <h3 className="text-xl font-black text-zinc-900">{formatLKR(stats.platformComm)}</h3>
+            <p className="text-[10px] text-zinc-500">Base engine fee applied</p>
           </div>
         </div>
 

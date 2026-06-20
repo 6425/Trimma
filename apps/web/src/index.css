@@ -1146,7 +1146,7 @@
    */
   .trimma-dark-context .trimma-portal-main.trimma-light-context,
   .trimma-dark-context .trimma-light-context.trimma-portal-main {
-    --background: #f8fafc;
+    --background: #ffffff;
     --foreground: #18181b;
     --card: #ffffff;
     --card-foreground: #18181b;
@@ -1202,6 +1202,84 @@
   .trimma-portal-main .trimma-light-context > *,
   .trimma-portal-main > .trimma-light-context > * {
     min-width: 0;
+  }
+
+  /*
+   * Portal dashboards — black shell, white main canvas.
+   * Dark accent panels inside the main column render as white cards.
+   */
+  .trimma-dark-context .trimma-portal-main.trimma-light-context {
+    background-color: #ffffff !important;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section).text-white:is(
+      [class*="bg-zinc-900"],
+      [class*="bg-zinc-950"],
+      [class*="bg-\[#1A1C29\]"]
+    ):not([class*="fixed"]):not([class*="inset-0"]):not([class*="bg-zinc-900/"]):not([class*="bg-black/"]) {
+    background-color: #ffffff !important;
+    color: #18181b !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section).text-white:is(
+      [class*="bg-zinc-900"],
+      [class*="bg-zinc-950"],
+      [class*="bg-\[#1A1C29\]"]
+    ):not([class*="fixed"]):not([class*="inset-0"])
+    :is(h1, h2, h3, h4, h5, h6, p, span, label):not([class*="text-brand"]):not([class*="text-amber"]):not([class*="text-emerald"]):not([class*="text-teal"]):not([class*="text-rose"]):not([class*="text-red"]):not([class*="text-green"]):not([class*="text-blue"]) {
+    color: #18181b;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section).text-white:is(
+      [class*="bg-zinc-900"],
+      [class*="bg-zinc-950"],
+      [class*="bg-\[#1A1C29\]"]
+    ):not([class*="fixed"]):not([class*="inset-0"])
+    [class*="text-white/60"],
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section).text-white:is(
+      [class*="bg-zinc-900"],
+      [class*="bg-zinc-950"],
+      [class*="bg-\[#1A1C29\]"]
+    ):not([class*="fixed"]):not([class*="inset-0"])
+    [class*="text-white/50"] {
+    color: #71717a !important;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section).text-white:is(
+      [class*="bg-zinc-900"],
+      [class*="bg-zinc-950"],
+      [class*="bg-\[#1A1C29\]"]
+    ):not([class*="fixed"]):not([class*="inset-0"])
+    [class*="text-white/70"] {
+    color: #52525b !important;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section).text-white:is(
+      [class*="bg-zinc-900"],
+      [class*="bg-zinc-950"],
+      [class*="bg-\[#1A1C29\]"]
+    ):not([class*="fixed"]):not([class*="inset-0"])
+    :is(span, div)[class*="bg-white/10"] {
+    background-color: #f4f4f5 !important;
+    color: #3f3f46 !important;
+  }
+
+  .trimma-dark-context .trimma-portal-main.trimma-light-context
+    :is(div, section):is(
+      [class*="bg-zinc-950"],
+      [class*="bg-zinc-900"]
+    ):not([class*="fixed"]):not([class*="inset-0"]):not([class*="bg-zinc-900/"]):not([class*="bg-black/"])
+    :is(svg:not([class*="text-brand"]):not([class*="text-amber"]):not([class*="text-emerald"])) {
+    color: #18181b !important;
+    stroke: currentColor !important;
   }
 
   .trimma-mobile-bottom-nav :is(a, button) {

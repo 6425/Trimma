@@ -15,8 +15,8 @@ export function SalonDashboardGuideCard() {
   const docsByLang = Object.fromEntries(SALON_OWNER_GUIDE_FALLBACKS.map((d) => [d.language, d]));
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-[#ffc800]/25 bg-zinc-950 text-white shadow-sm">
-      <BookOpen className="absolute -right-6 -top-6 w-32 h-32 text-[#ffc800]/8 pointer-events-none" />
+    <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white text-zinc-900 shadow-sm">
+      <BookOpen className="absolute -right-6 -top-6 w-32 h-32 text-[#ffc800]/10 pointer-events-none" />
       <div className="relative z-10 p-5 lg:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="flex items-start gap-4 min-w-0">
@@ -27,8 +27,8 @@ export function SalonDashboardGuideCard() {
               <span className="inline-flex items-center gap-1.5 bg-[#ffc800]/15 text-[#ffc800] border border-[#ffc800]/25 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
                 Salon Owner Handbook
               </span>
-              <h2 className="text-lg font-black tracking-tight mb-1">Trimma Workspace Guide</h2>
-              <p className="text-sm text-white/65 leading-relaxed max-w-xl">
+              <h2 className="text-lg font-black tracking-tight mb-1 text-zinc-900">Trimma Workspace Guide</h2>
+              <p className="text-sm text-zinc-500 leading-relaxed max-w-xl">
                 Complete professional handbook — profile setup, bookings, staff, services, finance,
                 and growing your salon. English, Sinhala, and Tamil.
               </p>
