@@ -46,7 +46,6 @@ import {
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
   logo: { label: "Square Logo", resolution: "500x500px", sizeText: "2MB max", size: 2 * 1024 * 1024 },
-  cover: { label: "Cover Banner", resolution: "1200x400px", sizeText: "5MB max", size: 5 * 1024 * 1024 },
   hero: { label: "Hero Header", resolution: "1920x680px", sizeText: "8MB max", size: 8 * 1024 * 1024 },
   gallery: { label: "Featured Image", resolution: "800x600px", sizeText: "3MB max", size: 3 * 1024 * 1024 }
 };
@@ -105,7 +104,6 @@ export default function SalonProfilePage() {
   
   // Image States
   const [logoUrl, setLogoUrl] = useState("");
-  const [coverUrl, setCoverUrl] = useState("");
   const [heroUrl, setHeroUrl] = useState("");
   const [featuredImages, setFeaturedImages] = useState<string[]>([]);
   
@@ -132,7 +130,6 @@ export default function SalonProfilePage() {
 
   // Hidden File Inputs Refs
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -176,7 +173,6 @@ export default function SalonProfilePage() {
 
       // Set visual assets — prefer dedicated URL columns, fall back to Google Places hero_image
       setLogoUrl(salonData.logo_url || "");
-      setCoverUrl(salonData.cover_url || "");
       setHeroUrl(salonData.hero_url || salonData.hero_image || "");
       setFeaturedImages(salonData.featured_images || []);
       if (salonData.working_hours) {
@@ -297,7 +293,7 @@ export default function SalonProfilePage() {
     if (address) completed++;
     if (description) completed++;
     if (logoUrl) completed++;
-    if (coverUrl) completed++;
+    if (heroUrl) completed++;
     if (salon?.bank_info?.account_number) completed++;
     if (salon?.ext?.business_type) completed++;
     return Math.round((completed / total) * 100);
@@ -326,7 +322,7 @@ export default function SalonProfilePage() {
   );
 
   // Helper function to upload image file to Supabase storage bucket
-  const processImageFile = async (file: File, type: "logo" | "cover" | "hero" | "gallery"): Promise<string | null> => {
+  const processImageFile = async (file: File, type: "logo" | "hero" | "gallery"): Promise<string | null> => {
     try {
       const config = SIZING_INFO[type];
       
@@ -357,7 +353,7 @@ export default function SalonProfilePage() {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "cover" | "hero" | "gallery") => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "hero" | "gallery") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -371,7 +367,6 @@ export default function SalonProfilePage() {
     if (!uploadedUrl) return;
 
     let updatedLogo = logoUrl;
-    let updatedCover = coverUrl;
     let updatedHero = heroUrl;
     let updatedGallery = [...featuredImages];
 
@@ -382,21 +377,9 @@ export default function SalonProfilePage() {
         window.dispatchEvent(new CustomEvent("trimma_salon_logo_update", { detail: uploadedUrl }));
       }
     }
-    if (type === "cover") {
-      setCoverUrl(uploadedUrl);
-      updatedCover = uploadedUrl;
-      if (!updatedHero) {
-        setHeroUrl(uploadedUrl);
-        updatedHero = uploadedUrl;
-      }
-    }
     if (type === "hero") {
       setHeroUrl(uploadedUrl);
       updatedHero = uploadedUrl;
-      if (!updatedCover) {
-        setCoverUrl(uploadedUrl);
-        updatedCover = uploadedUrl;
-      }
     }
     if (type === "gallery") {
       updatedGallery = [...featuredImages, uploadedUrl];
@@ -407,7 +390,6 @@ export default function SalonProfilePage() {
     try {
       const saveResult = await updateSalonMediaFields({
           logo_url: updatedLogo,
-          cover_url: updatedCover,
           hero_url: updatedHero,
           featured_images: updatedGallery,
         });
@@ -426,9 +408,8 @@ export default function SalonProfilePage() {
     }
   };
 
-  const removeImage = async (type: "logo" | "cover" | "hero") => {
+  const removeImage = async (type: "logo" | "hero") => {
     let updatedLogo = logoUrl;
-    let updatedCover = coverUrl;
     let updatedHero = heroUrl;
 
     if (type === "logo") {
@@ -438,10 +419,6 @@ export default function SalonProfilePage() {
         window.dispatchEvent(new CustomEvent("trimma_salon_logo_update", { detail: null }));
       }
     }
-    if (type === "cover") {
-      setCoverUrl("");
-      updatedCover = "";
-    }
     if (type === "hero") {
       setHeroUrl("");
       updatedHero = "";
@@ -450,7 +427,6 @@ export default function SalonProfilePage() {
     try {
       const saveResult = await updateSalonMediaFields({
           logo_url: updatedLogo,
-          cover_url: updatedCover,
           hero_url: updatedHero,
         });
 
@@ -876,7 +852,6 @@ export default function SalonProfilePage() {
 
             {/* Hidden File Inputs */}
             <input type="file" ref={logoInputRef} onChange={(e) => handleFileChange(e, "logo")} accept="image/*" className="hidden" />
-            <input type="file" ref={coverInputRef} onChange={(e) => handleFileChange(e, "cover")} accept="image/*" className="hidden" />
             <input type="file" ref={heroInputRef} onChange={(e) => handleFileChange(e, "hero")} accept="image/*" className="hidden" />
             <input type="file" ref={galleryInputRef} onChange={(e) => handleFileChange(e, "gallery")} accept="image/*" className="hidden" />
 
@@ -925,50 +900,7 @@ export default function SalonProfilePage() {
                 </Button>
               </div>
 
-              {/* Card 2: Cover Banner Uploader (used on salon listings) */}
-              <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group md:col-span-2">
-                <div className="space-y-3 w-full">
-                  <span className="inline-flex bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                    {SIZING_INFO.cover.label}
-                  </span>
-
-                  <div className="h-32 w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
-                    {coverUrl ? (
-                      <>
-                        <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage("cover")}
-                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </>
-                    ) : (
-                      <ImageIcon className="w-8 h-8 text-amber-300" />
-                    )}
-                  </div>
-
-                  <div className="text-[11px] text-zinc-400 space-y-0.5">
-                    <p className="font-bold text-amber-700">{SIZING_INFO.cover.resolution}</p>
-                    <p>{SIZING_INFO.cover.sizeText}</p>
-                    <p className="text-zinc-500">Shown on the homepage and salon directory cards.</p>
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => coverInputRef.current?.click()}
-                  disabled={uploadingType === "cover"}
-                  className="mt-4 w-full rounded-xl h-10 border-amber-100 text-amber-700 hover:bg-amber-50 font-bold text-xs flex items-center justify-center gap-1.5"
-                >
-                  {uploadingType === "cover" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                  Upload Cover
-                </Button>
-              </div>
-
-              {/* Card 3: Hero Header Uploader */}
+              {/* Card 2: Hero Header Uploader */}
               <div className="flex flex-col items-center justify-between border border-dashed border-zinc-200 rounded-2xl p-6 text-center bg-zinc-50 relative group">
                 <div className="space-y-3 w-full">
                   <span className="inline-flex bg-rose-50 text-brand px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
@@ -1453,8 +1385,8 @@ export default function SalonProfilePage() {
             <div className="bg-white rounded-2xl overflow-hidden border border-zinc-100 shadow-lg group relative">
               <div className="h-36 relative overflow-hidden bg-zinc-100">
                 <img 
-                  src={coverUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80"} 
-                  alt="Cover" 
+                  src={heroUrl || logoUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80"} 
+                  alt="Salon preview" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                 />
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-zinc-900 shadow-sm flex items-center gap-1">

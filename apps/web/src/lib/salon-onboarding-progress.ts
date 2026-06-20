@@ -89,7 +89,6 @@ export function isOperationsComplete(
     hasText(salon.phone) &&
     hasText(salon.address) &&
     hasText(salon.logo_url) &&
-    hasText(salon.cover_url) &&
     hasWorkingHours(salon.working_hours)
   );
 }
