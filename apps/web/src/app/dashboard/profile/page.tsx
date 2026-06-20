@@ -622,7 +622,7 @@ export default function SalonProfilePage() {
         status: "active",
         working_hours: buildStaffWorkingHoursPayload(
           st.schedule || {},
-          st.general_buffer_time ?? 15,
+          st.general_buffer_time ?? 0,
           st.services || {},
           salonServiceRows
         ),

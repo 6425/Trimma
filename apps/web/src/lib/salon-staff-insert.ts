@@ -128,6 +128,29 @@ export type SalonServiceAssignmentRow = {
   duration_min?: number | null;
 };
 
+export const DEFAULT_STAFF_COMMISSION_RATE = 10;
+export const DEFAULT_STAFF_BUFFER_MINUTES = 0;
+export const DEFAULT_SERVICE_DURATION_MINUTES = 30;
+
+/** Defaults applied when a salon owner allocates a service to a staff member. */
+export function buildDefaultStaffServiceConfig(
+  service: SalonServiceAssignmentRow,
+  staffCommissionRate?: number | null,
+  generalBufferTime: number | string = DEFAULT_STAFF_BUFFER_MINUTES
+) {
+  const duration =
+    service.duration_min != null && service.duration_min > 0
+      ? service.duration_min
+      : DEFAULT_SERVICE_DURATION_MINUTES;
+
+  return {
+    enabled: false,
+    commission: String(staffCommissionRate ?? DEFAULT_STAFF_COMMISSION_RATE),
+    buffer: String(generalBufferTime),
+    duration: String(duration),
+  };
+}
+
 export function findSalonServiceForAssignmentId(
   salonServices: SalonServiceAssignmentRow[],
   assignedId: string
@@ -142,8 +165,11 @@ export function findSalonServiceForAssignmentId(
 
 export function buildStaffServicesConfigFromMember(
   member: {
+    commission_rate?: number | null;
+    general_buffer_time?: number | null;
     services?: Record<string, StaffServiceConfig>;
     working_hours?: {
+      general_buffer_time?: number | null;
       assigned_services?: Array<{
         service_id: string;
         commission_rate?: number | null;
@@ -155,8 +181,15 @@ export function buildStaffServicesConfigFromMember(
   salonServices: SalonServiceAssignmentRow[]
 ) {
   const workingHours = parseStaffWorkingHours(member.working_hours) || member.working_hours;
+  const staffCommission = member.commission_rate ?? DEFAULT_STAFF_COMMISSION_RATE;
+  const generalBuffer =
+    member.general_buffer_time ??
+    workingHours?.general_buffer_time ??
+    DEFAULT_STAFF_BUFFER_MINUTES;
+
   const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
   for (const service of salonServices) {
+    const defaults = buildDefaultStaffServiceConfig(service, staffCommission, generalBuffer);
     const assigned = workingHours?.assigned_services?.find((row) =>
       serviceIdsMatch(row.service_id, service)
     );
@@ -164,30 +197,32 @@ export function buildStaffServicesConfigFromMember(
     if (fromStaffServices) {
       configs[service.id] = {
         enabled: Boolean(fromStaffServices.enabled),
-        commission: fromStaffServices.commission?.toString() || "10",
-        buffer: fromStaffServices.buffer?.toString() || "15",
+        commission: fromStaffServices.commission?.toString() || defaults.commission,
+        buffer:
+          fromStaffServices.buffer != null && fromStaffServices.buffer !== ""
+            ? String(fromStaffServices.buffer)
+            : defaults.buffer,
         duration:
           fromStaffServices.duration?.toString() ||
-          service.duration_min?.toString() ||
-          "30",
+          assigned?.service_time?.toString() ||
+          defaults.duration,
       };
     } else if (assigned) {
       configs[service.id] = {
         enabled: true,
-        commission: assigned.commission_rate?.toString() || "10",
-        buffer: assigned.buffer_time?.toString() || "15",
+        commission:
+          assigned.commission_rate != null
+            ? String(assigned.commission_rate)
+            : defaults.commission,
+        buffer:
+          assigned.buffer_time != null ? String(assigned.buffer_time) : defaults.buffer,
         duration:
-          assigned.service_time?.toString() ||
-          service.duration_min?.toString() ||
-          "30",
+          assigned.service_time != null
+            ? String(assigned.service_time)
+            : defaults.duration,
       };
     } else {
-      configs[service.id] = {
-        enabled: false,
-        commission: "10",
-        buffer: "15",
-        duration: service.duration_min?.toString() || "30",
-      };
+      configs[service.id] = defaults;
     }
   }
   return configs;
@@ -215,7 +250,7 @@ export function buildStaffWorkingHoursPayload(
 
   return {
     schedule,
-    general_buffer_time: parseFloat(String(generalBufferTime)) || 15,
+    general_buffer_time: parseFloat(String(generalBufferTime)) || DEFAULT_STAFF_BUFFER_MINUTES,
     assigned_services,
   };
 }
@@ -231,7 +266,7 @@ export function normalizeSalonStaffInsertRow(
       ? staff.working_hours
       : buildStaffWorkingHoursPayload(
           (staff.schedule || {}) as Record<string, unknown>,
-          staff.general_buffer_time ?? 15,
+          staff.general_buffer_time ?? DEFAULT_STAFF_BUFFER_MINUTES,
           staff.services || {},
           []
         );

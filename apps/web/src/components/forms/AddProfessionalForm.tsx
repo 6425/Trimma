@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { buildStaffServicesConfigFromMember, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
+import { buildStaffServicesConfigFromMember, buildDefaultStaffServiceConfig, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -109,26 +109,66 @@ export function AddProfessionalForm({
   );
   const [generalBufferTime, setGeneralBufferTime] = useState(
     () =>
-      initialStaff?.general_buffer_time?.toString() ||
-      initialStaff?.working_hours?.general_buffer_time?.toString() ||
-      "15"
+      initialStaff?.general_buffer_time?.toString() ??
+      initialStaff?.working_hours?.general_buffer_time?.toString() ??
+      "0"
   );
   const [selectedServices, setSelectedServices] = useState<any>(() =>
-    buildServicesConfig(initialStaff, salonServices)
+    buildServicesConfig(
+      {
+        ...initialStaff,
+        general_buffer_time:
+          initialStaff?.general_buffer_time ??
+          initialStaff?.working_hours?.general_buffer_time ??
+          0,
+      },
+      salonServices
+    )
   );
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(() => initialStaff?.avatar_url || "");
 
+  const resolveServiceDefaults = (serviceId: string) => {
+    const service = salonServices.find((s) => s.id === serviceId);
+    if (!service) {
+      return { commission: newCommission, buffer: generalBufferTime, duration: "30" };
+    }
+    const defaults = buildDefaultStaffServiceConfig(
+      service,
+      parseFloat(newCommission) || 0,
+      generalBufferTime
+    );
+    return defaults;
+  };
+
   const handleServiceCheckboxChange = (serviceId: string, checked: boolean) => {
-    setSelectedServices((prev: any) => ({
-      ...prev,
-      [serviceId]: {
-        ...prev[serviceId],
-        enabled: checked,
-        commission: prev[serviceId]?.commission || newCommission,
-        buffer: prev[serviceId]?.buffer || generalBufferTime,
-        duration: prev[serviceId]?.duration || salonServices.find(s => s.id === serviceId)?.duration_min?.toString() || salonServices.find(s => s.id === serviceId)?.duration?.toString() || "30"
+    setSelectedServices((prev: any) => {
+      const defaults = resolveServiceDefaults(serviceId);
+      const existing = prev[serviceId];
+
+      if (!checked) {
+        return {
+          ...prev,
+          [serviceId]: { ...existing, enabled: false },
+        };
       }
-    }));
+
+      if (!existing?.enabled) {
+        return {
+          ...prev,
+          [serviceId]: {
+            enabled: true,
+            commission: defaults.commission,
+            buffer: defaults.buffer,
+            duration: defaults.duration,
+          },
+        };
+      }
+
+      return {
+        ...prev,
+        [serviceId]: { ...existing, enabled: true },
+      };
+    });
   };
 
   const handleServiceDurationChange = (serviceId: string, val: string) => {
@@ -368,15 +408,17 @@ export function AddProfessionalForm({
                 <input 
                   type="number"
                   required
-                  placeholder="15"
+                  placeholder="0"
                   value={generalBufferTime}
                   onChange={(e) => {
                     const newBuf = e.target.value;
                     setGeneralBufferTime(newBuf);
                     setSelectedServices((prev: any) => {
                       const updated = { ...prev };
-                      Object.keys(updated).forEach(k => {
-                        updated[k].buffer = newBuf;
+                      Object.keys(updated).forEach((k) => {
+                        if (updated[k]?.enabled) {
+                          updated[k] = { ...updated[k], buffer: newBuf };
+                        }
                       });
                       return updated;
                     });
@@ -397,8 +439,10 @@ export function AddProfessionalForm({
                     setNewCommission(newComm);
                     setSelectedServices((prev: any) => {
                       const updated = { ...prev };
-                      Object.keys(updated).forEach(k => {
-                        updated[k].commission = newComm;
+                      Object.keys(updated).forEach((k) => {
+                        if (updated[k]?.enabled) {
+                          updated[k] = { ...updated[k], commission: newComm };
+                        }
                       });
                       return updated;
                     });
@@ -420,7 +464,12 @@ export function AddProfessionalForm({
             ) : (
               <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
                 {salonServices.map((service) => {
-                  const config = selectedServices[service.id] || { enabled: false, commission: "10", buffer: "15" };
+                  const fallback = buildDefaultStaffServiceConfig(
+                    service,
+                    parseFloat(newCommission) || 0,
+                    generalBufferTime
+                  );
+                  const config = selectedServices[service.id] || fallback;
                   return (
                     <div key={service.id} className="bg-white border border-slate-100 rounded-xl p-3 space-y-2 shadow-sm">
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -459,7 +508,7 @@ export function AddProfessionalForm({
                             <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Service Time (mins)</span>
                             <input 
                               type="number"
-                              placeholder="30"
+                              placeholder={service.duration_min?.toString() || "30"}
                               value={config.duration}
                               onChange={(e) => handleServiceDurationChange(service.id, e.target.value)}
                               className="w-full h-8 px-2 rounded-lg border border-slate-200 focus:outline-none focus:border-zinc-950 text-xs font-medium"

@@ -525,7 +525,7 @@ export default function DashboardStaff() {
                               ? `${Object.values(member.working_hours.schedule).filter((d: any) => d.isWorking).length} Working Days`
                               : member.working_hours?.hours_description || "No schedule"}
                           </span>
-                         {member.working_hours?.general_buffer_time && (
+                         {member.working_hours?.general_buffer_time > 0 && (
                            <span className="flex items-center gap-1 font-semibold text-zinc-500">⏱️ {member.working_hours.general_buffer_time}m Buffer</span>
                          )}
                        </div>
