@@ -1073,6 +1073,27 @@
     flex-shrink: 0;
   }
 
+  /* Dashboard portals with full-width site nav above the workspace shell */
+  .trimma-portal-with-site-nav {
+    --trimma-portal-sidebar-offset: 4rem;
+  }
+
+  @media (min-width: 1024px) {
+    .trimma-portal-with-site-nav {
+      --trimma-portal-sidebar-offset: 7.5rem;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .trimma-portal-with-site-nav .trimma-portal-sidebar {
+      top: var(--trimma-portal-sidebar-offset) !important;
+      bottom: 0 !important;
+      height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+      max-height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+      min-height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+    }
+  }
+
   /* Desktop portal sidebars — anchor to viewport bottom (below nav), not top */
   @media (min-width: 1024px) {
     .trimma-portal-sidebar {

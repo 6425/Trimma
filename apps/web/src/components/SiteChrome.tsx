@@ -17,44 +17,60 @@ export default function SiteChrome({
 }) {
   const pathname = usePathname();
   const isCheckout = pathname?.startsWith("/checkout");
+  const isStandaloneAuthPage =
+    pathname === "/admin/login" ||
+    pathname === "/agent/login" ||
+    pathname?.startsWith("/auth/") ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
   const usesDashboardShell =
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/agent") ||
     pathname?.startsWith("/regional-head") ||
     pathname === "/customer" ||
-    pathname?.startsWith("/customer/") ||
-    pathname?.startsWith("/auth/") ||
-    pathname === "/login" ||
-    pathname === "/signup" ||
-    pathname === "/forgot-password" ||
-    pathname === "/reset-password";
+    pathname?.startsWith("/customer/");
 
-  return (
+  const showSiteNav = !isCheckout && !isStandaloneAuthPage;
+
+  const withProviders = (content: React.ReactNode) => (
     <AuthProvider>
-      {isCheckout ? (
-        <main className="min-h-screen trimma-marketplace-shell">{children}</main>
-      ) : usesDashboardShell ? (
-        pathname === "/customer" || pathname?.startsWith("/customer/") ? (
-          <SalonFavoritesProvider>
-            <SavedStylesProvider>
-              <main className="min-h-screen trimma-marketplace-shell">{children}</main>
-            </SavedStylesProvider>
-          </SalonFavoritesProvider>
-        ) : (
-          <main className="min-h-screen">{children}</main>
-        )
-      ) : (
-        <SalonFavoritesProvider>
-          <SavedStylesProvider>
-            <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-[#ffc800]">
-              <GlobalHeader navCategories={navCategories} />
-              <main className="flex-1">{children}</main>
-              <GlobalFooter />
-            </div>
-          </SavedStylesProvider>
-        </SalonFavoritesProvider>
-      )}
+      <SalonFavoritesProvider>
+        <SavedStylesProvider>{content}</SavedStylesProvider>
+      </SalonFavoritesProvider>
     </AuthProvider>
+  );
+
+  if (isCheckout) {
+    return withProviders(
+      <main className="min-h-screen trimma-marketplace-shell">{children}</main>
+    );
+  }
+
+  if (isStandaloneAuthPage) {
+    return withProviders(<main className="min-h-screen">{children}</main>);
+  }
+
+  if (usesDashboardShell && showSiteNav) {
+    return withProviders(
+      <div className="trimma-portal-with-site-nav min-h-screen flex flex-col bg-white trimma-light-context w-full">
+        <GlobalHeader navCategories={navCategories} />
+        <main className="flex-1 min-h-0 flex flex-col w-full min-w-0">{children}</main>
+      </div>
+    );
+  }
+
+  if (usesDashboardShell) {
+    return withProviders(<main className="min-h-screen">{children}</main>);
+  }
+
+  return withProviders(
+    <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-[#ffc800]">
+      <GlobalHeader navCategories={navCategories} />
+      <main className="flex-1">{children}</main>
+      <GlobalFooter />
+    </div>
   );
 }
