@@ -9,6 +9,7 @@ type SalonServiceRow = {
   id: string;
   duration_min?: number | null;
   global_service_id?: string | null;
+  status?: string | null;
 };
 
 type SalonStaffRow = {
@@ -48,6 +49,10 @@ function normalizeStaffWorkingHours(workingHours: unknown): NormalizedStaffWorki
   };
 }
 
+function isActiveServiceStatus(status: string | null | undefined): boolean {
+  return (status || "active").toLowerCase() === "active";
+}
+
 function resolveSalonServiceId(
   assignedId: string,
   services: SalonServiceRow[]
@@ -58,7 +63,7 @@ function resolveSalonServiceId(
   return match?.id || null;
 }
 
-/** Ensure every active salon service is mapped to active staff using salon service UUIDs. */
+/** Ensure salon services are mapped to active staff using salon service UUIDs. */
 export async function syncStaffServiceAssignmentsForSalon(
   supabase: SupabaseClient,
   salonId: string
@@ -66,9 +71,8 @@ export async function syncStaffServiceAssignmentsForSalon(
   const [servicesRes, staffRes] = await Promise.all([
     supabase
       .from("services")
-      .select("id, duration_min, global_service_id")
-      .eq("salon_id", salonId)
-      .eq("status", "active"),
+      .select("id, duration_min, global_service_id, status")
+      .eq("salon_id", salonId),
     supabase
       .from("salon_staff")
       .select("id, commission_rate, working_hours, status")
@@ -76,9 +80,12 @@ export async function syncStaffServiceAssignmentsForSalon(
       .eq("status", "active"),
   ]);
 
-  const services = (servicesRes.data || []) as SalonServiceRow[];
+  const allServices = (servicesRes.data || []) as SalonServiceRow[];
   const staff = (staffRes.data || []) as SalonStaffRow[];
-  if (!services.length || !staff.length) return;
+  if (!allServices.length || !staff.length) return;
+
+  const activeServices = allServices.filter((svc) => isActiveServiceStatus(svc.status));
+  const servicesToSync = activeServices.length > 0 ? activeServices : allServices;
 
   for (const member of staff) {
     const base = normalizeStaffWorkingHours(member.working_hours);
@@ -90,7 +97,7 @@ export async function syncStaffServiceAssignmentsForSalon(
     const normalizedAssigned = (base.assigned_services as Array<Record<string, unknown>>)
       .map((row) => {
         const rawId = String(row.service_id || "");
-        const salonServiceId = resolveSalonServiceId(rawId, services);
+        const salonServiceId = resolveSalonServiceId(rawId, allServices);
         if (!salonServiceId) return null;
         return {
           ...row,
@@ -104,7 +111,7 @@ export async function syncStaffServiceAssignmentsForSalon(
       normalizedAssigned.map((row) => String(row.service_id))
     );
 
-    for (const svc of services) {
+    for (const svc of servicesToSync) {
       if (!covered.has(svc.id)) {
         normalizedAssigned.push({
           service_id: svc.id,
@@ -126,6 +133,15 @@ export async function syncStaffServiceAssignmentsForSalon(
         },
       })
       .eq("id", member.id);
+  }
+
+  if (activeServices.length === 0) {
+    const idsToActivate = servicesToSync.map((svc) => svc.id);
+    await supabase
+      .from("services")
+      .update({ status: "active" })
+      .in("id", idsToActivate)
+      .eq("salon_id", salonId);
   }
 }
 

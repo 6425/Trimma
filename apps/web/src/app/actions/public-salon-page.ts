@@ -6,6 +6,7 @@ import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { isDummySalonRecord } from "@/lib/salon-list-filters";
 import {
   dedupeStaffByNameRole,
+  syncStaffServiceAssignmentsForSalon,
 } from "@/lib/salon-staff-service-sync";
 
 const SALON_COLUMNS =
@@ -140,12 +141,33 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     if (globalAmenitiesRes.error) throw new Error(globalAmenitiesRes.error.message);
     if (promotionsRes.error) throw new Error(promotionsRes.error.message);
 
-    const activeServices = (servicesRes.data || []).filter(
+    let activeServices = (servicesRes.data || []).filter(
       (svc) => (svc.status || "active").toLowerCase() === "active"
     );
     const activeStaffRows = (staffRes.data || []).filter(
       (row) => (row.status || "active").toLowerCase() === "active"
     );
+
+    if (activeServices.length === 0 && activeStaffRows.length > 0) {
+      const { count, error: serviceCountError } = await supabase
+        .from("services")
+        .select("id", { count: "exact", head: true })
+        .eq("salon_id", salonId);
+      if (serviceCountError) throw new Error(serviceCountError.message);
+
+      if ((count || 0) > 0) {
+        await syncStaffServiceAssignmentsForSalon(supabase, salonId);
+        const { data: refreshedServices, error: refreshError } = await supabase
+          .from("services")
+          .select("*")
+          .eq("salon_id", salonId)
+          .eq("status", "active");
+        if (refreshError) throw new Error(refreshError.message);
+        activeServices = (refreshedServices || []).filter(
+          (svc) => (svc.status || "active").toLowerCase() === "active"
+        );
+      }
+    }
 
     const services: PublicSalonService[] = activeServices.map((svc) => ({
       id: svc.id,

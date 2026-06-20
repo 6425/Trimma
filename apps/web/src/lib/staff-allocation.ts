@@ -63,9 +63,13 @@ export function getServiceIdsCoveredByStaff(staff: SalonStaffForAllocation[]): S
 
 export function isServiceCoveredByStaff(
   serviceId: string,
-  staff: SalonStaffForAllocation[]
+  staff: SalonStaffForAllocation[],
+  globalServiceId?: string | null
 ): boolean {
-  return getServiceIdsCoveredByStaff(staff).has(serviceId);
+  const covered = getServiceIdsCoveredByStaff(staff);
+  if (covered.has(serviceId)) return true;
+  if (globalServiceId && covered.has(globalServiceId)) return true;
+  return false;
 }
 
 export function salonHasActiveStaff(staff: SalonStaffForAllocation[]): boolean {

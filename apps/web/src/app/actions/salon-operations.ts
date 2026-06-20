@@ -369,7 +369,16 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
       if (!salonHasActiveStaff(staff)) {
         throw new Error(STAFF_REQUIRED_BEFORE_SERVICES_MSG);
       }
-      if (!isServiceCoveredByStaff(serviceId, staff)) {
+
+      const { data: serviceRow, error: serviceReadError } = await supabase
+        .from("services")
+        .select("id, global_service_id")
+        .eq("id", serviceId)
+        .eq("salon_id", ctx.salonId)
+        .maybeSingle();
+      if (serviceReadError) throw new Error(serviceReadError.message);
+
+      if (!isServiceCoveredByStaff(serviceId, staff, serviceRow?.global_service_id)) {
         throw new Error(SERVICE_NEEDS_STAFF_MSG);
       }
     }
