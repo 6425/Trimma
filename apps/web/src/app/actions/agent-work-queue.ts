@@ -41,10 +41,7 @@ export async function fetchAgentWorkQueue(agentEmail: string) {
 
       if (lead.onboarding_status === "ASSIGNED_TO_AGENT") {
         priority = "HIGH";
-        action = "Publish Lead & Disable Booking";
-      } else if (lead.onboarding_status === "PUBLISHED_UNBOOKABLE") {
-        priority = "HIGH";
-        action = "Send Owner Invitation";
+        action = "Complete Field Editor & Invite Owner";
       } else if (lead.onboarding_status === "OWNER_INVITED") {
         priority = "LOW";
         action = "Wait for Owner Activation";

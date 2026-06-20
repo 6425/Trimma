@@ -39,7 +39,7 @@ export async function fetchAdminDashboardClient() {
     const status = String(salon.status || "").toLowerCase();
     if (["pending", "pending_approval"].includes(status)) return true;
     const onboarding = salon.onboarding_status || "";
-    return ["OWNER_ACTIVATED", "AGENT_APPROVED"].includes(onboarding) && !salon.is_verified;
+    return ["PENDING_ADMIN_VERIFICATION", "AGENT_APPROVED"].includes(onboarding) && !salon.is_verified;
   });
 
   return {

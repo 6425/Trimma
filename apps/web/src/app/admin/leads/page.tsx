@@ -972,7 +972,7 @@ export default function Leads() {
     } else if (activeTab === "draft") {
       return ["AUTO_PROVISIONED", "DRAFT_REVIEW"].includes(status);
     } else if (activeTab === "pipeline") {
-      return ["ASSIGNED_TO_AGENT", "PUBLISHED_UNBOOKABLE", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(status);
+      return ["ASSIGNED_TO_AGENT", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(status);
     } else if (activeTab === "archived") {
       return ["VERIFIED", "REJECTED", "ON_HOLD"].includes(status);
     }

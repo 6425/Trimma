@@ -3,7 +3,8 @@ export const AGENT_SALON_STATUS_LABELS: Record<string, string> = {
   AGENT_VERIFIED: "Field verified",
   OWNER_INVITED: "Owner invited",
   OWNER_ACTIVATED: "Owner activated",
-  AGENT_APPROVED: "Live",
+  PENDING_ADMIN_VERIFICATION: "Pending admin review",
+  AGENT_APPROVED: "Live (legacy)",
   VERIFIED: "Verified",
   REJECTED: "Rejected",
   DISCOVERED: "Discovered",
@@ -21,6 +22,7 @@ export function getAgentSalonStatusClass(status: string | null | undefined): str
     AGENT_VERIFIED: "bg-indigo-100 text-indigo-700",
     OWNER_INVITED: "bg-emerald-100 text-emerald-700",
     OWNER_ACTIVATED: "bg-amber-100 text-amber-700",
+    PENDING_ADMIN_VERIFICATION: "bg-indigo-100 text-indigo-700",
     AGENT_APPROVED: "bg-violet-100 text-violet-700",
     VERIFIED: "bg-green-100 text-green-700",
     REJECTED: "bg-rose-100 text-rose-700",
@@ -34,5 +36,5 @@ export function isAgentSalonActive(status: string | null | undefined): boolean {
 }
 
 export function isAgentSalonLive(status: string | null | undefined): boolean {
-  return ["AGENT_APPROVED", "VERIFIED"].includes(status || "");
+  return ["PENDING_ADMIN_VERIFICATION", "AGENT_APPROVED", "VERIFIED"].includes(status || "");
 }

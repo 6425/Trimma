@@ -129,26 +129,109 @@ export type SalonServiceAssignmentRow = {
 };
 
 export const DEFAULT_STAFF_COMMISSION_RATE = 10;
-export const DEFAULT_STAFF_BUFFER_MINUTES = 0;
 export const DEFAULT_SERVICE_DURATION_MINUTES = 30;
+
+export type StaffProfileAssignmentDefaults = {
+  commissionRate: number;
+  generalBufferTime: number;
+};
+
+/** Commission + buffer saved on the staff profile — used for every service allocation. */
+export function resolveStaffProfileAssignmentDefaults(member: {
+  commission_rate?: number | null;
+  general_buffer_time?: number | null;
+  working_hours?: {
+    general_buffer_time?: number | null;
+  } | null;
+}): StaffProfileAssignmentDefaults {
+  const workingHours = parseStaffWorkingHours(member.working_hours) || member.working_hours;
+  const generalBufferRaw =
+    member.general_buffer_time ??
+    workingHours?.general_buffer_time;
+
+  return {
+    commissionRate: Number(member.commission_rate ?? DEFAULT_STAFF_COMMISSION_RATE) || DEFAULT_STAFF_COMMISSION_RATE,
+    generalBufferTime:
+      generalBufferRaw != null && String(generalBufferRaw).trim() !== ""
+        ? Number(generalBufferRaw) || 0
+        : 0,
+  };
+}
 
 /** Defaults applied when a salon owner allocates a service to a staff member. */
 export function buildDefaultStaffServiceConfig(
   service: SalonServiceAssignmentRow,
   staffCommissionRate?: number | null,
-  generalBufferTime: number | string = DEFAULT_STAFF_BUFFER_MINUTES
+  generalBufferTime?: number | string | null
 ) {
   const duration =
     service.duration_min != null && service.duration_min > 0
       ? service.duration_min
       : DEFAULT_SERVICE_DURATION_MINUTES;
 
+  const buffer =
+    generalBufferTime != null && generalBufferTime !== ""
+      ? String(generalBufferTime)
+      : "0";
+
   return {
     enabled: false,
     commission: String(staffCommissionRate ?? DEFAULT_STAFF_COMMISSION_RATE),
-    buffer: String(generalBufferTime),
+    buffer,
     duration: String(duration),
   };
+}
+
+/** Merge salon service catalog into form state using staff profile defaults for new rows. */
+export function mergeSalonServicesIntoStaffConfig(
+  existing: Record<string, { enabled?: boolean; commission?: string; buffer?: string; duration?: string }>,
+  salonServices: SalonServiceAssignmentRow[],
+  profile: StaffProfileAssignmentDefaults
+) {
+  const merged: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
+
+  for (const service of salonServices) {
+    const defaults = buildDefaultStaffServiceConfig(
+      service,
+      profile.commissionRate,
+      profile.generalBufferTime
+    );
+    const current = existing[service.id];
+    merged[service.id] = {
+      enabled: Boolean(current?.enabled),
+      commission: current?.commission ?? defaults.commission,
+      buffer: current?.buffer ?? defaults.buffer,
+      duration: current?.duration ?? defaults.duration,
+    };
+  }
+
+  return merged;
+}
+
+/** Apply staff profile commission/buffer to every service row (keeps enabled state + durations). */
+export function applyStaffProfileRatesToServiceConfig(
+  config: Record<string, { enabled?: boolean; commission?: string; buffer?: string; duration?: string }>,
+  salonServices: SalonServiceAssignmentRow[],
+  profile: StaffProfileAssignmentDefaults
+) {
+  const next = { ...config };
+
+  for (const service of salonServices) {
+    const defaults = buildDefaultStaffServiceConfig(
+      service,
+      profile.commissionRate,
+      profile.generalBufferTime
+    );
+    const current = next[service.id];
+    next[service.id] = {
+      enabled: Boolean(current?.enabled),
+      commission: String(profile.commissionRate),
+      buffer: String(profile.generalBufferTime),
+      duration: current?.duration ?? defaults.duration,
+    };
+  }
+
+  return next;
 }
 
 export function findSalonServiceForAssignmentId(
@@ -181,15 +264,15 @@ export function buildStaffServicesConfigFromMember(
   salonServices: SalonServiceAssignmentRow[]
 ) {
   const workingHours = parseStaffWorkingHours(member.working_hours) || member.working_hours;
-  const staffCommission = member.commission_rate ?? DEFAULT_STAFF_COMMISSION_RATE;
-  const generalBuffer =
-    member.general_buffer_time ??
-    workingHours?.general_buffer_time ??
-    DEFAULT_STAFF_BUFFER_MINUTES;
+  const profile = resolveStaffProfileAssignmentDefaults(member);
 
   const configs: Record<string, { enabled: boolean; commission: string; buffer: string; duration: string }> = {};
   for (const service of salonServices) {
-    const defaults = buildDefaultStaffServiceConfig(service, staffCommission, generalBuffer);
+    const defaults = buildDefaultStaffServiceConfig(
+      service,
+      profile.commissionRate,
+      profile.generalBufferTime
+    );
     const assigned = workingHours?.assigned_services?.find((row) =>
       serviceIdsMatch(row.service_id, service)
     );
@@ -250,7 +333,7 @@ export function buildStaffWorkingHoursPayload(
 
   return {
     schedule,
-    general_buffer_time: parseFloat(String(generalBufferTime)) || DEFAULT_STAFF_BUFFER_MINUTES,
+    general_buffer_time: parseFloat(String(generalBufferTime)) || 0,
     assigned_services,
   };
 }
@@ -266,7 +349,7 @@ export function normalizeSalonStaffInsertRow(
       ? staff.working_hours
       : buildStaffWorkingHoursPayload(
           (staff.schedule || {}) as Record<string, unknown>,
-          staff.general_buffer_time ?? DEFAULT_STAFF_BUFFER_MINUTES,
+          staff.general_buffer_time ?? 0,
           staff.services || {},
           []
         );

@@ -1,8 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useState, useRef } from "react";
-import { buildStaffServicesConfigFromMember, buildDefaultStaffServiceConfig, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import {
+  buildStaffServicesConfigFromMember,
+  buildDefaultStaffServiceConfig,
+  mergeSalonServicesIntoStaffConfig,
+  applyStaffProfileRatesToServiceConfig,
+  resolveEffectiveStaffRoles,
+  DEFAULT_STAFF_COMMISSION_RATE,
+} from "@/lib/salon-staff-insert";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -81,7 +88,18 @@ export function AddProfessionalForm({
   const buildServicesConfig = (
     staff: AddProfessionalFormProps["initialStaff"],
     services: AddProfessionalFormProps["salonServices"]
-  ) => buildStaffServicesConfigFromMember(staff || {}, services);
+  ) =>
+    buildStaffServicesConfigFromMember(
+      {
+        ...staff,
+        commission_rate:
+          staff?.commission_rate ??
+          (staff?.working_hours as { commission_rate?: number } | undefined)?.commission_rate,
+        general_buffer_time:
+          staff?.general_buffer_time ?? staff?.working_hours?.general_buffer_time,
+      },
+      services
+    );
 
   // ADD FORM STATES — initialized from initialStaff when editing (parent should pass a stable key to remount)
   const [newName, setNewName] = useState(() => initialStaff?.name || "");
@@ -102,30 +120,34 @@ export function AddProfessionalForm({
     );
   });
   const [newCommission, setNewCommission] = useState(
-    () => initialStaff?.commission_rate?.toString() || "10"
+    () => initialStaff?.commission_rate?.toString() || String(DEFAULT_STAFF_COMMISSION_RATE)
   );
   const [newSchedule, setNewSchedule] = useState(
     () => initialStaff?.schedule || initialStaff?.working_hours?.schedule || defaultSchedule
   );
-  const [generalBufferTime, setGeneralBufferTime] = useState(
-    () =>
-      initialStaff?.general_buffer_time?.toString() ??
-      initialStaff?.working_hours?.general_buffer_time?.toString() ??
-      "0"
-  );
+  const [generalBufferTime, setGeneralBufferTime] = useState(() => {
+    const saved =
+      initialStaff?.general_buffer_time ?? initialStaff?.working_hours?.general_buffer_time;
+    return saved != null ? String(saved) : "";
+  });
   const [selectedServices, setSelectedServices] = useState<any>(() =>
-    buildServicesConfig(
-      {
-        ...initialStaff,
-        general_buffer_time:
-          initialStaff?.general_buffer_time ??
-          initialStaff?.working_hours?.general_buffer_time ??
-          0,
-      },
-      salonServices
-    )
+    buildServicesConfig(initialStaff, salonServices)
   );
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(() => initialStaff?.avatar_url || "");
+
+  const currentProfile = useMemo(
+    () => ({
+      commissionRate: parseFloat(newCommission) || DEFAULT_STAFF_COMMISSION_RATE,
+      generalBufferTime: parseFloat(generalBufferTime) || 0,
+    }),
+    [newCommission, generalBufferTime]
+  );
+
+  useEffect(() => {
+    setSelectedServices((prev) =>
+      mergeSalonServicesIntoStaffConfig(prev, salonServices, currentProfile)
+    );
+  }, [salonServices, currentProfile.commissionRate, currentProfile.generalBufferTime]);
 
   const resolveServiceDefaults = (serviceId: string) => {
     const service = salonServices.find((s) => s.id === serviceId);
@@ -134,8 +156,8 @@ export function AddProfessionalForm({
     }
     const defaults = buildDefaultStaffServiceConfig(
       service,
-      parseFloat(newCommission) || 0,
-      generalBufferTime
+      currentProfile.commissionRate,
+      currentProfile.generalBufferTime
     );
     return defaults;
   };
@@ -408,20 +430,18 @@ export function AddProfessionalForm({
                 <input 
                   type="number"
                   required
-                  placeholder="0"
+                  placeholder="Set buffer (mins)"
                   value={generalBufferTime}
                   onChange={(e) => {
                     const newBuf = e.target.value;
                     setGeneralBufferTime(newBuf);
-                    setSelectedServices((prev: any) => {
-                      const updated = { ...prev };
-                      Object.keys(updated).forEach((k) => {
-                        if (updated[k]?.enabled) {
-                          updated[k] = { ...updated[k], buffer: newBuf };
-                        }
-                      });
-                      return updated;
-                    });
+                    const profile = {
+                      commissionRate: parseFloat(newCommission) || DEFAULT_STAFF_COMMISSION_RATE,
+                      generalBufferTime: parseFloat(newBuf) || 0,
+                    };
+                    setSelectedServices((prev) =>
+                      applyStaffProfileRatesToServiceConfig(prev, salonServices, profile)
+                    );
                   }}
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
                 />
@@ -437,15 +457,13 @@ export function AddProfessionalForm({
                   onChange={(e) => {
                     const newComm = e.target.value;
                     setNewCommission(newComm);
-                    setSelectedServices((prev: any) => {
-                      const updated = { ...prev };
-                      Object.keys(updated).forEach((k) => {
-                        if (updated[k]?.enabled) {
-                          updated[k] = { ...updated[k], commission: newComm };
-                        }
-                      });
-                      return updated;
-                    });
+                    const profile = {
+                      commissionRate: parseFloat(newComm) || DEFAULT_STAFF_COMMISSION_RATE,
+                      generalBufferTime: parseFloat(generalBufferTime) || 0,
+                    };
+                    setSelectedServices((prev) =>
+                      applyStaffProfileRatesToServiceConfig(prev, salonServices, profile)
+                    );
                   }}
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-950 font-medium text-sm transition-all"
                 />
@@ -466,8 +484,8 @@ export function AddProfessionalForm({
                 {salonServices.map((service) => {
                   const fallback = buildDefaultStaffServiceConfig(
                     service,
-                    parseFloat(newCommission) || 0,
-                    generalBufferTime
+                    currentProfile.commissionRate,
+                    currentProfile.generalBufferTime
                   );
                   const config = selectedServices[service.id] || fallback;
                   return (

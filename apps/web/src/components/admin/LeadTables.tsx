@@ -84,7 +84,7 @@ export function LeadTables({
                 : "text-zinc-500 hover:text-zinc-950"
             }`}
           >
-            3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "PUBLISHED_UNBOOKABLE", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(l.onboarding_status || "DISCOVERED")).length})
+            3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(l.onboarding_status || "DISCOVERED")).length})
           </button>
           <button
             onClick={() => setActiveTab("archived")}

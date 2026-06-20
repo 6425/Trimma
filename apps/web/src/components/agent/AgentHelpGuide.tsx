@@ -24,7 +24,6 @@ import {
   Target,
   ClipboardList,
   ArrowRight,
-  ShieldCheck,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,6 @@ const AGENT_NAV_SECTIONS = [
   { id: "manual-lead", label: "Add Manual Lead" },
   { id: "field-editor", label: "Field Editor" },
   { id: "territory", label: "Territory Explorer" },
-  { id: "approval", label: "Salon Approval" },
   { id: "commissions", label: "Commissions" },
   { id: "tasks", label: "Work Queue" },
   { id: "profile", label: "My Profile" },
@@ -78,7 +76,6 @@ const REGIONAL_HEAD_NAV_SECTIONS = [
   { id: "manual-lead", label: "Add Manual Lead" },
   { id: "field-editor", label: "Field Editor" },
   { id: "territory", label: "Territory Explorer" },
-  { id: "approval", label: "Salon Approval" },
   { id: "commissions", label: "Commissions" },
   { id: "profile", label: "My Profile" },
   { id: "pipeline", label: "Onboarding Pipeline" },
@@ -93,7 +90,7 @@ const PIPELINE_STEPS = [
   { status: "Owner invited", code: "OWNER_INVITED", desc: "Invitation email and WhatsApp sent to the owner Gmail." },
   { status: "Owner activated", code: "OWNER_ACTIVATED", desc: "Owner finishes their profile inside the salon dashboard." },
   { status: "Pending admin review", code: "PENDING_ADMIN_VERIFICATION", desc: "You enable booking and submit to Trimma admin." },
-  { status: "Live / Verified", code: "AGENT_APPROVED / VERIFIED", desc: "Salon is public on the marketplace and can take bookings." },
+  { status: "Live / Verified", code: "VERIFIED", desc: "Admin approved — salon is public on the marketplace and can take bookings." },
 ];
 
 function MockFrame({
@@ -128,7 +125,6 @@ function AgentSidebarMockup() {
     { label: "Territory Explorer", active: false },
     { label: "Add Manual Lead", active: false },
     { label: "Salon Creation", active: false },
-    { label: "Salon Approval", active: false },
     { label: "Commissions", active: false },
     { label: "Agent Help", active: true },
   ];
@@ -352,7 +348,7 @@ const REGIONAL_HEAD_FAQS = [
   },
   {
     q: "Can I onboard salons myself as a Regional Head?",
-    a: "Yes. You have the full agent toolkit — Territory Explorer, Add Manual Lead, Salon Creation, Field Editor, and Salon Approval. Use the same onboarding pipeline as your sub-agents and coach them using this guide.",
+    a: "Yes. You have the full agent toolkit — Territory Explorer, Add Manual Lead, Salon Creation, and Field Editor. Use the same onboarding pipeline as your sub-agents and coach them using this guide.",
   },
 ];
 
@@ -549,7 +545,7 @@ export function AgentHelpGuide() {
                     "Set commission split % per sub-agent on My Team (0–100)",
                     "Onboard salons directly — Territory Explorer, Manual Lead, Field Editor",
                     "Monitor team pipeline — ensure no salon stalls at Owner invited or activated",
-                    "Review Salon Approval queue for salons in your regional scope",
+                    "Approve owner submissions in Field Editor — Enable Booking & Send to Admin",
                     "Earn personal referral commissions plus oversight of team activity",
                     "Escalate territory, commission, or admin approval issues to agents@trimma.com",
                   ]
@@ -638,7 +634,7 @@ export function AgentHelpGuide() {
             ]}
             tips={[
               "Start each day from the Cockpit to see which salons need owner follow-up.",
-              "Live Salons count reflects AGENT_APPROVED and VERIFIED statuses only.",
+              "Live Salons count reflects PENDING_ADMIN_VERIFICATION and VERIFIED statuses.",
             ]}
             mockup={<CockpitMockup />}
           />
@@ -695,10 +691,10 @@ export function AgentHelpGuide() {
             path="/agent/leads"
             description="Primary Field Editor hub. Verify Google leads assigned by admin and process manual onboarding leads through the same workflow."
             features={[
-              "Stats — My Salons count, Verified count, Owner Invited count",
+              "Stats — My Salons count, In Pipeline count, Owner Invited count",
               "Google Leads tab — admin-assigned salons from territory data",
               "Salon Leads (Manual) tab — leads you created in the field",
-              "Google sub-tabs — Assigned · Published · Invited/Owner Action",
+              "Google sub-tabs — Assigned · Owner Pipeline",
               "Lead cards — hero image, status badge, completion %, admin notes",
               "Completion checklist — owner Gmail, phone, address, category, hero, summary, hours",
               "Manual leads table — Business Name, Owner, Location, Contact, Edit/Process",
@@ -706,7 +702,7 @@ export function AgentHelpGuide() {
             ]}
             tips={[
               "Always set owner Gmail before sending invitations — invites go to that address.",
-              "Published (PUBLISHED_UNBOOKABLE) means the owner can preview the listing before activating.",
+              "When the owner activates their dashboard, use Enable Booking & Send to Admin in Field Editor.",
             ]}
           />
 
@@ -744,10 +740,10 @@ export function AgentHelpGuide() {
               "Section 4 — Add Staff: up to 2 professionals with photo and schedule",
               "Section 5 — Amenities & Facilities: AC, parking, WiFi, and more",
               "Save — stores draft without changing status",
-              "Send to Salon Owner for Review — requires phone + owner Gmail",
-              "Send Invitation — moves to Owner invited",
+              "Send to Salon Owner for Review — requires phone + owner Gmail; sends email + WhatsApp invite",
               "Resend Invitation — when owner has not yet activated",
               "Enable Booking & Send to Admin — when owner activated; enables booking and queues admin review",
+              "Return to Owner for Edits — when owner profile needs corrections before admin submission",
             ]}
             tips={[
               "Agent notes are internal — use them for visit context (manager name, interest level, plan preference).",
@@ -774,25 +770,6 @@ export function AgentHelpGuide() {
             tips={[
               "Potential leads = businesses not yet verified on Trimma.",
               "If no territories appear, contact admin to assign your district.",
-            ]}
-          />
-
-          <SectionCard
-            id="approval"
-            icon={ShieldCheck}
-            title="Salon Approval Queue"
-            path="/agent/salons/approval"
-            description="Dedicated list of salons where the owner finished their profile (Owner activated) and is waiting for your review before admin verification."
-            features={[
-              "Search by salon name or owner email",
-              "Pending counter — number of salons awaiting review",
-              "Table — Salon Details, Owner Contact, Status (Pending Review), Action",
-              "Review Profile — opens full approval page for that salon",
-              "Empty state — All Caught Up when no salons are pending",
-              "Primary approval path — Enable Booking & Send to Admin in Field Editor",
-            ]}
-            tips={[
-              "Check owner bank details and services on the approval page before submitting to admin.",
             ]}
           />
 
@@ -882,7 +859,8 @@ export function AgentHelpGuide() {
                     "Field verified — you confirmed data on site",
                     "Owner invited — invitation sent to owner Gmail",
                     "Owner activated — owner logged in and completed profile",
-                    "Live — AGENT_APPROVED; Verified — admin approved public listing",
+                    "Pending admin review — you enabled booking and submitted to Trimma admin",
+                    "Verified — admin approved public listing",
                     "Rejected — salon declined or failed verification",
                   ].map((s) => (
                     <li key={s} className="flex items-start gap-2">

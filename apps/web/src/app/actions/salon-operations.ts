@@ -24,6 +24,7 @@ import {
   type SalonStaffForAllocation,
 } from "@/lib/staff-allocation";
 import { normalizeSalonStaffInsertRow } from "@/lib/salon-staff-insert";
+import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
 import { syncSalonOperatingHours, syncStaffSchedules } from "@/lib/salon-operating-hours";
 import {
   calculateSalonOnboardingScore,
@@ -289,6 +290,7 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
     }));
     const { error } = await supabase.from("services").insert(rows);
     if (error) throw new Error(error.message);
+    await syncStaffServiceAssignmentsForSalon(supabase, ctx.salonId);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -664,6 +666,7 @@ export async function saveOwnerVerificationData(
           .from("services")
           .insert(servicesData.svcsToAdd.map((s) => ({ ...s, salon_id: ctx.salonId })));
         if (s1) throw new Error(s1.message);
+        await syncStaffServiceAssignmentsForSalon(supabase, ctx.salonId);
       }
     }
 

@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  DEFAULT_STAFF_BUFFER_MINUTES,
-  DEFAULT_STAFF_COMMISSION_RATE,
   DEFAULT_SERVICE_DURATION_MINUTES,
+  DEFAULT_STAFF_COMMISSION_RATE,
+  resolveStaffProfileAssignmentDefaults,
 } from "@/lib/salon-staff-insert";
 
 type SalonServiceRow = {
@@ -21,7 +21,7 @@ function normalizeStaffWorkingHours(workingHours: unknown) {
   if (Array.isArray(workingHours)) {
     return {
       schedule: workingHours,
-      general_buffer_time: DEFAULT_STAFF_BUFFER_MINUTES,
+      general_buffer_time: 0,
       assigned_services: [] as Array<Record<string, unknown>>,
     };
   }
@@ -30,14 +30,14 @@ function normalizeStaffWorkingHours(workingHours: unknown) {
     const wh = workingHours as Record<string, unknown>;
     return {
       schedule: wh.schedule || [],
-      general_buffer_time: wh.general_buffer_time ?? DEFAULT_STAFF_BUFFER_MINUTES,
+      general_buffer_time: wh.general_buffer_time ?? 0,
       assigned_services: Array.isArray(wh.assigned_services) ? wh.assigned_services : [],
     };
   }
 
   return {
     schedule: [],
-    general_buffer_time: DEFAULT_STAFF_BUFFER_MINUTES,
+    general_buffer_time: 0,
     assigned_services: [] as Array<Record<string, unknown>>,
   };
 }
@@ -76,6 +76,11 @@ export async function syncStaffServiceAssignmentsForSalon(
 
   for (const member of staff) {
     const base = normalizeStaffWorkingHours(member.working_hours);
+    const profile = resolveStaffProfileAssignmentDefaults({
+      commission_rate: member.commission_rate,
+      working_hours: base,
+    });
+
     const normalizedAssigned = (base.assigned_services as Array<Record<string, unknown>>)
       .map((row) => {
         const rawId = String(row.service_id || "");
@@ -93,14 +98,12 @@ export async function syncStaffServiceAssignmentsForSalon(
       normalizedAssigned.map((row) => String(row.service_id))
     );
 
-    const staffCommission = Number(member.commission_rate ?? DEFAULT_STAFF_COMMISSION_RATE) || DEFAULT_STAFF_COMMISSION_RATE;
-
     for (const svc of services) {
       if (!covered.has(svc.id)) {
         normalizedAssigned.push({
           service_id: svc.id,
-          commission_rate: staffCommission,
-          buffer_time: DEFAULT_STAFF_BUFFER_MINUTES,
+          commission_rate: profile.commissionRate,
+          buffer_time: profile.generalBufferTime,
           service_time: svc.duration_min || DEFAULT_SERVICE_DURATION_MINUTES,
           enabled: true,
         });
@@ -112,6 +115,7 @@ export async function syncStaffServiceAssignmentsForSalon(
       .update({
         working_hours: {
           ...base,
+          general_buffer_time: profile.generalBufferTime,
           assigned_services: normalizedAssigned,
         },
       })

@@ -594,6 +594,9 @@ export default function DashboardStaff() {
                       email: editingStaffMember.email,
                       role: editingStaffMember.role,
                       commission_rate: editingStaffMember.commission_rate,
+                      general_buffer_time:
+                        parseStaffWorkingHours(editingStaffMember.working_hours)?.general_buffer_time ??
+                        editingStaffMember.working_hours?.general_buffer_time,
                       avatar_url: editingStaffMember.avatar_url,
                       working_hours:
                         parseStaffWorkingHours(editingStaffMember.working_hours) ||

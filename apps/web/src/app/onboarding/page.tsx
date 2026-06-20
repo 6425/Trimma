@@ -21,9 +21,8 @@ export default async function OnboardingPage() {
             Grow Your Salon with Trimma
           </h1>
           <p className="text-xl text-zinc-700 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Join Sri Lanka&apos;s next-generation salon discovery and booking platform.
-            <br className="hidden md:block" />
-            Our regional onboarding specialists work directly with salon owners to ensure every salon profile is complete, accurate, and optimized for customer bookings.
+            Sign in with Google to open your salon owner dashboard, complete your profile, and submit for booking approval.
+            Your assigned Trimma agent reviews your submission before listings go live on the marketplace.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
@@ -55,7 +54,7 @@ export default async function OnboardingPage() {
               { title: "Staff Management", desc: "Manage staff availability and optimize appointment scheduling." },
               { title: "Marketing & Promos", desc: "Promote special offers, discounts, and seasonal campaigns." },
               { title: "Business Insights", desc: "Track bookings, customer trends, and performance metrics." },
-              { title: "Dedicated Support", desc: "Receive onboarding assistance and ongoing support from Trimma regional agents." }
+              { title: "Dedicated Support", desc: "Get help from your Trimma agent after you submit your salon profile from the owner dashboard." }
             ].map((feature, i) => (
               <div key={i} className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-brand-pink/30 transition-all group">
                 <div className="w-12 h-12 rounded-xl bg-brand-pink/10 flex items-center justify-center text-brand-pink font-black text-xl mb-4 group-hover:scale-110 transition-transform">
@@ -101,9 +100,10 @@ export default async function OnboardingPage() {
       {/* Why We Use Regional Onboarding Agents */}
       <section className="py-24 px-4 bg-slate-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-6">Quality-Verified Salon Information</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-6">Verified Salon Listings</h2>
           <p className="text-lg text-slate-300 mb-10 leading-relaxed">
-            Unlike open self-registration platforms, Trimma uses trained regional onboarding specialists to work directly with salon owners.
+            Every salon on Trimma completes a guided onboarding flow: you build your profile in the owner dashboard,
+            your regional agent verifies the details, and Trimma admin gives final approval before bookings open.
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
@@ -128,7 +128,7 @@ export default async function OnboardingPage() {
             <div className="mb-10 text-center">
               <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Start Salon Owner Onboarding</h2>
               <p className="text-zinc-500">
-                Sign in with Google, complete your profile, and submit for Trimma booking approval.
+                Sign in with Google, complete your salon profile in the owner dashboard, and submit for agent review and booking approval.
               </p>
             </div>
             

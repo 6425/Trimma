@@ -17,6 +17,7 @@ import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../action
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { saveAgentLeadData, convertManualLeadToSalon, fetchAgentGlobals } from "../../actions/agent-leads-update";
+import { rejectSalonOwnerSubmission } from "../../actions/agent-approval";
 import {
   fetchAgentAssignedLeads,
   fetchAgentManualLeads,
@@ -162,7 +163,7 @@ function AgentLeads() {
   const [updating, setUpdating] = useState(false);
   const [agentEmail, setAgentEmail] = useState("");
   const [agentName, setAgentName] = useState("");
-  const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'verified' | 'invited'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'invited'>('all');
   const openedSalonRef = useRef<string | null>(null);
 
   const [manualLeads, setManualLeads] = useState<any[]>([]);
@@ -630,54 +631,15 @@ function AgentLeads() {
   };
 
 
-  const handleSendInvitation = async () => {
+  const handleResendInvitation = async () => {
     if (!selectedLead) return;
     if (!formData.owner_gmail) {
-      toast.error("Owner Gmail is required to send an invitation.");
+      toast.error("Owner Gmail is required to resend an invitation.");
       return;
     }
-    
+
     try {
       setUpdating(true);
-
-      let parsedHours: any = [];
-      try {
-        parsedHours = JSON.parse(formData.working_hours || "[]");
-      } catch (e) {
-        parsedHours = formData.working_hours;
-      }
-
-      const updatePayload: any = {
-        name: formData.name || selectedLead.name,
-        address: formData.address || null,
-        phone: formData.phone || null,
-        website: formData.website || null,
-        map_url: formData.map_url || null,
-        category: selectedCategories.join(", ") || null,
-        working_hours: parsedHours,
-        latitude: formData.latitude === "" ? null : parseFloat(formData.latitude),
-        longitude: formData.longitude === "" ? null : parseFloat(formData.longitude),
-        price_level: SALON_DEFAULT_CURRENCY,
-        summary: formData.summary || null,
-        hero_url: formData.hero_url || formData.cover_url || null,
-        cover_url: formData.cover_url || formData.hero_url || null,
-        owner_gmail: formData.owner_gmail ? normalizeEmail(formData.owner_gmail) : null,
-        agent_notes: formData.agent_notes || null,
-        onboarding_status: "OWNER_INVITED",
-      };
-
-      const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
-
-      const { success, error } = await saveAgentLeadData(
-        selectedLead.id,
-        updatePayload,
-        servicesData,
-        finalStaffToAdd,
-        agentEmail,
-        "OWNER_INVITED",
-        salonAmenities
-      );
-      if (!success) throw new Error(error || "Failed to update status");
 
       const res = await fetch("/api/invite-owner", {
         method: "POST",
@@ -688,26 +650,34 @@ function AgentLeads() {
           actorEmail: agentEmail,
         }),
       });
-      
+
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to send email invite");
+        throw new Error(err.error || "Failed to resend invite");
       }
 
-      if (formData.phone) {
-        const waRes = await sendOnboardingInviteAlert(
-          selectedLead.id, 
-          formData.phone, 
-          formData.owner_gmail, 
-          formData.name || selectedLead.name,
-          selectedLead.slug
-        );
-        if (!waRes.success) {
-          console.warn("WhatsApp notification failed:", waRes.error);
-        }
-      }
-      
-      toast.success("Invites sent to owner!");
+      toast.success("Invitation resent to owner!");
+      fetchLeads();
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleRejectOwnerSubmission = async () => {
+    if (!selectedLead) return;
+    const reason = window.prompt(
+      "Why does this profile need changes? The owner will see this reason in their dashboard."
+    );
+    if (!reason?.trim()) return;
+
+    try {
+      setUpdating(true);
+      const { success, error } = await rejectSalonOwnerSubmission(selectedLead.id, reason.trim());
+      if (!success) throw new Error(error || "Rejection failed");
+
+      toast.success("Returned to owner for corrections.");
       setIsModalOpen(false);
       setSelectedLead(null);
       fetchLeads();
@@ -764,8 +734,9 @@ function AgentLeads() {
   const tabLeads = leads.filter(l => {
     if (activeTab === "all") return true;
     if (activeTab === "assigned") return l.onboarding_status === "ASSIGNED_TO_AGENT";
-    if (activeTab === "verified") return l.onboarding_status === "PUBLISHED_UNBOOKABLE";
-    if (activeTab === "invited") return ["OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(l.onboarding_status);
+    if (activeTab === "invited") {
+      return ["OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(l.onboarding_status);
+    }
     return true;
   });
 
@@ -782,6 +753,7 @@ function AgentLeads() {
       AGENT_VERIFIED: "bg-indigo-100 text-indigo-700",
       OWNER_INVITED: "bg-emerald-100 text-emerald-700",
       OWNER_ACTIVATED: "bg-amber-100 text-amber-700",
+      PENDING_ADMIN_VERIFICATION: "bg-indigo-100 text-indigo-700",
       AGENT_APPROVED: "bg-indigo-100 text-indigo-700",
       VERIFIED: "bg-green-100 text-green-700"
     };
@@ -824,8 +796,8 @@ function AgentLeads() {
             <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Verified</p>
-            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["PUBLISHED_UNBOOKABLE","OWNER_INVITED","OWNER_ACTIVATED","PENDING_ADMIN_VERIFICATION","VERIFIED"].includes(l.onboarding_status)).length}</p>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">In Pipeline</p>
+            <p className="text-xl font-black text-[#1A1C29]">{leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","PENDING_ADMIN_VERIFICATION","VERIFIED"].includes(l.onboarding_status)).length}</p>
           </div>
         </Card>
         <Card className="p-4 border-none shadow-sm flex items-center gap-4 bg-white rounded-2xl">
@@ -889,22 +861,12 @@ function AgentLeads() {
                   Assigned ({leads.filter(l => l.onboarding_status === "ASSIGNED_TO_AGENT").length})
                 </button>
                 <button
-                  onClick={() => setActiveTab("verified")}
-                  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
-                    // @ts-ignore
-                    activeTab === "verified" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
-                  }`}
-                >
-                  Published
-                </button>
-                <button
                   onClick={() => setActiveTab("invited")}
                   className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
-                    // @ts-ignore
                     activeTab === "invited" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
                   }`}
                 >
-                  Invited/Owner Action
+                  Owner Pipeline ({leads.filter(l => ["OWNER_INVITED","OWNER_ACTIVATED","PENDING_ADMIN_VERIFICATION","VERIFIED"].includes(l.onboarding_status)).length})
                 </button>
               </div>
             </div>
@@ -1484,34 +1446,33 @@ function AgentLeads() {
                     </Button>
                   )}
                   
-                  {["PUBLISHED_UNBOOKABLE"].includes(formData.onboarding_status) && (
-                    <Button
-                      onClick={handleSendInvitation}
-                      disabled={updating || !formData.phone || !formData.owner_gmail}
-                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
-                    >
-                      <CheckCircle2 className="w-4 h-4" /> Send Invitation
-                    </Button>
-                  )}
-
                   {formData.onboarding_status === "OWNER_ACTIVATED" && (
-                    <Button
-                      onClick={handleAgentApproval}
-                      disabled={updating}
-                      className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
-                    >
-                      <CheckCircle2 className="w-4 h-4" /> Enable Booking & Send to Admin
-                    </Button>
+                    <>
+                      <Button
+                        onClick={handleAgentApproval}
+                        disabled={updating}
+                        className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Enable Booking & Send to Admin
+                      </Button>
+                      <Button
+                        onClick={handleRejectOwnerSubmission}
+                        disabled={updating}
+                        variant="outline"
+                        className="rounded-xl font-bold h-10 px-4 border-rose-200 text-rose-600 text-xs w-full sm:w-auto"
+                      >
+                        Return to Owner for Edits
+                      </Button>
+                    </>
                   )}
 
-                  {/* Pending status display */}
                   {["OWNER_INVITED"].includes(formData.onboarding_status) && (
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                       <Badge className="bg-amber-50 text-amber-600 border border-amber-200 font-bold text-[10px] px-3 py-2 justify-center">
                         ⏳ Owner Invited
                       </Badge>
                       <Button
-                        onClick={handleSendInvitation}
+                        onClick={handleResendInvitation}
                         disabled={updating || !formData.phone || !formData.owner_gmail}
                         variant="outline"
                         className="text-amber-600 border-amber-200 hover:bg-amber-50 rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"

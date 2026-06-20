@@ -27,28 +27,24 @@ export async function saveAgentLeadData(
 
   try {
     const finalPayload = { ...updatePayload };
-    
-    // Explicitly set visibility and booking status to false for leads
-    finalPayload.public_visibility = false;
-    finalPayload.booking_enabled = false;
-    finalPayload.activation_status = "INACTIVE";
+    const enablesBooking = newStatus === "PENDING_ADMIN_VERIFICATION";
+
+    if (!enablesBooking) {
+      finalPayload.public_visibility = false;
+      finalPayload.booking_enabled = false;
+      finalPayload.activation_status = "INACTIVE";
+    }
 
     if (actionType === "REVIEW") {
-      finalPayload.onboarding_status = "ASSIGNED_TO_OWNER";
       if (finalPayload.owner_gmail) {
         finalPayload.owner_email = finalPayload.owner_gmail;
       }
     } else if (newStatus) {
       finalPayload.onboarding_status = newStatus;
-      
-      // If the Agent explicitly approves, immediately activate the salon and enable bookings
-      if (newStatus === "AGENT_APPROVED") {
-        finalPayload.public_visibility = true;
+
+      if (newStatus === "PENDING_ADMIN_VERIFICATION") {
         finalPayload.booking_enabled = true;
-        finalPayload.activation_status = "ACTIVE";
-        finalPayload.status = "active";
-        finalPayload.is_verified = true;
-        finalPayload.verified_at = new Date().toISOString();
+        finalPayload.public_visibility = "preview";
       }
     }
 
@@ -68,39 +64,6 @@ export async function saveAgentLeadData(
       }
     }
 
-    // Assign Free Plan and update Subscriptions table if Agent Approves
-    if (newStatus === "AGENT_APPROVED") {
-      const { data: freePlan } = await supabaseAdmin
-        .from("subscription_plans")
-        .select("id")
-        .eq("name", "Free")
-        .maybeSingle();
-
-      let freePlanId = freePlan?.id;
-      if (!freePlanId) {
-        const { data: anyPlan } = await supabaseAdmin.from("subscription_plans").select("id").limit(1).maybeSingle();
-        freePlanId = anyPlan?.id;
-      }
-
-      if (freePlanId) {
-        finalPayload.subscription_plan_id = freePlanId;
-        
-        // Also add an entry to the subscriptions table
-        const startDate = new Date();
-        const endDate = new Date(startDate);
-        endDate.setFullYear(endDate.getFullYear() + 10); // 10 years validity for Free plan
-
-        await supabaseAdmin.from("subscriptions").insert({
-          salon_id: salonId,
-          plan_id: freePlanId,
-          status: "active",
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString()
-        });
-      }
-    }
-
-    // 1. Update Salon Data
     const { error: updateError } = await supabaseAdmin
       .from("salons")
       .update(finalPayload)
@@ -152,20 +115,16 @@ export async function saveAgentLeadData(
     }
 
     // 5. Log Activity
-    const actionMap: Record<string, string> = {
-      "AGENT_VERIFIED": "AGENT_VERIFIED",
-      "AGENT_APPROVED": "AGENT_APPROVED"
-    };
-    
     await supabaseAdmin.from("onboarding_logs").insert({
       salon_id: salonId,
       actor_email: agentEmail,
-      action: newStatus ? (actionMap[newStatus] || "LEAD_UPDATED") : "LEAD_UPDATED",
-      notes: newStatus === "AGENT_VERIFIED" 
-        ? "Agent completed field verification and added phone/email."
-        : newStatus === "AGENT_APPROVED" 
-        ? "Agent approved the salon and enabled bookings."
-        : "Agent updated salon details in field editor."
+      action: newStatus === "PENDING_ADMIN_VERIFICATION" ? "PENDING_ADMIN_VERIFICATION" : "LEAD_UPDATED",
+      notes:
+        newStatus === "PENDING_ADMIN_VERIFICATION"
+          ? "Agent enabled bookings and sent salon to admin for verification."
+          : actionType === "REVIEW"
+            ? "Agent saved salon details before owner invitation."
+            : "Agent updated salon details in field editor.",
     });
 
     return { success: true as const };
@@ -195,11 +154,14 @@ export async function createAgentLeadData(
       .insert({
         ...payload,
         assign_to: agentEmail,
-        onboarding_status: actionType === "REVIEW" ? "ASSIGNED_TO_OWNER" : "ASSIGNED_TO_AGENT",
+        onboarding_status: "ASSIGNED_TO_AGENT",
         activation_status: "INACTIVE",
         public_visibility: false,
         booking_enabled: false,
-        owner_email: actionType === "REVIEW" && payload.owner_gmail ? payload.owner_gmail : `draft-${payload.slug}@trimma.io`
+        owner_email:
+          actionType === "REVIEW" && payload.owner_gmail
+            ? payload.owner_gmail
+            : `draft-${payload.slug}@trimma.io`,
       })
       .select("id")
       .single();
@@ -298,11 +260,14 @@ export async function convertManualLeadToSalon(
       .insert({
         ...payload,
         assign_to: agentEmail,
-        onboarding_status: actionType === "REVIEW" ? "ASSIGNED_TO_OWNER" : "ASSIGNED_TO_AGENT",
+        onboarding_status: "ASSIGNED_TO_AGENT",
         activation_status: "INACTIVE",
         public_visibility: false,
         booking_enabled: false,
-        owner_email: actionType === "REVIEW" && payload.owner_gmail ? payload.owner_gmail : `draft-${slug}@trimma.io`
+        owner_email:
+          actionType === "REVIEW" && payload.owner_gmail
+            ? payload.owner_gmail
+            : `draft-${slug}@trimma.io`,
       })
       .select("id")
       .single();

@@ -125,7 +125,7 @@ const AGENT_FEATURES = [
   { icon: MapPin, label: "Territory Explorer" },
   { icon: UserPlus, label: "Add Manual Lead" },
   { icon: ClipboardList, label: "Field Editor" },
-  { icon: Check, label: "Salon Approval" },
+  { icon: Check, label: "Field Editor" },
   { icon: BarChart3, label: "Commission Ledger" },
 ];
 
@@ -152,7 +152,7 @@ const FAQS = [
   },
   {
     q: "What tools do agents use daily?",
-    a: "Agent Cockpit, My Salons, Territory Explorer, Lead Sheet, Field Editor, Salon Approval, and Commission Ledger — all inside the Trimma Agent Portal.",
+    a: "Agent Cockpit, My Salons, Territory Explorer, Lead Sheet, Field Editor, and Commission Ledger — all inside the Trimma Agent Portal.",
   },
   {
     q: "Is there a limit to how much I can earn?",

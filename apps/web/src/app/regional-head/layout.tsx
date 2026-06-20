@@ -84,7 +84,6 @@ export default function RegionalHeadLayout({ children }: { children: React.React
         { name: "Territory Explorer", path: `${BASE}/territory`, icon: <MapPin className="w-4 h-4" /> },
         { name: "Add Manual Lead", path: `${BASE}/leads/new`, icon: <UserPlus className="w-4 h-4" /> },
         { name: "Salon Creation", path: `${BASE}/leads`, icon: <KanbanSquare className="w-4 h-4" /> },
-        { name: "Salon Approval", path: `${BASE}/salons/approval`, icon: <CheckCircle2 className="w-4 h-4" /> },
       ],
     },
     {
