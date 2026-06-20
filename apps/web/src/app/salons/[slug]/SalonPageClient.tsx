@@ -993,14 +993,14 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                   <p className="text-xs text-zinc-400">Branding & design works from {salon.name}&apos;s dynamic portfolio catalog.</p>
                 </div>
                 <Badge variant="outline" className="bg-zinc-50 border-zinc-200 text-zinc-500 font-bold text-[9px] uppercase tracking-wider py-1 px-2.5">
-                  Portfolio Standard (4:3)
+                  Portfolio Standard (3:4)
                 </Badge>
               </div>
 
               {featuredImages.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {featuredImages.map((imgUrl: string, idx: number) => (
-                    <div key={idx} className="group relative overflow-hidden rounded-2xl aspect-[4/3] border border-slate-200 shadow-sm bg-slate-50">
+                    <div key={idx} className="group relative overflow-hidden rounded-2xl aspect-[3/4] border border-slate-200 shadow-sm bg-slate-50">
                       <img 
                         src={imgUrl} 
                         alt={`Portfolio item ${idx + 1}`} 
