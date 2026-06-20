@@ -17,7 +17,13 @@ type SalonStaffRow = {
   working_hours?: unknown;
 };
 
-function normalizeStaffWorkingHours(workingHours: unknown) {
+type NormalizedStaffWorkingHours = {
+  schedule: unknown;
+  general_buffer_time: number;
+  assigned_services: Array<Record<string, unknown>>;
+};
+
+function normalizeStaffWorkingHours(workingHours: unknown): NormalizedStaffWorkingHours {
   if (Array.isArray(workingHours)) {
     return {
       schedule: workingHours,
@@ -30,7 +36,7 @@ function normalizeStaffWorkingHours(workingHours: unknown) {
     const wh = workingHours as Record<string, unknown>;
     return {
       schedule: wh.schedule || [],
-      general_buffer_time: wh.general_buffer_time ?? 0,
+      general_buffer_time: Number(wh.general_buffer_time ?? 0) || 0,
       assigned_services: Array.isArray(wh.assigned_services) ? wh.assigned_services : [],
     };
   }
