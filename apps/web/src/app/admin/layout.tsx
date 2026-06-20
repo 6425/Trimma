@@ -227,7 +227,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="trimma-admin-shell min-h-screen bg-slate-50 flex flex-col lg:flex-row trimma-light-context">
+    <div className="trimma-admin-shell min-h-screen bg-white flex flex-col lg:flex-row trimma-light-context">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -238,7 +238,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`trimma-admin-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-slate-50 border-r border-slate-200 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
+      <aside className={`trimma-admin-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-slate-50 border-r border-slate-200 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'}`}>
         
         {/* Sidebar Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 shrink-0 py-4">
@@ -327,7 +327,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-slate-200 space-y-0.5">
+        <div className="trimma-dashboard-sidebar-footer p-3 border-t border-slate-200 space-y-0.5 shrink-0">
           <button
             type="button"
             onClick={handleLogout}
@@ -340,10 +340,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Main Content Area ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="trimma-portal-body flex-1 flex flex-col min-w-0 bg-white">
 
         {/* Top Header */}
-        <header className="h-16 bg-slate-50 border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+        <header className="trimma-portal-topbar trimma-dashboard-topbar h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
           
           {/* Left: Logo on mobile / Search on desktop */}
           <div className="flex items-center gap-3">
@@ -412,8 +412,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-slate-50 text-zinc-900 trimma-page-shell">
-          {children}
+        <main className="trimma-portal-main flex-1 overflow-auto bg-white text-zinc-900 min-w-0 w-full">
+          <div className="trimma-page-shell trimma-portal-content">
+            {children}
+          </div>
         </main>
       </div>
     </div>

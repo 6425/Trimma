@@ -56,7 +56,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex font-sans trimma-light-context trimma-marketplace-shell dark:bg-[#0b0b0b] dark:text-[#ffc800]">
+    <div className="min-h-screen bg-white flex font-sans trimma-light-context trimma-marketplace-shell">
       <OnboardingSalonOwnerRecovery />
 
       {/* ── Mobile Overlay ── */}
@@ -68,7 +68,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       )}
 
       {/* ── SIDEBAR (Desktop in-flow | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffc800] border-r border-black/10 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 lg:sticky lg:top-0 lg:self-start lg:h-auto lg:min-h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] ${
+      <aside className={`trimma-dashboard-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffc800] border-r border-black/10 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${
         mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0'
       }`}>
 
@@ -158,10 +158,10 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       </aside>
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="flex-1 min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 flex flex-col min-w-0 overflow-x-clip trimma-light-context">
+      <main className="trimma-portal-body flex-1 min-h-screen pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 flex flex-col min-w-0 overflow-x-clip trimma-light-context bg-white">
 
         {/* Mobile Top Header */}
-        <header className="h-16 bg-zinc-50 border-b border-black/10 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
+        <header className="trimma-portal-topbar h-16 bg-white border-b border-black/10 sticky top-0 z-40 flex items-center justify-between px-4 lg:hidden">
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Logo iconSize={32} />
           </Link>
@@ -184,7 +184,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 min-w-0 overflow-x-hidden trimma-light-context">
+        <div className="trimma-portal-content flex-1 min-w-0 overflow-x-hidden trimma-light-context bg-white">
           {children}
         </div>
       </main>

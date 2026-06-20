@@ -191,7 +191,7 @@ export function SalonOwnerNotificationBell() {
   return (
     <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger
-        className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/8 transition-colors outline-none"
+        className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-slate-100 transition-colors outline-none"
         aria-label="Open notifications"
       >
         <Bell className="w-5 h-5" />

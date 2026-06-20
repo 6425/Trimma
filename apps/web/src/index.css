@@ -151,6 +151,7 @@
     --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
     --trimma-container-max-width: 1400px;
     --trimma-container-padding-x: 3%;
+    --trimma-portal-sidebar-offset: 0rem;
     --trimma-page-padding-y: var(--space-md);
     --trimma-card-padding: 0.875rem;
     --trimma-input-padding-y: 0.75rem;
@@ -1058,10 +1059,42 @@
   }
 
   .trimma-dashboard-sidebar-head {
-    position: sticky;
-    top: 0;
+    flex-shrink: 0;
     z-index: 10;
     background-color: #ffc800 !important;
+  }
+
+  .trimma-dashboard-sidebar-footer,
+  .trimma-agent-sidebar-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  /* Desktop portal sidebars — anchor to viewport bottom (below nav), not top */
+  @media (min-width: 1024px) {
+    .trimma-portal-sidebar {
+      align-self: flex-end !important;
+      top: auto !important;
+      bottom: 0 !important;
+      height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+      max-height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+      min-height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+    }
+
+    :is(.trimma-dashboard-sidebar, .trimma-admin-sidebar).trimma-portal-sidebar {
+      position: sticky !important;
+    }
+
+    .trimma-agent-sidebar.trimma-portal-sidebar {
+      position: fixed !important;
+      top: var(--trimma-portal-sidebar-offset) !important;
+      height: auto !important;
+      max-height: none !important;
+      min-height: 0 !important;
+    }
   }
 
   .trimma-dashboard-sidebar .trimma-sidebar-nav-logout {
@@ -1129,23 +1162,23 @@
     color: #b91c1c !important;
   }
 
-  /* Customer / dashboard sidebars — keep menu items clear of site header overlap */
+  /* Customer / dashboard sidebars — menu list spacing */
   .trimma-dashboard-sidebar-nav {
-    padding-top: 1rem;
+    padding-top: 0.5rem;
   }
 
   @media (min-width: 1024px) {
     .trimma-dashboard-sidebar-nav {
-      padding-top: 1.5rem;
+      padding-top: 0.75rem;
     }
   }
 
   /*
-   * Portal dashboards — light main column inside dark agent/regional-head shells.
-   * Keeps shadcn tokens, inputs, and ghost buttons readable on white/slate surfaces.
+   * Portal dashboards — light main column (sidebar menus unchanged).
    */
-  .trimma-dark-context .trimma-portal-main.trimma-light-context,
-  .trimma-dark-context .trimma-light-context.trimma-portal-main {
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context,
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context.trimma-portal-main,
+  .trimma-portal-body.trimma-light-context {
     --background: #ffffff;
     --foreground: #18181b;
     --card: #ffffff;
@@ -1161,7 +1194,7 @@
     color: #18181b;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context :is(
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context :is(
     h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
   ):not([class*="text-white"]):not([class*="text-[#ffc800]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-green"]):not([class*="text-blue"]) {
     color: inherit;
@@ -1205,14 +1238,35 @@
   }
 
   /*
-   * Portal dashboards — black shell, white main canvas.
-   * Dark accent panels inside the main column render as white cards.
+   * All dashboard body areas — pure white canvas (sidebar / bottom nav menus unchanged).
    */
-  .trimma-dark-context .trimma-portal-main.trimma-light-context {
+  .trimma-portal-body,
+  .trimma-portal-body .trimma-portal-main,
+  .trimma-portal-body .trimma-portal-content,
+  .trimma-dashboard-main-column,
+  .trimma-dashboard-main-column .trimma-portal-main,
+  .trimma-portal-topbar,
+  .trimma-dashboard-topbar {
     background-color: #ffffff !important;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  .trimma-dashboard-topbar {
+    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .trimma-dashboard-topbar :is(.trimma-salon-name, h1, h2, h3, p, span):not([class*="text-brand"]):not([class*="text-red"]) {
+    color: #18181b;
+  }
+
+  /*
+   * Portal dashboards — white main canvas inside dark-context shells.
+   * Dark accent panels inside the main column render as white cards.
+   */
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context {
+    background-color: #ffffff !important;
+  }
+
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section).text-white:is(
       [class*="bg-zinc-900"],
       [class*="bg-zinc-950"],
@@ -1224,7 +1278,7 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section).text-white:is(
       [class*="bg-zinc-900"],
       [class*="bg-zinc-950"],
@@ -1234,14 +1288,14 @@
     color: #18181b;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section).text-white:is(
       [class*="bg-zinc-900"],
       [class*="bg-zinc-950"],
       [class*="bg-\[#1A1C29\]"]
     ):not([class*="fixed"]):not([class*="inset-0"])
     [class*="text-white/60"],
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section).text-white:is(
       [class*="bg-zinc-900"],
       [class*="bg-zinc-950"],
@@ -1251,7 +1305,7 @@
     color: #71717a !important;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section).text-white:is(
       [class*="bg-zinc-900"],
       [class*="bg-zinc-950"],
@@ -1261,7 +1315,7 @@
     color: #52525b !important;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section).text-white:is(
       [class*="bg-zinc-900"],
       [class*="bg-zinc-950"],
@@ -1272,7 +1326,7 @@
     color: #3f3f46 !important;
   }
 
-  .trimma-dark-context .trimma-portal-main.trimma-light-context
+  :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context
     :is(div, section):is(
       [class*="bg-zinc-950"],
       [class*="bg-zinc-900"]
@@ -1536,9 +1590,10 @@
 
 /*
  * Light dashboard hard contract — wins over dark-shell token leaks on mobile.
- * Agent/regional-head/salon/customer main areas sit inside trimma-dark-context shells.
+ * Applies to all portal body columns; sidebar menus are not targeted.
  */
-.trimma-dark-context .trimma-light-context {
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context {
+  --background: #ffffff;
   --foreground: #18181b;
   --card-foreground: #18181b;
   --popover-foreground: #18181b;
@@ -1550,7 +1605,7 @@
   color: #18181b;
 }
 
-.trimma-dark-context .trimma-light-context :is(
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(
   .text-zinc-900, .text-zinc-800, .text-zinc-700, .text-zinc-600, .text-zinc-500,
   .text-black, [class*="text-zinc-9"], [class*="text-zinc-8"], [class*="text-zinc-7"],
   [class*="text-zinc-6"], [class*="text-black"]
@@ -1558,7 +1613,7 @@
   color: #18181b !important;
 }
 
-.trimma-dark-context .trimma-light-context :is(
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(
   .bg-white, .bg-slate-50, .bg-zinc-50, .bg-zinc-100, .bg-slate-100
 ) :is(
   [class*="text-white"], .text-white
@@ -1566,7 +1621,7 @@
   color: #18181b !important;
 }
 
-.trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):not(
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
   [class*="bg-brand"], [class*="bg-\[#ffc800\]"], [class*="text-\[#ffc800\]"], [class*="text-brand"],
   [class*="text-white"], .trimma-sidebar-nav-item
@@ -1574,7 +1629,7 @@
   color: #3f3f46 !important;
 }
 
-.trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
   [class*="bg-white"], .bg-white
 ):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#ffc800\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
   color: #18181b !important;
@@ -1582,14 +1637,14 @@
   border-color: #e4e4e7 !important;
 }
 
-.trimma-dark-context .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
   [class*="bg-white"], .bg-white
 ):is(:hover, :focus-visible):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]) {
   color: #18181b !important;
   background-color: #f4f4f5 !important;
 }
 
-.trimma-dark-context .trimma-light-context [data-slot="button"]:is(:hover, :focus-visible):not(
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context [data-slot="button"]:is(:hover, :focus-visible):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
   [class*="bg-brand"], [class*="bg-\[#ffc800\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
   [class*="hover:bg-black"], [class*="text-\[#ffc800\]"], [class*="text-brand"], [class*="text-white"]
@@ -1597,10 +1652,10 @@
   color: #18181b !important;
 }
 
-.trimma-dark-context .trimma-light-context [data-slot="button"][class*="hover:bg-zinc-8"]:hover,
-.trimma-dark-context .trimma-light-context [data-slot="button"][class*="hover:bg-zinc-9"]:hover,
-.trimma-dark-context .trimma-light-context [data-slot="button"][class*="hover:bg-black"]:hover,
-.trimma-dark-context .trimma-light-context :is(button, [data-slot="button"]).hover\:bg-zinc-800:hover {
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context [data-slot="button"][class*="hover:bg-zinc-8"]:hover,
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context [data-slot="button"][class*="hover:bg-zinc-9"]:hover,
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context [data-slot="button"][class*="hover:bg-black"]:hover,
+:is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, [data-slot="button"]).hover\:bg-zinc-800:hover {
   color: #ffffff !important;
 }
 

@@ -174,7 +174,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] flex flex-col lg:flex-row trimma-dark-context">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -185,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:sticky lg:top-0 lg:self-start lg:h-[calc(100dvh-8rem)] lg:max-h-[calc(100dvh-8rem)] lg:relative lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`trimma-dashboard-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full lg:translate-x-0'}`}>
         
         <div className="trimma-dashboard-sidebar-head shrink-0">
           {/* Sidebar Header */}
@@ -311,22 +311,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Main Content Area ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="trimma-portal-body trimma-dashboard-main-column flex-1 flex flex-col min-w-0 w-full bg-white trimma-light-context">
 
         {/* Top Header */}
-        <header className="h-16 bg-[#0B0B0B] border-b border-white/8 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40">
+        <header className="trimma-dashboard-topbar h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-40 trimma-light-context">
           
           {/* Left: Logo on mobile / Search on desktop */}
           <div className="flex items-center gap-3">
             <div className="lg:hidden">
-              <Logo inverse iconSize={32} title="Trimma" />
+              <Logo iconSize={32} title="Trimma" />
             </div>
             <div className="relative hidden lg:block w-64">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-white/80" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
               <input
                 type="search"
                 placeholder="Search..."
-                className="h-9 w-full rounded-lg bg-white/6 border border-white/8 pl-9 pr-4 text-sm text-white placeholder:text-white/60 outline-none focus:border-[#ffc800]/50 focus:ring-1 focus:ring-[#ffc800]/30 transition-all"
+                className="h-9 w-full rounded-lg bg-slate-50 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-[#ffc800]/50 focus:ring-1 focus:ring-[#ffc800]/30 transition-all"
               />
             </div>
           </div>
@@ -335,7 +335,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             {/* Dashboard navigation — mobile & tablet */}
             <button
-              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-white hover:text-white hover:bg-white/8 transition-colors"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-zinc-700 hover:text-zinc-900 hover:bg-slate-100 transition-colors"
               onClick={() => {
                 window.dispatchEvent(new Event("trimma:close-site-menu"));
                 setMobileMenuOpen(true);
@@ -349,7 +349,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Bell */}
             <SalonOwnerNotificationBell />
 
-            <div className="w-px h-6 bg-white/10 mx-1" />
+            <div className="w-px h-6 bg-slate-200 mx-1" />
 
             {/* Profile */}
             <Link
@@ -357,8 +357,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <div className="hidden lg:block text-right">
-                <div className="trimma-salon-name text-sm font-semibold text-white">{role === 'admin' ? 'Platform Admin' : salonName}</div>
-                <div className="text-xs text-white/80">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
+                <div className="trimma-salon-name text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
+                <div className="text-xs text-zinc-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
               <Avatar className="h-8 w-8 border-2 border-[#ffc800]/30 bg-[#ffc800]">
                 <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(role === 'admin' ? 'Admin' : salonName)}`} />
@@ -371,7 +371,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               type="button"
               onClick={handleLogout}
-              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-white/80 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -398,8 +398,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         )}
 
         {/* Page Content */}
-        <main className="trimma-portal-main flex-1 overflow-x-clip overflow-y-auto bg-white text-zinc-900 trimma-page-shell trimma-light-context min-w-0">
-          <div className="trimma-light-context min-w-0">
+        <main className="trimma-portal-main flex-1 overflow-x-clip overflow-y-auto bg-white text-zinc-900 trimma-light-context min-w-0 w-full">
+          <div className="trimma-page-shell trimma-light-context min-w-0">
             {children}
           </div>
         </main>

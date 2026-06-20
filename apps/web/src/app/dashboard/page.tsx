@@ -202,8 +202,8 @@ export default function Dashboard() {
     <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto p-3 sm:p-4 pb-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">Salon Performance</h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">Salon Performance</h1>
+          <p className="text-xs sm:text-sm text-zinc-500 mt-0.5">
             Welcome back. Here is what is happening at {salonName} today.
           </p>
         </div>

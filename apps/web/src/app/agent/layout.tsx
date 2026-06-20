@@ -103,7 +103,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
 
   return (
     <AgentPortalProvider>
-    <div className="min-h-screen bg-[#0B0B0B] flex font-sans trimma-dark-context">
+    <div className="min-h-screen bg-white flex font-sans">
 
       {/* ── Mobile Overlay ── */}
       {mobileMenuOpen && (
@@ -114,7 +114,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* ── SIDEBAR (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`trimma-agent-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col transition-transform duration-300 lg:translate-x-0 ${
+      <aside className={`trimma-agent-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:translate-x-0 ${
         mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full'
       }`}>
         
@@ -202,42 +202,36 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT AREA ── */}
-      <main className="trimma-portal-main flex-1 lg:ml-64 min-h-screen flex flex-col bg-white text-zinc-900 trimma-light-context pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 min-w-0 overflow-x-clip">
+      {/* ── MAIN CONTENT AREA (white body — sidebar unchanged) ── */}
+      <div className="trimma-portal-body flex-1 lg:ml-64 min-h-screen flex flex-col bg-white text-zinc-900 trimma-light-context pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 min-w-0 overflow-x-clip">
 
         {/* Top Header */}
-        <header className="h-16 bg-[#0B0B0B] border-b border-white/8 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-6">
-          
-          {/* Left: Title on desktop / Logo badge on mobile */}
+        <header className="trimma-portal-topbar trimma-dashboard-topbar h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-6 trimma-light-context">
           <div className="flex items-center gap-3">
-            <div className="hidden lg:block text-sm font-bold text-white">Sales Operating System</div>
+            <div className="hidden lg:block text-sm font-bold text-zinc-900">Sales Operating System</div>
             <div className="lg:hidden">
-              <Logo iconSize={28} inverse />
+              <Logo iconSize={28} title="Trimma" />
             </div>
           </div>
 
-          {/* Center: Search (desktop only) */}
-          <div className="hidden lg:flex items-center px-3 py-1.5 bg-white/6 rounded-lg w-64 border border-white/8 focus-within:border-[#ffc800]/50 focus-within:ring-1 focus-within:ring-[#ffc800]/30 transition-all">
-            <Search className="w-4 h-4 text-white/80 mr-2 shrink-0" />
+          <div className="hidden lg:flex items-center px-3 py-1.5 bg-slate-50 rounded-lg w-64 border border-slate-200 focus-within:border-[#ffc800]/50 focus-within:ring-1 focus-within:ring-[#ffc800]/30 transition-all">
+            <Search className="w-4 h-4 text-zinc-400 mr-2 shrink-0" />
             <input
               type="text"
               placeholder="Search leads, salons..."
-              className="bg-transparent border-none outline-none text-sm text-white placeholder:text-white/60 w-full"
+              className="bg-transparent border-none outline-none text-sm text-zinc-900 placeholder:text-zinc-400 w-full"
             />
           </div>
 
-          {/* Right: Hamburger + Bell */}
           <div className="flex items-center gap-1.5">
-            {/* Hamburger — mobile only, before bell */}
             <button
-              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/8 transition-colors"
+              className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-zinc-700 hover:text-zinc-900 hover:bg-slate-100 transition-colors"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5" />
             </button>
-            {/* Bell */}
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/8 transition-colors">
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-700 hover:text-zinc-900 hover:bg-slate-100 transition-colors">
               <Bell className="w-5 h-5" />
               {hasUnreadNotifications && (
                 <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffc800]" />
@@ -246,11 +240,12 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="trimma-light-context p-4 sm:p-6 lg:p-8 flex-1 min-w-0 overflow-x-hidden">
-          {children}
-        </div>
-      </main>
+        <main className="trimma-portal-main flex-1 overflow-x-clip bg-white text-zinc-900 trimma-light-context min-w-0 w-full">
+          <div className="trimma-portal-content p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden">
+            {children}
+          </div>
+        </main>
+      </div>
 
       {/* ── MOBILE BOTTOM NAVIGATION ── */}
       <nav className="trimma-mobile-bottom-nav trimma-mobile-bottom-nav--dark lg:hidden fixed bottom-0 left-0 right-0 bg-[#0B0B0B] border-t border-white/8 flex justify-around items-center px-1 sm:px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] z-30">
