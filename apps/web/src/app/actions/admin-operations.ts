@@ -894,7 +894,7 @@ export async function publishAdminLead(lead: {
       district: lead.district || "Colombo",
       city: lead.address || lead.city || "Colombo",
       subscription_plan_id: freePlanId || null,
-      status: "DRAFT",
+      status: "pending",
     }).select("id").single();
     if (salonError) throw new Error(salonError.message);
 

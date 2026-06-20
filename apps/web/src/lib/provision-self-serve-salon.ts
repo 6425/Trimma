@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { ensureSalonSubscriptionPlan } from "@/lib/salon-subscription-plan";
+import { buildSelfServeSalonInsertRow } from "@/lib/salon-insert-defaults";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 
 function slugifySalonName(name: string): string {
@@ -90,27 +91,14 @@ export async function provisionSelfServeSalonOwner(
 
   const { data: salon, error } = await supabase
     .from("salons")
-    .insert({
-      name: `${displayName}'s Salon`,
-      slug,
-      owner_email: normalizedEmail,
-      owner_gmail: normalizedEmail,
-      email: normalizedEmail,
-      status: "draft",
-      onboarding_status: "OWNER_INVITED",
-      activation_status: "DRAFT",
-      booking_enabled: false,
-      public_visibility: "hidden",
-      is_verified: false,
-      subscription_plan_id: freePlan?.id || null,
-      source_type: "self_serve_onboarding",
-      draft_created_at: new Date().toISOString(),
-      owner_invited_at: new Date().toISOString(),
-      onboarding_completion_score: 0,
-      business_info_extended: {
-        owner_full_name: displayName,
-      },
-    })
+    .insert(
+      buildSelfServeSalonInsertRow({
+        displayName,
+        slug,
+        normalizedEmail,
+        freePlanId: (freePlan?.id as string | null | undefined) ?? null,
+      })
+    )
     .select("id")
     .single();
 

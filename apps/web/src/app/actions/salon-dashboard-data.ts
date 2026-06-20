@@ -1,9 +1,8 @@
 "use server";
 
 import { getSalonOwnerReviews } from "@/app/actions/reviews";
-import { findOwnerSalon, getSalonAccessTokenFromCookies, getSalonOwnerEmailFromCookies } from "@/lib/server-salon-auth";
+import { getSalonAccessTokenFromCookies, requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
-import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   ensureSalonSubscriptionPlan,
   getAllowedCategoriesLimit,
@@ -14,23 +13,16 @@ import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settin
 import { getServiceIdsCoveredByStaff } from "@/lib/staff-allocation";
 
 export async function fetchSalonLayoutShell() {
-  const email = await getSalonOwnerEmailFromCookies();
-  if (!email) return { success: false as const, error: "Not signed in." };
-
-  const supabase = createSupabaseAdminClient();
-  const salon = await findOwnerSalon(supabase, email);
-  if (!salon) {
-    return {
-      success: true as const,
-      role: "salon_owner",
-      salonName: "My Salon",
-      avatarUrl: null as string | null,
-    };
+  const auth = await requireSalonOwnerFromCookies();
+  if ("error" in auth) {
+    return { success: false as const, error: auth.error };
   }
+
+  const salon = auth.salon;
 
   return {
     success: true as const,
-    role: "salon_owner",
+    role: auth.role,
     salonName: (salon.name as string) || "My Salon",
     avatarUrl: (salon.logo_url as string | null) || null,
     onboardingStatus: (salon.onboarding_status as string | null) || null,

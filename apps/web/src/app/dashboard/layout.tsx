@@ -45,7 +45,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     void fetchSalonLayoutShell().then((result) => {
-      if (result.success && result.salonName) {
+      if (result.success === false) {
+        console.error("Salon dashboard shell:", result.error);
+        return;
+      }
+
+      if (result.salonName) {
         setSalonName(result.salonName);
         if (result.avatarUrl) setAvatarUrl(result.avatarUrl);
         if (result.onboardingStatus) setOnboardingStatus(result.onboardingStatus);
