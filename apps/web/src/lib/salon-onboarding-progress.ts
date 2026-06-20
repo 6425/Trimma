@@ -3,8 +3,15 @@ export type SalonOnboardingSnapshot = {
   description?: string | null;
   phone?: string | null;
   address?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   logo_url?: string | null;
   cover_url?: string | null;
+  hero_url?: string | null;
+  hero_image?: string | null;
+  owner_email?: string | null;
+  owner_gmail?: string | null;
   working_hours?: unknown;
   business_info_extended?: Record<string, unknown> | null;
   bank_info?: Record<string, unknown> | null;
@@ -21,6 +28,43 @@ export type SalonOnboardingStep = {
 
 function hasText(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function hasSalonAddress(salon: Pick<SalonOnboardingSnapshot, "address" | "city">): boolean {
+  return hasText(salon.address) || hasText(salon.city);
+}
+
+function hasMapPin(salon: Pick<SalonOnboardingSnapshot, "latitude" | "longitude">): boolean {
+  const lat = salon.latitude;
+  const lng = salon.longitude;
+  return lat != null && lng != null && !Number.isNaN(Number(lat)) && !Number.isNaN(Number(lng));
+}
+
+function hasHeroImage(
+  salon: Pick<SalonOnboardingSnapshot, "hero_url" | "cover_url" | "hero_image">
+): boolean {
+  return hasText(salon.hero_url) || hasText(salon.cover_url) || hasText(salon.hero_image);
+}
+
+function isRealOwnerEmail(email: string | null | undefined): boolean {
+  if (!hasText(email)) return false;
+  return !(
+    email!.startsWith("draft-") ||
+    email!.startsWith("owner-") ||
+    email!.endsWith("@trimma.io")
+  );
+}
+
+function hasContactForApproval(
+  salon: Pick<SalonOnboardingSnapshot, "phone" | "owner_email" | "owner_gmail">,
+  signedInOwnerEmail?: string | null
+): boolean {
+  if (hasText(salon.phone)) return true;
+  return (
+    isRealOwnerEmail(salon.owner_email) ||
+    isRealOwnerEmail(salon.owner_gmail) ||
+    isRealOwnerEmail(signedInOwnerEmail)
+  );
 }
 
 function hasWorkingHours(value: unknown): boolean {
@@ -77,7 +121,36 @@ export function isBankInfoComplete(
   return nicFront && nicBack && businessReg && bankStatement;
 }
 
+export function getBookingApprovalMissingFields(
+  salon: SalonOnboardingSnapshot,
+  signedInOwnerEmail?: string | null
+): string[] {
+  const missing: string[] = [];
+  if (!hasText(salon.name)) missing.push("business name");
+  if (!hasSalonAddress(salon)) missing.push("address");
+  if (!hasMapPin(salon)) missing.push("map location");
+  if (!hasHeroImage(salon)) missing.push("hero image");
+  if (!hasContactForApproval(salon, signedInOwnerEmail)) missing.push("mobile number or email");
+  return missing;
+}
+
+export function canSubmitForBookingApproval(
+  salon: SalonOnboardingSnapshot,
+  signedInOwnerEmail?: string | null
+): boolean {
+  return getBookingApprovalMissingFields(salon, signedInOwnerEmail).length === 0;
+}
+
+/** Minimum profile needed before an owner submits for booking approval. */
 export function isOperationsComplete(
+  salon: SalonOnboardingSnapshot,
+  signedInOwnerEmail?: string | null
+): boolean {
+  return canSubmitForBookingApproval(salon, signedInOwnerEmail);
+}
+
+/** Full operational polish (optional beyond booking approval). */
+export function isOperationsProfilePolished(
   salon: Pick<
     SalonOnboardingSnapshot,
     "name" | "description" | "phone" | "address" | "logo_url" | "cover_url" | "working_hours"
@@ -97,7 +170,7 @@ export function getSalonOnboardingSteps(salon: SalonOnboardingSnapshot): SalonOn
   return [
     {
       id: "operations",
-      label: "Operational details",
+      label: "Booking essentials",
       complete: isOperationsComplete(salon),
       weight: 35,
     },
@@ -147,7 +220,7 @@ export function getOwnerOnboardingBannerMessage(salon: SalonOnboardingSnapshot):
   }
 
   if (!isOperationsComplete(salon)) {
-    return "Complete your operational details, then submit for booking approval.";
+    return "Add your business name, address, map pin, hero image, and a mobile number or email, then submit for booking approval.";
   }
 
   if (!isBusinessInfoComplete(salon) || !isBankInfoComplete(salon)) {

@@ -711,9 +711,26 @@ export default function SalonProfilePage() {
   const handleCompleteOnboarding = async () => {
     try {
       setSaving(true);
-      const result = await completeSalonOwnerOnboarding(salon.owner_email);
+
+      const saveResult = await saveOwnerVerificationData(
+        {
+          name,
+          phone: contact,
+          address,
+          province,
+          district,
+          latitude: parseFloat(latitude) || null,
+          longitude: parseFloat(longitude) || null,
+        },
+        null,
+        null,
+        null
+      );
+      if (saveResult.success === false) throw new Error(saveResult.error);
+
+      const result = await completeSalonOwnerOnboarding(undefined);
       if (result.success === false) throw new Error(result.error);
-      toast.success("Onboarding complete! Your salon is awaiting final admin verification.");
+      toast.success("Submitted for booking approval! Your Trimma agent will review your profile.");
       setOnboardingStatus("OWNER_ACTIVATED");
     } catch (err: any) {
       toast.error("Failed to activate: " + err.message);

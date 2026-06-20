@@ -384,7 +384,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span className="font-medium">
-                Welcome! Complete operational details, business info, and bank verification in Salon Profile.
+                Welcome! Add your business name, address, map pin, hero image, and contact details in Salon Profile, then submit for booking approval.
               </span>
             </div>
             <Link href="/dashboard/profile" className="mt-2 sm:mt-0 font-bold underline hover:text-emerald-100 whitespace-nowrap">

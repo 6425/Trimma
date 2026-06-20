@@ -28,9 +28,13 @@ import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-s
 import { syncSalonOperatingHours, syncStaffSchedules } from "@/lib/salon-operating-hours";
 import {
   calculateSalonOnboardingScore,
-  isOperationsComplete,
+  canSubmitForBookingApproval,
+  getBookingApprovalMissingFields,
   type SalonOnboardingSnapshot,
 } from "@/lib/salon-onboarding-progress";
+
+const SALON_ONBOARDING_SELECT =
+  "name, description, phone, address, city, latitude, longitude, logo_url, cover_url, hero_url, hero_image, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status";
 
 async function refreshSalonOnboardingScore(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -38,9 +42,7 @@ async function refreshSalonOnboardingScore(
 ) {
   const { data, error } = await supabase
     .from("salons")
-    .select(
-      "name, description, phone, address, logo_url, cover_url, working_hours, business_info_extended, bank_info, is_verified, onboarding_status"
-    )
+    .select(SALON_ONBOARDING_SELECT)
     .eq("id", salonId)
     .single();
 
@@ -637,17 +639,16 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: salon, error: readError } = await supabase
       .from("salons")
-      .select(
-        "name, description, phone, address, logo_url, cover_url, working_hours, business_info_extended, bank_info, is_verified, onboarding_status"
-      )
+      .select(SALON_ONBOARDING_SELECT)
       .eq("id", ctx.salonId)
       .single();
 
     if (readError) throw new Error(readError.message);
-    if (!isOperationsComplete(salon as SalonOnboardingSnapshot)) {
-      throw new Error(
-        "Complete operational details (description, contact, address, logo, cover, and working hours) before submitting for booking approval."
-      );
+
+    const approvalEmail = ownerEmail || ctx.email;
+    if (!canSubmitForBookingApproval(salon as SalonOnboardingSnapshot, approvalEmail)) {
+      const missing = getBookingApprovalMissingFields(salon as SalonOnboardingSnapshot, approvalEmail);
+      throw new Error(`Add ${missing.join(", ")} before submitting for booking approval.`);
     }
 
     const { error } = await supabase
@@ -655,7 +656,7 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       .update({
         onboarding_status: "OWNER_ACTIVATED",
         owner_activated_at: new Date().toISOString(),
-        owner_email: ownerEmail || ctx.email,
+        owner_email: approvalEmail,
         booking_enabled: false,
       })
       .eq("id", ctx.salonId);

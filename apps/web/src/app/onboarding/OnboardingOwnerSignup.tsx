@@ -113,7 +113,7 @@ export default function OnboardingOwnerSignup() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-2xl mx-auto">
         {[
-          { step: "1", title: "Operational details", body: "Services, staff, hours, photos — submit for booking approval." },
+          { step: "1", title: "Booking essentials", body: "Business name, address, map pin, hero image, and contact — submit for booking approval." },
           { step: "2", title: "Business & bank info", body: "Legal details, settlement account, NIC/BR documents." },
           { step: "3", title: "Agent & admin review", body: "Your Trimma agent enables bookings and sends your salon to admin for final verification." },
         ].map((item) => (
