@@ -15,7 +15,7 @@ export const WHATSAPP_ENV_ACCESS_TOKEN_KEYS = [
   "WHATSAPP_TOKEN",
 ] as const;
 
-export const TRIMMA_WHATSAPP_PHONE_NUMBER_ID = "100068412247940";
+export const TRIMMA_WHATSAPP_PHONE_NUMBER_ID = "1130184513519892";
 
 export function readWhatsAppEnvPhoneId(): string {
   for (const name of WHATSAPP_ENV_PHONE_ID_KEYS) {

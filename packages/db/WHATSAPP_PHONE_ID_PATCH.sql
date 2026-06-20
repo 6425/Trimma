@@ -9,7 +9,7 @@
 
 UPDATE public.global_payment_settings
 SET
-  whatsapp_phone_number_id = '100068412247940',
+  whatsapp_phone_number_id = '1130184513519892',
   whatsapp_enabled = true
 WHERE id = '00000000-0000-0000-0000-000000000001'::uuid;
 

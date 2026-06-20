@@ -369,11 +369,11 @@ function SettingsPanelContent() {
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                     required
-                    placeholder="100068412247940"
+                    placeholder="1130184513519892"
                     className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
                   />
                   <p className="text-[10px] text-zinc-500">
-                    From Meta Developer Console → WhatsApp → API Setup. Trimma production ID: <strong>100068412247940</strong>. Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>
+                    From Meta Developer Console → WhatsApp → API Setup. Trimma production ID: <strong>1130184513519892</strong>. Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>
                   </p>
                 </div>
 
