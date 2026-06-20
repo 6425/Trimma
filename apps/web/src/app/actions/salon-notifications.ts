@@ -115,6 +115,36 @@ export async function confirmBookingFromNotification(bookingId: string, notifica
   return { success: true as const, bookingNo: confirmResult.bookingNo };
 }
 
+export async function approveRescheduleFromNotification(
+  bookingId: string,
+  notificationId?: string
+) {
+  const { approveOwnerRescheduleRequest } = await import("@/app/actions/salon-operations");
+  const result = await approveOwnerRescheduleRequest(bookingId);
+  if (result.success === false) return result;
+
+  if (notificationId) {
+    await markSalonNotificationRead(notificationId);
+  }
+
+  return { success: true as const, bookingNo: result.bookingNo };
+}
+
+export async function rejectRescheduleFromNotification(
+  bookingId: string,
+  notificationId?: string
+) {
+  const { rejectOwnerRescheduleRequest } = await import("@/app/actions/salon-operations");
+  const result = await rejectOwnerRescheduleRequest(bookingId);
+  if (result.success === false) return result;
+
+  if (notificationId) {
+    await markSalonNotificationRead(notificationId);
+  }
+
+  return { success: true as const };
+}
+
 export async function markBookingNotificationsReadForOwner(bookingId: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
     await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);

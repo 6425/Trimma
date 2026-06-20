@@ -262,7 +262,7 @@ export async function createDirectBooking(
       booking_date: bookingDate,
       booking_time: formattedTime,
       amount: totalPrice,
-      status: isPaid ? "confirmed" : "confirmed",
+      status: "pending",
       payment_status: isPaid ? "reservation_paid" : "unpaid",
       reservation_fee_paid: isPaid,
       reservation_fee_refundable: false,

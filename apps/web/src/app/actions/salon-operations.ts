@@ -133,7 +133,8 @@ export async function confirmOwnerBooking(bookingId: string) {
     if (!booking || booking.salon_id !== ctx.salonId) {
       throw new Error("Booking not found for your salon.");
     }
-    if (booking.status !== "pending") {
+    const status = (booking.status || "").toLowerCase();
+    if (status !== "pending") {
       throw new Error("Only pending bookings can be confirmed.");
     }
 
@@ -202,6 +203,49 @@ export async function rescheduleOwnerBooking(
   }
 
   return { success: true as const, bookingNo };
+}
+
+export async function approveOwnerRescheduleRequest(bookingId: string) {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: booking, error: readErr } = await supabase
+      .from("bookings")
+      .select(
+        "id, salon_id, requested_booking_date, requested_booking_time, booking_date, booking_time"
+      )
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!booking || booking.salon_id !== ctx.salonId) {
+      throw new Error("Booking not found for your salon.");
+    }
+
+    const rescheduleState = await readBookingRescheduleState(supabase, bookingId);
+    if (!rescheduleState) {
+      throw new Error(rescheduleColumnsMissingMessage());
+    }
+    if (rescheduleState.rescheduleRequested !== true) {
+      throw new Error("This booking has no pending reschedule request.");
+    }
+
+    const bookingDate = String(
+      booking.requested_booking_date || booking.booking_date || ""
+    );
+    const bookingTime = String(
+      booking.requested_booking_time || booking.booking_time || "12:00:00"
+    );
+    if (!bookingDate) {
+      throw new Error("Requested appointment date is missing.");
+    }
+
+    return { bookingDate, bookingTime };
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  return rescheduleOwnerBooking(
+    bookingId,
+    result.data.bookingDate,
+    result.data.bookingTime
+  );
 }
 
 export async function rejectOwnerRescheduleRequest(bookingId: string) {
