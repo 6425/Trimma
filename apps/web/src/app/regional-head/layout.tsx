@@ -103,7 +103,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
 
   return (
     <AgentPortalProvider>
-      <div className="min-h-screen bg-white flex font-sans">
+      <div className="trimma-regional-head-shell flex-1 min-h-0 flex flex-col lg:flex-row w-full min-w-0 bg-white font-sans">
         {mobileMenuOpen ? (
           <div
             className="fixed inset-0 z-40 bg-black/70 lg:hidden backdrop-blur-sm"
@@ -112,38 +112,40 @@ export default function RegionalHeadLayout({ children }: { children: React.React
         ) : null}
 
         <aside
-          className={`trimma-agent-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:translate-x-0 ${
-            mobileMenuOpen ? "translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]" : "-translate-x-full"
+          className={`trimma-regional-head-sidebar trimma-agent-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:shrink-0 lg:translate-x-0 ${
+            mobileMenuOpen ? "translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]" : "-translate-x-full lg:translate-x-0"
           }`}
         >
-          <div className="h-16 flex items-center justify-between px-5 border-b border-white/8 shrink-0">
-            <Link href={BASE} className="hover:opacity-90 transition-opacity">
-              <Logo iconSize={32} variant="dark" tagline="Regional Head" />
-            </Link>
-            <button
-              type="button"
-              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-label="Close menu"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div className="trimma-dashboard-sidebar-head shrink-0">
+            <div className="h-16 flex items-center justify-between px-5 border-b border-white/8">
+              <Link href={BASE} className="hover:opacity-90 transition-opacity">
+                <Logo iconSize={32} variant="dark" tagline="Regional Head" />
+              </Link>
+              <button
+                type="button"
+                className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="px-3 pt-3 pb-1">
+              <Link
+                href={CUSTOMER_DASHBOARD_HREF}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
+                }`}
+              >
+                <CalendarDays className="w-4 h-4" />
+                {CUSTOMER_DASHBOARD_LABEL}
+              </Link>
+            </div>
           </div>
 
-          <div className="px-3 pt-3 pb-1 shrink-0">
-            <Link
-              href={CUSTOMER_DASHBOARD_HREF}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                pathname.startsWith("/customer") ? "is-active-nav font-semibold" : ""
-              }`}
-            >
-              <CalendarDays className="w-4 h-4" />
-              {CUSTOMER_DASHBOARD_LABEL}
-            </Link>
-          </div>
-
-          <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none">
+          <nav className="trimma-dashboard-sidebar-nav flex-1 overflow-y-auto py-3 px-3 space-y-4 scrollbar-none min-h-0">
             {menuSections.map((section) => (
               <div key={section.title} className="space-y-0.5">
                 <div className="text-[10px] font-bold text-black uppercase tracking-widest px-3 mb-1.5">
@@ -190,7 +192,7 @@ export default function RegionalHeadLayout({ children }: { children: React.React
           </div>
         </aside>
 
-        <div className="trimma-portal-body flex-1 lg:ml-64 min-h-screen flex flex-col bg-white text-zinc-900 trimma-light-context pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 min-w-0 overflow-x-clip">
+        <div className="trimma-portal-body trimma-dashboard-main-column flex-1 flex flex-col min-w-0 w-full bg-white text-zinc-900 trimma-light-context pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 overflow-x-clip">
           <header className="trimma-portal-topbar trimma-dashboard-topbar h-16 bg-white border-b border-slate-200 sticky top-0 z-40 flex items-center justify-between px-4 lg:px-6 trimma-light-context">
             <div className="flex items-center gap-3">
               <div className="hidden lg:block text-sm font-bold text-zinc-900">Regional Head Portal</div>
@@ -229,8 +231,8 @@ export default function RegionalHeadLayout({ children }: { children: React.React
             </div>
           </header>
 
-          <main className="trimma-portal-main flex-1 overflow-x-clip bg-white text-zinc-900 trimma-light-context min-w-0 w-full">
-            <div className="trimma-portal-content p-4 sm:p-6 lg:p-8 min-w-0 overflow-x-hidden">{children}</div>
+          <main className="trimma-portal-main flex-1 overflow-x-clip overflow-y-auto bg-white text-zinc-900 trimma-light-context min-w-0 w-full">
+            <div className="trimma-page-shell trimma-light-context min-w-0">{children}</div>
           </main>
         </div>
 

@@ -1109,7 +1109,17 @@
       position: sticky !important;
     }
 
-    .trimma-agent-sidebar.trimma-portal-sidebar {
+    .trimma-regional-head-sidebar.trimma-portal-sidebar {
+      position: sticky !important;
+      top: auto !important;
+      left: auto !important;
+      align-self: flex-end !important;
+      height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+      max-height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+      min-height: calc(100dvh - var(--trimma-portal-sidebar-offset)) !important;
+    }
+
+    .trimma-agent-sidebar.trimma-portal-sidebar:not(.trimma-regional-head-sidebar) {
       position: fixed !important;
       top: var(--trimma-portal-sidebar-offset) !important;
       height: auto !important;
