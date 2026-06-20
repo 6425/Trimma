@@ -5,15 +5,11 @@ import { mapSalonPromotionRows, type SalonPromotionPackage } from "@/lib/deals";
 import { formatPublicSalonAmenity } from "@/lib/salon-amenities";
 import { isDummySalonRecord } from "@/lib/salon-list-filters";
 import {
-  filterServicesWithStaffCoverage,
-  filterStaffCoveringAnyService,
-  normalizeStaffListForCoverage,
-  type SalonStaffForAllocation,
-} from "@/lib/staff-allocation";
-import { dedupeStaffByNameRole } from "@/lib/salon-staff-service-sync";
+  dedupeStaffByNameRole,
+} from "@/lib/salon-staff-service-sync";
 
 const SALON_COLUMNS =
-  "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled";
+  "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours";
 
 export type PublicSalonService = {
   id: string;
@@ -144,19 +140,14 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     if (globalAmenitiesRes.error) throw new Error(globalAmenitiesRes.error.message);
     if (promotionsRes.error) throw new Error(promotionsRes.error.message);
 
-    const staffForCoverage = normalizeStaffListForCoverage(
-      (staffRes.data || []) as SalonStaffForAllocation[]
-    );
     const activeServices = (servicesRes.data || []).filter(
       (svc) => (svc.status || "active").toLowerCase() === "active"
     );
-    const bookableServices = filterServicesWithStaffCoverage(activeServices, staffForCoverage);
-    const bookableServiceIds = bookableServices.map((svc) => svc.id);
-    const bookableStaffMembers = filterStaffCoveringAnyService(staffForCoverage, bookableServiceIds);
-    const bookableStaffIds = new Set(bookableStaffMembers.map((member) => member.id));
-    const visibleStaffRows = (staffRes.data || []).filter((row) => bookableStaffIds.has(row.id));
+    const activeStaffRows = (staffRes.data || []).filter(
+      (row) => (row.status || "active").toLowerCase() === "active"
+    );
 
-    const services: PublicSalonService[] = bookableServices.map((svc) => ({
+    const services: PublicSalonService[] = activeServices.map((svc) => ({
       id: svc.id,
       name: svc.name,
       duration: svc.duration_min,
@@ -169,7 +160,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       popular: false,
     }));
 
-    const staff: PublicSalonStaff[] = dedupeStaffByNameRole(visibleStaffRows).map((member) => ({
+    const staff: PublicSalonStaff[] = dedupeStaffByNameRole(activeStaffRows).map((member) => ({
       id: member.id,
       name: member.name,
       role: member.role || "Professional",

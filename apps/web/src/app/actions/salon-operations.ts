@@ -52,10 +52,28 @@ async function refreshSalonOnboardingScore(
   await supabase.from("salons").update({ onboarding_completion_score: score }).eq("id", salonId);
 }
 
-function revalidateOwnerSalonPage(salon: Record<string, unknown>) {
-  const slug = typeof salon.slug === "string" ? salon.slug.trim() : "";
-  if (slug) revalidatePath(`/salons/${slug}`);
-  if (salon.id != null) revalidatePath(`/salons/${String(salon.id)}`);
+function revalidateOwnerSalonPage(
+  salon: Record<string, unknown>,
+  previousSalon?: Record<string, unknown>
+) {
+  const slugs = new Set<string>();
+  for (const record of [salon, previousSalon]) {
+    if (!record) continue;
+    const slug = typeof record.slug === "string" ? record.slug.trim() : "";
+    if (slug) slugs.add(slug);
+    if (record.id != null) revalidatePath(`/salons/${String(record.id)}`);
+  }
+  for (const slug of slugs) revalidatePath(`/salons/${slug}`);
+}
+
+async function publishSalonCatalogUpdates(
+  supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
+  salonId: string,
+  salon: Record<string, unknown>,
+  patch?: Record<string, unknown>
+) {
+  await syncStaffServiceAssignmentsForSalon(supabase, salonId);
+  revalidateOwnerSalonPage({ ...salon, ...patch }, salon);
 }
 
 async function loadSalonStaffForCoverage(
@@ -336,7 +354,7 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
     }));
     const { error } = await supabase.from("services").insert(rows);
     if (error) throw new Error(error.message);
-    await syncStaffServiceAssignmentsForSalon(supabase, ctx.salonId);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -358,6 +376,7 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
 
     const { error } = await supabase.from("services").update(payload).eq("id", serviceId);
     if (error) throw new Error(error.message);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -368,6 +387,7 @@ export async function deleteSalonService(serviceId: string) {
     await assertSalonService(supabase, ctx, serviceId);
     const { error } = await supabase.from("services").delete().eq("id", serviceId);
     if (error) throw new Error(error.message);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -384,7 +404,7 @@ export async function insertSalonStaff(payload: Record<string, unknown>) {
     if (payload.working_hours != null) {
       await syncStaffSchedules(supabase, data.id as string, payload.working_hours);
     }
-    revalidateOwnerSalonPage(ctx.salon);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
     return { staffId: data.id as string };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
@@ -399,7 +419,7 @@ export async function updateSalonStaff(staffId: string, payload: Record<string, 
     if (payload.working_hours != null) {
       await syncStaffSchedules(supabase, staffId, payload.working_hours);
     }
-    revalidateOwnerSalonPage(ctx.salon);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -410,7 +430,7 @@ export async function deleteSalonStaff(staffId: string) {
     await assertSalonStaffMember(supabase, ctx, staffId);
     const { error } = await supabase.from("salon_staff").delete().eq("id", staffId);
     if (error) throw new Error(error.message);
-    revalidateOwnerSalonPage(ctx.salon);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -516,6 +536,7 @@ export async function updateSalonMediaFields(payload: {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { error } = await supabase.from("salons").update(payload).eq("id", ctx.salonId);
     if (error) throw new Error(error.message);
+    revalidateOwnerSalonPage(ctx.salon);
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -623,6 +644,7 @@ export async function saveSalonProfile(input: {
       }
 
       await refreshSalonOnboardingScore(supabase, ctx.salonId);
+      await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon, profile);
     });
 
     if (!isSalonDbSuccess(result)) {
@@ -711,7 +733,6 @@ export async function saveOwnerVerificationData(
           .from("services")
           .insert(servicesData.svcsToAdd.map((s) => ({ ...s, salon_id: ctx.salonId })));
         if (s1) throw new Error(s1.message);
-        await syncStaffServiceAssignmentsForSalon(supabase, ctx.salonId);
       }
     }
 
@@ -740,6 +761,7 @@ export async function saveOwnerVerificationData(
     }
 
     await refreshSalonOnboardingScore(supabase, ctx.salonId);
+    await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon, finalPayload);
   });
 
   if (!isSalonDbSuccess(result)) {
