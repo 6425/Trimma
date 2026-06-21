@@ -149,8 +149,10 @@ export async function runBookingCheckoutNotifications(
   }
 
   return {
-    whatsappSent: whatsappResult.success,
-    whatsappError: whatsappResult.success ? null : whatsappResult.error || "WhatsApp could not be sent.",
+    whatsappSent: Boolean(whatsappResult.success && whatsappResult.messageId),
+    whatsappError: whatsappResult.success && whatsappResult.messageId
+      ? null
+      : whatsappResult.error || "WhatsApp could not be sent.",
     emailSent,
     emailError,
   };

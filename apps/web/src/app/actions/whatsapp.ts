@@ -194,57 +194,36 @@ async function sendWhatsAppCustomerMessage(input: {
   metaTemplateLanguage?: string | null;
 }): Promise<{ success: boolean; messageId?: string; error?: string; delivery?: "meta-template" | "text" }> {
   const metaName = (input.metaTemplateName || "").trim();
-  if (metaName) {
-    const metaResult = await sendWhatsAppMetaTemplateMessage({
-      phoneId: input.phoneId,
-      accessToken: input.accessToken,
-      to: input.customerPhone,
-      templateName: metaName,
-      languageCode: input.metaTemplateLanguage || "en",
-      bodyParameters: buildMetaBodyParameters(input.trigger, input.variables),
-    });
-    if (metaResult.success) {
-      return {
-        success: true,
-        messageId: metaResult.messageId,
-        delivery: "meta-template",
-      };
-    }
+  if (!metaName) {
+    const templateLabel =
+      input.trigger === "reservation-paid" ? "Template 1 (slot locked)" : "Template 2 (confirmation)";
     return {
       success: false,
-      error: metaResult.error,
+      delivery: "meta-template",
+      error:
+        `Meta ${templateLabel} is not configured. Add the exact approved template name in Admin → Global Settings → WhatsApp, then run packages/db/WHATSAPP_META_TEMPLATES_PATCH.sql in Supabase if those fields are missing.`,
+    };
+  }
+
+  const metaResult = await sendWhatsAppMetaTemplateMessage({
+    phoneId: input.phoneId,
+    accessToken: input.accessToken,
+    to: input.customerPhone,
+    templateName: metaName,
+    languageCode: input.metaTemplateLanguage || "en",
+    bodyParameters: buildMetaBodyParameters(input.trigger, input.variables),
+  });
+  if (metaResult.success) {
+    return {
+      success: true,
+      messageId: metaResult.messageId,
       delivery: "meta-template",
     };
   }
-
-  const response = await fetch(`https://graph.facebook.com/v18.0/${input.phoneId}/messages`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${input.accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: input.customerPhone,
-      type: "text",
-      text: { preview_url: false, body: input.textBody },
-    }),
-  });
-
-  const result = await response.json();
-  if (!response.ok) {
-    return {
-      success: false,
-      error: formatWhatsAppApiError(result),
-      delivery: "text",
-    };
-  }
-
   return {
-    success: true,
-    messageId: result.messages?.[0]?.id,
-    delivery: "text",
+    success: false,
+    error: formatWhatsAppApiError({ error: { message: metaResult.error } }),
+    delivery: "meta-template",
   };
 }
 
@@ -879,12 +858,12 @@ export async function sendWhatsAppNotification(
 
   if (!enabled) {
     console.log("ℹ️ WhatsApp alerts are disabled globally in settings.");
-    return { success: true, message: "Disabled" };
+    return { success: false, error: "WhatsApp alerts are disabled in Admin settings.", skipped: true };
   }
 
   if (!bookingConfirmedEnabled) {
     console.log("ℹ️ WhatsApp Booking Confirmation receipts are disabled in settings.");
-    return { success: true, message: "Confirmed Alerts Disabled" };
+    return { success: false, error: "Booking confirmation WhatsApp is disabled in Admin settings.", skipped: true };
   }
 
   if (!phoneId || !accessToken) {
