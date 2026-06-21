@@ -1,3 +1,5 @@
+import { sanitizeWhatsAppPhoneNumberId } from "@/lib/whatsapp-env";
+
 const GRAPH_API_VERSION = "v18.0";
 
 type GraphJson = Record<string, unknown> & {
@@ -59,7 +61,7 @@ export async function resolveWhatsAppPhoneNumberId(
   accountId: string,
   accessToken: string
 ): Promise<WhatsAppPhoneResolution> {
-  const trimmedAccountId = accountId.trim();
+  const trimmedAccountId = sanitizeWhatsAppPhoneNumberId(accountId);
   const trimmedToken = accessToken.trim();
 
   if (!trimmedAccountId || !trimmedToken) {

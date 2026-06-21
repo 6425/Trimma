@@ -373,7 +373,7 @@ function SettingsPanelContent() {
                     className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
                   />
                   <p className="text-[10px] text-zinc-500">
-                    From Meta Developer Console → WhatsApp → API Setup. Trimma production ID: <strong>1130184513519892</strong>. Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>
+                    Meta numeric Phone Number ID — not your +94 business number. From Meta Developer Console → WhatsApp → API Setup: <strong>1130184513519892</strong>. Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>
                   </p>
                 </div>
 

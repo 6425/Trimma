@@ -7,9 +7,13 @@ import { preAssignSalonOwnerRole, assignSalonOwnerRoleByAdminClient } from "./ad
 import { cleanEnvValue } from "@/lib/supabase-server-env";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 import {
+  isLikelyWhatsAppDisplayPhone,
   readWhatsAppEnvAccessToken,
   readWhatsAppEnvPhoneId,
   resolveEffectiveWhatsAppCredentials,
+  sanitizeWhatsAppPhoneNumberId,
+  TRIMMA_WHATSAPP_PHONE_NUMBER_ID,
+  whatsAppPhoneNumberIdMisconfigurationMessage,
 } from "@/lib/whatsapp-env";
 import {
   clearWhatsAppPhoneResolutionCache,
@@ -157,6 +161,13 @@ function formatWhatsAppApiError(result: {
     return "Check that the Phone Number ID (App ID) in Admin → Global Settings matches Meta Developer Console → WhatsApp → API Setup.";
   }
 
+  if (code === 100 && lower.includes("does not exist") && message.includes("+")) {
+    return (
+      `${message} You entered a phone number (+94…) where Meta expects the numeric Phone Number ID ` +
+      `(1130184513519892). Update Admin → Global Settings and Vercel WHATSAPP_PHONE_NUMBER_ID.`
+    );
+  }
+
   return message;
 }
 
@@ -192,8 +203,9 @@ export async function validateWhatsAppCredentials(
   const config = await getWhatsAppConfig();
   const envToken = readWhatsAppEnvAccessToken();
   const envPhoneId = readWhatsAppEnvPhoneId();
-  const accountId =
-    accountIdOverride?.trim() || envPhoneId || config.accountId || config.phoneId;
+  const accountId = sanitizeWhatsAppPhoneNumberId(
+    accountIdOverride?.trim() || envPhoneId || config.accountId || config.phoneId
+  );
   // Never validate a stale Supabase token when Vercel WHATSAPP_ACCESS_TOKEN is configured.
   const accessToken = envToken || accessTokenOverride?.trim() || config.accessToken;
 
@@ -253,6 +265,21 @@ export async function getWhatsAppConfig() {
 
     if (error || !dbSettings) {
       throw error || new Error("No settings record found.");
+    }
+
+    const storedPhoneId = (dbSettings.whatsapp_phone_number_id || "").trim();
+    if (storedPhoneId && isLikelyWhatsAppDisplayPhone(storedPhoneId)) {
+      void getSupabaseAdmin()
+        .from("global_payment_settings")
+        .update({ whatsapp_phone_number_id: TRIMMA_WHATSAPP_PHONE_NUMBER_ID })
+        .eq("id", "00000000-0000-0000-0000-000000000001")
+        .then(({ error: healError }) => {
+          if (healError) {
+            console.error("Failed to auto-heal WhatsApp Phone Number ID:", healError);
+            return;
+          }
+          clearWhatsAppPhoneResolutionCache();
+        });
     }
 
     const enabled = dbSettings.whatsapp_enabled !== false;
@@ -444,7 +471,14 @@ export async function saveWhatsAppSettings(
   try {
     const envToken = readWhatsAppEnvAccessToken();
     const envPhoneId = readWhatsAppEnvPhoneId();
-    const trimmedAccountId = cleanWhatsAppCredential(accountId || envPhoneId);
+    const rawAccountId = cleanWhatsAppCredential(accountId || envPhoneId);
+    if (rawAccountId && isLikelyWhatsAppDisplayPhone(rawAccountId)) {
+      return {
+        success: false,
+        error: whatsAppPhoneNumberIdMisconfigurationMessage(rawAccountId),
+      };
+    }
+    const trimmedAccountId = rawAccountId;
     const trimmedToken = cleanWhatsAppCredential(envToken || accessToken);
 
     if (!trimmedAccountId || !trimmedToken) {
@@ -468,7 +502,7 @@ export async function saveWhatsAppSettings(
       .from("global_payment_settings")
       .upsert({
         id: "00000000-0000-0000-0000-000000000001",
-        whatsapp_phone_number_id: trimmedAccountId,
+        whatsapp_phone_number_id: validation.phoneNumberId,
         whatsapp_access_token: trimmedToken,
         whatsapp_enabled: enabled,
         whatsapp_admin_alert_phone: adminAlertPhone?.trim() || null,
