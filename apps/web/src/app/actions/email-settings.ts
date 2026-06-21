@@ -635,6 +635,24 @@ export async function sendAdminApprovalEmail(salonName: string, ownerEmail: stri
   return sendAdminAlertEmail("admin-approval-admin", { salon_name: salonName }, `admin-app-adm:${salonName}`);
 }
 
+export async function sendOwnerSubmissionRejectedEmail(
+  salonName: string,
+  ownerEmail: string,
+  rejectionReason: string
+) {
+  if (!ownerEmail) return { success: false as const, error: "No owner email", skipped: true as const };
+  return sendTriggeredEmail({
+    triggerId: "owner-submission-rejected",
+    to: ownerEmail,
+    variables: {
+      salon_name: salonName,
+      rejection_reason: rejectionReason,
+      dashboard_link: `${APP_BASE_URL}/dashboard/profile`,
+    },
+    rateLimitKey: `owner-reject:${ownerEmail}:${rejectionReason.slice(0, 40)}`,
+  });
+}
+
 export async function sendWelcomeCustomerEmail(customerName: string, customerEmail: string) {
   return sendTriggeredEmail({
     triggerId: "welcome-customer",

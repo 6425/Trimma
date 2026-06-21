@@ -88,7 +88,7 @@ export function LeadTables({
                 : "text-zinc-500 hover:text-zinc-950"
             }`}
           >
-            3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(l.onboarding_status || "DISCOVERED")).length})
+            3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "AGENT_VERIFIED", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(l.onboarding_status || "DISCOVERED")).length})
           </button>
           <button
             onClick={() => setActiveTab("archived")}
@@ -669,6 +669,35 @@ export function LeadTables({
                           >
                             <Send className="w-3 h-3" /> Send to Agent
                           </Button>
+                        </>
+                      )}
+                      {["ASSIGNED_TO_AGENT", "AGENT_VERIFIED", "OWNER_INVITED", "OWNER_ACTIVATED"].includes(
+                        lead.onboarding_status || ""
+                      ) && (
+                        <>
+                          <Button
+                            onClick={() => handleOpenAssignModal(lead)}
+                            size="sm"
+                            variant="outline"
+                            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold h-7 px-3 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm"
+                          >
+                            <FileSearch className="w-3 h-3" /> Review
+                          </Button>
+                          {lead.onboarding_status === "OWNER_ACTIVATED" && (
+                            <Badge className="bg-amber-50 text-amber-700 border border-amber-200 font-bold uppercase text-[9px] px-2.5 py-1">
+                              Awaiting agent
+                            </Badge>
+                          )}
+                          {lead.onboarding_status === "OWNER_INVITED" && (
+                            <Badge className="bg-sky-50 text-sky-700 border border-sky-200 font-bold uppercase text-[9px] px-2.5 py-1">
+                              Owner invited
+                            </Badge>
+                          )}
+                          {lead.onboarding_status === "AGENT_VERIFIED" && (
+                            <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold uppercase text-[9px] px-2.5 py-1">
+                              Field verified
+                            </Badge>
+                          )}
                         </>
                       )}
                       {lead.onboarding_status === "PENDING_ADMIN_VERIFICATION" && (

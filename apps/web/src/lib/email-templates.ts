@@ -21,6 +21,7 @@ export const EMAIL_SUBJECT_DEFAULTS = {
   welcomeCustomer: "Welcome to Trimma, {customer_name}!",
   agentLeadAssigned: "New salon lead assigned: {salon_name}",
   partnerLeadReceived: "We received your Trimma partner application",
+  ownerSubmissionRejected: "Action required: {salon_name} profile update",
 } as const;
 
 export const EMAIL_BODY_DEFAULTS = {
@@ -168,6 +169,19 @@ Business: {salon_name}
 Location: {salon_address}
 
 Our team will review your application and contact you shortly. If an agent is available in your area, they will reach out to help you onboard.
+
+Thank you,
+The Trimma Team`,
+
+  ownerSubmissionRejected: `Hi there,
+
+Your Trimma agent reviewed the profile for {salon_name} and requested updates before booking approval can continue.
+
+Reason: {rejection_reason}
+
+Please sign in to your salon owner dashboard, make the requested changes, and submit again for approval.
+
+Update profile: {dashboard_link}
 
 Thank you,
 The Trimma Team`,
@@ -475,6 +489,24 @@ export const EMAIL_TRIGGER_CATALOG = [
     defaultSubject: "partnerLeadReceived" as const,
     defaultBody: "partnerLeadReceived" as const,
     mergeTags: ["{owner_name}", "{salon_name}", "{salon_address}"],
+  },
+  {
+    id: "owner-submission-rejected",
+    order: 16,
+    title: "Profile Correction — Salon Owner",
+    recipient: "Salon owner",
+    whenFired: "When an agent returns a submitted owner profile for corrections.",
+    toggleKey: "agentApprovalEnabled" as const,
+    subjectKey: "subjectOwnerSubmissionRejected" as const,
+    bodyKey: "templateOwnerSubmissionRejected" as const,
+    bodyKeySi: "templateOwnerSubmissionRejectedSi" as const,
+    bodyKeyTa: "templateOwnerSubmissionRejectedTa" as const,
+    defaultSubject: "ownerSubmissionRejected" as const,
+    defaultBody: "ownerSubmissionRejected" as const,
+    ctaVariable: "dashboard_link" as const,
+    ctaLabel: "Update profile",
+    mergeTags: ["{salon_name}", "{rejection_reason}", "{dashboard_link}"],
+    sharesToggleWith: "agent-approval-owner",
   },
 ] as const;
 

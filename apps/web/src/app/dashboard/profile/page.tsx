@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Store, MapPin, Phone, Clock, Sparkles, Loader2, Check, Save, QrCode, ExternalLink, Printer, Star, ShieldCheck, Upload, X, Trash2, ChevronRight, Image as ImageIcon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,10 @@ import {
 } from "@/lib/salon-amenities";
 import { formatServerActionError } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
+import {
+  calculateSalonOnboardingScore,
+  type SalonOnboardingSnapshot,
+} from "@/lib/salon-onboarding-progress";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
@@ -286,20 +290,48 @@ export default function SalonProfilePage() {
   const salonPublicUrl = slug ? buildSalonPublicUrl(slug, publicBaseUrl) : "";
   const qrPreviewUrl = salonPublicUrl ? buildQrCodeImageUrl(salonPublicUrl, 150) : "";
 
-  const calculateCompletion = () => {
-    let completed = 0;
-    let total = 8;
-    if (name) completed++;
-    if (contact) completed++;
-    if (address) completed++;
-    if (description) completed++;
-    if (logoUrl) completed++;
-    if (heroUrl) completed++;
-    if (salon?.bank_info?.account_number) completed++;
-    if (salon?.ext?.business_type) completed++;
-    return Math.round((completed / total) * 100);
-  };
-  const completionPercentage = calculateCompletion();
+  const onboardingSnapshot = useMemo((): SalonOnboardingSnapshot => {
+    const parsedLat = latitude !== "" ? parseFloat(latitude) : null;
+    const parsedLng = longitude !== "" ? parseFloat(longitude) : null;
+    return {
+      name,
+      description,
+      phone: contact,
+      address,
+      city: address,
+      latitude: Number.isFinite(parsedLat) ? parsedLat : salon?.latitude ?? null,
+      longitude: Number.isFinite(parsedLng) ? parsedLng : salon?.longitude ?? null,
+      logo_url: logoUrl,
+      hero_url: heroUrl,
+      hero_image: heroUrl || salon?.hero_image,
+      owner_email: salon?.owner_email,
+      owner_gmail: salon?.owner_gmail,
+      working_hours: salonSchedule,
+      business_info_extended: salon?.business_info_extended || salon?.ext || null,
+      bank_info: salon?.bank_info || null,
+      is_verified: isVerified,
+      onboarding_status: onboardingStatus,
+      source_type: salon?.source_type,
+    };
+  }, [
+    name,
+    description,
+    contact,
+    address,
+    latitude,
+    longitude,
+    logoUrl,
+    heroUrl,
+    salon,
+    salonSchedule,
+    isVerified,
+    onboardingStatus,
+  ]);
+
+  const completionPercentage = useMemo(
+    () => calculateSalonOnboardingScore(onboardingSnapshot),
+    [onboardingSnapshot]
+  );
 
   const renderApprovalAction = () => (
     <div className="flex items-center gap-3">

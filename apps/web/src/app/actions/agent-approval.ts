@@ -5,6 +5,7 @@ import { notifyRegionalHeadOfTeamEvent } from "@/lib/agent-lead-notifications";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { ownerResubmitStatusAfterRejection } from "@/lib/salon-onboarding-paths";
+import { notifyOwnerSubmissionRejected } from "@/app/actions/salon-onboarding-notifications";
 
 /** Return owner to field editing after agent rejects their submitted profile (Field Editor only). */
 export async function rejectSalonOwnerSubmission(salonId: string, reason: string) {
@@ -35,21 +36,20 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
         rejection_reason: trimmedReason,
       })
       .eq("id", salonId)
-      .select("owner_id, owner_email, phone, name, assign_to, source_type")
+      .select("owner_id, owner_email, owner_gmail, phone, name, assign_to, source_type")
       .single();
 
     if (updateError) throw updateError;
 
-    if (salon?.owner_email) {
-      await supabase.from("salon_owner_notifications").insert({
-        salon_id: salonId,
-        user_email: salon.owner_email,
-        notification_type: "SALON_REJECTED",
-        title: "Action Required: Salon Profile",
-        body: `Your salon profile requires changes before approval. Reason: ${trimmedReason}`,
-        metadata: {},
-      });
-    }
+    const ownerEmail = normalizeEmail(salon?.owner_email || salon?.owner_gmail || "");
+
+    await notifyOwnerSubmissionRejected({
+      salonId,
+      salonName: salon?.name || "Your salon",
+      ownerPhone: salon?.phone,
+      ownerEmail: ownerEmail || null,
+      reason: trimmedReason,
+    });
 
     await supabase.from("onboarding_logs").insert({
       salon_id: salonId,

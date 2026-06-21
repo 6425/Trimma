@@ -47,6 +47,16 @@ export async function saveAgentLeadData(
         finalPayload.booking_enabled = true;
         finalPayload.public_visibility = "preview";
       }
+    } else if (actionType === "DRAFT") {
+      const { data: currentSalon } = await supabaseAdmin
+        .from("salons")
+        .select("onboarding_status")
+        .eq("id", salonId)
+        .maybeSingle();
+
+      if (currentSalon?.onboarding_status === "ASSIGNED_TO_AGENT") {
+        finalPayload.onboarding_status = "AGENT_VERIFIED";
+      }
     }
 
     if (finalPayload.owner_gmail) {
@@ -119,13 +129,22 @@ export async function saveAgentLeadData(
     await supabaseAdmin.from("onboarding_logs").insert({
       salon_id: salonId,
       actor_email: agentEmail,
-      action: newStatus === "PENDING_ADMIN_VERIFICATION" ? "PENDING_ADMIN_VERIFICATION" : "LEAD_UPDATED",
+      action:
+        newStatus === "PENDING_ADMIN_VERIFICATION"
+          ? "PENDING_ADMIN_VERIFICATION"
+          : finalPayload.onboarding_status === "AGENT_VERIFIED"
+            ? "AGENT_VERIFIED"
+            : actionType === "REVIEW"
+              ? "LEAD_REVIEW_SAVED"
+              : "LEAD_UPDATED",
       notes:
         newStatus === "PENDING_ADMIN_VERIFICATION"
           ? "Agent enabled bookings and sent salon to admin for verification."
-          : actionType === "REVIEW"
-            ? "Agent saved salon details before owner invitation."
-            : "Agent updated salon details in field editor.",
+          : finalPayload.onboarding_status === "AGENT_VERIFIED"
+            ? "Agent completed field verification in the editor."
+            : actionType === "REVIEW"
+              ? "Agent saved salon details before owner invitation."
+              : "Agent updated salon details in field editor.",
     });
 
     return { success: true as const };

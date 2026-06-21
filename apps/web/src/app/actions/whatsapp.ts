@@ -1610,3 +1610,59 @@ export async function sendAgentLeadAssignedWhatsApp(
     return { success: false, error: err.message };
   }
 }
+
+/** WhatsApp alert when an agent returns an owner profile for corrections. */
+export async function sendOwnerSubmissionRejectedAlert(
+  salonId: string,
+  ownerPhone: string,
+  salonName: string,
+  rejectionReason: string
+) {
+  const { enabled, phoneId, accessToken, agentApprovalEnabled } = await getWhatsAppMessagingConfig();
+  if (!enabled || !agentApprovalEnabled || !phoneId || !accessToken) {
+    return { success: false, error: "Disabled or missing credentials" };
+  }
+
+  const cleanPhone = cleanPhoneNumber(ownerPhone);
+  if (!cleanPhone) {
+    return { success: false, error: "Phone number is missing." };
+  }
+
+  const dashboardLink = `${APP_BASE_URL}/dashboard/profile`;
+  const msg = `Hi ${salonName || "there"} team,
+
+Your Trimma agent reviewed your salon profile and requested updates before booking approval can continue.
+
+Reason: ${rejectionReason}
+
+Please sign in and update your profile, then submit again:
+${dashboardLink}
+
+Trimma Partner Support`;
+
+  try {
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "text",
+        text: { body: msg },
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      return { success: false, error: formatWhatsAppApiError(result) };
+    }
+
+    return { success: true, messageId: result.messages?.[0]?.id, salonId };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send owner correction alert.",
+    };
+  }
+}

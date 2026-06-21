@@ -1,8 +1,8 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { sendAdminApprovalEmail, sendAgentApprovalEmail } from "@/app/actions/email-settings";
-import { sendAdminApprovalAlerts, sendAgentApprovalAlerts } from "@/app/actions/whatsapp";
+import { sendAdminApprovalEmail, sendAgentApprovalEmail, sendOwnerSubmissionRejectedEmail } from "@/app/actions/email-settings";
+import { sendAdminApprovalAlerts, sendAgentApprovalAlerts, sendOwnerSubmissionRejectedAlert } from "@/app/actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 
@@ -126,6 +126,44 @@ export async function notifyAdminRejectedSalon(params: {
     "SALON_REJECTED",
     "Salon application requires attention",
     `${params.salonName || "Your salon"} was not approved. Reason: ${reason}`
+  );
+
+  return { success: true as const };
+}
+
+/** Agent returns owner profile for corrections (not admin rejection). */
+export async function notifyOwnerSubmissionRejected(params: {
+  salonId: string;
+  salonName: string;
+  ownerPhone?: string | null;
+  ownerEmail?: string | null;
+  reason: string;
+}) {
+  const salonName = params.salonName || "Your salon";
+  const ownerEmail = normalizeEmail(params.ownerEmail || "") || null;
+  const reason = params.reason.trim() || "Please update your salon profile and resubmit.";
+
+  if (params.ownerPhone) {
+    void sendOwnerSubmissionRejectedAlert(
+      params.salonId,
+      params.ownerPhone,
+      salonName,
+      reason
+    ).catch((err) => console.error("Owner rejection WhatsApp failed:", err));
+  }
+
+  if (ownerEmail) {
+    void sendOwnerSubmissionRejectedEmail(salonName, ownerEmail, reason).catch((err) =>
+      console.error("Owner rejection email failed:", err)
+    );
+  }
+
+  void insertSalonOwnerInAppNotification(
+    params.salonId,
+    ownerEmail,
+    "SALON_REJECTED",
+    "Action required: Salon profile",
+    `${salonName} requires updates before approval. Reason: ${reason}`
   );
 
   return { success: true as const };
