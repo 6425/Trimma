@@ -27,6 +27,7 @@ import {
   createAdminSalonDraft,
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
+import { getSalonVerificationReadinessIssues } from "@/lib/salon-onboarding-progress";
 import { WorkingHoursEditor } from "../../../components/admin/WorkingHoursEditor";
 import { LeadTables } from "../../../components/admin/LeadTables";
 import { LeadEditorModal } from "../../../components/admin/LeadEditorModal";
@@ -36,6 +37,10 @@ import {
   fetchAdminSalonRequests,
   type SalonRequestRow,
 } from "@/app/actions/salon-requests";
+import {
+  notifyAdminRejectedSalon,
+  notifySalonVerifiedByAdmin,
+} from "@/app/actions/salon-onboarding-notifications";
 
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
 
@@ -916,6 +921,24 @@ export default function Leads() {
   };
 
   const handleVerifySalon = async (lead: any) => {
+    const issues = getSalonVerificationReadinessIssues({
+      name: lead.name,
+      phone: lead.phone,
+      address: lead.address,
+      business_info_extended: lead.business_info_extended,
+      bank_info: lead.bank_info,
+    });
+
+    if (issues.length > 0) {
+      const proceed = window.confirm(
+        `Verification checklist incomplete:\n• ${issues.join("\n• ")}\n\nOpen Review to inspect documents and bank details. Verify anyway?`
+      );
+      if (!proceed) {
+        handleOpenAssignModal(lead);
+        return;
+      }
+    }
+
     try {
       setVerifying(true);
       toast.loading(`Verifying "${lead.name}"...`, { id: "verify_salon" });
@@ -928,6 +951,13 @@ export default function Leads() {
           verified_at: new Date().toISOString()
         });
       if (result.success === false) throw new Error(result.error);
+
+      await notifySalonVerifiedByAdmin({
+        salonId: lead.id,
+        salonName: lead.name,
+        ownerPhone: lead.phone,
+        ownerEmail: lead.owner_email || lead.owner_gmail || lead.email,
+      });
 
       await logActivity(lead.id, "SALON_VERIFIED", "Salon verified and activated by Admin. Now live on the platform.");
       toast.success(`"${lead.name}" is now VERIFIED and LIVE! ✓`, { id: "verify_salon" });
@@ -949,6 +979,13 @@ export default function Leads() {
           rejection_reason: rejectReason
         });
       if (result.success === false) throw new Error(result.error);
+
+      await notifyAdminRejectedSalon({
+        salonId: rejectTarget.id,
+        salonName: rejectTarget.name,
+        ownerEmail: rejectTarget.owner_email || rejectTarget.owner_gmail || rejectTarget.email,
+        reason: rejectReason,
+      });
 
       await logActivity(rejectTarget.id, "SALON_REJECTED", `Salon rejected by Admin. Reason: ${rejectReason}`);
       toast.success(`"${rejectTarget.name}" has been rejected.`, { id: "reject_salon" });

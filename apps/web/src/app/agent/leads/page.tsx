@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { sendOnboardingInviteAlert, sendAgentApprovalAlerts } from "../../actions/whatsapp";
+import { sendOnboardingInviteAlert } from "../../actions/whatsapp";
+import { notifyAgentApprovedSalonForAdmin } from "../../actions/salon-onboarding-notifications";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { saveAgentLeadData, convertManualLeadToSalon, fetchAgentGlobals } from "../../actions/agent-leads-update";
@@ -32,6 +33,7 @@ import {
   fetchAgentGlobalsClient,
 } from "@/lib/agent-client-data";
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
+import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { buildStaffWorkingHoursPayload, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 
@@ -709,16 +711,13 @@ function AgentLeads() {
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
 
-      if (formData.phone) {
-        const waRes = await sendAgentApprovalAlerts(
-          selectedLead.id,
-          formData.phone,
-          formData.name || selectedLead.name
-        );
-        if (!waRes.success) {
-          console.warn("WhatsApp agent approval alert failed:", waRes.error);
-        }
-      }
+      await notifyAgentApprovedSalonForAdmin({
+        salonId: selectedLead.id,
+        salonName: formData.name || selectedLead.name,
+        ownerPhone: formData.phone || selectedLead.phone,
+        ownerEmail:
+          formData.owner_gmail || selectedLead.owner_email || selectedLead.owner_gmail || selectedLead.email,
+      });
       
       toast.success("Salon approved and sent to Admin for Verification! (Booking enabled)");
       setIsModalOpen(false);
@@ -1396,6 +1395,10 @@ function AgentLeads() {
                 </div>
 
               </div>
+
+              {!isManualLead && selectedLead?.id ? (
+                <SalonOnboardingReviewPanel salonId={selectedLead.id} salon={selectedLead} />
+              ) : null}
 
             </div>
 

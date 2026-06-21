@@ -136,6 +136,7 @@ export type OwnerSubmissionNotificationInput = {
   salonName: string;
   salonAddress?: string | null;
   assignToEmail: string | null;
+  ownerEmail?: string | null;
   sourceType?: string | null;
 };
 
@@ -145,31 +146,42 @@ export async function notifyOwnerSubmittedForBookingApproval(
   input: OwnerSubmissionNotificationInput
 ): Promise<void> {
   const assignTo = normalizeEmail(input.assignToEmail || "");
+  const ownerEmail = normalizeEmail(input.ownerEmail || "");
   const dashboardLink = `${APP_BASE_URL}/agent/leads?open=${input.salonId}`;
   const eventLabel = "Owner submitted for booking approval";
 
-  if (!assignTo) {
+  if (assignTo) {
+    await notifyAgentLeadAssigned(supabase, {
+      salonId: input.salonId,
+      salonName: input.salonName,
+      salonAddress: input.salonAddress || "Owner completed self onboarding profile",
+      assignToEmail: assignTo,
+      onboardingStatus: "OWNER_ACTIVATED",
+      dashboardLink,
+    });
+
+    void notifyRegionalHeadOfTeamEvent(
+      supabase,
+      assignTo,
+      input.salonName,
+      eventLabel,
+      dashboardLink,
+      `owner-submit-${input.salonId}`
+    ).catch((err) => console.error("Regional head owner submission notification failed:", err));
+  } else {
     console.warn(
       `Owner submission for salon ${input.salonId} has no assign_to — admin must review in pipeline.`
     );
-    return;
   }
 
-  await notifyAgentLeadAssigned(supabase, {
-    salonId: input.salonId,
-    salonName: input.salonName,
-    salonAddress: input.salonAddress || "Owner completed self onboarding profile",
-    assignToEmail: assignTo,
-    onboardingStatus: "OWNER_ACTIVATED",
-    dashboardLink,
-  });
-
-  void notifyRegionalHeadOfTeamEvent(
-    supabase,
-    assignTo,
-    input.salonName,
-    eventLabel,
-    dashboardLink,
-    `owner-submit-${input.salonId}`
-  ).catch((err) => console.error("Regional head owner submission notification failed:", err));
+  if (ownerEmail) {
+    const { notifyOwnerSubmissionAcknowledged } = await import(
+      "@/app/actions/salon-onboarding-notifications"
+    );
+    void notifyOwnerSubmissionAcknowledged({
+      salonId: input.salonId,
+      salonName: input.salonName,
+      ownerEmail,
+    }).catch((err) => console.error("Owner submission acknowledgement failed:", err));
+  }
 }

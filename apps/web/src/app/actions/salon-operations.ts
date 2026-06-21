@@ -722,6 +722,7 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       salonName: String(salon.name || "Salon"),
       salonAddress: (salon.address as string | null) || null,
       assignTo,
+      ownerEmail: approvalEmail,
       sourceType: (salon.source_type as string | null) || null,
     };
   });
@@ -733,6 +734,7 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
     salonName: result.data.salonName,
     salonAddress: result.data.salonAddress,
     assignToEmail: result.data.assignTo,
+    ownerEmail: result.data.ownerEmail,
     sourceType: result.data.sourceType,
   }).catch((err) => console.error("Owner submission notification failed:", err));
 
