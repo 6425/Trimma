@@ -359,21 +359,21 @@ function SettingsPanelContent() {
               {/* INPUT FIELDS */}
               <div className="space-y-4">
                 
-                {/* META BUSINESS ACCOUNT ID */}
+                {/* WHATSAPP_PHONE_NUMBER_ID */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
-                    Phone Number ID (App ID)
+                  <Label htmlFor="whatsapp_phone_number_id" className="text-xs font-black uppercase tracking-wider text-zinc-500">
+                    WHATSAPP_PHONE_NUMBER_ID
                   </Label>
                   <Input 
-                    id="phone_id"
+                    id="whatsapp_phone_number_id"
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                     required
                     placeholder="1130184513519892"
-                    className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm text-zinc-900"
+                    className="h-11 border-slate-200 focus:border-zinc-950 rounded-xl text-sm font-mono text-zinc-900"
                   />
                   <p className="text-[10px] text-zinc-500">
-                    Meta numeric Phone Number ID — not your +94 business number. From Meta Developer Console → WhatsApp → API Setup: <strong>1130184513519892</strong>. Vercel env: <code className="text-[9px] bg-zinc-100 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code>
+                    Meta numeric Phone Number ID — not your +94 business number. Same name as the Vercel env var. Production value: <strong>1130184513519892</strong> (Meta → WhatsApp → API Setup).
                   </p>
                 </div>
 
