@@ -11,8 +11,6 @@ Great news — your *20% reservation payment* for *{salon_name}* went through su
 ✅ Paid: LKR {deposit_paid}
 💵 Balance at salon: LKR {balance_to_pay}
 
-The salon will confirm your booking soon — we'll message you once it's approved! ✨
-
 Thank you for booking with Trimma 💛`,
 
   confirmed: `Hi {customer_name}! 🌟
@@ -152,11 +150,12 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   {
     id: "reservation-paid",
     order: 1,
-    title: "Reservation Payment Received",
+    title: "Reservation Payment Received (Template 1 — Slot Locked)",
     whenFired:
-      "Immediately after the customer pays the 20% reservation fee and the slot is locked.",
+      "Immediately after the customer pays the 20% reservation fee and the slot is locked. Uses your Meta-approved Template 1 when configured.",
     toggleKey: "reservationPaidEnabled" as const,
     templateKey: "templateReservationPaid" as const,
+    metaTemplateKey: "metaTemplateReservationPaid" as const,
     defaultTemplate: "reservationPaid" as const,
     mergeTags: [
       "{customer_name}",
@@ -172,10 +171,12 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   {
     id: "confirmed",
     order: 2,
-    title: "Booking Confirmed by Salon",
-    whenFired: "When the salon owner confirms a reserved booking from their dashboard.",
+    title: "Booking Confirmed (Template 2 — Confirmation)",
+    whenFired:
+      "When the booking is confirmed (sent at checkout after payment, or when the salon owner confirms a legacy pending booking). Uses your Meta-approved Template 2 when configured.",
     toggleKey: "bookingConfirmedEnabled" as const,
     templateKey: "templateConfirmed" as const,
+    metaTemplateKey: "metaTemplateConfirmed" as const,
     defaultTemplate: "confirmed" as const,
     mergeTags: [
       "{customer_name}",

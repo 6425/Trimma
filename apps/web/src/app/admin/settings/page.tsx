@@ -53,6 +53,9 @@ function SettingsPanelContent() {
   const [templateAdminApprovalAdmin, setTemplateAdminApprovalAdmin] = useState("");
   const [templateWelcomeCustomer, setTemplateWelcomeCustomer] = useState("");
   const [templateAgentLeadAssigned, setTemplateAgentLeadAssigned] = useState("");
+  const [metaTemplateReservationPaid, setMetaTemplateReservationPaid] = useState("");
+  const [metaTemplateConfirmed, setMetaTemplateConfirmed] = useState("");
+  const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en");
 
   // Show/Hide Access Token
   const [showToken, setShowToken] = useState(false);
@@ -100,6 +103,9 @@ function SettingsPanelContent() {
       setTemplateAdminApprovalAdmin(config.templateAdminApprovalAdmin || "");
       setTemplateWelcomeCustomer(config.templateWelcomeCustomer || "");
       setTemplateAgentLeadAssigned(config.templateAgentLeadAssigned || "");
+      setMetaTemplateReservationPaid(config.metaTemplateReservationPaid || "");
+      setMetaTemplateConfirmed(config.metaTemplateConfirmed || "");
+      setMetaTemplateLanguage(config.metaTemplateLanguage || "en");
       setConfigSource(config.credentialsSource || config.source);
 
       const validation = await validateWhatsAppCredentials();
@@ -153,7 +159,10 @@ function SettingsPanelContent() {
         welcomeCustomerEnabled,
         agentLeadAssignedEnabled,
         templateWelcomeCustomer,
-        templateAgentLeadAssigned
+        templateAgentLeadAssigned,
+        metaTemplateReservationPaid,
+        metaTemplateConfirmed,
+        metaTemplateLanguage
       );
       if (res.success) {
         toast.success("WhatsApp configuration updated successfully!", {
@@ -226,6 +235,19 @@ function SettingsPanelContent() {
       adminApprovalEnabled: setAdminApprovalEnabled,
       welcomeCustomerEnabled: setWelcomeCustomerEnabled,
       agentLeadAssignedEnabled: setAgentLeadAssignedEnabled,
+    };
+    setters[key]?.(value);
+  };
+
+  const metaTemplateValues: Record<string, string> = {
+    metaTemplateReservationPaid,
+    metaTemplateConfirmed,
+  };
+
+  const setMetaTemplateValue = (key: string, value: string) => {
+    const setters: Record<string, (value: string) => void> = {
+      metaTemplateReservationPaid: setMetaTemplateReservationPaid,
+      metaTemplateConfirmed: setMetaTemplateConfirmed,
     };
     setters[key]?.(value);
   };
@@ -432,8 +454,26 @@ function SettingsPanelContent() {
                       Automated Notification Trigger Events & Templates
                     </h4>
                     <p className="text-[10px] text-zinc-500 mt-0.5">
-                      All 14 message templates used by Trimma. Toggle each trigger and edit copy with merge tags below.
+                      All 14 message templates used by Trimma. For booking alerts (Template 1 &amp; 2), enter your Meta-approved template names — Trimma sends those via Meta Cloud API instead of free text.
                     </p>
+                  </div>
+
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+                    <p className="text-[11px] text-amber-900 font-medium leading-relaxed">
+                      <strong>Meta Business Manager templates.</strong> First booking messages to customers must use approved Meta templates (type: template). Copy the exact template name from Meta → WhatsApp → Message templates. Template text below is only used as fallback if the Meta name is left blank.
+                    </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="meta_template_language" className="text-[9px] font-black uppercase tracking-widest text-zinc-600">
+                        Meta template language code
+                      </Label>
+                      <Input
+                        id="meta_template_language"
+                        value={metaTemplateLanguage}
+                        onChange={(e) => setMetaTemplateLanguage(e.target.value)}
+                        placeholder="en"
+                        className="h-9 max-w-[120px] border-amber-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
                   </div>
                   
                   <div className="space-y-6">
@@ -473,7 +513,23 @@ function SettingsPanelContent() {
 
                           {isEnabled && (
                             <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                              <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Template Text</Label>
+                              {"metaTemplateKey" in trigger && trigger.metaTemplateKey && (
+                                <div className="space-y-2 pb-2">
+                                  <Label className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
+                                    Meta template name (Business Manager)
+                                  </Label>
+                                  <Input
+                                    value={metaTemplateValues[trigger.metaTemplateKey] || ""}
+                                    onChange={(e) => setMetaTemplateValue(trigger.metaTemplateKey, e.target.value)}
+                                    placeholder="e.g. trimma_booking_confirmed"
+                                    className="h-9 border-emerald-200 rounded-lg text-xs font-mono"
+                                  />
+                                  <p className="text-[9px] text-zinc-500">
+                                    Required for customer delivery outside the 24-hour window. Body variables map to merge tags in order ({`{{1}}`} = first tag, etc.).
+                                  </p>
+                                </div>
+                              )}
+                              <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Fallback template text</Label>
                               <textarea
                                 value={templateValues[templateKey] || ""}
                                 onChange={(e) => setTemplateValue(templateKey, e.target.value)}

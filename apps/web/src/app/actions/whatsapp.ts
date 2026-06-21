@@ -16,6 +16,11 @@ import {
   whatsAppPhoneNumberIdMisconfigurationMessage,
 } from "@/lib/whatsapp-env";
 import {
+  buildMetaBodyParameters,
+  sendWhatsAppMetaTemplateMessage,
+  type WhatsAppMetaTemplateTrigger,
+} from "@/lib/whatsapp-meta-send";
+import {
   clearWhatsAppPhoneResolutionCache,
   resolveWhatsAppPhoneNumberId,
   validateWhatsAppMetaAccount,
@@ -146,6 +151,13 @@ function formatWhatsAppApiError(result: {
   const lower = message.toLowerCase();
 
   if (
+    code === 132001 ||
+    (lower.includes("template") && lower.includes("does not exist"))
+  ) {
+    return `${message} Check Admin → Global Settings → Meta template name matches Meta Business Manager exactly (Template 1 / Template 2).`;
+  }
+
+  if (
     code === 190 ||
     lower.includes("expired") ||
     lower.includes("authentication error") ||
@@ -169,6 +181,71 @@ function formatWhatsAppApiError(result: {
   }
 
   return message;
+}
+
+async function sendWhatsAppCustomerMessage(input: {
+  trigger: WhatsAppMetaTemplateTrigger;
+  phoneId: string;
+  accessToken: string;
+  customerPhone: string;
+  textBody: string;
+  variables: Record<string, string>;
+  metaTemplateName?: string | null;
+  metaTemplateLanguage?: string | null;
+}): Promise<{ success: boolean; messageId?: string; error?: string; delivery?: "meta-template" | "text" }> {
+  const metaName = (input.metaTemplateName || "").trim();
+  if (metaName) {
+    const metaResult = await sendWhatsAppMetaTemplateMessage({
+      phoneId: input.phoneId,
+      accessToken: input.accessToken,
+      to: input.customerPhone,
+      templateName: metaName,
+      languageCode: input.metaTemplateLanguage || "en",
+      bodyParameters: buildMetaBodyParameters(input.trigger, input.variables),
+    });
+    if (metaResult.success) {
+      return {
+        success: true,
+        messageId: metaResult.messageId,
+        delivery: "meta-template",
+      };
+    }
+    return {
+      success: false,
+      error: metaResult.error,
+      delivery: "meta-template",
+    };
+  }
+
+  const response = await fetch(`https://graph.facebook.com/v18.0/${input.phoneId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: input.customerPhone,
+      type: "text",
+      text: { preview_url: false, body: input.textBody },
+    }),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    return {
+      success: false,
+      error: formatWhatsAppApiError(result),
+      delivery: "text",
+    };
+  }
+
+  return {
+    success: true,
+    messageId: result.messages?.[0]?.id,
+    delivery: "text",
+  };
 }
 
 function cleanWhatsAppCredential(value: string | undefined): string {
@@ -259,7 +336,10 @@ export async function getWhatsAppConfig() {
         whatsapp_template_admin_approval_owner,
         whatsapp_template_admin_approval_admin,
         whatsapp_template_welcome_customer,
-        whatsapp_template_agent_lead_assigned
+        whatsapp_template_agent_lead_assigned,
+        whatsapp_meta_template_reservation_paid,
+        whatsapp_meta_template_confirmed,
+        whatsapp_meta_template_language
       `)
       .single();
 
@@ -325,6 +405,10 @@ export async function getWhatsAppConfig() {
       dbSettings.whatsapp_template_welcome_customer || D.welcomeCustomer;
     const templateAgentLeadAssigned =
       dbSettings.whatsapp_template_agent_lead_assigned || D.agentLeadAssigned;
+    const metaTemplateReservationPaid =
+      dbSettings.whatsapp_meta_template_reservation_paid?.trim() || "";
+    const metaTemplateConfirmed = dbSettings.whatsapp_meta_template_confirmed?.trim() || "";
+    const metaTemplateLanguage = dbSettings.whatsapp_meta_template_language?.trim() || "en";
 
     return { 
       enabled, 
@@ -361,6 +445,9 @@ export async function getWhatsAppConfig() {
       templateAdminApprovalAdmin,
       templateWelcomeCustomer,
       templateAgentLeadAssigned,
+      metaTemplateReservationPaid,
+      metaTemplateConfirmed,
+      metaTemplateLanguage,
       source,
     };
   } catch (err) {
@@ -408,6 +495,9 @@ export async function getWhatsAppConfig() {
       templateAdminApprovalAdmin: D.adminApprovalAdmin,
       templateWelcomeCustomer: D.welcomeCustomer,
       templateAgentLeadAssigned: D.agentLeadAssigned,
+      metaTemplateReservationPaid: "",
+      metaTemplateConfirmed: "",
+      metaTemplateLanguage: "en",
       source,
     };
   }
@@ -466,7 +556,10 @@ export async function saveWhatsAppSettings(
   welcomeCustomerEnabled?: boolean,
   agentLeadAssignedEnabled?: boolean,
   templateWelcomeCustomer?: string,
-  templateAgentLeadAssigned?: string
+  templateAgentLeadAssigned?: string,
+  metaTemplateReservationPaid?: string,
+  metaTemplateConfirmed?: string,
+  metaTemplateLanguage?: string
 ) {
   try {
     const envToken = readWhatsAppEnvAccessToken();
@@ -531,6 +624,9 @@ export async function saveWhatsAppSettings(
         whatsapp_template_admin_approval_admin: templateAdminApprovalAdmin || null,
         whatsapp_template_welcome_customer: templateWelcomeCustomer || null,
         whatsapp_template_agent_lead_assigned: templateAgentLeadAssigned || null,
+        whatsapp_meta_template_reservation_paid: metaTemplateReservationPaid?.trim() || null,
+        whatsapp_meta_template_confirmed: metaTemplateConfirmed?.trim() || null,
+        whatsapp_meta_template_language: metaTemplateLanguage?.trim() || "en",
       });
 
     if (error) throw error;
@@ -614,6 +710,8 @@ export async function sendWhatsAppReservationPaidNotification(
     accessToken,
     reservationPaidEnabled,
     templateReservationPaid,
+    metaTemplateReservationPaid,
+    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
@@ -670,27 +768,22 @@ export async function sendWhatsAppReservationPaidNotification(
 
     const customerMessage = parseTemplate(templateReservationPaid || D.reservationPaid, variables);
 
-    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: customerPhone,
-        type: "text",
-        text: { preview_url: false, body: customerMessage },
-      }),
+    const sendResult = await sendWhatsAppCustomerMessage({
+      trigger: "reservation-paid",
+      phoneId,
+      accessToken,
+      customerPhone,
+      textBody: customerMessage,
+      variables,
+      metaTemplateName: metaTemplateReservationPaid,
+      metaTemplateLanguage: metaTemplateLanguage,
     });
 
-    const result = await response.json();
-    if (!response.ok) {
-      return { success: false, error: formatWhatsAppApiError(result) };
+    if (!sendResult.success) {
+      return { success: false, error: sendResult.error };
     }
 
-    return { success: true, messageId: result.messages?.[0]?.id };
+    return { success: true, messageId: sendResult.messageId, delivery: sendResult.delivery };
   } catch (err: unknown) {
     return {
       success: false,
@@ -779,7 +872,9 @@ export async function sendWhatsAppNotification(
     phoneId, 
     accessToken, 
     bookingConfirmedEnabled,
-    templateConfirmed
+    templateConfirmed,
+    metaTemplateConfirmed,
+    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
@@ -855,70 +950,51 @@ export async function sendWhatsAppNotification(
 
     const customerMessage = parseTemplate(templateConfirmed || D.confirmed, variables);
 
-    console.log(`🚀 Dispatching WhatsApp Booking Confirmation to ${customerPhone}:`);
+    const sendResult = await sendWhatsAppCustomerMessage({
+      trigger: "confirmed",
+      phoneId,
+      accessToken,
+      customerPhone,
+      textBody: customerMessage,
+      variables,
+      metaTemplateName: metaTemplateConfirmed,
+      metaTemplateLanguage: metaTemplateLanguage,
+    });
 
-    // 4. Send WhatsApp request directly to Meta API for CUSTOMER
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: customerPhone,
-          type: "text",
-          text: {
-            preview_url: false,
-            body: customerMessage,
-          },
-        }),
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      console.error("❌ Meta Graph API returned error response for customer:", result);
-      return { success: false, error: formatWhatsAppApiError(result) };
+    if (!sendResult.success) {
+      console.error("❌ Meta Graph API returned error response for customer:", sendResult.error);
+      return { success: false, error: sendResult.error };
     }
 
-    // 5. Send Notification to SALON OWNER
+    // Notify salon owner (session text — internal alert)
     const ownerRawPhone = booking.salons?.phone;
     if (ownerRawPhone) {
       const ownerPhone = cleanPhoneNumber(ownerRawPhone);
       const ownerMessage = `🔔 *BOOKING CONFIRMED* 🔔\n\nYou confirmed the booking from *${customerName}*.\n\n📋 Ref: ${bookingNo}\n📅 Date: ${booking.booking_date}\n⏰ Time: ${booking.booking_time}\n💇 Service: ${serviceName}\n\nPlease prepare for their arrival! ✂️`;
 
-      await fetch(
-        `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
+      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: ownerPhone,
+          type: "text",
+          text: {
+            preview_url: false,
+            body: ownerMessage,
           },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to: ownerPhone,
-            type: "text",
-            text: {
-              preview_url: false,
-              body: ownerMessage,
-            },
-          }),
-        }
-      );
+        }),
+      });
     }
 
-    return { success: true, messageId: result.messages?.[0]?.id };
-
-  } catch (err: any) {
+    return { success: true, messageId: sendResult.messageId, delivery: sendResult.delivery };
+  } catch (err: unknown) {
     console.error("❌ Unhandled error in WhatsApp confirmation dispatch:", err);
-    return { success: false, error: err.message || "Internal server error." };
+    return { success: false, error: err instanceof Error ? err.message : "Internal server error." };
   }
 }
 
