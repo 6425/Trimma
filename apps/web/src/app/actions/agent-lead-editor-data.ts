@@ -218,7 +218,7 @@ export async function fetchAgentManualLeads() {
       .from("salon_leads")
       .select("*")
       .eq("assign_to", auth.email)
-      .neq("lead_status", "CONVERTED")
+      .neq("onboarding_stage", "CONVERTED")
       .order("created_at", { ascending: false });
 
     if (error) {

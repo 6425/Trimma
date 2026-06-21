@@ -1,6 +1,9 @@
 import { createHash, randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { resolveOnboardingAgentEmail } from "@/lib/salon-onboarding-paths";
+
+export { resolveOnboardingAgentEmail } from "@/lib/salon-onboarding-paths";
 
 export type OnboardingLeadFormInput = {
   businessName: string;
@@ -16,13 +19,6 @@ export type OnboardingLeadFormInput = {
   notes: string;
 };
 
-const DISTRICT_AGENT_FALLBACK: Record<string, string> = {
-  colombo: "agent-colombo@trimma.io",
-  gampaha: "agent-gampaha@trimma.io",
-  kandy: "agent-kandy@trimma.io",
-  anuradhapura: "agent-anura@trimma.io",
-};
-
 export function createOnboardingPlaceId(seed: string) {
   const digest = createHash("sha256").update(seed).digest("hex").slice(0, 20);
   return `onboarding_${digest}_${randomBytes(4).toString("hex")}`;
@@ -36,53 +32,6 @@ export function validateOnboardingLeadInput(formData: OnboardingLeadFormInput): 
   if (!formData.whatsapp?.trim()) return "WhatsApp number is required.";
   if (!formData.address?.trim()) return "Address is required.";
   if (!formData.province?.trim() || !formData.district?.trim()) return "Province and district are required.";
-  return null;
-}
-
-async function userEmailExists(
-  supabase: SupabaseClient,
-  email: string | null | undefined
-): Promise<string | null> {
-  const normalized = normalizeEmail(email || "");
-  if (!normalized) return null;
-
-  const { data } = await supabase.from("users").select("email").eq("email", normalized).maybeSingle();
-  return data?.email ? normalized : null;
-}
-
-export async function resolveOnboardingAgentEmail(
-  supabase: SupabaseClient,
-  district: string
-): Promise<string | null> {
-  const districtName = district.trim();
-  const districtKey = districtName.toLowerCase();
-
-  try {
-    const { data: agentRows, error } = await supabase
-      .from("agents")
-      .select("user_email, territory, status")
-      .eq("status", "active");
-
-    if (!error) {
-      for (const row of agentRows || []) {
-        const territory = String(row.territory || "").trim().toLowerCase();
-        if (!territory) continue;
-        if (!territory.includes(districtKey) && territory !== districtKey) continue;
-
-        const verified = await userEmailExists(supabase, row.user_email);
-        if (verified) return verified;
-      }
-    }
-  } catch {
-    // Fall through to hardcoded district agents.
-  }
-
-  const fallback = DISTRICT_AGENT_FALLBACK[districtKey];
-  if (fallback) {
-    const verified = await userEmailExists(supabase, fallback);
-    if (verified) return verified;
-  }
-
   return null;
 }
 

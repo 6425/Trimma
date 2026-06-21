@@ -130,3 +130,46 @@ export async function notifyAgentLeadAssigned(
     input.salonId
   ).catch((err) => console.error("Regional head lead notification failed:", err));
 }
+
+export type OwnerSubmissionNotificationInput = {
+  salonId: string;
+  salonName: string;
+  salonAddress?: string | null;
+  assignToEmail: string | null;
+  sourceType?: string | null;
+};
+
+/** Fired when an owner submits their profile for booking approval (OWNER_ACTIVATED). */
+export async function notifyOwnerSubmittedForBookingApproval(
+  supabase: SupabaseClient,
+  input: OwnerSubmissionNotificationInput
+): Promise<void> {
+  const assignTo = normalizeEmail(input.assignToEmail || "");
+  const dashboardLink = `${APP_BASE_URL}/agent/leads?open=${input.salonId}`;
+  const eventLabel = "Owner submitted for booking approval";
+
+  if (!assignTo) {
+    console.warn(
+      `Owner submission for salon ${input.salonId} has no assign_to — admin must review in pipeline.`
+    );
+    return;
+  }
+
+  await notifyAgentLeadAssigned(supabase, {
+    salonId: input.salonId,
+    salonName: input.salonName,
+    salonAddress: input.salonAddress || "Owner completed self onboarding profile",
+    assignToEmail: assignTo,
+    onboardingStatus: "OWNER_ACTIVATED",
+    dashboardLink,
+  });
+
+  void notifyRegionalHeadOfTeamEvent(
+    supabase,
+    assignTo,
+    input.salonName,
+    eventLabel,
+    dashboardLink,
+    `owner-submit-${input.salonId}`
+  ).catch((err) => console.error("Regional head owner submission notification failed:", err));
+}

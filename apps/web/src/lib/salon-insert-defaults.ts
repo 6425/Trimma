@@ -9,6 +9,7 @@ export function buildSelfServeSalonInsertRow(params: {
   slug: string;
   normalizedEmail: string;
   freePlanId: string | null;
+  assignTo?: string | null;
 }) {
   const now = new Date().toISOString();
 
@@ -24,6 +25,7 @@ export function buildSelfServeSalonInsertRow(params: {
     booking_enabled: false,
     public_visibility: "hidden",
     is_verified: false,
+    assign_to: params.assignTo || null,
     subscription_plan_id: params.freePlanId,
     source_type: "self_serve_onboarding",
     draft_created_at: now,

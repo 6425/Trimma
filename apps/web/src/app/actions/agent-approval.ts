@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { notifyRegionalHeadOfTeamEvent } from "@/lib/agent-lead-notifications";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { ownerResubmitStatusAfterRejection } from "@/lib/salon-onboarding-paths";
 
 /** Return owner to field editing after agent rejects their submitted profile (Field Editor only). */
 export async function rejectSalonOwnerSubmission(salonId: string, reason: string) {
@@ -14,15 +15,27 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
       return { success: false as const, error: "A rejection reason is required." };
     }
 
+    const { data: existing, error: readError } = await supabase
+      .from("salons")
+      .select("source_type")
+      .eq("id", salonId)
+      .single();
+
+    if (readError || !existing) {
+      return { success: false as const, error: readError?.message || "Salon not found." };
+    }
+
+    const resubmitStatus = ownerResubmitStatusAfterRejection(existing.source_type);
+
     const { error: updateError, data: salon } = await supabase
       .from("salons")
       .update({
-        onboarding_status: "ASSIGNED_TO_AGENT",
+        onboarding_status: resubmitStatus,
         booking_enabled: false,
         rejection_reason: trimmedReason,
       })
       .eq("id", salonId)
-      .select("owner_id, owner_email, phone, name, assign_to")
+      .select("owner_id, owner_email, phone, name, assign_to, source_type")
       .single();
 
     if (updateError) throw updateError;

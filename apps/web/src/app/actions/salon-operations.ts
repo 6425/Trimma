@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendBookingConfirmedEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
 import { sendWhatsAppNotification, sendWhatsAppRescheduleNotification } from "@/app/actions/whatsapp";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
@@ -32,9 +33,11 @@ import {
   getBookingApprovalMissingFields,
   type SalonOnboardingSnapshot,
 } from "@/lib/salon-onboarding-progress";
+import { notifyOwnerSubmittedForBookingApproval } from "@/lib/agent-lead-notifications";
+import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 
 const SALON_ONBOARDING_SELECT =
-  "name, description, phone, address, city, latitude, longitude, logo_url, cover_url, hero_url, hero_image, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status";
+  "id, name, description, phone, address, city, assign_to, source_type, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status, latitude, longitude, logo_url, cover_url, hero_url, hero_image";
 
 async function refreshSalonOnboardingScore(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -682,21 +685,57 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       throw new Error(`Add ${missing.join(", ")} before submitting for booking approval.`);
     }
 
-    const { error } = await supabase
-      .from("salons")
-      .update({
-        onboarding_status: "OWNER_ACTIVATED",
-        owner_activated_at: new Date().toISOString(),
-        owner_email: approvalEmail,
-        booking_enabled: false,
-      })
-      .eq("id", ctx.salonId);
+    let assignTo = (salon.assign_to as string | null) || null;
+    if (!assignTo) {
+      assignTo = await resolveOnboardingAgentForSalon(supabase, {
+        city: salon.city as string | null,
+        address: salon.address as string | null,
+      });
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      onboarding_status: "OWNER_ACTIVATED",
+      owner_activated_at: new Date().toISOString(),
+      owner_email: approvalEmail,
+      booking_enabled: false,
+    };
+    if (assignTo && assignTo !== salon.assign_to) {
+      updatePayload.assign_to = assignTo;
+    }
+
+    const { error } = await supabase.from("salons").update(updatePayload).eq("id", ctx.salonId);
     if (error) throw new Error(error.message);
 
     await refreshSalonOnboardingScore(supabase, ctx.salonId);
+
+    await supabase.from("onboarding_logs").insert({
+      salon_id: ctx.salonId,
+      actor_email: approvalEmail,
+      action: "OWNER_ACTIVATED",
+      notes: assignTo
+        ? `Owner submitted for booking approval. Assigned agent: ${assignTo}.`
+        : "Owner submitted for booking approval. No field agent assigned — admin review required.",
+    });
+
+    return {
+      salonId: ctx.salonId,
+      salonName: String(salon.name || "Salon"),
+      salonAddress: (salon.address as string | null) || null,
+      assignTo,
+      sourceType: (salon.source_type as string | null) || null,
+    };
   });
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+
+  void notifyOwnerSubmittedForBookingApproval(createSupabaseAdminClient(), {
+    salonId: result.data.salonId,
+    salonName: result.data.salonName,
+    salonAddress: result.data.salonAddress,
+    assignToEmail: result.data.assignTo,
+    sourceType: result.data.sourceType,
+  }).catch((err) => console.error("Owner submission notification failed:", err));
+
   return { success: true as const };
 }
 

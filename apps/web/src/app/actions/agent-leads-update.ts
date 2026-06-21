@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import { SALON_SOURCE_TYPE } from "@/lib/salon-onboarding-paths";
 import { assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
@@ -158,6 +159,7 @@ export async function createAgentLeadData(
         activation_status: "INACTIVE",
         public_visibility: false,
         booking_enabled: false,
+        source_type: payload.source_type || SALON_SOURCE_TYPE.AGENT_MANUAL,
         owner_email:
           actionType === "REVIEW" && payload.owner_gmail
             ? payload.owner_gmail
@@ -264,6 +266,7 @@ export async function convertManualLeadToSalon(
         activation_status: "INACTIVE",
         public_visibility: false,
         booking_enabled: false,
+        source_type: SALON_SOURCE_TYPE.AGENT_MANUAL,
         owner_email:
           actionType === "REVIEW" && payload.owner_gmail
             ? payload.owner_gmail
@@ -322,8 +325,8 @@ export async function convertManualLeadToSalon(
     await supabaseAdmin
       .from("salon_leads")
       .update({
-        lead_status: "CONVERTED",
-        status: "processed"
+        onboarding_stage: "CONVERTED",
+        status: "processed",
       })
       .eq("id", leadId);
 

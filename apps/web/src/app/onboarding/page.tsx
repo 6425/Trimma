@@ -20,10 +20,16 @@ export default async function OnboardingPage() {
           <h1 className="text-4xl md:text-6xl font-extrabold text-zinc-900 tracking-tight mb-6">
             Grow Your Salon with Trimma
           </h1>
-          <p className="text-xl text-zinc-700 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-zinc-700 mb-4 max-w-2xl mx-auto leading-relaxed">
             Sign in with Google to open your salon owner dashboard, complete your profile, and submit for booking approval.
-            Your assigned Trimma agent reviews your submission before listings go live on the marketplace.
+            Trimma assigns a field agent in your area to review your submission before you go live.
           </p>
+          <ol className="text-sm text-zinc-600 max-w-xl mx-auto mb-8 text-left space-y-2 list-decimal list-inside">
+            <li>Google sign-in → your salon draft is created</li>
+            <li>Complete profile in the owner dashboard</li>
+            <li>Submit for booking approval</li>
+            <li>Your Trimma agent reviews → admin verifies → live on Trimma</li>
+          </ol>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <OnboardingHeroCta />

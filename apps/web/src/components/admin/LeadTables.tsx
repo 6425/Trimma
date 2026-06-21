@@ -1,8 +1,12 @@
 import React from "react";
-import { Loader2, Zap, Trash2, Send, CheckCircle2, AlertCircle, Shield, Star } from "lucide-react";
+import { Loader2, Zap, Trash2, Send, CheckCircle2, AlertCircle, Shield, Star, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  getOnboardingPathLabel,
+  onboardingPathFromSourceType,
+} from "@/lib/salon-onboarding-paths";
 
 interface LeadTablesProps {
   activeTab: "discovery" | "draft" | "pipeline" | "archived" | "salon-requests";
@@ -222,6 +226,18 @@ export function LeadTables({
                         className="cursor-pointer hover:bg-zinc-50 p-1.5 rounded block text-[#1A1C29] font-bold"
                       >
                         {lead.name}
+                        {activeTab === "pipeline" && lead.source_type ? (
+                          <Badge
+                            variant="outline"
+                            className={`ml-2 align-middle text-[8px] font-black uppercase tracking-wider ${
+                              lead.source_type === "self_serve_onboarding"
+                                ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                                : "border-zinc-200 bg-zinc-50 text-zinc-600"
+                            }`}
+                          >
+                            {getOnboardingPathLabel(onboardingPathFromSourceType(lead.source_type))}
+                          </Badge>
+                        ) : null}
                       </span>
                     )}
                   </td>
@@ -657,6 +673,14 @@ export function LeadTables({
                       )}
                       {lead.onboarding_status === "PENDING_ADMIN_VERIFICATION" && (
                         <>
+                          <Button
+                            onClick={() => handleOpenAssignModal(lead)}
+                            size="sm"
+                            variant="outline"
+                            className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold h-7 px-3 rounded-lg text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm"
+                          >
+                            <FileSearch className="w-3 h-3" /> Review
+                          </Button>
                           <Button
                             onClick={() => handleVerifySalon(lead)}
                             disabled={verifying}

@@ -1,3 +1,5 @@
+import { isSelfServeSalon } from "@/lib/salon-onboarding-paths";
+
 export type SalonOnboardingSnapshot = {
   name?: string | null;
   description?: string | null;
@@ -17,6 +19,7 @@ export type SalonOnboardingSnapshot = {
   bank_info?: Record<string, unknown> | null;
   is_verified?: boolean | null;
   onboarding_status?: string | null;
+  source_type?: string | null;
 };
 
 export type SalonOnboardingStep = {
@@ -210,13 +213,26 @@ export function canCollectVerifiedReservationDeposit(salon: SalonOnboardingSnaps
   );
 }
 
+export function getSalonVerificationReadinessIssues(salon: SalonOnboardingSnapshot): string[] {
+  const issues: string[] = [];
+  if (!isBusinessInfoComplete(salon)) {
+    issues.push("business information is incomplete");
+  }
+  if (!isBankInfoComplete(salon)) {
+    issues.push("bank details or verification documents are incomplete");
+  }
+  return issues;
+}
+
 export function getOwnerOnboardingBannerMessage(salon: SalonOnboardingSnapshot): string {
   if (salon.is_verified && canCollectVerifiedReservationDeposit(salon)) {
     return "Your salon is verified. Online reservation deposits (50%) are enabled for customer bookings.";
   }
 
   if (salon.onboarding_status === "OWNER_ACTIVATED") {
-    return "Your booking profile is awaiting agent approval. Complete business and bank details to unlock the verified badge and 50% online reservation deposits.";
+    return isSelfServeSalon(salon.source_type as string | undefined)
+      ? "Your booking profile is with your Trimma agent for review. Complete business and bank details to unlock the verified badge and 50% online reservation deposits."
+      : "Your booking profile is awaiting agent approval. Complete business and bank details to unlock the verified badge and 50% online reservation deposits.";
   }
 
   if (!isOperationsComplete(salon)) {
