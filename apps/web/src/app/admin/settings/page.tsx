@@ -55,7 +55,7 @@ function SettingsPanelContent() {
   const [templateAgentLeadAssigned, setTemplateAgentLeadAssigned] = useState("");
   const [metaTemplateReservationPaid, setMetaTemplateReservationPaid] = useState("");
   const [metaTemplateConfirmed, setMetaTemplateConfirmed] = useState("");
-  const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en");
+  const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en_US");
 
   // Show/Hide Access Token
   const [showToken, setShowToken] = useState(false);
@@ -105,7 +105,7 @@ function SettingsPanelContent() {
       setTemplateAgentLeadAssigned(config.templateAgentLeadAssigned || "");
       setMetaTemplateReservationPaid(config.metaTemplateReservationPaid || "");
       setMetaTemplateConfirmed(config.metaTemplateConfirmed || "");
-      setMetaTemplateLanguage(config.metaTemplateLanguage || "en");
+      setMetaTemplateLanguage(config.metaTemplateLanguage || "en_US");
       setConfigSource(config.credentialsSource || config.source);
 
       const validation = await validateWhatsAppCredentials();
@@ -470,7 +470,7 @@ function SettingsPanelContent() {
                         id="meta_template_language"
                         value={metaTemplateLanguage}
                         onChange={(e) => setMetaTemplateLanguage(e.target.value)}
-                        placeholder="en"
+                        placeholder="en_US"
                         className="h-9 max-w-[120px] border-amber-200 rounded-lg text-xs font-mono"
                       />
                     </div>

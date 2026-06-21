@@ -14,11 +14,11 @@ ALTER TABLE public.global_payment_settings
   ADD COLUMN IF NOT EXISTS whatsapp_meta_template_confirmed TEXT;
 
 ALTER TABLE public.global_payment_settings
-  ADD COLUMN IF NOT EXISTS whatsapp_meta_template_language TEXT DEFAULT 'en';
+  ADD COLUMN IF NOT EXISTS whatsapp_meta_template_language TEXT DEFAULT 'en_US';
 
 UPDATE public.global_payment_settings
 SET
-  whatsapp_meta_template_language = COALESCE(NULLIF(TRIM(whatsapp_meta_template_language), ''), 'en'),
+  whatsapp_meta_template_language = COALESCE(NULLIF(TRIM(whatsapp_meta_template_language), ''), 'en_US'),
   whatsapp_meta_template_confirmed = COALESCE(
     NULLIF(TRIM(whatsapp_meta_template_confirmed), ''),
     'confirmmessage'

@@ -19,6 +19,7 @@ import {
   buildMetaBodyParameters,
   sendWhatsAppMetaTemplateMessage,
   TRIMMA_META_TEMPLATE_CONFIRMED,
+  TRIMMA_META_TEMPLATE_LANGUAGE,
   type WhatsAppMetaTemplateTrigger,
 } from "@/lib/whatsapp-meta-send";
 import {
@@ -155,7 +156,7 @@ function formatWhatsAppApiError(result: {
     code === 132001 ||
     (lower.includes("template") && lower.includes("does not exist"))
   ) {
-    return `${message} Check Admin → Global Settings → Meta template name matches Meta Business Manager exactly (Template 1 / Template 2).`;
+    return `${message} Check Admin → Global Settings: template name must be confirmmessage (exact spelling) and language must match Meta (often en_US, not en). Open the template in Meta Business Manager and copy the Language field exactly.`;
   }
 
   if (
@@ -211,7 +212,7 @@ async function sendWhatsAppCustomerMessage(input: {
     accessToken: input.accessToken,
     to: input.customerPhone,
     templateName: metaName,
-    languageCode: input.metaTemplateLanguage || "en",
+    languageCode: input.metaTemplateLanguage || TRIMMA_META_TEMPLATE_LANGUAGE,
     bodyParameters: buildMetaBodyParameters(input.trigger, input.variables, metaName),
   });
   if (metaResult.success) {
@@ -389,7 +390,8 @@ export async function getWhatsAppConfig() {
       dbSettings.whatsapp_meta_template_reservation_paid?.trim() || "";
     const metaTemplateConfirmed =
       dbSettings.whatsapp_meta_template_confirmed?.trim() || TRIMMA_META_TEMPLATE_CONFIRMED;
-    const metaTemplateLanguage = dbSettings.whatsapp_meta_template_language?.trim() || "en";
+    const metaTemplateLanguage =
+      dbSettings.whatsapp_meta_template_language?.trim() || TRIMMA_META_TEMPLATE_LANGUAGE;
 
     return { 
       enabled, 
@@ -478,7 +480,7 @@ export async function getWhatsAppConfig() {
       templateAgentLeadAssigned: D.agentLeadAssigned,
       metaTemplateReservationPaid: "",
       metaTemplateConfirmed: TRIMMA_META_TEMPLATE_CONFIRMED,
-      metaTemplateLanguage: "en",
+      metaTemplateLanguage: TRIMMA_META_TEMPLATE_LANGUAGE,
       source,
     };
   }
@@ -607,7 +609,7 @@ export async function saveWhatsAppSettings(
         whatsapp_template_agent_lead_assigned: templateAgentLeadAssigned || null,
         whatsapp_meta_template_reservation_paid: metaTemplateReservationPaid?.trim() || null,
         whatsapp_meta_template_confirmed: metaTemplateConfirmed?.trim() || null,
-        whatsapp_meta_template_language: metaTemplateLanguage?.trim() || "en",
+        whatsapp_meta_template_language: metaTemplateLanguage?.trim() || TRIMMA_META_TEMPLATE_LANGUAGE,
       });
 
     if (error) throw error;

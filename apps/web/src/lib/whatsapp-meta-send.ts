@@ -7,6 +7,9 @@
 /** Meta-approved template for first customer booking confirmation (checkout). */
 export const TRIMMA_META_TEMPLATE_CONFIRMED = "confirmmessage";
 
+/** Default when Admin language is blank — most Meta English templates use en_US. */
+export const TRIMMA_META_TEMPLATE_LANGUAGE = "en_US";
+
 export type WhatsAppMetaTemplateTrigger = "reservation-paid" | "confirmed";
 
 export type WhatsAppMetaSendInput = {
@@ -111,6 +114,57 @@ export function buildMetaBodyParameters(
   ];
 }
 
+function buildLanguageCandidates(preferred?: string | null): string[] {
+  const candidates = [
+    (preferred || "").trim(),
+    TRIMMA_META_TEMPLATE_LANGUAGE,
+    "en_US",
+    "en_GB",
+    "en",
+  ].filter(Boolean);
+  return [...new Set(candidates)];
+}
+
+async function postMetaTemplateMessage(input: {
+  phoneId: string;
+  accessToken: string;
+  to: string;
+  templateName: string;
+  languageCode: string;
+  bodyParameters: Array<{ type: "text"; text: string }>;
+}) {
+  const response = await fetch(`https://graph.facebook.com/v18.0/${input.phoneId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: input.to,
+      type: "template",
+      template: {
+        name: input.templateName,
+        language: { code: input.languageCode },
+        components: [
+          {
+            type: "body",
+            parameters: input.bodyParameters,
+          },
+        ],
+      },
+    }),
+  });
+
+  const result = (await response.json()) as {
+    messages?: Array<{ id?: string }>;
+    error?: { message?: string; code?: number };
+  };
+
+  return { response, result };
+}
+
 export async function sendWhatsAppMetaTemplateMessage(
   input: WhatsAppMetaSendInput
 ): Promise<WhatsAppMetaSendResult> {
@@ -119,50 +173,49 @@ export async function sendWhatsAppMetaTemplateMessage(
     return { success: false, error: "Meta template name is not configured." };
   }
 
-  const languageCode = (input.languageCode || "en").trim() || "en";
   const bodyParameters = input.bodyParameters.map((text) => ({
     type: "text" as const,
     text: text.slice(0, 1024),
   }));
 
+  const languageCandidates = buildLanguageCandidates(input.languageCode);
+  let lastError = "Meta template message failed.";
+  let lastCode: number | undefined;
+
   try {
-    const response = await fetch(`https://graph.facebook.com/v18.0/${input.phoneId}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${input.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
+    for (const languageCode of languageCandidates) {
+      const { response, result } = await postMetaTemplateMessage({
+        phoneId: input.phoneId,
+        accessToken: input.accessToken,
         to: input.to,
-        type: "template",
-        template: {
-          name: templateName,
-          language: { code: languageCode },
-          components: [
-            {
-              type: "body",
-              parameters: bodyParameters,
-            },
-          ],
-        },
-      }),
-    });
+        templateName,
+        languageCode,
+        bodyParameters,
+      });
 
-    const result = (await response.json()) as {
-      messages?: Array<{ id?: string }>;
-      error?: { message?: string; code?: number };
-    };
+      if (response.ok) {
+        return {
+          success: true,
+          messageId: result.messages?.[0]?.id,
+          usedMetaTemplate: true,
+        };
+      }
 
-    if (!response.ok) {
-      const message = result.error?.message || "Meta template message failed.";
-      return { success: false, error: message, usedMetaTemplate: true };
+      lastError = result.error?.message || lastError;
+      lastCode = result.error?.code;
+
+      const retryableLanguageError =
+        lastCode === 132001 ||
+        lastError.toLowerCase().includes("does not exist in the translation");
+
+      if (!retryableLanguageError) {
+        return { success: false, error: lastError, usedMetaTemplate: true };
+      }
     }
 
     return {
-      success: true,
-      messageId: result.messages?.[0]?.id,
+      success: false,
+      error: `${lastError} Tried languages: ${languageCandidates.join(", ")}. In Meta Business Manager, open template "${templateName}" and copy its exact Language code into Admin → Global Settings.`,
       usedMetaTemplate: true,
     };
   } catch (err) {
