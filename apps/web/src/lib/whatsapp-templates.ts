@@ -180,17 +180,13 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     defaultTemplate: "confirmed" as const,
     mergeTags: [
       "{customer_name}",
-      "{booking_no}",
       "{salon_name}",
+      "{service_name}",
       "{booking_date}",
       "{booking_time}",
-      "{service_name}",
-      "{total_price}",
-      "{deposit_paid}",
-      "{balance_to_pay}",
-      "{salon_address}",
-      "{maps_link}",
     ],
+    metaParameterHint:
+      "Meta confirmmessage maps {{1}} name, {{2}} salon, {{3}} service, {{4}} date (e.g. December 31, 2025), {{5}} time (e.g. 1:00 PM).",
   },
   {
     id: "rescheduled",

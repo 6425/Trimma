@@ -212,7 +212,7 @@ async function sendWhatsAppCustomerMessage(input: {
     to: input.customerPhone,
     templateName: metaName,
     languageCode: input.metaTemplateLanguage || "en",
-    bodyParameters: buildMetaBodyParameters(input.trigger, input.variables),
+    bodyParameters: buildMetaBodyParameters(input.trigger, input.variables, metaName),
   });
   if (metaResult.success) {
     return {

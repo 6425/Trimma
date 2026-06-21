@@ -26,11 +26,62 @@ export type WhatsAppMetaSendResult = {
 };
 
 /** Parameter order must match Meta Template body {{1}}, {{2}}, … */
+function formatMetaBookingDate(raw: string): string {
+  const value = raw.trim();
+  if (!value) return "—";
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const date = new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T12:00:00`);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+  }
+  return value;
+}
+
+function formatMetaBookingTime(raw: string): string {
+  const value = raw.trim();
+  if (!value) return "—";
+  const match = value.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (!match) return value;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value;
+  const period = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
+/**
+ * confirmmessage (Meta):
+ * Hello {{1}}, … {{2}} … {{3}} on {{4}} at {{5}} is confirmed
+ */
+function buildConfirmMessageParameters(variables: Record<string, string>): string[] {
+  const v = (key: string) => String(variables[key] ?? "").trim() || "—";
+  return [
+    v("customer_name"),
+    v("salon_name"),
+    v("service_name"),
+    formatMetaBookingDate(v("booking_date")),
+    formatMetaBookingTime(v("booking_time")),
+  ];
+}
+
 export function buildMetaBodyParameters(
   trigger: WhatsAppMetaTemplateTrigger,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  templateName?: string
 ): string[] {
   const v = (key: string) => String(variables[key] ?? "").trim() || "—";
+  const normalizedTemplate = (templateName || "").trim().toLowerCase();
+
+  if (trigger === "confirmed" && normalizedTemplate === TRIMMA_META_TEMPLATE_CONFIRMED) {
+    return buildConfirmMessageParameters(variables);
+  }
 
   if (trigger === "reservation-paid") {
     return [
