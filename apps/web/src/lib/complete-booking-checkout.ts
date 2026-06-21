@@ -1,7 +1,7 @@
 import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { insertBookingRecord, updateBookingAfterPayment } from "@/lib/booking-insert";
-import { dispatchBookingCheckoutNotifications } from "@/lib/booking-checkout-notifications";
+import { runBookingCheckoutNotifications } from "@/lib/booking-checkout-notifications";
 import {
   parseDisplayTimeSlot,
   resolveStaffForBookingSlot,
@@ -76,10 +76,10 @@ export type CompleteBookingCheckoutResult = {
   bookingNo: string;
   bookingId: string;
   notificationsPending: boolean;
-  whatsappSent: null;
-  whatsappError: null;
-  emailSent: null;
-  emailError: null;
+  whatsappSent: boolean;
+  whatsappError: string | null;
+  emailSent: boolean;
+  emailError: string | null;
   emailId: null;
 };
 
@@ -95,8 +95,8 @@ function validateCheckoutInput(input: CompleteBookingCheckoutInput) {
   if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
     throw new Error("A valid email address is required.");
   }
-  if (!input.stripePayment && !input.customer.phone?.trim()) {
-    throw new Error("Phone number is required.");
+  if (!input.customer.phone?.trim()) {
+    throw new Error("Phone number is required for WhatsApp booking alerts.");
   }
   if (!input.salon?.id?.trim()) {
     throw new Error("Salon is required.");
@@ -416,7 +416,7 @@ export async function completeBookingCheckout(
     }),
   ]);
 
-  dispatchBookingCheckoutNotifications({
+  const notificationResult = await runBookingCheckoutNotifications({
     supabase,
     bookingNo,
     bookingId: newBooking.id,
@@ -437,11 +437,11 @@ export async function completeBookingCheckout(
   return {
     bookingNo,
     bookingId: newBooking.id,
-    notificationsPending: true,
-    whatsappSent: null,
-    whatsappError: null,
-    emailSent: null,
-    emailError: null,
+    notificationsPending: false,
+    whatsappSent: notificationResult.whatsappSent,
+    whatsappError: notificationResult.whatsappError,
+    emailSent: notificationResult.emailSent,
+    emailError: notificationResult.emailError,
     emailId: null,
   };
 }

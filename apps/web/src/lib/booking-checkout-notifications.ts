@@ -25,14 +25,16 @@ export type BookingCheckoutNotificationInput = {
   clientIp?: string;
 };
 
-/** Fire-and-forget: never blocks checkout response. */
-export function dispatchBookingCheckoutNotifications(input: BookingCheckoutNotificationInput) {
-  void runBookingCheckoutNotifications(input).catch((err) => {
-    console.error("[checkout/notifications]", err);
-  });
-}
+export type BookingCheckoutNotificationResult = {
+  whatsappSent: boolean;
+  whatsappError: string | null;
+  emailSent: boolean;
+  emailError: string | null;
+};
 
-async function runBookingCheckoutNotifications(input: BookingCheckoutNotificationInput) {
+export async function runBookingCheckoutNotifications(
+  input: BookingCheckoutNotificationInput
+): Promise<BookingCheckoutNotificationResult> {
   const {
     supabase,
     bookingNo,
@@ -69,16 +71,16 @@ async function runBookingCheckoutNotifications(input: BookingCheckoutNotificatio
   const salonName = salonRow?.name || "your salon";
   const balanceToPay = Math.max(0, serviceTotal - reservationFee);
 
-  const notificationTasks: Promise<unknown>[] = [
-    sendWhatsAppReservationPaidNotification(bookingNo, {
-      customerPhone,
-      customerName,
-      serviceName,
-    }).then((result) => {
-      if (!result.success) {
-        console.error("WhatsApp confirmation failed after checkout:", result.error);
-      }
-    }),
+  const whatsappResult = await sendWhatsAppReservationPaidNotification(bookingNo, {
+    customerPhone,
+    customerName,
+    serviceName,
+  });
+  if (!whatsappResult.success) {
+    console.error("WhatsApp confirmation failed after checkout:", whatsappResult.error);
+  }
+
+  const [, , emailResult] = await Promise.allSettled([
     createBookingPendingConfirmNotification(supabase, {
       salonId,
       bookingId,
@@ -109,12 +111,31 @@ async function runBookingCheckoutNotifications(input: BookingCheckoutNotificatio
       },
       rateLimitKey: buildEmailRateLimitKey(clientIp || "checkout", customerEmail),
       idempotencyKey: `booking-reservation-paid/${bookingNo}`,
-    }).then((emailResult) => {
-      if (isEmailSendFailure(emailResult) && !emailResult.skipped) {
-        console.error("Reservation payment email failed:", emailResult.error);
-      }
     }),
-  ];
+  ]);
 
-  await Promise.allSettled(notificationTasks);
+  let emailSent = false;
+  let emailError: string | null = null;
+  if (emailResult.status === "fulfilled") {
+    const emailPayload = emailResult.value;
+    if (isEmailSendFailure(emailPayload) && !emailPayload.skipped) {
+      emailError = emailPayload.error || "Email could not be sent.";
+      console.error("Reservation payment email failed:", emailError);
+    } else {
+      emailSent = true;
+    }
+  } else {
+    emailError =
+      emailResult.reason instanceof Error
+        ? emailResult.reason.message
+        : "Email could not be sent.";
+    console.error("Reservation payment email failed:", emailError);
+  }
+
+  return {
+    whatsappSent: whatsappResult.success,
+    whatsappError: whatsappResult.success ? null : whatsappResult.error || "WhatsApp could not be sent.",
+    emailSent,
+    emailError,
+  };
 }

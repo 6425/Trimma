@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, MessageCircle, Home, CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { clearBookingCheckoutDraft } from "@/lib/booking-checkout";
@@ -19,6 +20,7 @@ function BookingSuccessContent() {
   const [whatsappError, setWhatsappError] = useState<string | null>(
     searchParams.get("whatsapp_error")
   );
+  const [resendingWhatsApp, setResendingWhatsApp] = useState(false);
   const [loading, setLoading] = useState(Boolean(sessionId && !bookingNoParam));
   const [error, setError] = useState<string | null>(null);
 
@@ -61,18 +63,43 @@ function BookingSuccessContent() {
       toast.success("Receipt sent to your WhatsApp!", {
         position: "top-center",
       });
-    } else if (notificationsPending) {
-      toast.message("Confirmation is on its way via WhatsApp and email.", {
+    } else if (!whatsappSent && !notificationsPending) {
+      toast.error("WhatsApp receipt could not be sent. You can retry below.", {
         position: "top-center",
       });
     }
   }, [bookingNo, whatsappSent, notificationsPending]);
 
+  const handleResendWhatsApp = async () => {
+    if (!bookingNo) return;
+    setResendingWhatsApp(true);
+    try {
+      const response = await fetch("/api/checkout/resend-whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingNo }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Could not send WhatsApp.");
+      }
+      setWhatsappSent(true);
+      setWhatsappError(null);
+      toast.success("Receipt sent to your WhatsApp!", { position: "top-center" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not send WhatsApp.";
+      setWhatsappError(message);
+      toast.error(message, { position: "top-center" });
+    } finally {
+      setResendingWhatsApp(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-900 mb-4" />
-        <p className="text-sm text-zinc-500 font-medium">Finalizing your booking…</p>
+        <p className="text-sm text-zinc-500 font-medium">Finalizing your booking and sending confirmations…</p>
       </div>
     );
   }
@@ -122,27 +149,47 @@ function BookingSuccessContent() {
           <p className="font-mono font-black text-lg text-emerald-400 mt-1">{bookingNo}</p>
         </div>
 
-        {notificationsPending ? (
+        {whatsappSent ? (
+          <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">
+            <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>WhatsApp receipt sent to your booking phone number.</span>
+          </p>
+        ) : notificationsPending ? (
           <p className="text-xs text-sky-800 bg-sky-50 border border-sky-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">
             <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>
               Your booking reference is saved above. WhatsApp and email confirmations are being sent now.
             </span>
           </p>
-        ) : !whatsappSent ? (
-          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">
-            <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>
-              WhatsApp receipt could not be sent. Save your booking reference above.
-              {whatsappError && (
-                <>
-                  {" "}
+        ) : (
+          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-left space-y-3">
+            <p className="flex items-start gap-2">
+              <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                WhatsApp receipt could not be sent. Save your booking reference above.
+                {whatsappError && (
                   <span className="block mt-2 text-amber-800/90">{whatsappError}</span>
+                )}
+              </span>
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              disabled={resendingWhatsApp}
+              onClick={() => void handleResendWhatsApp()}
+              className="h-9 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700"
+            >
+              {resendingWhatsApp ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Sending…
                 </>
+              ) : (
+                "Resend WhatsApp receipt"
               )}
-            </span>
-          </p>
-        ) : null}
+            </Button>
+          </div>
+        )}
 
         <ConnectTelegramCard
           compact

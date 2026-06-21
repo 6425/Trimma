@@ -82,6 +82,10 @@ export async function POST(request: Request) {
         checkoutType: "booking",
         bookingNo: result.bookingNo,
         notificationsPending: result.notificationsPending,
+        whatsappSent: result.whatsappSent,
+        whatsappError: result.whatsappError,
+        emailSent: result.emailSent,
+        emailError: result.emailError,
       });
     }
 
