@@ -94,16 +94,65 @@ const SALON_BOOKINGS_SELECT = `
   booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
 `;
 
+function mergeBookingsById<T extends { id: string; created_at?: string | null }>(
+  primary: T[],
+  extra: T[]
+): T[] {
+  const byId = new Map<string, T>();
+  for (const row of primary) byId.set(row.id, row);
+  for (const row of extra) {
+    if (!byId.has(row.id)) byId.set(row.id, row);
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+  );
+}
+
 export async function fetchSalonBookingsPage() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const { data, error } = await supabase
+    const primaryQuery = await supabase
       .from("bookings")
       .select(SALON_BOOKINGS_SELECT)
       .eq("salon_id", ctx.salonId)
-      .order("booking_date", { ascending: false })
-      .order("booking_time", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { salon: ctx.salon, bookings: data || [] };
+      .order("created_at", { ascending: false });
+
+    let bookings = primaryQuery.data || [];
+
+    if (primaryQuery.error) {
+      console.error("Bookings relation select failed, falling back:", primaryQuery.error.message);
+      const fallback = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("salon_id", ctx.salonId)
+        .order("created_at", { ascending: false });
+      if (fallback.error) throw new Error(fallback.error.message);
+      bookings = fallback.data || [];
+    }
+
+    const pendingPaid = await supabase
+      .from("bookings")
+      .select(SALON_BOOKINGS_SELECT)
+      .eq("salon_id", ctx.salonId)
+      .eq("status", "pending")
+      .eq("payment_status", "reservation_paid")
+      .order("created_at", { ascending: false });
+
+    if (!pendingPaid.error && pendingPaid.data?.length) {
+      bookings = mergeBookingsById(bookings, pendingPaid.data);
+    } else if (pendingPaid.error) {
+      const pendingPaidFallback = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("salon_id", ctx.salonId)
+        .eq("status", "pending")
+        .eq("payment_status", "reservation_paid")
+        .order("created_at", { ascending: false });
+      if (!pendingPaidFallback.error && pendingPaidFallback.data?.length) {
+        bookings = mergeBookingsById(bookings, pendingPaidFallback.data);
+      }
+    }
+
+    return { salon: ctx.salon, bookings };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const, ...result.data };

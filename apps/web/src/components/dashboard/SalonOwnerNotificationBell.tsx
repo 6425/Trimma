@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Calendar, CheckCircle2, Loader2, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   type SalonOwnerNotificationItem,
 } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
+import { isBookingAwaitingOwnerConfirmation } from "@/lib/booking-owner-queue";
 import { toast } from "sonner";
 
 function formatTimeLabel(time?: string) {
@@ -47,10 +48,15 @@ function NotificationCard({
 }) {
   const meta = item.metadata || {};
   const bookingStatus = normalizeStatus(item.bookingStatus || (meta.booking_status as string));
+  const paymentStatus = normalizeStatus(meta.payment_status as string);
+  const awaitingConfirmation =
+    isBookingAwaitingOwnerConfirmation({
+      status: bookingStatus || "pending",
+      payment_status: paymentStatus || undefined,
+      reservation_fee_paid: paymentStatus === "reservation_paid" ? true : undefined,
+    }) || (item.notificationType === "booking_pending_confirm" && bookingStatus === "pending");
   const isPendingConfirm =
-    item.notificationType === "booking_pending_confirm" &&
-    bookingStatus === "pending" &&
-    item.bookingId;
+    item.notificationType === "booking_pending_confirm" && awaitingConfirmation && item.bookingId;
   const isRescheduleRequest =
     item.notificationType === "booking_reschedule_request" && item.bookingId;
   const isProcessing = processingId === item.id;
@@ -166,12 +172,26 @@ export function SalonOwnerNotificationBell() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<SalonOwnerNotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCountRef = useRef(0);
 
   const loadNotifications = useCallback(async () => {
     try {
       const result = await withTimeout(fetchSalonOwnerNotifications(20), 15000, "Notifications timed out.");
       if (result.success === false) return;
-      setNotifications(result.notifications);
+
+      setNotifications((previous) => {
+        const hadPendingConfirm = previous.some(
+          (item) => item.notificationType === "booking_pending_confirm" && !item.readAt
+        );
+        const hasPendingConfirm = result.notifications.some(
+          (item) => item.notificationType === "booking_pending_confirm" && !item.readAt
+        );
+        if (hasPendingConfirm && (!hadPendingConfirm || result.unreadCount > unreadCountRef.current)) {
+          window.dispatchEvent(new Event("trimma:dashboard-refresh"));
+        }
+        return result.notifications;
+      });
+      unreadCountRef.current = result.unreadCount;
       setUnreadCount(result.unreadCount);
     } catch (err) {
       console.error("Failed to load salon notifications", err);

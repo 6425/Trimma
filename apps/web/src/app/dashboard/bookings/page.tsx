@@ -21,12 +21,15 @@ import { confirmOwnerBooking, rescheduleOwnerBooking, rejectOwnerRescheduleReque
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
+import {
+  isBookingAwaitingOwnerConfirmation,
+  matchesBookingStatusTab,
+  type BookingStatusTab,
+} from "@/lib/booking-owner-queue";
 import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 import { ChevronDown } from "lucide-react";
-
-type BookingStatusTab = "pending" | "confirmed" | "rescheduled" | "canceled";
 
 const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
   { key: "pending", label: "Pending" },
@@ -34,22 +37,6 @@ const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
   { key: "rescheduled", label: "Rescheduled" },
   { key: "canceled", label: "Cancelled" },
 ];
-
-function matchesBookingTab(booking: any, tab: BookingStatusTab) {
-  const status = (booking.status || "pending").toLowerCase();
-  if (tab === "pending") return status === "pending";
-  if (tab === "confirmed") return status === "confirmed" || status === "in_progress" || status === "completed";
-  if (tab === "rescheduled") {
-    return (
-      status === "rescheduled" ||
-      booking.reschedule_requested === true ||
-      booking.reschedule_status === "approved" ||
-      booking.reschedule_status === "pending_salon"
-    );
-  }
-  if (tab === "canceled") return status === "canceled" || status === "no_show";
-  return true;
-}
 
 // Context-Aware Action Menu — only shows valid actions based on current booking status
 const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onAction: (id: string, action: string) => void, processingId: string | null }) => {
@@ -182,10 +169,13 @@ export default function DashboardBookings() {
   const tabParam = searchParams.get("tab") as BookingStatusTab | null;
   const statusTab: BookingStatusTab =
     tabParam && BOOKING_STATUS_TABS.some((t) => t.key === tabParam) ? tabParam : "pending";
+  const skipTabRefetch = useRef(true);
 
-  async function fetchBookings() {
+  async function fetchBookings(options?: { silent?: boolean }) {
     try {
-      setLoading(true);
+      if (!options?.silent) {
+        setLoading(true);
+      }
       const result = await withTimeout(fetchSalonBookingsPage(), 20000, "Loading timed out.");
       if (result.success === false) throw new Error(result.error);
       setBookings(result.bookings || []);
@@ -193,21 +183,47 @@ export default function DashboardBookings() {
       console.error("Failed to fetch bookings:", err);
       toast.error(err instanceof Error ? err.message : "Failed to load bookings.");
     } finally {
-      setLoading(false);
+      if (!options?.silent) {
+        setLoading(false);
+      }
     }
   }
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      fetchBookings();
+      void fetchBookings();
     });
 
     const handleRefresh = () => {
-      void fetchBookings();
+      void fetchBookings({ silent: true });
     };
     window.addEventListener("trimma:dashboard-refresh", handleRefresh);
-    return () => window.removeEventListener("trimma:dashboard-refresh", handleRefresh);
+
+    const interval = window.setInterval(() => {
+      void fetchBookings({ silent: true });
+    }, 45000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void fetchBookings({ silent: true });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.removeEventListener("trimma:dashboard-refresh", handleRefresh);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
+
+  useEffect(() => {
+    if (skipTabRefetch.current) {
+      skipTabRefetch.current = false;
+      return;
+    }
+    void fetchBookings({ silent: true });
+  }, [tabParam]);
 
   const handleStatusTabChange = (tab: BookingStatusTab) => {
     router.replace(`/dashboard/bookings?tab=${tab}`, { scroll: false });
@@ -361,11 +377,11 @@ export default function DashboardBookings() {
     (b.booking_no || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredBookings = searchedBookings.filter((b) => matchesBookingTab(b, statusTab));
+  const filteredBookings = searchedBookings.filter((b) => matchesBookingStatusTab(b, statusTab));
 
   const tabCounts = BOOKING_STATUS_TABS.reduce(
     (acc, tab) => {
-      acc[tab.key] = searchedBookings.filter((b) => matchesBookingTab(b, tab.key)).length;
+      acc[tab.key] = searchedBookings.filter((b) => matchesBookingStatusTab(b, tab.key)).length;
       return acc;
     },
     {} as Record<BookingStatusTab, number>
@@ -383,7 +399,13 @@ export default function DashboardBookings() {
   );
 
   const pendingConfirmations = useMemo(
-    () => bookings.filter((b) => (b.status || "pending").toLowerCase() === "pending"),
+    () =>
+      bookings
+        .filter((b) => isBookingAwaitingOwnerConfirmation(b))
+        .sort(
+          (a, b) =>
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        ),
     [bookings]
   );
 

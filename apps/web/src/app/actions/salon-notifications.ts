@@ -7,7 +7,28 @@ import {
   type SalonOwnerNotificationMetadata,
   type SalonOwnerNotificationRow,
 } from "@/lib/salon-owner-notifications";
+import { normalizeEmail } from "@/lib/normalize-email";
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
+
+function ownerNotificationEmails(ctx: {
+  email: string;
+  salon: Record<string, unknown>;
+}): string[] {
+  const emails = new Set<string>();
+  const authEmail = normalizeEmail(ctx.email);
+  if (authEmail) emails.add(authEmail);
+
+  const ownerEmail = normalizeEmail(
+    typeof ctx.salon.owner_email === "string" ? ctx.salon.owner_email : null
+  );
+  const ownerGmail = normalizeEmail(
+    typeof ctx.salon.owner_gmail === "string" ? ctx.salon.owner_gmail : null
+  );
+  if (ownerEmail) emails.add(ownerEmail);
+  if (ownerGmail) emails.add(ownerGmail);
+
+  return [...emails];
+}
 
 export type SalonOwnerNotificationItem = {
   id: string;
@@ -37,13 +58,20 @@ function mapNotificationRow(row: SalonOwnerNotificationRow, bookingStatus?: stri
 
 export async function fetchSalonOwnerNotifications(limit = 20) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const { data, error } = await supabase
+    const recipientEmails = ownerNotificationEmails(ctx);
+    let query = supabase
       .from("salon_owner_notifications")
       .select("*")
       .eq("salon_id", ctx.salonId)
-      .eq("user_email", ctx.email)
       .order("created_at", { ascending: false })
       .limit(limit);
+
+    query =
+      recipientEmails.length === 1
+        ? query.eq("user_email", recipientEmails[0]!)
+        : query.in("user_email", recipientEmails);
+
+    const { data, error } = await query;
 
     if (error) throw new Error(error.message);
 
@@ -75,12 +103,19 @@ export async function fetchSalonOwnerNotifications(limit = 20) {
 
 export async function markSalonNotificationRead(notificationId: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const { error } = await supabase
+    const recipientEmails = ownerNotificationEmails(ctx);
+    let query = supabase
       .from("salon_owner_notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("id", notificationId)
-      .eq("salon_id", ctx.salonId)
-      .eq("user_email", ctx.email);
+      .eq("salon_id", ctx.salonId);
+
+    query =
+      recipientEmails.length === 1
+        ? query.eq("user_email", recipientEmails[0]!)
+        : query.in("user_email", recipientEmails);
+
+    const { error } = await query;
     if (error) throw new Error(error.message);
   });
 
@@ -90,12 +125,19 @@ export async function markSalonNotificationRead(notificationId: string) {
 
 export async function markAllSalonNotificationsRead() {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const { error } = await supabase
+    const recipientEmails = ownerNotificationEmails(ctx);
+    let query = supabase
       .from("salon_owner_notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("salon_id", ctx.salonId)
-      .eq("user_email", ctx.email)
       .is("read_at", null);
+
+    query =
+      recipientEmails.length === 1
+        ? query.eq("user_email", recipientEmails[0]!)
+        : query.in("user_email", recipientEmails);
+
+    const { error } = await query;
     if (error) throw new Error(error.message);
   });
 
