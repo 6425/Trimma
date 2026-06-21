@@ -54,6 +54,7 @@ const SALON = {
 
 const NAV_SECTIONS = [
   { id: "overview", label: "Overview" },
+  { id: "onboarding", label: "Getting live on Trimma" },
   { id: "global", label: "Layout & Header" },
   { id: "dashboard", label: "Dashboard" },
   { id: "bookings", label: "Bookings" },
@@ -114,7 +115,6 @@ function SidebarMockup() {
     { icon: DollarSign, label: "Finance & Commissions", active: false },
     { icon: CreditCard, label: "Subscription & Billing", active: false },
     { icon: Store, label: "Salon Profile", active: true },
-    { icon: HelpCircle, label: "Salon Help", active: false },
   ];
 
   return (
@@ -138,6 +138,9 @@ function SidebarMockup() {
       <div className="mt-3 pt-2 border-t border-white/10 space-y-0.5">
         <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] text-white/80">
           <Settings className="w-3 h-3" /> Settings
+        </div>
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[#ffc800] text-black text-[10px] font-semibold">
+          <HelpCircle className="w-3 h-3" /> Salon Help
         </div>
         <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] text-red-400">
           <LogOut className="w-3 h-3" /> Logout
@@ -464,8 +467,20 @@ function SectionCard({
 
 const FAQS = [
   {
-    q: "How do I activate my salon on the Trimma marketplace?",
-    a: `Complete your Salon Profile (logo, hours, services, staff, bank details) until the progress bar is high. Submit for verification from the Profile page. Once approved, ${SALON.name} appears publicly with a Verified badge and customers can book online.`,
+    q: "How do I get my salon live on Trimma?",
+    a: "Sign in from trimma.com/onboarding with Google, then open Salon Profile and add your business name, address, map pin, hero image, and a mobile number or email. Click Submit for Booking Approval. Your assigned Trimma agent reviews your profile, enables booking, and Trimma admin gives final verification. After that your salon appears on the marketplace and customers can book online.",
+  },
+  {
+    q: "What happens after I submit for booking approval?",
+    a: "Your status becomes Owner Activated. Your Trimma field agent is notified automatically. They review your salon details, then enable booking and send your salon to Trimma admin for final verification. You will see progress banners in your dashboard while you wait.",
+  },
+  {
+    q: "I signed up with Google — do I need a Trimma agent invite email?",
+    a: "No. Self onboarding assigns a field agent in your district when you sign up. Complete your profile and submit for booking approval — your agent is notified and will review from their Trimma workspace. If a Trimma agent invited you separately, use the link in their email to sign in with the same Gmail they invited.",
+  },
+  {
+    q: "What is the difference between booking approval and the Verified badge?",
+    a: "Booking approval lets customers book your salon on Trimma after agent and admin review. The Verified badge and 50% online reservation deposits require completed business information and bank verification documents under Salon Profile → Business Info and Bank Info tabs.",
   },
   {
     q: "Why do some time slots show as already booked?",
@@ -512,9 +527,8 @@ export function SalonOwnerHelpGuide() {
             Trimma Workspace Guide
           </h1>
           <p className="text-sm text-white/70 leading-relaxed mb-4">
-            Everything in your salon dashboard — explained step by step. Examples use{" "}
-            <strong className="text-white">{SALON.name}</strong> ({SALON.location}) so you can
-            follow along with real screens and workflows.
+            Everything in your salon dashboard — explained step by step, including how self
+            onboarding, booking approval, and going live on Trimma work today.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/profile">
@@ -561,18 +575,18 @@ export function SalonOwnerHelpGuide() {
           <section id="overview" className="scroll-mt-24 space-y-4">
             <h2 className="text-xl font-bold text-zinc-900">Getting started</h2>
             <p className="text-sm text-zinc-600 leading-relaxed">
-              Your Trimma workspace is the control centre for {SALON.name}. Use the left sidebar
-              for daily tools; Settings and Logout sit at the bottom. Complete your profile first,
-              then add services and staff so online booking works correctly.
+              Your Trimma workspace is the control centre for your salon. Use the left sidebar for
+              daily tools. Settings, Salon Help, and Logout sit at the bottom of the sidebar — there
+              is only one help menu: <strong>Salon Help</strong>.
             </p>
             <MockFrame title="Marketplace listing preview">
               <ListingMockup />
             </MockFrame>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { step: "1", title: "Profile & hours", desc: "Logo, location, amenities, bank info" },
-                { step: "2", title: "Services & staff", desc: "Menu, prices, stylist schedules" },
-                { step: "3", title: "Go live", desc: "Verify salon · accept bookings · track revenue" },
+                { step: "1", title: "Salon Profile", desc: "Name, address, map pin, hero image, contact" },
+                { step: "2", title: "Submit for approval", desc: "Agent review → admin verification" },
+                { step: "3", title: "Run your salon", desc: "Bookings, staff, services, finance" },
               ].map((s) => (
                 <div
                   key={s.step}
@@ -588,6 +602,104 @@ export function SalonOwnerHelpGuide() {
             </div>
           </section>
 
+          {/* Onboarding — primary self-serve workflow */}
+          <section id="onboarding" className="scroll-mt-24 bg-white rounded-3xl border border-indigo-100 shadow-sm overflow-hidden">
+            <div className="p-6 sm:p-8 border-b border-indigo-50 bg-indigo-50/40">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight mb-1">
+                    Getting live on Trimma
+                  </h2>
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                    Most salon owners start with <strong>self onboarding</strong> — sign in with Google
+                    at <Link href="/onboarding" className="text-indigo-700 font-semibold hover:underline">trimma.com/onboarding</Link>.
+                    Trimma creates your salon draft and assigns a field agent in your area. Follow the
+                    steps below in order.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 sm:p-8 space-y-6">
+              <ol className="space-y-4">
+                {[
+                  {
+                    title: "Sign in with Google",
+                    body: "Open /onboarding and sign in with the Gmail you want on your salon account. Trimma creates your owner dashboard and a draft salon automatically.",
+                  },
+                  {
+                    title: "Complete Salon Profile (booking essentials)",
+                    body: "Go to Salon Profile and add: business name, address, map location pin, hero image, and a mobile number or email. The progress banner at the top of your dashboard shows what is still missing.",
+                  },
+                  {
+                    title: "Submit for Booking Approval",
+                    body: "When the essentials are complete, click Submit for Booking Approval on Salon Profile. Your assigned Trimma agent is notified by email and WhatsApp to review your submission.",
+                  },
+                  {
+                    title: "Agent review",
+                    body: "Your Trimma field agent checks your salon details in their workspace. They may contact you if anything needs correcting. When satisfied, they enable booking and send your salon to Trimma admin.",
+                  },
+                  {
+                    title: "Admin verification → live",
+                    body: "Trimma admin gives final approval. Your salon then goes live on the marketplace and customers can book online. You will see a verified/live status in your dashboard.",
+                  },
+                  {
+                    title: "Optional: Verified badge & reservation deposits",
+                    body: "After you are live, complete Business Info and Bank Info (with required documents) on Salon Profile to earn the Trimma Verified badge and enable 50% online reservation deposits on customer bookings.",
+                  },
+                ].map((step, index) => (
+                  <li key={step.title} className="flex gap-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-800 text-xs font-black">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-bold text-zinc-900">{step.title}</h3>
+                      <p className="text-sm text-zinc-600 leading-relaxed mt-1">{step.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2">
+                  If a Trimma agent invited you by email
+                </h3>
+                <p className="text-sm text-amber-900/90 leading-relaxed">
+                  Sign in with the same Gmail address the agent invited. Complete your Salon Profile
+                  and submit for booking approval the same way — your agent already has your salon in
+                  their queue and will review after you submit.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-zinc-500 mb-3">
+                  What you will see in your dashboard
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-2 text-sm text-zinc-700">
+                  {[
+                    "Green welcome banner — profile incomplete, go to Salon Profile",
+                    "Progress banner — booking essentials, business info, bank docs",
+                    "Awaiting Verification — after you submit, before agent/admin approve",
+                    "Resubmit Booking Approval — if your agent asks for profile corrections",
+                  ].map((item) => (
+                    <div key={item} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Link href="/dashboard/profile">
+                <Button className="h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold">
+                  Open Salon Profile
+                </Button>
+              </Link>
+            </div>
+          </section>
+
           {/* Global layout */}
           <section id="global" className="scroll-mt-24 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8">
             <h2 className="text-lg font-bold text-zinc-900 mb-2">Layout & header</h2>
@@ -600,9 +712,9 @@ export function SalonOwnerHelpGuide() {
                 <HeaderMockup />
                 <div className="rounded-xl bg-emerald-600 text-white text-[10px] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium">
-                    Draft mode banner — complete profile to activate
+                    Welcome banner — complete Salon Profile, then submit for booking approval
                   </span>
-                  <span className="font-bold underline">Go to Profile →</span>
+                  <span className="font-bold underline">Go to Salon Profile →</span>
                 </div>
               </div>
             </div>
@@ -612,7 +724,8 @@ export function SalonOwnerHelpGuide() {
                 "Search bar (desktop) — quick lookup (expanding)",
                 "Salon avatar — opens Salon Profile; shows plan tier",
                 "Mobile menu — hamburger opens the full sidebar drawer",
-                "Settings (footer) — shortcut hub to key setup pages",
+                "Settings (sidebar footer) — shortcut hub to key setup pages",
+                "Salon Help (sidebar footer) — this handbook; only one help entry",
                 "Logout — ends your session securely",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
@@ -840,24 +953,23 @@ export function SalonOwnerHelpGuide() {
             icon={Store}
             title="Salon Profile"
             path="/dashboard/profile"
-            description="The most important page — your public storefront, branding, and activation."
+            description="Your public storefront and the centre of onboarding. Complete booking essentials here first, then submit for booking approval."
             features={[
+              "Booking essentials: business name, address, map pin, hero image, phone or email",
+              "Submit for Booking Approval — sends your profile to your assigned Trimma agent",
+              "Resubmit Booking Approval — if your agent returns the profile for corrections",
               "Tab: Business Operations — logo, cover, hero, featured gallery (plan limits)",
               "Location: address, province, district, map coordinates",
-              "Identity: salon name, phone, bio/tagline, completion progress %",
-              "Weekly operating hours per day",
+              "Weekly operating hours per day; amenities checklist",
               "Quick-add services and staff from profile",
-              "Amenities checklist with quantities (parking, Wi-Fi, etc.)",
-              "Marketplace live preview panel",
-              "Store QR Flyer — A4 print poster with your booking QR code",
-              "Save Operations — persists all operational fields",
-              "Tab: Business Info — legal/registration details",
-              "Tab: Bank Info — payout account for reservation settlements",
-              "Submit for verification / activation when ready",
+              "Marketplace live preview panel and Store QR Flyer",
+              "Tab: Business Info — legal/registration details for Verified badge",
+              "Tab: Bank Info — payout account and verification documents for 50% reservation deposits",
             ]}
             tips={[
+              "Submit for Booking Approval only after name, address, map pin, hero image, and contact are saved.",
+              "Services and staff can be added before or after approval, but booking needs agent + admin sign-off first.",
               "Changing salon name may update your public URL slug — share the new link after save.",
-              "Gallery image limits depend on your subscription tier.",
             ]}
           />
 
@@ -866,13 +978,14 @@ export function SalonOwnerHelpGuide() {
             icon={Settings}
             title="Settings"
             path="/dashboard/settings"
-            description="Shortcut control centre in the sidebar footer — not duplicated in the main menu."
+            description="Shortcut control centre in the sidebar footer — not duplicated in the main workspace menu."
             features={[
               "Quick link: Salon Profile",
               "Quick link: Services & Catalog",
               "Quick link: Staff & Stylists",
               "Quick link: Billing & Subscriptions",
               "Security & Credentials information card",
+              "Salon Help lives in the sidebar footer — use it for onboarding and workspace guidance",
             ]}
           />
 
