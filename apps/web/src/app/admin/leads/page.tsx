@@ -39,6 +39,7 @@ import {
 } from "@/app/actions/salon-requests";
 import {
   notifyAdminRejectedSalon,
+  notifyAgentOfSalonAssignment,
   notifySalonVerifiedByAdmin,
 } from "@/app/actions/salon-onboarding-notifications";
 
@@ -908,6 +909,8 @@ export default function Leads() {
           onboarding_status: "ASSIGNED_TO_AGENT"
         });
       if (result.success === false) throw new Error(result.error);
+
+      await notifyAgentOfSalonAssignment(lead.id);
 
       await logActivity(lead.id, "ASSIGNED_TO_AGENT", `Salon assigned and routed to field agent: ${agentLabel}.`);
 

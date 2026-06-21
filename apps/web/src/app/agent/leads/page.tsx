@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { sendOnboardingInviteAlert } from "../../actions/whatsapp";
 import { notifyAgentApprovedSalonForAdmin } from "../../actions/salon-onboarding-notifications";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
@@ -605,19 +604,6 @@ function AgentLeads() {
       if (!apiRes.ok) {
         const err = await apiRes.json();
         throw new Error(err.error || "Failed to send email invite");
-      }
-
-      if (formData.phone) {
-        const waRes = await sendOnboardingInviteAlert(
-          targetSalonId, 
-          formData.phone, 
-          formData.owner_gmail, 
-          formData.name || selectedLead.name,
-          selectedLead.slug || "salon"
-        );
-        if (!waRes.success) {
-          console.warn("WhatsApp notification failed:", waRes.error);
-        }
       }
 
       toast.success("Sent to Salon Owner and Invites Delivered!");

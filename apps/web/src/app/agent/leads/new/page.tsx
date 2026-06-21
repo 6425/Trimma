@@ -15,7 +15,6 @@ import { getAgentEmailFast } from "@/lib/client-auth";
 import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-leads-update";
 import { tryAgentData, fetchAgentGlobalsClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
-import { sendOnboardingInviteAlert } from "../../../actions/whatsapp";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 export default function AgentNewLeadPage() {
@@ -183,18 +182,6 @@ export default function AgentNewLeadPage() {
           throw new Error(err.error || "Failed to send email invite");
         }
 
-        if (form.phone) {
-          const waRes = await sendOnboardingInviteAlert(
-            salonId, 
-            form.phone, 
-            form.owner_gmail, 
-            form.name,
-            salonId // Note: We might not have the slug immediately available here, so salonId is used
-          );
-          if (!waRes.success) {
-            console.warn("WhatsApp notification failed:", waRes.error);
-          }
-        }
         toast.success("Lead created, Salon Owner sent review invites!");
       } else {
         toast.success("Manual lead saved as draft successfully.");

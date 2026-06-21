@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendAdminApprovalEmail, sendAgentApprovalEmail } from "@/app/actions/email-settings";
 import { sendAdminApprovalAlerts, sendAgentApprovalAlerts } from "@/app/actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 
 async function insertSalonOwnerInAppNotification(
   salonId: string,
@@ -126,6 +127,30 @@ export async function notifyAdminRejectedSalon(params: {
     "Salon application requires attention",
     `${params.salonName || "Your salon"} was not approved. Reason: ${reason}`
   );
+
+  return { success: true as const };
+}
+
+/** Admin sends a discovered lead to the assigned field agent. */
+export async function notifyAgentOfSalonAssignment(salonId: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data: salon, error } = await supabase
+    .from("salons")
+    .select("id, name, address, assign_to, onboarding_status")
+    .eq("id", salonId)
+    .maybeSingle();
+
+  if (error || !salon?.assign_to) {
+    return { success: false as const, error: error?.message || "No agent assigned" };
+  }
+
+  void notifyAgentLeadAssigned(supabase, {
+    salonId: salon.id,
+    salonName: salon.name || "Salon lead",
+    salonAddress: salon.address,
+    assignToEmail: salon.assign_to,
+    onboardingStatus: salon.onboarding_status || "ASSIGNED_TO_AGENT",
+  });
 
   return { success: true as const };
 }

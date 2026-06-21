@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fetchAdminSalons, fetchAdminUsers } from "@/app/actions/admin-list-data";
-import { approveAdminSalon, verifyAdminSalon, rejectAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
+import { approveAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
 import { refreshSalonGooglePlaceImages } from "@/app/actions/salon-google-images";
 import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
@@ -15,9 +15,12 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
+import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
-import { sendAdminApprovalEmail } from "@/app/actions/email-settings";
+import {
+  notifyAdminRejectedSalon,
+  notifySalonVerifiedByAdmin,
+} from "@/app/actions/salon-onboarding-notifications";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 
 export default function Salons() {
@@ -227,39 +230,49 @@ export default function Salons() {
   };
 
   const handleVerify = async (salonId: string) => {
+    const salon = salons.find((s) => s.id === salonId);
     try {
-      toast.loading("Awarding verified badge...");
-      // Final verification, awarding the badge
-      const result = await verifyAdminSalon(salonId);
+      toast.loading("Verifying salon...", { id: "verify_salon" });
+
+      const result = await updateAdminSalon(salonId, {
+        onboarding_status: "VERIFIED",
+        activation_status: "ACTIVE",
+        status: "active",
+        is_verified: true,
+        booking_enabled: true,
+        verified_at: new Date().toISOString(),
+      });
       if (result.success === false) throw new Error(result.error);
-      
-      const salon = salons.find(s => s.id === salonId);
-      if (salon && salon.phone) {
-        toast.loading("Sending WhatsApp Badge Alerts...");
-        const result = await sendAdminApprovalAlerts(salon.id, salon.phone, salon.name);
-        if (result.success === false) {
-          toast.error("Verified, but WhatsApp alert failed: " + result.error);
-        }
-        if (salon.owner_email || salon.owner_gmail || salon.email) {
-          await sendAdminApprovalEmail(salon.name, salon.owner_email || salon.owner_gmail || salon.email);
-        }
-      } else {
-        toast.warning("Verified, but WhatsApp alert skipped (missing phone).");
-        if (salon?.owner_email || salon?.owner_gmail || salon?.email) {
-          await sendAdminApprovalEmail(salon.name, salon.owner_email || salon.owner_gmail || salon.email);
-        }
+
+      if (salon) {
+        await notifySalonVerifiedByAdmin({
+          salonId,
+          salonName: salon.name,
+          ownerPhone: salon.phone,
+          ownerEmail: salon.owner_email || salon.owner_gmail || salon.email,
+        });
       }
 
-      toast.dismiss();
-      toast.success("Salon is now fully verified!");
+      toast.success("Salon is now verified and live on Trimma!", { id: "verify_salon" });
       fetchSalons();
       if (selectedSalon && selectedSalon.id === salonId) {
-         setSelectedSalon({ ...selectedSalon, status: 'active', is_verified: true });
-         setEditForm({ ...editForm, status: 'active', is_verified: true });
+        setSelectedSalon({
+          ...selectedSalon,
+          status: "active",
+          is_verified: true,
+          onboarding_status: "VERIFIED",
+          booking_enabled: true,
+        });
+        setEditForm({
+          ...editForm,
+          status: "active",
+          is_verified: true,
+          onboarding_status: "VERIFIED",
+          booking_enabled: true,
+        });
       }
     } catch (error: any) {
-      toast.dismiss();
-      toast.error("Failed to verify: " + error.message);
+      toast.error("Failed to verify: " + error.message, { id: "verify_salon" });
     }
   };
 
@@ -319,9 +332,21 @@ export default function Salons() {
     try {
       setIsProcessing(true);
       toast.loading("Rejecting salon...");
-      const result = await rejectAdminSalon(salonToReject.id, rejectionReason);
+      const result = await updateAdminSalon(salonToReject.id, {
+        onboarding_status: "REJECTED",
+        status: "rejected",
+        is_verified: false,
+        rejection_reason: rejectionReason,
+      });
       if (result.success === false) throw new Error(result.error);
-      
+
+      await notifyAdminRejectedSalon({
+        salonId: salonToReject.id,
+        salonName: salonToReject.name,
+        ownerEmail: salonToReject.owner_email || salonToReject.owner_gmail || salonToReject.email,
+        reason: rejectionReason,
+      });
+
       toast.dismiss();
       toast.success("Salon has been rejected.");
       setRejectModalOpen(false);
