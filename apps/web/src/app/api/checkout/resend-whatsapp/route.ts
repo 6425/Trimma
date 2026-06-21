@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
+import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid booking reference." }, { status: 400 });
     }
 
-    const result = await sendWhatsAppReservationPaidNotification(bookingNo);
+    const result = await sendWhatsAppNotification(bookingNo);
 
     if (!result.success) {
       return NextResponse.json(

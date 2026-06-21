@@ -152,7 +152,7 @@ function BookingSuccessContent() {
         {whatsappSent ? (
           <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">
             <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>WhatsApp receipt sent to your booking phone number.</span>
+            <span>WhatsApp booking confirmation sent to your phone number.</span>
           </p>
         ) : notificationsPending ? (
           <p className="text-xs text-sky-800 bg-sky-50 border border-sky-100 rounded-xl px-4 py-3 flex items-start gap-2 text-left">

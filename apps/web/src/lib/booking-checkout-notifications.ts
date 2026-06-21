@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendWhatsAppReservationPaidNotification } from "@/app/actions/whatsapp";
+import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { isEmailSendFailure } from "@/lib/email/result";
 import { APP_BASE_URL } from "@/lib/email/config";
@@ -54,7 +54,11 @@ export async function runBookingCheckoutNotifications(
   } = input;
 
   const [{ data: salonRow }, { data: staffRow }] = await Promise.all([
-    supabase.from("salons").select("name, address, location, slug").eq("id", salonId).maybeSingle(),
+    supabase
+      .from("salons")
+      .select("name, address, location, slug")
+      .eq("id", salonId)
+      .maybeSingle(),
     resolvedStaffId
       ? supabase.from("salon_staff").select("name").eq("id", resolvedStaffId).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -69,15 +73,24 @@ export async function runBookingCheckoutNotifications(
     "Salon service";
 
   const salonName = salonRow?.name || "your salon";
+  const salonAddress = salonRow?.address || "";
   const balanceToPay = Math.max(0, serviceTotal - reservationFee);
+  let mapsLink = "";
+  if (salonRow?.location && String(salonRow.location).includes(",")) {
+    mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(String(salonRow.location).trim())}`;
+  } else if (salonAddress) {
+    mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${salonName}, ${salonAddress}`)}`;
+  } else if (salonRow?.slug) {
+    mapsLink = `${APP_BASE_URL}/salons/${salonRow.slug}`;
+  }
 
-  const whatsappResult = await sendWhatsAppReservationPaidNotification(bookingNo, {
+  const whatsappResult = await sendWhatsAppNotification(bookingNo, {
     customerPhone,
     customerName,
     serviceName,
   });
   if (!whatsappResult.success) {
-    console.error("WhatsApp confirmation failed after checkout:", whatsappResult.error);
+    console.error("WhatsApp booking confirmation failed after checkout:", whatsappResult.error);
   }
 
   const [, , emailResult] = await Promise.allSettled([
@@ -96,7 +109,7 @@ export async function runBookingCheckoutNotifications(
     }),
     notifyOwnerPaidBookingRequest(supabase, bookingNo, "reservation_paid"),
     sendTriggeredEmail({
-      triggerId: "reservation-paid",
+      triggerId: "confirmed",
       to: customerEmail,
       variables: {
         customer_name: customerName,
@@ -105,12 +118,15 @@ export async function runBookingCheckoutNotifications(
         booking_date: bookingDate,
         booking_time: bookingTime,
         service_name: serviceName,
+        total_price: Number(serviceTotal).toLocaleString("en-LK"),
         deposit_paid: Number(reservationFee).toLocaleString("en-LK"),
         balance_to_pay: balanceToPay.toLocaleString("en-LK"),
+        salon_address: salonAddress || "See Trimma for details",
+        maps_link: mapsLink || APP_BASE_URL,
         dashboard_link: `${APP_BASE_URL}/customer`,
       },
       rateLimitKey: buildEmailRateLimitKey(clientIp || "checkout", customerEmail),
-      idempotencyKey: `booking-reservation-paid/${bookingNo}`,
+      idempotencyKey: `booking-confirmed/${bookingNo}`,
     }),
   ]);
 

@@ -7,7 +7,7 @@ import { CalendarDays, Loader2, RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { sendWhatsAppReservationPaidNotification } from "../actions/whatsapp";
+import { sendWhatsAppNotification } from "../actions/whatsapp";
 import { formatLkr, getBookingAmount, getBookingBalance } from "@/lib/dashboard-stats";
 import { fetchCustomerDashboardPage, type CustomerDashboardBooking } from "@/app/actions/customer-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
@@ -43,7 +43,7 @@ function DashboardContent() {
               position: "top-center",
             });
           } else if (!sessionStorage.getItem(dedupKey)) {
-            sendWhatsAppReservationPaidNotification(bookingNo).then((res) => {
+            sendWhatsAppNotification(bookingNo).then((res) => {
               sessionStorage.setItem(dedupKey, res?.success ? "sent" : "failed");
               if (res?.success) {
                 toast.success("Receipt sent to your WhatsApp! 📱", {

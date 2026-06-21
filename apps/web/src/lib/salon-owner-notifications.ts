@@ -75,11 +75,11 @@ export async function createBookingPendingConfirmNotification(
       service_name: input.serviceName,
       staff_name: input.staffName || undefined,
       payment_status: input.paymentStatus || "reservation_paid",
-      booking_status: "pending",
+      booking_status: "confirmed",
     };
 
-    const title = `New paid booking — ${input.bookingNo}`;
-    const body = `${input.customerName || input.customerEmail} paid the reservation for ${input.serviceName} on ${input.bookingDate} at ${input.bookingTime}. Confirm to lock the appointment.`;
+    const title = `New booking — ${input.bookingNo}`;
+    const body = `${input.customerName || input.customerEmail} booked ${input.serviceName} on ${input.bookingDate} at ${input.bookingTime}. The reservation is confirmed — use Bookings to reschedule if needed.`;
 
     const { error } = await supabase.from("salon_owner_notifications").insert({
       user_email: ownerEmail,

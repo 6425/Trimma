@@ -410,7 +410,7 @@ export async function completeBookingCheckout(
       if (error) throw new Error(error.message);
     })(),
     updateBookingAfterPayment(supabase, newBooking.id, {
-      status: "pending",
+      status: "confirmed",
       payment_status: "reservation_paid",
       reservation_fee_paid: true,
     }),

@@ -8,6 +8,7 @@ import { insertBookingRecord } from "@/lib/booking-insert";
 import { calculateCommissionSplit } from "@/lib/booking-pricing";
 import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
 import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
+import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
@@ -262,7 +263,7 @@ export async function createDirectBooking(
       booking_date: bookingDate,
       booking_time: formattedTime,
       amount: totalPrice,
-      status: "pending",
+      status: isPaid ? "confirmed" : "pending",
       payment_status: isPaid ? "reservation_paid" : "unpaid",
       reservation_fee_paid: isPaid,
       reservation_fee_refundable: false,
@@ -357,6 +358,7 @@ export async function createDirectBooking(
       });
 
       if (isPaid) {
+        void sendWhatsAppNotification(bookingNo);
         void notifyOwnerPaidBookingRequest(supabase, bookingNo, "reservation_paid");
       }
     } catch {
