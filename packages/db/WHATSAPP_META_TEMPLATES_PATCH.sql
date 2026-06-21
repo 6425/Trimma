@@ -17,7 +17,12 @@ ALTER TABLE public.global_payment_settings
   ADD COLUMN IF NOT EXISTS whatsapp_meta_template_language TEXT DEFAULT 'en';
 
 UPDATE public.global_payment_settings
-SET whatsapp_meta_template_language = COALESCE(NULLIF(TRIM(whatsapp_meta_template_language), ''), 'en')
+SET
+  whatsapp_meta_template_language = COALESCE(NULLIF(TRIM(whatsapp_meta_template_language), ''), 'en'),
+  whatsapp_meta_template_confirmed = COALESCE(
+    NULLIF(TRIM(whatsapp_meta_template_confirmed), ''),
+    'confirmmessage'
+  )
 WHERE id = '00000000-0000-0000-0000-000000000001'::uuid;
 
 NOTIFY pgrst, 'reload schema';

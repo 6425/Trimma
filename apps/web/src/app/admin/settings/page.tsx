@@ -521,7 +521,7 @@ function SettingsPanelContent() {
                                   <Input
                                     value={metaTemplateValues[trigger.metaTemplateKey] || ""}
                                     onChange={(e) => setMetaTemplateValue(trigger.metaTemplateKey, e.target.value)}
-                                    placeholder="e.g. trimma_booking_confirmed"
+                                    placeholder="confirmmessage"
                                     className="h-9 border-emerald-200 rounded-lg text-xs font-mono"
                                   />
                                   <p className="text-[9px] text-zinc-500">

@@ -4,6 +4,9 @@
  * Admin → Global Settings: set exact template names from Meta Business Manager.
  */
 
+/** Meta-approved template for first customer booking confirmation (checkout). */
+export const TRIMMA_META_TEMPLATE_CONFIRMED = "confirmmessage";
+
 export type WhatsAppMetaTemplateTrigger = "reservation-paid" | "confirmed";
 
 export type WhatsAppMetaSendInput = {

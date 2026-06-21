@@ -18,6 +18,7 @@ import {
 import {
   buildMetaBodyParameters,
   sendWhatsAppMetaTemplateMessage,
+  TRIMMA_META_TEMPLATE_CONFIRMED,
   type WhatsAppMetaTemplateTrigger,
 } from "@/lib/whatsapp-meta-send";
 import {
@@ -386,7 +387,8 @@ export async function getWhatsAppConfig() {
       dbSettings.whatsapp_template_agent_lead_assigned || D.agentLeadAssigned;
     const metaTemplateReservationPaid =
       dbSettings.whatsapp_meta_template_reservation_paid?.trim() || "";
-    const metaTemplateConfirmed = dbSettings.whatsapp_meta_template_confirmed?.trim() || "";
+    const metaTemplateConfirmed =
+      dbSettings.whatsapp_meta_template_confirmed?.trim() || TRIMMA_META_TEMPLATE_CONFIRMED;
     const metaTemplateLanguage = dbSettings.whatsapp_meta_template_language?.trim() || "en";
 
     return { 
@@ -475,7 +477,7 @@ export async function getWhatsAppConfig() {
       templateWelcomeCustomer: D.welcomeCustomer,
       templateAgentLeadAssigned: D.agentLeadAssigned,
       metaTemplateReservationPaid: "",
-      metaTemplateConfirmed: "",
+      metaTemplateConfirmed: TRIMMA_META_TEMPLATE_CONFIRMED,
       metaTemplateLanguage: "en",
       source,
     };
