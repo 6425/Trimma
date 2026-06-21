@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert, sendAdminApprovalAlerts } from "@/app/actions/whatsapp";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { sendAdminApprovalEmail } from "@/app/actions/email-settings";
-import { SalonVerificationDocumentsPanel } from "@/components/salon/SalonVerificationDocumentsPanel";
+import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -777,10 +777,9 @@ export default function Salons() {
                 </div>
               </div>
 
-              <SalonVerificationDocumentsPanel
+              <SalonOnboardingReviewPanel
                 salonId={selectedSalon.id}
-                compact
-                className="rounded-2xl p-4"
+                salon={selectedSalon}
               />
 
               <div className="space-y-3">

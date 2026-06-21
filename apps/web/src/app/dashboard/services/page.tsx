@@ -29,6 +29,7 @@ import {
   SERVICE_IMAGE_DIMENSION_LABEL,
 } from "../../../components/admin/GlobalServiceIconUpload";
 import { uploadSalonServiceImage } from "@/app/actions/style-images";
+import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 const serviceIconMap = { LayoutGrid, Scissors };
 
@@ -571,181 +572,179 @@ export default function DashboardServices() {
         )}
       </div>
 
-      {/* PREMIUM IMPORT MASTER CATALOG MODAL OVERLAY */}
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in duration-200">
-            
-            {/* Modal Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <div>
-                <h3 className="text-xl font-extrabold text-[#1A1C29] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-brand" />
-                  Import Master Catalog Services
-                </h3>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Showing service categories permitted under your <span className="font-extrabold text-brand">{subscriptionPlan?.name || "Tier Limit"}</span>.
-                  <a href="/dashboard/billing" className="ml-2 text-brand hover:underline font-bold">Upgrade to unlock more &rarr;</a>
-                </p>
-              </div>
-              <Button 
-                onClick={() => setShowImportModal(false)}
-                variant="ghost" 
-                className="text-zinc-400 hover:text-zinc-600 rounded-xl"
+      <DashboardModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        size="xl"
+        title={
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-brand shrink-0" />
+            Import Master Catalog Services
+          </span>
+        }
+        description={
+          <>
+            Showing service categories permitted under your{" "}
+            <span className="font-extrabold text-brand">{subscriptionPlan?.name || "Tier Limit"}</span>.
+            <a href="/dashboard/billing" className="ml-2 text-brand hover:underline font-bold">
+              Upgrade to unlock more &rarr;
+            </a>
+          </>
+        }
+        toolbar={
+          <div className="bg-zinc-50 p-2 flex items-center gap-1.5 overflow-x-auto">
+            {allowedCategories.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategoryTab(cat.id)}
+                className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap ${
+                  activeCategoryTab === cat.id
+                    ? "bg-brand text-black shadow-md shadow-brand/20"
+                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+                }`}
               >
-                ✕ Close
+                {cat.name}
+              </button>
+            ))}
+            {allowedCategories.length === 0 && (
+              <div className="flex items-center gap-2 text-zinc-400 text-xs py-2 px-4">
+                <Ban className="w-4 h-4" /> No categories permitted under current tier.
+              </div>
+            )}
+          </div>
+        }
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span className="text-xs font-bold text-zinc-500">
+              {Object.keys(selectedServices).filter((id) => selectedServices[id].checked).length} services selected
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                variant="outline"
+                className="rounded-xl font-bold h-11"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleImportAndPublish}
+                disabled={importing}
+                className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
+              >
+                {importing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                Publish Selected Services
               </Button>
             </div>
-
-            {/* Allowed Categories Tab Bar */}
-            <div className="bg-zinc-50 p-2 flex items-center gap-1.5 overflow-x-auto border-b border-zinc-100">
-              {allowedCategories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategoryTab(cat.id)}
-                  className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all whitespace-nowrap ${
-                    activeCategoryTab === cat.id 
-                    ? "bg-brand text-black shadow-md shadow-brand/20" 
-                    : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-              {allowedCategories.length === 0 && (
-                <div className="flex items-center gap-2 text-zinc-400 text-xs py-2 px-4">
-                  <Ban className="w-4 h-4" /> No categories permitted under current tier.
-                </div>
-              )}
-            </div>
-
-            {/* Scrollable Master Services List */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[50vh]">
-              {globalServices.filter(s => s.category_id === activeCategoryTab).length === 0 ? (
-                <div className="py-16 text-center text-zinc-400">
-                  <Scissors className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p className="font-medium text-sm">No master services loaded under this category.</p>
-                </div>
-              ) : (
-                globalServices
-                  .filter(s => s.category_id === activeCategoryTab)
-                  .map((s) => {
-                    const isChecked = selectedServices[s.id]?.checked || false;
-                    return (
-                      <div 
-                        key={s.id} 
-                        className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 select-none ${
-                          isChecked 
-                          ? "bg-rose-50/50 border-brand shadow-sm" 
-                          : "bg-white border-zinc-100 hover:border-zinc-200"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3 flex-1">
-                          <input 
-                            type="checkbox" 
-                            checked={isChecked}
-                            onChange={() => handleToggleSelect(s.id)}
-                            className="mt-1 w-4 h-4 rounded border-zinc-300 text-brand focus:ring-brand accent-brand cursor-pointer"
-                          />
-                          <GlobalServiceIconPreview
-                            iconImageUrl={s.icon_image_url}
-                            iconName={s.icon}
-                            iconMap={serviceIconMap}
-                          />
-                          <div className="min-w-0" onClick={() => handleToggleSelect(s.id)}>
-                            <h4 className="font-bold text-sm text-zinc-800 flex items-center gap-1.5 cursor-pointer">
-                              {s.name}
-                            </h4>
-                            <p className="text-xs text-zinc-400 leading-relaxed mt-0.5 max-w-md truncate">
-                              {s.description || "Traditional high-quality service."}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Interactive Edit Fields */}
-                        {isChecked && (
-                          <div className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-150">
-                            {/* Custom Price Input */}
-                            <div className="w-32">
-                              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Price (LKR)</label>
-                              <Input 
-                                type="number" 
-                                value={selectedServices[s.id]?.price || ""}
-                                onChange={(e) => handleValueChange(s.id, "price", e.target.value)}
-                                className="h-9 font-bold text-zinc-800 border-zinc-200 rounded-xl"
-                              />
-                            </div>
-                            {/* Custom Duration Input */}
-                            <div className="w-24">
-                              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">Mins</label>
-                              <Input 
-                                type="number" 
-                                value={selectedServices[s.id]?.duration_min || ""}
-                                onChange={(e) => handleValueChange(s.id, "duration_min", e.target.value)}
-                                className="h-9 text-zinc-600 border-zinc-200 rounded-xl"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-              )}
-            </div>
-
-            {/* Modal Footer Actions */}
-            <div className="p-6 border-t border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <span className="text-xs font-bold text-zinc-500">
-                {Object.keys(selectedServices).filter(id => selectedServices[id].checked).length} services selected
-              </span>
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={() => setShowImportModal(false)}
-                  variant="outline" 
-                  className="rounded-xl font-bold h-11"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleImportAndPublish}
-                  disabled={importing}
-                  className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
-                >
-                  {importing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                  Publish Selected Services
-                </Button>
-              </div>
-            </div>
-
           </div>
-        </div>
-      )}
-      {/* PREMIUM EDIT SERVICE OVERLAY MODAL */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-zinc-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-            
-            {/* Modal Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-brand">
-                  <Scissors className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-zinc-900 text-sm">Customize Catalog Service</h3>
-                  <p className="text-[10px] text-zinc-400">Edit customized details for this published catalog offering.</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowEditModal(false)}
-                className="w-8 h-8 rounded-full bg-zinc-50 hover:bg-zinc-100 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors font-bold text-xs"
-              >
-                ✕
-              </button>
+        }
+      >
+        <div className="space-y-4">
+          {globalServices.filter((s) => s.category_id === activeCategoryTab).length === 0 ? (
+            <div className="py-16 text-center text-zinc-400">
+              <Scissors className="w-12 h-12 mx-auto mb-3 opacity-20" />
+              <p className="font-medium text-sm">No master services loaded under this category.</p>
             </div>
+          ) : (
+            globalServices
+              .filter((s) => s.category_id === activeCategoryTab)
+              .map((s) => {
+                const isChecked = selectedServices[s.id]?.checked || false;
+                return (
+                  <div
+                    key={s.id}
+                    className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 select-none ${
+                      isChecked
+                        ? "bg-rose-50/50 border-brand shadow-sm"
+                        : "bg-white border-zinc-100 hover:border-zinc-200"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3 flex-1">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggleSelect(s.id)}
+                        className="mt-1 w-4 h-4 rounded border-zinc-300 text-brand focus:ring-brand accent-brand cursor-pointer"
+                      />
+                      <GlobalServiceIconPreview
+                        iconImageUrl={s.icon_image_url}
+                        iconName={s.icon}
+                        iconMap={serviceIconMap}
+                      />
+                      <div className="min-w-0" onClick={() => handleToggleSelect(s.id)}>
+                        <h4 className="font-bold text-sm text-zinc-800 flex items-center gap-1.5 cursor-pointer">
+                          {s.name}
+                        </h4>
+                        <p className="text-xs text-zinc-400 leading-relaxed mt-0.5 max-w-md truncate">
+                          {s.description || "Traditional high-quality service."}
+                        </p>
+                      </div>
+                    </div>
 
-            {/* Modal Body / Form */}
-            <form onSubmit={handleUpdateService} className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {isChecked && (
+                      <div className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-150">
+                        <div className="w-32">
+                          <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                            Price (LKR)
+                          </label>
+                          <Input
+                            type="number"
+                            value={selectedServices[s.id]?.price || ""}
+                            onChange={(e) => handleValueChange(s.id, "price", e.target.value)}
+                            className="h-9 font-bold text-zinc-800 border-zinc-200 rounded-xl"
+                          />
+                        </div>
+                        <div className="w-24">
+                          <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                            Mins
+                          </label>
+                          <Input
+                            type="number"
+                            value={selectedServices[s.id]?.duration_min || ""}
+                            onChange={(e) => handleValueChange(s.id, "duration_min", e.target.value)}
+                            className="h-9 text-zinc-600 border-zinc-200 rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+          )}
+        </div>
+      </DashboardModal>
+
+      <DashboardModal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        size="lg"
+        title="Customize Catalog Service"
+        description="Edit customized details for this published catalog offering."
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => setShowEditModal(false)}
+              variant="outline"
+              className="rounded-xl font-bold h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="edit-service-form"
+              disabled={updating}
+              className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
+            >
+              {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Save & Publish Changes
+            </Button>
+          </div>
+        }
+      >
+        <form id="edit-service-form" onSubmit={handleUpdateService} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">
                   Service Image ({SERVICE_IMAGE_DIMENSION_LABEL})
@@ -873,30 +872,8 @@ export default function DashboardServices() {
                 />
               </div>
 
-              {/* Modal Actions */}
-              <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-2">
-                <Button 
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  variant="outline" 
-                  className="rounded-xl font-bold h-11"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={updating}
-                  className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
-                >
-                  {updating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Save & Publish Changes
-                </Button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      )}
+        </form>
+      </DashboardModal>
     </div>
   );
 }

@@ -61,6 +61,8 @@ export interface AddProfessionalFormProps {
   } | null;
   title?: string;
   submitLabel?: string;
+  /** When true, form renders inside DashboardModal (no duplicate shell/header). */
+  embedded?: boolean;
 }
 
 export function AddProfessionalForm({
@@ -73,6 +75,7 @@ export function AddProfessionalForm({
   initialStaff = null,
   title = "Add Professional",
   submitLabel = "Add Professional",
+  embedded = false,
 }: AddProfessionalFormProps) {
   // Avatar Upload & Crop States
   const [imgSrc, setImgSrc] = useState('');
@@ -272,29 +275,36 @@ export function AddProfessionalForm({
 
   return (
     <>
-      <form 
+      <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden max-h-[85vh] overflow-y-auto custom-scrollbar"
+        className={
+          embedded
+            ? "space-y-6"
+            : "bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden max-h-[85vh] overflow-y-auto custom-scrollbar"
+        }
       >
-        <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"></div>
-
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-xl font-black text-zinc-900">{title}</h2>
-            <p className="text-xs text-zinc-500 mt-1">
-              {initialStaff?.id
-                ? "Update this professional's hours, services, and commission settings."
-                : "Register a new professional with custom hours and service commissions."}
-            </p>
-          </div>
-          <button 
-            type="button"
-            onClick={onCancel}
-            className="text-zinc-400 hover:text-zinc-600 p-1.5 rounded-full hover:bg-zinc-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        {!embedded ? (
+          <>
+            <div className="absolute top-0 inset-x-0 h-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600" />
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-black text-zinc-900">{title}</h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {initialStaff?.id
+                    ? "Update this professional's hours, services, and commission settings."
+                    : "Register a new professional with custom hours and service commissions."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onCancel}
+                className="text-zinc-400 hover:text-zinc-600 p-1.5 rounded-full hover:bg-zinc-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </>
+        ) : null}
 
         <div className="space-y-4">
           {/* Identity fields */}
@@ -541,7 +551,7 @@ export function AddProfessionalForm({
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className={embedded ? "flex gap-3 pt-2 sticky bottom-0 bg-white pb-1" : "flex gap-3 pt-2"}>
           <Button 
             type="button" 
             variant="outline" 
@@ -562,7 +572,7 @@ export function AddProfessionalForm({
 
       {/* POPUP MODAL DIALOG - CROP */}
       {isCropModalOpen && !!imgSrc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full mx-auto shadow-2xl relative">
             <h3 className="text-lg font-black text-zinc-900 mb-4">Position your photo</h3>
             <div className="bg-slate-100 rounded-xl overflow-hidden flex justify-center items-center h-64 mb-6">

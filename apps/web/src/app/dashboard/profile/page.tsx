@@ -32,6 +32,7 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
+import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
 import { BankInfoForm } from "../../../components/forms/BankInfoForm";
 import { Plus, Users, Globe, ClipboardList, Tag, FileText, Landmark } from "lucide-react";
@@ -1491,34 +1492,43 @@ export default function SalonProfilePage() {
           </div>
         </div>
 
-        {isStaffModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-            <AddProfessionalForm
-              key={
-                editingStaffIndex !== null
-                  ? `edit-${staffToAdd[editingStaffIndex]?.id ?? editingStaffIndex}-${profileSalonServices.map((s) => s.salonServiceId || s.id).join(",")}`
-                  : `add-${profileSalonServices.map((s) => s.salonServiceId || s.id).join(",")}`
-              }
-              onCancel={closeStaffModal}
-              onSubmit={handleStaffModalSubmit}
-              globalRoles={globalStaffRoles}
-              salonServices={profileSalonServices}
-              adding={savingStaff}
-              initialStaff={
-                editingStaffIndex !== null
-                  ? {
-                      ...staffToAdd[editingStaffIndex],
-                      working_hours:
-                        parseStaffWorkingHours(staffToAdd[editingStaffIndex]?.working_hours) ||
-                        staffToAdd[editingStaffIndex]?.working_hours,
-                    }
-                  : null
-              }
-              title={editingStaffIndex !== null ? "Edit Professional" : "Add Professional"}
-              submitLabel={editingStaffIndex !== null ? "Save Changes" : "Add Professional"}
-            />
-          </div>
-        )}
+        <DashboardModal
+          open={isStaffModalOpen}
+          onClose={closeStaffModal}
+          size="md"
+          title={editingStaffIndex !== null ? "Edit Professional" : "Add Professional"}
+          description={
+            editingStaffIndex !== null
+              ? "Update hours, services, and commission settings for this team member."
+              : "Register a new professional with custom hours and service commissions."
+          }
+        >
+          <AddProfessionalForm
+            key={
+              editingStaffIndex !== null
+                ? `edit-${staffToAdd[editingStaffIndex]?.id ?? editingStaffIndex}-${profileSalonServices.map((s) => s.salonServiceId || s.id).join(",")}`
+                : `add-${profileSalonServices.map((s) => s.salonServiceId || s.id).join(",")}`
+            }
+            embedded
+            onCancel={closeStaffModal}
+            onSubmit={handleStaffModalSubmit}
+            globalRoles={globalStaffRoles}
+            salonServices={profileSalonServices}
+            adding={savingStaff}
+            initialStaff={
+              editingStaffIndex !== null
+                ? {
+                    ...staffToAdd[editingStaffIndex],
+                    working_hours:
+                      parseStaffWorkingHours(staffToAdd[editingStaffIndex]?.working_hours) ||
+                      staffToAdd[editingStaffIndex]?.working_hours,
+                  }
+                : null
+            }
+            title={editingStaffIndex !== null ? "Edit Professional" : "Add Professional"}
+            submitLabel={editingStaffIndex !== null ? "Save Changes" : "Add Professional"}
+          />
+        </DashboardModal>
       </div>
           </div>
         )}

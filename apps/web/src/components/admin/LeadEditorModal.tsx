@@ -6,6 +6,7 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { Badge } from "@/components/ui/badge";
 import { WorkingHoursEditor } from "./WorkingHoursEditor";
 import { AdminSalonServiceImporter } from "./AdminSalonServiceImporter";
+import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { Image as ImageIcon } from "lucide-react";
 
 interface LeadEditorModalProps {
@@ -108,6 +109,10 @@ export function LeadEditorModal({
             
             {/* Left Column (Main Forms) */}
             <div className="lg:col-span-2 space-y-8">
+
+              {selectedLead?.id ? (
+                <SalonOnboardingReviewPanel salonId={selectedLead.id} salon={selectedLead} />
+              ) : null}
               
               {/* VISUAL ASSET MANAGER */}
               <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">

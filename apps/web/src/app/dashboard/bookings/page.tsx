@@ -22,6 +22,7 @@ import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifi
 import { withTimeout } from "@/lib/promise-timeout";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
 import { toast } from "sonner";
+import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 import { ChevronDown } from "lucide-react";
 
@@ -696,86 +697,90 @@ export default function DashboardBookings() {
         )}
       </div>
 
-      {reschedulingBooking && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-slate-200 shadow-2xl space-y-6 mx-4 relative text-left">
-            <div>
-              <h3 className="text-lg font-black text-zinc-900 tracking-tight flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-emerald-600" />
-                Reschedule Appointment
-              </h3>
-              <p className="text-xs text-zinc-500 mt-1 font-medium">
-                Updating schedule for booking reference{" "}
-                <strong>{reschedulingBooking.booking_no}</strong>.
-                {reschedulingBooking.requested_booking_date ? (
-                  <>
-                    {" "}
-                    Customer requested{" "}
-                    <strong>
-                      {reschedulingBooking.requested_booking_date} at{" "}
-                      {(reschedulingBooking.requested_booking_time || "").slice(0, 5)}
-                    </strong>
-                    .
-                  </>
-                ) : null}
-              </p>
-            </div>
+      <DashboardModal
+        open={Boolean(reschedulingBooking)}
+        onClose={() => setReschedulingBooking(null)}
+        size="sm"
+        title={
+          <span className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-emerald-600 shrink-0" />
+            Reschedule Appointment
+          </span>
+        }
+        description={
+          reschedulingBooking ? (
+            <>
+              Updating schedule for booking reference{" "}
+              <strong>{reschedulingBooking.booking_no}</strong>.
+              {reschedulingBooking.requested_booking_date ? (
+                <>
+                  {" "}
+                  Customer requested{" "}
+                  <strong>
+                    {reschedulingBooking.requested_booking_date} at{" "}
+                    {(reschedulingBooking.requested_booking_time || "").slice(0, 5)}
+                  </strong>
+                  .
+                </>
+              ) : null}
+            </>
+          ) : null
+        }
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReschedulingBooking(null)}
+              className="border-slate-200 text-zinc-700 hover:bg-slate-50 font-bold rounded-xl h-10 px-4 text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleRescheduleSave}
+              disabled={!reschedulingBooking || processingId === reschedulingBooking.id || !newDate || !newTime}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
+            >
+              {reschedulingBooking && processingId === reschedulingBooking.id ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                "Confirm Reschedule"
+              )}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              New Appointment Date
+            </label>
+            <input
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              className="w-full h-11 px-4 border border-slate-200 focus:border-zinc-950 rounded-xl text-sm focus:outline-none"
+              required
+            />
+          </div>
 
-            <div className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                  New Appointment Date
-                </label>
-                <input
-                  type="date"
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full h-11 px-4 border border-slate-200 focus:border-zinc-950 rounded-xl text-sm focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                  New Appointment Time
-                </label>
-                <input
-                  type="time"
-                  value={newTime}
-                  onChange={(e) => setNewTime(e.target.value)}
-                  className="w-full h-11 px-4 border border-slate-200 focus:border-zinc-950 rounded-xl text-sm focus:outline-none"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-100 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setReschedulingBooking(null)}
-                className="border-slate-200 text-zinc-700 hover:bg-slate-50 font-bold rounded-xl h-10 px-4 text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleRescheduleSave}
-                disabled={processingId === reschedulingBooking.id || !newDate || !newTime}
-                className="bg-zinc-900 hover:bg-zinc-800 text-white font-bold rounded-xl h-10 px-5 flex items-center gap-1.5 text-xs"
-              >
-                {processingId === reschedulingBooking.id ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  "Confirm Reschedule"
-                )}
-              </Button>
-            </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              New Appointment Time
+            </label>
+            <input
+              type="time"
+              value={newTime}
+              onChange={(e) => setNewTime(e.target.value)}
+              className="w-full h-11 px-4 border border-slate-200 focus:border-zinc-950 rounded-xl text-sm focus:outline-none"
+              required
+            />
           </div>
         </div>
-      )}
+      </DashboardModal>
     </div>
   );
 }

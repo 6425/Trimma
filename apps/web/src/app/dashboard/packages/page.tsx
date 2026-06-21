@@ -38,6 +38,7 @@ import {
   updateSalonPromotionPackage,
 } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
+import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import {
   getPromotionPeriodLabel,
   getRemainingDaysBadgeClass,
@@ -513,132 +514,143 @@ export default function PackagesPage() {
         </div>
       )}
 
-      {showImportModal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-6 pt-24 sm:pt-6 pb-4">
-          <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[min(90vh,calc(100dvh-6rem))] min-h-0 overflow-hidden flex flex-col shadow-2xl">
-            <div className="shrink-0 p-5 sm:p-6 border-b border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-50/50">
-              <div className="min-w-0 pr-2">
-                <h3 className="text-lg sm:text-xl font-extrabold text-[#1A1C29] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-brand shrink-0" />
-                  Import Global Promotion Packages
-                </h3>
-                <p className="text-xs text-zinc-500 mt-1.5">
-                  Templates allowed under your {subscriptionPlan?.name || "plan"} limits.
-                </p>
-              </div>
-              <Button onClick={() => setShowImportModal(false)} variant="ghost" className="rounded-xl shrink-0 self-end sm:self-auto">
-                Close
-              </Button>
-            </div>
-
-            <div className="shrink-0 bg-zinc-50 px-3 sm:px-4 py-3 flex items-center gap-2 overflow-x-auto border-b border-zinc-100">
-              {allowedPromotionTypes.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setActiveTypeTab(type.id)}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                    activeTypeTab === type.id
-                      ? "bg-zinc-900 text-white shadow-md"
-                      : "bg-white text-zinc-500 hover:text-zinc-800 border border-zinc-100"
+      <DashboardModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        size="xl"
+        title={
+          <span className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-brand shrink-0" />
+            Import Global Promotion Packages
+          </span>
+        }
+        description={`Templates allowed under your ${subscriptionPlan?.name || "plan"} limits.`}
+        toolbar={
+          <div className="bg-zinc-50 px-3 sm:px-4 py-3 flex items-center gap-2 overflow-x-auto">
+            {allowedPromotionTypes.map((type) => (
+              <button
+                key={type.id}
+                type="button"
+                onClick={() => setActiveTypeTab(type.id)}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  activeTypeTab === type.id
+                    ? "bg-zinc-900 text-white shadow-md"
+                    : "bg-white text-zinc-500 hover:text-zinc-800 border border-zinc-100"
+                }`}
+              >
+                {type.name}
+              </button>
+            ))}
+          </div>
+        }
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+            <Button variant="ghost" onClick={() => setShowImportModal(false)} className="rounded-xl font-bold">
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleImportAndPublish}
+              disabled={importing}
+              className="rounded-xl bg-brand hover:bg-brand-hover text-zinc-900 font-bold px-8"
+            >
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Selected Packages"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          {filteredGlobalForTab.length === 0 ? (
+            <p className="text-center text-zinc-400 text-sm py-12 px-4">
+              No global packages in this promotion type yet.
+            </p>
+          ) : (
+            filteredGlobalForTab.map((pkg) => {
+              const selected = selectedPackages[pkg.id];
+              const savings = getSavingsLabel(
+                parseFloat(selected?.original_price || pkg.original_price || 0),
+                parseFloat(selected?.package_price || pkg.package_price || 0)
+              );
+              const typeInfo = allowedPromotionTypes.find((type) => type.id === pkg.promotion_type_id);
+              const TypeIcon = promotionTypeIconMap[typeInfo?.icon || "Gift"] || Gift;
+              return (
+                <label
+                  key={pkg.id}
+                  className={`flex items-start gap-4 sm:gap-5 p-5 sm:p-6 rounded-2xl border cursor-pointer transition-all ${
+                    selected?.checked ? "border-brand bg-rose-50/30 shadow-sm" : "border-zinc-100 hover:border-zinc-200 bg-white"
                   }`}
                 >
-                  {type.name}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4">
-              {filteredGlobalForTab.length === 0 ? (
-                <p className="text-center text-zinc-400 text-sm py-12 px-4">
-                  No global packages in this promotion type yet.
-                </p>
-              ) : (
-                filteredGlobalForTab.map((pkg) => {
-                  const selected = selectedPackages[pkg.id];
-                  const savings = getSavingsLabel(
-                    parseFloat(selected?.original_price || pkg.original_price || 0),
-                    parseFloat(selected?.package_price || pkg.package_price || 0)
-                  );
-                  const typeInfo = allowedPromotionTypes.find((type) => type.id === pkg.promotion_type_id);
-                  const TypeIcon = promotionTypeIconMap[typeInfo?.icon || "Gift"] || Gift;
-                  return (
-                    <label
-                      key={pkg.id}
-                      className={`flex items-start gap-4 sm:gap-5 p-5 sm:p-6 rounded-2xl border cursor-pointer transition-all ${
-                        selected?.checked ? "border-brand bg-rose-50/30 shadow-sm" : "border-zinc-100 hover:border-zinc-200 bg-white"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selected?.checked || false}
-                        onChange={() => handleToggleSelect(pkg.id)}
-                        className="mt-1.5 accent-brand shrink-0"
-                      />
-                      <div className="flex-1 min-w-0 space-y-3 py-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest gap-1.5 px-2.5 py-1">
-                            <TypeIcon className="w-3 h-3" />
-                            {typeInfo?.name || "General"}
-                          </Badge>
-                        </div>
-                        <div className="font-bold text-zinc-900 text-base leading-snug">{pkg.name}</div>
-                        <div className="text-sm text-zinc-600">
-                          <span className="font-black text-brand">
-                            LKR {parseFloat(selected?.package_price || pkg.package_price || 0).toLocaleString()}
-                          </span>
-                          {savings && <span className="ml-2 text-emerald-600 font-bold text-xs">{savings}</span>}
-                        </div>
-                        {pkg.description && (
-                          <p className="text-xs text-zinc-500 leading-relaxed">{pkg.description}</p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
-                          <Calendar className="w-3.5 h-3.5 shrink-0" />
-                          <span>{getPromotionPeriodLabel(pkg.start_date, pkg.end_date)}</span>
-                          <span
-                            className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${getRemainingDaysBadgeClass(pkg.end_date)}`}
-                          >
-                            {getRemainingDaysLabel(pkg.end_date)}
-                          </span>
-                        </div>
-                        <ul className="space-y-2 pt-1">
-                          {(pkg.included_services || []).map((srv: string, idx: number) => (
-                            <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-zinc-600 leading-relaxed">
-                              <CheckCircle className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
-                              <span>{srv}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </label>
-                  );
-                })
-              )}
-              </div>
-              
-            <div className="shrink-0 p-4 sm:p-6 border-t border-zinc-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 bg-white">
-              <Button variant="ghost" onClick={() => setShowImportModal(false)} className="rounded-xl font-bold">
-                Cancel
-              </Button>
-              <Button
-                onClick={handleImportAndPublish}
-                disabled={importing}
-                className="rounded-xl bg-brand hover:bg-brand-hover text-zinc-900 font-bold px-8"
-              >
-                {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Selected Packages"}
-              </Button>
-            </div>
-          </div>
+                  <input
+                    type="checkbox"
+                    checked={selected?.checked || false}
+                    onChange={() => handleToggleSelect(pkg.id)}
+                    className="mt-1.5 accent-brand shrink-0"
+                  />
+                  <div className="flex-1 min-w-0 space-y-3 py-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest gap-1.5 px-2.5 py-1">
+                        <TypeIcon className="w-3 h-3" />
+                        {typeInfo?.name || "General"}
+                      </Badge>
+                    </div>
+                    <div className="font-bold text-zinc-900 text-base leading-snug">{pkg.name}</div>
+                    <div className="text-sm text-zinc-600">
+                      <span className="font-black text-brand">
+                        LKR {parseFloat(selected?.package_price || pkg.package_price || 0).toLocaleString()}
+                      </span>
+                      {savings && <span className="ml-2 text-emerald-600 font-bold text-xs">{savings}</span>}
+                    </div>
+                    {pkg.description && (
+                      <p className="text-xs text-zinc-500 leading-relaxed">{pkg.description}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+                      <Calendar className="w-3.5 h-3.5 shrink-0" />
+                      <span>{getPromotionPeriodLabel(pkg.start_date, pkg.end_date)}</span>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${getRemainingDaysBadgeClass(pkg.end_date)}`}
+                      >
+                        {getRemainingDaysLabel(pkg.end_date)}
+                      </span>
+                    </div>
+                    <ul className="space-y-2 pt-1">
+                      {(pkg.included_services || []).map((srv: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                          <CheckCircle className="w-3.5 h-3.5 text-brand shrink-0 mt-0.5" />
+                          <span>{srv}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </label>
+              );
+            })
+          )}
         </div>
-      )}
+      </DashboardModal>
 
-      {showEditModal && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-6 pt-24 sm:pt-6 pb-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg max-h-[min(92vh,calc(100dvh-6rem))] overflow-y-auto p-6 sm:p-8 shadow-2xl space-y-5">
-            <div>
-              <h3 className="text-lg sm:text-xl font-bold text-zinc-900">Edit Promotion Package</h3>
-              <p className="text-xs text-zinc-500 mt-1">Update pricing, services, and visibility for this deal.</p>
-            </div>
-            <form onSubmit={handleUpdatePackage} className="space-y-4">
+      <DashboardModal
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        size="lg"
+        title="Edit Promotion Package"
+        description="Update pricing, services, and visibility for this deal."
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setShowEditModal(false)} className="flex-1 rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="edit-package-form"
+              disabled={updating}
+              className="flex-[2] rounded-xl bg-brand text-zinc-900 font-bold"
+            >
+              {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
+            </Button>
+          </div>
+        }
+      >
+        <form id="edit-package-form" onSubmit={handleUpdatePackage} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Package Name
@@ -764,18 +776,8 @@ export default function PackagesPage() {
                   <option value="inactive">Paused</option>
                 </select>
               </div>
-              <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2 sticky bottom-0 bg-white">
-                <Button type="button" variant="ghost" onClick={() => setShowEditModal(false)} className="flex-1 rounded-xl">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={updating} className="flex-[2] rounded-xl bg-brand text-zinc-900 font-bold">
-                  {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
-                </Button>
-              </div>
-            </form>
-          </div>
-      </div>
-      )}
+        </form>
+      </DashboardModal>
     </div>
   );
 }

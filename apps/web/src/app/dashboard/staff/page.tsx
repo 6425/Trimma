@@ -18,6 +18,7 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId, mapSalonServicesForStaffForm, parseStaffWorkingHours, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
+import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 async function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -571,45 +572,54 @@ export default function DashboardStaff() {
         )}
       </div>
 
-      {staffModalMode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
-          {refreshingForm ? (
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-10 flex flex-col items-center gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-brand" />
-              <p className="text-sm font-semibold text-zinc-600">Loading staff form...</p>
-            </div>
-          ) : (
-            <AddProfessionalForm
-              key={staffFormKey}
-              onCancel={closeStaffModal}
-              onSubmit={staffModalMode === "add" ? handleAddStaffFormSubmit : handleEditStaffSubmit}
-              globalRoles={effectiveStaffRoles}
-              salonServices={staffFormServices}
-              adding={adding}
-              initialStaff={
-                staffModalMode === "edit" && editingStaffMember
-                  ? {
-                      id: editingStaffMember.id,
-                      name: editingStaffMember.name,
-                      email: editingStaffMember.email,
-                      role: editingStaffMember.role,
-                      commission_rate: editingStaffMember.commission_rate,
-                      general_buffer_time:
-                        parseStaffWorkingHours(editingStaffMember.working_hours)?.general_buffer_time ??
-                        editingStaffMember.working_hours?.general_buffer_time,
-                      avatar_url: editingStaffMember.avatar_url,
-                      working_hours:
-                        parseStaffWorkingHours(editingStaffMember.working_hours) ||
-                        editingStaffMember.working_hours,
-                    }
-                  : null
-              }
-              title={staffModalMode === "edit" ? "Edit Professional" : "Add Professional"}
-              submitLabel={staffModalMode === "edit" ? "Save Changes" : "Save Stylist"}
-            />
-          )}
-        </div>
-      )}
+      <DashboardModal
+        open={Boolean(staffModalMode)}
+        onClose={closeStaffModal}
+        size="md"
+        title={staffModalMode === "edit" ? "Edit Professional" : "Add Professional"}
+        description={
+          staffModalMode === "edit"
+            ? "Update hours, services, and commission settings for this team member."
+            : "Register a new professional with custom hours and service commissions."
+        }
+      >
+        {refreshingForm ? (
+          <div className="flex flex-col items-center gap-4 py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-brand" />
+            <p className="text-sm font-semibold text-zinc-600">Loading staff form...</p>
+          </div>
+        ) : (
+          <AddProfessionalForm
+            key={staffFormKey}
+            embedded
+            onCancel={closeStaffModal}
+            onSubmit={staffModalMode === "add" ? handleAddStaffFormSubmit : handleEditStaffSubmit}
+            globalRoles={effectiveStaffRoles}
+            salonServices={staffFormServices}
+            adding={adding}
+            initialStaff={
+              staffModalMode === "edit" && editingStaffMember
+                ? {
+                    id: editingStaffMember.id,
+                    name: editingStaffMember.name,
+                    email: editingStaffMember.email,
+                    role: editingStaffMember.role,
+                    commission_rate: editingStaffMember.commission_rate,
+                    general_buffer_time:
+                      parseStaffWorkingHours(editingStaffMember.working_hours)?.general_buffer_time ??
+                      editingStaffMember.working_hours?.general_buffer_time,
+                    avatar_url: editingStaffMember.avatar_url,
+                    working_hours:
+                      parseStaffWorkingHours(editingStaffMember.working_hours) ||
+                      editingStaffMember.working_hours,
+                  }
+                : null
+            }
+            title={staffModalMode === "edit" ? "Edit Professional" : "Add Professional"}
+            submitLabel={staffModalMode === "edit" ? "Save Changes" : "Save Stylist"}
+          />
+        )}
+      </DashboardModal>
 
     </div>
   );
