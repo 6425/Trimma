@@ -55,6 +55,7 @@ function SettingsPanelContent() {
   const [templateAgentLeadAssigned, setTemplateAgentLeadAssigned] = useState("");
   const [metaTemplateReservationPaid, setMetaTemplateReservationPaid] = useState("");
   const [metaTemplateConfirmed, setMetaTemplateConfirmed] = useState("");
+  const [metaTemplateBookingCreatedOwner, setMetaTemplateBookingCreatedOwner] = useState("");
   const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en_US");
 
   // Show/Hide Access Token
@@ -105,6 +106,7 @@ function SettingsPanelContent() {
       setTemplateAgentLeadAssigned(config.templateAgentLeadAssigned || "");
       setMetaTemplateReservationPaid(config.metaTemplateReservationPaid || "");
       setMetaTemplateConfirmed(config.metaTemplateConfirmed || "");
+      setMetaTemplateBookingCreatedOwner(config.metaTemplateBookingCreatedOwner || "");
       setMetaTemplateLanguage(config.metaTemplateLanguage || "en_US");
       setConfigSource(config.credentialsSource || config.source);
 
@@ -162,6 +164,7 @@ function SettingsPanelContent() {
         templateAgentLeadAssigned,
         metaTemplateReservationPaid,
         metaTemplateConfirmed,
+        metaTemplateBookingCreatedOwner,
         metaTemplateLanguage
       );
       if (res.success) {
@@ -242,12 +245,14 @@ function SettingsPanelContent() {
   const metaTemplateValues: Record<string, string> = {
     metaTemplateReservationPaid,
     metaTemplateConfirmed,
+    metaTemplateBookingCreatedOwner,
   };
 
   const setMetaTemplateValue = (key: string, value: string) => {
     const setters: Record<string, (value: string) => void> = {
       metaTemplateReservationPaid: setMetaTemplateReservationPaid,
       metaTemplateConfirmed: setMetaTemplateConfirmed,
+      metaTemplateBookingCreatedOwner: setMetaTemplateBookingCreatedOwner,
     };
     setters[key]?.(value);
   };
@@ -544,7 +549,9 @@ function SettingsPanelContent() {
                                     className="h-9 border-emerald-200 rounded-lg text-xs font-mono"
                                   />
                                   <p className="text-[9px] text-zinc-500">
-                                    Required for customer delivery outside the 24-hour window. Body variables map to merge tags in order ({`{{1}}`} = first tag, etc.).
+                                    {"metaParameterHint" in trigger && trigger.metaParameterHint
+                                      ? trigger.metaParameterHint
+                                      : `Required outside the 24-hour window. Body variables map to merge tags in order (${`{{1}}`} = first tag).`}
                                   </p>
                                 </div>
                               )}

@@ -232,6 +232,9 @@ export const WHATSAPP_TRIGGER_CATALOG = [
       "{booking_time}",
       "{payment_status}",
     ],
+    metaTemplateKey: "metaTemplateBookingCreatedOwner" as const,
+    metaParameterHint:
+      "Salon owner alert: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time, {{6}} payment status. Sent to salon phone / WhatsApp from profile.",
   },
   {
     id: "agent-approval-owner",

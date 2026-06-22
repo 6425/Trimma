@@ -11,6 +11,9 @@ ALTER TABLE public.global_payment_settings
   ADD COLUMN IF NOT EXISTS whatsapp_meta_template_reservation_paid TEXT;
 
 ALTER TABLE public.global_payment_settings
+  ADD COLUMN IF NOT EXISTS whatsapp_meta_template_booking_created_owner TEXT;
+
+ALTER TABLE public.global_payment_settings
   ADD COLUMN IF NOT EXISTS whatsapp_meta_template_confirmed TEXT;
 
 ALTER TABLE public.global_payment_settings
@@ -30,6 +33,7 @@ NOTIFY pgrst, 'reload schema';
 SELECT
   whatsapp_meta_template_reservation_paid AS template_1_slot_locked,
   whatsapp_meta_template_confirmed AS template_2_confirmed,
+  whatsapp_meta_template_booking_created_owner AS owner_booking_alert,
   whatsapp_meta_template_language AS language_code
 FROM public.global_payment_settings
 WHERE id = '00000000-0000-0000-0000-000000000001'::uuid;

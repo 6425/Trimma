@@ -93,7 +93,7 @@ export async function runBookingCheckoutNotifications(
     console.error("WhatsApp booking confirmation failed after checkout:", whatsappResult.error);
   }
 
-  const [, , emailResult] = await Promise.allSettled([
+  const [, ownerNotifyResult, emailResult] = await Promise.allSettled([
     createBookingPendingConfirmNotification(supabase, {
       salonId,
       bookingId,
@@ -129,6 +129,20 @@ export async function runBookingCheckoutNotifications(
       idempotencyKey: `booking-confirmed/${bookingNo}`,
     }),
   ]);
+
+  let ownerWhatsAppError: string | null = null;
+  if (ownerNotifyResult.status === "fulfilled") {
+    if (!ownerNotifyResult.value.ownerWhatsAppSent) {
+      ownerWhatsAppError = ownerNotifyResult.value.ownerWhatsAppError;
+      console.error("Salon owner WhatsApp failed after checkout:", ownerWhatsAppError);
+    }
+  } else {
+    ownerWhatsAppError =
+      ownerNotifyResult.reason instanceof Error
+        ? ownerNotifyResult.reason.message
+        : "Salon owner WhatsApp could not be sent.";
+    console.error("Salon owner WhatsApp failed after checkout:", ownerWhatsAppError);
+  }
 
   let emailSent = false;
   let emailError: string | null = null;

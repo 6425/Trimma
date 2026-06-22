@@ -10,7 +10,10 @@ export const TRIMMA_META_TEMPLATE_CONFIRMED = "confirmmessage";
 /** Default when Admin language is blank — most Meta English templates use en_US. */
 export const TRIMMA_META_TEMPLATE_LANGUAGE = "en_US";
 
-export type WhatsAppMetaTemplateTrigger = "reservation-paid" | "confirmed";
+export type WhatsAppMetaTemplateTrigger =
+  | "reservation-paid"
+  | "confirmed"
+  | "owner-booking-created";
 
 export type WhatsAppMetaSendInput = {
   phoneId: string;
@@ -74,6 +77,18 @@ function buildConfirmMessageParameters(variables: Record<string, string>): strin
   ];
 }
 
+function buildOwnerBookingCreatedParameters(variables: Record<string, string>): string[] {
+  const v = (key: string) => String(variables[key] ?? "").trim() || "—";
+  return [
+    v("customer_name"),
+    v("salon_name"),
+    v("service_name"),
+    formatMetaBookingDate(v("booking_date")),
+    formatMetaBookingTime(v("booking_time")),
+    v("payment_status"),
+  ];
+}
+
 export function buildMetaBodyParameters(
   trigger: WhatsAppMetaTemplateTrigger,
   variables: Record<string, string>,
@@ -84,6 +99,10 @@ export function buildMetaBodyParameters(
 
   if (trigger === "confirmed" && normalizedTemplate === TRIMMA_META_TEMPLATE_CONFIRMED) {
     return buildConfirmMessageParameters(variables);
+  }
+
+  if (trigger === "owner-booking-created") {
+    return buildOwnerBookingCreatedParameters(variables);
   }
 
   if (trigger === "reservation-paid") {
