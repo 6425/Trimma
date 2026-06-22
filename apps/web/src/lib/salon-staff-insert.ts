@@ -37,9 +37,10 @@ export function resolveEffectiveStaffRoles(
 }
 
 /** Map AddProfessionalForm / profile staff payload to salon_staff table columns only. */
+/** Staff can only be assigned to active salon services (not inactive/deleted). */
 export function isAssignableSalonService(status?: string | null): boolean {
   const normalized = (status || "active").toLowerCase();
-  return normalized !== "deleted";
+  return normalized === "active";
 }
 
 export function parseStaffWorkingHours(workingHours: unknown): {
@@ -81,20 +82,69 @@ export function mapSalonServicesForStaffForm(
   globalServices: Array<{ id: string; name?: string | null; category?: string | null }> = []
 ): SalonServiceAssignmentRow[] {
   const globalMap = Object.fromEntries(globalServices.map((g) => [g.id, g]));
-  return salonServices
+  const mapped = salonServices
     .filter((service) => isAssignableSalonService(service.status))
     .map((service) => {
       const globalMatch = service.global_service_id ? globalMap[service.global_service_id] : null;
       return {
-        id: service.global_service_id || service.id,
+        id: service.id,
         salonServiceId: service.id,
         global_service_id: service.global_service_id,
         name: service.name || globalMatch?.name || "Service",
         category: service.category || globalMatch?.category || "",
         duration_min: service.duration_min,
         duration: service.duration_min,
+        status: (service.status || "active").toLowerCase(),
       };
     });
+
+  return deduplicateSalonServicesForStaffForm(mapped);
+}
+
+function normalizeSalonServiceName(name?: string | null) {
+  return (name || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function preferStaffServiceRow(
+  candidate: SalonServiceAssignmentRow,
+  incumbent: SalonServiceAssignmentRow
+): boolean {
+  const candidateActive = (candidate.status || "active") === "active";
+  const incumbentActive = (incumbent.status || "active") === "active";
+  if (candidateActive !== incumbentActive) {
+    return candidateActive;
+  }
+
+  const candidateHasGlobal = Boolean(candidate.global_service_id);
+  const incumbentHasGlobal = Boolean(incumbent.global_service_id);
+  if (candidateHasGlobal !== incumbentHasGlobal) {
+    return candidateHasGlobal;
+  }
+  return false;
+}
+
+/**
+ * One row per resolved display name for staff assignment UI.
+ * Services page may show a single named row while another row has a blank name
+ * but the same catalog title — staff form resolves both to the same label.
+ */
+export function deduplicateSalonServicesForStaffForm(
+  rows: SalonServiceAssignmentRow[]
+): SalonServiceAssignmentRow[] {
+  const bestByName = new Map<string, SalonServiceAssignmentRow>();
+
+  for (const row of rows) {
+    const nameKey = normalizeSalonServiceName(row.name);
+    const key = nameKey || `__uuid_${row.id}`;
+    const existing = bestByName.get(key);
+    if (!existing || preferStaffServiceRow(row, existing)) {
+      bestByName.set(key, row);
+    }
+  }
+
+  return Array.from(bestByName.values()).sort((a, b) =>
+    normalizeSalonServiceName(a.name).localeCompare(normalizeSalonServiceName(b.name))
+  );
 }
 
 function serviceIdsMatch(
@@ -126,6 +176,7 @@ export type SalonServiceAssignmentRow = {
   global_service_id?: string | null;
   name?: string | null;
   duration_min?: number | null;
+  status?: string | null;
 };
 
 export const DEFAULT_STAFF_COMMISSION_RATE = 10;
@@ -317,19 +368,33 @@ export function buildStaffWorkingHoursPayload(
   services: Record<string, { enabled?: boolean; commission?: string | number; buffer?: string | number; duration?: string | number }>,
   salonServices: SalonServiceAssignmentRow[]
 ) {
-  const assigned_services = Object.entries(services)
-    .filter(([, cfg]) => cfg?.enabled)
-    .map(([serviceKey, cfg]) => {
-      const matched =
-        findSalonServiceForAssignmentId(salonServices, serviceKey) ||
-        salonServices.find((s) => (s.global_service_id || s.id) === serviceKey);
-      return {
-        service_id: matched?.salonServiceId || matched?.id || serviceKey,
-        commission_rate: parseFloat(String(cfg?.commission ?? 0)) || 0,
-        buffer_time: parseInt(String(cfg?.buffer ?? 0), 10) || 0,
-        service_time: parseInt(String(cfg?.duration ?? 0), 10) || matched?.duration_min || 30,
-      };
+  const assignedByServiceId = new Map<
+    string,
+    {
+      service_id: string;
+      commission_rate: number;
+      buffer_time: number;
+      service_time: number;
+    }
+  >();
+
+  for (const [serviceKey, cfg] of Object.entries(services)) {
+    if (!cfg?.enabled) continue;
+
+    const matched =
+      findSalonServiceForAssignmentId(salonServices, serviceKey) ||
+      salonServices.find((s) => (s.global_service_id || s.id) === serviceKey);
+    const serviceId = matched?.salonServiceId || matched?.id || serviceKey;
+
+    assignedByServiceId.set(serviceId, {
+      service_id: serviceId,
+      commission_rate: parseFloat(String(cfg?.commission ?? 0)) || 0,
+      buffer_time: parseInt(String(cfg?.buffer ?? 0), 10) || 0,
+      service_time: parseInt(String(cfg?.duration ?? 0), 10) || matched?.duration_min || 30,
     });
+  }
+
+  const assigned_services = Array.from(assignedByServiceId.values());
 
   return {
     schedule,

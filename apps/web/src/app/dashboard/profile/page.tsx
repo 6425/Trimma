@@ -497,14 +497,6 @@ export default function SalonProfilePage() {
 
   const profileSalonServices = mapSalonServicesForStaffForm(existingSalonServices, globalServices);
 
-  const profileSalonServiceRows = existingSalonServices.map((service) => ({
-    id: service.id,
-    salonServiceId: service.id,
-    global_service_id: service.global_service_id,
-    name: service.name,
-    duration_min: service.duration_min,
-  }));
-
   const closeStaffModal = () => {
     setIsStaffModalOpen(false);
     setEditingStaffIndex(null);
@@ -521,15 +513,6 @@ export default function SalonProfilePage() {
   };
 
   const handleStaffModalSubmit = async (staffData: any) => {
-    const salonServiceRows = profileSalonServiceRows.length > 0
-      ? profileSalonServiceRows
-      : profileSalonServices.map((service) => ({
-          id: service.salonServiceId || service.id,
-          salonServiceId: service.salonServiceId || service.id,
-          global_service_id: service.global_service_id,
-          duration_min: service.duration_min,
-        }));
-
     if (staffData.id) {
       try {
         setSavingStaff(true);
@@ -545,7 +528,7 @@ export default function SalonProfilePage() {
           staffData.schedule,
           staffData.general_buffer_time,
           staffData.services,
-          salonServiceRows
+          profileSalonServices
         );
 
         const updateResult = await updateSalonStaff(staffData.id, {

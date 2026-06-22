@@ -156,7 +156,9 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       if (serviceCountError) throw new Error(serviceCountError.message);
 
       if ((count || 0) > 0) {
-        await syncStaffServiceAssignmentsForSalon(supabase, salonId);
+        await syncStaffServiceAssignmentsForSalon(supabase, salonId, {
+          assignMissingServices: true,
+        });
         const { data: refreshedServices, error: refreshError } = await supabase
           .from("services")
           .select("*")

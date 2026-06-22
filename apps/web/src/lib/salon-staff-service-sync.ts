@@ -64,10 +64,17 @@ function resolveSalonServiceId(
 }
 
 /** Ensure salon services are mapped to active staff using salon service UUIDs. */
+export type SyncStaffServiceAssignmentsOptions = {
+  /** When true, auto-assign any active salon service missing from a staff member (onboarding/import only). */
+  assignMissingServices?: boolean;
+};
+
 export async function syncStaffServiceAssignmentsForSalon(
   supabase: SupabaseClient,
-  salonId: string
+  salonId: string,
+  options: SyncStaffServiceAssignmentsOptions = {}
 ) {
+  const assignMissingServices = options.assignMissingServices ?? false;
   const [servicesRes, staffRes] = await Promise.all([
     supabase
       .from("services")
@@ -111,15 +118,17 @@ export async function syncStaffServiceAssignmentsForSalon(
       normalizedAssigned.map((row) => String(row.service_id))
     );
 
-    for (const svc of servicesToSync) {
-      if (!covered.has(svc.id)) {
-        normalizedAssigned.push({
-          service_id: svc.id,
-          commission_rate: profile.commissionRate,
-          buffer_time: profile.generalBufferTime,
-          service_time: svc.duration_min || DEFAULT_SERVICE_DURATION_MINUTES,
-          enabled: true,
-        });
+    if (assignMissingServices) {
+      for (const svc of servicesToSync) {
+        if (!covered.has(svc.id)) {
+          normalizedAssigned.push({
+            service_id: svc.id,
+            commission_rate: profile.commissionRate,
+            buffer_time: profile.generalBufferTime,
+            service_time: svc.duration_min || DEFAULT_SERVICE_DURATION_MINUTES,
+            enabled: true,
+          });
+        }
       }
     }
 

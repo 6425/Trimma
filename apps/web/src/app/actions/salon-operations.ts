@@ -75,7 +75,9 @@ async function publishSalonCatalogUpdates(
   salon: Record<string, unknown>,
   patch?: Record<string, unknown>
 ) {
-  await syncStaffServiceAssignmentsForSalon(supabase, salonId);
+  await syncStaffServiceAssignmentsForSalon(supabase, salonId, {
+    assignMissingServices: false,
+  });
   revalidateOwnerSalonPage({ ...salon, ...patch }, salon);
 }
 

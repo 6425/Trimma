@@ -92,7 +92,9 @@ export async function saveAgentLeadData(
       }
     }
 
-    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
+    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId, {
+      assignMissingServices: true,
+    });
 
     // 3. Add Staff (skip duplicates by name + email)
     if (staffToAdd && staffToAdd.length > 0) {
@@ -117,7 +119,9 @@ export async function saveAgentLeadData(
         await supabaseAdmin.from("salon_staff").insert(uniqueStaff);
       }
 
-      await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
+      await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId, {
+      assignMissingServices: true,
+    });
     }
 
     // 4. Sync Amenities
@@ -201,7 +205,9 @@ export async function createAgentLeadData(
       await supabaseAdmin.from("salon_staff").insert(staff);
     }
 
-    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
+    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId, {
+      assignMissingServices: true,
+    });
 
     // 4. Sync Amenities
     if (amenitiesData) {
@@ -325,7 +331,9 @@ export async function convertManualLeadToSalon(
       await supabaseAdmin.from("salon_staff").insert(staff);
     }
 
-    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId);
+    await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId, {
+      assignMissingServices: true,
+    });
 
     // 5. Sync Amenities
     if (amenitiesData) {

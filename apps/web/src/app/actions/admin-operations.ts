@@ -821,7 +821,9 @@ export async function importAdminSalonServices(
       if (error) throw new Error(error.message);
     }
 
-    await syncStaffServiceAssignmentsForSalon(supabase, salonId);
+    await syncStaffServiceAssignmentsForSalon(supabase, salonId, {
+      assignMissingServices: true,
+    });
     return { inserted: toInsert.length };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

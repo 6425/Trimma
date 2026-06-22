@@ -64,14 +64,7 @@ export default function DashboardStaff() {
 
   const staffFormServices = mapSalonServicesForStaffForm(salonServices, globalServices);
   const effectiveStaffRoles = resolveEffectiveStaffRoles(globalRoles);
-  const staffFormKey = `${staffModalMode || "closed"}-${editingStaffMember?.id || "new"}-${staffFormServices.map((s) => s.salonServiceId || s.id).join(",")}`;
-  const salonServiceRows = salonServices.map((service) => ({
-    id: service.id,
-    salonServiceId: service.id,
-    global_service_id: service.global_service_id,
-    name: service.name,
-    duration_min: service.duration_min,
-  }));
+  const staffFormKey = `${staffModalMode || "closed"}-${editingStaffMember?.id || "new"}-${staffFormServices.map((s) => s.id).join(",")}`;
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -282,7 +275,7 @@ export default function DashboardStaff() {
         data.schedule,
         data.general_buffer_time,
         data.services,
-        salonServiceRows
+        staffFormServices
       );
 
       const insertResult = await insertSalonStaff({
@@ -351,7 +344,7 @@ export default function DashboardStaff() {
         data.schedule,
         data.general_buffer_time,
         data.services,
-        salonServiceRows
+        staffFormServices
       );
 
       let updatedAvatarUrl = data.avatar_url || editingStaffMember.avatar_url || null;
@@ -509,7 +502,7 @@ export default function DashboardStaff() {
                        {member.working_hours?.assigned_services && member.working_hours.assigned_services.length > 0 && (
                          <div className="flex flex-wrap gap-1 mt-2">
                            {member.working_hours.assigned_services.map((as: any) => {
-                             const matchedServ = findSalonServiceForAssignmentId(salonServiceRows, as.service_id);
+                             const matchedServ = findSalonServiceForAssignmentId(staffFormServices, as.service_id);
                              return (
                                <Badge key={as.service_id} className="bg-rose-50 text-brand border-none font-bold text-[9px] py-0 px-2 rounded">
                                  {matchedServ?.name || "Service"} ({as.commission_rate}%)
