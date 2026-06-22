@@ -490,7 +490,9 @@ export function AddProfessionalForm({
             </p>
 
             {salonServices.length === 0 ? (
-              <p className="text-xs text-zinc-400 italic">No active services registered for this salon. Stylist will have access to all.</p>
+              <p className="text-xs text-zinc-400 italic">
+                No services in your salon catalog yet. Add or import services on the Services page first.
+              </p>
             ) : (
               <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
                 {salonServices.map((service) => {

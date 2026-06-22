@@ -598,8 +598,9 @@ export default function SalonProfilePage() {
         }
       }
 
-      const salonServiceRows = existingSalonServices.map((service) => ({
+      const salonServiceRows = profileSalonServices.map((service) => ({
         id: service.id,
+        salonServiceId: service.salonServiceId || service.id,
         global_service_id: service.global_service_id,
         duration_min: service.duration_min,
       }));

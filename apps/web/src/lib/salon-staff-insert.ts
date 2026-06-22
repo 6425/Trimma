@@ -36,11 +36,10 @@ export function resolveEffectiveStaffRoles(
   return filtered.length > 0 ? filtered : DEFAULT_STAFF_ROLES;
 }
 
-/** Map AddProfessionalForm / profile staff payload to salon_staff table columns only. */
-/** Staff can only be assigned to active salon services (not inactive/deleted). */
+/** Services the owner can map to staff (active + inactive/pending; not deleted). */
 export function isAssignableSalonService(status?: string | null): boolean {
   const normalized = (status || "active").toLowerCase();
-  return normalized === "active";
+  return normalized !== "deleted";
 }
 
 export function parseStaffWorkingHours(workingHours: unknown): {
@@ -124,25 +123,40 @@ function preferStaffServiceRow(
 }
 
 /**
- * One row per resolved display name for staff assignment UI.
- * Services page may show a single named row while another row has a blank name
- * but the same catalog title — staff form resolves both to the same label.
+ * One row per catalog service for staff assignment UI.
+ * Imported services often start as inactive until staff are mapped — include them.
+ * When duplicates exist (same global id or display name), prefer the active row.
  */
 export function deduplicateSalonServicesForStaffForm(
   rows: SalonServiceAssignmentRow[]
 ): SalonServiceAssignmentRow[] {
+  const bestByGlobalId = new Map<string, SalonServiceAssignmentRow>();
   const bestByName = new Map<string, SalonServiceAssignmentRow>();
+  const withoutKey: SalonServiceAssignmentRow[] = [];
 
   for (const row of rows) {
-    const nameKey = normalizeSalonServiceName(row.name);
-    const key = nameKey || `__uuid_${row.id}`;
-    const existing = bestByName.get(key);
-    if (!existing || preferStaffServiceRow(row, existing)) {
-      bestByName.set(key, row);
+    if (row.global_service_id) {
+      const key = row.global_service_id;
+      const existing = bestByGlobalId.get(key);
+      if (!existing || preferStaffServiceRow(row, existing)) {
+        bestByGlobalId.set(key, row);
+      }
+      continue;
     }
+
+    const nameKey = normalizeSalonServiceName(row.name);
+    if (nameKey) {
+      const existing = bestByName.get(nameKey);
+      if (!existing || preferStaffServiceRow(row, existing)) {
+        bestByName.set(nameKey, row);
+      }
+      continue;
+    }
+
+    withoutKey.push(row);
   }
 
-  return Array.from(bestByName.values()).sort((a, b) =>
+  return [...bestByGlobalId.values(), ...bestByName.values(), ...withoutKey].sort((a, b) =>
     normalizeSalonServiceName(a.name).localeCompare(normalizeSalonServiceName(b.name))
   );
 }
