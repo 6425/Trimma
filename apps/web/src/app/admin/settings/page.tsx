@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { 
   getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection, validateWhatsAppCredentials
 } from "../../actions/whatsapp";
-import { WHATSAPP_TRIGGER_CATALOG } from "@/lib/whatsapp-templates";
+import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
 import { TelegramSettingsPanel } from "../../../components/admin/TelegramSettingsPanel";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -454,16 +454,32 @@ function SettingsPanelContent() {
                       Automated Notification Trigger Events & Templates
                     </h4>
                     <p className="text-[10px] text-zinc-500 mt-0.5">
-                      All 14 message templates used by Trimma. For booking alerts (Template 1 &amp; 2), enter your Meta-approved template names — Trimma sends those via Meta Cloud API instead of free text.
+                      Other automated WhatsApp alerts (salon owner, reschedule, reviews, etc.). Customer checkout confirmation uses the Meta block below.
                     </p>
                   </div>
 
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
-                    <p className="text-[11px] text-amber-900 font-medium leading-relaxed">
-                      <strong>Meta Business Manager templates.</strong> First booking messages to customers must use approved Meta templates (type: template). Copy the exact template name from Meta → WhatsApp → Message templates. Template text below is only used as fallback if the Meta name is left blank.
-                    </p>
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-3">
+                    <div>
+                      <div className="text-xs font-extrabold text-emerald-900">
+                        {WHATSAPP_CHECKOUT_META_CONFIG.title}
+                      </div>
+                      <p className="text-[10px] text-emerald-800 mt-0.5 leading-relaxed">
+                        {WHATSAPP_CHECKOUT_META_CONFIG.description}
+                      </p>
+                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="meta_template_language" className="text-[9px] font-black uppercase tracking-widest text-zinc-600">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-emerald-800">
+                        Meta template name
+                      </Label>
+                      <Input
+                        value={metaTemplateConfirmed}
+                        onChange={(e) => setMetaTemplateConfirmed(e.target.value)}
+                        placeholder={WHATSAPP_CHECKOUT_META_CONFIG.defaultTemplateName}
+                        className="h-9 border-emerald-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="meta_template_language" className="text-[9px] font-black uppercase tracking-widest text-emerald-800">
                         Meta template language code
                       </Label>
                       <Input
@@ -471,9 +487,12 @@ function SettingsPanelContent() {
                         value={metaTemplateLanguage}
                         onChange={(e) => setMetaTemplateLanguage(e.target.value)}
                         placeholder="en_US"
-                        className="h-9 max-w-[120px] border-amber-200 rounded-lg text-xs font-mono"
+                        className="h-9 max-w-[120px] border-emerald-200 rounded-lg text-xs font-mono"
                       />
                     </div>
+                    <p className="text-[9px] text-emerald-800/90 leading-relaxed">
+                      {WHATSAPP_CHECKOUT_META_CONFIG.metaParameterHint}
+                    </p>
                   </div>
                   
                   <div className="space-y-6">

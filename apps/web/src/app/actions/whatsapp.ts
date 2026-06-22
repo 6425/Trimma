@@ -1260,8 +1260,7 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
 }
 
 /**
- * Triggers an instant WhatsApp alert when a new booking is created (Pending state).
- * Sends to BOTH customer and Salon Owner.
+ * Legacy owner-only alert for pending booking sheet flow (customer pending WhatsApp removed).
  */
 export async function sendBookingCreatedAlert(bookingNo: string) {
   mirrorBookingCreatedTelegram(bookingNo);
@@ -1270,7 +1269,6 @@ export async function sendBookingCreatedAlert(bookingNo: string) {
     phoneId,
     accessToken,
     bookingCreatedEnabled,
-    templateBookingCreatedCustomer,
     templateBookingCreatedOwner,
   } = await getWhatsAppMessagingConfig();
   if (!enabled || !bookingCreatedEnabled || !phoneId || !accessToken) {
@@ -1282,21 +1280,12 @@ export async function sendBookingCreatedAlert(bookingNo: string) {
     if (!booking) return { success: false };
 
     const customer = await fetchCustomerContact(booking.customer_email);
-    if (!customer?.phone) return { success: false };
-
-    const customerPhone = cleanPhoneNumber(customer.phone);
     const serviceName = await resolveServiceName(booking.id, booking.services?.name);
     const ownerPhone = booking.salons?.phone ? cleanPhoneNumber(booking.salons.phone) : null;
-    const customerName = customer.full_name || "Customer";
-    const salonName = booking.salons?.name || "Trimma Partner Salon";
+    if (!ownerPhone) return { success: false, error: "Salon phone is missing.", skipped: true };
 
-    const customerMsg = parseTemplate(templateBookingCreatedCustomer || D.bookingCreatedCustomer, {
-      customer_name: customerName,
-      salon_name: salonName,
-      service_name: serviceName,
-      booking_date: booking.booking_date || "",
-      booking_time: booking.booking_time || "",
-    });
+    const customerName = customer?.full_name || "Customer";
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
 
     const ownerMsg = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, {
       customer_name: customerName,
@@ -1307,36 +1296,30 @@ export async function sendBookingCreatedAlert(bookingNo: string) {
       payment_status: booking.payment_status || "unpaid",
     });
 
-    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         messaging_product: "whatsapp",
         recipient_type: "individual",
-        to: customerPhone,
+        to: ownerPhone,
         type: "text",
-        text: { body: customerMsg },
+        text: { body: ownerMsg },
       }),
     });
 
-    if (ownerPhone) {
-      await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: ownerPhone,
-          type: "text",
-          text: { body: ownerMsg },
-        }),
-      });
+    const result = await response.json();
+    if (!response.ok) {
+      return { success: false, error: formatWhatsAppApiError(result) };
     }
 
-    return { success: true };
-  } catch (err: any) {
+    return { success: true, messageId: result.messages?.[0]?.id };
+  } catch (err: unknown) {
     console.error("WhatsApp booking created error:", err);
-    return { success: false, error: err.message };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send owner booking alert.",
+    };
   }
 }
 

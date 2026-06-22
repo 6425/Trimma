@@ -169,28 +169,8 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     ],
   },
   {
-    id: "confirmed",
-    order: 2,
-    title: "Booking Confirmed (Template 2 — Confirmation)",
-    whenFired:
-      "When the booking is confirmed (sent at checkout after payment, or when the salon owner confirms a legacy pending booking). Uses your Meta-approved Template 2 when configured.",
-    toggleKey: "bookingConfirmedEnabled" as const,
-    templateKey: "templateConfirmed" as const,
-    metaTemplateKey: "metaTemplateConfirmed" as const,
-    defaultTemplate: "confirmed" as const,
-    mergeTags: [
-      "{customer_name}",
-      "{salon_name}",
-      "{service_name}",
-      "{booking_date}",
-      "{booking_time}",
-    ],
-    metaParameterHint:
-      "Meta confirmmessage maps {{1}} name, {{2}} salon, {{3}} service, {{4}} date (e.g. December 31, 2025), {{5}} time (e.g. 1:00 PM).",
-  },
-  {
     id: "rescheduled",
-    order: 3,
+    order: 2,
     title: "Booking Rescheduled Alert",
     whenFired: "When a salon or admin approves a reschedule request with a new date/time.",
     toggleKey: "bookingRescheduledEnabled" as const,
@@ -208,7 +188,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "cancelled",
-    order: 4,
+    order: 3,
     title: "Booking Cancelled Alert",
     whenFired: "When the salon owner cancels a booking from the dashboard.",
     toggleKey: "bookingCancelledEnabled" as const,
@@ -218,7 +198,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "review",
-    order: 5,
+    order: 4,
     title: "Feedback Review Prompt",
     whenFired: "When the salon marks a booking as completed.",
     toggleKey: "bookingReviewEnabled" as const,
@@ -228,7 +208,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "onboarding",
-    order: 6,
+    order: 5,
     title: "Salon Onboarding Invitation",
     whenFired: "When admin or agent sends a partner login invite after salon verification.",
     toggleKey: "onboardingInviteEnabled" as const,
@@ -237,26 +217,10 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     mergeTags: ["{salon_name}", "{owner_gmail}", "{login_link}", "{draft_link}"],
   },
   {
-    id: "booking-created-customer",
-    order: 7,
-    title: "New Booking — Customer (Pending)",
-    whenFired: "When a booking is created in pending state (legacy booking sheet flow).",
-    toggleKey: "bookingCreatedEnabled" as const,
-    templateKey: "templateBookingCreatedCustomer" as const,
-    defaultTemplate: "bookingCreatedCustomer" as const,
-    mergeTags: [
-      "{customer_name}",
-      "{salon_name}",
-      "{service_name}",
-      "{booking_date}",
-      "{booking_time}",
-    ],
-  },
-  {
     id: "booking-created-owner",
-    order: 8,
+    order: 6,
     title: "New Booking — Salon Owner Alert",
-    whenFired: "Sent to the salon phone when a pending booking request is created.",
+    whenFired: "Sent to the salon phone when a paid booking needs owner attention.",
     toggleKey: "bookingCreatedEnabled" as const,
     templateKey: "templateBookingCreatedOwner" as const,
     defaultTemplate: "bookingCreatedOwner" as const,
@@ -268,11 +232,10 @@ export const WHATSAPP_TRIGGER_CATALOG = [
       "{booking_time}",
       "{payment_status}",
     ],
-    sharesToggleWith: "booking-created-customer",
   },
   {
     id: "agent-approval-owner",
-    order: 9,
+    order: 7,
     title: "Agent Approval — Salon Owner",
     whenFired: "When an agent approves a salon to go live on the marketplace.",
     toggleKey: "agentApprovalEnabled" as const,
@@ -282,7 +245,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "agent-approval-admin",
-    order: 10,
+    order: 8,
     title: "Agent Approval — Platform Admin",
     whenFired: "Internal alert to the admin phone when an agent approves a salon.",
     toggleKey: "agentApprovalEnabled" as const,
@@ -293,7 +256,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "admin-approval-owner",
-    order: 11,
+    order: 9,
     title: "Admin Verified Badge — Salon Owner",
     whenFired: "When platform admin grants the official Verified badge.",
     toggleKey: "adminApprovalEnabled" as const,
@@ -303,7 +266,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "admin-approval-admin",
-    order: 12,
+    order: 10,
     title: "Admin Verified Badge — Confirmation",
     whenFired: "Confirmation copy sent to the platform admin phone after granting a badge.",
     toggleKey: "adminApprovalEnabled" as const,
@@ -314,7 +277,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "welcome-customer",
-    order: 13,
+    order: 11,
     title: "Welcome — New Customer",
     whenFired: "After a customer completes signup (first successful login).",
     toggleKey: "welcomeCustomerEnabled" as const,
@@ -324,7 +287,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
   {
     id: "agent-lead-assigned",
-    order: 14,
+    order: 12,
     title: "Lead Assigned — Field Agent",
     whenFired: "When a salon lead is assigned to an agent.",
     toggleKey: "agentLeadAssignedEnabled" as const,
@@ -333,3 +296,14 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     mergeTags: ["{agent_name}", "{salon_name}", "{salon_address}", "{onboarding_status}", "{dashboard_link}"],
   },
 ] as const;
+
+/** Checkout Meta template — not listed in the legacy trigger catalog. */
+export const WHATSAPP_CHECKOUT_META_CONFIG = {
+  title: "Checkout booking confirmation (Meta)",
+  description:
+    "Sent once when the customer completes online payment. This is your working confirmmessage template — not a separate follow-up message.",
+  metaTemplateKey: "metaTemplateConfirmed" as const,
+  defaultTemplateName: "confirmmessage",
+  metaParameterHint:
+    "confirmmessage: {{1}} name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.",
+} as const;
