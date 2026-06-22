@@ -22,6 +22,9 @@ export type BookingRecordInput = {
   field_agent_email?: string | null;
   agent_commission_percent?: number;
   agent_commission_amount?: number;
+  field_agent_commission_amount?: number;
+  regional_head_commission_amount?: number;
+  agent_split_percent?: number;
   staff_commission_percent?: number;
   staff_commission_amount?: number;
   promotion_package_id?: string | null;

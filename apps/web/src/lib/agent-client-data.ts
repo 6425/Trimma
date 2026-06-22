@@ -3,6 +3,8 @@ import { getAgentEmailFast } from "@/lib/client-auth";
 import { isAgentSalonLive, getAgentSalonStatusLabel } from "@/lib/agent-salons";
 import { formatRelativeTime } from "@/lib/dashboard-stats";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { resolveBookingAgentPercentage, formatBookingAgentRateLabel } from "@/lib/booking-pricing";
+import { isCommissionEligibleBooking } from "@/lib/commission-ledger-format";
 import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import type { WorkItem } from "@/app/actions/agent-work-queue";
@@ -95,6 +97,7 @@ export async function loadAgentDashboardFromClient() {
     { data: agentProfile },
     { data: bookingRows },
     { data: ledgerRows },
+    { data: commissionMasterRows },
   ] = await Promise.all([
     supabase
       .from("salons")
@@ -104,7 +107,12 @@ export async function loadAgentDashboardFromClient() {
     supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
     supabase.from("bookings").select("agent_commission_amount").ilike("agent_email", email),
     supabase.from("commission_ledger").select("*").ilike("agent_email", email),
+    supabase.from("commission_master").select("commission_type, agent_percentage").eq("active", true),
   ]);
+
+  const bookingMaster = (commissionMasterRows || []).find((row) => row.commission_type === "booking");
+  const bookingAgentPct = resolveBookingAgentPercentage(bookingMaster?.agent_percentage);
+  const bookingAgentRateLabel = formatBookingAgentRateLabel(bookingAgentPct);
 
   const agentRow = await findAgentRecord(supabase, email, auth.userId);
   const territoryLabel = formatAgentTerritoryLabel(
@@ -127,7 +135,8 @@ export async function loadAgentDashboardFromClient() {
       stats: {
         assignedCount: salons.length,
         convertedCount: salons.filter((s) => isAgentSalonLive(s.onboarding_status)).length,
-        commissionRate: agentProfile?.commission_rate || 10,
+        commissionRate: bookingAgentPct,
+        commissionRateLabel: bookingAgentRateLabel,
         bookingCommissions: (bookingRows || []).reduce(
           (sum, b) => sum + (Number(b.agent_commission_amount) || 0),
           0
@@ -487,10 +496,8 @@ export async function fetchAgentCommissionsClient() {
 
   const bookingMaster = (masterRes.data || []).find((r) => r.commission_type === "booking");
   const subscriptionMaster = (masterRes.data || []).find((r) => r.commission_type === "subscription");
-  const bookingAgentPct =
-    Number(bookingMaster?.agent_percentage) ||
-    Number(agentRow?.commission_rate) ||
-    20;
+  const bookingAgentPct = resolveBookingAgentPercentage(bookingMaster?.agent_percentage);
+  const bookingAgentRateLabel = formatBookingAgentRateLabel(bookingAgentPct);
   const subscriptionAgentPct = Number(subscriptionMaster?.agent_percentage) || 20;
 
   const salonMap = new Map<string, string>();
@@ -579,7 +586,7 @@ export async function fetchAgentCommissionsClient() {
 
   let allTimeBookingGross = 0;
   bookings.forEach((b) => {
-    if (b.status === "completed" || b.status === "confirmed") {
+    if (isCommissionEligibleBooking(b)) {
       allTimeBookingGross += b.amount;
     }
   });
@@ -588,8 +595,9 @@ export async function fetchAgentCommissionsClient() {
     success: true as const,
     agentEmail: email,
     bookingAgentPct,
+    bookingAgentRateLabel,
     subscriptionAgentPct,
-    profileCommissionRate: Number(agentRow?.commission_rate) || bookingAgentPct,
+    profileCommissionRate: bookingAgentPct,
     referredSalonCount: salonIds.length,
     bookings,
     subscriptions,

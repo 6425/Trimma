@@ -30,6 +30,10 @@ export async function notifyOwnerPaidBookingRequest(
     console.error("Owner booking WhatsApp failed:", whatsappResult.error);
   }
 
+  if (whatsappResult.skipped) {
+    return { ownerWhatsAppSent: false, ownerWhatsAppError: null };
+  }
+
   return {
     ownerWhatsAppSent: Boolean(whatsappResult.success && whatsappResult.messageId),
     ownerWhatsAppError: whatsappResult.success

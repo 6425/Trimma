@@ -7,6 +7,14 @@
 ALTER TABLE public.global_payment_settings
   ADD COLUMN IF NOT EXISTS whatsapp_meta_template_booking_created_owner TEXT;
 
+-- Default suggested template name (change to your exact Meta template name).
+UPDATE public.global_payment_settings
+SET whatsapp_meta_template_booking_created_owner = COALESCE(
+  NULLIF(TRIM(whatsapp_meta_template_booking_created_owner), ''),
+  'appointment_confirmation_1'
+)
+WHERE id = '00000000-0000-0000-0000-000000000001'::uuid;
+
 NOTIFY pgrst, 'reload schema';
 
 SELECT whatsapp_meta_template_booking_created_owner AS owner_booking_meta_template

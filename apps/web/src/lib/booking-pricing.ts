@@ -70,3 +70,9 @@ export function calculateEffectivePlatformRate(
   if (!hasAgentReferral) return platformRate;
   return platformRate * (1 - agentRateOfPlatform / 100);
 }
+
+/** Agent booking commission is a % of the platform share, not the full service total. */
+export function formatBookingAgentRateLabel(agentPercentOfPlatform: number): string {
+  const pct = resolveBookingAgentPercentage(agentPercentOfPlatform);
+  return `${pct}% of platform share`;
+}

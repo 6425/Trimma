@@ -14,6 +14,7 @@ import {
   isRegionalHeadAgent,
   normalizeAgentTier,
 } from "@/lib/agent-hierarchy";
+import { resolveBookingAgentPercentage, formatBookingAgentRateLabel } from "@/lib/booking-pricing";
 import { normalizeEmail } from "@/lib/normalize-email";
 
 type AssignedSalon = {
@@ -75,6 +76,7 @@ export async function getAgentDashboardData() {
       agentProfileRes,
       bookingCommissionsRes,
       ledgerRes,
+      commissionMasterRes,
     ] = await Promise.all([
       supabase
         .from("salons")
@@ -94,6 +96,10 @@ export async function getAgentDashboardData() {
       isFieldAgent
         ? supabase.from("commission_ledger").select("*").ilike("field_agent_email", email)
         : supabase.from("commission_ledger").select("*").ilike("agent_email", email),
+      supabase
+        .from("commission_master")
+        .select("commission_type, agent_percentage")
+        .eq("active", true),
     ]);
 
     let territoryLabel = "No territory assigned";
@@ -127,7 +133,11 @@ export async function getAgentDashboardData() {
     const convertedCount = salonRows.filter((salon: any) => isAgentSalonLive(salon.onboarding_status)).length;
     const hotLeads = salonRows.slice(0, 3) as AssignedSalon[];
 
-    const commRate = agentProfileRes.data?.commission_rate || 10;
+    const bookingMaster = (commissionMasterRes.data || []).find(
+      (row) => row.commission_type === "booking"
+    );
+    const bookingAgentPct = resolveBookingAgentPercentage(bookingMaster?.agent_percentage);
+    const bookingAgentRateLabel = formatBookingAgentRateLabel(bookingAgentPct);
 
     const splitByFieldEmail = new Map<string, number>();
     if (!isFieldAgent && hierarchyRow?.id) {
@@ -213,7 +223,8 @@ export async function getAgentDashboardData() {
         stats: {
           assignedCount,
           convertedCount,
-          commissionRate: commRate,
+          commissionRate: bookingAgentPct,
+          commissionRateLabel: bookingAgentRateLabel,
           bookingCommissions: totalBookingCommissions,
           subscriptionCommissions,
           hotLeads,

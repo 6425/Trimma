@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import Link from "next/link";
 import { Store, MapPin, Phone, Clock, Sparkles, Loader2, Check, Save, QrCode, ExternalLink, Printer, Star, ShieldCheck, Upload, X, Trash2, ChevronRight, Image as ImageIcon, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ import { AddProfessionalForm } from "../../../components/forms/AddProfessionalFo
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
 import { BankInfoForm } from "../../../components/forms/BankInfoForm";
-import { Plus, Users, Globe, ClipboardList, Tag, FileText, Landmark } from "lucide-react";
+import { Plus, Users, Globe, ClipboardList, FileText, Landmark, Scissors } from "lucide-react";
 import { supabase } from "@/config/supabase";
 import {
   buildQrCodeImageUrl,
@@ -127,7 +128,6 @@ export default function SalonProfilePage() {
   // Extra states for Field Editor integration
   const [globalServices, setGlobalServices] = useState<any[]>([]);
   const [globalStaffRoles, setGlobalStaffRoles] = useState<any[]>([]);
-  const [selectedServices, setSelectedServices] = useState<{[key: string]: { enabled: boolean, price: string, duration: string, category: string }}>({});
   const [existingSalonServices, setExistingSalonServices] = useState<any[]>([]);
   const [staffToAdd, setStaffToAdd] = useState<any[]>([]);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
@@ -255,16 +255,6 @@ export default function SalonProfilePage() {
       
       if (res.services) {
         setExistingSalonServices(res.services);
-        const svcMap: any = {};
-        for (const s of res.services) {
-          svcMap[s.global_service_id] = {
-            enabled: true,
-            price: s.price?.toString() || "0",
-            duration: s.duration_min?.toString() || "30",
-            category: s.category || "",
-          };
-        }
-        setSelectedServices(svcMap);
       }
       if (res.staff) {
         setStaffToAdd(
@@ -505,24 +495,7 @@ export default function SalonProfilePage() {
     }
   };
 
-  const profileSalonServices = (() => {
-    const fromSalonTable = mapSalonServicesForStaffForm(existingSalonServices, globalServices);
-    if (fromSalonTable.length > 0) return fromSalonTable;
-    return Object.keys(selectedServices)
-      .filter((id) => selectedServices[id]?.enabled)
-      .map((id) => {
-        const gs = globalServices.find((g) => g.id === id);
-        return {
-          id,
-          salonServiceId: id,
-          global_service_id: id,
-          name: gs?.name || "Service",
-          category: gs?.category || selectedServices[id]?.category || "",
-          duration_min: parseInt(selectedServices[id]?.duration || "30", 10),
-          duration: selectedServices[id]?.duration || "30",
-        };
-      });
-  })();
+  const profileSalonServices = mapSalonServicesForStaffForm(existingSalonServices, globalServices);
 
   const profileSalonServiceRows = existingSalonServices.map((service) => ({
     id: service.id,
@@ -675,29 +648,6 @@ export default function SalonProfilePage() {
       setSaving(true);
 
       const preparedStaff = salon?.id ? await prepareStaffForSave(salon.id) : [];
-      
-      const existingSvcIds = existingSalonServices
-        .map((service) => service.global_service_id)
-        .filter(Boolean);
-      const selectedSvcIds = Object.keys(selectedServices).filter((id) => selectedServices[id].enabled);
-      const svcsToAddIds = selectedSvcIds.filter((id) => !existingSvcIds.includes(id));
-      const svcsToRemoveIds = existingSalonServices
-        .filter((service) => !selectedSvcIds.includes(service.global_service_id))
-        .map((service) => service.id);
-
-      const svcsToAdd = svcsToAddIds.map((id) => {
-        const gs = globalServices.find((g: any) => g.id === id);
-        const config = selectedServices[id];
-        return {
-          global_service_id: id,
-          name: gs?.name || "Service",
-          category: config?.category || gs?.category || "Other",
-          category_id: gs?.category_id,
-          price: parseFloat(config?.price) || 0,
-          duration_min: parseInt(config?.duration) || gs?.default_duration || 30,
-          status: "active",
-        };
-      });
 
       const payload = {
         name,
@@ -716,13 +666,14 @@ export default function SalonProfilePage() {
 
       const result = await saveOwnerVerificationData(
         payload,
-        { svcsToAdd, svcsToRemoveIds },
+        null,
         preparedStaff,
         salonAmenities
       );
 
       if (!result.success) throw new Error("error" in result ? (result as any).error : "Failed to verify salon");
-      
+
+      await fetchSalonProfile();
       toast.success("Salon Operations saved successfully as draft.");
     } catch (err: any) {
       toast.error("Failed to save: " + err.message);
@@ -1239,71 +1190,25 @@ export default function SalonProfilePage() {
               
               <div className="space-y-3 pt-2">
                 <h4 className="font-extrabold uppercase tracking-widest text-brand text-[10px] border-b border-rose-100 pb-1 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5" /> Included Services
+                  <Scissors className="w-3.5 h-3.5" /> Service Catalog
                 </h4>
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
-                  <span className="text-[10px] font-bold text-zinc-400">
-                    {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2 max-h-80 overflow-y-auto p-3 bg-zinc-50 rounded-xl border border-zinc-100 custom-scrollbar">
-                  {selectedCategories.length === 0 ? (
-                    <span className="text-[10px] text-zinc-400 font-medium p-1">Please select a category first to view available services.</span>
-                  ) : globalServices.filter(s => selectedCategories.includes(s.category)).length === 0 ? (
-                    <span className="text-[10px] text-zinc-400 font-medium p-1">No services available for the selected categories.</span>
-                  ) : (
-                    globalServices.filter(s => selectedCategories.includes(s.category)).map(s => {
-                      const config = selectedServices[s.id] || { enabled: false, price: s.default_price?.toString() || "0", duration: s.default_duration?.toString() || "30", category: s.category || "" };
-                      return (
-                        <div 
-                          key={s.id}
-                          className={`p-3 rounded-xl border transition-colors ${
-                            config.enabled ? 'bg-white border-brand shadow-sm' : 'bg-white border-zinc-200 opacity-70 hover:opacity-100'
-                          }`}
-                        >
-                          <label className="flex items-center gap-2 cursor-pointer mb-2">
-                            <input 
-                              type="checkbox"
-                              checked={config.enabled}
-                              onChange={(e) => {
-                                const currentlySelected = Object.values(selectedServices).filter(svc => svc.enabled).length;
-                                if (e.target.checked && currentlySelected >= 6) {
-                                  toast.error("You can only select up to 6 services. Upgrade to a premium plan to add more.");
-                                  return;
-                                }
-                                setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, enabled: e.target.checked } }));
-                              }}
-                              className="rounded border-zinc-300 text-brand focus:ring-brand w-4 h-4"
-                            />
-                            <span className="text-xs font-bold text-zinc-800">{s.name} <span className="text-zinc-400 font-normal">({s.category})</span></span>
-                          </label>
-                          {config.enabled && (
-                            <div className="flex gap-3 pl-6 mt-2">
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Price</label>
-                                <Input 
-                                  type="number" 
-                                  value={config.price} 
-                                  onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
-                                  className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-brand"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Duration (m)</label>
-                                <Input 
-                                  type="number" 
-                                  value={config.duration} 
-                                  onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, duration: e.target.value } }))}
-                                  className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-brand"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold text-zinc-800">
+                      {existingSalonServices.length > 0
+                        ? `${existingSalonServices.length} service${existingSalonServices.length === 1 ? "" : "s"} in your catalog`
+                        : "No services added yet"}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 mt-1 max-w-md">
+                      Import from the master catalog or add custom services on the Services page. Assign each service to staff in the Staff section below.
+                    </p>
+                  </div>
+                  <Link
+                    href="/dashboard/services"
+                    className="inline-flex items-center justify-center h-9 px-4 rounded-xl bg-brand hover:bg-brand-hover text-black text-xs font-bold whitespace-nowrap"
+                  >
+                    Manage Services
+                  </Link>
                 </div>
               </div>
               

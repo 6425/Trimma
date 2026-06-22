@@ -5,13 +5,14 @@ import { parseDisplayTimeSlot, resolveStaffForBookingSlot } from "@/lib/booking-
 import { filterStaffQualifiedForServices, assertQualifiedStaffForServices, filterServicesWithStaffCoverage, computeBookingStaffCommission } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { insertBookingRecord } from "@/lib/booking-insert";
-import { calculateCommissionSplit } from "@/lib/booking-pricing";
+import { calculateCommissionSplit, getReservationDepositPercentForSalon, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
 import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
 import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
+import { computeAgentCommissionSnapshot } from "@/lib/booking-commission-snapshot";
 
 export type CreateDirectBookingInput = {
   salonId: string;
@@ -174,29 +175,38 @@ export async function createDirectBooking(
 
     const basePrice = processedServices.reduce((sum, s) => sum + s.price, 0);
     const totalDuration = processedServices.reduce((sum, s) => sum + s.duration, 0);
-    const totalPrice = basePrice + basePrice * 0.1;
+    const serviceTotal = basePrice;
 
     const globalRates = await fetchBookingCommissionRates();
-    const pricing = calculateCommissionSplit(totalPrice, globalRates);
-    const reservationFee = pricing.reservationFee;
-
     const { data: salonData } = await supabase
       .from("salons")
-      .select("onboarding_agent_email, assign_to")
+      .select(
+        "onboarding_agent_email, assign_to, is_verified, business_info_extended, bank_info, name, phone, address"
+      )
       .eq("id", salonId)
       .single();
+
+    const depositPercent = getReservationDepositPercentForSalon(salonData || undefined);
+    const pricing = calculateCommissionSplit(serviceTotal, globalRates, depositPercent);
+    const reservationFee = pricing.reservationFee;
 
     let agentEmail: string | null = null;
     let fieldAgentEmail: string | null = null;
     let agentCommissionPct = 0;
     let agentCommissionAmount = 0;
+    let agentSplitSnapshot = {
+      field_agent_commission_amount: 0,
+      regional_head_commission_amount: 0,
+      agent_split_percent: 0,
+    };
 
     const attribution = await resolveAgentCommissionAttribution(supabase, salonData);
     if (attribution.payeeEmail) {
       agentEmail = attribution.payeeEmail;
       fieldAgentEmail = attribution.fieldAgentEmail;
-      agentCommissionPct = globalRates.agent;
+      agentCommissionPct = resolveBookingAgentPercentage(globalRates.agent);
       agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
+      agentSplitSnapshot = computeAgentCommissionSnapshot(agentCommissionAmount, attribution);
     }
 
     const formattedTime = parseDisplayTimeSlot(timeSlot);
@@ -240,7 +250,7 @@ export async function createDirectBooking(
       ? computeBookingStaffCommission(
           staffProfile,
           {
-            amount: totalPrice,
+            amount: serviceTotal,
             service_id: processedServices[0]?.id || null,
             booking_services: processedServices.map((service) => ({
               service_id: service.id,
@@ -262,7 +272,7 @@ export async function createDirectBooking(
       staff_id: resolvedStaffId,
       booking_date: bookingDate,
       booking_time: formattedTime,
-      amount: totalPrice,
+      amount: serviceTotal,
       status: isPaid ? "confirmed" : "pending",
       payment_status: isPaid ? "reservation_paid" : "unpaid",
       reservation_fee_paid: isPaid,
@@ -274,6 +284,9 @@ export async function createDirectBooking(
       field_agent_email: fieldAgentEmail,
       agent_commission_percent: agentCommissionPct,
       agent_commission_amount: agentCommissionAmount,
+      field_agent_commission_amount: agentSplitSnapshot.field_agent_commission_amount,
+      regional_head_commission_amount: agentSplitSnapshot.regional_head_commission_amount,
+      agent_split_percent: agentSplitSnapshot.agent_split_percent,
       staff_commission_percent: staffCommission?.rate ?? 0,
       staff_commission_amount: staffCommission?.amount ?? 0,
       promotion_package_id: promotionPackageId || null,
@@ -351,7 +364,7 @@ export async function createDirectBooking(
         customerName,
         bookingDate,
         bookingTime: formattedTime,
-        amount: totalPrice,
+        amount: serviceTotal,
         serviceName: processedServices.map((s) => s.name).join(", "),
         staffName,
         paymentStatus: isPaid ? "reservation_paid" : "unpaid",
@@ -370,7 +383,7 @@ export async function createDirectBooking(
       booking_id: newBooking.id,
       booking_no: bookingNo,
       status: newBooking.status,
-      total_price: totalPrice,
+      total_price: serviceTotal,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Booking failed.";

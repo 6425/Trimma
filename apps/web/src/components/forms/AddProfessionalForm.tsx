@@ -483,8 +483,11 @@ export function AddProfessionalForm({
           {/* Certified services checklist */}
           <div className="space-y-4 bg-zinc-50/50 p-4 rounded-2xl border border-zinc-100">
             <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-               <Tag className="w-4 h-4 text-brand" /> Certify Shop Services
+               <Tag className="w-4 h-4 text-brand" /> Services This Stylist Performs
             </h3>
+            <p className="text-[10px] text-zinc-400">
+              Choose which catalog services this team member can perform. Set commission and timing per service.
+            </p>
 
             {salonServices.length === 0 ? (
               <p className="text-xs text-zinc-400 italic">No active services registered for this salon. Stylist will have access to all.</p>

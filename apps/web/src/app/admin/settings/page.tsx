@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { 
   getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection, validateWhatsAppCredentials
 } from "../../actions/whatsapp";
-import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG } from "@/lib/whatsapp-templates";
+import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG, WHATSAPP_OWNER_BOOKING_META_CONFIG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
 import { TelegramSettingsPanel } from "../../../components/admin/TelegramSettingsPanel";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -499,6 +499,31 @@ function SettingsPanelContent() {
                       {WHATSAPP_CHECKOUT_META_CONFIG.metaParameterHint}
                     </p>
                   </div>
+
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+                    <div>
+                      <div className="text-xs font-extrabold text-amber-900">
+                        {WHATSAPP_OWNER_BOOKING_META_CONFIG.title}
+                      </div>
+                      <p className="text-[10px] text-amber-800 mt-0.5 leading-relaxed">
+                        {WHATSAPP_OWNER_BOOKING_META_CONFIG.description}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-amber-900">
+                        Meta template name
+                      </Label>
+                      <Input
+                        value={metaTemplateBookingCreatedOwner}
+                        onChange={(e) => setMetaTemplateBookingCreatedOwner(e.target.value)}
+                        placeholder={WHATSAPP_OWNER_BOOKING_META_CONFIG.defaultTemplateName}
+                        className="h-9 border-amber-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <p className="text-[9px] text-amber-900/90 leading-relaxed">
+                      {WHATSAPP_OWNER_BOOKING_META_CONFIG.metaParameterHint}
+                    </p>
+                  </div>
                   
                   <div className="space-y-6">
                     {WHATSAPP_TRIGGER_CATALOG.map((trigger) => {
@@ -537,10 +562,10 @@ function SettingsPanelContent() {
 
                           {isEnabled && (
                             <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                              {"metaTemplateKey" in trigger && trigger.metaTemplateKey && (
+                              {"metaTemplateKey" in trigger && trigger.metaTemplateKey && trigger.id !== "booking-created-owner" && (
                                 <div className="space-y-2 pb-2">
                                   <Label className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
-                                    Meta template name (optional fallback)
+                                    Meta template name
                                   </Label>
                                   <Input
                                     value={metaTemplateValues[trigger.metaTemplateKey] || ""}
@@ -549,13 +574,19 @@ function SettingsPanelContent() {
                                     className="h-9 border-emerald-200 rounded-lg text-xs font-mono"
                                   />
                                   <p className="text-[9px] text-zinc-500">
-                                    {"metaParameterHint" in trigger && trigger.metaParameterHint
+                                    {"metaParameterHint" in trigger &&
+                                    typeof trigger.metaParameterHint === "string" &&
+                                    trigger.metaParameterHint
                                       ? trigger.metaParameterHint
                                       : `Required outside the 24-hour window. Body variables map to merge tags in order (${`{{1}}`} = first tag).`}
                                   </p>
                                 </div>
                               )}
-                              <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">Fallback template text</Label>
+                              <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                                {trigger.id === "booking-created-owner"
+                                  ? "Reference copy (Meta template above is used for delivery)"
+                                  : "Fallback template text"}
+                              </Label>
                               <textarea
                                 value={templateValues[templateKey] || ""}
                                 onChange={(e) => setTemplateValue(templateKey, e.target.value)}

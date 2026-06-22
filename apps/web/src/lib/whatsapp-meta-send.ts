@@ -7,6 +7,9 @@
 /** Meta-approved template for first customer booking confirmation (checkout). */
 export const TRIMMA_META_TEMPLATE_CONFIRMED = "confirmmessage";
 
+/** Meta template for salon owner new-booking alerts (customer appointment → notify owner). */
+export const TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED = "appointment_confirmation_1";
+
 /** Default when Admin language is blank — most Meta English templates use en_US. */
 export const TRIMMA_META_TEMPLATE_LANGUAGE = "en_US";
 
@@ -98,6 +101,14 @@ export function buildMetaBodyParameters(
   const normalizedTemplate = (templateName || "").trim().toLowerCase();
 
   if (trigger === "confirmed" && normalizedTemplate === TRIMMA_META_TEMPLATE_CONFIRMED) {
+    return buildConfirmMessageParameters(variables);
+  }
+
+  if (
+    trigger === "owner-booking-created" &&
+    normalizedTemplate === TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED
+  ) {
+    // appointment_confirmation_1: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time
     return buildConfirmMessageParameters(variables);
   }
 

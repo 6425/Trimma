@@ -71,6 +71,17 @@ export default function DashboardServices() {
   });
   const [updating, setUpdating] = useState(false);
 
+  // Custom Service States
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [addingCustom, setAddingCustom] = useState(false);
+  const [customForm, setCustomForm] = useState({
+    name: "",
+    category: "",
+    price: "",
+    duration_min: "30",
+    description: "",
+  });
+
   const fetchSalonAndPlan = useCallback(async () => {
     try {
       setLoading(true);
@@ -280,6 +291,78 @@ export default function DashboardServices() {
     }
   };
 
+  const openCustomModal = () => {
+    if (!hasActiveStaff) {
+      toast.error("Add at least one staff member before adding services.");
+      return;
+    }
+    const defaultCategory = allowedCategories[0]?.name || "";
+    setCustomForm({
+      name: "",
+      category: defaultCategory,
+      price: "",
+      duration_min: "30",
+      description: "",
+    });
+    setShowCustomModal(true);
+  };
+
+  const handleAddCustomService = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!hasActiveStaff) {
+      toast.error("Add at least one staff member in the Staff menu before adding services.");
+      return;
+    }
+
+    const maxServicesAllowed = subscriptionPlan?.max_services || 6;
+    if (services.length >= maxServicesAllowed) {
+      toast.error(
+        `Your ${subscriptionPlan?.name || "Free"} plan allows up to ${maxServicesAllowed} services. Upgrade to add more.`
+      );
+      return;
+    }
+
+    const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
+    const projectedCategories = new Set(services.map((s) => s.category));
+    if (customForm.category) projectedCategories.add(customForm.category);
+    if (projectedCategories.size > allowedCategoriesLimit) {
+      toast.error(
+        `Your plan allows services under up to ${allowedCategoriesLimit} categories. Upgrade to add more.`
+      );
+      return;
+    }
+
+    const matchedCategory = allowedCategories.find((c) => c.name === customForm.category);
+
+    try {
+      setAddingCustom(true);
+      const result = await insertSalonServices([
+        {
+          name: customForm.name.trim(),
+          category: customForm.category,
+          category_id: matchedCategory?.id || null,
+          price: parseFloat(customForm.price) || 0,
+          duration_min: parseInt(customForm.duration_min, 10) || 30,
+          description: customForm.description.trim() || null,
+          status: "inactive",
+        },
+      ]);
+      if (result.success === false) throw new Error(result.error);
+
+      toast.success(
+        "Custom service added as Inactive. Assign it to a staff member in Staff, then activate it here."
+      );
+      setShowCustomModal(false);
+      fetchSalonAndPlan();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast.error("Failed to add custom service: " + message);
+    } finally {
+      setAddingCustom(false);
+    }
+  };
+
   const openEditModal = (service: any) => {
     setEditingServiceId(service.id);
     setEditForm({
@@ -429,7 +512,11 @@ export default function DashboardServices() {
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
           </Button>
-          <Button className="flex-1 md:flex-none bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11">
+          <Button
+            onClick={openCustomModal}
+            disabled={!hasActiveStaff}
+            className="flex-1 md:flex-none bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11 disabled:opacity-50"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Custom Service
           </Button>
@@ -872,6 +959,109 @@ export default function DashboardServices() {
                 />
               </div>
 
+        </form>
+      </DashboardModal>
+
+      <DashboardModal
+        open={showCustomModal}
+        onClose={() => setShowCustomModal(false)}
+        size="lg"
+        title="Add Custom Service"
+        description="Create a salon-specific service that is not in the master catalog."
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Button
+              type="button"
+              onClick={() => setShowCustomModal(false)}
+              variant="outline"
+              className="rounded-xl font-bold h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="add-custom-service-form"
+              disabled={addingCustom}
+              className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
+            >
+              {addingCustom ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+              Add Service
+            </Button>
+          </div>
+        }
+      >
+        <form id="add-custom-service-form" onSubmit={handleAddCustomService} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Service Name</label>
+            <Input
+              type="text"
+              required
+              value={customForm.name}
+              onChange={(e) => setCustomForm((prev) => ({ ...prev, name: e.target.value }))}
+              className="h-11 rounded-xl border-zinc-200 font-bold text-zinc-800 focus:ring-brand"
+              placeholder="e.g. Signature Fade & Beard Trim"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Category</label>
+              <select
+                required
+                value={customForm.category}
+                onChange={(e) => setCustomForm((prev) => ({ ...prev, category: e.target.value }))}
+                className="w-full h-11 border border-zinc-200 bg-white px-4 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-brand"
+              >
+                {allowedCategories.length === 0 ? (
+                  <option value="">No categories on your plan</option>
+                ) : (
+                  allowedCategories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Duration (Mins)</label>
+              <Input
+                type="number"
+                required
+                min="5"
+                value={customForm.duration_min}
+                onChange={(e) => setCustomForm((prev) => ({ ...prev, duration_min: e.target.value }))}
+                className="h-11 rounded-xl border-zinc-200 text-zinc-600"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR)</label>
+            <Input
+              type="number"
+              required
+              min="0"
+              value={customForm.price}
+              onChange={(e) => setCustomForm((prev) => ({ ...prev, price: e.target.value }))}
+              className="h-11 rounded-xl border-zinc-200 font-bold text-zinc-800"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Description (optional)</label>
+            <textarea
+              rows={3}
+              value={customForm.description}
+              onChange={(e) => setCustomForm((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder="Brief description for customers..."
+              className="w-full border border-zinc-200 bg-white p-4 rounded-xl font-sans text-xs focus:outline-none focus:ring-1 focus:ring-brand leading-relaxed"
+            />
+          </div>
+
+          <p className="text-[10px] text-amber-700 font-medium bg-amber-50 border border-amber-100 rounded-lg p-3">
+            New services start as Inactive. Assign them to staff in Staff, then set Active here.
+          </p>
         </form>
       </DashboardModal>
     </div>

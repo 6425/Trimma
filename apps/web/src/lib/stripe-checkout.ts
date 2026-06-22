@@ -49,7 +49,7 @@ export async function createStripePaymentIntent(input: {
     currency: "lkr",
     description: input.description,
     ...(input.customerEmail ? { receipt_email: input.customerEmail } : {}),
-    automatic_payment_methods: { enabled: true },
+    payment_method_types: ["card"],
     metadata: {
       pending_id: pending.id,
       checkout_type: input.checkoutType,

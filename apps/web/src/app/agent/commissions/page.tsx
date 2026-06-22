@@ -34,6 +34,7 @@ export default function AgentCommissions() {
   const [loading, setLoading] = useState(true);
   const [offsetWeeks, setOffsetWeeks] = useState(0);
   const [bookingAgentPct, setBookingAgentPct] = useState(20);
+  const [bookingAgentRateLabel, setBookingAgentRateLabel] = useState("20% of platform share");
   const [subscriptionAgentPct, setSubscriptionAgentPct] = useState(20);
   const [bookings, setBookings] = useState<CommissionBookingRow[]>([]);
   const [subscriptions, setSubscriptions] = useState<CommissionSubscriptionRow[]>([]);
@@ -59,6 +60,9 @@ export default function AgentCommissions() {
       }
 
       setBookingAgentPct(result.bookingAgentPct);
+      setBookingAgentRateLabel(
+        result.bookingAgentRateLabel || `${result.bookingAgentPct}% of platform share`
+      );
       setSubscriptionAgentPct(result.subscriptionAgentPct);
       setBookings(result.bookings);
       setSubscriptions(result.subscriptions);
@@ -126,7 +130,7 @@ export default function AgentCommissions() {
             </span>
             <span className="flex items-center gap-1 text-[10px] font-semibold text-zinc-400">
               <Sparkles className="w-3 h-3 text-amber-500" />
-              Booking {bookingAgentPct}% · Subscription {subscriptionAgentPct}%
+              Booking {bookingAgentRateLabel} · Subscription {subscriptionAgentPct}%
             </span>
           </div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">Commissions Ledger</h1>
@@ -203,7 +207,7 @@ export default function AgentCommissions() {
             <tbody className="divide-y divide-slate-100">
               <tr>
                 <td className="px-5 py-4 font-bold text-zinc-900">Booking Commission</td>
-                <td className="px-4 py-4 text-center"><Badge className="bg-emerald-50 text-emerald-700 border-none font-bold">{bookingAgentPct}%</Badge></td>
+                <td className="px-4 py-4 text-center"><Badge className="bg-emerald-50 text-emerald-700 border-none font-bold">{bookingAgentRateLabel}</Badge></td>
                 <td className="px-4 py-4 text-right font-semibold">{formatCommissionLKR(weeklyBookingGross)}</td>
                 <td className="px-4 py-4 text-right font-black text-emerald-600">{formatCommissionLKR(weeklyBookingEarned)}</td>
                 <td className="px-4 py-4 text-center">{weeklyBookings.length}</td>
@@ -229,7 +233,7 @@ export default function AgentCommissions() {
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <h3 className="font-bold text-zinc-900 flex items-center gap-2">
             <History className="w-4 h-4 text-emerald-600" />
-            Booking Commissions ({bookingAgentPct}%)
+            Booking Commissions ({bookingAgentRateLabel})
           </h3>
           {weeklyBookings.length === 0 ? (
             <p className="text-sm text-zinc-500 py-8 text-center">No bookings this week.</p>

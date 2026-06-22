@@ -8,6 +8,7 @@ import { fetchSalonFinancePage } from "@/app/actions/salon-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
 import { buildBookingIncomeRows } from "@/lib/booking-income-rows";
 import { exportFinanceLedgerToExcel } from "@/lib/export-finance-ledger";
+import { isCommissionEligibleBooking } from "@/lib/commission-ledger-format";
 import { toast } from "sonner";
 import { BookingCommissionTable } from "../../../components/dashboard/BookingCommissionTable";
 
@@ -18,6 +19,8 @@ interface BookingWithSplits {
   booking_time: string;
   amount: number;
   status: string;
+  payment_status?: string;
+  reservation_fee_paid?: boolean;
   customer_email: string;
   created_at: string;
   platform_commission_amount: number;
@@ -84,7 +87,11 @@ export default function FinanceDashboard() {
       let completed = 0;
       
       resolvedBookings.forEach((b: BookingWithSplits) => {
-      if (b.status === "completed" || b.status === "confirmed") {
+      if (isCommissionEligibleBooking({
+        status: b.status,
+        payment_status: b.payment_status || "",
+        reservation_fee_paid: Boolean(b.reservation_fee_paid),
+      })) {
       gross += b.amount;
       platform += b.platform_commission_amount;
       salonUpfront += b.salon_upfront_amount;
@@ -138,7 +145,13 @@ export default function FinanceDashboard() {
 
   const filteredBookings = bookings.filter((b) => {
     if (filter === "all") return true;
-    if (filter === "completed") return b.status === "completed" || b.status === "confirmed";
+    if (filter === "completed") {
+      return isCommissionEligibleBooking({
+        status: b.status,
+        payment_status: b.payment_status || "",
+        reservation_fee_paid: Boolean(b.reservation_fee_paid),
+      });
+    }
     return b.status === filter;
   });
 

@@ -15,6 +15,7 @@ import {
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
+import { computeAgentCommissionSnapshot } from "@/lib/booking-commission-snapshot";
 import { normalizeEmail } from "@/lib/normalize-email";
 import type { CardType } from "@/lib/card-payment";
 
@@ -157,6 +158,7 @@ export async function completeBookingCheckout(
     card,
     stripePayment,
     payhereEnvironment,
+    reservationFee: inputReservationFee,
     serviceTotal,
     rates,
     salon,
@@ -244,18 +246,27 @@ export async function completeBookingCheckout(
   });
 
   const pricing = calculateCommissionSplit(serviceTotal, rates);
-  const resolvedReservationFee = pricing.reservationFee;
+  const resolvedReservationFee =
+    Number.isFinite(inputReservationFee) && inputReservationFee > 0
+      ? inputReservationFee
+      : pricing.reservationFee;
 
   let agentEmail: string | null = null;
   let fieldAgentEmail: string | null = null;
   let agentCommissionPct = 0;
   let agentCommissionAmount = 0;
+  let agentSplitSnapshot = {
+    field_agent_commission_amount: 0,
+    regional_head_commission_amount: 0,
+    agent_split_percent: 0,
+  };
 
   if (attribution.payeeEmail) {
     agentEmail = attribution.payeeEmail;
     fieldAgentEmail = attribution.fieldAgentEmail;
     agentCommissionPct = resolveBookingAgentPercentage(rates.agent);
     agentCommissionAmount = pricing.platformCommission * (agentCommissionPct / 100);
+    agentSplitSnapshot = computeAgentCommissionSnapshot(agentCommissionAmount, attribution);
   }
 
   const { data: staffProfile } = resolvedStaffId
@@ -301,6 +312,9 @@ export async function completeBookingCheckout(
     field_agent_email: fieldAgentEmail,
     agent_commission_percent: agentCommissionPct,
     agent_commission_amount: agentCommissionAmount,
+    field_agent_commission_amount: agentSplitSnapshot.field_agent_commission_amount,
+    regional_head_commission_amount: agentSplitSnapshot.regional_head_commission_amount,
+    agent_split_percent: agentSplitSnapshot.agent_split_percent,
     staff_commission_percent: staffCommission?.rate ?? 0,
     staff_commission_amount: staffCommission?.amount ?? 0,
     promotion_package_id: draft.promotionPackageId || null,

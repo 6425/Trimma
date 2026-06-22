@@ -112,6 +112,7 @@ export default function CommissionManagement() {
       const result = await saveBookingCommissionMaster({
         platform: bookingForm.platform,
         salon: bookingForm.salon,
+        agent: bookingConfig?.agent_percentage ?? 20,
         previousId: bookingConfig?.id,
       });
       if (result.success === false) throw new Error(result.error);

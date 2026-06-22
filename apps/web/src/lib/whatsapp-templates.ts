@@ -221,7 +221,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     order: 6,
     title: "New Booking — Salon Owner Alert",
     whenFired:
-      "Sent to the salon WhatsApp/phone on profile when a customer pays a reservation. Uses Template #6 text (platform partner message). Meta template name below is optional fallback only.",
+      "Sent to the salon WhatsApp/phone on profile when a customer pays a reservation. Requires a Meta-approved template (see block above trigger #6).",
     toggleKey: "bookingCreatedEnabled" as const,
     templateKey: "templateBookingCreatedOwner" as const,
     defaultTemplate: "bookingCreatedOwner" as const,
@@ -235,7 +235,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     ],
     metaTemplateKey: "metaTemplateBookingCreatedOwner" as const,
     metaParameterHint:
-      "Optional fallback only if Template #6 text is rejected by Meta. Variables: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time, {{6}} payment status.",
+      "appointment_confirmation_1: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.",
   },
   {
     id: "agent-approval-owner",
@@ -310,4 +310,15 @@ export const WHATSAPP_CHECKOUT_META_CONFIG = {
   defaultTemplateName: "confirmmessage",
   metaParameterHint:
     "confirmmessage: {{1}} name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.",
+} as const;
+
+/** Salon owner new-booking alert — Meta template required (free text is blocked outside 24h window). */
+export const WHATSAPP_OWNER_BOOKING_META_CONFIG = {
+  title: "Salon owner new booking alert (Meta)",
+  description:
+    "Sent to the salon WhatsApp/phone on profile when a customer pays a reservation. Meta template is required — plain text is rejected outside the 24-hour session window.",
+  metaTemplateKey: "metaTemplateBookingCreatedOwner" as const,
+  defaultTemplateName: "appointment_confirmation_1",
+  metaParameterHint:
+    "appointment_confirmation_1: {{1}} customer name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time (same order as confirmmessage).",
 } as const;

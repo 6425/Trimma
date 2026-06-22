@@ -12,6 +12,7 @@ import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } 
 import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
 import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
+import { resolveBookingFinancialBreakdown } from "@/lib/booking-commission-snapshot";
 import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
 
 // Timeline step definition
@@ -165,12 +166,7 @@ export default function BookingDetailPage() {
   }
 
   const status = (booking.status || "pending").toLowerCase();
-  const amount = parseFloat(booking.amount || "0");
-  const deposit = amount * 0.2;
-  const platformPercent = booking.platform_commission_percent || 10;
-  const platformFee = deposit * (platformPercent / 100);
-  const salonPayout = deposit - platformFee;
-  const balanceDue = amount - deposit;
+  const financials = resolveBookingFinancialBreakdown(booking);
   const timeline = getTimeline(status);
 
   const isTerminal = ["completed", "cancelled", "declined", "no_show"].includes(status);
@@ -302,15 +298,36 @@ export default function BookingDetailPage() {
             </h3>
 
             <div className="space-y-3">
-              <FinancialRow label="Total Service Amount" value={`LKR ${amount.toLocaleString()}`} bold />
+              <FinancialRow label="Total Service Amount" value={`LKR ${financials.serviceTotal.toLocaleString()}`} bold />
               <div className="h-px bg-slate-100" />
-              <FinancialRow label="Reservation Deposit (20%)" value={`LKR ${deposit.toLocaleString()}`} />
+              <FinancialRow
+                label={`Reservation Deposit (${financials.reservationDepositPercent}%)`}
+                value={`LKR ${financials.reservationDeposit.toLocaleString()}`}
+              />
               <div className="pl-3 space-y-2 border-l-2 border-amber-200 ml-1">
-                <FinancialRow label={`Platform Fee (${platformPercent}%)`} value={`- LKR ${platformFee.toLocaleString()}`} color="text-amber-700" small />
-                <FinancialRow label="Salon Payout" value={`LKR ${salonPayout.toLocaleString()}`} color="text-emerald-700" small />
+                <FinancialRow
+                  label={`Platform Share (${financials.platformCommissionPercent}% of service)`}
+                  value={`LKR ${financials.platformCommission.toLocaleString()}`}
+                  color="text-amber-700"
+                  small
+                />
+                <FinancialRow
+                  label="Salon Upfront Share"
+                  value={`LKR ${financials.salonUpfront.toLocaleString()}`}
+                  color="text-emerald-700"
+                  small
+                />
+                {financials.staffCommission > 0 && (
+                  <FinancialRow
+                    label="Staff Commission (internal)"
+                    value={`LKR ${financials.staffCommission.toLocaleString()}`}
+                    color="text-indigo-700"
+                    small
+                  />
+                )}
               </div>
               <div className="h-px bg-slate-100" />
-              <FinancialRow label="Balance Due at Salon" value={`LKR ${balanceDue.toLocaleString()}`} bold />
+              <FinancialRow label="Balance Due at Salon" value={`LKR ${financials.balanceDue.toLocaleString()}`} bold />
 
               <div className="flex items-center gap-2 mt-2">
                 <CreditCard className="w-3.5 h-3.5 text-zinc-400" />

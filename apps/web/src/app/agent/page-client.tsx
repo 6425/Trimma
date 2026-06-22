@@ -46,7 +46,8 @@ export default function AgentDashboard() {
   const [stats, setStats] = useState({
     assignedCount: 0,
     convertedCount: 0,
-    commissionRate: 10,
+    commissionRate: 20,
+    commissionRateLabel: "20% of platform share",
     bookingCommissions: 0,
     subscriptionCommissions: 0,
     hotLeads: [] as AssignedSalon[],
@@ -156,7 +157,7 @@ export default function AgentDashboard() {
           { title: "Assigned Salons", value: stats.assignedCount, trend: "Managed by you", icon: <Users className="w-5 h-5 text-indigo-500" /> },
           { title: "In Progress", value: stats.assignedCount - stats.convertedCount, trend: "Still onboarding", icon: <Rocket className="w-5 h-5 text-amber-500" /> },
           { title: "Live Salons", value: stats.convertedCount, trend: "Approved / verified", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> },
-          { title: "Total Earnings", value: `Rs ${totalEarnings.toLocaleString()}`, trend: `${stats.commissionRate}% commission tier`, icon: <Target className="w-5 h-5 text-sky-500" /> },
+          { title: "Total Earnings", value: `Rs ${totalEarnings.toLocaleString()}`, trend: stats.commissionRateLabel || `${stats.commissionRate}% of platform share`, icon: <Target className="w-5 h-5 text-sky-500" /> },
         ].map((kpi, i) => (
           <div key={i} className="bg-white p-4 lg:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden min-w-0">
             <div

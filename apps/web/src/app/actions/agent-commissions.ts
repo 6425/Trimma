@@ -12,8 +12,11 @@ import {
   listSubAgentsForRegionalHead,
   normalizeAgentTier,
 } from "@/lib/agent-hierarchy";
+import { resolveStoredAgentSplit } from "@/lib/booking-commission-snapshot";
 import type { SubAgentTeamRow } from "@/app/actions/agent-team";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { resolveBookingAgentPercentage, formatBookingAgentRateLabel } from "@/lib/booking-pricing";
+import { isCommissionEligibleBooking } from "@/lib/commission-ledger-format";
 
 export type AgentCommissionBooking = {
   id: string;
@@ -105,14 +108,14 @@ export async function getAgentCommissionsData() {
       ? supabase
           .from("bookings")
           .select(
-            "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
+            "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, field_agent_commission_amount, regional_head_commission_amount, agent_split_percent, salons(name)"
           )
           .ilike("field_agent_email", email)
           .order("booking_date", { ascending: false })
       : supabase
           .from("bookings")
           .select(
-            "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
+            "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, field_agent_commission_amount, regional_head_commission_amount, agent_split_percent, salons(name)"
           )
           .ilike("agent_email", email)
           .order("booking_date", { ascending: false }),
@@ -132,11 +135,9 @@ export async function getAgentCommissionsData() {
   const bookingMaster = (masterRes.data || []).find((r) => r.commission_type === "booking");
   const subscriptionMaster = (masterRes.data || []).find((r) => r.commission_type === "subscription");
 
-  const bookingAgentPct =
-    Number(bookingMaster?.agent_percentage) ||
-    Number(agentRow?.commission_rate) ||
-    20;
+  const bookingAgentPct = resolveBookingAgentPercentage(bookingMaster?.agent_percentage);
   const subscriptionAgentPct = Number(subscriptionMaster?.agent_percentage) || 20;
+  const bookingAgentRateLabel = formatBookingAgentRateLabel(bookingAgentPct);
 
   const salonMap = new Map<string, string>();
   for (const salon of salonsRes.data || []) {
@@ -170,12 +171,11 @@ export async function getAgentCommissionsData() {
         ? splitByFieldEmail.get(fieldEmail) ?? clampSplitPercent(undefined)
         : 0;
 
-    const subAgentCut = fieldEmail
-      ? calculateSubAgentShare(grossAgentCut, splitPercent)
-      : 0;
-    const headCut = fieldEmail
-      ? calculateRegionalHeadNet(grossAgentCut, splitPercent)
-      : grossAgentCut;
+    const { subAgentCut, headCut, splitPercent: resolvedSplit } = resolveStoredAgentSplit(row, {
+      gross: grossAgentCut,
+      fieldEmail,
+      splitPercent,
+    });
     const agentCut = isFieldAgent ? subAgentCut : headCut;
 
     const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
@@ -199,7 +199,7 @@ export async function getAgentCommissionsData() {
       agent_percent: agentPercent,
       platform_commission: platformCommission,
       field_agent_email: fieldEmail || null,
-      split_percent: splitPercent > 0 ? splitPercent : undefined,
+      split_percent: resolvedSplit > 0 ? resolvedSplit : undefined,
     });
   };
 
@@ -245,7 +245,7 @@ export async function getAgentCommissionsData() {
 
   let allTimeBookingGross = 0;
   bookings.forEach((b) => {
-    if (b.status === "completed" || b.status === "confirmed") {
+    if (isCommissionEligibleBooking(b)) {
       allTimeBookingGross += b.amount;
     }
   });
@@ -273,8 +273,9 @@ export async function getAgentCommissionsData() {
     agentTier: isRegionalHead ? "regional_head" : "field_agent",
     isRegionalHead,
     bookingAgentPct,
+    bookingAgentRateLabel,
     subscriptionAgentPct,
-    profileCommissionRate: Number(agentRow?.commission_rate) || bookingAgentPct,
+    profileCommissionRate: bookingAgentPct,
     referredSalonCount: salonMap.size,
     subAgents,
     bookings,

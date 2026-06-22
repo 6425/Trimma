@@ -20,6 +20,7 @@ import {
   sendWhatsAppMetaTemplateMessage,
   TRIMMA_META_TEMPLATE_CONFIRMED,
   TRIMMA_META_TEMPLATE_LANGUAGE,
+  TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED,
   type WhatsAppMetaTemplateTrigger,
 } from "@/lib/whatsapp-meta-send";
 import {
@@ -184,6 +185,18 @@ function formatWhatsAppApiError(result: {
   }
 
   return message;
+}
+
+function formatPaymentStatusForWhatsApp(status: string): string {
+  const normalized = status.trim().toLowerCase().replace(/_/g, " ");
+  if (!normalized) return "Reservation paid";
+  if (normalized === "reservation paid" || normalized === "reservation_paid") {
+    return "Reservation paid (20% deposit)";
+  }
+  if (normalized === "paid" || normalized === "unpaid") {
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  }
+  return normalized.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function resolveSalonWhatsAppPhone(salon: {
@@ -431,7 +444,8 @@ export async function getWhatsAppConfig() {
     const metaTemplateConfirmed =
       dbSettings.whatsapp_meta_template_confirmed?.trim() || TRIMMA_META_TEMPLATE_CONFIRMED;
     const metaTemplateBookingCreatedOwner =
-      dbSettings.whatsapp_meta_template_booking_created_owner?.trim() || "";
+      dbSettings.whatsapp_meta_template_booking_created_owner?.trim() ||
+      TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED;
     const metaTemplateLanguage =
       dbSettings.whatsapp_meta_template_language?.trim() || TRIMMA_META_TEMPLATE_LANGUAGE;
 
@@ -824,8 +838,7 @@ export async function sendWhatsAppReservationPaidNotification(
 
 /**
  * Alerts the salon owner when a new paid booking is received.
- * Uses Trimma Template #6 (free text) — salon partners are on-platform contacts.
- * Optional Meta template in Admin is only used as fallback if Meta rejects the text message.
+ * Uses Meta-approved template (required outside 24h window). Plain text is only tried as last resort.
  */
 export async function sendOwnerBookingRequestWhatsApp(
   bookingNo: string,
@@ -877,8 +890,35 @@ export async function sendOwnerBookingRequestWhatsApp(
       service_name: serviceName,
       booking_date: booking.booking_date || "",
       booking_time: booking.booking_time || "",
-      payment_status: paymentStatus,
+      payment_status: formatPaymentStatusForWhatsApp(paymentStatus),
     };
+
+    const metaName = (metaTemplateBookingCreatedOwner || "").trim();
+    if (metaName) {
+      const metaResult = await sendWhatsAppMetaAlert({
+        trigger: "owner-booking-created",
+        phoneId,
+        accessToken,
+        to: ownerPhone,
+        variables,
+        metaTemplateName: metaName,
+        metaTemplateLanguage,
+      });
+
+      if (metaResult.success) {
+        return {
+          success: true,
+          messageId: metaResult.messageId,
+          delivery: "meta-template" as const,
+        };
+      }
+
+      console.error("Owner booking WhatsApp Meta template failed:", metaResult.error);
+    } else {
+      console.warn(
+        "Owner booking WhatsApp: no Meta template configured. Set Admin → Global Settings → Salon owner new booking alert (Meta)."
+      );
+    }
 
     const ownerMessage = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, variables);
 
@@ -904,28 +944,14 @@ export async function sendOwnerBookingRequestWhatsApp(
     }
 
     const textError = formatWhatsAppApiError(textResult);
-    const metaName = (metaTemplateBookingCreatedOwner || "").trim();
-    if (!metaName) {
-      console.error("Owner booking WhatsApp (Template #6 text) failed:", textError);
-      return { success: false, error: textError };
-    }
-
-    const metaResult = await sendWhatsAppMetaAlert({
-      trigger: "owner-booking-created",
-      phoneId,
-      accessToken,
-      to: ownerPhone,
-      variables,
-      metaTemplateName: metaName,
-      metaTemplateLanguage,
-    });
-
-    if (!metaResult.success) {
-      console.error("Owner booking WhatsApp text and Meta fallback failed:", metaResult.error);
-      return { success: false, error: metaResult.error || textError };
-    }
-
-    return { success: true, messageId: metaResult.messageId, delivery: metaResult.delivery };
+    const metaHint = metaName
+      ? ` Meta template "${metaName}" also failed.`
+      : " Add your approved owner-booking Meta template name in Admin → Global Settings.";
+    console.error("Owner booking WhatsApp text fallback failed:", textError);
+    return {
+      success: false,
+      error: `${textError}${metaHint}`,
+    };
   } catch (err: unknown) {
     return {
       success: false,
