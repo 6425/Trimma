@@ -220,7 +220,8 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     id: "booking-created-owner",
     order: 6,
     title: "New Booking — Salon Owner Alert",
-    whenFired: "Sent to the salon phone when a paid booking needs owner attention.",
+    whenFired:
+      "Sent to the salon WhatsApp/phone on profile when a customer pays a reservation. Uses Template #6 text (platform partner message). Meta template name below is optional fallback only.",
     toggleKey: "bookingCreatedEnabled" as const,
     templateKey: "templateBookingCreatedOwner" as const,
     defaultTemplate: "bookingCreatedOwner" as const,
@@ -234,7 +235,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     ],
     metaTemplateKey: "metaTemplateBookingCreatedOwner" as const,
     metaParameterHint:
-      "Salon owner alert: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time, {{6}} payment status. Sent to salon phone / WhatsApp from profile.",
+      "Optional fallback only if Template #6 text is rejected by Meta. Variables: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time, {{6}} payment status.",
   },
   {
     id: "agent-approval-owner",

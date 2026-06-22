@@ -540,7 +540,7 @@ function SettingsPanelContent() {
                               {"metaTemplateKey" in trigger && trigger.metaTemplateKey && (
                                 <div className="space-y-2 pb-2">
                                   <Label className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
-                                    Meta template name (Business Manager)
+                                    Meta template name (optional fallback)
                                   </Label>
                                   <Input
                                     value={metaTemplateValues[trigger.metaTemplateKey] || ""}

@@ -823,7 +823,9 @@ export async function sendWhatsAppReservationPaidNotification(
 }
 
 /**
- * Alerts the salon owner when a new paid booking needs confirmation.
+ * Alerts the salon owner when a new paid booking is received.
+ * Uses Trimma Template #6 (free text) — salon partners are on-platform contacts.
+ * Optional Meta template in Admin is only used as fallback if Meta rejects the text message.
  */
 export async function sendOwnerBookingRequestWhatsApp(
   bookingNo: string,
@@ -835,6 +837,7 @@ export async function sendOwnerBookingRequestWhatsApp(
     phoneId,
     accessToken,
     bookingCreatedEnabled,
+    templateBookingCreatedOwner,
     metaTemplateBookingCreatedOwner,
     metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
@@ -877,22 +880,52 @@ export async function sendOwnerBookingRequestWhatsApp(
       payment_status: paymentStatus,
     };
 
-    const sendResult = await sendWhatsAppMetaAlert({
+    const ownerMessage = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, variables);
+
+    const textResponse = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: ownerPhone,
+        type: "text",
+        text: { preview_url: false, body: ownerMessage },
+      }),
+    });
+
+    const textResult = await textResponse.json();
+    if (textResponse.ok) {
+      return {
+        success: true,
+        messageId: textResult.messages?.[0]?.id,
+        delivery: "text" as const,
+      };
+    }
+
+    const textError = formatWhatsAppApiError(textResult);
+    const metaName = (metaTemplateBookingCreatedOwner || "").trim();
+    if (!metaName) {
+      console.error("Owner booking WhatsApp (Template #6 text) failed:", textError);
+      return { success: false, error: textError };
+    }
+
+    const metaResult = await sendWhatsAppMetaAlert({
       trigger: "owner-booking-created",
       phoneId,
       accessToken,
       to: ownerPhone,
       variables,
-      metaTemplateName: metaTemplateBookingCreatedOwner,
+      metaTemplateName: metaName,
       metaTemplateLanguage,
     });
 
-    if (!sendResult.success) {
-      console.error("Owner booking WhatsApp failed:", sendResult.error);
-      return { success: false, error: sendResult.error };
+    if (!metaResult.success) {
+      console.error("Owner booking WhatsApp text and Meta fallback failed:", metaResult.error);
+      return { success: false, error: metaResult.error || textError };
     }
 
-    return { success: true, messageId: sendResult.messageId, delivery: sendResult.delivery };
+    return { success: true, messageId: metaResult.messageId, delivery: metaResult.delivery };
   } catch (err: unknown) {
     return {
       success: false,
