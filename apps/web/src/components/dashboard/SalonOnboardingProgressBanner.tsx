@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  calculateSalonOnboardingScore,
+  calculateOwnerProfileCompletionScore,
   getOwnerOnboardingBannerMessage,
   getSalonOnboardingSteps,
   type SalonOnboardingSnapshot,
@@ -13,12 +13,12 @@ export function SalonOnboardingProgressBanner({
 }: {
   salon: SalonOnboardingSnapshot;
 }) {
-  if (salon.is_verified && calculateSalonOnboardingScore(salon) >= 100) {
+  if (salon.is_verified && calculateOwnerProfileCompletionScore(salon) >= 100) {
     return null;
   }
 
-  const score = calculateSalonOnboardingScore(salon);
-  const steps = getSalonOnboardingSteps(salon);
+  const score = calculateOwnerProfileCompletionScore(salon);
+  const steps = getSalonOnboardingSteps(salon).filter((step) => step.id !== "verification");
   const message = getOwnerOnboardingBannerMessage(salon);
 
   return (
@@ -63,6 +63,11 @@ export function SalonOnboardingProgressBanner({
               {step.complete ? "✓" : "○"} {step.label}
             </span>
           ))}
+          {!salon.is_verified && (
+            <span className="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold bg-white text-amber-900 border border-amber-200">
+              ○ Trimma verification badge (admin)
+            </span>
+          )}
         </div>
       </div>
     </div>

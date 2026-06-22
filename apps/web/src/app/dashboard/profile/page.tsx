@@ -29,7 +29,8 @@ import {
 import { formatServerActionError } from "@/lib/salon-profile-save";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import {
-  calculateSalonOnboardingScore,
+  calculateOwnerProfileCompletionScore,
+  getOwnerProfileMissingSections,
   type SalonOnboardingSnapshot,
 } from "@/lib/salon-onboarding-progress";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -161,8 +162,7 @@ export default function SalonProfilePage() {
       setSlug(salonData.slug || "");
       // Map phone from salons.phone (aligned with Google Places field)
       setContact(salonData.phone || "");
-      // Map city: prefer city column, fall back to address (Google Places stores as address)
-      setAddress(salonData.city || salonData.address || "");
+      setAddress(salonData.address || salonData.city || "");
       setProvince(salonData.province || "Western Province");
       setDistrict(salonData.district || "Colombo");
       // Map description: prefer description column, fall back to summary (Google Places field)
@@ -296,9 +296,9 @@ export default function SalonProfilePage() {
     return {
       name,
       description,
-      phone: contact,
-      address,
-      city: address,
+      phone: contact || salon?.phone || "",
+      address: salon?.address || address,
+      city: salon?.city || address,
       latitude: Number.isFinite(parsedLat) ? parsedLat : salon?.latitude ?? null,
       longitude: Number.isFinite(parsedLng) ? parsedLng : salon?.longitude ?? null,
       logo_url: logoUrl,
@@ -329,7 +329,12 @@ export default function SalonProfilePage() {
   ]);
 
   const completionPercentage = useMemo(
-    () => calculateSalonOnboardingScore(onboardingSnapshot),
+    () => calculateOwnerProfileCompletionScore(onboardingSnapshot),
+    [onboardingSnapshot]
+  );
+
+  const missingProfileSections = useMemo(
+    () => getOwnerProfileMissingSections(onboardingSnapshot),
     [onboardingSnapshot]
   );
 
@@ -797,6 +802,20 @@ export default function SalonProfilePage() {
             </div>
             <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{completionPercentage}% Complete</span>
           </div>
+          {!isVerified && completionPercentage >= 100 && (
+            <p className="text-xs text-emerald-700 mt-2 font-medium">
+              Your profile is complete. Awaiting Trimma verification badge (granted by admin).
+            </p>
+          )}
+          {missingProfileSections.length > 0 && (
+            <div className="mt-3 space-y-2 max-w-xl">
+              {missingProfileSections.map((section) => (
+                <p key={section.id} className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  <span className="font-bold">{section.label}:</span> still needs {section.items.join(", ")}.
+                </p>
+              ))}
+            </div>
+          )}
         </div>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">

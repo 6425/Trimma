@@ -95,17 +95,21 @@ export function isBusinessInfoComplete(
 export function isBankInfoComplete(
   salon: Pick<SalonOnboardingSnapshot, "bank_info" | "business_info_extended">
 ): boolean {
+  return getBankInfoMissingFields(salon).length === 0;
+}
+
+export function getBankInfoMissingFields(
+  salon: Pick<SalonOnboardingSnapshot, "bank_info" | "business_info_extended">
+): string[] {
   const bank = salon.bank_info || {};
   const businessType = String(salon.business_info_extended?.business_type || "").toLowerCase();
+  const missing: string[] = [];
 
-  const hasCoreBankFields =
-    hasText(bank.account_holder_name) &&
-    hasText(bank.bank_name) &&
-    hasText(bank.branch_name) &&
-    hasText(bank.account_number) &&
-    hasText(bank.account_type);
-
-  if (!hasCoreBankFields) return false;
+  if (!hasText(bank.account_holder_name)) missing.push("account holder name");
+  if (!hasText(bank.bank_name)) missing.push("bank name");
+  if (!hasText(bank.branch_name)) missing.push("branch name");
+  if (!hasText(bank.account_number)) missing.push("account number");
+  if (!hasText(bank.account_type)) missing.push("account type");
 
   const nicFront = hasText(bank.owner_nic_front_url);
   const nicBack = hasText(bank.owner_nic_back_url);
@@ -118,10 +122,74 @@ export function isBankInfoComplete(
     businessType.includes("plc");
 
   if (isCompany) {
-    return businessReg && bankStatement && (nicFront || businessReg);
+    if (!businessReg) missing.push("business registration document");
+    if (!bankStatement) missing.push("bank statement");
+    if (!nicFront && !businessReg) missing.push("owner NIC front or business registration");
+    return missing;
   }
 
-  return nicFront && nicBack && businessReg && bankStatement;
+  if (!nicFront) missing.push("owner NIC front");
+  if (!nicBack) missing.push("owner NIC back");
+  if (!businessReg) missing.push("business registration document");
+  if (!bankStatement) missing.push("bank statement");
+  return missing;
+}
+
+export function getBusinessInfoMissingFields(
+  salon: Pick<SalonOnboardingSnapshot, "business_info_extended" | "name" | "phone" | "address">
+): string[] {
+  const ext = salon.business_info_extended || {};
+  const missing: string[] = [];
+  if (!hasText(salon.name)) missing.push("business name");
+  if (!hasText(salon.phone)) missing.push("phone number");
+  if (!hasText(salon.address)) missing.push("street address");
+  if (!hasText(ext.legal_business_name)) missing.push("legal business name");
+  if (!hasText(ext.business_type)) missing.push("business type");
+  if (!hasText(ext.owner_full_name)) missing.push("owner full name");
+  if (!hasText(ext.nic)) missing.push("owner NIC number");
+  return missing;
+}
+
+export function getOwnerProfileMissingSections(
+  salon: SalonOnboardingSnapshot,
+  signedInOwnerEmail?: string | null
+): Array<{ id: SalonOnboardingStep["id"]; label: string; items: string[] }> {
+  const sections: Array<{ id: SalonOnboardingStep["id"]; label: string; items: string[] }> = [];
+
+  const operationsMissing = getBookingApprovalMissingFields(salon, signedInOwnerEmail);
+  if (operationsMissing.length > 0) {
+    sections.push({ id: "operations", label: "Booking essentials", items: operationsMissing });
+  }
+
+  const businessMissing = getBusinessInfoMissingFields(salon);
+  if (businessMissing.length > 0) {
+    sections.push({ id: "business", label: "Business information", items: businessMissing });
+  }
+
+  const bankMissing = getBankInfoMissingFields(salon);
+  if (bankMissing.length > 0) {
+    sections.push({ id: "bank", label: "Bank & documents", items: bankMissing });
+  }
+
+  return sections;
+}
+
+/** Owner-controllable profile sections only (excludes Trimma verification badge). */
+export function calculateOwnerProfileCompletionScore(
+  salon: SalonOnboardingSnapshot,
+  signedInOwnerEmail?: string | null
+): number {
+  const steps = getSalonOnboardingSteps(salon).filter((step) => step.id !== "verification");
+  const totalWeight = steps.reduce((sum, step) => sum + step.weight, 0);
+  const earned = steps
+    .filter((step) => {
+      if (step.id === "operations") return isOperationsComplete(salon, signedInOwnerEmail);
+      if (step.id === "business") return isBusinessInfoComplete(salon);
+      if (step.id === "bank") return isBankInfoComplete(salon);
+      return step.complete;
+    })
+    .reduce((sum, step) => sum + step.weight, 0);
+  return Math.round((earned / totalWeight) * 100);
 }
 
 export function getBookingApprovalMissingFields(
