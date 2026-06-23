@@ -203,7 +203,10 @@ export async function sendOwnerBookingReminder(bookingId: string) {
     success: true as const,
     channels,
     sent,
-    skipped,
+    skipped: skipped.map((name) => ({
+      channel: name,
+      error: (channels as Record<string, ReminderChannelResult>)[name]?.error || "Not available",
+    })),
     failed: failed.map(([name, r]) => ({ channel: name, error: r.error || "Failed" })),
   };
 }

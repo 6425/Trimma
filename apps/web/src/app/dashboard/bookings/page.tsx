@@ -273,13 +273,20 @@ export default function DashboardBookings() {
         });
         toast.success(`Reminder sent via ${sentLabels.join(", ")}.`);
         if (reminderResult.skipped.length > 0) {
-          const skippedLabels = reminderResult.skipped.map((ch) => {
-            if (ch === "whatsapp") return "WhatsApp";
-            if (ch === "email") return "Email";
-            if (ch === "telegram") return "Telegram";
-            return ch;
-          });
-          toast.message(`Skipped (not available): ${skippedLabels.join(", ")}.`);
+          const skippedDetails = reminderResult.skipped
+            .map((row) => {
+              const label =
+                row.channel === "whatsapp"
+                  ? "WhatsApp"
+                  : row.channel === "email"
+                    ? "Email"
+                    : row.channel === "telegram"
+                      ? "Telegram"
+                      : row.channel;
+              return `${label}: ${row.error}`;
+            })
+            .join(" · ");
+          toast.message(`Skipped — ${skippedDetails}`);
         }
         if (reminderResult.failed.length > 0) {
           const failedLabels = reminderResult.failed
