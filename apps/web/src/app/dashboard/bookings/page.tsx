@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } from "@/app/actions/whatsapp";
 import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
@@ -33,23 +34,9 @@ const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
   { key: "canceled", label: "Cancelled" },
 ];
 
-// Context-Aware Action Menu — only shows valid actions based on current booking status
+// Context-Aware Action Menu — portaled so it is not clipped by the table card
 const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onAction: (id: string, action: string) => void, processingId: string | null }) => {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuRef]);
-
   const handleFire = (action: string) => {
-    setOpen(false);
     onAction(booking.id, action);
   };
 
@@ -58,7 +45,6 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   const paymentStatus = (booking.payment_status || 'unpaid').toLowerCase();
   const isTerminal = ['completed', 'canceled', 'cancelled', 'no_show'].includes(status);
 
-  // Build context-aware lifecycle actions based on current status
   const lifecycleActions: { key: string; label: string; color: string; hoverBg: string }[] = [];
 
   if (status === 'confirmed' || status === 'pending') {
@@ -74,7 +60,6 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
     lifecycleActions.push({ key: 'cancel', label: 'Cancel Booking', color: 'text-rose-600', hoverBg: 'hover:bg-rose-50' });
   }
 
-  // Build context-aware payment actions
   const paymentActions: { key: string; label: string; color: string; hoverBg: string }[] = [];
 
   if (paymentStatus === 'unpaid') {
@@ -85,66 +70,77 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   }
 
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
-      <div className="flex items-center justify-end">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setOpen(!open)} 
-          className="h-7 text-[10px] font-bold px-2 border-zinc-200 text-zinc-700 hover:text-zinc-900 hover:bg-slate-50 shrink-0"
-          disabled={isProcessing}
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={isProcessing}
+        className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-zinc-200 bg-white px-2 text-[10px] font-bold text-zinc-700 hover:bg-slate-50 hover:text-zinc-900 disabled:pointer-events-none disabled:opacity-50 outline-none"
+      >
+        {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+        Action
+        <ChevronDown className="w-3 h-3 opacity-70" />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        sideOffset={6}
+        className="z-[250] w-52 min-w-52 border border-slate-200 bg-white p-1 shadow-xl rounded-xl"
+      >
+        <DropdownMenuItem
+          onClick={() => handleFire('view')}
+          className="text-xs font-bold text-zinc-700 cursor-pointer"
         >
-          {isProcessing ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
-          Action <ChevronDown className="w-3 h-3 ml-1.5 opacity-70" />
-        </Button>
-      </div>
+          <Eye className="w-3 h-3" />
+          View Booking
+        </DropdownMenuItem>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden transform opacity-100 scale-100 transition-all duration-200 origin-top-right">
-          <div className="py-1 flex flex-col">
-            {/* Always available: View */}
-            <button onClick={() => handleFire('view')} className="w-full flex items-center px-4 py-2 text-xs hover:bg-slate-50 text-zinc-700 font-bold transition-colors">
-              <Eye className="w-3 h-3 mr-2" /> View Booking
-            </button>
+        {lifecycleActions.length > 0 && (
+          <>
+            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuLabel className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+              Booking Status
+            </DropdownMenuLabel>
+            {lifecycleActions.map((a) => (
+              <DropdownMenuItem
+                key={a.key}
+                onClick={() => handleFire(a.key)}
+                className={`text-xs font-bold cursor-pointer ${a.color} ${a.hoverBg}`}
+              >
+                {a.label}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
 
-            {/* Lifecycle actions — only if not terminal */}
-            {lifecycleActions.length > 0 && (
-              <>
-                <div className="h-px bg-slate-100 my-1 mx-2" />
-                <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Booking Status</div>
-                {lifecycleActions.map((a) => (
-                  <button key={a.key} onClick={() => handleFire(a.key)} className={`w-full text-left px-4 py-2 text-xs ${a.hoverBg} ${a.color} font-bold transition-colors`}>
-                    {a.label}
-                  </button>
-                ))}
-              </>
-            )}
+        {paymentActions.length > 0 && !['paid', 'refunded'].includes(paymentStatus) && (
+          <>
+            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuLabel className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+              Payment
+            </DropdownMenuLabel>
+            {paymentActions.map((a) => (
+              <DropdownMenuItem
+                key={a.key}
+                onClick={() => handleFire(a.key)}
+                className={`text-xs font-bold cursor-pointer ${a.color} ${a.hoverBg}`}
+              >
+                {a.label}
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
 
-            {/* Payment actions — show unless fully paid/refunded */}
-            {paymentActions.length > 0 && !['paid', 'refunded'].includes(paymentStatus) && (
-              <>
-                <div className="h-px bg-slate-100 my-1 mx-2" />
-                <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Payment</div>
-                {paymentActions.map((a) => (
-                  <button key={a.key} onClick={() => handleFire(a.key)} className={`w-full text-left px-4 py-2 text-xs ${a.hoverBg} ${a.color} font-bold transition-colors`}>
-                    {a.label}
-                  </button>
-                ))}
-              </>
-            )}
-
-            {/* Terminal state indicator */}
-            {isTerminal && lifecycleActions.length === 0 && (
-              <>
-                <div className="h-px bg-slate-100 my-1 mx-2" />
-                <div className="px-3 py-2 text-[10px] font-bold text-zinc-400 italic">No further actions available</div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+        {isTerminal && lifecycleActions.length === 0 && (
+          <>
+            <DropdownMenuSeparator className="bg-slate-100" />
+            <DropdownMenuLabel className="px-3 py-2 text-[10px] font-bold text-zinc-400 italic">
+              No further actions available
+            </DropdownMenuLabel>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 
@@ -493,7 +489,7 @@ export default function DashboardBookings() {
       </div>
 
       {/* Bookings List Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs min-h-[400px]">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs min-h-[400px]">
         {loading ? (
            <div className="flex flex-col items-center justify-center h-[400px]">
              <Loader2 className="w-8 h-8 animate-spin text-zinc-400 mb-4" />
@@ -508,7 +504,7 @@ export default function DashboardBookings() {
              <p className="text-sm text-zinc-500 mt-1">Try another tab or adjust your search.</p>
            </div>
         ) : (
-          <div className="overflow-hidden">
+          <div className="overflow-visible rounded-b-2xl">
             <table className="w-full table-fixed text-left">
               <colgroup>
                 <col className="w-[12%]" />
