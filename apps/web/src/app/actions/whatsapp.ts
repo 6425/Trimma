@@ -1818,3 +1818,49 @@ export async function sendWhatsAppBookingReminder(bookingNo: string) {
     };
   }
 }
+
+/** Marketing VIP promo blast — plain text WhatsApp to a customer phone. */
+export async function sendMarketingPromoWhatsApp(rawPhone: string, messageBody: string) {
+  const { enabled, phoneId, accessToken } = await getWhatsAppMessagingConfig();
+
+  if (!enabled) {
+    return { success: false, error: "WhatsApp alerts are disabled in Admin settings.", skipped: true };
+  }
+  if (!phoneId || !accessToken) {
+    return { success: false, error: "WhatsApp credentials not configured." };
+  }
+
+  try {
+    const customerPhone = cleanPhoneNumber(rawPhone);
+    if (!customerPhone) {
+      return { success: false, error: "Customer phone number is missing.", skipped: true };
+    }
+
+    const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: customerPhone,
+        type: "text",
+        text: { body: messageBody },
+      }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        success: false,
+        error: formatWhatsAppApiError(payload) || "WhatsApp rejected the message.",
+      };
+    }
+
+    return { success: true, messageId: payload?.messages?.[0]?.id as string | undefined };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send WhatsApp promo.",
+    };
+  }
+}

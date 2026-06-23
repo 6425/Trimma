@@ -716,6 +716,68 @@ export async function sendBookingReminderEmail(bookingNo: string) {
   }
 }
 
+export async function sendMarketingPromoEmail(input: {
+  to: string;
+  subject: string;
+  body: string;
+  ctaUrl: string;
+  rateLimitKey: string;
+}) {
+  try {
+    const config = await getEmailConfig();
+    if (!config.enabled) {
+      return { success: false, error: "Email notifications are disabled.", skipped: true };
+    }
+
+    const rate = checkEmailRateLimit(input.rateLimitKey);
+    if (!rate.allowed) {
+      return {
+        success: false,
+        error: "Email rate limit exceeded. Please try again later.",
+        rateLimited: true,
+        retryAfterSec: rate.retryAfterSec,
+      };
+    }
+
+    const credentials = resolveResendCredentials(config);
+    if (!credentials.apiKey) {
+      return {
+        success: false,
+        error: "Resend API key is not configured. Add it in Admin → Global Settings → Resend Email.",
+      };
+    }
+
+    const resend = createResendClient(credentials.apiKey);
+    const { data, error } = await resend.emails.send({
+      from: credentials.from,
+      to: [input.to.trim().toLowerCase()],
+      subject: input.subject,
+      react: DynamicTrimmaEmail({
+        preview: input.subject,
+        title: input.subject,
+        body: input.body,
+        ctaLabel: "View offer",
+        ctaUrl: input.ctaUrl,
+      }),
+      tags: [{ name: "trigger", value: "marketing-vip-promo" }],
+    });
+
+    if (error) {
+      return { success: false, error: error.message || "Resend rejected the email." };
+    }
+    if (!data?.id) {
+      return { success: false, error: "Resend did not return a message id." };
+    }
+
+    return { success: true, id: data.id };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send promo email.",
+    };
+  }
+}
+
 export async function sendAgentApprovalEmail(salonName: string, ownerEmail: string) {
   if (ownerEmail) {
     await sendTriggeredEmail({ triggerId: "agent-approval-owner", to: ownerEmail, variables: { salon_name: salonName }, rateLimitKey: `agent-app-own:${ownerEmail}` });

@@ -96,3 +96,32 @@ export function buildVisitCountsByEmail(
 
   return visitCounts;
 }
+
+export type VipRecipient = {
+  email: string;
+  name: string;
+  phone: string | null;
+  visits: number;
+};
+
+export function listVipRecipients(
+  bookings: Array<{ customer_email?: string | null; status?: string | null }>,
+  rules: SalonLoyaltyRule[],
+  usersByEmail: Map<string, { full_name?: string | null; phone?: string | null }>
+): VipRecipient[] {
+  const visitCounts = buildVisitCountsByEmail(bookings);
+  const recipients: VipRecipient[] = [];
+
+  for (const [email, visits] of Object.entries(visitCounts)) {
+    if (!resolveVipFromVisits(visits, rules)) continue;
+    const user = usersByEmail.get(email);
+    recipients.push({
+      email,
+      name: user?.full_name?.trim() || "Valued Client",
+      phone: user?.phone?.trim() || null,
+      visits,
+    });
+  }
+
+  return recipients.sort((a, b) => b.visits - a.visits);
+}
