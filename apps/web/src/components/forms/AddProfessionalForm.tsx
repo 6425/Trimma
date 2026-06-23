@@ -63,6 +63,8 @@ export interface AddProfessionalFormProps {
   submitLabel?: string;
   /** When true, form renders inside DashboardModal (no duplicate shell/header). */
   embedded?: boolean;
+  /** Optional extra classes on the form root (e.g. staff page black text theme). */
+  formClassName?: string;
 }
 
 export function AddProfessionalForm({
@@ -76,6 +78,7 @@ export function AddProfessionalForm({
   title = "Add Professional",
   submitLabel = "Add Professional",
   embedded = false,
+  formClassName = "",
 }: AddProfessionalFormProps) {
   // Avatar Upload & Crop States
   const [imgSrc, setImgSrc] = useState('');
@@ -279,8 +282,8 @@ export function AddProfessionalForm({
         onSubmit={handleSubmit}
         className={
           embedded
-            ? "space-y-6"
-            : "bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden max-h-[85vh] overflow-y-auto custom-scrollbar"
+            ? `space-y-6 ${formClassName}`.trim()
+            : `bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-lg w-full mx-auto space-y-6 animate-in slide-in-from-bottom-6 duration-300 relative overflow-hidden max-h-[85vh] overflow-y-auto custom-scrollbar ${formClassName}`.trim()
         }
       >
         {!embedded ? (

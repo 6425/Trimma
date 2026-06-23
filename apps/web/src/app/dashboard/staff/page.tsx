@@ -410,29 +410,29 @@ export default function DashboardStaff() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto p-4 relative">
+    <div className="space-y-6 max-w-5xl mx-auto p-4 relative text-black [&_button]:text-black [&_svg]:text-black">
       
       {/* Dynamic Plan Header Badge */}
       <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-brand font-bold">
+          <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center text-black font-bold">
             <Sparkles className="w-5 h-5 animate-pulse" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Active Membership Tier</p>
-            <h3 className="font-extrabold text-[#1A1C29] text-base">{subscriptionName}</h3>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-black">Active Membership Tier</p>
+            <h3 className="font-extrabold text-black text-base">{subscriptionName}</h3>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-zinc-500">Allowed Staff:</span>
-            <Badge variant="outline" className="bg-white border-zinc-200 text-brand font-black px-2 py-0.5 text-[10px]">
+            <span className="text-xs font-semibold text-black">Allowed Staff:</span>
+            <Badge variant="outline" className="bg-white border-zinc-200 text-black font-black px-2 py-0.5 text-[10px]">
               {staff.length} / {maxStaffLimit}
             </Badge>
           </div>
           <Button 
             onClick={() => window.location.href = '/dashboard/billing'}
-            className="ml-0 sm:ml-2 h-8 text-[10px] bg-zinc-900 hover:bg-black text-white rounded-lg font-bold uppercase tracking-wider"
+            className="ml-0 sm:ml-2 h-8 text-[10px] bg-white hover:bg-zinc-50 text-black border border-zinc-200 rounded-lg font-bold uppercase tracking-wider"
           >
             Upgrade Plan
           </Button>
@@ -442,13 +442,13 @@ export default function DashboardStaff() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Staff Directory</h1>
-          <p className="text-sm text-zinc-500 mt-1">Manage your barbers, stylists, and professional commissions.</p>
+          <h1 className="text-2xl font-bold text-black tracking-tight">Staff Directory</h1>
+          <p className="text-sm text-black mt-1">Manage your barbers, stylists, and professional commissions.</p>
         </div>
         <Button 
           onClick={() => void openStaffModal("add")}
           disabled={loading || refreshingForm}
-          className="bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11 shadow-md shadow-brand/20 self-start sm:self-auto"
+          className="bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11 shadow-md shadow-brand/20 self-start sm:self-auto border border-zinc-200"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Professional
@@ -458,19 +458,19 @@ export default function DashboardStaff() {
       <div className="bg-white rounded-2xl border border-slate-200 min-h-[300px] shadow-sm overflow-hidden">
         {loading ? (
            <div className="flex flex-col items-center justify-center h-[300px]">
-             <Loader2 className="w-8 h-8 animate-spin text-zinc-400 mb-4" />
-             <p className="text-zinc-500">Loading staff directory...</p>
+             <Loader2 className="w-8 h-8 animate-spin text-black mb-4" />
+             <p className="text-black">Loading staff directory...</p>
            </div>
         ) : staff.length === 0 ? (
            <div className="flex flex-col items-center justify-center text-center p-8 h-[300px]">
              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-               <Users className="w-8 h-8 text-slate-400" />
+               <Users className="w-8 h-8 text-black" />
              </div>
-             <h3 className="text-lg font-semibold text-zinc-900">No staff members yet</h3>
-             <p className="text-zinc-500 max-w-xs mx-auto mt-1">
+             <h3 className="text-lg font-semibold text-black">No staff members yet</h3>
+             <p className="text-black max-w-xs mx-auto mt-1">
                Add your stylists and barbers to manage their schedules and performance.
              </p>
-             <Button onClick={() => void openStaffModal("add")} variant="outline" className="mt-6 rounded-xl h-10 px-5 font-bold">
+             <Button onClick={() => void openStaffModal("add")} variant="outline" className="mt-6 rounded-xl h-10 px-5 font-bold text-black border-zinc-200">
                <Plus className="w-4 h-4 mr-2" /> Add Professional
              </Button>
            </div>
@@ -488,15 +488,13 @@ export default function DashboardStaff() {
                        <AvatarFallback>{member.name[0]}</AvatarFallback>
                      </Avatar>
                      <div>
-                       <h3 className="font-bold text-zinc-900 text-lg flex items-center gap-2">
+                       <h3 className="font-bold text-black text-lg flex items-center gap-2">
                          {member.name}
-                         <Badge className={`border-none px-2.5 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider ${
-                           member.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
-                         }`}>
+                         <Badge className="border-none px-2.5 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wider bg-zinc-100 text-black">
                            {member.status === 'active' ? 'Active' : 'Inactive'}
                          </Badge>
                        </h3>
-                       <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{member.role}</p>
+                       <p className="text-xs text-black font-bold uppercase tracking-widest mt-0.5">{member.role}</p>
                        
                        {/* Display certified services and commissions */}
                        {member.working_hours?.assigned_services && member.working_hours.assigned_services.length > 0 && (
@@ -504,7 +502,7 @@ export default function DashboardStaff() {
                            {member.working_hours.assigned_services.map((as: any) => {
                              const matchedServ = findSalonServiceForAssignmentId(staffFormServices, as.service_id);
                              return (
-                               <Badge key={as.service_id} className="bg-rose-50 text-brand border-none font-bold text-[9px] py-0 px-2 rounded">
+                               <Badge key={as.service_id} className="bg-zinc-100 text-black border-none font-bold text-[9px] py-0 px-2 rounded">
                                  {matchedServ?.name || "Service"} ({as.commission_rate}%)
                                </Badge>
                              );
@@ -512,15 +510,15 @@ export default function DashboardStaff() {
                          </div>
                        )}
 
-                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400 mt-2.5">
-                          <span className="flex items-center gap-1 font-semibold text-zinc-600">
+                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-black mt-2.5">
+                          <span className="flex items-center gap-1 font-semibold text-black">
                             <Clock className="w-3.5 h-3.5" /> 
                             {member.working_hours?.schedule 
                               ? `${Object.values(member.working_hours.schedule).filter((d: any) => d.isWorking).length} Working Days`
                               : member.working_hours?.hours_description || "No schedule"}
                           </span>
                          {member.working_hours?.general_buffer_time > 0 && (
-                           <span className="flex items-center gap-1 font-semibold text-zinc-500">⏱️ {member.working_hours.general_buffer_time}m Buffer</span>
+                           <span className="flex items-center gap-1 font-semibold text-black">⏱️ {member.working_hours.general_buffer_time}m Buffer</span>
                          )}
                        </div>
                      </div>
@@ -528,7 +526,7 @@ export default function DashboardStaff() {
 
                    {/* Listing Action buttons */}
                    <div className="flex items-center justify-between sm:flex-col sm:items-end w-full sm:w-auto mt-4 sm:mt-0 gap-3">
-                      <div className="text-xs text-zinc-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm font-semibold">
+                      <div className="text-xs text-black bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm font-semibold">
                         {member.email || 'No email provided'}
                       </div>
                       <div className="flex gap-2">
@@ -537,7 +535,7 @@ export default function DashboardStaff() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => startEditing(member)}
-                          className="rounded-lg h-9 font-bold text-xs border-zinc-200 text-zinc-700 hover:bg-brand/5 hover:text-brand hover:border-brand/20 flex items-center gap-1"
+                          className="rounded-lg h-9 font-bold text-xs border-zinc-200 text-black hover:bg-zinc-50 hover:text-black hover:border-zinc-300 flex items-center gap-1"
                         >
                           <Pencil className="w-3 h-3" /> Edit Info
                         </Button>
@@ -545,7 +543,7 @@ export default function DashboardStaff() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleToggleStatus(member.id, member.status)}
-                          className="rounded-lg h-9 font-semibold text-xs border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                          className="rounded-lg h-9 font-semibold text-xs border-zinc-200 text-black hover:bg-zinc-50 hover:text-black"
                         >
                           Toggle Status
                         </Button>
@@ -553,7 +551,7 @@ export default function DashboardStaff() {
                           variant="ghost" 
                           size="icon" 
                           onClick={() => handleDeleteStaff(member.id)}
-                          className="text-zinc-400 hover:text-red-500 hover:bg-red-50 h-9 w-9 rounded-lg"
+                          className="text-black hover:text-black hover:bg-zinc-100 h-9 w-9 rounded-lg"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -569,6 +567,8 @@ export default function DashboardStaff() {
         open={Boolean(staffModalMode)}
         onClose={closeStaffModal}
         size="md"
+        panelClassName="text-black [&_h2]:text-black [&_p]:text-black [&_button]:text-black"
+        bodyClassName="text-black [&_*]:text-black [&_button]:text-black [&_input]:text-black [&_select]:text-black [&_option]:text-black [&_label]:text-black [&_span]:text-black [&_h3]:text-black [&_p]:text-black"
         title={staffModalMode === "edit" ? "Edit Professional" : "Add Professional"}
         description={
           staffModalMode === "edit"
@@ -578,13 +578,14 @@ export default function DashboardStaff() {
       >
         {refreshingForm ? (
           <div className="flex flex-col items-center gap-4 py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-brand" />
-            <p className="text-sm font-semibold text-zinc-600">Loading staff form...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-black" />
+            <p className="text-sm font-semibold text-black">Loading staff form...</p>
           </div>
         ) : (
           <AddProfessionalForm
             key={staffFormKey}
             embedded
+            formClassName="text-black [&_button]:!text-black [&_label]:!text-black [&_span]:!text-black [&_p]:!text-black [&_h3]:!text-black [&_input]:!text-black [&_select]:!text-black [&_option]:!text-black [&_svg]:!text-black"
             onCancel={closeStaffModal}
             onSubmit={staffModalMode === "add" ? handleAddStaffFormSubmit : handleEditStaffSubmit}
             globalRoles={effectiveStaffRoles}
