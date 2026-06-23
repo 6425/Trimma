@@ -353,7 +353,20 @@ export default function DashboardBookings() {
     (b.booking_no || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredBookings = searchedBookings.filter((b) => matchesBookingStatusTab(b, statusTab));
+  const filteredBookings = useMemo(
+    () =>
+      [...searchedBookings]
+        .filter((b) => matchesBookingStatusTab(b, statusTab))
+        .sort((a, b) => {
+          const dateA = a.booking_date || "";
+          const dateB = b.booking_date || "";
+          if (dateA !== dateB) return dateA.localeCompare(dateB);
+          const timeA = (a.booking_time || "").slice(0, 8);
+          const timeB = (b.booking_time || "").slice(0, 8);
+          return timeA.localeCompare(timeB);
+        }),
+    [searchedBookings, statusTab]
+  );
 
   const tabCounts = BOOKING_STATUS_TABS.reduce(
     (acc, tab) => {

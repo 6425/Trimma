@@ -94,7 +94,22 @@ const SALON_BOOKINGS_SELECT = `
   booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
 `;
 
-function mergeBookingsById<T extends { id: string; created_at?: string | null }>(
+function compareBookingsByAppointmentDate(
+  a: { booking_date?: string | null; booking_time?: string | null; created_at?: string | null },
+  b: { booking_date?: string | null; booking_time?: string | null; created_at?: string | null }
+): number {
+  const dateA = a.booking_date || "";
+  const dateB = b.booking_date || "";
+  if (dateA !== dateB) return dateA.localeCompare(dateB);
+
+  const timeA = (a.booking_time || "").slice(0, 8);
+  const timeB = (b.booking_time || "").slice(0, 8);
+  if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+  return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+}
+
+function mergeBookingsById<T extends { id: string; booking_date?: string | null; booking_time?: string | null; created_at?: string | null }>(
   primary: T[],
   extra: T[]
 ): T[] {
@@ -103,9 +118,7 @@ function mergeBookingsById<T extends { id: string; created_at?: string | null }>
   for (const row of extra) {
     if (!byId.has(row.id)) byId.set(row.id, row);
   }
-  return Array.from(byId.values()).sort(
-    (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-  );
+  return Array.from(byId.values()).sort(compareBookingsByAppointmentDate);
 }
 
 export async function fetchSalonBookingsPage() {
@@ -114,7 +127,8 @@ export async function fetchSalonBookingsPage() {
       .from("bookings")
       .select(SALON_BOOKINGS_SELECT)
       .eq("salon_id", ctx.salonId)
-      .order("created_at", { ascending: false });
+      .order("booking_date", { ascending: true })
+      .order("booking_time", { ascending: true });
 
     let bookings = primaryQuery.data || [];
 
@@ -124,7 +138,8 @@ export async function fetchSalonBookingsPage() {
         .from("bookings")
         .select("*")
         .eq("salon_id", ctx.salonId)
-        .order("created_at", { ascending: false });
+        .order("booking_date", { ascending: true })
+        .order("booking_time", { ascending: true });
       if (fallback.error) throw new Error(fallback.error.message);
       bookings = fallback.data || [];
     }
@@ -135,7 +150,8 @@ export async function fetchSalonBookingsPage() {
       .eq("salon_id", ctx.salonId)
       .eq("status", "pending")
       .eq("payment_status", "reservation_paid")
-      .order("created_at", { ascending: false });
+      .order("booking_date", { ascending: true })
+      .order("booking_time", { ascending: true });
 
     if (!pendingPaid.error && pendingPaid.data?.length) {
       bookings = mergeBookingsById(bookings, pendingPaid.data);
@@ -146,11 +162,14 @@ export async function fetchSalonBookingsPage() {
         .eq("salon_id", ctx.salonId)
         .eq("status", "pending")
         .eq("payment_status", "reservation_paid")
-        .order("created_at", { ascending: false });
+        .order("booking_date", { ascending: true })
+        .order("booking_time", { ascending: true });
       if (!pendingPaidFallback.error && pendingPaidFallback.data?.length) {
         bookings = mergeBookingsById(bookings, pendingPaidFallback.data);
       }
     }
+
+    bookings.sort(compareBookingsByAppointmentDate);
 
     return { salon: ctx.salon, bookings };
   });
