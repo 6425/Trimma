@@ -4,6 +4,20 @@ import {
   resolveStaffMemberFromBooking,
   type SalonStaffForAllocation,
 } from "@/lib/staff-allocation";
+import { toDateInputValue } from "@/lib/promotion-package-dates";
+
+/** Calendar date in the salon owner's local timezone — never use toISOString() for day keys. */
+function toLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function normalizeBookingDateKey(bookingDate: string | null | undefined): string | null {
+  const key = toDateInputValue(bookingDate ?? "");
+  return key || null;
+}
 
 export function formatLkr(value: number): string {
   if (!Number.isFinite(value)) return "0";
@@ -88,16 +102,16 @@ export function groupBookingsByDay(
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(endDate);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = toLocalDateKey(d);
     const label = d.toLocaleDateString(undefined, { weekday: "short" });
     buckets.set(dateStr, { label, dateStr, bookings: 0, revenue: 0 });
   }
 
   for (const booking of bookings) {
-    if (!booking.booking_date) continue;
-    // ensure we only count if it is within the initialized days
-    if (buckets.has(booking.booking_date)) {
-      const current = buckets.get(booking.booking_date)!;
+    const bookingDateKey = normalizeBookingDateKey(booking.booking_date);
+    if (!bookingDateKey) continue;
+    if (buckets.has(bookingDateKey)) {
+      const current = buckets.get(bookingDateKey)!;
       current.bookings += 1;
       current.revenue += Number(booking.amount || 0);
     }
@@ -117,8 +131,7 @@ export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, all
   for (let i = 6; i >= 0; i--) {
     const d = new Date(endDate);
     d.setDate(d.getDate() - i);
-    // Format as YYYY-MM-DD for easy mapping
-    last7Days.push(d.toISOString().split("T")[0]);
+    last7Days.push(toLocalDateKey(d));
   }
 
   // Create a bucket for each day: { date: 'Mon', fullDate: 'YYYY-MM-DD', ...staffCounts }
@@ -140,10 +153,10 @@ export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, all
   });
 
   for (const b of bookings) {
-    if (!b.booking_date) continue;
-    // We only care if it falls in our last 7 days bucket
-    if (dataMap.has(b.booking_date)) {
-      const bucket = dataMap.get(b.booking_date)!;
+    const bookingDateKey = normalizeBookingDateKey(b.booking_date);
+    if (!bookingDateKey) continue;
+    if (dataMap.has(bookingDateKey)) {
+      const bucket = dataMap.get(bookingDateKey)!;
       let staffName = "Any Staff";
 
       // Try direct relation first, then fallback to junction table
@@ -176,17 +189,13 @@ export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, all
 export function groupRevenueByDay(bookings: any[], offsetWeeks = 0) {
   const last7Days: string[] = [];
   const endDate = new Date();
-  
-  if (offsetWeeks > 0) {
-    endDate.setDate(endDate.getDate() - (offsetWeeks * 7));
-  }
-  
-  endDate.setHours(23, 59, 59, 999);
+  endDate.setHours(0, 0, 0, 0);
+  endDate.setDate(endDate.getDate() - offsetWeeks * 7);
 
   for (let i = 6; i >= 0; i--) {
     const d = new Date(endDate);
     d.setDate(d.getDate() - i);
-    last7Days.push(d.toISOString().split("T")[0]);
+    last7Days.push(toLocalDateKey(d));
   }
 
   const dataMap = new Map<string, any>();
@@ -203,9 +212,10 @@ export function groupRevenueByDay(bookings: any[], offsetWeeks = 0) {
   });
 
   for (const b of bookings) {
-    if (!b.booking_date) continue;
-    if (dataMap.has(b.booking_date)) {
-      const bucket = dataMap.get(b.booking_date)!;
+    const bookingDateKey = normalizeBookingDateKey(b.booking_date);
+    if (!bookingDateKey) continue;
+    if (dataMap.has(bookingDateKey)) {
+      const bucket = dataMap.get(bookingDateKey)!;
       const amount = Number(b.amount || 0);
       const totalResFee = Number(b.total_reservation_fee || 0);
       const salonUpfront = Number(b.salon_upfront_amount || 0);
