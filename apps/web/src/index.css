@@ -500,6 +500,24 @@
     color: #ffc800 !important;
   }
 
+  :is(button, a, [role="button"], [data-slot="button"]).bg-black:not(.bg-brand):not([class*="bg-brand/"]),
+  :is(button, a, [role="button"], [data-slot="button"]).bg-zinc-900:not(.bg-brand) {
+    color: #ffffff !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]).bg-black:not(.bg-brand) :is(a, span, svg),
+  :is(button, a, [role="button"], [data-slot="button"]).bg-zinc-900:not(.bg-brand) :is(a, span, svg) {
+    color: #ffffff !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(.bg-black, .bg-zinc-900, .bg-zinc-950):not(.bg-brand) {
+    color: #ffffff !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(.bg-black, .bg-zinc-900, .bg-zinc-950):not(.bg-brand) :is(svg, span) {
+    color: #ffffff !important;
+  }
+
   /*
    * Unified primary button contract — SOLID yellow fill only, black text, gold hover.
    * Excludes low-opacity brand tints (/10, /20) used for outline secondary on dark panels.

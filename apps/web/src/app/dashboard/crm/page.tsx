@@ -152,7 +152,8 @@ export default function CRMPage() {
 
         <Button
           onClick={openRulesModal}
-          className="h-10 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+          variant="dark"
+          className="h-10 rounded-xl text-xs font-bold gap-1.5 shadow-md"
         >
           <Award className="w-3.5 h-3.5" /> Setup Loyalty Rule
         </Button>
@@ -260,7 +261,8 @@ export default function CRMPage() {
 
               <Button
                 onClick={openRulesModal}
-                className="w-full bg-black text-white hover:bg-zinc-800 font-bold h-11 rounded-xl text-xs flex items-center justify-center gap-1.5"
+                variant="dark"
+                className="w-full font-bold h-11 rounded-xl text-xs gap-1.5"
               >
                 View Member Rules <ArrowRight className="w-4 h-4" />
               </Button>
@@ -297,12 +299,13 @@ export default function CRMPage() {
             >
               Cancel
             </Button>
-            <Button
-              type="button"
-              onClick={() => void handleSaveRules()}
-              disabled={savingRules}
-              className="rounded-xl font-bold h-11 bg-black text-white hover:bg-zinc-800"
-            >
+              <Button
+                type="button"
+                onClick={() => void handleSaveRules()}
+                disabled={savingRules}
+                variant="dark"
+                className="rounded-xl font-bold h-11 px-6"
+              >
               {savingRules ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
               Save rules
             </Button>

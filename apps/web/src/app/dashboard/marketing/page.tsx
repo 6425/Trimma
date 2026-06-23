@@ -16,9 +16,10 @@ import {
   Crown,
   Mail,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import {
   fetchSalonMarketingPage,
@@ -213,20 +214,22 @@ export default function MarketingPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
+            variant="default"
             onClick={() => openCampaignModal()}
             disabled={packages.length === 0 || vipAudience.count === 0}
-            className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs flex items-center gap-1.5 shadow-md"
+            className="h-10 rounded-xl text-xs font-bold gap-1.5 shadow-md"
           >
             <Send className="w-3.5 h-3.5" /> Send promo to VIPs
           </Button>
-          <Button
-            asChild
-            className="h-10 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+          <Link
+            href="/dashboard/packages"
+            className={cn(
+              buttonVariants({ variant: "dark" }),
+              "h-10 rounded-xl text-xs font-bold gap-1.5"
+            )}
           >
-            <Link href="/dashboard/packages">
-              <Plus className="w-3.5 h-3.5" /> Create package
-            </Link>
-          </Button>
+            <Plus className="w-3.5 h-3.5" /> Create promotional package
+          </Link>
         </div>
       </div>
 
@@ -370,9 +373,12 @@ export default function MarketingPage() {
 
         {packages.length === 0 ? (
           <div className="py-12 text-center">
-            <Button asChild className="rounded-xl bg-black text-white hover:bg-zinc-800 font-bold">
-              <Link href="/dashboard/packages">Create your first package</Link>
-            </Button>
+            <Link
+              href="/dashboard/packages"
+              className={cn(buttonVariants({ variant: "dark" }), "rounded-xl font-bold")}
+            >
+              Create your first package
+            </Link>
           </div>
         ) : (
           <div className="overflow-x-auto border border-zinc-100 rounded-2xl">
@@ -444,7 +450,8 @@ export default function MarketingPage() {
               type="button"
               onClick={() => void handleSendVipCampaign()}
               disabled={sendingCampaign}
-              className="rounded-xl font-bold h-11 bg-black text-white hover:bg-zinc-800"
+              variant="dark"
+              className="rounded-xl font-bold h-11 px-6"
             >
               {sendingCampaign ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
               Send campaign

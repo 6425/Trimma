@@ -55,6 +55,10 @@ const buttonVariants = cva(
         destructive:
           "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300",
 
+        // ── Dark: Black fill, white text (dashboard secondary CTAs) ──
+        dark:
+          "bg-black !text-white border-black hover:bg-zinc-800 hover:!text-white [&_svg]:!text-white shadow-sm",
+
         // ── Link: Underline only ──
         link:
           "bg-transparent text-[#ffc800] border-transparent underline-offset-4 hover:underline hover:text-[#ffd633]",

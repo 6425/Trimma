@@ -463,7 +463,8 @@ export default function DashboardServices() {
             </div>
             <Button 
               onClick={() => window.location.href = '/dashboard/billing'}
-              className="ml-0 sm:ml-2 h-8 text-[10px] bg-zinc-900 hover:bg-black text-white rounded-lg font-bold uppercase tracking-wider"
+              className="ml-0 sm:ml-2 h-8 text-[10px] rounded-lg font-bold uppercase tracking-wider"
+            variant="dark"
             >
               Upgrade Plan
             </Button>
@@ -507,7 +508,8 @@ export default function DashboardServices() {
               setShowImportModal(true);
             }}
             disabled={!hasActiveStaff}
-            className="flex-1 md:flex-none bg-black text-white hover:bg-zinc-800 rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50 border border-black [&_svg]:text-white"
+            variant="dark"
+            className="flex-1 md:flex-none rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
@@ -563,7 +565,8 @@ export default function DashboardServices() {
             </p>
             <Button 
               onClick={() => setShowImportModal(true)}
-              className="bg-black text-white hover:bg-zinc-800 rounded-xl font-bold [&_svg]:text-white"
+              variant="dark"
+              className="rounded-xl font-bold"
             >
               <Sparkles className="w-4 h-4 mr-2" /> Import from Master Catalog
             </Button>
