@@ -13,6 +13,8 @@ import { checkEmailRateLimit } from "@/lib/email/rate-limit";
 import { createResendClient } from "@/lib/email/resend-client";
 import {
   getEmailTriggerById,
+  EMAIL_BODY_DEFAULTS,
+  EMAIL_SUBJECT_DEFAULTS,
   type EmailTriggerId,
 } from "@/lib/email-templates";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
@@ -619,6 +621,99 @@ export async function sendBookingCreatedOwnerEmail(bookingNo: string, ownerEmail
     variables: { customer_name: customer?.full_name || "Valued Client", salon_name: salon?.name || "Partner Salon", service_name: "Salon service", booking_date: booking.booking_date || "", booking_time: booking.booking_time || "", payment_status: paymentStatus, dashboard_link: `${APP_BASE_URL}/dashboard/bookings` },
     rateLimitKey: `booking-created-own:${bookingNo}`
   });
+}
+
+export async function sendBookingReminderEmail(bookingNo: string) {
+  try {
+    const config = await getEmailConfig();
+    if (!config.enabled) {
+      return { success: false, error: "Email notifications are disabled.", skipped: true };
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("customer_email, booking_date, booking_time, services(name), salons(name, address, location, slug)")
+      .eq("booking_no", bookingNo)
+      .maybeSingle();
+
+    if (!booking?.customer_email) {
+      return { success: false, error: "Booking or customer email not found.", skipped: true };
+    }
+
+    const rate = checkEmailRateLimit(`reminder:${bookingNo}`);
+    if (!rate.allowed) {
+      return {
+        success: false,
+        error: "Email rate limit exceeded. Please try again later.",
+        rateLimited: true,
+        retryAfterSec: rate.retryAfterSec,
+      };
+    }
+
+    const salon = Array.isArray(booking.salons) ? booking.salons[0] : booking.salons;
+    const salonName = salon?.name || "your salon";
+    const salonAddress = salon?.address || salon?.location || "See Trimma for details";
+    const mapsLink = salon?.slug ? `${APP_BASE_URL}/salons/${salon.slug}` : APP_BASE_URL;
+    const serviceRow = Array.isArray(booking.services) ? booking.services[0] : booking.services;
+
+    const { data: customer } = await supabase
+      .from("users")
+      .select("full_name")
+      .eq("email", booking.customer_email)
+      .maybeSingle();
+
+    const variables = {
+      customer_name: customer?.full_name || "Valued Client",
+      booking_no: bookingNo,
+      salon_name: salonName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      service_name: serviceRow?.name || "Salon service",
+      salon_address: salonAddress,
+      maps_link: mapsLink,
+      dashboard_link: `${APP_BASE_URL}/customer`,
+    };
+
+    const subject = parseEmailTemplate(EMAIL_SUBJECT_DEFAULTS.appointmentReminder, variables);
+    const body = parseEmailTemplate(EMAIL_BODY_DEFAULTS.appointmentReminder, variables);
+    const credentials = resolveResendCredentials(config);
+    if (!credentials.apiKey) {
+      return {
+        success: false,
+        error: "Resend API key is not configured. Add it in Admin → Global Settings → Resend Email.",
+      };
+    }
+
+    const resend = createResendClient(credentials.apiKey);
+    const { data, error } = await resend.emails.send({
+      from: credentials.from,
+      to: [booking.customer_email.trim().toLowerCase()],
+      subject,
+      react: DynamicTrimmaEmail({
+        preview: subject,
+        title: subject,
+        body,
+        ctaLabel: "View my bookings",
+        ctaUrl: variables.dashboard_link,
+      }),
+      tags: [{ name: "trigger", value: "appointment-reminder" }],
+    });
+
+    if (error) {
+      return { success: false, error: error.message || "Resend rejected the email." };
+    }
+    if (!data?.id) {
+      return { success: false, error: "Resend did not return a message id." };
+    }
+
+    return { success: true, id: data.id };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send reminder email.",
+    };
+  }
 }
 
 export async function sendAgentApprovalEmail(salonName: string, ownerEmail: string) {

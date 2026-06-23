@@ -1746,3 +1746,75 @@ Trimma Partner Support`;
     };
   }
 }
+
+/** Manual appointment reminder — salon owner dashboard (WhatsApp). */
+export async function sendWhatsAppBookingReminder(bookingNo: string) {
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    metaTemplateConfirmed,
+    metaTemplateLanguage,
+  } = await getWhatsAppMessagingConfig();
+
+  if (!enabled) {
+    return { success: false, error: "WhatsApp alerts are disabled in Admin settings.", skipped: true };
+  }
+  if (!phoneId || !accessToken) {
+    return { success: false, error: "WhatsApp credentials not configured." };
+  }
+
+  try {
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, phone, address, location)");
+    if (!booking) return { success: false, error: "Booking record not found." };
+
+    const customer = await fetchCustomerContact(booking.customer_email);
+    const customerName = customer?.full_name || "Valued Client";
+    const rawCustomerPhone = customer?.phone;
+    if (!rawCustomerPhone) {
+      return { success: false, error: "Customer phone number is missing.", skipped: true };
+    }
+
+    const customerPhone = cleanPhoneNumber(rawCustomerPhone);
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
+    const salonAddress = booking.salons?.address || "";
+    const salonLocation = booking.salons?.location || "";
+    const serviceName = await resolveServiceName(booking.id, booking.services?.name);
+
+    let mapsLink = "";
+    if (salonLocation && salonLocation.includes(",")) {
+      mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(salonLocation.trim())}`;
+    } else if (salonAddress) {
+      mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salonName + ", " + salonAddress)}`;
+    }
+
+    const variables = {
+      customer_name: customerName,
+      booking_no: bookingNo,
+      salon_name: salonName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      service_name: serviceName,
+      salon_address: salonAddress,
+      maps_link: mapsLink,
+    };
+
+    const customerMessage = parseTemplate(D.appointmentReminder, variables);
+
+    return await sendWhatsAppCustomerMessage({
+      trigger: "confirmed",
+      phoneId,
+      accessToken,
+      customerPhone,
+      textBody: customerMessage,
+      variables,
+      metaTemplateName: metaTemplateConfirmed,
+      metaTemplateLanguage: metaTemplateLanguage,
+    });
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send WhatsApp reminder.",
+    };
+  }
+}

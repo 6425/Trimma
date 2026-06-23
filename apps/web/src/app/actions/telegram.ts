@@ -1184,3 +1184,57 @@ export async function sendAgentLeadAssignedTelegram(
     };
   }
 }
+
+/** Manual appointment reminder — salon owner dashboard (Telegram). */
+export async function sendTelegramBookingReminder(bookingNo: string) {
+  const { enabled, botToken } = await getTelegramMessagingConfig();
+  if (!enabled || !botToken) {
+    return { success: false, error: "Telegram alerts are disabled or not configured.", skipped: true };
+  }
+
+  try {
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name, address, location)");
+    if (!booking) return { success: false, error: "Booking record not found." };
+
+    const customer = await fetchCustomerContact(booking.customer_email);
+    const customerName = customer?.full_name || "Valued Client";
+    const chatId = await resolveTelegramChatId(
+      customer?.phone,
+      undefined,
+      booking.customer_email
+    );
+    if (!chatId) {
+      return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
+    }
+
+    const salonName = booking.salons?.name || "Trimma Partner Salon";
+    const salonAddress = booking.salons?.address || "";
+    const salonLocation = booking.salons?.location || "";
+    const serviceName = await resolveServiceName(booking.id, booking.services?.name);
+
+    let mapsLink = "";
+    if (salonLocation && salonLocation.includes(",")) {
+      mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(salonLocation.trim())}`;
+    } else if (salonAddress) {
+      mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salonName + ", " + salonAddress)}`;
+    }
+
+    const customerMessage = parseTemplate(D.appointmentReminder, {
+      customer_name: customerName,
+      booking_no: bookingNo,
+      salon_name: salonName,
+      booking_date: booking.booking_date || "",
+      booking_time: booking.booking_time || "",
+      service_name: serviceName,
+      salon_address: salonAddress,
+      maps_link: mapsLink,
+    });
+
+    return await sendTelegramText(botToken, chatId, customerMessage);
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send Telegram reminder.",
+    };
+  }
+}

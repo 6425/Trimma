@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { sendBookingConfirmedEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
-import { sendWhatsAppNotification, sendWhatsAppRescheduleNotification } from "@/app/actions/whatsapp";
+import { sendBookingConfirmedEmail, sendBookingReminderEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
+import { sendWhatsAppBookingReminder, sendWhatsAppNotification, sendWhatsAppRescheduleNotification } from "@/app/actions/whatsapp";
+import { sendTelegramBookingReminder } from "@/app/actions/telegram";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
 import {
   readBookingRescheduleState,
@@ -143,6 +144,68 @@ export async function updateOwnerBooking(bookingId: string, payload: Record<stri
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
+}
+
+type ReminderChannelResult = {
+  success: boolean;
+  error?: string;
+  skipped?: boolean;
+};
+
+export async function sendOwnerBookingReminder(bookingId: string) {
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: booking, error: readErr } = await supabase
+      .from("bookings")
+      .select("id, salon_id, booking_no, status, customer_email")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!booking || booking.salon_id !== ctx.salonId) {
+      throw new Error("Booking not found for your salon.");
+    }
+
+    const status = (booking.status || "").toLowerCase();
+    if (["completed", "canceled", "cancelled", "no_show"].includes(status)) {
+      throw new Error("Reminders cannot be sent for completed or cancelled bookings.");
+    }
+    if (!booking.booking_no) {
+      throw new Error("Booking reference is missing.");
+    }
+
+    return { bookingNo: booking.booking_no as string };
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+
+  const bookingNo = result.data.bookingNo;
+  const [whatsapp, email, telegram] = await Promise.all([
+    sendWhatsAppBookingReminder(bookingNo),
+    sendBookingReminderEmail(bookingNo),
+    sendTelegramBookingReminder(bookingNo),
+  ]);
+
+  const channels = { whatsapp, email, telegram };
+  const sent = Object.entries(channels).filter(([, r]) => r.success).map(([name]) => name);
+  const skipped = Object.entries(channels).filter(([, r]) => !r.success && (r as ReminderChannelResult).skipped).map(([name]) => name);
+  const failed = Object.entries(channels).filter(([, r]) => !r.success && !(r as ReminderChannelResult).skipped);
+
+  if (sent.length === 0) {
+    const firstFailed = failed[0];
+    const firstSkippedName = skipped[0];
+    const firstError =
+      (firstFailed && firstFailed[1]?.error) ||
+      (firstSkippedName && (channels as Record<string, ReminderChannelResult>)[firstSkippedName]?.error) ||
+      "No reminder channels were available.";
+    return { success: false as const, error: firstError, channels };
+  }
+
+  return {
+    success: true as const,
+    channels,
+    sent,
+    skipped,
+    failed: failed.map(([name, r]) => ({ channel: name, error: r.error || "Failed" })),
+  };
 }
 
 export async function confirmOwnerBooking(bookingId: string) {

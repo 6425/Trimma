@@ -30,6 +30,20 @@ Thank you for booking with Trimma 💛`,
 
 See you soon! ✂️`,
 
+  appointmentReminder: `Hi {customer_name}! ⏰
+
+Friendly reminder from *{salon_name}* about your upcoming appointment.
+
+📋 Ref: {booking_no}
+📅 *Date:* {booking_date}
+⏰ *Time:* {booking_time}
+💇 *Service:* {service_name}
+
+📍 *Location:* {salon_address}
+🗺️ *Directions:* {maps_link}
+
+We look forward to seeing you! ✂️`,
+
   rescheduled: `Hi {customer_name}! 🌟
 
 Your appointment at *{salon_name}* has been *rescheduled* to a new date and time.

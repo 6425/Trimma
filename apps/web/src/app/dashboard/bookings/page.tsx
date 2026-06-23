@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
+import { Plus, Search, Calendar, Loader2, AlertCircle, Eye, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,7 +18,7 @@ import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
-import { rescheduleOwnerBooking, rejectOwnerRescheduleRequest, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { rescheduleOwnerBooking, rejectOwnerRescheduleRequest, sendOwnerBookingReminder, updateOwnerBooking } from "@/app/actions/salon-operations";
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
@@ -93,6 +93,16 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
           <Eye className="w-3 h-3" />
           View Booking
         </DropdownMenuItem>
+
+        {!isTerminal && (
+          <DropdownMenuItem
+            onClick={() => handleFire('send_reminder')}
+            className="text-xs font-bold text-violet-700 cursor-pointer hover:bg-violet-50"
+          >
+            <Bell className="w-3 h-3" />
+            Send Reminder
+          </DropdownMenuItem>
+        )}
 
         {lifecycleActions.length > 0 && (
           <>
@@ -246,6 +256,41 @@ export default function DashboardBookings() {
     }
     setProcessingId(bookingId);
     try {
+      if (action === 'send_reminder') {
+        const booking = bookings.find((b) => b.id === bookingId);
+        if (!booking?.booking_no) {
+          throw new Error("Booking reference is missing.");
+        }
+        const reminderResult = await sendOwnerBookingReminder(bookingId);
+        if (reminderResult.success === false) {
+          throw new Error(reminderResult.error);
+        }
+        const sentLabels = reminderResult.sent.map((ch) => {
+          if (ch === "whatsapp") return "WhatsApp";
+          if (ch === "email") return "Email";
+          if (ch === "telegram") return "Telegram";
+          return ch;
+        });
+        toast.success(`Reminder sent via ${sentLabels.join(", ")}.`);
+        if (reminderResult.skipped.length > 0) {
+          const skippedLabels = reminderResult.skipped.map((ch) => {
+            if (ch === "whatsapp") return "WhatsApp";
+            if (ch === "email") return "Email";
+            if (ch === "telegram") return "Telegram";
+            return ch;
+          });
+          toast.message(`Skipped (not available): ${skippedLabels.join(", ")}.`);
+        }
+        if (reminderResult.failed.length > 0) {
+          const failedLabels = reminderResult.failed
+            .map((row) => `${row.channel}: ${row.error}`)
+            .join(" · ");
+          toast.message(`Some channels were unavailable: ${failedLabels}`);
+        }
+        setProcessingId(null);
+        return;
+      }
+
       let updatePayload: any = {};
       const booking = bookings.find(b => b.id === bookingId);
       const bookingNo = booking?.booking_no;

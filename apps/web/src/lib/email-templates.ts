@@ -8,6 +8,7 @@ import {
 export const EMAIL_SUBJECT_DEFAULTS = {
   reservationPaid: "Reservation payment received · {booking_no}",
   confirmed: "Your Trimma appointment is confirmed · {booking_no}",
+  appointmentReminder: "Reminder: your Trimma appointment · {booking_no}",
   rescheduled: "Your Trimma appointment was rescheduled",
   cancelled: "Your Trimma appointment was cancelled",
   review: "How was your visit to {salon_name}?",
@@ -60,6 +61,22 @@ Directions: {maps_link}
 View your bookings: {dashboard_link}
 
 Thank you for choosing Trimma.`,
+
+  appointmentReminder: `Hi {customer_name},
+
+This is a friendly reminder about your upcoming appointment at {salon_name}.
+
+Reference: {booking_no}
+Date: {booking_date}
+Time: {booking_time}
+Service: {service_name}
+
+Salon address: {salon_address}
+Directions: {maps_link}
+
+View your bookings: {dashboard_link}
+
+We look forward to seeing you!`,
 
   rescheduled: `Hi {customer_name},
 
