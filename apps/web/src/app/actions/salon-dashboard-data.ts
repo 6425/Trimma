@@ -10,7 +10,7 @@ import {
   sliceAllowedCategories,
 } from "@/lib/salon-subscription-plan";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
-import { getServiceIdsCoveredByStaff } from "@/lib/staff-allocation";
+import { getServiceIdsCoveredByStaff, getBookingServiceDisplayName, resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
 
 export async function fetchSalonLayoutShell() {
   const auth = await requireSalonOwnerFromCookies();
@@ -160,60 +160,70 @@ export async function fetchSalonBookingsPage() {
 
 export async function fetchSalonCalendarBookings(startDateStr: string, endDateStr: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    // Note: To join users via customer_email foreign key in Supabase, we can use users!bookings_customer_email_fkey(...) if needed,
-    // but users(full_name) usually works if there's only one FK to users. Let's select what we need.
+    const calendarSelect = `
+      id,
+      booking_date,
+      booking_time,
+      status,
+      customer_email,
+      staff_id,
+      services (id, name),
+      salon_staff (id, name, commission_rate, working_hours),
+      booking_services (service_id, price, duration_min, services (id, name, global_service_id)),
+      booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
+    `;
+
     const { data, error } = await supabase
       .from("bookings")
-      .select(`
-        id, 
-        booking_date, 
-        booking_time, 
-        status, 
-        customer_email,
-        services (name)
-      `)
+      .select(calendarSelect)
       .eq("salon_id", ctx.salonId)
       .gte("booking_date", startDateStr)
       .lte("booking_date", endDateStr)
       .order("booking_date", { ascending: true })
       .order("booking_time", { ascending: true });
-      
+
     if (error) throw new Error(error.message);
 
     const bookingsList = data || [];
-    
-    // Fetch users separately
-    const emails = [...new Set(bookingsList.map(b => b.customer_email).filter(Boolean))];
-    let usersMap: Record<string, string> = {};
-    if (emails.length > 0) {
-      const { data: usersData } = await supabase
-        .from("users")
-        .select("email, full_name")
-        .in("email", emails);
-        
-      if (usersData) {
-        usersData.forEach(u => {
+
+    const [usersRes, staffRes] = await Promise.all([
+      (async () => {
+        const emails = [...new Set(bookingsList.map((b) => b.customer_email).filter(Boolean))];
+        if (!emails.length) return {} as Record<string, string>;
+        const { data: usersData } = await supabase
+          .from("users")
+          .select("email, full_name")
+          .in("email", emails);
+        const usersMap: Record<string, string> = {};
+        (usersData || []).forEach((u) => {
           usersMap[u.email] = u.full_name || u.email;
         });
-      }
-    }
+        return usersMap;
+      })(),
+      supabase
+        .from("salon_staff")
+        .select("id, name, commission_rate, working_hours, status")
+        .eq("salon_id", ctx.salonId),
+    ]);
 
-    // Map the returned data to a cleaner format
+    if (staffRes.error) throw new Error(staffRes.error.message);
+    const allStaff = staffRes.data || [];
+
     const mappedBookings = bookingsList.map((b: any) => {
-      let clientName = b.customer_email ? (usersMap[b.customer_email] || b.customer_email) : "Guest";
-      
-      let serviceName = "General Booking";
-      if (b.services) {
-        serviceName = Array.isArray(b.services) ? b.services[0]?.name : b.services.name;
-      }
+      const clientName = b.customer_email
+        ? usersRes[b.customer_email] || b.customer_email
+        : "Walk-in Client";
+      const serviceName = getBookingServiceDisplayName(b) || "General Booking";
+      const staffMember = resolveStaffMemberFromBooking(b, allStaff);
 
       return {
         id: b.id,
         booking_date: b.booking_date,
         booking_time: b.booking_time,
         status: b.status,
-        clientName: clientName || b.customer_email || "Guest",
-        serviceName: serviceName || "General Booking"
+        clientName: clientName || b.customer_email || "Walk-in Client",
+        serviceName,
+        staffName: staffMember?.name || "Unassigned",
       };
     });
 

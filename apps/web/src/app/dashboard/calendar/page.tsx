@@ -99,6 +99,7 @@ export default function CalendarPage() {
       fullDate: fullDateStr,
       client: b.clientName,
       service: b.serviceName,
+      staff: b.staffName,
       color: color
     };
   });
@@ -208,7 +209,7 @@ export default function CalendarPage() {
         {/* Time Grid Rows */}
         <div className="divide-y divide-zinc-100">
           {hours.map((hourObj, idx) => (
-            <div key={idx} className="grid grid-cols-8 divide-x divide-zinc-100 min-h-[64px]">
+            <div key={idx} className="grid grid-cols-8 divide-x divide-zinc-100 min-h-[80px]">
               {/* Hour Column */}
               <div className="p-4 text-[10px] font-black text-zinc-400 flex items-center justify-center bg-zinc-50/20">
                 {hourObj.label}
@@ -217,13 +218,17 @@ export default function CalendarPage() {
               {days.map((day, dIdx) => {
                 const cellBookings = formattedBookings.filter(b => b.hour === hourObj.label && b.fullDate === day.fullDate);
                 return (
-                  <div key={dIdx} className={`p-1.5 relative ${day.isToday ? "bg-rose-50/5" : ""} group min-h-[64px] flex flex-col gap-1`}>
+                  <div key={dIdx} className={`p-1.5 relative ${day.isToday ? "bg-rose-50/5" : ""} group min-h-[80px] flex flex-col gap-1`}>
                     {cellBookings.length > 0 ? (
                       <>
                         {cellBookings.map((booking, bIdx) => (
-                          <div key={bIdx} className={`p-2.5 rounded-xl border w-full text-left flex flex-col justify-center transition-all hover:shadow-sm ${booking.color}`}>
-                            <div className="text-[10px] font-black leading-tight truncate">{booking.client}</div>
-                            <div className="text-[9px] font-semibold opacity-80 mt-0.5 truncate">{booking.service}</div>
+                          <div key={bIdx} className={`p-2 rounded-xl border w-full text-left flex flex-col gap-0.5 transition-all hover:shadow-sm ${booking.color}`}>
+                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70">Client</div>
+                            <div className="text-[10px] font-black leading-tight line-clamp-2">{booking.client}</div>
+                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70 mt-0.5">Service</div>
+                            <div className="text-[9px] font-semibold leading-tight line-clamp-2">{booking.service}</div>
+                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70 mt-0.5">Professional</div>
+                            <div className="text-[9px] font-bold leading-tight line-clamp-1">{booking.staff}</div>
                           </div>
                         ))}
                         <div 
