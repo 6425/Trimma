@@ -65,8 +65,6 @@ export default function DashboardServices() {
     duration_min: "",
     description: "",
     status: "active",
-    discount_percentage: "0",
-    discount_end_date: "",
     image_url: "",
   });
   const [updating, setUpdating] = useState(false);
@@ -147,7 +145,6 @@ export default function DashboardServices() {
 
   const planFlags = readPlanFlags(subscriptionPlan);
   const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
-  const hasDiscountFeature = planFlags.features?.includes("Discounts & Promotions") ?? false;
 
   const handleToggleSelect = (id: string) => {
     const isCurrentlyChecked = selectedServices[id]?.checked || false;
@@ -372,8 +369,6 @@ export default function DashboardServices() {
       duration_min: service.duration_min.toString(),
       description: service.description || "",
       status: service.status,
-      discount_percentage: service.discount_percentage?.toString() || "0",
-      discount_end_date: service.discount_end_date ? new Date(service.discount_end_date).toISOString().split('T')[0] : "",
       image_url: service.image_url || "",
     });
     setShowEditModal(true);
@@ -382,10 +377,6 @@ export default function DashboardServices() {
   const handleUpdateService = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingServiceId) return;
-
-    const discountPct = hasDiscountFeature
-      ? Math.min(100, Math.max(0, parseFloat(editForm.discount_percentage) || 0))
-      : 0;
 
     try {
       setUpdating(true);
@@ -397,11 +388,6 @@ export default function DashboardServices() {
           description: editForm.description,
           status: editForm.status,
           image_url: editForm.image_url || null,
-          discount_percentage: discountPct,
-          discount_end_date:
-            hasDiscountFeature && discountPct > 0 && editForm.discount_end_date
-              ? new Date(editForm.discount_end_date).toISOString()
-              : null,
         });
       if (result.success === false) throw new Error(result.error);
       toast.success("Service updated successfully!");
@@ -412,10 +398,6 @@ export default function DashboardServices() {
       if (message.includes("image_url")) {
         toast.error(
           "Database missing image_url column. Run packages/db/SERVICES_IMAGE_URL_PATCH.sql in Supabase SQL Editor, then try again."
-        );
-      } else if (message.includes("discount_percentage") || message.includes("discount_end_date")) {
-        toast.error(
-          "Database missing discount columns. Run packages/db/SERVICES_DISCOUNTS_PATCH.sql in Supabase SQL Editor, then try again."
         );
       } else {
         toast.error("Failed to update service: " + message);
@@ -912,41 +894,6 @@ export default function DashboardServices() {
                     <p className="text-[10px] text-amber-600 font-medium">
                       Map this service to a staff member in Staff before activating.
                     </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5 relative">
-                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
-                    Discount % <Sparkles className="w-3 h-3 text-brand" />
-                  </label>
-                  {!hasDiscountFeature && (
-                    <div className="absolute top-0 right-0 -mt-1">
-                       <Badge variant="outline" className="text-[8px] bg-rose-50 text-rose-500 border-rose-200">Upgrade Required</Badge>
-                    </div>
-                  )}
-                  <Input 
-                    type="number"
-                    min="0"
-                    max="100"
-                    disabled={!hasDiscountFeature}
-                    value={editForm.discount_percentage}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, discount_percentage: e.target.value }))}
-                    className={`h-11 rounded-xl border-zinc-200 font-bold ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-emerald-600 focus:ring-brand'}`}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Discount End Date</label>
-                  <Input 
-                    type="date"
-                    disabled={!hasDiscountFeature}
-                    value={editForm.discount_end_date}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, discount_end_date: e.target.value }))}
-                    className={`h-11 rounded-xl border-zinc-200 ${!hasDiscountFeature ? 'bg-zinc-50 text-zinc-400' : 'text-zinc-800 focus:ring-brand'}`}
-                  />
-                  {hasDiscountFeature && (
-                    <p className="text-[10px] text-zinc-400">Leave empty for no expiry.</p>
                   )}
                 </div>
               </div>
