@@ -34,7 +34,7 @@ export function isUnpaidPendingBooking(booking: BookingOwnerQueueRow): boolean {
   );
 }
 
-export type BookingStatusTab = "pending" | "confirmed" | "rescheduled" | "canceled";
+export type BookingStatusTab = "confirmed" | "rescheduled" | "canceled";
 
 export function matchesBookingStatusTab(
   booking: BookingOwnerQueueRow,
@@ -42,11 +42,13 @@ export function matchesBookingStatusTab(
 ): boolean {
   const status = normalizeBookingStatus(booking.status);
 
-  if (tab === "pending") {
-    return status === "pending";
-  }
   if (tab === "confirmed") {
-    return status === "confirmed" || status === "in_progress" || status === "completed";
+    return (
+      status === "confirmed" ||
+      status === "in_progress" ||
+      status === "completed" ||
+      status === "pending"
+    );
   }
   if (tab === "rescheduled") {
     return (

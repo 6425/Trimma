@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Calendar, Loader2, AlertCircle, Eye, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Calendar, Loader2, AlertCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,22 +17,17 @@ import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
-import { confirmOwnerBooking, rescheduleOwnerBooking, rejectOwnerRescheduleRequest, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { rescheduleOwnerBooking, rejectOwnerRescheduleRequest, updateOwnerBooking } from "@/app/actions/salon-operations";
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
-import {
-  isBookingAwaitingOwnerConfirmation,
-  matchesBookingStatusTab,
-  type BookingStatusTab,
-} from "@/lib/booking-owner-queue";
+import { matchesBookingStatusTab, type BookingStatusTab } from "@/lib/booking-owner-queue";
 import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 import { ChevronDown } from "lucide-react";
 
 const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
-  { key: "pending", label: "Pending" },
   { key: "confirmed", label: "Confirmed" },
   { key: "rescheduled", label: "Rescheduled" },
   { key: "canceled", label: "Cancelled" },
@@ -66,10 +61,7 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   // Build context-aware lifecycle actions based on current status
   const lifecycleActions: { key: string; label: string; color: string; hoverBg: string }[] = [];
 
-  if (status === 'pending') {
-    lifecycleActions.push({ key: 'confirm', label: 'Confirm Booking', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
-  }
-  if (status === 'confirmed') {
+  if (status === 'confirmed' || status === 'pending') {
     lifecycleActions.push({ key: 'in_progress', label: 'Start Service', color: 'text-indigo-700', hoverBg: 'hover:bg-indigo-50' });
   }
   if (status === 'in_progress') {
@@ -166,9 +158,13 @@ export default function DashboardBookings() {
   const [reschedulingBooking, setReschedulingBooking] = useState<any | null>(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("12:00");
-  const tabParam = searchParams.get("tab") as BookingStatusTab | null;
+  const tabParam = searchParams.get("tab") as BookingStatusTab | "pending" | null;
   const statusTab: BookingStatusTab =
-    tabParam && BOOKING_STATUS_TABS.some((t) => t.key === tabParam) ? tabParam : "pending";
+    tabParam === "pending" || !tabParam
+      ? "confirmed"
+      : BOOKING_STATUS_TABS.some((t) => t.key === tabParam)
+        ? tabParam
+        : "confirmed";
   const skipTabRefetch = useRef(true);
 
   async function fetchBookings(options?: { silent?: boolean }) {
@@ -188,6 +184,12 @@ export default function DashboardBookings() {
       }
     }
   }
+
+  useEffect(() => {
+    if (tabParam === "pending") {
+      router.replace("/dashboard/bookings?tab=confirmed", { scroll: false });
+    }
+  }, [tabParam, router]);
 
   useEffect(() => {
     void Promise.resolve().then(() => {
@@ -229,20 +231,6 @@ export default function DashboardBookings() {
     router.replace(`/dashboard/bookings?tab=${tab}`, { scroll: false });
   };
 
-  const handleConfirmBooking = async (bookingId: string) => {
-    setProcessingId(bookingId);
-    try {
-      const confirmResult = await confirmOwnerBooking(bookingId);
-      if (confirmResult.success === false) throw new Error(confirmResult.error);
-      toast.success("Appointment confirmed!");
-      await fetchBookings();
-    } catch (e: any) {
-      toast.error("Failed to confirm booking: " + e.message);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   const handleBookingLifecycleAction = async (bookingId: string, action: string) => {
     if (action === 'view') {
       router.push(`/dashboard/bookings/${bookingId}`);
@@ -267,14 +255,6 @@ export default function DashboardBookings() {
       const bookingNo = booking?.booking_no;
       
       switch (action) {
-        case 'confirm': {
-          const confirmResult = await confirmOwnerBooking(bookingId);
-          if (confirmResult.success === false) throw new Error(confirmResult.error);
-          toast.success(`Booking successfully confirmed!`);
-          await fetchBookings();
-          setProcessingId(null);
-          return;
-        }
         case 'in_progress': 
           updatePayload.status = 'in_progress'; 
           break;
@@ -398,17 +378,6 @@ export default function DashboardBookings() {
     [bookings]
   );
 
-  const pendingConfirmations = useMemo(
-    () =>
-      bookings
-        .filter((b) => isBookingAwaitingOwnerConfirmation(b))
-        .sort(
-          (a, b) =>
-            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
-        ),
-    [bookings]
-  );
-
   const renderStatusBadge = (status: string) => {
     const s = (status || 'pending').toLowerCase();
     if (s === 'pending') return <Badge className="bg-amber-50 text-amber-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Pending</Badge>;
@@ -446,57 +415,6 @@ export default function DashboardBookings() {
           </Button>
         </div>
       </div>
-
-      {/* Pending confirmation banner */}
-      {pendingConfirmations.length > 0 && (
-        <div className="bg-emerald-50/60 border border-emerald-100/80 rounded-2xl p-5 space-y-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-2 text-emerald-800 font-extrabold text-sm uppercase tracking-wider">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span>Pending Confirmation ({pendingConfirmations.length})</span>
-          </div>
-          <div className="space-y-2.5">
-            {pendingConfirmations.slice(0, 5).map((req) => (
-              <div
-                key={req.id}
-                className="bg-white border border-emerald-100/50 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs"
-              >
-                <div>
-                  <div className="font-extrabold text-zinc-900 text-sm">
-                    {req.customer_email || "Walk-in Customer"}
-                  </div>
-                  <div className="text-[11px] text-zinc-400 mt-1 font-medium">
-                    Booking No: <span className="font-bold text-zinc-700">{req.booking_no}</span> &bull;{" "}
-                    {req.booking_date} at {(req.booking_time || "").slice(0, 5)} &bull;{" "}
-                    {getBookingServiceDisplayName(req) || "Standard Service"}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <Button
-                    size="sm"
-                    disabled={processingId === req.id}
-                    onClick={() => handleConfirmBooking(req.id)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-1.5 h-8 rounded-lg"
-                  >
-                    {processingId === req.id ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                        Confirm Appointment
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {pendingConfirmations.length > 5 && (
-              <p className="text-[11px] font-semibold text-emerald-700/80 px-1">
-                +{pendingConfirmations.length - 5} more in the Pending tab below
-              </p>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Premium Reschedule Requests Alert Banner */}
       {pendingRequests.length > 0 && (
@@ -551,13 +469,11 @@ export default function DashboardBookings() {
                 onClick={() => handleStatusTabChange(tab.key)}
                 className={`h-10 px-4 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 ${
                   active
-                    ? tab.key === "pending"
-                      ? "bg-amber-500 text-zinc-900 border-amber-500 shadow-sm"
-                      : tab.key === "confirmed"
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                        : tab.key === "rescheduled"
-                          ? "bg-brand text-black border-brand shadow-sm"
-                          : "bg-rose-600 text-white border-rose-600 shadow-sm"
+                    ? tab.key === "confirmed"
+                      ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                      : tab.key === "rescheduled"
+                        ? "bg-brand text-black border-brand shadow-sm"
+                        : "bg-rose-600 text-white border-rose-600 shadow-sm"
                     : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
                 }`}
               >
@@ -691,23 +607,6 @@ export default function DashboardBookings() {
                     {/* Actions */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {(b.status || "pending").toLowerCase() === "pending" && (
-                          <Button
-                            size="sm"
-                            disabled={processingId === b.id}
-                            onClick={() => handleConfirmBooking(b.id)}
-                            className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 rounded-lg shrink-0"
-                          >
-                            {processingId === b.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                                Confirm
-                              </>
-                            )}
-                          </Button>
-                        )}
                         <ActionMenu booking={b} onAction={handleBookingLifecycleAction} processingId={processingId} />
                       </div>
                     </td>

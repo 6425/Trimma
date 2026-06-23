@@ -363,11 +363,11 @@ export function SalonOwnerNotificationBell() {
 
         <div className="border-t border-slate-100 p-3">
           <Link
-            href="/dashboard/bookings?tab=pending"
+            href="/dashboard/bookings?tab=confirmed"
             onClick={() => setOpen(false)}
             className="flex h-9 w-full items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-zinc-700 hover:bg-slate-200 transition-colors"
           >
-            Open bookings — Pending tab
+            Open bookings
           </Link>
         </div>
       </DropdownMenuContent>

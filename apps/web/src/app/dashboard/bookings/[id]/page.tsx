@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchSalonBookingDetail } from "@/app/actions/salon-dashboard-data";
-import { confirmOwnerBooking, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { updateOwnerBooking } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,13 +90,6 @@ export default function BookingDetailPage() {
       let updatePayload: any = {};
 
       switch (action) {
-        case "confirm": {
-          const confirmResult = await confirmOwnerBooking(bookingId);
-          if (confirmResult.success === false) throw new Error(confirmResult.error);
-          toast.success("Booking successfully confirmed!");
-          await fetchBooking();
-          return;
-        }
         case "check_in":
           updatePayload.status = "checked_in";
           break;
@@ -355,10 +348,7 @@ export default function BookingDetailPage() {
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="text-sm font-bold text-zinc-900 mb-4 uppercase tracking-wider">Quick Actions</h3>
               <div className="space-y-2">
-                {status === "pending" && (
-                  <ActionButton label="Confirm Booking" action="confirm" color="bg-emerald-600 hover:bg-emerald-700" icon={<CheckCircle2 className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
-                )}
-                {status === "confirmed" && (
+                {(status === "confirmed" || status === "pending") && (
                   <ActionButton label="Check-In Customer" action="check_in" color="bg-brand hover:bg-brand-hover text-black" icon={<UserCheck className="w-4 h-4" />} onClick={handleAction} processing={processingAction} />
                 )}
                 {status === "checked_in" && (
