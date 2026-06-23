@@ -35,6 +35,11 @@ CREATE INDEX IF NOT EXISTS idx_salon_marketing_campaigns_salon_created
 
 ALTER TABLE public.salon_marketing_campaigns ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.salon_marketing_campaigns
+  ADD COLUMN IF NOT EXISTS telegram_sent INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS telegram_skipped INT NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS telegram_failed INT NOT NULL DEFAULT 0;
+
 COMMIT;
 
 NOTIFY pgrst, 'reload schema';

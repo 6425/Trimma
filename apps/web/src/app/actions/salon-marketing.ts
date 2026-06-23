@@ -12,6 +12,7 @@ import {
 import { isSalonDbSuccess, salonDbFailure, withSalonDb } from "@/lib/with-salon-db";
 import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
 import { sendMarketingPromoEmail } from "@/app/actions/email-settings";
+import { sendMarketingPromoTelegram } from "@/app/actions/telegram";
 import { sendMarketingPromoWhatsApp } from "@/app/actions/whatsapp";
 
 const CAMPAIGNS_DB_HINT =
@@ -47,6 +48,9 @@ export type SalonMarketingCampaign = {
   email_skipped: number;
   whatsapp_failed: number;
   email_failed: number;
+  telegram_sent: number;
+  telegram_skipped: number;
+  telegram_failed: number;
   message_preview: string | null;
   created_at: string;
   package_name: string | null;
@@ -54,6 +58,7 @@ export type SalonMarketingCampaign = {
 
 export type PromoCampaignChannels = {
   whatsapp: boolean;
+  telegram: boolean;
   email: boolean;
 };
 
@@ -123,7 +128,7 @@ export async function fetchSalonMarketingPage() {
       supabase
         .from("salon_marketing_campaigns")
         .select(
-          "id, campaign_name, audience, channels, recipients_targeted, whatsapp_sent, email_sent, whatsapp_skipped, email_skipped, whatsapp_failed, email_failed, message_preview, created_at, promotion_package_id"
+          "id, campaign_name, audience, channels, recipients_targeted, whatsapp_sent, email_sent, whatsapp_skipped, email_skipped, whatsapp_failed, email_failed, telegram_sent, telegram_skipped, telegram_failed, message_preview, created_at, promotion_package_id"
         )
         .eq("salon_id", ctx.salonId)
         .order("created_at", { ascending: false })
@@ -208,6 +213,9 @@ export async function fetchSalonMarketingPage() {
       email_skipped: row.email_skipped,
       whatsapp_failed: row.whatsapp_failed,
       email_failed: row.email_failed,
+      telegram_sent: row.telegram_sent ?? 0,
+      telegram_skipped: row.telegram_skipped ?? 0,
+      telegram_failed: row.telegram_failed ?? 0,
       message_preview: row.message_preview,
       created_at: row.created_at,
       package_name: row.promotion_package_id
@@ -247,8 +255,11 @@ export async function fetchSalonMarketingPage() {
 }
 
 export async function sendVipPromoCampaign(packageId: string, channels: PromoCampaignChannels) {
-  if (!channels.whatsapp && !channels.email) {
-    return { success: false as const, error: "Select at least one channel (WhatsApp or Email)." };
+  if (!channels.whatsapp && !channels.telegram && !channels.email) {
+    return {
+      success: false as const,
+      error: "Select at least one channel (WhatsApp, Telegram, or Email).",
+    };
   }
 
   const cooldown = checkEmailRateLimit(`vip-promo-campaign:${packageId}`);
@@ -312,14 +323,18 @@ export async function sendVipPromoCampaign(packageId: string, channels: PromoCam
     recipients_targeted: recipients.length,
     whatsapp_sent: 0,
     email_sent: 0,
+    telegram_sent: 0,
     whatsapp_skipped: 0,
     email_skipped: 0,
+    telegram_skipped: 0,
     whatsapp_failed: 0,
     email_failed: 0,
+    telegram_failed: 0,
   };
 
   const selectedChannels: string[] = [];
   if (channels.whatsapp) selectedChannels.push("whatsapp");
+  if (channels.telegram) selectedChannels.push("telegram");
   if (channels.email) selectedChannels.push("email");
 
   for (let index = 0; index < recipients.length; index += SEND_BATCH_SIZE) {
@@ -346,6 +361,17 @@ export async function sendVipPromoCampaign(packageId: string, channels: PromoCam
           else stats.whatsapp_failed += 1;
         }
 
+        if (channels.telegram) {
+          const tgResult = (await sendMarketingPromoTelegram(
+            recipient.phone,
+            recipient.email,
+            copy.telegramBody
+          )) as ChannelSendResult;
+          if (tgResult.success) stats.telegram_sent += 1;
+          else if (tgResult.skipped) stats.telegram_skipped += 1;
+          else stats.telegram_failed += 1;
+        }
+
         if (channels.email) {
           const emailResult = (await sendMarketingPromoEmail({
             to: recipient.email,
@@ -362,11 +388,11 @@ export async function sendVipPromoCampaign(packageId: string, channels: PromoCam
     );
   }
 
-  const totalSent = stats.whatsapp_sent + stats.email_sent;
+  const totalSent = stats.whatsapp_sent + stats.telegram_sent + stats.email_sent;
   if (totalSent === 0) {
     return {
       success: false as const,
-      error: "No messages were sent. Check WhatsApp/Email settings and that VIP clients have phone numbers on file.",
+      error: "No messages were sent. Check WhatsApp/Telegram/Email settings and that VIP clients have contact details on file.",
       stats,
     };
   }
@@ -388,6 +414,9 @@ export async function sendVipPromoCampaign(packageId: string, channels: PromoCam
         email_skipped: stats.email_skipped,
         whatsapp_failed: stats.whatsapp_failed,
         email_failed: stats.email_failed,
+        telegram_sent: stats.telegram_sent,
+        telegram_skipped: stats.telegram_skipped,
+        telegram_failed: stats.telegram_failed,
         created_by: ownerEmail,
       })
       .select("id")
@@ -416,6 +445,6 @@ export async function sendVipPromoCampaign(packageId: string, channels: PromoCam
     success: true as const,
     campaignId: logResult.data.campaignId,
     stats,
-    message: `VIP promo sent — WhatsApp ${stats.whatsapp_sent}, Email ${stats.email_sent}.`,
+    message: `VIP promo sent — WhatsApp ${stats.whatsapp_sent}, Telegram ${stats.telegram_sent}, Email ${stats.email_sent}.`,
   };
 }

@@ -10,7 +10,7 @@ export function buildPromoOfferCopy(input: {
   originalPrice: number;
   shareUrl: string;
   packageDescription?: string | null;
-}): { whatsappBody: string; emailSubject: string; emailBody: string } {
+}): { whatsappBody: string; emailSubject: string; emailBody: string; telegramBody: string } {
   const savings =
     input.originalPrice > input.packagePrice
       ? ` (was ${formatPromoLkr(input.originalPrice)})`
@@ -41,5 +41,5 @@ Book on Trimma: ${input.shareUrl}
 
 Thank you for your loyalty!`;
 
-  return { whatsappBody, emailSubject, emailBody };
+  return { whatsappBody, emailSubject, emailBody, telegramBody: whatsappBody.replace(/\*/g, "") };
 }

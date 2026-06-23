@@ -15,6 +15,7 @@ import {
   Send,
   Crown,
   Mail,
+  Bot,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +48,10 @@ function buildPromoShareMessage(pkg: SalonMarketingPackage, salonName: string, s
 
 function formatCampaignChannels(channels: string[]): string {
   return channels
-    .map((ch) => (ch === "whatsapp" ? "WhatsApp" : ch === "email" ? "Email" : ch))
+    .filter((ch) => ch !== "sms")
+    .map((ch) =>
+      ch === "whatsapp" ? "WhatsApp" : ch === "telegram" ? "Telegram" : ch === "email" ? "Email" : ch
+    )
     .join(" + ");
 }
 
@@ -73,6 +77,7 @@ export default function MarketingPage() {
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState("");
   const [sendWhatsapp, setSendWhatsapp] = useState(true);
+  const [sendTelegram, setSendTelegram] = useState(true);
   const [sendEmail, setSendEmail] = useState(true);
   const [sendingCampaign, setSendingCampaign] = useState(false);
 
@@ -143,8 +148,8 @@ export default function MarketingPage() {
       toast.error("Select a promotion package.");
       return;
     }
-    if (!sendWhatsapp && !sendEmail) {
-      toast.error("Select at least one channel.");
+    if (!sendWhatsapp && !sendTelegram && !sendEmail) {
+      toast.error("Select at least one channel (WhatsApp, Telegram, or Email).");
       return;
     }
     if (vipAudience.count === 0) {
@@ -159,6 +164,7 @@ export default function MarketingPage() {
     setSendingCampaign(true);
     const result = await sendVipPromoCampaign(selectedPackageId, {
       whatsapp: sendWhatsapp,
+      telegram: sendTelegram,
       email: sendEmail,
     });
     setSendingCampaign(false);
@@ -206,7 +212,7 @@ export default function MarketingPage() {
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Marketing & Promotions</h1>
             <p className="text-xs text-zinc-500">
-              Send package promos to VIP clients via WhatsApp and Email. VIP rules come from CRM.
+              Send package promos to VIP clients via WhatsApp, Telegram, and Email. VIP rules come from CRM.
             </p>
           </div>
         </div>
@@ -318,6 +324,7 @@ export default function MarketingPage() {
                   <th className="px-6 py-4">Channels</th>
                   <th className="px-6 py-4">VIP recipients</th>
                   <th className="px-6 py-4">WhatsApp</th>
+                  <th className="px-6 py-4">Telegram</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4 text-right">Sent</th>
                 </tr>
@@ -342,6 +349,14 @@ export default function MarketingPage() {
                       ) : null}
                     </td>
                     <td className="px-6 py-4">
+                      <span className="text-emerald-600">{campaign.telegram_sent} sent</span>
+                      {campaign.telegram_skipped + campaign.telegram_failed > 0 ? (
+                        <span className="text-zinc-400 block text-[10px]">
+                          {campaign.telegram_skipped} skipped · {campaign.telegram_failed} failed
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-6 py-4">
                       <span className="text-emerald-600">{campaign.email_sent} sent</span>
                       {campaign.email_skipped + campaign.email_failed > 0 ? (
                         <span className="text-zinc-400 block text-[10px]">
@@ -350,7 +365,7 @@ export default function MarketingPage() {
                       ) : null}
                     </td>
                     <td className="px-6 py-4 text-right font-black text-brand">
-                      {campaign.whatsapp_sent + campaign.email_sent}
+                      {campaign.whatsapp_sent + campaign.telegram_sent + campaign.email_sent}
                     </td>
                   </tr>
                 ))}
@@ -438,7 +453,7 @@ export default function MarketingPage() {
           <>
             Sends to <strong>{vipAudience.count}</strong> VIP clients
             {vipAudience.minVisits != null ? ` (${vipAudience.minVisits}+ qualifying visits)` : ""}.
-            WhatsApp needs a phone on the customer profile; email uses booking email.
+            WhatsApp needs a phone on the customer profile; Telegram needs a linked Trimma bot chat; email uses booking email.
           </>
         }
         footer={
@@ -480,6 +495,10 @@ export default function MarketingPage() {
             <label className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-3 text-xs font-bold cursor-pointer">
               <input type="checkbox" checked={sendWhatsapp} onChange={(e) => setSendWhatsapp(e.target.checked)} className="accent-black" />
               <MessageCircle className="w-4 h-4" /> WhatsApp
+            </label>
+            <label className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-3 text-xs font-bold cursor-pointer">
+              <input type="checkbox" checked={sendTelegram} onChange={(e) => setSendTelegram(e.target.checked)} className="accent-black" />
+              <Bot className="w-4 h-4" /> Telegram
             </label>
             <label className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 px-4 py-3 text-xs font-bold cursor-pointer">
               <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} className="accent-black" />

@@ -1238,3 +1238,44 @@ export async function sendTelegramBookingReminder(bookingNo: string) {
     };
   }
 }
+
+/** Marketing VIP promo blast — plain text Telegram to a linked customer chat. */
+export async function sendMarketingPromoTelegram(
+  rawPhone: string | null | undefined,
+  customerEmail: string,
+  messageBody: string
+) {
+  const { enabled, botToken } = await getTelegramMessagingConfig();
+  if (!enabled || !botToken) {
+    return { success: false, error: "Telegram alerts are disabled or not configured.", skipped: true };
+  }
+
+  try {
+    const chatId = await resolveTelegramChatId(rawPhone, undefined, customerEmail);
+    if (!chatId) {
+      return { success: false, error: "Customer Telegram chat ID is missing.", skipped: true };
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: messageBody,
+        disable_web_page_preview: false,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.ok) {
+      return { success: false, error: formatTelegramApiError(result) };
+    }
+
+    return { success: true, messageId: String(result.result?.message_id || "") };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send Telegram promo.",
+    };
+  }
+}
