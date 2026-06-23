@@ -91,7 +91,7 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
           variant="outline" 
           size="sm" 
           onClick={() => setOpen(!open)} 
-          className="h-8 text-xs font-bold px-3 border-zinc-200 text-zinc-700 hover:text-zinc-900 hover:bg-slate-50 shrink-0"
+          className="h-7 text-[10px] font-bold px-2 border-zinc-200 text-zinc-700 hover:text-zinc-900 hover:bg-slate-50 shrink-0"
           disabled={isProcessing}
         >
           {isProcessing ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
@@ -380,14 +380,15 @@ export default function DashboardBookings() {
 
   const renderStatusBadge = (status: string) => {
     const s = (status || 'pending').toLowerCase();
-    if (s === 'pending') return <Badge className="bg-amber-50 text-amber-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Pending</Badge>;
-    if (s === 'confirmed') return <Badge className="bg-emerald-50 text-emerald-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Confirmed</Badge>;
-    if (s === 'in_progress') return <Badge className="bg-indigo-50 text-indigo-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">In Progress</Badge>;
-    if (s === 'completed') return <Badge className="bg-zinc-100 text-zinc-700 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Completed</Badge>;
-    if (s === 'canceled') return <Badge className="bg-rose-50 text-rose-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Cancelled</Badge>;
-    if (s === 'no_show') return <Badge className="bg-orange-50 text-orange-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">No Show</Badge>;
-    if (s === 'rescheduled') return <Badge className="bg-blue-50 text-blue-600 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">Rescheduled</Badge>;
-    return <Badge className="bg-zinc-100 text-zinc-500 border-none px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider shadow-xs">{s}</Badge>;
+    const badgeClass = "border-none px-1.5 py-0 text-[8px] font-extrabold uppercase tracking-wide shadow-xs";
+    if (s === 'pending') return <Badge className={`bg-amber-50 text-amber-600 ${badgeClass}`}>Pending</Badge>;
+    if (s === 'confirmed') return <Badge className={`bg-emerald-50 text-emerald-600 ${badgeClass}`}>Confirmed</Badge>;
+    if (s === 'in_progress') return <Badge className={`bg-indigo-50 text-indigo-600 ${badgeClass}`}>In Progress</Badge>;
+    if (s === 'completed') return <Badge className={`bg-zinc-100 text-zinc-700 ${badgeClass}`}>Completed</Badge>;
+    if (s === 'canceled') return <Badge className={`bg-rose-50 text-rose-600 ${badgeClass}`}>Cancelled</Badge>;
+    if (s === 'no_show') return <Badge className={`bg-orange-50 text-orange-600 ${badgeClass}`}>No Show</Badge>;
+    if (s === 'rescheduled') return <Badge className={`bg-blue-50 text-blue-600 ${badgeClass}`}>Rescheduled</Badge>;
+    return <Badge className={`bg-zinc-100 text-zinc-500 ${badgeClass}`}>{s}</Badge>;
   }
 
   return (
@@ -507,97 +508,97 @@ export default function DashboardBookings() {
              <p className="text-sm text-zinc-500 mt-1">Try another tab or adjust your search.</p>
            </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left whitespace-nowrap">
+          <div className="overflow-hidden">
+            <table className="w-full table-fixed text-left">
+              <colgroup>
+                <col className="w-[12%]" />
+                <col className="w-[14%]" />
+                <col className="w-[20%]" />
+                <col className="w-[22%]" />
+                <col className="w-[12%]" />
+                <col className="w-[10%]" />
+              </colgroup>
               <thead>
-                <tr className="bg-zinc-50/50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-200">
-                  <th className="px-6 py-4">Booking ID & Date</th>
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Service & Staff</th>
-                  <th className="px-6 py-4">Financials</th>
-                  <th className="px-6 py-4">Lifecycle Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                <tr className="bg-zinc-50/50 text-[9px] font-bold text-zinc-400 uppercase tracking-wide border-b border-zinc-200">
+                  <th className="px-2 py-2">Booking</th>
+                  <th className="px-2 py-2">Customer</th>
+                  <th className="px-2 py-2">Service</th>
+                  <th className="px-2 py-2">Amount</th>
+                  <th className="px-2 py-2">Status</th>
+                  <th className="px-2 py-2 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {filteredBookings.map((b) => (
+                {filteredBookings.map((b) => {
+                  const amount = parseFloat(b.amount || "0");
+                  const deposit = amount * 0.2;
+                  const platAmt = amount * 0.1;
+                  const salonAmt = amount * 0.1;
+
+                  return (
                   <tr key={b.id} className="hover:bg-zinc-50/60 transition-colors">
                     
                     {/* ID & Date */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-mono font-extrabold text-zinc-900">{b.booking_no}</div>
-                      <div className="text-xs font-bold text-zinc-500 mt-1">{b.booking_date}</div>
-                      <div className="text-[11px] font-semibold text-zinc-400">{b.booking_time}</div>
+                    <td className="px-2 py-2 align-top">
+                      <div className="text-[11px] font-mono font-extrabold text-zinc-900 leading-tight break-all">{b.booking_no}</div>
+                      <div className="text-[10px] font-bold text-zinc-500 mt-0.5 leading-tight">{b.booking_date}</div>
+                      <div className="text-[10px] font-semibold text-zinc-400 leading-tight">{(b.booking_time || "").slice(0, 5)}</div>
                     </td>
                     
                     {/* Customer */}
-                    <td className="px-6 py-4">
-                      <div className="font-extrabold text-zinc-900 text-sm">{b.customer_email || 'Walk-in'}</div>
+                    <td className="px-2 py-2 align-top">
+                      <div className="font-bold text-zinc-900 text-[11px] leading-snug break-all">{b.customer_email || 'Walk-in'}</div>
                     </td>
 
                     {/* Service & Staff */}
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-zinc-800 text-sm">{getBookingServiceDisplayName(b) || 'Standard Service'}</div>
-                      <div className="text-[11px] text-zinc-400 font-medium mt-1">
-                        Staff: <span className="font-bold text-zinc-600">{resolveStaffMemberFromBooking(b)?.name || 'Unassigned — check staff mapping'}</span>
+                    <td className="px-2 py-2 align-top">
+                      <div className="font-bold text-zinc-800 text-[11px] leading-snug line-clamp-2">{getBookingServiceDisplayName(b) || 'Standard Service'}</div>
+                      <div className="text-[10px] text-zinc-400 font-medium mt-0.5 leading-tight">
+                        <span className="font-bold text-zinc-600">{resolveStaffMemberFromBooking(b)?.name || 'Unassigned'}</span>
                       </div>
                     </td>
                     
                     {/* Financials */}
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-black text-zinc-900">LKR {parseFloat(b.amount || "0").toLocaleString()}</div>
-                      <div className="flex flex-col gap-1 mt-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                            Dep: LKR {(parseFloat(b.amount || "0") * 0.2).toLocaleString()}
-                          </div>
-                          {b.reservation_fee_paid ? (
-                            <Badge className="bg-emerald-50 text-emerald-600 border-none px-1.5 py-0 text-[8px] font-black uppercase">Paid</Badge>
-                          ) : (
-                            <Badge className="bg-rose-50 text-rose-600 border-none px-1.5 py-0 text-[8px] font-black uppercase">Unpaid</Badge>
-                          )}
-                        </div>
-                        {b.reservation_fee_paid && (() => {
-                          const amt = parseFloat(b.amount || "0");
-                          // Strictly calculate as 10% each as per new rules, ignoring legacy DB splits
-                          const platAmt = amt * 0.10;
-                          const salonAmt = amt * 0.10;
-                          
-                          return (
-                            <div className="bg-amber-50/50 border border-amber-100 rounded flex flex-col p-1.5 mt-0.5">
-                              <div className="flex justify-between text-[9px] font-bold">
-                                <span className="text-amber-700/70">Platform Fee (10%):</span>
-                                <span className="text-amber-700">- LKR {platAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                              </div>
-                              <div className="flex justify-between text-[10px] font-black mt-0.5 border-t border-amber-100/50 pt-0.5">
-                                <span className="text-emerald-700">Salon Commission (10%):</span>
-                                <span className="text-emerald-700">LKR {salonAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                              </div>
-                            </div>
-                          );
-                        })()}
+                    <td className="px-2 py-2 align-top">
+                      <div className="text-[11px] font-black text-zinc-900 leading-tight">LKR {amount.toLocaleString()}</div>
+                      <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase">
+                          Dep {deposit.toLocaleString()}
+                        </span>
+                        {b.reservation_fee_paid ? (
+                          <Badge className="bg-emerald-50 text-emerald-600 border-none px-1 py-0 text-[7px] font-black uppercase">Paid</Badge>
+                        ) : (
+                          <Badge className="bg-rose-50 text-rose-600 border-none px-1 py-0 text-[7px] font-black uppercase">Unpaid</Badge>
+                        )}
                       </div>
+                      {b.reservation_fee_paid && (
+                        <div className="text-[9px] font-bold mt-0.5 leading-tight">
+                          <span className="text-emerald-700">Salon {salonAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          <span className="text-zinc-300"> · </span>
+                          <span className="text-amber-700">Plat {platAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                        </div>
+                      )}
                       {(b.payment_status === 'reservation_paid' || b.payment_status === 'paid' || b.payment_status === 'refunded') && (
-                        <div className="text-[10px] font-bold text-zinc-400 mt-1.5 capitalize border-t border-slate-100 pt-1">
-                          Balance: <span className={b.payment_status === 'paid' ? 'text-emerald-600' : b.payment_status === 'reservation_paid' ? 'text-amber-600' : 'text-rose-600'}>
-                            {b.payment_status === 'reservation_paid' ? 'Reserved Comm. Paid' : b.payment_status}
+                        <div className="text-[9px] font-bold text-zinc-400 mt-0.5 capitalize leading-tight">
+                          <span className={b.payment_status === 'paid' ? 'text-emerald-600' : b.payment_status === 'reservation_paid' ? 'text-amber-600' : 'text-rose-600'}>
+                            {b.payment_status === 'reservation_paid' ? 'Bal: Reserved' : `Bal: ${b.payment_status}`}
                           </span>
                         </div>
                       )}
                     </td>
                     
                     {/* Status */}
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1.5">
+                    <td className="px-2 py-2 align-top">
+                      <div className="flex flex-col gap-1">
                         {renderStatusBadge(b.status)}
                         
                         {b.reschedule_requested && (
-                          <Badge className="bg-rose-50 text-rose-600 border-none animate-pulse w-fit text-[9px] font-black uppercase tracking-wider px-2 py-0.5">
-                            Reschedule Req
+                          <Badge className="bg-rose-50 text-rose-600 border-none w-fit text-[8px] font-black uppercase tracking-wide px-1.5 py-0">
+                            Reschedule
                           </Badge>
                         )}
                         {b.reschedule_status === 'approved' && (
-                          <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100 w-fit text-[9px] font-bold uppercase tracking-wider px-2 py-0.5">
+                          <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100 w-fit text-[8px] font-bold uppercase tracking-wide px-1.5 py-0">
                             Rescheduled
                           </Badge>
                         )}
@@ -605,13 +606,14 @@ export default function DashboardBookings() {
                     </td>
                     
                     {/* Actions */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-2 py-2 text-right align-top">
+                      <div className="flex items-start justify-end">
                         <ActionMenu booking={b} onAction={handleBookingLifecycleAction} processingId={processingId} />
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
