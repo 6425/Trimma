@@ -502,7 +502,7 @@ export default function DashboardStaff() {
                            {member.working_hours.assigned_services.map((as: any) => {
                              const matchedServ = findSalonServiceForAssignmentId(staffFormServices, as.service_id);
                              return (
-                               <Badge key={as.service_id} className="bg-zinc-100 text-black border-none font-bold text-[9px] py-0 px-2 rounded">
+                               <Badge key={as.service_id} className="bg-black !text-white border-none font-bold text-[9px] py-1 px-2.5 rounded-md shadow-sm">
                                  {matchedServ?.name || "Service"} ({as.commission_rate}%)
                                </Badge>
                              );

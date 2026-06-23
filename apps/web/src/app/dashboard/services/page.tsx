@@ -507,7 +507,7 @@ export default function DashboardServices() {
               setShowImportModal(true);
             }}
             disabled={!hasActiveStaff}
-            className="flex-1 md:flex-none border border-brand bg-white text-brand hover:bg-rose-50 rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50"
+            className="flex-1 md:flex-none bg-black text-white hover:bg-zinc-800 rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50 border border-black [&_svg]:text-white"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
@@ -563,7 +563,7 @@ export default function DashboardServices() {
             </p>
             <Button 
               onClick={() => setShowImportModal(true)}
-              className="bg-brand text-black hover:bg-brand-hover rounded-xl font-bold"
+              className="bg-black text-white hover:bg-zinc-800 rounded-xl font-bold [&_svg]:text-white"
             >
               <Sparkles className="w-4 h-4 mr-2" /> Import from Master Catalog
             </Button>
