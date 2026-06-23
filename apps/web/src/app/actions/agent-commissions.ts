@@ -9,8 +9,8 @@ import {
   findAgentHierarchyRecord,
   getAgentOperationalEmails,
   isRegionalHeadAgent,
+  isFieldAgentForCommissions,
   listSubAgentsForRegionalHead,
-  normalizeAgentTier,
 } from "@/lib/agent-hierarchy";
 import { resolveStoredAgentSplit } from "@/lib/booking-commission-snapshot";
 import type { SubAgentTeamRow } from "@/app/actions/agent-team";
@@ -69,8 +69,10 @@ export async function getAgentCommissionsData() {
   const globalRole = userRow?.global_role ?? auth.role;
   const isRegionalHead =
     auth.role === "regional_head" || isRegionalHeadAgent(agentRow, globalRole);
-  const isFieldAgent =
-    !isRegionalHead && normalizeAgentTier(agentRow?.agent_tier) === "field_agent";
+  const isFieldAgent = isFieldAgentForCommissions(agentRow, {
+    isRegionalHead,
+    globalRole,
+  });
   const operationalEmails = await getAgentOperationalEmails(
     supabase,
     email,

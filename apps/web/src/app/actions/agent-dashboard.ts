@@ -10,9 +10,9 @@ import {
   clampSplitPercent,
   findAgentHierarchyRecord,
   getAgentOperationalEmails,
+  isFieldAgentForCommissions,
   listSubAgentsForRegionalHead,
   isRegionalHeadAgent,
-  normalizeAgentTier,
 } from "@/lib/agent-hierarchy";
 import { resolveBookingAgentPercentage, formatBookingAgentRateLabel } from "@/lib/booking-pricing";
 import { normalizeEmail } from "@/lib/normalize-email";
@@ -59,8 +59,10 @@ export async function getAgentDashboardData() {
     const isRegionalHead =
       auth.role === "regional_head" ||
       isRegionalHeadAgent(hierarchyRow, userData?.global_role);
-    const isFieldAgent =
-      !isRegionalHead && normalizeAgentTier(hierarchyRow?.agent_tier) === "field_agent";
+    const isFieldAgent = isFieldAgentForCommissions(hierarchyRow, {
+      isRegionalHead,
+      globalRole: userData?.global_role,
+    });
     const operationalEmails = await getAgentOperationalEmails(
       supabase,
       email,

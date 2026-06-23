@@ -31,6 +31,18 @@ export function isRegionalHeadAgent(
   return normalizeAgentTier(agent?.agent_tier) === "regional_head";
 }
 
+/** Field agents earn via field_agent_email; includes sub-agents even if agent_tier was not set. */
+export function isFieldAgentForCommissions(
+  agent: AgentHierarchyRow | null | undefined,
+  options?: { isRegionalHead?: boolean; globalRole?: string | null }
+): boolean {
+  if (options?.isRegionalHead) return false;
+  if (isRegionalHeadAgent(agent, options?.globalRole ?? null)) return false;
+  if (normalizeAgentTier(agent?.agent_tier) === "field_agent") return true;
+  if (agent?.reports_to_agent_id) return true;
+  return false;
+}
+
 export function clampSplitPercent(value: unknown, fallback = DEFAULT_SUB_AGENT_SPLIT_PERCENT): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;

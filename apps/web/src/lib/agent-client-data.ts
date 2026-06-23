@@ -5,6 +5,15 @@ import { formatRelativeTime } from "@/lib/dashboard-stats";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { resolveBookingAgentPercentage, formatBookingAgentRateLabel } from "@/lib/booking-pricing";
 import { isCommissionEligibleBooking } from "@/lib/commission-ledger-format";
+import { resolveStoredAgentSplit } from "@/lib/booking-commission-snapshot";
+import {
+  calculateRegionalHeadNet,
+  calculateSubAgentShare,
+  clampSplitPercent,
+  findAgentHierarchyRecord,
+  isFieldAgentForCommissions,
+  isRegionalHeadAgent,
+} from "@/lib/agent-hierarchy";
 import { resolveTrimmaUserRole } from "@/lib/trimma-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 import type { WorkItem } from "@/app/actions/agent-work-queue";
@@ -84,13 +93,24 @@ export async function loadAgentDashboardFromClient() {
   if (auth.success === false) return { success: false as const, error: auth.error };
 
   const email = auth.email;
-  const { data: userData } = await supabase
-    .from("users")
-    .select("full_name")
-    .eq("email", email)
-    .maybeSingle();
+  const [{ data: userData }, hierarchyRow] = await Promise.all([
+    supabase.from("users").select("full_name, global_role").eq("email", email).maybeSingle(),
+    findAgentHierarchyRecord(supabase, email, auth.userId),
+  ]);
 
   const agentName = userData?.full_name || email.split("@")[0];
+  const isRegionalHead =
+    auth.role === "regional_head" || isRegionalHeadAgent(hierarchyRow, userData?.global_role);
+  const isFieldAgent = isFieldAgentForCommissions(hierarchyRow, {
+    isRegionalHead,
+    globalRole: userData?.global_role,
+  });
+
+  const bookingSelect =
+    "agent_commission_amount, field_agent_email, platform_commission_amount, agent_commission_percent, field_agent_commission_amount, regional_head_commission_amount, agent_split_percent";
+  const fieldAgentSplit = isFieldAgent
+    ? clampSplitPercent(hierarchyRow?.sub_agent_split_percent)
+    : 0;
 
   const [
     { data: salonRows },
@@ -105,8 +125,12 @@ export async function loadAgentDashboardFromClient() {
       .eq("assign_to", email)
       .order("created_at", { ascending: false }),
     supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
-    supabase.from("bookings").select("agent_commission_amount").ilike("agent_email", email),
-    supabase.from("commission_ledger").select("*").ilike("agent_email", email),
+    isFieldAgent
+      ? supabase.from("bookings").select(bookingSelect).ilike("field_agent_email", email)
+      : supabase.from("bookings").select(bookingSelect).ilike("agent_email", email),
+    isFieldAgent
+      ? supabase.from("commission_ledger").select("*").ilike("field_agent_email", email)
+      : supabase.from("commission_ledger").select("*").ilike("agent_email", email),
     supabase.from("commission_master").select("commission_type, agent_percentage").eq("active", true),
   ]);
 
@@ -131,19 +155,38 @@ export async function loadAgentDashboardFromClient() {
       agentEmail: email,
       agentName,
       territoryLabel,
-      isRegionalHead: auth.role === "regional_head",
+      isRegionalHead,
       stats: {
         assignedCount: salons.length,
         convertedCount: salons.filter((s) => isAgentSalonLive(s.onboarding_status)).length,
         commissionRate: bookingAgentPct,
         commissionRateLabel: bookingAgentRateLabel,
-        bookingCommissions: (bookingRows || []).reduce(
-          (sum, b) => sum + (Number(b.agent_commission_amount) || 0),
-          0
-        ),
+        bookingCommissions: (bookingRows || []).reduce((sum, booking) => {
+          const storedGross = Number(booking.agent_commission_amount) || 0;
+          const gross =
+            storedGross > 0
+              ? storedGross
+              : (Number(booking.platform_commission_amount) || 0) *
+                ((Number(booking.agent_commission_percent) || 0) / 100);
+          const { subAgentCut } = resolveStoredAgentSplit(booking, {
+            gross,
+            fieldEmail: normalizeEmail(booking.field_agent_email || ""),
+            splitPercent: fieldAgentSplit,
+          });
+          return sum + (isFieldAgent ? subAgentCut : gross);
+        }, 0),
         subscriptionCommissions: (ledgerRows || [])
           .filter((e) => String(e.commission_category || "").toLowerCase() === "subscription")
-          .reduce((sum, e) => sum + (Number(e.amount) || 0), 0),
+          .reduce((sum, entry) => {
+            const gross = Number(entry.amount) || 0;
+            const fieldEmail = normalizeEmail(entry.field_agent_email || "");
+            const net = isFieldAgent
+              ? calculateSubAgentShare(gross, fieldAgentSplit)
+              : fieldEmail
+                ? calculateRegionalHeadNet(gross, clampSplitPercent(undefined))
+                : gross;
+            return sum + net;
+          }, 0),
         hotLeads,
         upcomingTasks: pendingSalons.map((salon) => {
           const status = salon.onboarding_status || "ASSIGNED_TO_AGENT";
@@ -472,26 +515,36 @@ export async function fetchAgentCommissionsClient() {
   if (auth.success === false) return { success: false as const, error: auth.error };
 
   const email = auth.email;
+  const [{ data: userData }, hierarchyRow] = await Promise.all([
+    supabase.from("users").select("global_role").eq("email", email).maybeSingle(),
+    findAgentHierarchyRecord(supabase, email, auth.userId),
+  ]);
 
-  const [masterRes, agentRow, salonsRes, bookingsByAgentRes, ledgerRes] = await Promise.all([
+  const isRegionalHead =
+    auth.role === "regional_head" || isRegionalHeadAgent(hierarchyRow, userData?.global_role);
+  const isFieldAgent = isFieldAgentForCommissions(hierarchyRow, {
+    isRegionalHead,
+    globalRole: userData?.global_role,
+  });
+  const fieldAgentSplit = isFieldAgent
+    ? clampSplitPercent(hierarchyRow?.sub_agent_split_percent)
+    : 0;
+
+  const bookingSelect =
+    "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, field_agent_commission_amount, regional_head_commission_amount, agent_split_percent, salons(name)";
+
+  const [masterRes, salonsRes, bookingsRes, ledgerRes] = await Promise.all([
     supabase
       .from("commission_master")
       .select("commission_type, agent_percentage, active")
       .eq("active", true),
-    findAgentRecord(supabase, email, auth.userId),
     supabase.from("salons").select("id, name").eq("assign_to", email),
-    supabase
-      .from("bookings")
-      .select(
-        "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, salons(name)"
-      )
-      .ilike("agent_email", email)
-      .order("booking_date", { ascending: false }),
-    supabase
-      .from("commission_ledger")
-      .select("*")
-      .ilike("agent_email", email)
-      .order("created_at", { ascending: false }),
+    isFieldAgent
+      ? supabase.from("bookings").select(bookingSelect).ilike("field_agent_email", email).order("booking_date", { ascending: false })
+      : supabase.from("bookings").select(bookingSelect).ilike("agent_email", email).order("booking_date", { ascending: false }),
+    isFieldAgent
+      ? supabase.from("commission_ledger").select("*").ilike("field_agent_email", email).order("created_at", { ascending: false })
+      : supabase.from("commission_ledger").select("*").ilike("agent_email", email).order("created_at", { ascending: false }),
   ]);
 
   const bookingMaster = (masterRes.data || []).find((r) => r.commission_type === "booking");
@@ -505,50 +558,29 @@ export async function fetchAgentCommissionsClient() {
     salonMap.set(salon.id, salon.name);
   }
 
-  const bookingIds = new Set<string>();
-  const bookings: Array<{
-    id: string;
-    salon_id: string;
-    salon_name: string;
-    booking_date: string;
-    created_at: string;
-    status: string;
-    payment_status: string;
-    reservation_fee_paid: boolean;
-    amount: number;
-    customer_email: string;
-    agent_cut: number;
-    agent_percent: number;
-    platform_commission: number;
-  }> = [];
-
-  const pushBooking = (row: Record<string, unknown>) => {
-    const id = String(row.id);
-    if (bookingIds.has(id)) return;
-
-    const rowAgentEmail = String(row.agent_email || "").trim().toLowerCase();
-    const storedCut = Number(row.agent_commission_amount) || 0;
-    const isAttributed =
-      (rowAgentEmail.length > 0 && rowAgentEmail === email.toLowerCase()) || storedCut > 0;
-    if (!isAttributed) return;
-
-    bookingIds.add(id);
-
+  const bookings = (bookingsRes.data || []).map((row) => {
     const amount = Number(row.amount) || 0;
     const storedPct = Number(row.agent_commission_percent);
     const agentPercent = storedPct > 0 ? storedPct : bookingAgentPct;
     const platformCommission = Number(row.platform_commission_amount) || 0;
-    const agentCut =
-      storedCut > 0
-        ? storedCut
-        : rowAgentEmail
+    const storedGross = Number(row.agent_commission_amount) || 0;
+    const grossAgentCut =
+      storedGross > 0
+        ? storedGross
+        : platformCommission > 0
           ? platformCommission * (agentPercent / 100)
           : 0;
+    const fieldEmail = normalizeEmail(String(row.field_agent_email || ""));
+    const { subAgentCut, headCut } = resolveStoredAgentSplit(row, {
+      gross: grossAgentCut,
+      fieldEmail,
+      splitPercent: fieldAgentSplit,
+    });
     const salonsJoin = row.salons as { name?: string } | { name?: string }[] | null;
     const joinedName = Array.isArray(salonsJoin) ? salonsJoin[0]?.name : salonsJoin?.name;
 
-    bookings.push({
-      id,
+    return {
+      id: String(row.id),
       salon_id: String(row.salon_id || ""),
       salon_name: joinedName || salonMap.get(String(row.salon_id)) || "Referred Salon",
       booking_date: String(row.booking_date || ""),
@@ -558,17 +590,11 @@ export async function fetchAgentCommissionsClient() {
       reservation_fee_paid: Boolean(row.reservation_fee_paid),
       amount,
       customer_email: String(row.customer_email || "—"),
-      agent_cut: agentCut,
+      agent_cut: isFieldAgent ? subAgentCut : headCut,
       agent_percent: agentPercent,
       platform_commission: platformCommission,
-    });
-  };
-
-  for (const row of bookingsByAgentRes.data || []) {
-    pushBooking(row as Record<string, unknown>);
-  }
-
-  const salonIds = [...salonMap.keys()];
+    };
+  });
 
   bookings.sort(
     (a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()
@@ -576,13 +602,19 @@ export async function fetchAgentCommissionsClient() {
 
   const subscriptions = (ledgerRes.data || [])
     .filter((row) => String(row.commission_category || "").toLowerCase() === "subscription")
-    .map((row) => ({
-      id: row.id,
-      amount: Number(row.amount) || 0,
-      status: row.status || "PENDING",
-      notes: row.notes,
-      created_at: row.created_at,
-    }));
+    .map((row) => {
+      const grossAmount = Number(row.amount) || 0;
+      const netAmount = isFieldAgent
+        ? calculateSubAgentShare(grossAmount, fieldAgentSplit)
+        : grossAmount;
+      return {
+        id: row.id,
+        amount: netAmount,
+        status: row.status || "PENDING",
+        notes: row.notes,
+        created_at: row.created_at,
+      };
+    });
 
   let allTimeBookingGross = 0;
   bookings.forEach((b) => {
@@ -594,11 +626,12 @@ export async function fetchAgentCommissionsClient() {
   return {
     success: true as const,
     agentEmail: email,
+    isRegionalHead,
     bookingAgentPct,
     bookingAgentRateLabel,
     subscriptionAgentPct,
     profileCommissionRate: bookingAgentPct,
-    referredSalonCount: salonIds.length,
+    referredSalonCount: salonMap.size,
     bookings,
     subscriptions,
     allTimeBookingGross,
