@@ -11,6 +11,12 @@ import {
 } from "@/lib/salon-subscription-plan";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { getServiceIdsCoveredByStaff, getBookingServiceDisplayName, resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
+import {
+  bookingCountsAsLoyaltyVisit,
+  resolveHighestDisplayTier,
+  resolveVipFromVisits,
+} from "@/lib/salon-loyalty";
+import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
 
 export async function fetchSalonLayoutShell() {
   const auth = await requireSalonOwnerFromCookies();
@@ -531,6 +537,9 @@ export async function fetchSalonProfilePage() {
 }
 
 export async function fetchSalonCustomersPage() {
+  const loyaltyResult = await fetchSalonLoyaltyRules();
+  const loyaltyRules = loyaltyResult.success ? loyaltyResult.rules : [];
+
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: bookings, error } = await supabase
       .from("bookings")
@@ -543,25 +552,9 @@ export async function fetchSalonCustomersPage() {
 
     const emails = [...new Set((bookings || []).map(b => b.customer_email).filter(Boolean))];
     let usersData: any[] = [];
-    let vipByEmail = new Map<string, boolean>();
     if (emails.length > 0) {
-      const [usersRes, vipRes] = await Promise.all([
-        supabase.from("users").select("email, full_name, phone").in("email", emails),
-        supabase
-          .from("salon_customer_profiles")
-          .select("customer_email, is_vip")
-          .eq("salon_id", ctx.salonId)
-          .in("customer_email", emails),
-      ]);
-      if (usersRes.data) usersData = usersRes.data;
-      if (vipRes.error && !vipRes.error.message.toLowerCase().includes("does not exist")) {
-        throw new Error(vipRes.error.message);
-      }
-      (vipRes.data || []).forEach((row) => {
-        if (row.customer_email) {
-          vipByEmail.set(String(row.customer_email).toLowerCase(), Boolean(row.is_vip));
-        }
-      });
+      const { data: usersRes } = await supabase.from("users").select("email, full_name, phone").in("email", emails);
+      if (usersRes) usersData = usersRes;
     }
     
     const usersByEmail = new Map();
@@ -579,17 +572,18 @@ export async function fetchSalonCustomersPage() {
           email: email,
           name: user?.full_name || "Guest",
           phone: user?.phone || "-",
-          isVip: vipByEmail.get(email) ?? false,
-          bookings: 0,
+          visits: 0,
           spent: 0,
-          rating: 5, // We don't have per-customer ratings aggregated easily right now
+          rating: 5,
           lastVisit: b.booking_date || b.created_at,
           lastVisitDate: new Date(b.created_at).getTime()
         });
       }
 
       const c = customersMap.get(email);
-      c.bookings += 1;
+      if (bookingCountsAsLoyaltyVisit(b.status)) {
+        c.visits += 1;
+      }
       if (b.status === "completed" || b.status === "confirmed") {
         c.spent += Number(b.amount || 0);
       }
@@ -603,20 +597,28 @@ export async function fetchSalonCustomersPage() {
 
     const customersList = Array.from(customersMap.values())
       .sort((a, b) => b.lastVisitDate - a.lastVisitDate)
-      .map(c => ({
-        name: c.name,
-        email: c.email,
-        phone: c.phone,
-        isVip: c.isVip,
-        bookings: c.bookings,
-        spent: "LKR " + c.spent.toLocaleString(),
-        rating: 5,
-        lastVisit: new Date(c.lastVisitDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      }));
+      .map(c => {
+        const displayTier = resolveHighestDisplayTier(c.visits, loyaltyRules);
+        const isVip = resolveVipFromVisits(c.visits, loyaltyRules);
+        return {
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
+          isVip,
+          loyaltyTier: displayTier?.tier_key || null,
+          loyaltyTierLabel: displayTier?.tier_label || null,
+          vipMinVisits: loyaltyRules.find((rule) => rule.tier_key === "vip" && rule.enabled)?.min_visits ?? null,
+          bookings: c.visits,
+          spent: "LKR " + c.spent.toLocaleString(),
+          rating: 5,
+          lastVisit: new Date(c.lastVisitDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+        };
+      });
 
     return {
       salon: ctx.salon,
       customers: customersList,
+      loyaltyRules,
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);

@@ -1,17 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Users, Search, Plus, Filter, Mail, Star, Loader2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchSalonCustomersPage, setSalonCustomerVip } from "@/app/actions/salon-dashboard-data";
-import { toast } from "sonner";
+import { fetchSalonCustomersPage } from "@/app/actions/salon-dashboard-data";
 
 type SalonCustomer = {
   name: string;
   email: string;
   phone: string;
   isVip: boolean;
+  loyaltyTier: string | null;
+  loyaltyTierLabel: string | null;
+  vipMinVisits: number | null;
   bookings: number;
   spent: string;
   rating: number;
@@ -33,7 +36,6 @@ function buildWhatsAppHref(phone: string, customerName: string): string | null {
   if (digits.startsWith("0")) digits = `94${digits.slice(1)}`;
   else if (!digits.startsWith("94") && digits.length === 9) digits = `94${digits}`;
   const text = encodeURIComponent(`Hi ${customerName}, `);
-  // wa.me opens the salon owner's logged-in WhatsApp (app on mobile, WhatsApp Web on desktop)
   return `https://wa.me/${digits}?text=${text}`;
 }
 
@@ -52,13 +54,15 @@ function buildGmailHref(email: string, customerName: string): string | null {
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState<SalonCustomer[]>([]);
+  const [vipMinVisits, setVipMinVisits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [vipUpdating, setVipUpdating] = useState<string | null>(null);
 
   React.useEffect(() => {
     void fetchSalonCustomersPage().then((res) => {
       if (res.success && res.customers) {
         setCustomers(res.customers);
+        const vipRule = res.loyaltyRules?.find((rule) => rule.tier_key === "vip" && rule.enabled);
+        setVipMinVisits(vipRule?.min_visits ?? null);
       }
       setLoading(false);
     });
@@ -71,23 +75,6 @@ export default function CustomersPage() {
       c.phone.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  async function handleVipToggle(customer: SalonCustomer) {
-    const nextVip = !customer.isVip;
-    setVipUpdating(customer.email);
-    const result = await setSalonCustomerVip(customer.email, nextVip);
-    setVipUpdating(null);
-
-    if (result.success === false) {
-      toast.error(result.error);
-      return;
-    }
-
-    setCustomers((prev) =>
-      prev.map((c) => (c.email === customer.email ? { ...c, isVip: nextVip } : c))
-    );
-    toast.success(nextVip ? `${customer.name} marked as VIP` : `${customer.name} removed from VIP`);
-  }
-
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -97,12 +84,19 @@ export default function CustomersPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Customer Database</h1>
-            <p className="text-xs text-zinc-500">Manage client relationships, VIP status, and booking histories.</p>
+            <p className="text-xs text-zinc-500">
+              VIP badges and loyalty tiers are assigned automatically from visit rules in CRM.
+            </p>
           </div>
         </div>
 
-        <Button className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20">
-          <Plus className="w-3.5 h-3.5" /> Add Customer
+        <Button
+          asChild
+          className="h-10 rounded-xl bg-brand hover:bg-brand-hover text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-brand/20"
+        >
+          <Link href="/dashboard/crm">
+            <Plus className="w-3.5 h-3.5" /> Loyalty rules
+          </Link>
         </Button>
       </div>
 
@@ -122,7 +116,9 @@ export default function CustomersPage() {
           <h3 className="text-xl font-black text-[#1A1C29] mt-1">
             {loading ? "..." : customers.filter((c) => c.isVip).length} Clients
           </h3>
-          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Owner selected</span>
+          <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">
+            {vipMinVisits != null ? `${vipMinVisits}+ visits` : "Set rules in CRM"}
+          </span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Average Rating</span>
@@ -153,7 +149,7 @@ export default function CustomersPage() {
             <thead>
               <tr className="bg-zinc-50 text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-200">
                 <th className="px-6 py-4">Client Detail</th>
-                <th className="px-6 py-4">VIP</th>
+                <th className="px-6 py-4">Loyalty</th>
                 <th className="px-6 py-4">Total Bookings</th>
                 <th className="px-6 py-4">Lifetime Value</th>
                 <th className="px-6 py-4">Client Rating</th>
@@ -179,7 +175,6 @@ export default function CustomersPage() {
                 filteredCustomers.map((c) => {
                   const whatsappHref = buildWhatsAppHref(c.phone, c.name);
                   const gmailHref = buildGmailHref(c.email, c.name);
-                  const isUpdatingVip = vipUpdating === c.email;
 
                   return (
                     <tr key={c.email} className="hover:bg-zinc-50/50 transition-colors">
@@ -197,25 +192,13 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <Button
-                          type="button"
-                          variant={c.isVip ? "default" : "outline"}
-                          size="sm"
-                          disabled={isUpdatingVip}
-                          onClick={() => void handleVipToggle(c)}
-                          className={`h-8 rounded-lg text-[10px] font-bold gap-1.5 ${
-                            c.isVip
-                              ? "bg-amber-400 hover:bg-amber-500 text-black"
-                              : "border-zinc-200 text-zinc-600 hover:text-zinc-900"
-                          }`}
-                        >
-                          {isUpdatingVip ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Crown className="w-3 h-3" />
-                          )}
-                          {c.isVip ? "VIP" : "Mark VIP"}
-                        </Button>
+                        {c.loyaltyTierLabel ? (
+                          <span className="inline-flex items-center rounded-md bg-black text-white text-[10px] font-bold px-2.5 py-1">
+                            {c.loyaltyTierLabel}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-zinc-400 font-semibold">—</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-zinc-700">{c.bookings} visits</td>
                       <td className="px-6 py-4 text-sm font-black text-brand">{c.spent}</td>
