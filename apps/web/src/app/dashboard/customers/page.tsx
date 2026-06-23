@@ -58,14 +58,16 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
-    void fetchSalonCustomersPage().then((res) => {
-      if (res.success && res.customers) {
-        setCustomers(res.customers);
-        const vipRule = res.loyaltyRules?.find((rule) => rule.tier_key === "vip" && rule.enabled);
-        setVipMinVisits(vipRule?.min_visits ?? null);
-      }
-      setLoading(false);
-    });
+    void Promise.resolve().then(() =>
+      fetchSalonCustomersPage().then((res) => {
+        if (res.success && res.customers) {
+          setCustomers(res.customers);
+          const vipRule = res.loyaltyRules?.find((rule) => rule.tier_key === "vip" && rule.enabled);
+          setVipMinVisits(vipRule?.min_visits ?? null);
+        }
+        setLoading(false);
+      })
+    );
   }, []);
 
   const filteredCustomers = customers.filter(

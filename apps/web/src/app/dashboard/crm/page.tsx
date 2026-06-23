@@ -77,7 +77,7 @@ export default function CRMPage() {
   }, []);
 
   useEffect(() => {
-    void loadCrm();
+    void Promise.resolve().then(() => loadCrm());
   }, [loadCrm]);
 
   function openRulesModal() {
