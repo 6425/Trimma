@@ -11,6 +11,7 @@ import { sendWhatsAppNotification } from "../actions/whatsapp";
 import { formatLkr, getBookingAmount, getBookingBalance } from "@/lib/dashboard-stats";
 import { fetchCustomerDashboardPage, type CustomerDashboardBooking } from "@/app/actions/customer-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
+import { customerBtnClass } from "@/lib/customer-dashboard-ui";
 
 function DashboardContent() {
   const router = useRouter();
@@ -126,7 +127,7 @@ function DashboardContent() {
             setLoading(true);
             void loadDashboard();
           }}
-          className="inline-flex items-center gap-2 bg-[#ffc800] text-black font-bold rounded-xl px-4 py-2"
+          className={`${customerBtnClass} gap-2 px-4 py-2`}
         >
           <RefreshCw className="w-4 h-4" />
           Retry
@@ -161,16 +162,16 @@ function DashboardContent() {
         </div>
 
         <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
-          <Link href="/" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className={`${customerBtnClass} h-12 w-full`}>
             Book Now
           </Link>
-          <Link href="/" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/" className={`${customerBtnClass} h-12 w-full`}>
             Find Salons
           </Link>
-          <Link href="/customer/styles" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/styles" className={`${customerBtnClass} h-12 w-full`}>
             Saved Styles
           </Link>
-          <Link href="/customer/bookings" className="trimma-customer-action-btn group/button inline-flex shrink-0 items-center justify-center max-w-full bg-zinc-100 border border-zinc-200 text-zinc-800 hover:bg-[#ffc800]/10 hover:text-[#ffc800] hover:border-[#ffc800]/30 h-12 rounded-xl w-full transition-all">
+          <Link href="/customer/bookings" className={`${customerBtnClass} h-12 w-full`}>
             History
           </Link>
         </div>
@@ -195,7 +196,7 @@ function DashboardContent() {
           <div className="text-center py-12 text-zinc-500">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
             <p>You have no upcoming bookings.</p>
-            <Link href="/" className="inline-flex mt-2 text-[#ffc800] hover:text-[#ffc800]/80 underline-offset-4 hover:underline text-sm font-semibold transition-all">
+            <Link href="/" className={`${customerBtnClass} mt-4 px-5 py-2 text-sm`}>
               Browse salons to book
             </Link>
           </div>

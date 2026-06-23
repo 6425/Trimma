@@ -14,6 +14,7 @@ import { getCustomerReviewUiState } from "@/lib/reviews";
 import { ReviewFormDialog } from "../../../components/reviews/ReviewFormDialog";
 import { StarRatingDisplay } from "../../../components/reviews/StarRatingInput";
 import { toast } from "sonner";
+import { customerBtnClass, customerTabClass } from "@/lib/customer-dashboard-ui";
 
 type BookingTab = "all" | "ready" | "reviewed";
 
@@ -151,7 +152,7 @@ function BookingsListContent() {
       return (
         <Button
           onClick={() => openReviewDialog(booking)}
-          className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold rounded-xl h-10 px-4"
+          className={`${customerBtnClass} h-10 px-4`}
         >
           <Star className="w-4 h-4 mr-2" />
           {reviewState.actionLabel}
@@ -193,12 +194,7 @@ function BookingsListContent() {
     );
   };
 
-  const tabButtonClass = (tab: BookingTab) =>
-    `rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-      validTab === tab
-        ? "bg-[#ffc800] text-black shadow-sm"
-        : "bg-white text-zinc-600 border border-zinc-200 hover:border-[#ffc800]/40"
-    }`;
+  const tabButtonClass = (tab: BookingTab) => customerTabClass(validTab === tab);
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
@@ -208,7 +204,7 @@ function BookingsListContent() {
           <p className="text-sm text-zinc-500 mt-1">View, track, and review your salon appointments.</p>
         </div>
 
-        <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all">
+        <Link href="/" className={`${customerBtnClass} text-xs h-10 px-4 gap-2`}>
           <Scissors className="w-4 h-4 mr-2" />
           Book New Appointment
         </Link>
@@ -251,7 +247,7 @@ function BookingsListContent() {
           <p className="text-sm text-zinc-500 mt-2 max-w-sm mx-auto leading-relaxed">
             You don&apos;t have any bookings yet. Find a professional salon nearby and book your first experience.
           </p>
-          <Link href="/" className="group/button inline-flex shrink-0 items-center justify-center max-w-full mt-6 bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all">
+          <Link href="/" className={`${customerBtnClass} mt-6 px-6 py-2.5`}>
             Explore Salons
           </Link>
         </div>
@@ -270,7 +266,7 @@ function BookingsListContent() {
             <button
               type="button"
               onClick={() => setTab("all")}
-              className="mt-6 text-xs font-bold text-[#ffc800] hover:underline"
+              className={`${customerBtnClass} mt-6 px-5 py-2 text-xs`}
             >
               View all bookings
             </button>
@@ -339,9 +335,8 @@ function BookingsListContent() {
                   {canRequestReschedule(booking) ? (
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={() => openRescheduleDialog(booking)}
-                      className="rounded-xl border-zinc-200 text-zinc-800 font-bold text-xs h-9"
+                      className={`${customerBtnClass} h-9 text-xs px-4`}
                     >
                       <CalendarClock className="w-4 h-4 mr-2" />
                       Request reschedule
@@ -415,10 +410,9 @@ function BookingsListContent() {
 
             <div className="flex items-center gap-3 pt-4 border-t border-zinc-100 justify-end">
               <Button
-                variant="outline"
                 size="sm"
                 onClick={() => setRescheduleBooking(null)}
-                className="rounded-xl font-bold text-xs h-10"
+                className={`${customerBtnClass} h-10 text-xs px-4`}
               >
                 Cancel
               </Button>
@@ -426,7 +420,7 @@ function BookingsListContent() {
                 size="sm"
                 onClick={() => void handleRescheduleSubmit()}
                 disabled={rescheduleSubmitting || !rescheduleDate || !rescheduleTime}
-                className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold rounded-xl h-10 px-5 text-xs"
+                className={`${customerBtnClass} h-10 px-5 text-xs`}
               >
                 {rescheduleSubmitting ? (
                   <>

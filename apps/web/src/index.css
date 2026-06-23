@@ -1881,6 +1881,69 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
   border-color: rgba(255, 200, 0, 0.45) !important;
 }
 
+/* Customer dashboard — black buttons, white text, yellow text on hover (BG stays black) */
+.trimma-customer-btn {
+  background-color: #000000 !important;
+  border: 1px solid #000000 !important;
+  color: #ffffff !important;
+}
+
+.trimma-customer-btn :is(svg, span) {
+  color: inherit;
+}
+
+.trimma-customer-btn svg {
+  color: #ffffff !important;
+}
+
+.trimma-customer-btn:is(:hover, :focus-visible):not(:disabled) {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffc800 !important;
+}
+
+.trimma-customer-btn:is(:hover, :focus-visible):not(:disabled) :is(svg, span) {
+  color: #ffc800 !important;
+}
+
+.trimma-customer-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.trimma-customer-tab {
+  background-color: #ffffff;
+  border: 1px solid #e4e4e7;
+  color: #52525b;
+}
+
+.trimma-customer-tab.is-active {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.trimma-customer-tab.is-active:is(:hover, :focus-visible) {
+  color: #ffc800 !important;
+}
+
+.trimma-customer-tab:not(.is-active):is(:hover, :focus-visible) {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffc800 !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-customer-btn {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-customer-btn:is(:hover, :focus-visible):not(:disabled) {
+  background-color: #000000 !important;
+  color: #ffc800 !important;
+}
+
 /* Hero bands stay yellow in dark mode — black type for readability */
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) {
   background: linear-gradient(135deg, #ffd633 0%, #ffc800 100%) !important;

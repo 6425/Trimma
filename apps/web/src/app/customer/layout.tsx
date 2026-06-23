@@ -184,7 +184,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </header>
 
         {/* Page Content */}
-        <div className="trimma-portal-content flex-1 min-w-0 overflow-x-hidden trimma-light-context bg-white">
+        <div className="trimma-portal-content trimma-customer-dashboard flex-1 min-w-0 overflow-x-hidden trimma-light-context bg-white">
           {children}
         </div>
       </main>

@@ -15,6 +15,7 @@ import {
 import { withTimeout } from "@/lib/promise-timeout";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { useSalonFavorites } from "@/hooks/useSalonFavorites";
+import { customerBtnClass } from "@/lib/customer-dashboard-ui";
 
 function FavoritesContent() {
   const router = useRouter();
@@ -86,7 +87,7 @@ function FavoritesContent() {
 
         <Link
           href="/"
-          className="inline-flex shrink-0 items-center justify-center bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all"
+          className={`${customerBtnClass} text-xs h-10 px-4 gap-2`}
         >
           <Scissors className="w-4 h-4 mr-2" />
           Discover Salons
@@ -115,7 +116,7 @@ function FavoritesContent() {
           </p>
           <Link
             href="/"
-            className="inline-flex mt-6 bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all"
+            className={`${customerBtnClass} mt-6 px-6 py-2.5`}
           >
             Explore Salons
           </Link>
@@ -183,13 +184,13 @@ function FavoritesContent() {
                     <div className="flex gap-2">
                       <Link
                         href={linkTarget}
-                        className="inline-flex items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 text-xs font-bold h-9 px-3 hover:bg-zinc-50 transition-colors"
+                        className={`${customerBtnClass} rounded-lg text-xs h-9 px-3`}
                       >
                         View
                       </Link>
                       <Link
                         href={`${linkTarget}?action=book`}
-                        className="inline-flex items-center justify-center rounded-lg bg-[#ffc800] text-black text-xs font-bold h-9 px-4 hover:bg-[#ffc800]/90 transition-colors"
+                        className={`${customerBtnClass} rounded-lg text-xs h-9 px-4`}
                       >
                         Book
                       </Link>

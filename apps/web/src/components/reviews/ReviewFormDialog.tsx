@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { submitBookingReview } from "@/app/actions/reviews";
 import { StarRatingInput } from "./StarRatingInput";
 import { toast } from "sonner";
+import { customerBtnClass } from "@/lib/customer-dashboard-ui";
 
 type ReviewFormDialogProps = {
   open: boolean;
@@ -126,14 +127,18 @@ export function ReviewFormDialog({
         <DialogFooter className="border-t border-zinc-200 bg-zinc-50">
           <Button
             type="button"
-            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={saving}
-            className="border-zinc-300 bg-white !text-zinc-700 hover:bg-zinc-100 hover:!text-zinc-900 hover:border-zinc-400"
+            className={`${customerBtnClass} h-10 px-4`}
           >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={saving} className="!text-black">
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className={`${customerBtnClass} h-10 px-4`}
+          >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit review"}
           </Button>
         </DialogFooter>

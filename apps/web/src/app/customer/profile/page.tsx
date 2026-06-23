@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { fetchCustomerProfileViaApi, patchCustomerProfileViaApi } from "@/lib/customer-profile-api-client";
 import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { withTimeout } from "@/lib/promise-timeout";
+import { customerBtnClass } from "@/lib/customer-dashboard-ui";
 
 function ProfileFormContent() {
   const router = useRouter();
@@ -105,7 +106,7 @@ function ProfileFormContent() {
               setLoading(true);
               void loadProfile();
             }}
-            className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold"
+            className={`${customerBtnClass} px-4 py-2`}
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -193,7 +194,7 @@ function ProfileFormContent() {
                 <p className="text-[10px] text-zinc-400 font-medium">Your email is used for sign-in and booking confirmations and can&apos;t be changed here.</p>
               </div>
 
-              <ConnectTelegramCard className="mt-2" />
+              <ConnectTelegramCard className="mt-2" buttonClassName={customerBtnClass} />
 
             </div>
           </div>
@@ -203,7 +204,7 @@ function ProfileFormContent() {
             <Button 
               type="submit" 
               disabled={saving}
-              className="bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold h-11 px-6 flex items-center gap-2"
+              className={`${customerBtnClass} h-11 px-6 gap-2`}
             >
               {saving ? (
                 <>

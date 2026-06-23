@@ -10,6 +10,7 @@ type ConnectTelegramCardProps = {
   description?: string;
   compact?: boolean;
   className?: string;
+  buttonClassName?: string;
 };
 
 export function ConnectTelegramCard({
@@ -17,6 +18,7 @@ export function ConnectTelegramCard({
   description = "Use the same phone for WhatsApp. Connect Telegram once to also get alerts here — no chat ID needed.",
   compact = false,
   className = "",
+  buttonClassName = "w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold h-10 text-xs flex items-center gap-2",
 }: ConnectTelegramCardProps) {
   const [loading, setLoading] = useState(true);
   const [linking, setLinking] = useState(false);
@@ -172,7 +174,7 @@ export function ConnectTelegramCard({
         type="button"
         onClick={handleConnect}
         disabled={linking}
-        className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold h-10 text-xs flex items-center gap-2"
+        className={buttonClassName}
       >
         {linking ? (
           <>

@@ -13,6 +13,7 @@ import {
 } from "@/app/actions/customer-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
 import { useSavedStyles } from "@/hooks/useSavedStyles";
+import { customerBtnClass } from "@/lib/customer-dashboard-ui";
 
 function SavedStylesContent() {
   const router = useRouter();
@@ -84,7 +85,7 @@ function SavedStylesContent() {
 
         <Link
           href="/styles"
-          className="inline-flex shrink-0 items-center justify-center bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold text-xs h-10 px-4 transition-all"
+          className={`${customerBtnClass} text-xs h-10 px-4 gap-2`}
         >
           <Scissors className="w-4 h-4 mr-2" />
           Browse Latest Styles
@@ -113,7 +114,7 @@ function SavedStylesContent() {
           </p>
           <Link
             href="/styles"
-            className="inline-flex mt-6 bg-[#ffc800] hover:bg-[#ffc800]/90 text-black rounded-xl font-bold px-6 py-2.5 transition-all"
+            className={`${customerBtnClass} mt-6 px-6 py-2.5`}
           >
             Explore Styles
           </Link>
