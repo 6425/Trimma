@@ -498,7 +498,7 @@ export default function DashboardBookings() {
             onClick={openWalkInBookingModal}
             className="h-10 rounded-xl font-bold text-xs shrink-0 px-4"
           >
-            <Plus className="w-4 h-4 mr-1.5" /> Walking Customer Booking
+            <Plus className="w-4 h-4 mr-1.5" /> Walk-in Customer Booking
           </Button>
         </div>
       </div>

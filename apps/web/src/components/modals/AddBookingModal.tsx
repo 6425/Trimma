@@ -13,9 +13,9 @@ export function AddBookingModal({
   selectedSlot,
   salonId,
   onSuccess,
-  title = "Walking Customer Booking",
+  title = "Walk-in Customer Booking",
   description = "Register a walk-in customer appointment at your salon.",
-  submitLabel = "Save Walk-In Booking",
+  submitLabel = "Save Walk-in Booking",
 }: {
   isOpen: boolean;
   onClose: () => void;
