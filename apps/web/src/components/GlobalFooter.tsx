@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Facebook, Instagram, Youtube } from "lucide-react";
 import Logo from "./Logo";
 import { CookieSettingsLink } from "@/components/legal/CookieSettingsLink";
+import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
 
 export default function GlobalFooter() {
   return (
@@ -62,11 +62,7 @@ export default function GlobalFooter() {
             <Link href="/" className="inline-flex items-center gap-3 group hover:opacity-90 transition-opacity">
               <Logo iconSize={36} />
             </Link>
-            <div className="flex items-center gap-4">
-              <a href="https://www.facebook.com/profile.php?id=61590121154154" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#ffc800] transition-colors"><Facebook className="w-5 h-5" /></a>
-              <a href="https://www.youtube.com/@Trimma-io" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#ffc800] transition-colors"><Youtube className="w-5 h-5" /></a>
-              <a href="https://www.instagram.com/trimmaio/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-[#ffc800] transition-colors"><Instagram className="w-5 h-5" /></a>
-            </div>
+            <TrimmaSocialLinks />
           </div>
 
         </div>

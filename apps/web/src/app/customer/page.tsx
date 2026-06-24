@@ -161,17 +161,17 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="relative z-10 mt-8 trimma-action-grid gap-3 text-sm font-medium">
-          <Link href="/" className={`${customerBtnClass} h-12 w-full`}>
+        <div className="relative z-10 mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Link href="/" className={`${customerBtnClass} h-11 lg:h-12 px-4 text-sm`}>
             Book Now
           </Link>
-          <Link href="/" className={`${customerBtnClass} h-12 w-full`}>
+          <Link href="/" className={`${customerBtnClass} h-11 lg:h-12 px-4 text-sm`}>
             Find Salons
           </Link>
-          <Link href="/customer/styles" className={`${customerBtnClass} h-12 w-full`}>
+          <Link href="/customer/styles" className={`${customerBtnClass} h-11 lg:h-12 px-4 text-sm`}>
             Saved Styles
           </Link>
-          <Link href="/customer/bookings" className={`${customerBtnClass} h-12 w-full`}>
+          <Link href="/customer/bookings" className={`${customerBtnClass} h-11 lg:h-12 px-4 text-sm`}>
             History
           </Link>
         </div>

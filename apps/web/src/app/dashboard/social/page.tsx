@@ -1,11 +1,18 @@
 "use client";
 
 import React from "react";
-import { Share2, Facebook, MessageCircle, Instagram, Globe, Check, Play, Settings } from "lucide-react";
+import { Share2, Facebook, MessageCircle, Globe, Check, Play, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
 
 export default function SocialMediaPage() {
-  const socialChannels = [
+  const socialChannels: {
+    name: string;
+    desc: string;
+    connected: boolean;
+    icon: React.ReactNode;
+    iconWrapClass?: string;
+  }[] = [
     {
       name: "Facebook Booking Page",
       desc: "Automatically sync salon bookings directly inside your Facebook Business profile call-to-action button.",
@@ -19,10 +26,11 @@ export default function SocialMediaPage() {
       icon: <MessageCircle className="w-6 h-6 text-emerald-600" />
     },
     {
-      name: "Instagram Action Link",
-      desc: "Embed your custom reservation link into your Instagram profile bio or custom story swipe-up cards.",
+      name: "TikTok Action Link",
+      desc: "Add your Trimma booking link to your TikTok profile bio so followers can book in one tap.",
       connected: false,
-      icon: <Instagram className="w-6 h-6 text-pink-600" />
+      icon: <TikTokIcon className="w-6 h-6 text-[#ffc800]" />,
+      iconWrapClass: "bg-black border-black",
     },
     {
       name: "Google Business Directory",
@@ -42,7 +50,7 @@ export default function SocialMediaPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Social Media & Integrations</h1>
-            <p className="text-xs text-zinc-500">Connect and manage booking shortcuts across Facebook, Instagram, WhatsApp, and Google.</p>
+            <p className="text-xs text-zinc-500">Connect and manage booking shortcuts across Facebook, TikTok, WhatsApp, and Google.</p>
           </div>
         </div>
       </div>
@@ -63,7 +71,11 @@ export default function SocialMediaPage() {
             )}
 
             <div className="space-y-4 pt-4 flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+              <div
+                className={`w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 ${
+                  channel.iconWrapClass || "bg-zinc-50 border-zinc-100"
+                }`}
+              >
                 {channel.icon}
               </div>
               <div className="space-y-1">

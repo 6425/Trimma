@@ -876,7 +876,7 @@ export function SalonOwnerHelpGuide() {
             features={[
               "Facebook Booking Page — sync CTA bookings (Connected)",
               "WhatsApp Automated Agent — confirmations, reminders, receipts (Connected)",
-              "Instagram Action Link — booking URL in bio/stories (connect when ready)",
+              "TikTok Action Link — booking URL in profile bio (connect when ready)",
               "Google Business Directory — Maps/Search integration (connect when ready)",
               "Per-channel Connect, Settings, and status badges",
             ]}
