@@ -31,6 +31,36 @@ function displaySlotToMinutes(slot: string): number {
   return hh * 60 + mm;
 }
 
+const BIRTHDAY_YEAR_OPTIONS = Array.from({ length: 100 }, (_, index) => {
+  const year = new Date().getFullYear() - index;
+  return { value: String(year), label: String(year) };
+});
+
+const BIRTHDAY_MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => {
+  const month = index + 1;
+  return {
+    value: String(month).padStart(2, "0"),
+    label: format(new Date(2000, index, 1), "MMMM"),
+  };
+});
+
+function parseBirthdayParts(value: string) {
+  const [year = "", month = "", day = ""] = value.split("-");
+  return { year, month, day };
+}
+
+function composeBirthday(year: string, month: string, day: string) {
+  if (!year || !month || !day) return "";
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+function daysInMonth(year: string, month: string) {
+  const yearNum = Number(year);
+  const monthNum = Number(month);
+  if (!yearNum || !monthNum) return 31;
+  return new Date(yearNum, monthNum, 0).getDate();
+}
+
 export function BookingSheet({ 
   isOpen, 
   onOpenChange, 
@@ -86,9 +116,7 @@ export function BookingSheet({
     });
   }, []);
 
-  // Customer search & details
-  const [searchPhone, setSearchPhone] = useState("");
-  const [searchingCustomer, setSearchingCustomer] = useState(false);
+  // Customer details
   const [customerDetails, setCustomerDetails] = useState({
     fullName: "",
     email: "",
@@ -280,35 +308,6 @@ export function BookingSheet({
     });
   }, [step, selectedDate, selectedStaffId, selectedServiceIds, salonId, staff, totalDuration, slotsRefreshNonce]);
 
-  // Autofill search by phone
-  const handleSearchCustomer = async () => {
-    if (!searchPhone) return;
-    setSearchingCustomer(true);
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("phone", searchPhone)
-        .maybeSingle();
-
-      if (data) {
-        setCustomerDetails({
-          fullName: data.full_name || "",
-          email: data.email || "",
-          phone: data.phone || searchPhone
-        });
-        alert("🎉 Profile autofilled successfully!");
-      } else {
-        alert("No registered profile found. You can proceed to create a new profile.");
-      }
-    } catch(e) {
-      console.error(e);
-    } finally {
-      setSearchingCustomer(false);
-    }
-  };
-
-
   const toggleService = (id: string) => {
     setSelectedServiceIds(prev => 
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
@@ -389,7 +388,7 @@ export function BookingSheet({
           </div>
         </div>
 
-        <div className="p-6 flex-1">
+        <div className="p-6 flex-1 min-w-0 overflow-x-hidden">
           {/* STEP 1: SELECT SERVICES */}
           {step === 1 && (
             <div className="space-y-4">
@@ -619,31 +618,8 @@ export function BookingSheet({
 
           {/* STEP 4: CUSTOMER DETAILS */}
           {step === 4 && (
-            <div className="space-y-6">
-               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
-                  <div>
-                    <h3 className="font-bold text-zinc-900 text-base">Customer Lookup</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Lookup profiles by phone to instantly autofill your booking details.</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <LkPhoneInput
-                      theme="light"
-                      value={searchPhone}
-                      onChange={setSearchPhone}
-                      className="flex-1 h-11 rounded-xl"
-                      inputClassName="h-11 text-sm font-semibold"
-                    />
-                    <Button 
-                      className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl h-11 px-4"
-                      onClick={handleSearchCustomer}
-                      disabled={searchingCustomer}
-                    >
-                      {searchingCustomer ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Find'}
-                    </Button>
-                  </div>
-               </div>
-
-               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+            <div className="space-y-6 min-w-0">
+               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 min-w-0 overflow-hidden">
                   <h3 className="font-bold text-zinc-900 text-base">Personal Details</h3>
                   
                   <div className="space-y-2">
@@ -683,13 +659,13 @@ export function BookingSheet({
 
 
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
+                    <div className="space-y-2 min-w-0">
                       <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Gender</label>
                       <select 
                         value={gender}
                         onChange={(e) => setGender(e.target.value)}
-                        className="w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800 bg-white"
+                        className="w-full min-w-0 h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800 bg-white"
                       >
                         <option value="Unspecified">Prefer Not Say</option>
                         <option value="Male">Male</option>
@@ -697,14 +673,76 @@ export function BookingSheet({
                         <option value="Other">Other</option>
                       </select>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Birthday</label>
-                      <input 
-                        type="date"
-                        value={birthday}
-                        onChange={(e) => setBirthday(e.target.value)}
-                        className="w-full h-11 px-4 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800 bg-white"
-                      />
+                      {(() => {
+                        const { year, month, day } = parseBirthdayParts(birthday);
+                        const maxDays = daysInMonth(year, month);
+                        const dayOptions = Array.from({ length: maxDays }, (_, index) => {
+                          const value = String(index + 1).padStart(2, "0");
+                          return { value, label: String(index + 1) };
+                        });
+                        const fieldClass =
+                          "w-full min-w-0 max-w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800 bg-white";
+
+                        const updateBirthday = (next: { year?: string; month?: string; day?: string }) => {
+                          const nextYear = next.year ?? year;
+                          const nextMonth = next.month ?? month;
+                          let nextDay = next.day ?? day;
+                          const nextMaxDays = daysInMonth(nextYear, nextMonth);
+                          if (nextDay && Number(nextDay) > nextMaxDays) {
+                            nextDay = String(nextMaxDays).padStart(2, "0");
+                          }
+                          setBirthday(composeBirthday(nextYear, nextMonth, nextDay));
+                        };
+
+                        return (
+                          <div className="space-y-2 min-w-0">
+                            <select
+                              value={year}
+                              onChange={(e) => updateBirthday({ year: e.target.value })}
+                              className={fieldClass}
+                              aria-label="Birth year"
+                            >
+                              <option value="">Year</option>
+                              {BIRTHDAY_YEAR_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="grid grid-cols-2 gap-2 min-w-0">
+                              <select
+                                value={month}
+                                onChange={(e) => updateBirthday({ month: e.target.value })}
+                                className={fieldClass}
+                                aria-label="Birth month"
+                              >
+                                <option value="">Month</option>
+                                {BIRTHDAY_MONTH_OPTIONS.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={day}
+                                onChange={(e) => updateBirthday({ day: e.target.value })}
+                                className={fieldClass}
+                                aria-label="Birth day"
+                                disabled={!month}
+                              >
+                                <option value="">Day</option>
+                                {dayOptions.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 
