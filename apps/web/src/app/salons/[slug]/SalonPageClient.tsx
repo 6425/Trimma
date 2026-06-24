@@ -40,7 +40,7 @@ import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
 
 const SALON_ACTION_BTN =
-  "bg-black !text-white hover:bg-zinc-800 hover:!text-white border-black [&_svg]:!text-white disabled:bg-zinc-700 disabled:!text-zinc-300";
+  "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffc800] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffc800] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
 import {
   getDiscountedServicePrice,
   getServiceDiscountLabel,

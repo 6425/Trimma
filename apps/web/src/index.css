@@ -1688,7 +1688,7 @@
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
   [class*="bg-brand"], [class*="bg-\[#ffc800\]"], [class*="text-\[#ffc800\]"], [class*="text-brand"],
-  [class*="text-white"], .trimma-sidebar-nav-item
+  [class*="text-white"], .trimma-sidebar-nav-item, .trimma-filter-tab
 ) {
   color: #3f3f46 !important;
 }
@@ -1711,7 +1711,8 @@
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context [data-slot="button"]:is(:hover, :focus-visible):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
   [class*="bg-brand"], [class*="bg-\[#ffc800\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
-  [class*="hover:bg-black"], [class*="text-\[#ffc800\]"], [class*="text-brand"], [class*="text-white"]
+  [class*="hover:bg-black"], [class*="text-\[#ffc800\]"], [class*="text-brand"], [class*="text-white"],
+  .trimma-filter-tab
 ) {
   color: #18181b !important;
 }
@@ -1903,9 +1904,14 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
   color: #52525b;
 }
 
-.trimma-filter-tab.is-active {
+.trimma-filter-tab.is-active,
+.trimma-filter-tab.is-active:is(:hover, :focus-visible) {
   background-color: #000000 !important;
   border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.trimma-filter-tab.is-active :is(svg, span) {
   color: #ffffff !important;
 }
 
@@ -1913,9 +1919,38 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
   color: #ffc800 !important;
 }
 
+.trimma-filter-tab.is-active:is(:hover, :focus-visible) :is(svg, span) {
+  color: #ffc800 !important;
+}
+
 .trimma-filter-tab:not(.is-active):is(:hover, :focus-visible) {
   background-color: #000000 !important;
   border-color: #000000 !important;
+  color: #ffc800 !important;
+}
+
+/* Customer portal — never gray labels on solid black controls */
+.trimma-customer-dashboard :is(
+  .trimma-filter-tab.is-active,
+  [data-slot="button"][class*="bg-black"],
+  a[class*="bg-black"]
+) {
+  color: #ffffff !important;
+}
+
+.trimma-customer-dashboard :is(
+  .trimma-filter-tab.is-active,
+  [data-slot="button"][class*="bg-black"],
+  a[class*="bg-black"]
+) :is(svg, span) {
+  color: currentColor !important;
+}
+
+.trimma-customer-dashboard :is(
+  .trimma-filter-tab.is-active,
+  [data-slot="button"][class*="bg-black"],
+  a[class*="bg-black"]
+):is(:hover, :focus-visible):not(:disabled) {
   color: #ffc800 !important;
 }
 

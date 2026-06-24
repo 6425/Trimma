@@ -11,7 +11,7 @@ export const trimmaDarkBtnClass = cn(
 export function trimmaFilterTabClass(active: boolean) {
   return cn(
     "trimma-filter-tab rounded-xl px-4 py-2.5 sm:py-2 text-xs font-bold transition-all min-h-11 sm:min-h-9",
-    active && "is-active"
+    active && "is-active bg-black !text-white border-black"
   );
 }
 

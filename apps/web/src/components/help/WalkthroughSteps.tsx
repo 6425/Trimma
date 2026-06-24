@@ -185,7 +185,7 @@ const BookingProcessMockup = () => (
     <div className="p-4 space-y-4 flex-1">
       <div className="flex justify-between items-center bg-white p-2 rounded-lg border border-zinc-200">
          <div className="text-center px-3 py-1 rounded-md bg-zinc-50"><div className="text-[10px] text-zinc-500">Mon</div><div className="font-bold text-sm">12</div></div>
-         <div className="text-center px-3 py-1 rounded-md bg-zinc-900 text-white"><div className="text-[10px] text-zinc-400">Tue</div><div className="font-bold text-sm">13</div></div>
+         <div className="text-center px-3 py-1 rounded-md bg-zinc-900 text-white"><div className="text-[10px] text-zinc-200">Tue</div><div className="font-bold text-sm">13</div></div>
          <div className="text-center px-3 py-1 rounded-md bg-zinc-50"><div className="text-[10px] text-zinc-500">Wed</div><div className="font-bold text-sm">14</div></div>
       </div>
       <div>
