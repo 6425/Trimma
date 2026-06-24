@@ -13,12 +13,18 @@ export function AddBookingModal({
   selectedSlot,
   salonId,
   onSuccess,
+  title = "Walking Customer Booking",
+  description = "Register a walk-in customer appointment at your salon.",
+  submitLabel = "Save Walk-In Booking",
 }: {
   isOpen: boolean;
   onClose: () => void;
   selectedSlot: { date: string; time: string } | null;
   salonId: string;
   onSuccess: () => void;
+  title?: string;
+  description?: string;
+  submitLabel?: string;
 }) {
   const [services, setServices] = useState<any[]>([]);
   const [staffList, setStaffList] = useState<any[]>([]);
@@ -134,8 +140,8 @@ export function AddBookingModal({
       open={isOpen}
       onClose={onClose}
       size="sm"
-      title="Manual Booking"
-      description="Capture a walk-in or phone reservation"
+      title={title}
+      description={description}
       footer={
         !isLoading ? (
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
@@ -153,7 +159,7 @@ export function AddBookingModal({
               disabled={isSubmitting || !formData.service_id || !formData.staff_id}
               className="rounded-xl h-11 bg-brand hover:bg-brand-hover text-black font-bold shadow-md shadow-brand/20 px-6"
             >
-              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Capture Booking"}
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : submitLabel}
             </Button>
           </div>
         ) : undefined

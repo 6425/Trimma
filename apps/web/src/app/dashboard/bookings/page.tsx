@@ -25,6 +25,7 @@ import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/l
 import { matchesBookingStatusTab, type BookingStatusTab } from "@/lib/booking-owner-queue";
 import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
+import { AddBookingModal } from "../../../components/modals/AddBookingModal";
 
 import { ChevronDown } from "lucide-react";
 
@@ -172,6 +173,25 @@ export default function DashboardBookings() {
         ? tabParam
         : "confirmed";
   const skipTabRefetch = useRef(true);
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
+  const [walkInSlot, setWalkInSlot] = useState<{ date: string; time: string } | null>(null);
+
+  function openWalkInBookingModal() {
+    const now = new Date();
+    const minutes = now.getMinutes();
+    now.setMinutes(Math.ceil(minutes / 15) * 15, 0, 0);
+    const date = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+    const time = [
+      String(now.getHours()).padStart(2, "0"),
+      String(now.getMinutes()).padStart(2, "0"),
+    ].join(":");
+    setWalkInSlot({ date, time });
+    setIsWalkInModalOpen(true);
+  }
 
   async function fetchBookings(options?: { silent?: boolean }) {
     try {
@@ -472,8 +492,13 @@ export default function DashboardBookings() {
               className="pl-9.5 h-10 rounded-xl"
             />
           </div>
-          <Button className="h-10 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl font-bold text-xs shrink-0 px-4">
-            <Plus className="w-4 h-4 mr-1.5" /> New Booking
+          <Button
+            type="button"
+            variant="dark"
+            onClick={openWalkInBookingModal}
+            className="h-10 rounded-xl font-bold text-xs shrink-0 px-4"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Walking Customer Booking
           </Button>
         </div>
       </div>
@@ -765,6 +790,18 @@ export default function DashboardBookings() {
           </div>
         </div>
       </DashboardModal>
+
+      <AddBookingModal
+        isOpen={isWalkInModalOpen}
+        onClose={() => setIsWalkInModalOpen(false)}
+        selectedSlot={walkInSlot}
+        salonId=""
+        onSuccess={() => {
+          setIsWalkInModalOpen(false);
+          void fetchBookings({ silent: true });
+          toast.success("Walk-in booking saved.");
+        }}
+      />
     </div>
   );
 }
