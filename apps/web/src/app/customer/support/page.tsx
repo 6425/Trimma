@@ -2,6 +2,12 @@
 
 import { LifeBuoy, Mail, MessageSquare, Phone } from "lucide-react";
 import { CustomerHelpFaq } from "@/components/help/CustomerHelpFaq";
+import {
+  TRIMMA_SUPPORT_EMAIL,
+  TRIMMA_WHATSAPP_DISPLAY,
+  TRIMMA_WHATSAPP_TEL,
+  TRIMMA_WHATSAPP_URL,
+} from "@/lib/trimma-contact";
 
 export default function CustomerSupportPage() {
   return (
@@ -22,8 +28,8 @@ export default function CustomerSupportPage() {
           <div>
             <h3 className="font-extrabold text-zinc-900 text-lg">Email Support</h3>
             <p className="text-sm text-zinc-500 mt-1 mb-3">Drop us an email anytime and we will get back to you within 24 hours.</p>
-            <a href="mailto:support@trimma.io" className="text-sm font-bold text-[#ffc800] hover:underline">
-              support@trimma.io
+            <a href={`mailto:${TRIMMA_SUPPORT_EMAIL}`} className="text-sm font-bold text-[#ffc800] hover:underline">
+              {TRIMMA_SUPPORT_EMAIL}
             </a>
           </div>
         </div>
@@ -35,8 +41,8 @@ export default function CustomerSupportPage() {
           <div>
             <h3 className="font-extrabold text-zinc-900 text-lg">WhatsApp Chat</h3>
             <p className="text-sm text-zinc-500 mt-1 mb-3">Need immediate assistance with a booking? Chat with our team.</p>
-            <a href="https://wa.me/94770000000" target="_blank" rel="noreferrer" className="text-sm font-bold text-[#ffc800] hover:underline">
-              Chat on WhatsApp
+            <a href={TRIMMA_WHATSAPP_URL} target="_blank" rel="noreferrer" className="text-sm font-bold text-[#ffc800] hover:underline">
+              {TRIMMA_WHATSAPP_DISPLAY} · Chat on WhatsApp
             </a>
           </div>
         </div>
@@ -48,8 +54,8 @@ export default function CustomerSupportPage() {
           <div>
             <h3 className="font-extrabold text-zinc-900 text-lg">Call Us</h3>
             <p className="text-sm text-zinc-500 mt-1 mb-3">Our hotline is open from 9 AM to 6 PM on weekdays.</p>
-            <a href="tel:+94770000000" className="text-sm font-bold text-[#ffc800] hover:underline">
-              +94 77 000 0000
+            <a href={TRIMMA_WHATSAPP_TEL} className="text-sm font-bold text-[#ffc800] hover:underline">
+              {TRIMMA_WHATSAPP_DISPLAY}
             </a>
           </div>
         </div>

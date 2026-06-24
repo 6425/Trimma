@@ -20,6 +20,11 @@ import { Button } from "@/components/ui/button";
 import { BookingGuideDownloads } from "@/components/help/BookingGuideDownloads";
 import { CustomerHelpFaq } from "@/components/help/CustomerHelpFaq";
 import { CUSTOMER_DASHBOARD_OPTIONS } from "@/lib/customer-help-faq";
+import {
+  TRIMMA_SUPPORT_EMAIL,
+  TRIMMA_WHATSAPP_DISPLAY,
+  TRIMMA_WHATSAPP_URL,
+} from "@/lib/trimma-contact";
 
 const BOOKING_STEPS = [
   "Browse salons on Trimma or search by service and location.",
@@ -150,16 +155,21 @@ export function CustomerHelpContent() {
         </p>
         <div className="space-y-3">
           <a
-            href="mailto:support@trimma.io"
+            href={`mailto:${TRIMMA_SUPPORT_EMAIL}`}
             className="flex items-center gap-2 text-sm font-semibold text-white hover:text-[#ffc800] transition-colors"
           >
             <Mail className="w-4 h-4" />
-            support@trimma.io
+            {TRIMMA_SUPPORT_EMAIL}
           </a>
-          <p className="flex items-center gap-2 text-sm font-semibold text-white/90">
+          <a
+            href={TRIMMA_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm font-semibold text-white/90 hover:text-[#ffc800] transition-colors"
+          >
             <MessageCircle className="w-4 h-4 text-emerald-400" />
-            WhatsApp customer support
-          </p>
+            WhatsApp · {TRIMMA_WHATSAPP_DISPLAY}
+          </a>
           <Link
             href="/contact"
             className="inline-flex text-sm font-bold text-[#ffc800] hover:underline"

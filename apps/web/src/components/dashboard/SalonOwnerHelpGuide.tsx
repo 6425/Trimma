@@ -3,6 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import {
+  TRIMMA_WHATSAPP_DISPLAY,
+  TRIMMA_WHATSAPP_URL,
+} from "@/lib/trimma-contact";
+import {
   HelpCircle,
   ChevronDown,
   ChevronRight,
@@ -1092,10 +1096,15 @@ export function SalonOwnerHelpGuide() {
                     <Mail className="w-5 h-5 text-brand" />
                     support@trimma.com
                   </a>
-                  <div className="flex items-center gap-3 text-sm font-semibold text-white/90">
+                  <a
+                    href={TRIMMA_WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#ffc800] transition-colors"
+                  >
                     <MessageCircle className="w-5 h-5 text-emerald-400" />
-                    WhatsApp Live Chat
-                  </div>
+                    WhatsApp Live Chat · {TRIMMA_WHATSAPP_DISPLAY}
+                  </a>
                   <Link href="/dashboard/profile">
                     <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
                       Return to {SALON.name} profile

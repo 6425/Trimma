@@ -71,6 +71,6 @@ export const CUSTOMER_DASHBOARD_OPTIONS = [
   {
     title: "Support",
     path: "/customer/support",
-    description: "Contact Trimma by email or WhatsApp for booking and account help.",
+    description: "Contact Trimma by email or WhatsApp (+94 712205515) for booking and account help.",
   },
 ] as const;

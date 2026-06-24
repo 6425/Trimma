@@ -26,6 +26,12 @@ import {
   Inbox,
 } from "lucide-react";
 
+import {
+  TRIMMA_SUPPORT_EMAIL,
+  TRIMMA_WHATSAPP_DISPLAY,
+  TRIMMA_WHATSAPP_URL,
+} from "@/lib/trimma-contact";
+
 const COMPANY_OPERATOR = "Ceylon Wild Tours (Pvt) Ltd.";
 const LEGAL_DISCLAIMER =
   "Trimma is a software platform owned and operated by Ceylon Wild Tours (Pvt) Ltd. All commercial operations, billing, contracts, and customer support related to Trimma are managed under Ceylon Wild Tours (Pvt) Ltd.";
@@ -65,9 +71,18 @@ const CONTACT_OPTIONS = [
     title: "Customer Support",
     description: "For booking assistance, account issues, and platform support.",
     action: "Get Support",
-    href: "mailto:support@trimma.io",
+    href: `mailto:${TRIMMA_SUPPORT_EMAIL}`,
     iconBg: "bg-blue-50",
     iconColor: "text-blue-600",
+  },
+  {
+    icon: MessageCircle,
+    title: "WhatsApp Support",
+    description: "Chat with Trimma on WhatsApp for faster booking and account help.",
+    action: "Chat on WhatsApp",
+    href: TRIMMA_WHATSAPP_URL,
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
   },
   {
     icon: Wrench,
@@ -136,7 +151,8 @@ const BUSINESS_INFO = [
   { icon: Building2, label: "Company Name", value: COMPANY_OPERATOR },
   { icon: Sparkles, label: "Brand", value: "Trimma" },
   { icon: Globe, label: "Website", value: "https://trimma.io", href: "https://trimma.io" },
-  { icon: Headphones, label: "Support Email", value: "support@trimma.io", href: "mailto:support@trimma.io" },
+  { icon: Headphones, label: "Support Email", value: TRIMMA_SUPPORT_EMAIL, href: `mailto:${TRIMMA_SUPPORT_EMAIL}` },
+  { icon: MessageCircle, label: "WhatsApp", value: TRIMMA_WHATSAPP_DISPLAY, href: TRIMMA_WHATSAPP_URL },
   {
     icon: Clock,
     label: "Business Hours",

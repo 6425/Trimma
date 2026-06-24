@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "./Logo";
 import { CookieSettingsLink } from "@/components/legal/CookieSettingsLink";
 import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
+import { TRIMMA_WHATSAPP_DISPLAY, TRIMMA_WHATSAPP_URL } from "@/lib/trimma-contact";
 
 export default function GlobalFooter() {
   return (
@@ -19,6 +20,11 @@ export default function GlobalFooter() {
               <li><Link href="/cancellation-help" className="hover:text-[#ffc800] transition-colors">Cancellation options</Link></li>
               <li><Link href="/safety" className="hover:text-[#ffc800] transition-colors">Safety Resource Center</Link></li>
               <li><Link href="/contact" className="hover:text-[#ffc800] transition-colors">Contact</Link></li>
+              <li>
+                <a href={TRIMMA_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#ffc800] transition-colors">
+                  WhatsApp {TRIMMA_WHATSAPP_DISPLAY}
+                </a>
+              </li>
             </ul>
           </div>
 

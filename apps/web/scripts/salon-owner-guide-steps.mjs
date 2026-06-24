@@ -35,7 +35,7 @@ export const SALON_OWNER_GUIDE_STEPS = {
     { title: "Image upload guidelines", body: "Logo: 500×500px, max 2MB. Cover: 1200×400px, max 5MB. Hero: 1920×680px, max 8MB. Service/staff photos: clear, well-lit, professional. Use JPEG or PNG. Poor images reduce booking conversion on the marketplace.", screen: "Profile image uploads" },
     { title: "Professional best practices", body: "Keep services and prices current. Update hours before public holidays. Respond to reviews promptly. Confirm bookings same day. Train staff on Trimma booking workflow. Share your marketplace link on WhatsApp status and Facebook. Upgrade plan before peak season if you need more staff slots.", screen: "Best practices checklist" },
     { title: "Common mistakes to avoid", body: "Incomplete bank details blocking verification. Wrong operating hours causing slot conflicts. Inactive services still showing in old links. Ignoring pending bookings. Deleting staff with booking history (deactivate instead). Uploading blurry logo or hero images. Not connecting WhatsApp for customer updates.", tip: "Use Salon Setup Checklist on Dashboard — it highlights missing profile items.", screen: "Setup checklist" },
-    { title: "Support & contact", body: "Setup, billing, bookings, verification, or marketplace issues: email support@trimma.com with salon name and booking reference. WhatsApp Live Chat for urgent help. Read Salon Help in your dashboard (/dashboard/help) for the full interactive guide. Download this handbook in English, Sinhala, or Tamil from Salon Help → Download Guide.", screen: "Support contacts" },
+    { title: "Support & contact", body: "Setup, billing, bookings, verification, or marketplace issues: email support@trimma.com with salon name and booking reference. WhatsApp +94 712205515 for urgent help. Read Salon Help in your dashboard (/dashboard/help) for the full interactive guide. Download this handbook in English, Sinhala, or Tamil from Salon Help → Download Guide.", screen: "Support contacts" },
   ],
   si: [
     { title: "Trimma Workspace වෙත සාදරයෙන් පිළිගනිමු", body: "Trimma Workspace යනු ශ්‍රී ලංකාවේ premium grooming marketplace හි ඔබේ සැලුනේ control centre ය. trimma.io/login වෙත යන්න. Trimma agent ලියාපදිංචි කළ Gmail මගින් Google sign-in කරන්න. Login වීමෙන් පසු /dashboard — ඔබේ salon command centre.", screen: "Google sign-in → Dashboard" },
@@ -69,7 +69,7 @@ export const SALON_OWNER_GUIDE_STEPS = {
     { title: "Image upload guidelines", body: "Logo 500×500. Cover 1200×400. Hero 1920×680. JPEG/PNG. Professional photos = more bookings.", screen: "Image uploads" },
     { title: "Professional best practices", body: "Prices current තබන්න. Holiday hours update. Reviews reply. Same-day confirm. Staff train. Marketplace link share. Plan upgrade before peak.", screen: "Best practices" },
     { title: "වැළැක්විය යුතු දෝෂ", body: "Incomplete bank. Wrong hours. Ignored pending. Staff delete (deactivate use). Blurry images. No WhatsApp.", tip: "Dashboard Setup Checklist බලන්න.", screen: "Checklist" },
-    { title: "Support", body: "support@trimma.com — salon name + booking ref. WhatsApp Live Chat. Salon Help (/dashboard/help). EN/SI/TA handbook download.", screen: "Support" },
+    { title: "Support", body: "support@trimma.com — salon name + booking ref. WhatsApp +94 712205515. Salon Help (/dashboard/help). EN/SI/TA handbook download.", screen: "Support" },
   ],
   ta: [
     { title: "Trimma Workspace க்கு வரவேற்கிறோம்", body: "Trimma Workspace என்பது இலங்கையின் premium grooming marketplace இல் உங்கள் salon இன் control centre. trimma.io/login திறந்து Trimma agent பதிவு செய்த Gmail மூலம் Google sign-in செய்யுங்கள். Login பிறகு /dashboard — உங்கள் salon command centre.", screen: "Google sign-in → Dashboard" },
@@ -103,6 +103,6 @@ export const SALON_OWNER_GUIDE_STEPS = {
     { title: "Image upload guidelines", body: "Logo 500×500. Cover 1200×400. Hero 1920×680. JPEG/PNG. Professional photos = more bookings.", screen: "Images" },
     { title: "Professional best practices", body: "Prices current. Holiday hours update. Review reply. Same-day confirm. Staff train. Link share. Plan upgrade.", screen: "Best practices" },
     { title: "தவிர்க்க வேண்டிய பிழைகள்", body: "Incomplete bank. Wrong hours. Ignored pending. Staff delete. Blurry images. No WhatsApp.", tip: "Dashboard Setup Checklist பாருங்கள்.", screen: "Checklist" },
-    { title: "Support", body: "support@trimma.com — salon name + ref. WhatsApp Live Chat. Salon Help (/dashboard/help). EN/SI/TA handbook download.", screen: "Support" },
+    { title: "Support", body: "support@trimma.com — salon name + ref. WhatsApp +94 712205515. Salon Help (/dashboard/help). EN/SI/TA handbook download.", screen: "Support" },
   ],
 };

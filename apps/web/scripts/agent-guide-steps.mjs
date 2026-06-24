@@ -154,7 +154,7 @@ export const AGENT_GUIDE_STEPS = {
     },
     {
       title: "Support and escalation",
-      body: "Territory not assigned, commission disputes, blocked admin approvals, or technical issues: email agents@trimma.com with salon name, owner Gmail, and screenshot. WhatsApp Agent Support Line for urgent field issues. Read Agent Help in the portal for the full interactive guide and Word downloads in English, Sinhala, and Tamil.",
+      body: "Territory not assigned, commission disputes, blocked admin approvals, or technical issues: email agents@trimma.com with salon name, owner Gmail, and screenshot. WhatsApp +94 712205515 for urgent field issues. Read Agent Help in the portal for the full interactive guide and Word downloads in English, Sinhala, and Tamil.",
       screen: "Support contacts",
     },
   ],

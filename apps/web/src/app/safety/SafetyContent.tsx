@@ -4,6 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { VerifiedSalonBadge } from "../../components/marketplace/VerifiedSalonBadge";
 import {
+  TRIMMA_SUPPORT_EMAIL,
+  TRIMMA_WHATSAPP_DISPLAY,
+  TRIMMA_WHATSAPP_URL,
+} from "@/lib/trimma-contact";
+import {
   AlertTriangle,
   ArrowRight,
   BadgeCheck,
@@ -18,6 +23,7 @@ import {
   Headphones,
   Lock,
   Mail,
+  MessageCircle,
   MapPin,
   MessageSquareWarning,
   Scale,
@@ -606,11 +612,20 @@ export function SafetyContent() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="mailto:support@trimma.io?subject=Safety%20Report"
+                href={`mailto:${TRIMMA_SUPPORT_EMAIL}?subject=Safety%20Report`}
                 className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-8 py-4 rounded-2xl transition-all"
               >
                 <Mail className="w-4 h-4" />
-                support@trimma.io
+                {TRIMMA_SUPPORT_EMAIL}
+              </a>
+              <a
+                href={TRIMMA_WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-4 rounded-2xl transition-all"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp {TRIMMA_WHATSAPP_DISPLAY}
               </a>
               <Link
                 href="/contact"

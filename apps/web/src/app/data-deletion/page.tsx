@@ -1,3 +1,9 @@
+import {
+  TRIMMA_SUPPORT_EMAIL,
+  TRIMMA_WHATSAPP_DISPLAY,
+  TRIMMA_WHATSAPP_URL,
+} from "@/lib/trimma-contact";
+
 const EFFECTIVE_DATE = "May 29, 2026";
 
 function Section({
@@ -77,10 +83,10 @@ export default function DataDeletionPage() {
                 <li>
                   Send an email to{" "}
                   <a
-                    href="mailto:support@trimma.io?subject=Data%20Deletion%20Request"
+                    href={`mailto:${TRIMMA_SUPPORT_EMAIL}?subject=Data%20Deletion%20Request`}
                     className="font-bold text-zinc-900 underline decoration-[#ffc800] decoration-2 underline-offset-4 hover:text-yellow-700"
                   >
-                    support@trimma.io
+                    {TRIMMA_SUPPORT_EMAIL}
                   </a>{" "}
                   with the subject line <span className="font-semibold text-zinc-900">&quot;Data Deletion Request&quot;</span>.
                 </li>
@@ -143,16 +149,31 @@ export default function DataDeletionPage() {
               For any questions about deleting your data, contact our support
               team:
             </p>
-            <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
-              <p className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
-                Support Email
-              </p>
-              <a
-                href="mailto:support@trimma.io?subject=Data%20Deletion%20Request"
-                className="mt-1 inline-block text-lg font-bold text-zinc-900 underline decoration-[#ffc800] decoration-2 underline-offset-4 hover:text-yellow-700"
-              >
-                support@trimma.io
-              </a>
+            <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-6 space-y-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                  Support Email
+                </p>
+                <a
+                  href={`mailto:${TRIMMA_SUPPORT_EMAIL}?subject=Data%20Deletion%20Request`}
+                  className="mt-1 inline-block text-lg font-bold text-zinc-900 underline decoration-[#ffc800] decoration-2 underline-offset-4 hover:text-yellow-700"
+                >
+                  {TRIMMA_SUPPORT_EMAIL}
+                </a>
+              </div>
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
+                  WhatsApp
+                </p>
+                <a
+                  href={TRIMMA_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-lg font-bold text-zinc-900 underline decoration-[#ffc800] decoration-2 underline-offset-4 hover:text-yellow-700"
+                >
+                  {TRIMMA_WHATSAPP_DISPLAY}
+                </a>
+              </div>
             </div>
           </Section>
         </div>
