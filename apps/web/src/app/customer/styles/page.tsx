@@ -85,7 +85,7 @@ function SavedStylesContent() {
 
         <Link
           href="/styles"
-          className={`${customerBtnClass} text-xs h-10 px-4 gap-2`}
+          className={`${customerBtnClass} text-xs h-11 sm:h-10 px-4 gap-2 trimma-page-cta`}
         >
           <Scissors className="w-4 h-4 mr-2" />
           Browse Latest Styles
@@ -114,7 +114,7 @@ function SavedStylesContent() {
           </p>
           <Link
             href="/styles"
-            className={`${customerBtnClass} mt-6 px-6 py-2.5`}
+            className={`${customerBtnClass} mt-6 px-6 py-2.5 trimma-page-cta`}
           >
             Explore Styles
           </Link>

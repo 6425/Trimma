@@ -102,6 +102,7 @@ function ProfileFormContent() {
           <p className="text-sm text-zinc-400 max-w-md">{loadError}</p>
           <Button
             type="button"
+            variant="dark"
             onClick={() => {
               setLoading(true);
               void loadProfile();
@@ -203,8 +204,9 @@ function ProfileFormContent() {
           <div className="flex justify-end">
             <Button 
               type="submit" 
+              variant="dark"
               disabled={saving}
-              className={`${customerBtnClass} h-11 px-6 gap-2`}
+              className={`${customerBtnClass} h-11 px-6 w-full sm:w-auto trimma-page-cta`}
             >
               {saving ? (
                 <>

@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils"
  * 
  * Variants:
  *   default   – Solid yellow (#ffc800) fill, black text. Primary CTA.
- *   hero      – Black fill on yellow hero sections, white text.
+ *   hero      – Black fill on yellow hero sections, yellow text.
+ *   dark      – Black fill, white text, yellow text on hover (BG stays black).
  *   secondary – Dark surface (#1A1A1A) with yellow text. Secondary action.
  *   outline   – Transparent with yellow border + yellow text. Tertiary action.
  *   ghost     – No border, subtle hover. Icon buttons or low-emphasis actions.
@@ -55,9 +56,9 @@ const buttonVariants = cva(
         destructive:
           "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-300",
 
-        // ── Dark: Black fill, white text (dashboard secondary CTAs) ──
+        // ── Dark: Black fill, white text, yellow text on hover (BG stays black) ──
         dark:
-          "bg-black !text-white border-black hover:bg-zinc-800 hover:!text-white [&_svg]:!text-white shadow-sm",
+          "bg-black !text-white border-black hover:bg-black hover:!text-[#ffc800] hover:border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffc800] shadow-sm",
 
         // ── Link: Underline only ──
         link:

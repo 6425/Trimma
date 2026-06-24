@@ -518,6 +518,21 @@
     color: #ffffff !important;
   }
 
+  /* Dark solid buttons — white label default, yellow label on hover, fill stays black */
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .bg-black, .bg-zinc-900, .bg-zinc-950
+  ):not(.bg-brand):not([class*="bg-[#ffc800]"]):not(.hero-btn-primary):not(.hero-btn-secondary):not(.trimma-sidebar-nav-item):is(:hover, :focus-visible, :active):not(:disabled) {
+    background-color: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffc800 !important;
+  }
+
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .bg-black, .bg-zinc-900, .bg-zinc-950
+  ):not(.bg-brand):not([class*="bg-[#ffc800]"]):not(.hero-btn-primary):not(.hero-btn-secondary):not(.trimma-sidebar-nav-item):is(:hover, :focus-visible, :active):not(:disabled) :is(svg, span) {
+    color: #ffc800 !important;
+  }
+
   /*
    * Unified primary button contract — SOLID yellow fill only, black text, gold hover.
    * Excludes low-opacity brand tints (/10, /20) used for outline secondary on dark panels.
@@ -1881,67 +1896,69 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
   border-color: rgba(255, 200, 0, 0.45) !important;
 }
 
-/* Customer dashboard — black buttons, white text, yellow text on hover (BG stays black) */
-.trimma-customer-btn {
-  background-color: #000000 !important;
-  border: 1px solid #000000 !important;
-  color: #ffffff !important;
-}
-
-.trimma-customer-btn :is(svg, span) {
-  color: inherit;
-}
-
-.trimma-customer-btn svg {
-  color: #ffffff !important;
-}
-
-.trimma-customer-btn:is(:hover, :focus-visible):not(:disabled) {
-  background-color: #000000 !important;
-  border-color: #000000 !important;
-  color: #ffc800 !important;
-}
-
-.trimma-customer-btn:is(:hover, :focus-visible):not(:disabled) :is(svg, span) {
-  color: #ffc800 !important;
-}
-
-.trimma-customer-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.trimma-customer-tab {
+/* Global filter/tab pills — dark active, yellow hover on dark */
+.trimma-filter-tab {
   background-color: #ffffff;
   border: 1px solid #e4e4e7;
   color: #52525b;
 }
 
-.trimma-customer-tab.is-active {
+.trimma-filter-tab.is-active {
   background-color: #000000 !important;
   border-color: #000000 !important;
   color: #ffffff !important;
 }
 
-.trimma-customer-tab.is-active:is(:hover, :focus-visible) {
+.trimma-filter-tab.is-active:is(:hover, :focus-visible) {
   color: #ffc800 !important;
 }
 
-.trimma-customer-tab:not(.is-active):is(:hover, :focus-visible) {
+.trimma-filter-tab:not(.is-active):is(:hover, :focus-visible) {
   background-color: #000000 !important;
   border-color: #000000 !important;
   color: #ffc800 !important;
 }
 
-html.dark .trimma-marketplace-shell .trimma-customer-btn {
-  background-color: #000000 !important;
-  border-color: #000000 !important;
-  color: #ffffff !important;
+/* Customer portal — mobile SaaS touch targets & layout polish (styles only) */
+@media (max-width: 639px) {
+  .trimma-customer-dashboard {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .trimma-customer-dashboard :is(
+    [data-slot="button"],
+    button:not(.trimma-sidebar-nav-item):not(.trimma-filter-tab),
+    a[class*="bg-black"]
+  ) {
+    min-height: 2.75rem;
+  }
+
+  .trimma-customer-dashboard .trimma-page-cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .trimma-customer-dashboard .trimma-action-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
 }
 
-html.dark .trimma-marketplace-shell .trimma-customer-btn:is(:hover, :focus-visible):not(:disabled) {
-  background-color: #000000 !important;
-  color: #ffc800 !important;
+@media (min-width: 640px) {
+  .trimma-customer-dashboard .trimma-page-cta {
+    width: auto;
+  }
+
+  .trimma-customer-dashboard .trimma-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .trimma-customer-dashboard .trimma-action-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* Hero bands stay yellow in dark mode — black type for readability */

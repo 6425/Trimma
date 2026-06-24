@@ -161,7 +161,7 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="relative z-10 mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm font-medium">
+        <div className="relative z-10 mt-8 trimma-action-grid gap-3 text-sm font-medium">
           <Link href="/" className={`${customerBtnClass} h-12 w-full`}>
             Book Now
           </Link>
@@ -196,7 +196,7 @@ function DashboardContent() {
           <div className="text-center py-12 text-zinc-500">
             <CalendarDays className="w-12 h-12 mx-auto mb-4 opacity-20 text-zinc-400" />
             <p>You have no upcoming bookings.</p>
-            <Link href="/" className={`${customerBtnClass} mt-4 px-5 py-2 text-sm`}>
+            <Link href="/" className={`${customerBtnClass} mt-4 px-5 py-2.5 text-sm trimma-page-cta`}>
               Browse salons to book
             </Link>
           </div>

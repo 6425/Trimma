@@ -87,7 +87,7 @@ function FavoritesContent() {
 
         <Link
           href="/"
-          className={`${customerBtnClass} text-xs h-10 px-4 gap-2`}
+          className={`${customerBtnClass} text-xs h-11 sm:h-10 px-4 gap-2 trimma-page-cta`}
         >
           <Scissors className="w-4 h-4 mr-2" />
           Discover Salons
@@ -116,7 +116,7 @@ function FavoritesContent() {
           </p>
           <Link
             href="/"
-            className={`${customerBtnClass} mt-6 px-6 py-2.5`}
+            className={`${customerBtnClass} mt-6 px-6 py-2.5 trimma-page-cta`}
           >
             Explore Salons
           </Link>
@@ -181,16 +181,16 @@ function FavoritesContent() {
                     <div className="text-xs text-zinc-500">
                       From <span className="text-zinc-900 font-bold">LKR {ui.startingPrice.toLocaleString()}</span>
                     </div>
-                    <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <Link
                         href={linkTarget}
-                        className={`${customerBtnClass} rounded-lg text-xs h-9 px-3`}
+                        className={`${customerBtnClass} rounded-lg text-xs h-11 sm:h-9 px-3 flex-1 sm:flex-none`}
                       >
                         View
                       </Link>
                       <Link
                         href={`${linkTarget}?action=book`}
-                        className={`${customerBtnClass} rounded-lg text-xs h-9 px-4`}
+                        className={`${customerBtnClass} rounded-lg text-xs h-11 sm:h-9 px-4 flex-1 sm:flex-none`}
                       >
                         Book
                       </Link>
