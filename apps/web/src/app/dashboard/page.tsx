@@ -20,6 +20,8 @@ import {
   groupBookingsByMonth,
   type MonthlyPoint,
 } from "@/lib/dashboard-stats";
+import { isCommissionEligibleBooking } from "@/lib/commission-ledger-format";
+import { isActiveSalonStaff } from "@/lib/staff-allocation";
 
 function SimpleBarChart({
   title,
@@ -101,18 +103,26 @@ export default function Dashboard() {
 
       setSalonName((salonData.name as string) || "your salon");
 
-      // Total Revenue = gross booking value (matches the Finance page's Gross Revenue),
-      // not just the upfront reservation deposit.
-      const revenue = bookings.reduce(
+      const eligibleBookings = bookings.filter((booking) =>
+        isCommissionEligibleBooking({
+          status: String(booking.status || ""),
+          payment_status: String(booking.payment_status || ""),
+          reservation_fee_paid: Boolean(booking.reservation_fee_paid),
+        })
+      );
+
+      // Total Revenue = gross booking value for paid/confirmed bookings (matches Finance → Gross Revenue).
+      const revenue = eligibleBookings.reduce(
         (sum, booking) => sum + Number(booking.amount || 0),
         0
       );
       const activeServices = services.filter((service) => service.status === "active").length;
+      const activeStaff = staff.filter(isActiveSalonStaff);
 
       const newStats = {
-        totalBookings: bookings.length,
+        totalBookings: eligibleBookings.length,
         activeServices,
-        totalStaff: staff.length,
+        totalStaff: activeStaff.length,
         revenue,
       };
 
@@ -145,10 +155,10 @@ export default function Dashboard() {
         });
       }
 
-      const monthly = groupBookingsByMonth(bookings);
+      const monthly = groupBookingsByMonth(eligibleBookings);
 
       setStats(newStats);
-      setRecentBookings(bookings);
+      setRecentBookings(eligibleBookings);
       setAllStaff(staff);
       setAllServices(services);
       setMonthlyPoints(monthly);
@@ -222,7 +232,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card title="Total Bookings" value={stats.totalBookings.toLocaleString()} />
         <Card title="Active Services" value={stats.activeServices.toLocaleString()} />
-        <Card title="Total Staff" value={stats.totalStaff.toLocaleString()} />
+        <Card title="Active Staff" value={stats.totalStaff.toLocaleString()} />
         <Card title="Total Revenue" value={`LKR ${formatLkr(stats.revenue)}`} />
       </div>
 
