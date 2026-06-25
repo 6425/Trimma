@@ -128,6 +128,7 @@ export async function saveAdminSubscriptionPlan(input: {
   
   revalidatePath("/", "layout");
   revalidatePath("/pricing");
+  revalidatePath("/dashboard/billing");
   return { success: true as const };
 }
 
@@ -140,6 +141,7 @@ export async function deleteAdminSubscriptionPlan(id: string) {
   
   revalidatePath("/", "layout");
   revalidatePath("/pricing");
+  revalidatePath("/dashboard/billing");
   return { success: true as const };
 }
 
@@ -167,6 +169,7 @@ export async function seedAdminSubscriptionPlans() {
   
   revalidatePath("/", "layout");
   revalidatePath("/pricing");
+  revalidatePath("/dashboard/billing");
   return { success: true as const };
 }
 

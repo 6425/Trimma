@@ -21,21 +21,25 @@ import {
   formatLkr,
   formatPromotionPackageLimit,
   getCheckoutAmount,
+  getDiscountPercentage,
   getDisplayMonthlyPrice,
   getIntroMonthlyPrice,
   getListMonthlyPrice,
 } from "@/lib/subscription-pricing";
+import {
+  getPlanPricingCopy,
+  getStrikethroughMonthlyPrice,
+} from "@/lib/subscription-pricing-copy";
+import type { PublicSubscriptionPlan } from "@/app/actions/subscription-plans";
 
-const TIER_ORDER: Record<string, number> = {
-  free: 0,
-  starter: 1,
-  pro: 2,
-  elite: 3,
-};
-
-function getTierRank(name?: string | null): number {
-  if (!name) return 0;
-  return TIER_ORDER[name.toLowerCase()] ?? 0;
+function getPlanRank(plans: PublicSubscriptionPlan[], plan?: { id?: string; name?: string | null } | null): number {
+  if (!plan) return -1;
+  const idx = plans.findIndex(
+    (entry) =>
+      (plan.id && entry.id === plan.id) ||
+      entry.name?.toLowerCase() === (plan.name || "").toLowerCase()
+  );
+  return idx;
 }
 
 function buildCheckoutHref(planName: string, cycle: "monthly" | "annual"): string {
@@ -44,10 +48,12 @@ function buildCheckoutHref(planName: string, cycle: "monthly" | "annual"): strin
 
 export default function BillingPage() {
   const [activePlan, setActivePlan] = useState<any>(null);
+  const [availablePlans, setAvailablePlans] = useState<PublicSubscriptionPlan[]>(
+    DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]
+  );
+  const [plansLoadError, setPlansLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-
-  const plans = DEFAULT_SUBSCRIPTION_PLANS;
 
   const mockInvoices = [
     { invoiceNo: "TRM-INV-001", date: "May 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
@@ -55,24 +61,26 @@ export default function BillingPage() {
     { invoiceNo: "TRM-INV-003", date: "Mar 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
   ];
 
-  const fetchActivePlan = async () => {
+  const fetchBillingData = async () => {
     try {
       setLoading(true);
       const result = await withTimeout(fetchSalonBillingPage(), 20000, "Loading timed out.");
       if (result.success === false) return;
       if (result.activePlan) setActivePlan(result.activePlan);
+      if (result.availablePlans?.length) setAvailablePlans(result.availablePlans);
+      setPlansLoadError(result.plansLoadError ?? null);
     } catch (err: any) {
-      console.warn("Failed to load active plan details:", err.message);
+      console.warn("Failed to load billing details:", err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void Promise.resolve().then(() => fetchActivePlan());
+    void Promise.resolve().then(() => fetchBillingData());
   }, []);
 
-  const activeTierRank = getTierRank(activePlan?.name);
+  const activeTierRank = getPlanRank(availablePlans, activePlan);
 
   if (loading) {
     return (
@@ -157,21 +165,32 @@ export default function BillingPage() {
           Available Subscription Packages
         </h3>
 
+        {plansLoadError && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+            Showing default packages — live plans could not be loaded ({plansLoadError}).
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
-          {plans.map((plan) => {
-            const planRank = getTierRank(plan.name);
-            const isActive = activePlan && activePlan.name.toLowerCase() === plan.name.toLowerCase();
-            const isFree = plan.name.toLowerCase() === "free";
+          {availablePlans.map((plan) => {
+            const planRank = getPlanRank(availablePlans, plan);
+            const isActive =
+              activePlan &&
+              ((activePlan.id && activePlan.id === plan.id) ||
+                activePlan.name?.toLowerCase() === plan.name.toLowerCase());
+            const isFree = getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
             const canUpgrade = !isActive && !isFree && planRank > activeTierRank;
             const displayMonthly = getDisplayMonthlyPrice(plan, billingCycle);
             const checkoutAmount = getCheckoutAmount(plan, billingCycle);
-            const listMonthly = getListMonthlyPrice(plan);
-            const introMonthly = getIntroMonthlyPrice(plan);
+            const discountPercent = getDiscountPercentage(plan);
+            const strikethroughMonthly = billingCycle === "monthly" ? getStrikethroughMonthlyPrice(plan) : null;
+            const pricingDescription = getPlanPricingCopy(plan, billingCycle);
             const checkoutHref = buildCheckoutHref(plan.name, billingCycle);
+            const maxServices = plan.max_services ?? 0;
 
             return (
               <div
-                key={plan.name}
+                key={plan.id}
                 className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between gap-6 relative min-h-[420px] ${
                   isActive
                     ? "border-brand bg-rose-50/10 shadow-sm"
@@ -187,15 +206,18 @@ export default function BillingPage() {
                 <div className="space-y-5 pt-2">
                   <div className="pr-14">
                     <h4 className="font-extrabold text-sm text-zinc-800">{plan.name}</h4>
+                    {strikethroughMonthly ? (
+                      <p className="text-[10px] text-zinc-400 line-through mt-2">{strikethroughMonthly}</p>
+                    ) : null}
                     <div className="flex items-baseline gap-1 mt-2">
                       <span className="text-xl font-black text-zinc-900">
                         {isFree ? "Free" : formatLkr(displayMonthly)}
                       </span>
                       {!isFree && <span className="text-zinc-400 text-xs font-semibold">/month</span>}
                     </div>
-                    {!isFree && billingCycle === "monthly" && listMonthly > introMonthly && (
-                      <p className="text-[10px] text-zinc-400 line-through mt-1">
-                        {formatLkr(listMonthly)}/mo standard
+                    {!isFree && billingCycle === "monthly" && discountPercent > 0 && (
+                      <p className="text-[10px] text-emerald-600 font-bold mt-1 uppercase tracking-wide">
+                        Intro price — {discountPercent}% off
                       </p>
                     )}
                     {!isFree && billingCycle === "annual" && (
@@ -203,6 +225,9 @@ export default function BillingPage() {
                         {formatLkr(checkoutAmount, 2)} billed annually
                       </p>
                     )}
+                    <p className="text-[10px] text-zinc-500 mt-2 font-medium leading-relaxed">
+                      {pricingDescription}
+                    </p>
                   </div>
 
                   <div className="rounded-2xl bg-zinc-50 border border-zinc-100 px-3.5 py-3 space-y-2.5">
@@ -211,7 +236,7 @@ export default function BillingPage() {
                       {
                         icon: Scissors,
                         label: "Services",
-                        value: plan.max_services >= 9999 ? "Unlimited" : plan.max_services,
+                        value: maxServices >= 9999 ? "Unlimited" : maxServices,
                       },
                       { icon: ImageIcon, label: "Images", value: plan.max_images },
                       {

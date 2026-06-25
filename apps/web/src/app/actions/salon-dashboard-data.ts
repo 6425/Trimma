@@ -17,6 +17,7 @@ import {
   resolveVipFromVisits,
 } from "@/lib/salon-loyalty";
 import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
+import { getPublicSubscriptionPlans } from "@/app/actions/subscription-plans";
 
 export async function fetchSalonLayoutShell() {
   const auth = await requireSalonOwnerFromCookies();
@@ -289,16 +290,26 @@ export async function fetchSalonFinancePage() {
 }
 
 export async function fetchSalonBillingPage() {
-  const result = await withSalonDb(async (supabase, ctx) => {
-    const { plan } = await ensureSalonSubscriptionPlan(
-      supabase,
-      ctx.salonId,
-      ctx.salon.subscription_plan_id as string | null | undefined
-    );
-    return { activePlan: plan };
-  });
-  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
-  return { success: true as const, ...result.data };
+  const [billingResult, plansResult] = await Promise.all([
+    withSalonDb(async (supabase, ctx) => {
+      const { plan } = await ensureSalonSubscriptionPlan(
+        supabase,
+        ctx.salonId,
+        ctx.salon.subscription_plan_id as string | null | undefined
+      );
+      return { activePlan: plan };
+    }),
+    getPublicSubscriptionPlans(),
+  ]);
+
+  if (!isSalonDbSuccess(billingResult)) return salonDbFailure(billingResult);
+
+  return {
+    success: true as const,
+    ...billingResult.data,
+    availablePlans: plansResult.plans,
+    plansLoadError: plansResult.success ? null : plansResult.error,
+  };
 }
 
 export async function fetchSalonReviewsPage() {
