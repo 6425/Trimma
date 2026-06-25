@@ -520,7 +520,7 @@ export default function SocialMediaPage() {
                 <Button
                   type="button"
                   onClick={() => void handleConnectFacebook()}
-                  disabled={connecting || facebookStatus?.configured === false}
+                  disabled={connecting}
                   className="rounded-xl bg-[#1877F2] hover:bg-[#166FE5] text-white font-bold h-11"
                 >
                   {connecting ? (
@@ -530,12 +530,6 @@ export default function SocialMediaPage() {
                   )}
                   Connect with Facebook
                 </Button>
-                {facebookStatus?.configured === false ? (
-                  <p className="text-[10px] text-amber-700">
-                    Facebook login is temporarily unavailable on this environment. You can still save your Page URL and
-                    booking link below; connect will work once Trimma enables Meta for beta/live.
-                  </p>
-                ) : null}
               </>
             )}
           </div>

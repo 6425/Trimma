@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   buildFacebookOAuthUrl,
@@ -9,6 +10,8 @@ import {
   getFacebookAppConfig,
   publishFacebookPageFeedPost,
 } from "@/lib/facebook-graph";
+import { hasFacebookAppCredentials } from "@/lib/facebook-env";
+import { loadFacebookPlatformCredentials } from "@/lib/facebook-platform-credentials";
 import { createFacebookOAuthState } from "@/lib/facebook-oauth-state";
 import {
   getSalonFacebookIntegration,
@@ -28,10 +31,24 @@ function normalizeFacebookPageUrl(value: string): string {
   return `https://${trimmed}`;
 }
 
+async function readRequestOrigin(): Promise<string | undefined> {
+  try {
+    const headerStore = await headers();
+    const host = headerStore.get("x-forwarded-host") || headerStore.get("host");
+    if (!host) return undefined;
+    const proto = headerStore.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+    return `${proto}://${host}`;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function getFacebookConnectStatus() {
+  await loadFacebookPlatformCredentials();
   const result = await withSalonDb(async (supabase, ctx) => {
     const integration = await getSalonFacebookIntegration(supabase, ctx.salon);
-    const config = getFacebookAppConfig();
+    const requestOrigin = await readRequestOrigin();
+    const config = getFacebookAppConfig(requestOrigin);
     const pendingPages = (integration.pending_pages || []).map((page) => ({
       id: page.id,
       name: page.name,
@@ -46,7 +63,7 @@ export async function getFacebookConnectStatus() {
         : {};
 
     return {
-      configured: Boolean(config),
+      configured: hasFacebookAppCredentials(),
       connected: integration.facebook_connected === true && Boolean(integration.facebook_page_id),
       pageId: integration.facebook_page_id,
       pageName: integration.facebook_page_name,
@@ -58,6 +75,7 @@ export async function getFacebookConnectStatus() {
       bookingCtaLabel: integration.booking_cta_label,
       autoPublishPromos: integration.auto_publish_promos,
       salonBookingUrl: resolveSalonBookingUrl(ctx.salon),
+      oauthRedirectUri: config?.redirectUri || null,
       scopes: ["pages_show_list", "pages_read_engagement", "pages_manage_posts"],
     };
   });
@@ -116,27 +134,36 @@ export async function saveFacebookIntegrationSettings(input: {
 }
 
 export async function createFacebookConnectUrl() {
+  await loadFacebookPlatformCredentials();
   const result = await withSalonDb(async (_supabase, ctx) => {
-    if (!getFacebookAppConfig()) {
-      throw new Error("Facebook integration is not available yet. Trimma platform credentials are being configured.");
+    const requestOrigin = await readRequestOrigin();
+    if (!hasFacebookAppCredentials()) {
+      throw new Error(
+        "Facebook App ID or App Secret is missing on the server. Add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET to apps/web/.env (or APPID and APP_SECRET)."
+      );
     }
 
     const state = createFacebookOAuthState(ctx.salonId);
-    return { url: buildFacebookOAuthUrl(state) };
+    return { url: buildFacebookOAuthUrl(state, requestOrigin) };
   });
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const, ...result.data };
 }
 
-export async function completeFacebookOAuthCallback(code: string, state: string) {
+export async function completeFacebookOAuthCallback(
+  code: string,
+  state: string,
+  requestOrigin?: string
+) {
+  await loadFacebookPlatformCredentials();
   const { verifyFacebookOAuthState } = await import("@/lib/facebook-oauth-state");
   const verified = verifyFacebookOAuthState(state);
   if (!verified) {
     return { success: false as const, error: "Invalid or expired Facebook OAuth state." };
   }
 
-  const shortTokenResult = await exchangeFacebookCodeForUserToken(code);
+  const shortTokenResult = await exchangeFacebookCodeForUserToken(code, requestOrigin);
   if (shortTokenResult.success === false) {
     return { success: false as const, error: shortTokenResult.error };
   }

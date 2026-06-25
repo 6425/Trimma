@@ -1,5 +1,12 @@
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Monorepo root .env (e.g. Meta credentials) — apps/web/.env takes precedence when both define a key.
+const repoRootEnv = path.resolve(process.cwd(), '../../.env');
+if (fs.existsSync(repoRootEnv)) {
+  dotenv.config({ path: repoRootEnv });
+}
 
 // Self-healing logo copy script
 try {

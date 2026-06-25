@@ -11,6 +11,7 @@ import {
 } from "../../actions/whatsapp";
 import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG, WHATSAPP_OWNER_BOOKING_META_CONFIG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
+import { FacebookSettingsPanel } from "../../../components/admin/FacebookSettingsPanel";
 import { TelegramSettingsPanel } from "../../../components/admin/TelegramSettingsPanel";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 
@@ -306,7 +307,7 @@ function SettingsPanelContent() {
             <Settings2 className="w-8 h-8 text-emerald-600" />
             Global Settings
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">Configure WhatsApp, Telegram, email templates, and third-party integrations.</p>
+          <p className="text-sm text-zinc-500 mt-1">Configure WhatsApp, Facebook, Telegram, email templates, and third-party integrations.</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -697,6 +698,8 @@ function SettingsPanelContent() {
               </div>
 
             </div>
+
+            <FacebookSettingsPanel />
 
           </div>
 

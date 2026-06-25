@@ -1,4 +1,9 @@
-import { APP_BASE_URL } from "@/lib/email/config";
+import {
+  hasFacebookAppCredentials,
+  readFacebookAppId,
+  readFacebookAppSecret,
+  readFacebookRedirectUri,
+} from "@/lib/facebook-env";
 
 export const FACEBOOK_GRAPH_VERSION = "v19.0";
 
@@ -36,38 +41,21 @@ export type FacebookPageAccount = {
   category?: string;
 };
 
-export function getFacebookAppConfig(): FacebookAppConfig | null {
-  const appId =
-    process.env.FACEBOOK_APP_ID?.trim() ||
-    process.env.META_APP_ID?.trim() ||
-    process.env.FB_APP_ID?.trim() ||
-    process.env.FACEBOOK_APPID?.trim() ||
-    process.env.APP_ID?.trim() ||
-    process.env.APPID?.trim() ||
-    process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim() ||
-    "";
-  const appSecret =
-    process.env.FACEBOOK_APP_SECRET?.trim() ||
-    process.env.META_APP_SECRET?.trim() ||
-    process.env.FB_APP_SECRET?.trim() ||
-    process.env.FACEBOOK_APPSECRET?.trim() ||
-    process.env.APP_SECRET?.trim() ||
-    process.env.APPSECRET?.trim() ||
-    "";
-  const redirectUri =
-    process.env.FACEBOOK_REDIRECT_URI?.trim() ||
-    `${APP_BASE_URL}/api/facebook/callback`;
+export function getFacebookAppConfig(requestOrigin?: string): FacebookAppConfig | null {
+  const appId = readFacebookAppId();
+  const appSecret = readFacebookAppSecret();
+  const redirectUri = readFacebookRedirectUri(requestOrigin);
 
   if (!appId || !appSecret) return null;
 
   return { appId, appSecret, redirectUri };
 }
 
-export function requireFacebookAppConfig(): FacebookAppConfig {
-  const config = getFacebookAppConfig();
+export function requireFacebookAppConfig(requestOrigin?: string): FacebookAppConfig {
+  const config = getFacebookAppConfig(requestOrigin);
   if (!config) {
     throw new Error(
-      "Facebook app credentials are missing. Set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in apps/web/.env."
+      "Facebook App ID or App Secret is missing. Set FACEBOOK_APP_ID (or APPID) and FACEBOOK_APP_SECRET (or APP_SECRET) in apps/web/.env or Vercel."
     );
   }
   return config;
@@ -81,8 +69,8 @@ function readGraphError(payload: GraphPayload, fallback: string): string {
   return payload.error?.message || fallback;
 }
 
-export function buildFacebookOAuthUrl(state: string): string {
-  const { appId, redirectUri } = requireFacebookAppConfig();
+export function buildFacebookOAuthUrl(state: string, requestOrigin?: string): string {
+  const { appId, redirectUri } = requireFacebookAppConfig(requestOrigin);
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
@@ -93,11 +81,14 @@ export function buildFacebookOAuthUrl(state: string): string {
   return `https://www.facebook.com/${FACEBOOK_GRAPH_VERSION}/dialog/oauth?${params.toString()}`;
 }
 
-export async function exchangeFacebookCodeForUserToken(code: string): Promise<
+export async function exchangeFacebookCodeForUserToken(
+  code: string,
+  requestOrigin?: string
+): Promise<
   | { success: true; accessToken: string; expiresIn?: number }
   | { success: false; error: string }
 > {
-  const { appId, appSecret, redirectUri } = requireFacebookAppConfig();
+  const { appId, appSecret, redirectUri } = requireFacebookAppConfig(requestOrigin);
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
