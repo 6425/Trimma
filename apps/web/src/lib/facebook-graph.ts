@@ -148,26 +148,48 @@ export async function exchangeFacebookLongLivedUserToken(shortLivedToken: string
   };
 }
 
-export async function fetchFacebookManagedPages(userAccessToken: string): Promise<
-  | { success: true; pages: FacebookPageAccount[] }
-  | { success: false; error: string }
-> {
+export const FACEBOOK_ME_ACCOUNTS_URL =
+  process.env.FACEBOOK_ME_ACCOUNTS_URL?.trim() ||
+  `https://graph.facebook.com/${FACEBOOK_GRAPH_VERSION}/me/accounts`;
+
+function buildFacebookMeAccountsUrl(userAccessToken: string, withFields: boolean): string {
   const params = new URLSearchParams({
     access_token: userAccessToken,
-    fields: "id,name,access_token,category",
   });
+  if (withFields) {
+    params.set("fields", "id,name,access_token,category");
+  }
+  return `${FACEBOOK_ME_ACCOUNTS_URL}?${params.toString()}`;
+}
 
-  const response = await fetch(`${graphBaseUrl("me/accounts")}?${params.toString()}`, {
-    cache: "no-store",
-  });
-  const payload = (await response.json()) as GraphPayload & {
-    data?: Array<{
-      id?: string;
-      name?: string;
-      access_token?: string;
-      category?: string;
-    }>;
-  };
+type MeAccountsPayload = GraphPayload & {
+  data?: Array<{
+    id?: string;
+    name?: string;
+    access_token?: string;
+    category?: string;
+  }>;
+};
+
+function parseFacebookManagedPages(payload: MeAccountsPayload): FacebookPageAccount[] | null {
+  if (!Array.isArray(payload.data)) return null;
+
+  return payload.data
+    .filter((page) => Boolean(page.id && page.access_token && page.name))
+    .map((page) => ({
+      id: String(page.id),
+      name: String(page.name),
+      access_token: String(page.access_token),
+      category: page.category ? String(page.category) : undefined,
+    }));
+}
+
+async function requestFacebookManagedPages(url: string): Promise<
+  | { success: true; payload: MeAccountsPayload }
+  | { success: false; error: string }
+> {
+  const response = await fetch(url, { cache: "no-store" });
+  const payload = (await response.json()) as MeAccountsPayload;
 
   if (!response.ok || payload.error) {
     return {
@@ -176,21 +198,46 @@ export async function fetchFacebookManagedPages(userAccessToken: string): Promis
     };
   }
 
-  if (!Array.isArray(payload.data)) {
+  return { success: true, payload };
+}
+
+export async function fetchFacebookManagedPages(userAccessToken: string): Promise<
+  | { success: true; pages: FacebookPageAccount[] }
+  | { success: false; error: string }
+> {
+  const trimmedToken = userAccessToken.trim();
+  if (!trimmedToken) {
+    return { success: false, error: "Facebook user access token is missing." };
+  }
+
+  // Meta-documented URL: https://graph.facebook.com/v19.0/me/accounts?access_token={USER_TOKEN}
+  const metaUrl = buildFacebookMeAccountsUrl(trimmedToken, false);
+  const metaResult = await requestFacebookManagedPages(metaUrl);
+  if (metaResult.success === true) {
+    const pages = parseFacebookManagedPages(metaResult.payload);
+    if (pages) {
+      return { success: true, pages };
+    }
+  }
+
+  // Fallback: same endpoint with explicit fields when the bare Meta URL returns an unexpected shape.
+  const fieldsUrl = buildFacebookMeAccountsUrl(trimmedToken, true);
+  const fieldsResult = await requestFacebookManagedPages(fieldsUrl);
+  if (fieldsResult.success === false) {
     return {
       success: false,
-      error: "Facebook Pages response was missing a data array. Confirm pages_show_list scope is granted.",
+      error: metaResult.success === false ? metaResult.error : fieldsResult.error,
     };
   }
 
-  const pages = payload.data
-    .filter((page) => Boolean(page.id && page.access_token && page.name))
-    .map((page) => ({
-      id: String(page.id),
-      name: String(page.name),
-      access_token: String(page.access_token),
-      category: page.category ? String(page.category) : undefined,
-    }));
+  const pages = parseFacebookManagedPages(fieldsResult.payload);
+  if (!pages) {
+    return {
+      success: false,
+      error:
+        "Facebook Pages response was missing a data array. Confirm pages_show_list scope is granted.",
+    };
+  }
 
   return { success: true, pages };
 }
