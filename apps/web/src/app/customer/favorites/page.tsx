@@ -78,7 +78,7 @@ function FavoritesContent() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">Favorite Salons</h1>
@@ -122,7 +122,7 @@ function FavoritesContent() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {favorites.map((favorite, idx) => {
             const salon = favorite.salons;
             if (!salon) return null;
@@ -140,7 +140,7 @@ function FavoritesContent() {
                     src={ui.image}
                     alt={ui.name}
                     fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 to-transparent" />
