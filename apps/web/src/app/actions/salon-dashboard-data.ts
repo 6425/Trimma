@@ -9,6 +9,7 @@ import {
   readPlanFlags,
   sliceAllowedCategories,
 } from "@/lib/salon-subscription-plan";
+import { buildInferredStaffMap } from "@/lib/dashboard-stats";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { getServiceIdsCoveredByStaff, getBookingServiceDisplayName, resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
 import {
@@ -188,10 +189,12 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
   const result = await withSalonDb(async (supabase, ctx) => {
     const calendarSelect = `
       id,
+      booking_no,
       booking_date,
       booking_time,
       status,
       customer_email,
+      customer_name,
       staff_id,
       services (id, name),
       salon_staff (id, name, commission_rate, working_hours),
@@ -234,20 +237,24 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
 
     if (staffRes.error) throw new Error(staffRes.error.message);
     const allStaff = staffRes.data || [];
+    const inferredStaffByBookingId = buildInferredStaffMap(bookingsList as any[], allStaff as any[]);
 
     const mappedBookings = bookingsList.map((b: any) => {
-      const clientName = b.customer_email
-        ? usersRes[b.customer_email] || b.customer_email
-        : "Walk-in Client";
+      const clientName =
+        (typeof b.customer_name === "string" && b.customer_name.trim()) ||
+        (b.customer_email ? usersRes[b.customer_email] || b.customer_email : null) ||
+        "Walk-in Client";
       const serviceName = getBookingServiceDisplayName(b) || "General Booking";
-      const staffMember = resolveStaffMemberFromBooking(b, allStaff);
+      const staffMember =
+        resolveStaffMemberFromBooking(b, allStaff) || inferredStaffByBookingId.get(b.id) || null;
 
       return {
         id: b.id,
+        booking_no: b.booking_no,
         booking_date: b.booking_date,
         booking_time: b.booking_time,
         status: b.status,
-        clientName: clientName || b.customer_email || "Walk-in Client",
+        clientName,
         serviceName,
         staffName: staffMember?.name || "Unassigned",
       };

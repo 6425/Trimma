@@ -8,6 +8,38 @@ import { fetchSalonCalendarBookings } from "@/app/actions/salon-dashboard-data";
 import { AddBookingModal } from "../../../components/modals/AddBookingModal";
 import { normalizeSalonWeeklySchedule } from "@/lib/salon-operating-hours";
 
+function getBookingCalendarColor(status: string | null | undefined): string {
+  const s = (status || "pending").toLowerCase();
+  if (s === "confirmed") return "bg-emerald-50 border-emerald-200 text-emerald-700";
+  if (s === "pending") return "bg-amber-50 border-amber-200 text-amber-800";
+  if (s === "in_progress") return "bg-indigo-50 border-indigo-200 text-indigo-700";
+  if (s === "completed") return "bg-blue-50 border-blue-200 text-blue-700";
+  if (s === "canceled" || s === "cancelled") {
+    return "bg-zinc-100 border-zinc-200 text-zinc-500 line-through opacity-70";
+  }
+  if (s === "no_show") return "bg-orange-50 border-orange-200 text-orange-700 line-through opacity-80";
+  if (s === "rescheduled") return "bg-sky-50 border-sky-200 text-sky-700";
+  return "bg-rose-50 border-rose-200 text-brand";
+}
+
+function formatBookingHourLabel(bookingTime: string | null | undefined): string {
+  if (!bookingTime) return "12:00 PM";
+  try {
+    const [h, m] = bookingTime.split(":");
+    const d = new Date();
+    d.setHours(parseInt(h, 10) || 0, parseInt(m, 10) || 0, 0, 0);
+    return format(d, "hh:mm a");
+  } catch {
+    return "12:00 PM";
+  }
+}
+
+function parseBookingHour(bookingTime: string | null | undefined): number | null {
+  if (!bookingTime) return null;
+  const hour = parseInt(bookingTime.split(":")[0], 10);
+  return Number.isFinite(hour) ? hour : null;
+}
+
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<any[]>([]);
@@ -22,13 +54,12 @@ export default function CalendarPage() {
 
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+  const startStr = format(startDate, "yyyy-MM-dd");
+  const endStr = format(endDate, "yyyy-MM-dd");
 
   useEffect(() => {
     async function loadBookings() {
       setIsLoading(true);
-      const startStr = format(startDate, "yyyy-MM-dd");
-      const endStr = format(endDate, "yyyy-MM-dd");
-      
       const res = await fetchSalonCalendarBookings(startStr, endStr);
       if (res.success && res.bookings) {
         setBookings(res.bookings);
@@ -38,20 +69,17 @@ export default function CalendarPage() {
       }
       setIsLoading(false);
     }
-    loadBookings();
-  }, [currentDate]);
+    void loadBookings();
+  }, [startStr, endStr]);
 
   const loadBookingsRef = async () => {
-      setIsLoading(true);
-      const startStr = format(startDate, "yyyy-MM-dd");
-      const endStr = format(endDate, "yyyy-MM-dd");
-      
-      const res = await fetchSalonCalendarBookings(startStr, endStr);
-      if (res.success && res.bookings) {
-        setBookings(res.bookings);
-        setSalon(res.salon);
-      }
-      setIsLoading(false);
+    setIsLoading(true);
+    const res = await fetchSalonCalendarBookings(startStr, endStr);
+    if (res.success && res.bookings) {
+      setBookings(res.bookings);
+      setSalon(res.salon);
+    }
+    setIsLoading(false);
   };
 
   const days = Array.from({ length: 7 }).map((_, i) => {
@@ -68,39 +96,32 @@ export default function CalendarPage() {
   // The grid expects `hour` as "10:00 AM" and `day` as "19" (date string)
   // Our db format: booking_time "10:00:00", booking_date "2026-06-19"
   
-  const formattedBookings = bookings.map(b => {
-    // Parse time and snap to the top of the hour for grid matching
-    let hourStr = "12:00 PM";
-    try {
-      const [h] = b.booking_time.split(":");
-      const d = new Date();
-      d.setHours(parseInt(h, 10), 0, 0, 0); // Snap minutes to 0
-      hourStr = format(d, "hh:mm a");
-    } catch (e) {}
+  const formattedBookings = bookings.map((b) => {
+    const hourStr = formatBookingHourLabel(b.booking_time);
 
-    // Parse date exactly
     let fullDateStr = "";
     try {
-      const parts = b.booking_date.split("-");
+      const parts = String(b.booking_date || "").split("-");
       if (parts.length === 3) {
         fullDateStr = `${parts[0]}-${parts[1]}-${parts[2]}`;
-      } else {
+      } else if (b.booking_date) {
         fullDateStr = format(new Date(b.booking_date), "yyyy-MM-dd");
       }
-    } catch (e) {}
-
-    let color = "bg-rose-50 border-rose-200 text-brand";
-    if (b.status === "confirmed") color = "bg-emerald-50 border-emerald-200 text-emerald-700";
-    else if (b.status === "completed") color = "bg-blue-50 border-blue-200 text-blue-700";
-    else if (b.status === "cancelled") color = "bg-zinc-100 border-zinc-200 text-zinc-500 line-through opacity-70";
+    } catch {
+      fullDateStr = "";
+    }
 
     return {
+      id: b.id,
       hour: hourStr,
+      hourSlot: (parseBookingHour(b.booking_time) ?? 12).toString(),
+      timeLabel: b.booking_time ? String(b.booking_time).slice(0, 5) : "",
       fullDate: fullDateStr,
       client: b.clientName,
       service: b.serviceName,
       staff: b.staffName,
-      color: color
+      status: b.status,
+      color: getBookingCalendarColor(b.status),
     };
   });
 
@@ -132,6 +153,14 @@ export default function CalendarPage() {
       if (latest > 0) maxHour = latest;
     } catch (e) {
       console.error("Failed to parse schedule", e);
+    }
+  }
+
+  for (const booking of bookings) {
+    const bookingHour = parseBookingHour(booking.booking_time);
+    if (bookingHour !== null) {
+      if (bookingHour < minHour) minHour = bookingHour;
+      if (bookingHour > maxHour) maxHour = bookingHour;
     }
   }
 
@@ -216,14 +245,31 @@ export default function CalendarPage() {
               </div>
               {/* Day slots */}
               {days.map((day, dIdx) => {
-                const cellBookings = formattedBookings.filter(b => b.hour === hourObj.label && b.fullDate === day.fullDate);
+                const cellBookings = formattedBookings.filter((b) => {
+                  if (b.fullDate !== day.fullDate) return false;
+                  const slotHour = parseInt(hourObj.label.split(":")[0], 10);
+                  const bookingHour = parseInt(b.hourSlot, 10);
+                  if (Number.isNaN(slotHour) || Number.isNaN(bookingHour)) return false;
+                  const slotIsPm = hourObj.label.toLowerCase().includes("pm");
+                  const bookingIsPm = b.hour.toLowerCase().includes("pm");
+                  const slot24 =
+                    (slotHour % 12) + (slotIsPm && slotHour !== 12 ? 12 : 0) + (!slotIsPm && slotHour === 12 ? -12 : 0);
+                  const booking24 =
+                    (bookingHour % 12) +
+                    (bookingIsPm && bookingHour !== 12 ? 12 : 0) +
+                    (!bookingIsPm && bookingHour === 12 ? -12 : 0);
+                  return slot24 === booking24;
+                });
                 return (
                   <div key={dIdx} className={`p-1.5 relative ${day.isToday ? "bg-rose-50/5" : ""} group min-h-[80px] flex flex-col gap-1`}>
                     {cellBookings.length > 0 ? (
                       <>
-                        {cellBookings.map((booking, bIdx) => (
-                          <div key={bIdx} className={`p-2 rounded-xl border w-full text-left flex flex-col gap-0.5 transition-all hover:shadow-sm ${booking.color}`}>
-                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70">Client</div>
+                        {cellBookings.map((booking) => (
+                          <div key={booking.id} className={`p-2 rounded-xl border w-full text-left flex flex-col gap-0.5 transition-all hover:shadow-sm ${booking.color}`}>
+                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70">
+                              {booking.timeLabel || booking.hour}
+                            </div>
+                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70 mt-0.5">Client</div>
                             <div className="text-[10px] font-black leading-tight line-clamp-2">{booking.client}</div>
                             <div className="text-[9px] font-black uppercase tracking-wide opacity-70 mt-0.5">Service</div>
                             <div className="text-[9px] font-semibold leading-tight line-clamp-2">{booking.service}</div>
