@@ -19,6 +19,8 @@ export type PublicSubscriptionPlan = {
     allowed_categories_limit?: number;
     allowed_promotion_types_limit?: number;
     features?: string[];
+    pricing_copy_monthly?: string;
+    pricing_copy_annual?: string;
   } | null;
 };
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Scissors, Users, ShieldCheck, HelpCircle, Image as ImageIcon, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   getAnnualSavingsPercent,
   getAnnualTotal,
@@ -15,6 +16,11 @@ import {
   formatPromotionPackageLimit,
   getDiscountPercentage,
 } from "@/lib/subscription-pricing";
+import {
+  buildPricingPageFaqs,
+  getPlanPricingCopy,
+  getStrikethroughMonthlyPrice,
+} from "@/lib/subscription-pricing-copy";
 import type { PublicSubscriptionPlan } from "../actions/subscription-plans";
 
 type PricingContentProps = {
@@ -33,6 +39,8 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
     }, 0);
   }, [plans]);
 
+  const pricingFaqs = useMemo(() => buildPricingPageFaqs(plans), [plans]);
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-rose-500 selection:text-white">
       <section className="page-hero-shell text-zinc-900 pt-28 pb-36 text-center px-4 relative overflow-hidden">
@@ -50,31 +58,34 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
             Introduction rates apply to monthly billing. Annual plans use a lower monthly equivalent billed once per year.
           </p>
 
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <span className={`text-sm font-bold transition-colors ${!isAnnual ? "text-zinc-900" : "text-zinc-600"}`}>
-              Billed Monthly
-            </span>
-            <button
-              onClick={() => setIsAnnual(!isAnnual)}
-              className="w-16 h-8 bg-black/10 rounded-full p-1 relative flex items-center transition-all duration-300 focus:outline-none"
-              aria-label="Toggle annual billing"
-            >
-              <div
-                className={`w-6 h-6 bg-[#ffc800] rounded-full shadow-md transform transition-transform duration-300 ${
-                  isAnnual ? "translate-x-8" : "translate-x-0"
-                }`}
-              />
-            </button>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-sm font-bold transition-colors ${isAnnual ? "text-zinc-900" : "text-zinc-600"}`}>
-                Billed Annually
-              </span>
-              {maxAnnualSavings > 0 && (
-                <Badge className="bg-rose-500/10 text-rose-400 border border-rose-500/20 font-extrabold text-[10px] uppercase px-2 py-0.5 tracking-wider">
-                  Save up to {maxAnnualSavings}%
-                </Badge>
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+            <Button
+              type="button"
+              variant="dark"
+              onClick={() => setIsAnnual(false)}
+              className={cn(
+                "rounded-full h-11 px-5 text-sm font-bold",
+                !isAnnual && "ring-2 ring-[#ffc800] ring-offset-2 ring-offset-[#ffc800]/30"
               )}
-            </div>
+            >
+              Billed Monthly
+            </Button>
+            <Button
+              type="button"
+              variant="dark"
+              onClick={() => setIsAnnual(true)}
+              className={cn(
+                "rounded-full h-11 px-5 text-sm font-bold gap-2",
+                isAnnual && "ring-2 ring-[#ffc800] ring-offset-2 ring-offset-[#ffc800]/30"
+              )}
+            >
+              <span>Billed Annually</span>
+              {maxAnnualSavings > 0 ? (
+                <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                  Save up to {maxAnnualSavings}%
+                </span>
+              ) : null}
+            </Button>
           </div>
         </div>
       </section>
@@ -93,12 +104,15 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
             const catLimit = flags.allowed_categories_limit ?? 0;
             const maxServices = plan.max_services ?? 0;
 
-            const listMonthly = getListMonthlyPrice(plan);
-            const introMonthly = getIntroMonthlyPrice(plan);
             const displayMonthly = getDisplayMonthlyPrice(plan, isAnnual ? "annual" : "monthly");
             const discountPercent = getDiscountPercentage(plan);
             const annualTotal = getAnnualTotal(plan);
-            const isFree = listMonthly === 0 && introMonthly === 0;
+            const isFree = getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
+            const strikethroughMonthly = !isAnnual ? getStrikethroughMonthlyPrice(plan) : null;
+            const pricingDescription = getPlanPricingCopy(
+              plan,
+              isAnnual ? "annual" : "monthly"
+            );
             const isPro = plan.name.toLowerCase() === "pro";
             const checkoutHref = isFree
               ? "/signup"
@@ -124,11 +138,11 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
                     {plan.name} Tier
                   </h3>
 
-                  {(!isAnnual && (isFree || listMonthly > introMonthly)) && (
+                  {strikethroughMonthly ? (
                     <p className={`text-sm line-through mt-3 ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>
-                      {isFree ? "LKR 3,000/mo" : `${formatLkr(listMonthly)}/mo`}
+                      {strikethroughMonthly}
                     </p>
-                  )}
+                  ) : null}
 
                   <div className="flex items-baseline gap-1 mt-1">
                     <span className="text-3xl font-black">
@@ -156,11 +170,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
                   )}
 
                   <p className={`text-xs mt-2 font-medium leading-relaxed ${isPro ? "text-zinc-400" : "text-zinc-500"}`}>
-                    {isFree
-                      ? "Perfect option for independent stylers starting out."
-                      : isAnnual
-                        ? `${formatLkr(displayMonthly)}/mo equivalent when paid yearly.`
-                        : `Introduction monthly rate. Standard rate ${formatLkr(listMonthly)}/mo.`}
+                    {pricingDescription}
                   </p>
                 </div>
 
@@ -238,45 +248,15 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100">
-            <h4 className="font-bold text-sm text-[#1A1C29] flex items-center gap-2 mb-2">
-              <HelpCircle className="w-4 h-4 text-rose-500" />
-              How does introduction pricing work?
-            </h4>
-            <p className="text-sm text-zinc-500 leading-relaxed">
-              Monthly plans show their discounted introduction rate (e.g. Starter LKR 3,750 instead of LKR 5,000). Annual plans are billed as a single yearly total based on a lower monthly equivalent.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-100">
-            <h4 className="font-bold text-sm text-[#1A1C29] flex items-center gap-2 mb-2">
-              <HelpCircle className="w-4 h-4 text-rose-500" />
-              What are Service Category Limits?
-            </h4>
-            <p className="text-sm text-zinc-500 leading-relaxed">
-              To keep Trimma search highly optimized, tiers restrict the number of different global category directories your salon can list in. Pro and Elite tiers allow unlimited categories.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-100">
-            <h4 className="font-bold text-sm text-[#1A1C29] flex items-center gap-2 mb-2">
-              <HelpCircle className="w-4 h-4 text-rose-500" />
-              Is there a lock-in contract?
-            </h4>
-            <p className="text-sm text-zinc-500 leading-relaxed">
-              No contracts. Trimma is pay-as-you-go. Cancel online at any time with zero termination fees.
-            </p>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-100">
-            <h4 className="font-bold text-sm text-[#1A1C29] flex items-center gap-2 mb-2">
-              <HelpCircle className="w-4 h-4 text-rose-500" />
-              Do the prices include taxes?
-            </h4>
-            <p className="text-sm text-zinc-500 leading-relaxed">
-              All prices shown on this page are inclusive of platform services and VAT, ensuring complete billing transparency.
-            </p>
-          </div>
+          {pricingFaqs.map((faq) => (
+            <div key={faq.q} className="bg-white p-6 rounded-2xl border border-slate-100">
+              <h4 className="font-bold text-sm text-[#1A1C29] flex items-center gap-2 mb-2">
+                <HelpCircle className="w-4 h-4 text-rose-500" />
+                {faq.q}
+              </h4>
+              <p className="text-sm text-zinc-500 leading-relaxed">{faq.a}</p>
+            </div>
+          ))}
         </div>
       </section>
     </div>
