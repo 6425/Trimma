@@ -23,6 +23,7 @@ import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifi
 import { withTimeout } from "@/lib/promise-timeout";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
 import { matchesBookingStatusTab, type BookingStatusTab } from "@/lib/booking-owner-queue";
+import { resolveBookingFinancialBreakdown } from "@/lib/booking-commission-snapshot";
 import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { AddBookingModal } from "../../../components/modals/AddBookingModal";
@@ -154,6 +155,18 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
   );
 }
 
+
+function isReservationDepositPaid(booking: {
+  reservation_fee_paid?: boolean | null;
+  payment_status?: string | null;
+}): boolean {
+  const paymentStatus = (booking.payment_status || "unpaid").toLowerCase();
+  return (
+    booking.reservation_fee_paid === true ||
+    paymentStatus === "reservation_paid" ||
+    paymentStatus === "paid"
+  );
+}
 
 export default function DashboardBookings() {
   const router = useRouter();
@@ -466,7 +479,7 @@ export default function DashboardBookings() {
     if (s === 'confirmed') return <Badge className={`bg-emerald-50 text-emerald-600 ${badgeClass}`}>Confirmed</Badge>;
     if (s === 'in_progress') return <Badge className={`bg-indigo-50 text-indigo-600 ${badgeClass}`}>In Progress</Badge>;
     if (s === 'completed') return <Badge className={`bg-zinc-100 text-zinc-700 ${badgeClass}`}>Completed</Badge>;
-    if (s === 'canceled') return <Badge className={`bg-rose-50 text-rose-600 ${badgeClass}`}>Cancelled</Badge>;
+    if (s === 'canceled' || s === 'cancelled') return <Badge className={`bg-rose-50 text-rose-600 ${badgeClass}`}>Cancelled</Badge>;
     if (s === 'no_show') return <Badge className={`bg-orange-50 text-orange-600 ${badgeClass}`}>No Show</Badge>;
     if (s === 'rescheduled') return <Badge className={`bg-blue-50 text-blue-600 ${badgeClass}`}>Rescheduled</Badge>;
     return <Badge className={`bg-zinc-100 text-zinc-500 ${badgeClass}`}>{s}</Badge>;
@@ -616,10 +629,9 @@ export default function DashboardBookings() {
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {filteredBookings.map((b) => {
-                  const amount = parseFloat(b.amount || "0");
-                  const deposit = amount * 0.2;
-                  const platAmt = amount * 0.1;
-                  const salonAmt = amount * 0.1;
+                  const financials = resolveBookingFinancialBreakdown(b);
+                  const paymentStatus = (b.payment_status || "unpaid").toLowerCase();
+                  const reservationPaid = isReservationDepositPaid(b);
 
                   return (
                   <tr key={b.id} className="hover:bg-zinc-50/60 transition-colors">
@@ -646,28 +658,51 @@ export default function DashboardBookings() {
                     
                     {/* Financials */}
                     <td className="px-2 py-2 align-top">
-                      <div className="text-[11px] font-black text-zinc-900 leading-tight">LKR {amount.toLocaleString()}</div>
+                      <div className="text-[11px] font-black text-zinc-900 leading-tight">
+                        LKR {financials.serviceTotal.toLocaleString()}
+                      </div>
                       <div className="flex flex-wrap items-center gap-1 mt-0.5">
                         <span className="text-[9px] text-zinc-500 font-bold uppercase">
-                          Dep {deposit.toLocaleString()}
+                          Dep {financials.reservationDeposit.toLocaleString()}
+                          {financials.reservationDepositPercent > 0
+                            ? ` (${financials.reservationDepositPercent}%)`
+                            : ""}
                         </span>
-                        {b.reservation_fee_paid ? (
+                        {reservationPaid ? (
                           <Badge className="bg-emerald-50 text-emerald-600 border-none px-1 py-0 text-[7px] font-black uppercase">Paid</Badge>
                         ) : (
                           <Badge className="bg-rose-50 text-rose-600 border-none px-1 py-0 text-[7px] font-black uppercase">Unpaid</Badge>
                         )}
                       </div>
-                      {b.reservation_fee_paid && (
+                      {reservationPaid && (financials.salonUpfront > 0 || financials.platformCommission > 0) && (
                         <div className="text-[9px] font-bold mt-0.5 leading-tight">
-                          <span className="text-emerald-700">Salon {salonAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          <span className="text-emerald-700">
+                            Salon {financials.salonUpfront.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </span>
                           <span className="text-zinc-300"> · </span>
-                          <span className="text-amber-700">Plat {platAmt.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                          <span className="text-amber-700">
+                            Plat {financials.platformCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </span>
                         </div>
                       )}
-                      {(b.payment_status === 'reservation_paid' || b.payment_status === 'paid' || b.payment_status === 'refunded') && (
+                      {(paymentStatus === "reservation_paid" ||
+                        paymentStatus === "paid" ||
+                        paymentStatus === "refunded") && (
                         <div className="text-[9px] font-bold text-zinc-400 mt-0.5 capitalize leading-tight">
-                          <span className={b.payment_status === 'paid' ? 'text-emerald-600' : b.payment_status === 'reservation_paid' ? 'text-amber-600' : 'text-rose-600'}>
-                            {b.payment_status === 'reservation_paid' ? 'Bal: Reserved' : `Bal: ${b.payment_status}`}
+                          <span
+                            className={
+                              paymentStatus === "paid"
+                                ? "text-emerald-600"
+                                : paymentStatus === "reservation_paid"
+                                  ? "text-amber-600"
+                                  : "text-rose-600"
+                            }
+                          >
+                            {paymentStatus === "reservation_paid"
+                              ? `Bal due: ${financials.balanceDue.toLocaleString()}`
+                              : paymentStatus === "paid"
+                                ? "Bal: Paid"
+                                : `Bal: ${paymentStatus}`}
                           </span>
                         </div>
                       )}

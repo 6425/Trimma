@@ -162,7 +162,7 @@ export default function BookingDetailPage() {
   const financials = resolveBookingFinancialBreakdown(booking);
   const timeline = getTimeline(status);
 
-  const isTerminal = ["completed", "cancelled", "declined", "no_show"].includes(status);
+  const isTerminal = ["completed", "canceled", "cancelled", "declined", "no_show"].includes(status);
 
   const statusColorMap: Record<string, string> = {
     pending: "bg-amber-50 text-amber-700 border-amber-200",
