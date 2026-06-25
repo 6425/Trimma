@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { readFacebookRedirectUri } from "@/lib/facebook-env";
 import { requireFacebookAppConfig } from "@/lib/facebook-graph";
 
 const STATE_TTL_MS = 15 * 60 * 1000;
@@ -6,6 +7,7 @@ const STATE_TTL_MS = 15 * 60 * 1000;
 type FacebookOAuthStatePayload = {
   salonId: string;
   issuedAt: number;
+  redirectUri?: string;
 };
 
 function encodePayload(payload: FacebookOAuthStatePayload): string {
@@ -26,14 +28,15 @@ function sign(encodedPayload: string, secret: string): string {
   return createHmac("sha256", secret).update(encodedPayload).digest("base64url");
 }
 
-export function createFacebookOAuthState(salonId: string): string {
-  const { appSecret } = requireFacebookAppConfig();
-  const payload = encodePayload({ salonId, issuedAt: Date.now() });
+export function createFacebookOAuthState(salonId: string, requestOrigin?: string): string {
+  const { appSecret } = requireFacebookAppConfig(requestOrigin);
+  const redirectUri = readFacebookRedirectUri(requestOrigin);
+  const payload = encodePayload({ salonId, issuedAt: Date.now(), redirectUri });
   const signature = sign(payload, appSecret);
   return `${payload}.${signature}`;
 }
 
-export function verifyFacebookOAuthState(state: string): { salonId: string } | null {
+export function verifyFacebookOAuthState(state: string): { salonId: string; redirectUri?: string } | null {
   const [encodedPayload, signature] = state.split(".");
   if (!encodedPayload || !signature) return null;
 
@@ -50,5 +53,8 @@ export function verifyFacebookOAuthState(state: string): { salonId: string } | n
   if (!payload) return null;
   if (Date.now() - payload.issuedAt > STATE_TTL_MS) return null;
 
-  return { salonId: payload.salonId };
+  return {
+    salonId: payload.salonId,
+    redirectUri: payload.redirectUri?.replace(/\/$/, ""),
+  };
 }

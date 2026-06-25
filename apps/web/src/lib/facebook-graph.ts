@@ -83,15 +83,16 @@ export function buildFacebookOAuthUrl(state: string, requestOrigin?: string): st
 
 export async function exchangeFacebookCodeForUserToken(
   code: string,
-  requestOrigin?: string
+  redirectUri: string
 ): Promise<
   | { success: true; accessToken: string; expiresIn?: number }
   | { success: false; error: string }
 > {
-  const { appId, appSecret, redirectUri } = requireFacebookAppConfig(requestOrigin);
+  const { appId, appSecret } = requireFacebookAppConfig();
+  const normalizedRedirect = redirectUri.replace(/\/$/, "");
   const params = new URLSearchParams({
     client_id: appId,
-    redirect_uri: redirectUri,
+    redirect_uri: normalizedRedirect,
     client_secret: appSecret,
     code,
   });

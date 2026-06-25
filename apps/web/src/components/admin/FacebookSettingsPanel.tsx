@@ -235,13 +235,19 @@ export function FacebookSettingsPanel() {
           id="facebook_redirect_uri"
           value={redirectUri}
           onChange={(e) => setRedirectUri(e.target.value)}
-          required
-          placeholder="https://beta.trimma.io/facebook/callback/auth"
+          placeholder="https://beta.trimma.io/facebook/callback/auth (default fallback)"
           className="h-10 border-slate-200 rounded-xl text-xs font-mono"
         />
         <p className="text-[9px] text-zinc-500 leading-relaxed">
-          Must match Meta Developer Console exactly. Beta:{" "}
-          <code className="bg-slate-100 px-1 rounded">https://beta.trimma.io/facebook/callback/auth</code>
+          OAuth auto-picks beta or live based on where the salon owner connects. Register both in Meta →
+          Facebook Login → Valid OAuth Redirect URIs:
+        </p>
+        <ul className="text-[9px] text-zinc-600 space-y-1 font-mono">
+          <li>https://beta.trimma.io/facebook/callback/auth</li>
+          <li>https://www.trimma.io/facebook/callback/auth</li>
+        </ul>
+        <p className="text-[9px] text-zinc-500 leading-relaxed">
+          Default below is only used when the request host is unknown (optional on save if beta URI is set).
         </p>
       </div>
 

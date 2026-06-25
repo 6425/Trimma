@@ -54,24 +54,37 @@ export function readFacebookAppSecret(): string {
   return readFirstEnv(FACEBOOK_APP_SECRET_ENV_KEYS);
 }
 
+export const FACEBOOK_OAUTH_CALLBACK_PATH = "/facebook/callback/auth";
+
+/** Registered in Meta for beta + live OAuth. */
+export const TRIMMA_FACEBOOK_OAUTH_REDIRECTS = [
+  "https://beta.trimma.io/facebook/callback/auth",
+  "https://www.trimma.io/facebook/callback/auth",
+] as const;
+
+function buildRedirectFromOrigin(origin: string): string {
+  return `${origin.replace(/\/$/, "")}${FACEBOOK_OAUTH_CALLBACK_PATH}`;
+}
+
 export function readFacebookRedirectUri(requestOrigin?: string): string {
+  // OAuth must use the same host the user is on (beta vs live), not a fixed admin URI.
+  if (requestOrigin) {
+    return buildRedirectFromOrigin(requestOrigin);
+  }
+
   const cached = getFacebookPlatformCredentialsSync()?.redirectUri?.trim();
   if (cached) return cached.replace(/\/$/, "");
 
   const explicit = readFirstEnv(FACEBOOK_REDIRECT_URI_ENV_KEYS);
   if (explicit) return explicit.replace(/\/$/, "");
 
-  if (requestOrigin) {
-    return `${requestOrigin.replace(/\/$/, "")}/facebook/callback/auth`;
-  }
-
   const vercelUrl = cleanEnvValue(process.env.VERCEL_URL);
   if (vercelUrl) {
     const protocol = vercelUrl.includes("localhost") ? "http" : "https";
-    return `${protocol}://${vercelUrl.replace(/\/$/, "")}/facebook/callback/auth`;
+    return buildRedirectFromOrigin(`${protocol}://${vercelUrl.replace(/\/$/, "")}`);
   }
 
-  return `${APP_BASE_URL.replace(/\/$/, "")}/facebook/callback/auth`;
+  return buildRedirectFromOrigin(APP_BASE_URL.replace(/\/$/, ""));
 }
 
 export function hasFacebookAppCredentials(): boolean {

@@ -10,7 +10,7 @@ import {
   getFacebookAppConfig,
   publishFacebookPageFeedPost,
 } from "@/lib/facebook-graph";
-import { hasFacebookAppCredentials } from "@/lib/facebook-env";
+import { hasFacebookAppCredentials, readFacebookRedirectUri } from "@/lib/facebook-env";
 import { loadFacebookPlatformCredentials } from "@/lib/facebook-platform-credentials";
 import { createFacebookOAuthState } from "@/lib/facebook-oauth-state";
 import {
@@ -143,7 +143,7 @@ export async function createFacebookConnectUrl() {
       );
     }
 
-    const state = createFacebookOAuthState(ctx.salonId);
+    const state = createFacebookOAuthState(ctx.salonId, requestOrigin);
     return { url: buildFacebookOAuthUrl(state, requestOrigin) };
   });
 
@@ -163,7 +163,11 @@ export async function completeFacebookOAuthCallback(
     return { success: false as const, error: "Invalid or expired Facebook OAuth state." };
   }
 
-  const shortTokenResult = await exchangeFacebookCodeForUserToken(code, requestOrigin);
+  const redirectUri =
+    verified.redirectUri ||
+    (requestOrigin ? readFacebookRedirectUri(requestOrigin) : readFacebookRedirectUri());
+
+  const shortTokenResult = await exchangeFacebookCodeForUserToken(code, redirectUri);
   if (shortTokenResult.success === false) {
     return { success: false as const, error: shortTokenResult.error };
   }
