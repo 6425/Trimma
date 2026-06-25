@@ -19,6 +19,19 @@ import {
 import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
 import { getPublicSubscriptionPlans } from "@/app/actions/subscription-plans";
 
+function isDeletedCatalogStatus(status?: string | null): boolean {
+  return (status || "").toLowerCase() === "deleted";
+}
+
+function filterCatalogServices<T extends { status?: string | null }>(rows: T[]): T[] {
+  return rows.filter((row) => !isDeletedCatalogStatus(row.status));
+}
+
+function isMissingDbObjectError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("does not exist") || lower.includes("schema cache");
+}
+
 export async function fetchSalonLayoutShell() {
   const auth = await requireSalonOwnerFromCookies();
   if ("error" in auth) {
@@ -362,7 +375,7 @@ export async function fetchSalonServicesPage() {
 
     return {
       salon,
-      services: servicesRes.data || [],
+      services: filterCatalogServices(servicesRes.data || []),
       staff,
       coveredServiceIds,
       subscriptionPlan: plan,
@@ -407,10 +420,7 @@ export async function fetchSalonStaffPage() {
     return {
       salon: ctx.salon,
       staff: staffRes.data || [],
-      salonServices: (servicesRes.data || []).filter((service: { status?: string | null }) => {
-        const status = (service.status || "active").toLowerCase();
-        return status !== "deleted";
-      }),
+      salonServices: filterCatalogServices(servicesRes.data || []),
       globalServices: globalServicesRes.data || [],
       globalStaffRoles,
       globalSkillGrades,
@@ -439,8 +449,15 @@ export async function fetchSalonPackagesPage() {
       supabase.from("global_promotion_packages").select("*").eq("is_active", true),
     ]);
 
-    for (const res of [packagesRes, typesRes, globalPackagesRes]) {
-      if (res.error) throw new Error(res.error.message);
+    if (typesRes.error) throw new Error(typesRes.error.message);
+    if (globalPackagesRes.error) throw new Error(globalPackagesRes.error.message);
+
+    let packages = packagesRes.data || [];
+    if (packagesRes.error) {
+      if (!isMissingDbObjectError(packagesRes.error.message)) {
+        throw new Error(packagesRes.error.message);
+      }
+      packages = [];
     }
 
     const flags = readPlanFlags(plan);
@@ -452,11 +469,12 @@ export async function fetchSalonPackagesPage() {
 
     return {
       salon: ctx.salon,
-      packages: packagesRes.data || [],
+      packages,
       promotionTypes: typesRes.data || [],
       allowedPromotionTypes: allowedTypes,
       globalPackages: globalPackagesRes.data || [],
       subscriptionPlan: plan,
+      packagesTableMissing: Boolean(packagesRes.error),
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);

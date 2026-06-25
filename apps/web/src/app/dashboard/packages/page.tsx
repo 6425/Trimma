@@ -112,6 +112,8 @@ function resolvePromotionTypeName(pkg: any, types: any[]) {
 export default function PackagesPage() {
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [packagesTableMissing, setPackagesTableMissing] = useState(false);
   const [salon, setSalon] = useState<any>(null);
   const [subscriptionPlan, setSubscriptionPlan] = useState<any>(null);
   const [allowedPromotionTypes, setAllowedPromotionTypes] = useState<any[]>([]);
@@ -138,11 +140,13 @@ export default function PackagesPage() {
   const fetchSalonAndPackages = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const result = await withTimeout(fetchSalonPackagesPage(), 20000, "Loading timed out.");
       if (result.success === false) throw new Error(result.error);
 
       setSalon(result.salon);
       setPackages(result.packages || []);
+      setPackagesTableMissing(Boolean(result.packagesTableMissing));
       setSubscriptionPlan(result.subscriptionPlan);
       setAllowedPromotionTypes(result.allowedPromotionTypes || []);
       if ((result.allowedPromotionTypes || []).length > 0) {
@@ -172,7 +176,9 @@ export default function PackagesPage() {
         setSelectedPackages(initialSelected);
       }
     } catch (error: any) {
-      toast.error("Failed to load promotion packages: " + error.message);
+      const message = error.message || "Failed to load promotion packages.";
+      setLoadError(message);
+      toast.error("Failed to load promotion packages: " + message);
     } finally {
       setLoading(false);
     }
@@ -201,7 +207,9 @@ export default function PackagesPage() {
       }
 
       const typesLimit = subscriptionPlan?.feature_flags?.allowed_promotion_types_limit || 2;
-      const projectedTypes = new Set(packages.map((p) => p.promotion_type));
+      const projectedTypes = new Set(
+        packages.map((p) => resolvePromotionTypeName(p, allowedPromotionTypes))
+      );
       selectedIds.forEach((x) => {
         const info = selectedPackages[x];
         if (info) projectedTypes.add(info.promotionTypeName);
@@ -400,10 +408,32 @@ export default function PackagesPage() {
         </div>
       </div>
 
+      {packagesTableMissing && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-xs font-bold text-amber-900">Promotion packages database not ready</h4>
+            <p className="text-[10px] text-amber-800 mt-1">
+              Your salon can still browse global templates, but published deals will appear here after the
+              promotion packages table is provisioned on this environment.
+            </p>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="py-24 flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100">
           <Loader2 className="w-8 h-8 animate-spin text-brand mb-2" />
           <p className="text-zinc-400 font-medium">Syncing promotion packages...</p>
+        </div>
+      ) : loadError ? (
+        <div className="py-24 flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100 text-center p-8">
+          <AlertCircle className="w-12 h-12 text-rose-400 mb-4" />
+          <h3 className="text-lg font-semibold text-zinc-900">Unable to load promotion packages</h3>
+          <p className="text-zinc-500 max-w-md mx-auto mt-2 mb-6">{loadError}</p>
+          <Button onClick={() => fetchSalonAndPackages()} variant="outline" className="rounded-xl font-bold">
+            Retry
+          </Button>
         </div>
       ) : packages.length === 0 ? (
         <div className="py-24 flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-100 text-center p-8">

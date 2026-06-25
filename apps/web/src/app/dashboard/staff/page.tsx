@@ -17,6 +17,7 @@ import {
 import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId, mapSalonServicesForStaffForm, parseStaffWorkingHours, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
+import { isActiveSalonStaff } from "@/lib/staff-allocation";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
@@ -409,6 +410,8 @@ export default function DashboardStaff() {
     }
   };
 
+  const activeStaffCount = staff.filter((member) => isActiveSalonStaff(member)).length;
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto p-4 relative text-black [&_button]:text-black [&_svg]:text-black">
       
@@ -427,7 +430,7 @@ export default function DashboardStaff() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-black">Allowed Staff:</span>
             <Badge variant="outline" className="bg-white border-zinc-200 text-black font-black px-2 py-0.5 text-[10px]">
-              {staff.length} / {maxStaffLimit}
+              {activeStaffCount} active · {staff.length} / {maxStaffLimit}
             </Badge>
           </div>
           <Button 
@@ -503,7 +506,7 @@ export default function DashboardStaff() {
                              const matchedServ = findSalonServiceForAssignmentId(staffFormServices, as.service_id);
                              return (
                                <Badge key={as.service_id} className="bg-black !text-white border-none font-bold text-[9px] py-1 px-2.5 rounded-md shadow-sm">
-                                 {matchedServ?.name || "Service"} ({as.commission_rate}%)
+                                 {matchedServ?.name || "Service"} ({as.commission_rate ?? member.commission_rate ?? 0}%)
                                </Badge>
                              );
                            })}

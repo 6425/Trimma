@@ -145,6 +145,8 @@ export default function DashboardServices() {
 
   const planFlags = readPlanFlags(subscriptionPlan);
   const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
+  const catalogServices = services.filter((service) => (service.status || "").toLowerCase() !== "deleted");
+  const activeServiceCount = catalogServices.filter((service) => service.status === "active").length;
 
   const handleToggleSelect = (id: string) => {
     const isCurrentlyChecked = selectedServices[id]?.checked || false;
@@ -154,7 +156,7 @@ export default function DashboardServices() {
     if (!isCurrentlyChecked && targetService) {
       // 1. Check maximum service slots limit
       const maxServicesAllowed = subscriptionPlan?.max_services || 6;
-      const currentServiceCount = services.length;
+      const currentServiceCount = catalogServices.length;
       const selectedIds = Object.keys(selectedServices).filter(x => selectedServices[x].checked);
       
       if (currentServiceCount + selectedIds.length + 1 > maxServicesAllowed) {
@@ -164,7 +166,7 @@ export default function DashboardServices() {
 
       // 2. Check maximum unique categories limit
       const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
-      const projectedCategories = new Set(services.map(s => s.category));
+      const projectedCategories = new Set(catalogServices.map((s) => s.category));
       
       selectedIds.forEach(x => {
         const info = selectedServices[x];
@@ -209,7 +211,7 @@ export default function DashboardServices() {
 
     // Double-check thresholds before submitting to database
     const maxServicesAllowed = subscriptionPlan?.max_services || 6;
-    const currentServiceCount = services.length;
+    const currentServiceCount = catalogServices.length;
     const projectedServiceCount = currentServiceCount + selectedIds.length;
     
     if (projectedServiceCount > maxServicesAllowed) {
@@ -219,7 +221,7 @@ export default function DashboardServices() {
     }
 
     const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
-    const projectedCategories = new Set(services.map(s => s.category));
+    const projectedCategories = new Set(catalogServices.map((s) => s.category));
     
     selectedIds.forEach(id => {
       const info = selectedServices[id];
@@ -313,7 +315,7 @@ export default function DashboardServices() {
     }
 
     const maxServicesAllowed = subscriptionPlan?.max_services || 6;
-    if (services.length >= maxServicesAllowed) {
+    if (catalogServices.length >= maxServicesAllowed) {
       toast.error(
         `Your ${subscriptionPlan?.name || "Free"} plan allows up to ${maxServicesAllowed} services. Upgrade to add more.`
       );
@@ -321,7 +323,7 @@ export default function DashboardServices() {
     }
 
     const allowedCategoriesLimit = getAllowedCategoriesLimit(planFlags, subscriptionPlan?.name);
-    const projectedCategories = new Set(services.map((s) => s.category));
+    const projectedCategories = new Set(catalogServices.map((s) => s.category));
     if (customForm.category) projectedCategories.add(customForm.category);
     if (projectedCategories.size > allowedCategoriesLimit) {
       toast.error(
@@ -407,7 +409,7 @@ export default function DashboardServices() {
     }
   };
 
-  const filteredServices = services.filter(s => 
+  const filteredServices = catalogServices.filter((s) =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -429,7 +431,7 @@ export default function DashboardServices() {
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-zinc-500">Allowed Services:</span>
               <Badge variant="outline" className="bg-white border-zinc-200 text-brand font-black px-2 py-0.5 text-[10px]">
-                {services.length} / {subscriptionPlan.max_services || 6}
+                {activeServiceCount} active · {catalogServices.length} / {subscriptionPlan.max_services || 6}
               </Badge>
             </div>
             <div className="hidden sm:block w-px h-6 bg-zinc-200"></div>
