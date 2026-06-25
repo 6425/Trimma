@@ -20,6 +20,8 @@ export function FacebookSettingsPanel() {
   const [appSecret, setAppSecret] = useState("");
   const [redirectUri, setRedirectUri] = useState("");
   const [secretConfigured, setSecretConfigured] = useState(false);
+  const [loginConfigId, setLoginConfigId] = useState("");
+  const [oauthMode, setOauthMode] = useState<"business_config" | "legacy_scope">("legacy_scope");
   const [source, setSource] = useState<"database" | "env" | "none">("none");
   const [showSecret, setShowSecret] = useState(false);
   const [validation, setValidation] = useState<{
@@ -34,6 +36,8 @@ export function FacebookSettingsPanel() {
         const config = await getFacebookPlatformConfig();
         setAppId(config.appId);
         setRedirectUri(config.redirectUri);
+        setLoginConfigId(config.loginConfigId);
+        setOauthMode(config.oauthMode);
         setSecretConfigured(config.secretConfigured);
         setSource(config.source);
 
@@ -105,6 +109,7 @@ export function FacebookSettingsPanel() {
         appId,
         appSecret,
         redirectUri,
+        loginConfigId,
       });
 
       if (result.success === false) {
@@ -114,6 +119,7 @@ export function FacebookSettingsPanel() {
       setSecretConfigured(true);
       setAppSecret("");
       setSource("database");
+      setOauthMode("business_config");
       setValidation(result.appName ? { valid: true, appName: result.appName } : { valid: true });
 
       if (result.envFileSynced) {
@@ -155,6 +161,19 @@ export function FacebookSettingsPanel() {
           writable.
         </p>
       </div>
+
+      {oauthMode === "legacy_scope" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
+            <strong>Login Config ID required.</strong> Business-type Meta apps reject raw{" "}
+            <code className="text-[10px]">scope=pages_*</code> (Invalid Scopes). Create a configuration
+            under Meta → <strong>Facebook Login for Business</strong> with{" "}
+            <code className="text-[10px]">pages_show_list</code> +{" "}
+            <code className="text-[10px]">pages_manage_posts</code>, then paste the Configuration ID below.
+          </p>
+        </div>
+      )}
 
       {source === "env" && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
@@ -222,6 +241,28 @@ export function FacebookSettingsPanel() {
             {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label
+          htmlFor="facebook_login_config_id"
+          className="text-[10px] font-black uppercase tracking-wider text-zinc-500"
+        >
+          FACEBOOK_LOGIN_CONFIG_ID
+        </Label>
+        <Input
+          id="facebook_login_config_id"
+          value={loginConfigId}
+          onChange={(e) => setLoginConfigId(e.target.value)}
+          required
+          placeholder="1234567890123456"
+          className="h-10 border-slate-200 rounded-xl text-xs font-mono"
+        />
+        <p className="text-[9px] text-zinc-500 leading-relaxed">
+          Meta → Facebook Login for Business → Configurations → copy Configuration ID. OAuth uses{" "}
+          <code className="bg-slate-100 px-1 rounded">config_id</code> (not{" "}
+          <code className="bg-slate-100 px-1 rounded">scope</code>) — fixes Invalid Scopes on Business apps.
+        </p>
       </div>
 
       <div className="space-y-2">

@@ -5,6 +5,7 @@ type FacebookEnvValues = {
   appId: string;
   appSecret: string;
   redirectUri: string;
+  loginConfigId?: string;
 };
 
 function upsertEnvLine(content: string, key: string, value: string): string {
@@ -29,6 +30,9 @@ function syncEnvFile(filePath: string, values: FacebookEnvValues): boolean {
   content = upsertEnvLine(content, "FACEBOOK_REDIRECT_URI", values.redirectUri);
   content = upsertEnvLine(content, "APPID", values.appId);
   content = upsertEnvLine(content, "APP_SECRET", values.appSecret);
+  if (values.loginConfigId) {
+    content = upsertEnvLine(content, "FACEBOOK_LOGIN_CONFIG_ID", values.loginConfigId);
+  }
 
   fs.writeFileSync(filePath, content, "utf8");
   return true;

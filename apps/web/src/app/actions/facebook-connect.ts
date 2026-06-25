@@ -4,13 +4,14 @@ import { headers } from "next/headers";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   buildFacebookOAuthUrl,
+  describeFacebookOAuthMode,
   exchangeFacebookCodeForUserToken,
   exchangeFacebookLongLivedUserToken,
   fetchFacebookManagedPages,
   getFacebookAppConfig,
   publishFacebookPageFeedPost,
 } from "@/lib/facebook-graph";
-import { hasFacebookAppCredentials, readFacebookRedirectUri } from "@/lib/facebook-env";
+import { hasFacebookAppCredentials, hasFacebookLoginConfigId, readFacebookRedirectUri } from "@/lib/facebook-env";
 import { loadFacebookPlatformCredentials } from "@/lib/facebook-platform-credentials";
 import { createFacebookOAuthState } from "@/lib/facebook-oauth-state";
 import {
@@ -62,8 +63,10 @@ export async function getFacebookConnectStatus() {
         ? (ctx.salon.business_info_extended as Record<string, unknown>)
         : {};
 
+    const oauth = describeFacebookOAuthMode();
+
     return {
-      configured: hasFacebookAppCredentials(),
+      configured: hasFacebookAppCredentials() && hasFacebookLoginConfigId(),
       connected: integration.facebook_connected === true && Boolean(integration.facebook_page_id),
       pageId: integration.facebook_page_id,
       pageName: integration.facebook_page_name,
@@ -76,7 +79,9 @@ export async function getFacebookConnectStatus() {
       autoPublishPromos: integration.auto_publish_promos,
       salonBookingUrl: resolveSalonBookingUrl(ctx.salon),
       oauthRedirectUri: config?.redirectUri || null,
-      scopes: ["pages_show_list", "pages_read_engagement", "pages_manage_posts"],
+      oauthMode: oauth.mode,
+      loginConfigId: oauth.loginConfigId,
+      scopes: oauth.scopes,
     };
   });
 
@@ -139,7 +144,12 @@ export async function createFacebookConnectUrl() {
     const requestOrigin = await readRequestOrigin();
     if (!hasFacebookAppCredentials()) {
       throw new Error(
-        "Facebook App ID or App Secret is missing on the server. Add FACEBOOK_APP_ID and FACEBOOK_APP_SECRET to apps/web/.env (or APPID and APP_SECRET)."
+        "Facebook App ID or App Secret is missing on the server. Add them in Admin → Global Settings → Meta Facebook App."
+      );
+    }
+    if (!hasFacebookLoginConfigId()) {
+      throw new Error(
+        "Facebook Login Config ID is missing. In Meta → Facebook Login for Business, create a configuration with pages_show_list and pages_manage_posts, then paste the Configuration ID in Admin → Global Settings."
       );
     }
 

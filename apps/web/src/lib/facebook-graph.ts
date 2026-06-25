@@ -2,6 +2,7 @@ import {
   hasFacebookAppCredentials,
   readFacebookAppId,
   readFacebookAppSecret,
+  readFacebookLoginConfigId,
   readFacebookRedirectUri,
 } from "@/lib/facebook-env";
 
@@ -71,14 +72,36 @@ function readGraphError(payload: GraphPayload, fallback: string): string {
 
 export function buildFacebookOAuthUrl(state: string, requestOrigin?: string): string {
   const { appId, redirectUri } = requireFacebookAppConfig(requestOrigin);
+  const loginConfigId = readFacebookLoginConfigId();
+
   const params = new URLSearchParams({
     client_id: appId,
     redirect_uri: redirectUri,
     state,
-    scope: FACEBOOK_PAGE_SCOPES.join(","),
     response_type: "code",
   });
+
+  // Business-type Meta apps: use Facebook Login for Business config (do not pass scope).
+  // https://developers.facebook.com/docs/facebook-login/facebook-login-for-business/
+  if (loginConfigId) {
+    params.set("config_id", loginConfigId);
+  } else {
+    params.set("scope", FACEBOOK_PAGE_SCOPES.join(","));
+  }
+
   return `https://www.facebook.com/${FACEBOOK_GRAPH_VERSION}/dialog/oauth?${params.toString()}`;
+}
+
+export function describeFacebookOAuthMode(): {
+  mode: "business_config" | "legacy_scope";
+  loginConfigId: string | null;
+  scopes: string[];
+} {
+  const loginConfigId = readFacebookLoginConfigId();
+  if (loginConfigId) {
+    return { mode: "business_config", loginConfigId, scopes: [...FACEBOOK_PAGE_SCOPES] };
+  }
+  return { mode: "legacy_scope", loginConfigId: null, scopes: [...FACEBOOK_PAGE_SCOPES] };
 }
 
 export async function exchangeFacebookCodeForUserToken(

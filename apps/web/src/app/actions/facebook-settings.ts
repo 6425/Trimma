@@ -18,6 +18,8 @@ export type FacebookPlatformConfig = {
   appId: string;
   appSecret: string;
   redirectUri: string;
+  loginConfigId: string;
+  oauthMode: "business_config" | "legacy_scope";
   secretConfigured: boolean;
   source: FacebookPlatformCredentials["source"];
 };
@@ -45,6 +47,8 @@ export async function getFacebookPlatformConfig(): Promise<FacebookPlatformConfi
     appId: creds.appId,
     appSecret: "",
     redirectUri: creds.redirectUri,
+    loginConfigId: creds.loginConfigId,
+    oauthMode: creds.loginConfigId ? "business_config" : "legacy_scope",
     secretConfigured: Boolean(storedSecret || creds.appSecret),
     source: creds.source,
   };
@@ -127,6 +131,7 @@ export async function saveFacebookPlatformSettings(input: {
   appId: string;
   appSecret: string;
   redirectUri: string;
+  loginConfigId?: string;
 }) {
   const admin = await requirePlatformAdminFromCookies();
   if ("error" in admin) {
@@ -156,6 +161,16 @@ export async function saveFacebookPlatformSettings(input: {
     };
   }
 
+  const loginConfigId = input.loginConfigId?.trim() || "";
+
+  if (!loginConfigId) {
+    return {
+      success: false as const,
+      error:
+        "FACEBOOK_LOGIN_CONFIG_ID is required for Business-type Meta apps. Create a configuration under Meta → Facebook Login for Business and paste the Configuration ID here.",
+    };
+  }
+
   const validation = await validateFacebookPlatformCredentials(appId, appSecret);
   if (validation.valid === false) {
     return { success: false as const, error: validation.error };
@@ -168,6 +183,7 @@ export async function saveFacebookPlatformSettings(input: {
       facebook_app_id: appId,
       facebook_app_secret: appSecret,
       facebook_redirect_uri: redirectUri,
+      facebook_login_config_id: loginConfigId,
     });
 
   if (error) {
@@ -182,11 +198,12 @@ export async function saveFacebookPlatformSettings(input: {
     appId,
     appSecret,
     redirectUri,
+    loginConfigId,
     source: "database",
   };
   applyFacebookPlatformCredentialsToProcess(creds);
 
-  const envSync = syncFacebookCredentialsToEnvFiles({ appId, appSecret, redirectUri });
+  const envSync = syncFacebookCredentialsToEnvFiles({ appId, appSecret, redirectUri, loginConfigId });
 
   return {
     success: true as const,

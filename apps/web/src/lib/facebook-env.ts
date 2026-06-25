@@ -34,6 +34,14 @@ export const FACEBOOK_REDIRECT_URI_ENV_KEYS = [
   "AUTH_CALLBACK_URL",
 ] as const;
 
+/** Meta Facebook Login for Business configuration ID (replaces scope on Business apps). */
+export const FACEBOOK_LOGIN_CONFIG_ID_ENV_KEYS = [
+  "FACEBOOK_LOGIN_CONFIG_ID",
+  "META_FACEBOOK_LOGIN_CONFIG_ID",
+  "FACEBOOK_CONFIG_ID",
+  "FB_LOGIN_CONFIG_ID",
+] as const;
+
 function readFirstEnv(keys: readonly string[]): string {
   for (const name of keys) {
     const value = cleanEnvValue(process.env[name]);
@@ -85,6 +93,16 @@ export function readFacebookRedirectUri(requestOrigin?: string): string {
   }
 
   return buildRedirectFromOrigin(APP_BASE_URL.replace(/\/$/, ""));
+}
+
+export function readFacebookLoginConfigId(): string {
+  const cached = getFacebookPlatformCredentialsSync()?.loginConfigId?.trim();
+  if (cached) return cached;
+  return readFirstEnv(FACEBOOK_LOGIN_CONFIG_ID_ENV_KEYS);
+}
+
+export function hasFacebookLoginConfigId(): boolean {
+  return Boolean(readFacebookLoginConfigId());
 }
 
 export function hasFacebookAppCredentials(): boolean {

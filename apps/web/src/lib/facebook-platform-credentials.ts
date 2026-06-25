@@ -3,6 +3,7 @@ import { APP_BASE_URL } from "@/lib/email/config";
 import {
   FACEBOOK_APP_ID_ENV_KEYS,
   FACEBOOK_APP_SECRET_ENV_KEYS,
+  FACEBOOK_LOGIN_CONFIG_ID_ENV_KEYS,
   FACEBOOK_REDIRECT_URI_ENV_KEYS,
 } from "@/lib/facebook-env";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
@@ -14,6 +15,7 @@ export type FacebookPlatformCredentials = {
   appId: string;
   appSecret: string;
   redirectUri: string;
+  loginConfigId: string;
   source: "database" | "env" | "none";
 };
 
@@ -37,15 +39,18 @@ function readEnvRedirectUri(): string {
 function resolveCredentials(
   dbAppId: string,
   dbAppSecret: string,
-  dbRedirectUri: string
+  dbRedirectUri: string,
+  dbLoginConfigId: string
 ): FacebookPlatformCredentials {
   const envAppId = readEnvFirst(FACEBOOK_APP_ID_ENV_KEYS);
   const envAppSecret = readEnvFirst(FACEBOOK_APP_SECRET_ENV_KEYS);
   const envRedirect = readEnvRedirectUri();
+  const envLoginConfigId = readEnvFirst(FACEBOOK_LOGIN_CONFIG_ID_ENV_KEYS);
 
   const appId = dbAppId || envAppId;
   const appSecret = dbAppSecret || envAppSecret;
   const redirectUri = dbRedirectUri || envRedirect;
+  const loginConfigId = dbLoginConfigId || envLoginConfigId;
 
   const source: FacebookPlatformCredentials["source"] = dbAppId || dbAppSecret
     ? "database"
@@ -53,7 +58,7 @@ function resolveCredentials(
       ? "env"
       : "none";
 
-  return { appId, appSecret, redirectUri, source };
+  return { appId, appSecret, redirectUri, loginConfigId, source };
 }
 
 export function getFacebookPlatformCredentialsSync(): FacebookPlatformCredentials | null {
@@ -71,6 +76,7 @@ export function applyFacebookPlatformCredentialsToProcess(creds: FacebookPlatfor
   if (creds.appId) process.env.FACEBOOK_APP_ID = creds.appId;
   if (creds.appSecret) process.env.FACEBOOK_APP_SECRET = creds.appSecret;
   if (creds.redirectUri) process.env.FACEBOOK_REDIRECT_URI = creds.redirectUri;
+  if (creds.loginConfigId) process.env.FACEBOOK_LOGIN_CONFIG_ID = creds.loginConfigId;
   cache = creds;
   cacheLoadedAt = Date.now();
 }
@@ -83,7 +89,7 @@ export async function loadFacebookPlatformCredentials(force = false): Promise<Fa
   try {
     const { data, error } = await createSupabaseAdminClient()
       .from("global_payment_settings")
-      .select("facebook_app_id, facebook_app_secret, facebook_redirect_uri")
+      .select("facebook_app_id, facebook_app_secret, facebook_redirect_uri, facebook_login_config_id")
       .eq("id", SETTINGS_ID)
       .maybeSingle();
 
@@ -92,14 +98,15 @@ export async function loadFacebookPlatformCredentials(force = false): Promise<Fa
     const resolved = resolveCredentials(
       String(data?.facebook_app_id || "").trim(),
       String(data?.facebook_app_secret || "").trim(),
-      String(data?.facebook_redirect_uri || "").trim()
+      String(data?.facebook_redirect_uri || "").trim(),
+      String(data?.facebook_login_config_id || "").trim()
     );
 
     applyFacebookPlatformCredentialsToProcess(resolved);
     return resolved;
   } catch (err) {
     console.warn("Failed to load Facebook platform credentials from DB:", err);
-    const fallback = resolveCredentials("", "", "");
+    const fallback = resolveCredentials("", "", "", "");
     applyFacebookPlatformCredentialsToProcess(fallback);
     return fallback;
   }
