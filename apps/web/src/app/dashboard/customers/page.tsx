@@ -21,6 +21,15 @@ type SalonCustomer = {
   lastVisit: string;
 };
 
+type CustomerSummary = {
+  totalCustomers: number;
+  newThisMonth: number;
+  vipCount: number;
+  averageRating: number;
+  totalReviews: number;
+  vipMinVisits: number | null;
+};
+
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
@@ -54,7 +63,7 @@ function buildGmailHref(email: string, customerName: string): string | null {
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState<SalonCustomer[]>([]);
-  const [vipMinVisits, setVipMinVisits] = useState<number | null>(null);
+  const [summary, setSummary] = useState<CustomerSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   React.useEffect(() => {
@@ -62,8 +71,19 @@ export default function CustomersPage() {
       fetchSalonCustomersPage().then((res) => {
         if (res.success && res.customers) {
           setCustomers(res.customers);
-          const vipRule = res.loyaltyRules?.find((rule) => rule.tier_key === "vip" && rule.enabled);
-          setVipMinVisits(vipRule?.min_visits ?? null);
+          if (res.summary) {
+            setSummary(res.summary);
+          } else {
+            const vipRule = res.loyaltyRules?.find((rule) => rule.tier_key === "vip" && rule.enabled);
+            setSummary({
+              totalCustomers: res.customers.length,
+              newThisMonth: 0,
+              vipCount: res.customers.filter((c) => c.isVip).length,
+              averageRating: 0,
+              totalReviews: 0,
+              vipMinVisits: vipRule?.min_visits ?? null,
+            });
+          }
         }
         setLoading(false);
       })
@@ -105,27 +125,38 @@ export default function CustomersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Total Customers</span>
-          <h3 className="text-xl font-black text-[#1A1C29] mt-1">{loading ? "..." : customers.length} Clients</h3>
+          <h3 className="text-xl font-black text-[#1A1C29] mt-1">
+            {loading ? "..." : `${summary?.totalCustomers ?? customers.length} Clients`}
+          </h3>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">New This Month</span>
           <h3 className="text-xl font-black text-[#1A1C29] mt-1">
-            {loading ? "..." : customers.filter((c) => new Date(c.lastVisit).getMonth() === new Date().getMonth()).length} Clients
+            {loading ? "..." : `${summary?.newThisMonth ?? 0} Clients`}
           </h3>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">VIP Clients</span>
           <h3 className="text-xl font-black text-[#1A1C29] mt-1">
-            {loading ? "..." : customers.filter((c) => c.isVip).length} Clients
+            {loading ? "..." : `${summary?.vipCount ?? customers.filter((c) => c.isVip).length} Clients`}
           </h3>
           <span className="text-[9px] font-semibold text-brand bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">
-            {vipMinVisits != null ? `${vipMinVisits}+ visits` : "Set rules in CRM"}
+            {summary?.vipMinVisits != null ? `${summary.vipMinVisits}+ visits` : "Set rules in CRM"}
           </span>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Average Rating</span>
           <h3 className="text-xl font-black text-amber-500 mt-1 flex items-center gap-1">
-            5.0 <Star className="w-5 h-5 fill-amber-500 text-amber-500 inline" />
+            {loading ? (
+              "..."
+            ) : summary && summary.totalReviews > 0 ? (
+              <>
+                {summary.averageRating.toFixed(1)}{" "}
+                <Star className="w-5 h-5 fill-amber-500 text-amber-500 inline" />
+              </>
+            ) : (
+              <span className="text-sm font-bold text-zinc-400">No reviews yet</span>
+            )}
           </h3>
         </div>
       </div>
@@ -177,9 +208,11 @@ export default function CustomersPage() {
                 filteredCustomers.map((c) => {
                   const whatsappHref = buildWhatsAppHref(c.phone, c.name);
                   const gmailHref = buildGmailHref(c.email, c.name);
+                  const rowKey = `${c.email}-${c.phone}-${c.name}`;
+                  const filledStars = Math.round(c.rating);
 
                   return (
-                    <tr key={c.email} className="hover:bg-zinc-50/50 transition-colors">
+                    <tr key={rowKey} className="hover:bg-zinc-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="font-bold text-zinc-800">{c.name}</div>
@@ -205,11 +238,19 @@ export default function CustomersPage() {
                       <td className="px-6 py-4 text-sm font-semibold text-zinc-700">{c.bookings} visits</td>
                       <td className="px-6 py-4 text-sm font-black text-brand">{c.spent}</td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-0.5 text-amber-500">
-                          {Array.from({ length: 5 }).map((_, rIdx) => (
-                            <Star key={rIdx} className={`w-3 h-3 ${rIdx < c.rating ? "fill-amber-500" : "text-zinc-200"}`} />
-                          ))}
-                        </div>
+                        {c.rating > 0 ? (
+                          <div className="flex items-center gap-0.5 text-amber-500">
+                            {Array.from({ length: 5 }).map((_, rIdx) => (
+                              <Star
+                                key={rIdx}
+                                className={`w-3 h-3 ${rIdx < filledStars ? "fill-amber-500" : "text-zinc-200"}`}
+                              />
+                            ))}
+                            <span className="ml-1 text-[10px] font-bold text-zinc-500">{c.rating.toFixed(1)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-zinc-400">No review</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-xs font-semibold text-zinc-500">{c.lastVisit}</td>
                       <td className="px-6 py-4 text-right">
