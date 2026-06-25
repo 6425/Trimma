@@ -1,11 +1,10 @@
 "use client";
 
-import { LifeBuoy, Mail, MessageSquare, Phone } from "lucide-react";
+import { LifeBuoy, Mail, MessageSquare } from "lucide-react";
 import { CustomerHelpFaq } from "@/components/help/CustomerHelpFaq";
 import {
   TRIMMA_SUPPORT_EMAIL,
   TRIMMA_WHATSAPP_DISPLAY,
-  TRIMMA_WHATSAPP_TEL,
   TRIMMA_WHATSAPP_URL,
 } from "@/lib/trimma-contact";
 
@@ -39,23 +38,12 @@ export default function CustomerSupportPage() {
             <MessageSquare className="w-6 h-6 text-zinc-600" />
           </div>
           <div>
-            <h3 className="font-extrabold text-zinc-900 text-lg">WhatsApp Chat</h3>
-            <p className="text-sm text-zinc-500 mt-1 mb-3">Need immediate assistance with a booking? Chat with our team.</p>
+            <h3 className="font-extrabold text-zinc-900 text-lg">WhatsApp chat & call</h3>
+            <p className="text-sm text-zinc-500 mt-1 mb-3">
+              Need immediate help with a booking? Message or voice-call our team on WhatsApp — weekdays 9 AM to 6 PM.
+            </p>
             <a href={TRIMMA_WHATSAPP_URL} target="_blank" rel="noreferrer" className="text-sm font-bold text-[#ffc800] hover:underline">
-              {TRIMMA_WHATSAPP_DISPLAY} · Chat on WhatsApp
-            </a>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-zinc-200 p-6 flex items-start gap-4 shadow-sm hover:border-[#ffc800]/50 transition-all cursor-default">
-          <div className="w-12 h-12 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
-            <Phone className="w-6 h-6 text-zinc-600" />
-          </div>
-          <div>
-            <h3 className="font-extrabold text-zinc-900 text-lg">Call Us</h3>
-            <p className="text-sm text-zinc-500 mt-1 mb-3">Our hotline is open from 9 AM to 6 PM on weekdays.</p>
-            <a href={TRIMMA_WHATSAPP_TEL} className="text-sm font-bold text-[#ffc800] hover:underline">
-              {TRIMMA_WHATSAPP_DISPLAY}
+              {TRIMMA_WHATSAPP_DISPLAY} · Chat or call on WhatsApp
             </a>
           </div>
         </div>
