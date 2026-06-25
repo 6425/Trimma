@@ -9,7 +9,6 @@ import {
   readPlanFlags,
   sliceAllowedCategories,
 } from "@/lib/salon-subscription-plan";
-import { buildInferredStaffMap } from "@/lib/dashboard-stats";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { getServiceIdsCoveredByStaff, getBookingServiceDisplayName, resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
 import {
@@ -19,50 +18,6 @@ import {
 } from "@/lib/salon-loyalty";
 import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
 import { getPublicSubscriptionPlans } from "@/app/actions/subscription-plans";
-import { isCommissionEligibleBooking } from "@/lib/commission-ledger-format";
-import { formatDisplayDate, toDateInputValue } from "@/lib/promotion-package-dates";
-import { buildReviewSummary, isVerifiedBookingReview } from "@/lib/reviews";
-
-function customerIdentityKey(booking: {
-  customer_email?: string | null;
-  customer_phone?: string | null;
-}): string | null {
-  if (booking.customer_email) return booking.customer_email.toLowerCase();
-  const phone = (booking.customer_phone || "").replace(/\D/g, "");
-  if (phone) return `phone:${phone}`;
-  return null;
-}
-
-function bookingAppointmentMs(booking: {
-  booking_date?: string | null;
-  created_at?: string | null;
-}): number {
-  const dateKey = toDateInputValue(booking.booking_date || booking.created_at);
-  if (!dateKey) return 0;
-  const parsed = new Date(`${dateKey}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
-}
-
-function isInCurrentMonth(ms: number): boolean {
-  if (!ms) return false;
-  const date = new Date(ms);
-  const now = new Date();
-  return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
-}
-
-function isMissingColumnError(message: string): boolean {
-  const lower = message.toLowerCase();
-  return lower.includes("column") || lower.includes("schema cache");
-}
-
-function bookingCountsTowardSpend(
-  booking: { status?: string | null; payment_status?: string | null; reservation_fee_paid?: boolean | null },
-  usePaymentFields: boolean
-): boolean {
-  if (usePaymentFields) return isCommissionEligibleBooking(booking);
-  const status = (booking.status || "").toLowerCase();
-  return status === "completed" || status === "confirmed";
-}
 
 export async function fetchSalonLayoutShell() {
   const auth = await requireSalonOwnerFromCookies();
@@ -231,30 +186,31 @@ export async function fetchSalonBookingsPage() {
 
 export async function fetchSalonCalendarBookings(startDateStr: string, endDateStr: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const primaryQuery = await supabase
+    const calendarSelect = `
+      id,
+      booking_date,
+      booking_time,
+      status,
+      customer_email,
+      staff_id,
+      services (id, name),
+      salon_staff (id, name, commission_rate, working_hours),
+      booking_services (service_id, price, duration_min, services (id, name, global_service_id)),
+      booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
+    `;
+
+    const { data, error } = await supabase
       .from("bookings")
-      .select(SALON_BOOKINGS_SELECT)
+      .select(calendarSelect)
       .eq("salon_id", ctx.salonId)
       .gte("booking_date", startDateStr)
       .lte("booking_date", endDateStr)
       .order("booking_date", { ascending: true })
       .order("booking_time", { ascending: true });
 
-    let bookingsList = primaryQuery.data || [];
+    if (error) throw new Error(error.message);
 
-    if (primaryQuery.error) {
-      console.error("Calendar relation select failed, falling back:", primaryQuery.error.message);
-      const fallback = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("salon_id", ctx.salonId)
-        .gte("booking_date", startDateStr)
-        .lte("booking_date", endDateStr)
-        .order("booking_date", { ascending: true })
-        .order("booking_time", { ascending: true });
-      if (fallback.error) throw new Error(fallback.error.message);
-      bookingsList = fallback.data || [];
-    }
+    const bookingsList = data || [];
 
     const [usersRes, staffRes] = await Promise.all([
       (async () => {
@@ -278,22 +234,16 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
 
     if (staffRes.error) throw new Error(staffRes.error.message);
     const allStaff = staffRes.data || [];
-    const inferredStaffByBookingId = buildInferredStaffMap(bookingsList as any[], allStaff as any[]);
 
     const mappedBookings = bookingsList.map((b: any) => {
-      const storedCustomerName =
-        typeof b.customer_name === "string" ? b.customer_name.trim() : "";
-      const clientName =
-        storedCustomerName ||
-        (b.customer_email ? usersRes[b.customer_email] || b.customer_email : null) ||
-        "Walk-in Client";
+      const clientName = b.customer_email
+        ? usersRes[b.customer_email] || b.customer_email
+        : "Walk-in Client";
       const serviceName = getBookingServiceDisplayName(b) || "General Booking";
-      const staffMember =
-        resolveStaffMemberFromBooking(b, allStaff) || inferredStaffByBookingId.get(b.id) || null;
+      const staffMember = resolveStaffMemberFromBooking(b, allStaff);
 
       return {
         id: b.id,
-        booking_no: b.booking_no,
         booking_date: b.booking_date,
         booking_time: b.booking_time,
         status: b.status,
@@ -602,42 +552,12 @@ export async function fetchSalonCustomersPage() {
   const loyaltyRules = loyaltyResult.success ? loyaltyResult.rules : [];
 
   const result = await withSalonDb(async (supabase, ctx) => {
-    const extendedBookingSelect =
-      "customer_email, customer_name, customer_phone, amount, status, created_at, booking_date, payment_status, reservation_fee_paid";
-    const basicBookingSelect = "customer_email, amount, status, created_at, booking_date";
+    const { data: bookings, error } = await supabase
+      .from("bookings")
+      .select("customer_email, amount, status, created_at, booking_date")
+      .eq("salon_id", ctx.salonId);
 
-    let bookingsRes = await supabase.from("bookings").select(extendedBookingSelect).eq("salon_id", ctx.salonId);
-    let useExtendedBookingFields = true;
-
-    if (bookingsRes.error) {
-      if (isMissingColumnError(bookingsRes.error.message)) {
-        bookingsRes = await supabase.from("bookings").select(basicBookingSelect).eq("salon_id", ctx.salonId);
-        useExtendedBookingFields = false;
-      }
-      if (bookingsRes.error) throw new Error(bookingsRes.error.message);
-    }
-
-    const reviewsRes = await supabase
-      .from("reviews")
-      .select("customer_email, rating, booking_id, status")
-      .eq("salon_id", ctx.salonId)
-      .eq("status", "published")
-      .not("booking_id", "is", null);
-
-    const bookings = bookingsRes.data || [];
-    const verifiedReviews = reviewsRes.error
-      ? []
-      : (reviewsRes.data || []).filter((row) => isVerifiedBookingReview(row));
-    const reviewSummary = buildReviewSummary(verifiedReviews);
-
-    const ratingsByCustomer = new Map<string, number[]>();
-    for (const review of verifiedReviews) {
-      const email = (review.customer_email || "").toLowerCase();
-      if (!email) continue;
-      const ratings = ratingsByCustomer.get(email) || [];
-      ratings.push(Number(review.rating) || 0);
-      ratingsByCustomer.set(email, ratings);
-    }
+    if (error) throw new Error(error.message);
 
     const customersMap = new Map<
       string,
@@ -647,21 +567,16 @@ export async function fetchSalonCustomersPage() {
         phone: string;
         visits: number;
         spent: number;
-        lastVisitMs: number;
-        firstVisitMs: number;
-        lastVisitLabel: string;
+        rating: number;
+        lastVisit: string;
+        lastVisitDate: number;
       }
     >();
 
-    const emails = [
-      ...new Set(bookings.map((b) => b.customer_email).filter(Boolean).map((e) => String(e).toLowerCase())),
-    ];
+    const emails = [...new Set((bookings || []).map((b) => b.customer_email).filter(Boolean))];
     let usersData: Array<{ email: string; full_name?: string | null; phone?: string | null }> = [];
     if (emails.length > 0) {
-      const { data: usersRes } = await supabase
-        .from("users")
-        .select("email, full_name, phone")
-        .in("email", emails);
+      const { data: usersRes } = await supabase.from("users").select("email, full_name, phone").in("email", emails);
       if (usersRes) usersData = usersRes;
     }
 
@@ -670,79 +585,44 @@ export async function fetchSalonCustomersPage() {
       if (u.email) usersByEmail.set(u.email.toLowerCase(), u);
     });
 
-    for (const b of bookings) {
-      const key = customerIdentityKey(b);
-      if (!key) continue;
+    for (const b of bookings || []) {
+      if (!b.customer_email) continue;
 
-      const appointmentMs = bookingAppointmentMs(b);
-      const user = b.customer_email ? usersByEmail.get(b.customer_email.toLowerCase()) : undefined;
-      const displayEmail = b.customer_email?.toLowerCase() || "-";
-      const displayName =
-        (typeof b.customer_name === "string" && b.customer_name.trim()) ||
-        user?.full_name?.trim() ||
-        (b.customer_email ? b.customer_email.split("@")[0] : "Walk-in Client");
-      const displayPhone =
-        (typeof b.customer_phone === "string" && b.customer_phone.trim()) ||
-        user?.phone?.trim() ||
-        "-";
-
-      if (!customersMap.has(key)) {
-        customersMap.set(key, {
-          email: displayEmail,
-          name: displayName,
-          phone: displayPhone,
+      const email = b.customer_email.toLowerCase();
+      if (!customersMap.has(email)) {
+        const user = usersByEmail.get(email);
+        customersMap.set(email, {
+          email,
+          name: user?.full_name || "Guest",
+          phone: user?.phone || "-",
           visits: 0,
           spent: 0,
-          lastVisitMs: appointmentMs,
-          firstVisitMs: appointmentMs > 0 ? appointmentMs : Number.MAX_SAFE_INTEGER,
-          lastVisitLabel: formatDisplayDate(b.booking_date || b.created_at),
+          rating: 5,
+          lastVisit: b.booking_date || b.created_at,
+          lastVisitDate: new Date(b.created_at).getTime(),
         });
       }
 
-      const c = customersMap.get(key)!;
-
-      if (displayName && displayName !== "Walk-in Client" && c.name === "Walk-in Client") {
-        c.name = displayName;
-      } else if (appointmentMs >= c.lastVisitMs) {
-        if (typeof b.customer_name === "string" && b.customer_name.trim()) {
-          c.name = b.customer_name.trim();
-        }
-        if (typeof b.customer_phone === "string" && b.customer_phone.trim()) {
-          c.phone = b.customer_phone.trim();
-        }
-      }
-
+      const c = customersMap.get(email)!;
       if (bookingCountsAsLoyaltyVisit(b.status)) {
         c.visits += 1;
       }
-      if (bookingCountsTowardSpend(b, useExtendedBookingFields)) {
+      if (b.status === "completed" || b.status === "confirmed") {
         c.spent += Number(b.amount || 0);
       }
 
-      if (appointmentMs > 0) {
-        if (appointmentMs < c.firstVisitMs) {
-          c.firstVisitMs = appointmentMs;
-        }
-        if (appointmentMs >= c.lastVisitMs) {
-          c.lastVisitMs = appointmentMs;
-          c.lastVisitLabel = formatDisplayDate(b.booking_date || b.created_at);
-        }
+      const bDate = new Date(b.created_at).getTime();
+      if (bDate > c.lastVisitDate) {
+        c.lastVisitDate = bDate;
+        c.lastVisit = b.booking_date || b.created_at;
       }
     }
 
     const customersList = Array.from(customersMap.values())
-      .sort((a, b) => b.lastVisitMs - a.lastVisitMs)
+      .sort((a, b) => b.lastVisitDate - a.lastVisitDate)
       .map((c) => {
         const displayTier = resolveHighestDisplayTier(c.visits, loyaltyRules);
         const isVip = resolveVipFromVisits(c.visits, loyaltyRules);
-        const customerRatings = c.email.includes("@") ? ratingsByCustomer.get(c.email) || [] : [];
-        const rating =
-          customerRatings.length > 0
-            ? Math.round(
-                (customerRatings.reduce((sum, value) => sum + value, 0) / customerRatings.length) * 10
-              ) / 10
-            : 0;
-
         return {
           name: c.name,
           email: c.email,
@@ -752,27 +632,20 @@ export async function fetchSalonCustomersPage() {
           loyaltyTierLabel: displayTier?.tier_label || null,
           vipMinVisits: loyaltyRules.find((rule) => rule.tier_key === "vip" && rule.enabled)?.min_visits ?? null,
           bookings: c.visits,
-          spent: "LKR " + Math.round(c.spent).toLocaleString(),
-          rating,
-          lastVisit: c.lastVisitLabel,
-          isNewThisMonth: c.firstVisitMs < Number.MAX_SAFE_INTEGER && isInCurrentMonth(c.firstVisitMs),
+          spent: "LKR " + c.spent.toLocaleString(),
+          rating: 5,
+          lastVisit: new Date(c.lastVisitDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
         };
       });
-
-    const vipMinVisits = loyaltyRules.find((rule) => rule.tier_key === "vip" && rule.enabled)?.min_visits ?? null;
 
     return {
       salon: ctx.salon,
       customers: customersList,
       loyaltyRules,
-      summary: {
-        totalCustomers: customersList.length,
-        newThisMonth: customersList.filter((c) => c.isNewThisMonth).length,
-        vipCount: customersList.filter((c) => c.isVip).length,
-        averageRating: reviewSummary.averageRating,
-        totalReviews: reviewSummary.totalReviews,
-        vipMinVisits,
-      },
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);

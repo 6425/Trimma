@@ -13,36 +13,11 @@ function getBookingCalendarColor(status: string | null | undefined): string {
   const s = (status || "pending").toLowerCase();
   if (s === "confirmed") return "bg-emerald-50 border-emerald-200 text-emerald-700";
   if (s === "pending") return "bg-amber-50 border-amber-200 text-amber-800";
-  if (s === "in_progress") return "bg-indigo-50 border-indigo-200 text-indigo-700";
   if (s === "completed") return "bg-blue-50 border-blue-200 text-blue-700";
   if (s === "canceled" || s === "cancelled") {
     return "bg-zinc-100 border-zinc-200 text-zinc-500 line-through opacity-70";
   }
-  if (s === "no_show") return "bg-orange-50 border-orange-200 text-orange-700 line-through opacity-80";
-  if (s === "rescheduled") return "bg-sky-50 border-sky-200 text-sky-700";
   return "bg-rose-50 border-rose-200 text-brand";
-}
-
-function snapBookingToHourLabel(bookingTime: string | null | undefined): string {
-  if (!bookingTime) return "12:00 PM";
-  try {
-    const [h] = bookingTime.split(":");
-    const d = new Date();
-    d.setHours(parseInt(h, 10) || 0, 0, 0, 0);
-    return format(d, "hh:mm a");
-  } catch {
-    return "12:00 PM";
-  }
-}
-
-function hourLabelTo24(label: string): number {
-  const [time, meridiem] = label.trim().split(/\s+/);
-  const hour = parseInt(time.split(":")[0], 10);
-  if (Number.isNaN(hour)) return -1;
-  const isPm = meridiem?.toLowerCase() === "pm";
-  if (isPm && hour !== 12) return hour + 12;
-  if (!isPm && hour === 12) return 0;
-  return hour;
 }
 
 export default function CalendarPage() {
@@ -50,7 +25,6 @@ export default function CalendarPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [salon, setSalon] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
@@ -60,28 +34,36 @@ export default function CalendarPage() {
 
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
-  const startStr = format(startDate, "yyyy-MM-dd");
-  const endStr = format(endDate, "yyyy-MM-dd");
 
-  const loadBookings = async () => {
+  useEffect(() => {
+    void Promise.resolve().then(async () => {
+      setIsLoading(true);
+      const startStr = format(startDate, "yyyy-MM-dd");
+      const endStr = format(endDate, "yyyy-MM-dd");
+
+      const res = await fetchSalonCalendarBookings(startStr, endStr);
+      if (res.success && res.bookings) {
+        setBookings(res.bookings);
+        setSalon(res.salon);
+      } else {
+        setBookings([]);
+      }
+      setIsLoading(false);
+    });
+  }, [currentDate]);
+
+  const loadBookingsRef = async () => {
     setIsLoading(true);
-    setLoadError(null);
+    const startStr = format(startDate, "yyyy-MM-dd");
+    const endStr = format(endDate, "yyyy-MM-dd");
+
     const res = await fetchSalonCalendarBookings(startStr, endStr);
     if (res.success && res.bookings) {
       setBookings(res.bookings);
       setSalon(res.salon);
-    } else {
-      setBookings([]);
-      setLoadError(res.success === false ? res.error : "Could not load calendar bookings.");
     }
     setIsLoading(false);
   };
-
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      void loadBookings();
-    });
-  }, [startStr, endStr]);
 
   const days = Array.from({ length: 7 }).map((_, i) => {
     const date = addDays(startDate, i);
@@ -94,15 +76,21 @@ export default function CalendarPage() {
   });
 
   const formattedBookings = bookings.map((b) => {
-    const hourStr = snapBookingToHourLabel(b.booking_time);
+    let hourStr = "12:00 PM";
+    try {
+      const [h] = String(b.booking_time || "").split(":");
+      const d = new Date();
+      d.setHours(parseInt(h, 10) || 0, 0, 0, 0);
+      hourStr = format(d, "hh:mm a");
+    } catch {
+      hourStr = "12:00 PM";
+    }
+
     const fullDateStr = toDateInputValue(b.booking_date || b.created_at);
-    const hour24 = parseInt(String(b.booking_time || "").split(":")[0], 10);
 
     return {
       id: b.id,
       hour: hourStr,
-      hour24: Number.isFinite(hour24) ? hour24 : -1,
-      timeLabel: b.booking_time ? String(b.booking_time).slice(0, 5) : "",
       fullDate: fullDateStr,
       client: b.clientName,
       service: b.serviceName,
@@ -141,14 +129,6 @@ export default function CalendarPage() {
     }
   }
 
-  for (const booking of bookings) {
-    const bookingHour = parseInt(String(booking.booking_time || "").split(":")[0], 10);
-    if (Number.isFinite(bookingHour)) {
-      if (bookingHour < minHour) minHour = bookingHour;
-      if (bookingHour > maxHour) maxHour = bookingHour;
-    }
-  }
-
   const hours = [];
   for (let i = minHour; i <= maxHour; i++) {
     const d = new Date();
@@ -184,12 +164,6 @@ export default function CalendarPage() {
           </Button>
         </div>
       </div>
-
-      {loadError ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-          {loadError}
-        </div>
-      ) : null}
 
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
@@ -235,9 +209,8 @@ export default function CalendarPage() {
                 {hourObj.label}
               </div>
               {days.map((day, dIdx) => {
-                const slotHour24 = hourLabelTo24(hourObj.label);
                 const cellBookings = formattedBookings.filter(
-                  (b) => b.fullDate === day.fullDate && b.hour24 === slotHour24
+                  (b) => b.hour === hourObj.label && b.fullDate === day.fullDate
                 );
 
                 return (
@@ -252,10 +225,7 @@ export default function CalendarPage() {
                             key={booking.id}
                             className={`p-2 rounded-xl border w-full text-left flex flex-col gap-0.5 transition-all hover:shadow-sm ${booking.color}`}
                           >
-                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70">
-                              {booking.timeLabel || booking.hour}
-                            </div>
-                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70 mt-0.5">Client</div>
+                            <div className="text-[9px] font-black uppercase tracking-wide opacity-70">Client</div>
                             <div className="text-[10px] font-black leading-tight line-clamp-2">{booking.client}</div>
                             <div className="text-[9px] font-black uppercase tracking-wide opacity-70 mt-0.5">Service</div>
                             <div className="text-[9px] font-semibold leading-tight line-clamp-2">{booking.service}</div>
@@ -300,7 +270,7 @@ export default function CalendarPage() {
         onSuccess={() => {
           setIsModalOpen(false);
           void Promise.resolve().then(() => {
-            void loadBookings();
+            void loadBookingsRef();
           });
         }}
       />
