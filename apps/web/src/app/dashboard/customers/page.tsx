@@ -65,6 +65,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<SalonCustomer[]>([]);
   const [summary, setSummary] = useState<CustomerSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   React.useEffect(() => {
     void Promise.resolve().then(() =>
@@ -84,6 +85,9 @@ export default function CustomersPage() {
               vipMinVisits: vipRule?.min_visits ?? null,
             });
           }
+        } else {
+          setCustomers([]);
+          setLoadError(res.success === false ? res.error : "Could not load customers.");
         }
         setLoading(false);
       })
@@ -121,6 +125,12 @@ export default function CustomersPage() {
           </Link>
         </Button>
       </div>
+
+      {loadError ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+          {loadError}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">

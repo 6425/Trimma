@@ -50,6 +50,20 @@ function isInCurrentMonth(ms: number): boolean {
   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
 }
 
+function isMissingColumnError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("column") || lower.includes("schema cache");
+}
+
+function bookingCountsTowardSpend(
+  booking: { status?: string | null; payment_status?: string | null; reservation_fee_paid?: boolean | null },
+  usePaymentFields: boolean
+): boolean {
+  if (usePaymentFields) return isCommissionEligibleBooking(booking);
+  const status = (booking.status || "").toLowerCase();
+  return status === "completed" || status === "confirmed";
+}
+
 export async function fetchSalonLayoutShell() {
   const auth = await requireSalonOwnerFromCookies();
   if ("error" in auth) {
@@ -217,33 +231,30 @@ export async function fetchSalonBookingsPage() {
 
 export async function fetchSalonCalendarBookings(startDateStr: string, endDateStr: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const calendarSelect = `
-      id,
-      booking_no,
-      booking_date,
-      booking_time,
-      status,
-      customer_email,
-      customer_name,
-      staff_id,
-      services (id, name),
-      salon_staff (id, name, commission_rate, working_hours),
-      booking_services (service_id, price, duration_min, services (id, name, global_service_id)),
-      booking_staff (staff_id, salon_staff (id, name, commission_rate, working_hours))
-    `;
-
-    const { data, error } = await supabase
+    const primaryQuery = await supabase
       .from("bookings")
-      .select(calendarSelect)
+      .select(SALON_BOOKINGS_SELECT)
       .eq("salon_id", ctx.salonId)
       .gte("booking_date", startDateStr)
       .lte("booking_date", endDateStr)
       .order("booking_date", { ascending: true })
       .order("booking_time", { ascending: true });
 
-    if (error) throw new Error(error.message);
+    let bookingsList = primaryQuery.data || [];
 
-    const bookingsList = data || [];
+    if (primaryQuery.error) {
+      console.error("Calendar relation select failed, falling back:", primaryQuery.error.message);
+      const fallback = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("salon_id", ctx.salonId)
+        .gte("booking_date", startDateStr)
+        .lte("booking_date", endDateStr)
+        .order("booking_date", { ascending: true })
+        .order("booking_time", { ascending: true });
+      if (fallback.error) throw new Error(fallback.error.message);
+      bookingsList = fallback.data || [];
+    }
 
     const [usersRes, staffRes] = await Promise.all([
       (async () => {
@@ -270,8 +281,10 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
     const inferredStaffByBookingId = buildInferredStaffMap(bookingsList as any[], allStaff as any[]);
 
     const mappedBookings = bookingsList.map((b: any) => {
+      const storedCustomerName =
+        typeof b.customer_name === "string" ? b.customer_name.trim() : "";
       const clientName =
-        (typeof b.customer_name === "string" && b.customer_name.trim()) ||
+        storedCustomerName ||
         (b.customer_email ? usersRes[b.customer_email] || b.customer_email : null) ||
         "Walk-in Client";
       const serviceName = getBookingServiceDisplayName(b) || "General Booking";
@@ -589,25 +602,32 @@ export async function fetchSalonCustomersPage() {
   const loyaltyRules = loyaltyResult.success ? loyaltyResult.rules : [];
 
   const result = await withSalonDb(async (supabase, ctx) => {
-    const [bookingsRes, reviewsRes] = await Promise.all([
-      supabase
-        .from("bookings")
-        .select(
-          "customer_email, customer_name, customer_phone, amount, status, created_at, booking_date, payment_status, reservation_fee_paid"
-        )
-        .eq("salon_id", ctx.salonId),
-      supabase
-        .from("reviews")
-        .select("customer_email, rating, booking_id, status")
-        .eq("salon_id", ctx.salonId)
-        .eq("status", "published")
-        .not("booking_id", "is", null),
-    ]);
+    const extendedBookingSelect =
+      "customer_email, customer_name, customer_phone, amount, status, created_at, booking_date, payment_status, reservation_fee_paid";
+    const basicBookingSelect = "customer_email, amount, status, created_at, booking_date";
 
-    if (bookingsRes.error) throw new Error(bookingsRes.error.message);
+    let bookingsRes = await supabase.from("bookings").select(extendedBookingSelect).eq("salon_id", ctx.salonId);
+    let useExtendedBookingFields = true;
+
+    if (bookingsRes.error) {
+      if (isMissingColumnError(bookingsRes.error.message)) {
+        bookingsRes = await supabase.from("bookings").select(basicBookingSelect).eq("salon_id", ctx.salonId);
+        useExtendedBookingFields = false;
+      }
+      if (bookingsRes.error) throw new Error(bookingsRes.error.message);
+    }
+
+    const reviewsRes = await supabase
+      .from("reviews")
+      .select("customer_email, rating, booking_id, status")
+      .eq("salon_id", ctx.salonId)
+      .eq("status", "published")
+      .not("booking_id", "is", null);
 
     const bookings = bookingsRes.data || [];
-    const verifiedReviews = (reviewsRes.data || []).filter((row) => isVerifiedBookingReview(row));
+    const verifiedReviews = reviewsRes.error
+      ? []
+      : (reviewsRes.data || []).filter((row) => isVerifiedBookingReview(row));
     const reviewSummary = buildReviewSummary(verifiedReviews);
 
     const ratingsByCustomer = new Map<string, number[]>();
@@ -695,7 +715,7 @@ export async function fetchSalonCustomersPage() {
       if (bookingCountsAsLoyaltyVisit(b.status)) {
         c.visits += 1;
       }
-      if (isCommissionEligibleBooking(b)) {
+      if (bookingCountsTowardSpend(b, useExtendedBookingFields)) {
         c.spent += Number(b.amount || 0);
       }
 
