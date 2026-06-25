@@ -101,6 +101,17 @@ function DashboardContent() {
     });
   }, [loadDashboard]);
 
+  useEffect(() => {
+    const handleAvatarUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ avatarUrl?: string }>;
+      if (typeof customEvent.detail?.avatarUrl === "string") {
+        setAvatarUrl(customEvent.detail.avatarUrl);
+      }
+    };
+    window.addEventListener("trimma_customer_avatar_update", handleAvatarUpdate);
+    return () => window.removeEventListener("trimma_customer_avatar_update", handleAvatarUpdate);
+  }, []);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning";

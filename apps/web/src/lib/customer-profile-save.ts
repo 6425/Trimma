@@ -6,6 +6,7 @@ export type CustomerProfileData = {
   lastName: string;
   email: string;
   phone: string;
+  avatarUrl: string;
 };
 
 export type CustomerProfileSaveInput = {
@@ -34,7 +35,7 @@ export async function loadCustomerProfile(
 ): Promise<CustomerProfileData> {
   const { data: profile } = await supabase
     .from("users")
-    .select("full_name, phone")
+    .select("full_name, phone, avatar_url")
     .eq("email", ctx.email)
     .maybeSingle();
 
@@ -57,6 +58,11 @@ export async function loadCustomerProfile(
       profile?.phone ||
       ctx.phone ||
       (ctx.userMetadata.phone as string | undefined) ||
+      "",
+    avatarUrl:
+      profile?.avatar_url ||
+      (ctx.userMetadata.avatar_url as string | undefined) ||
+      (ctx.userMetadata.picture as string | undefined) ||
       "",
   };
 }

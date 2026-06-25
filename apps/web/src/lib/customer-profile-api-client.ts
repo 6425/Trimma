@@ -1,5 +1,5 @@
 export async function fetchCustomerProfileViaApi(): Promise<
-  | { success: true; firstName: string; lastName: string; email: string; phone: string }
+  | { success: true; firstName: string; lastName: string; email: string; phone: string; avatarUrl: string }
   | { success: false; error: string }
 > {
   const response = await fetch("/api/customer/profile", {
@@ -15,6 +15,7 @@ export async function fetchCustomerProfileViaApi(): Promise<
     lastName?: string;
     email?: string;
     phone?: string;
+    avatarUrl?: string;
   } = {};
 
   try {
@@ -41,6 +42,7 @@ export async function fetchCustomerProfileViaApi(): Promise<
     lastName: result.lastName || "",
     email: result.email || "",
     phone: result.phone || "",
+    avatarUrl: result.avatarUrl || "",
   };
 }
 
