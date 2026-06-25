@@ -70,7 +70,9 @@ export default function CalendarPage() {
   };
 
   useEffect(() => {
-    void loadBookings();
+    void Promise.resolve().then(() => {
+      void loadBookings();
+    });
   }, [startStr, endStr]);
 
   const days = Array.from({ length: 7 }).map((_, i) => {
@@ -291,7 +293,9 @@ export default function CalendarPage() {
         salonId={salon?.id}
         onSuccess={() => {
           setIsModalOpen(false);
-          void loadBookings();
+          void Promise.resolve().then(() => {
+            void loadBookings();
+          });
         }}
       />
     </div>
