@@ -191,7 +191,7 @@ export default function BillingPage() {
             return (
               <div
                 key={plan.id}
-                className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between gap-6 relative min-h-[420px] ${
+                className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between gap-5 relative min-h-[480px] ${
                   isActive
                     ? "border-brand bg-rose-50/10 shadow-sm"
                     : "border-zinc-100 bg-white hover:border-zinc-200"
@@ -203,7 +203,7 @@ export default function BillingPage() {
                   </span>
                 )}
 
-                <div className="space-y-5 pt-2">
+                <div className="flex flex-col flex-1 gap-5 pt-2 min-h-0">
                   <div className="pr-14">
                     <h4 className="font-extrabold text-sm text-zinc-800">{plan.name}</h4>
                     {strikethroughMonthly ? (
@@ -225,9 +225,6 @@ export default function BillingPage() {
                         {formatLkr(checkoutAmount, 2)} billed annually
                       </p>
                     )}
-                    <p className="text-[10px] text-zinc-500 mt-2 font-medium leading-relaxed">
-                      {pricingDescription}
-                    </p>
                   </div>
 
                   <div className="rounded-2xl bg-zinc-50 border border-zinc-100 px-3.5 py-3 space-y-2.5">
@@ -255,6 +252,21 @@ export default function BillingPage() {
                         </span>
                       </div>
                     ))}
+                  </div>
+
+                  <div
+                    className={`flex-1 rounded-2xl border px-3.5 py-3 min-h-[96px] ${
+                      isActive
+                        ? "border-rose-100 bg-white/80"
+                        : "border-zinc-200 bg-zinc-50/80"
+                    }`}
+                  >
+                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-400 mb-2">
+                      {billingCycle === "annual" ? "Annual plan details" : "Monthly plan details"}
+                    </p>
+                    <p className="text-xs text-zinc-600 leading-relaxed whitespace-pre-wrap">
+                      {pricingDescription}
+                    </p>
                   </div>
                 </div>
 
