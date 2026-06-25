@@ -11,7 +11,7 @@ import {
 } from "@/lib/salon-subscription-plan";
 import { buildInferredStaffMap } from "@/lib/dashboard-stats";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
-import { getServiceIdsCoveredByStaff, getBookingServiceDisplayName, resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
+import { getServiceIdsCoveredByStaff, getBookingServiceDisplayName, isActiveSalonStaff, resolveStaffMemberFromBooking } from "@/lib/staff-allocation";
 import {
   bookingCountsAsLoyaltyVisit,
   resolveHighestDisplayTier,
@@ -257,10 +257,16 @@ export async function fetchSalonCalendarBookings(startDateStr: string, endDateSt
         clientName,
         serviceName,
         staffName: staffMember?.name || "Unassigned",
+        staffId: staffMember?.id || null,
       };
     });
 
-    return { salon: ctx.salon, bookings: mappedBookings };
+    const staffList = allStaff
+      .filter(isActiveSalonStaff)
+      .map((member) => ({ id: member.id, name: member.name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return { salon: ctx.salon, bookings: mappedBookings, staffList };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const, ...result.data };
