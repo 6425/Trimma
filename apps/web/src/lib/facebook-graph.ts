@@ -41,11 +41,18 @@ export function getFacebookAppConfig(): FacebookAppConfig | null {
     process.env.FACEBOOK_APP_ID?.trim() ||
     process.env.META_APP_ID?.trim() ||
     process.env.FB_APP_ID?.trim() ||
+    process.env.FACEBOOK_APPID?.trim() ||
+    process.env.APP_ID?.trim() ||
+    process.env.APPID?.trim() ||
+    process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim() ||
     "";
   const appSecret =
     process.env.FACEBOOK_APP_SECRET?.trim() ||
     process.env.META_APP_SECRET?.trim() ||
     process.env.FB_APP_SECRET?.trim() ||
+    process.env.FACEBOOK_APPSECRET?.trim() ||
+    process.env.APP_SECRET?.trim() ||
+    process.env.APPSECRET?.trim() ||
     "";
   const redirectUri =
     process.env.FACEBOOK_REDIRECT_URI?.trim() ||

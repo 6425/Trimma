@@ -532,8 +532,8 @@ export default function SocialMediaPage() {
                 </Button>
                 {facebookStatus?.configured === false ? (
                   <p className="text-[10px] text-amber-700">
-                    Trimma platform Facebook credentials are still being configured. You can save your page URL and
-                    booking link now, then connect once available.
+                    Facebook login is temporarily unavailable on this environment. You can still save your Page URL and
+                    booking link below; connect will work once Trimma enables Meta for beta/live.
                   </p>
                 ) : null}
               </>
