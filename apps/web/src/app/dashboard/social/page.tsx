@@ -6,7 +6,6 @@ import {
   Share2,
   Facebook,
   MessageCircle,
-  Globe,
   Check,
   Play,
   Settings,
@@ -19,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { toast } from "sonner";
 import {
   createFacebookConnectUrl,
@@ -311,21 +309,6 @@ export default function SocialMediaPage() {
       desc: "Auto-send booking notifications, reminders, and invoice receipts directly through your WhatsApp business account.",
       connected: true,
       icon: <MessageCircle className="w-6 h-6 text-emerald-600" />,
-    },
-    {
-      key: "tiktok",
-      name: "TikTok Action Link",
-      desc: "Add your Trimma booking link to your TikTok profile bio so followers can book in one tap.",
-      connected: false,
-      icon: <TikTokIcon className="w-6 h-6 text-[#ffc800]" />,
-      iconWrapClass: "bg-black border-black",
-    },
-    {
-      key: "google",
-      name: "Google Business Directory",
-      desc: "Connect to Google Maps & Search to sync physical address ratings and online reservations.",
-      connected: false,
-      icon: <Globe className="w-6 h-6 text-sky-600" />,
     },
   ];
 

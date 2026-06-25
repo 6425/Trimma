@@ -94,7 +94,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Marketing", href: "/dashboard/marketing", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Social Media", href: "/dashboard/social", icon: <Share2 className="w-4 h-4" /> },
     { name: "Reviews", href: "/dashboard/reviews", icon: <Star className="w-4 h-4" /> },
-    { name: "AI Assistant", href: "/dashboard/ai", icon: <Bot className="w-4 h-4" /> },
+    { name: "AI Assistant", href: "/dashboard/ai", icon: <Bot className="w-4 h-4" />, frozen: true },
     { name: "Reports & Analytics", href: "/dashboard/analytics", icon: <BarChart3 className="w-4 h-4" /> },
     { name: "Finance & Commissions", href: "/dashboard/finance", icon: <DollarSign className="w-4 h-4" /> },
     { name: "Subscription & Billing", href: "/dashboard/billing", icon: <CreditCard className="w-4 h-4" /> },
@@ -256,6 +256,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       ))}
                     </CollapsibleContent>
                   </Collapsible>
+                ) : item.frozen ? (
+                  <span
+                    aria-disabled="true"
+                    title="Coming soon"
+                    className="trimma-sidebar-nav-item flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium opacity-45 cursor-not-allowed select-none"
+                  >
+                    <span className="flex items-center gap-3">
+                      {item.icon}
+                      {item.name}
+                    </span>
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-black/50">Soon</span>
+                  </span>
                 ) : (
                   <Link href={item.href}
                     className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
