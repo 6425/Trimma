@@ -339,7 +339,8 @@ export default function SocialMediaPage() {
           <div>
             <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Social Media & Integrations</h1>
             <p className="text-xs text-zinc-500">
-              Connect Facebook, WhatsApp, TikTok, and Google booking channels for your salon.
+              <strong className="font-semibold text-zinc-700">Facebook Booking Page</strong> is managed here only — not on Profile.
+              Connect your Page, booking link, and posts from the card below.
             </p>
           </div>
         </div>

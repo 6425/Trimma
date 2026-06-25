@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Loader2, CheckCircle2, User, Building, MapPin, Store, Globe, Search } from "lucide-react";
+import Link from "next/link";
+import { Loader2, CheckCircle2, User, Building, MapPin, Store, Globe, Search, Facebook, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +46,6 @@ export function BusinessInfoForm({
   const [establishedYear, setEstablishedYear] = useState(ext.established_year || "");
   const [staffCount, setStaffCount] = useState(ext.number_of_staff || "");
   const [branchCount, setBranchCount] = useState(ext.number_of_branches || "");
-  const [facebook, setFacebook] = useState(ext.facebook_url || "");
   const [instagram, setInstagram] = useState(ext.instagram_url || "");
   const [tiktok, setTiktok] = useState(ext.tiktok_url || "");
   const [whatsapp, setWhatsapp] = useState(ext.whatsapp_number || "");
@@ -78,7 +78,6 @@ export function BusinessInfoForm({
     setEstablishedYear(newExt.established_year || "");
     setStaffCount(newExt.number_of_staff || "");
     setBranchCount(newExt.number_of_branches || "");
-    setFacebook(newExt.facebook_url || "");
     setInstagram(newExt.instagram_url || "");
     setTiktok(newExt.tiktok_url || "");
     setWhatsapp(newExt.whatsapp_number || "");
@@ -128,6 +127,7 @@ export function BusinessInfoForm({
         description,
         website,
         business_info_extended: {
+          ...(salon?.business_info_extended || {}),
           legal_business_name: legalName,
           business_registration_number: regNumber,
           business_type: businessType,
@@ -136,7 +136,6 @@ export function BusinessInfoForm({
           established_year: establishedYear,
           number_of_staff: staffCount,
           number_of_branches: branchCount,
-          facebook_url: facebook,
           instagram_url: instagram,
           tiktok_url: tiktok,
           whatsapp_number: whatsapp,
@@ -293,9 +292,31 @@ export function BusinessInfoForm({
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">WhatsApp Number</Label>
             <LkPhoneInput disabled={readOnly} theme="light" value={whatsapp} onChange={setWhatsapp} className="h-11 rounded-xl" inputClassName="h-11" />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Facebook URL</Label>
-            <Input disabled={readOnly} type="url" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="https://facebook.com/..." className="h-11 rounded-xl" />
+          <div className="space-y-1.5 md:col-span-2">
+            <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Facebook Booking Page</Label>
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <Facebook className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-zinc-800">
+                    Manage Facebook on Social Media
+                  </p>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">
+                    Page URL, Meta OAuth connect, and booking button are configured in one place only.
+                  </p>
+                  {ext.facebook_url ? (
+                    <p className="text-[10px] text-zinc-400 mt-1 truncate">{ext.facebook_url}</p>
+                  ) : null}
+                </div>
+              </div>
+              <Link
+                href="/dashboard/social"
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-4 text-xs font-bold text-zinc-900 hover:bg-zinc-50"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                Open Facebook settings
+              </Link>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Instagram URL</Label>
