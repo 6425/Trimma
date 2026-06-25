@@ -137,17 +137,16 @@ export async function completeFacebookOAuthCallback(code: string, state: string)
   }
 
   const shortTokenResult = await exchangeFacebookCodeForUserToken(code);
-  if (!shortTokenResult.success) {
+  if (shortTokenResult.success === false) {
     return { success: false as const, error: shortTokenResult.error };
   }
 
   const longTokenResult = await exchangeFacebookLongLivedUserToken(shortTokenResult.accessToken);
-  const userAccessToken = longTokenResult.success
-    ? longTokenResult.accessToken
-    : shortTokenResult.accessToken;
+  const userAccessToken =
+    longTokenResult.success === true ? longTokenResult.accessToken : shortTokenResult.accessToken;
 
   const pagesResult = await fetchFacebookManagedPages(userAccessToken);
-  if (!pagesResult.success) {
+  if (pagesResult.success === false) {
     return { success: false as const, error: pagesResult.error };
   }
 
@@ -304,7 +303,7 @@ export async function publishFacebookPagePost(input: {
       scheduledPublishTime,
     });
 
-    if (!publishResult.success) {
+    if (publishResult.success === false) {
       throw new Error(publishResult.error);
     }
 
