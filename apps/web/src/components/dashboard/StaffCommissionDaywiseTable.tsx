@@ -79,7 +79,7 @@ export function StaffCommissionDaywiseTable({
             <Users className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
             Staff Commission
           </h3>
-          <p className="text-[10px] text-zinc-500 mt-0.5">{weekLabel} · matches income breakdown</p>
+          <p className="text-[10px] text-zinc-500 mt-0.5">{weekLabel} · by appointment date</p>
         </div>
         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-md p-0.5 shrink-0 self-start">
           <button type="button" onClick={() => setOffsetWeeks((p) => p + 1)} className="px-2 py-1 text-[10px] font-medium text-slate-600 hover:bg-slate-200 rounded min-h-[32px]">Prev</button>

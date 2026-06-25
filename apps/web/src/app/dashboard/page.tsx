@@ -126,34 +126,46 @@ export default function Dashboard() {
         revenue,
       };
 
-      const feed: ActivityItem[] = [];
-      for (const booking of bookings.slice(0, 4)) {
+      const feed: Array<ActivityItem & { sortTime: number }> = [];
+      for (const booking of bookings.slice(0, 8)) {
         feed.push({
           id: `booking-${booking.id}`,
           title: "Booking update",
           description: `${booking.customer_email || "Customer"} · LKR ${formatLkr(Number(booking.amount || 0))} · ${booking.status}`,
           time: formatRelativeTime(booking.created_at),
           tone: "blue",
+          sortTime: booking.created_at ? new Date(booking.created_at).getTime() : 0,
         });
       }
-      for (const service of services.slice(0, 2)) {
+      for (const service of [...services].sort(
+        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      ).slice(0, 3)) {
         feed.push({
           id: `service-${service.id}`,
           title: service.status === "active" ? "Service active" : "Service updated",
           description: service.name,
           time: formatRelativeTime(service.created_at),
           tone: "purple",
+          sortTime: service.created_at ? new Date(service.created_at).getTime() : 0,
         });
       }
-      for (const member of staff.slice(0, 2)) {
+      for (const member of [...staff].sort(
+        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      ).slice(0, 3)) {
         feed.push({
           id: `staff-${member.id}`,
           title: "Staff member",
           description: member.name,
           time: formatRelativeTime(member.created_at),
           tone: "emerald",
+          sortTime: member.created_at ? new Date(member.created_at).getTime() : 0,
         });
       }
+
+      const sortedActivity = feed
+        .sort((a, b) => b.sortTime - a.sortTime)
+        .slice(0, 6)
+        .map(({ sortTime: _sortTime, ...item }) => item);
 
       const monthly = groupBookingsByMonth(eligibleBookings);
 
@@ -162,7 +174,7 @@ export default function Dashboard() {
       setAllStaff(staff);
       setAllServices(services);
       setMonthlyPoints(monthly);
-      setActivity(feed.slice(0, 6));
+      setActivity(sortedActivity);
     } catch (err) {
       console.error("Failed to fetch dashboard stats", err);
     } finally {

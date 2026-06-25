@@ -1,6 +1,7 @@
 import {
   computeBookingStaffCommission,
   inferStaffAllocations,
+  isActiveSalonStaff,
   resolveStaffMemberFromBooking,
   type SalonStaffForAllocation,
 } from "@/lib/staff-allocation";
@@ -122,6 +123,8 @@ export function groupBookingsByDay(
 }
 
 export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, allStaff: any[] = []) {
+  const inferredStaffByBookingId = buildInferredStaffMap(bookings, allStaff);
+
   // Generate the 7 days for the given week offset
   const last7Days: string[] = [];
   const endDate = new Date();
@@ -138,9 +141,9 @@ export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, all
   const dataMap = new Map<string, any>();
   const staffSet = new Set<string>();
 
-  // Prepopulate staffSet with all assigned staff first names
-  allStaff.forEach(staffMem => {
-    if (staffMem?.name) {
+  // Prepopulate active staff first names so the legend stays accurate.
+  allStaff.forEach((staffMem) => {
+    if (staffMem?.name && isActiveSalonStaff(staffMem)) {
       const firstName = staffMem.name.split(" ")[0];
       staffSet.add(firstName);
     }
@@ -159,11 +162,13 @@ export function groupBookingsByStaffAndDay(bookings: any[], offsetWeeks = 0, all
       const bucket = dataMap.get(bookingDateKey)!;
       let staffName = "Any Staff";
 
-      // Try direct relation first, then fallback to junction table
       let fullName = b.salon_staff?.name;
       if (!fullName && b.booking_staff && b.booking_staff.length > 0) {
         const st = b.booking_staff[0].salon_staff;
         fullName = Array.isArray(st) ? st[0]?.name : st?.name;
+      }
+      if (!fullName) {
+        fullName = inferredStaffByBookingId.get(b.id)?.name;
       }
 
       if (fullName) {
@@ -281,11 +286,10 @@ export function resolveBookingStaffCommission(
   return computeBookingStaffCommission(staffMember, booking, allStaff);
 }
 
-/** Bookings in the 7-day commission window (by created_at), aligned with Booking Income Breakdown. */
-export function filterBookingsByCommissionWeek<T extends { created_at?: string | null }>(
-  bookings: T[],
-  offsetWeeks = 0
-): T[] {
+/** Bookings in the 7-day window by appointment date (falls back to created_at). */
+export function filterBookingsByCommissionWeek<
+  T extends { created_at?: string | null; booking_date?: string | null },
+>(bookings: T[], offsetWeeks = 0): T[] {
   const endDateObj = new Date();
   endDateObj.setHours(0, 0, 0, 0);
   endDateObj.setDate(endDateObj.getDate() - offsetWeeks * 7);
@@ -293,13 +297,15 @@ export function filterBookingsByCommissionWeek<T extends { created_at?: string |
   const startDateObj = new Date(endDateObj);
   startDateObj.setDate(startDateObj.getDate() - 6);
 
-  const startMs = startDateObj.getTime();
-  const endMs = endDateObj.getTime() + 86400000;
+  const startKey = toLocalDateKey(startDateObj);
+  const endKey = toLocalDateKey(endDateObj);
 
   return bookings.filter((booking) => {
-    if (!booking.created_at) return false;
-    const createdMs = new Date(booking.created_at).getTime();
-    return createdMs >= startMs && createdMs < endMs;
+    const key =
+      normalizeBookingDateKey(booking.booking_date) ||
+      (booking.created_at ? toLocalDateKey(new Date(booking.created_at)) : null);
+    if (!key) return false;
+    return key >= startKey && key <= endKey;
   });
 }
 
