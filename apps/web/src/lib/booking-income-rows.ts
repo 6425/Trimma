@@ -103,5 +103,11 @@ export function buildBookingIncomeRows(
     };
   });
 
+  rows.sort((a, b) => {
+    const dateCompare = a.bookingDate.localeCompare(b.bookingDate);
+    if (dateCompare !== 0) return dateCompare;
+    return a.timeLabel.localeCompare(b.timeLabel);
+  });
+
   return { rows, totals };
 }
