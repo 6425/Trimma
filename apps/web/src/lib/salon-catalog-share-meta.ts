@@ -111,7 +111,8 @@ export function resolveCatalogShareMeta(input: {
       description: truncateText(
         descriptionParts.length > 0 ? descriptionParts.join(" · ") : `${promotion.name} — ${priceLabel}`
       ),
-      imageUrl: salonFallbackImage(input.salon, origin),
+      imageUrl:
+        toAbsoluteAssetUrl(promotion.image_url, origin) || salonFallbackImage(input.salon, origin),
       canonicalUrl,
       priceLabel,
     };

@@ -129,7 +129,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
         supabase
           .from("salon_promotion_packages")
           .select(
-            "id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type"
+            "id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, image_url"
           )
           .eq("salon_id", salonId)
           .eq("status", "active"),

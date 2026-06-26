@@ -37,8 +37,10 @@ import {
   deleteSalonPromotionPackage,
   updateSalonPromotionPackage,
 } from "@/app/actions/salon-operations";
+import { uploadSalonPromotionPackageImage } from "@/app/actions/style-images";
 import { withTimeout } from "@/lib/promise-timeout";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
+import { GlobalServiceIconUpload, GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
 import {
   getPromotionPeriodLabel,
   getRemainingDaysBadgeClass,
@@ -134,6 +136,7 @@ export default function PackagesPage() {
     status: "active",
     start_date: "",
     end_date: "",
+    image_url: "",
   });
   const [updating, setUpdating] = useState(false);
 
@@ -301,6 +304,7 @@ export default function PackagesPage() {
       status: pkg.status || "active",
       start_date: toDateInputValue(pkg.start_date),
       end_date: toDateInputValue(pkg.end_date),
+      image_url: pkg.image_url || "",
     });
     setShowEditModal(true);
   };
@@ -335,13 +339,21 @@ export default function PackagesPage() {
           start_date,
           end_date,
           status: editForm.status,
+          image_url: editForm.image_url || null,
         });
       if (result.success === false) throw new Error(result.error);
       toast.success("Promotion package updated");
       setShowEditModal(false);
       fetchSalonAndPackages();
     } catch (error: any) {
-      toast.error("Failed to update package: " + error.message);
+      const message = error.message || "Unknown error";
+      if (message.includes("image_url")) {
+        toast.error(
+          "Database missing image_url column. Run packages/db/PROMOTION_PACKAGES_IMAGE_URL_PATCH.sql in Supabase SQL Editor, then try again."
+        );
+      } else {
+        toast.error("Failed to update package: " + message);
+      }
     } finally {
       setUpdating(false);
     }
@@ -475,6 +487,14 @@ export default function PackagesPage() {
             )}
 
                 <div className="flex-1 space-y-5 pt-2 pr-16">
+                  <div className="flex items-start gap-4">
+                    <GlobalServiceIconPreview
+                      iconImageUrl={pkg.image_url}
+                      iconMap={promotionTypeIconMap}
+                      iconName={typeInfo?.icon || "Gift"}
+                      className="w-16 h-16 rounded-2xl"
+                    />
+                    <div className="min-w-0 space-y-2">
                   <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest gap-1.5 px-2.5 py-1">
                     <TypeIcon className="w-3 h-3" />
                     {resolvePromotionTypeName(pkg, allowedPromotionTypes)}
@@ -482,6 +502,8 @@ export default function PackagesPage() {
                   <h3 className="font-extrabold text-base sm:text-lg text-[#1A1C29] tracking-tight leading-snug">
                     {pkg.name}
                   </h3>
+                    </div>
+                  </div>
 
                   <div className="rounded-2xl border border-zinc-100 bg-zinc-50/80 p-4 space-y-2">
                     <div className="flex items-center gap-2 text-[11px] font-semibold text-zinc-600">
@@ -681,6 +703,23 @@ export default function PackagesPage() {
         }
       >
         <form id="edit-package-form" onSubmit={handleUpdatePackage} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
+                  Package Image
+                </label>
+                <GlobalServiceIconUpload
+                  value={editForm.image_url}
+                  onChange={(url) => setEditForm((prev) => ({ ...prev, image_url: url }))}
+                  onClear={() => setEditForm((prev) => ({ ...prev, image_url: "" }))}
+                  uploadAction={
+                    salon?.id
+                      ? (formData) => uploadSalonPromotionPackageImage(formData, String(salon.id))
+                      : undefined
+                  }
+                  uploadContextLabel="promotion package"
+                />
+                <p className="text-[10px] text-zinc-400 pl-1">Shown on your salon page and Facebook shares.</p>
+              </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Package Name

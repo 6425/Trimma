@@ -89,6 +89,7 @@ export type SalonPromotionPackage = {
   end_date: string | null;
   status: string | null;
   promotion_type: string | null;
+  image_url: string | null;
 };
 
 export function isActivePromotionPackage(
@@ -112,6 +113,7 @@ export function mapSalonPromotionRows(packages: any[]): SalonPromotionPackage[] 
       end_date: pkg.end_date ?? null,
       status: pkg.status ?? null,
       promotion_type: pkg.promotion_type ?? null,
+      image_url: typeof pkg.image_url === "string" && pkg.image_url.trim() ? pkg.image_url.trim() : null,
     }))
     .filter((pkg) => isActivePromotionPackage(pkg));
 }

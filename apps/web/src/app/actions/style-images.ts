@@ -95,3 +95,10 @@ export async function uploadSalonServiceImage(formData: FormData, salonId: strin
   }
   return uploadPublicAssetImage(formData, `salon-services/${salonId}`, "svc", false);
 }
+
+export async function uploadSalonPromotionPackageImage(formData: FormData, salonId: string) {
+  if (!salonId) {
+    return { success: false as const, error: "Salon ID is required for promotion image upload." };
+  }
+  return uploadPublicAssetImage(formData, `salon-promotions/${salonId}`, "promo", false);
+}

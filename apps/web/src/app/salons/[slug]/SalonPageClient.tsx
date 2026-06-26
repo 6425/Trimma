@@ -51,6 +51,7 @@ import {
 } from "@/lib/service-discount";
 
 const salonServiceIconMap = { LayoutGrid, Scissors };
+const salonPromotionIconMap = { LayoutGrid, Gift, Tag };
 
 const BookingSheet = dynamic(
   () => import("../../../components/BookingSheet").then((m) => m.BookingSheet),
@@ -941,9 +942,15 @@ export default function SalonPage({
                               sharedPromoId === String(promotion.id) ? "bg-amber-50 ring-2 ring-brand/40 ring-inset" : ""
                             }`}
                           >
-                            <div className="flex-1">
+                            <div className="flex items-start gap-4 flex-1 min-w-0">
+                              <GlobalServiceIconPreview
+                                iconImageUrl={promotion.image_url}
+                                iconMap={salonPromotionIconMap}
+                                iconName="Gift"
+                                className="w-14 h-14 rounded-2xl"
+                              />
+                              <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <Tag className="w-4 h-4 text-brand shrink-0" />
                                 <h3 className="font-semibold text-zinc-900 text-lg">{promotion.name}</h3>
                                 {hasDiscount && (
                                   <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold uppercase">
@@ -973,6 +980,7 @@ export default function SalonPage({
                                     <span>{getRemainingDaysLabel(promotion.end_date)}</span>
                                   </>
                                 )}
+                              </div>
                               </div>
                             </div>
                             <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
