@@ -92,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Packages", href: "/dashboard/packages", icon: <Tag className="w-4 h-4" /> },
     { name: "CRM", href: "/dashboard/crm", icon: <MessageSquare className="w-4 h-4" /> },
     { name: "Marketing", href: "/dashboard/marketing", icon: <Sparkles className="w-4 h-4" /> },
-    { name: "Social Media", href: "/dashboard/social", icon: <Share2 className="w-4 h-4" /> },
+    { name: "Social Media", href: "/dashboard/social", icon: <Share2 className="w-4 h-4" />, frozen: true },
     { name: "Reviews", href: "/dashboard/reviews", icon: <Star className="w-4 h-4" /> },
     { name: "AI Assistant", href: "/dashboard/ai", icon: <Bot className="w-4 h-4" />, frozen: true },
     { name: "Reports & Analytics", href: "/dashboard/analytics", icon: <BarChart3 className="w-4 h-4" /> },

@@ -38,6 +38,9 @@ import { fetchPublicSalonPage, type PublicSalonService, type PublicSalonStaff, t
 import { withTimeout } from "@/lib/promise-timeout";
 import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
+import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLinks";
+import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
+import { buildSalonCatalogShareUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffc800] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffc800] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
@@ -460,6 +463,9 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
   // Derive categories from live services
   const categoriesSet = new Set(services.map(s => s.category));
   const serviceCategories = ["All", ...Array.from(categoriesSet)];
+  const salonSocialLinks = readSalonSocialLinks(salon);
+  const showFacebookShare = Boolean(salonSocialLinks.facebookUrl);
+  const shareOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
 
   const filteredServices = selectedCategory === "All" 
     ? services 
@@ -715,6 +721,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                     <Navigation2 className="w-4 h-4 mr-1.5 text-white" />
                     Get Directions
                   </button>
+                  <SalonSocialLinks salon={salon} links={salonSocialLinks} />
                 </div>
                 
                 <div className="flex flex-wrap gap-1.5 pt-1">
@@ -840,7 +847,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
+                        <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
                         <div className="text-right">
                           {isServiceDiscountActive(service) ? (
                             <>
@@ -858,9 +865,17 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                             <div className="font-bold text-lg text-zinc-900">LKR {service.price}</div>
                           )}
                         </div>
-                        <Button className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`} onClick={() => handleBookService(service.name)} disabled={!isBookable}>
-                          {!isBookable ? "Unavailable" : "Book Now"}
-                        </Button>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {showFacebookShare ? (
+                            <FacebookShareButton
+                              shareUrl={buildSalonCatalogShareUrl(salon, "service", String(service.id), shareOrigin)}
+                              label="Share"
+                            />
+                          ) : null}
+                          <Button className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`} onClick={() => handleBookService(service.name)} disabled={!isBookable}>
+                            {!isBookable ? "Unavailable" : "Book Now"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -924,7 +939,7 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
+                            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
                               <div className="text-right">
                                 <div className="font-bold text-lg text-zinc-900">
                                   LKR {promotion.package_price.toLocaleString()}
@@ -935,13 +950,21 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                                   </div>
                                 )}
                               </div>
-                              <Button
-                                className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`}
-                                onClick={() => handleBookPromotion(promotion)}
-                                disabled={!isBookable}
-                              >
-                                {!isBookable ? "Unavailable" : "Book Deal"}
-                              </Button>
+                              <div className="flex flex-wrap items-center justify-end gap-2">
+                                {showFacebookShare ? (
+                                  <FacebookShareButton
+                                    shareUrl={buildSalonCatalogShareUrl(salon, "promo", String(promotion.id), shareOrigin)}
+                                    label="Share"
+                                  />
+                                ) : null}
+                                <Button
+                                  className={`rounded-full shadow-sm px-6 ${SALON_ACTION_BTN}`}
+                                  onClick={() => handleBookPromotion(promotion)}
+                                  disabled={!isBookable}
+                                >
+                                  {!isBookable ? "Unavailable" : "Book Deal"}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         );

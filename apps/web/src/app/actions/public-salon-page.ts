@@ -10,7 +10,7 @@ import {
 } from "@/lib/salon-staff-service-sync";
 
 const SALON_COLUMNS =
-  "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours";
+  "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, business_info_extended";
 
 export type PublicSalonService = {
   id: string;
