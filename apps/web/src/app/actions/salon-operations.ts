@@ -36,6 +36,11 @@ import {
 } from "@/lib/salon-onboarding-progress";
 import { notifyOwnerSubmittedForBookingApproval } from "@/lib/agent-lead-notifications";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
+import {
+  queueFacebookPromotionSync,
+  queueFacebookServiceSync,
+  type FacebookSyncAction,
+} from "@/lib/facebook-sync-engine";
 
 const SALON_ONBOARDING_SELECT =
   "id, name, description, phone, address, city, assign_to, source_type, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status, latitude, longitude, logo_url, cover_url, hero_url, hero_image";
@@ -378,8 +383,16 @@ export async function rejectOwnerRescheduleRequest(bookingId: string) {
 export async function insertSalonPromotionPackages(payloads: Record<string, unknown>[]) {
   const result = await withSalonDb(async (supabase, ctx) => {
     const rows = payloads.map((row) => ({ ...row, salon_id: ctx.salonId }));
-    const { error } = await supabase.from("salon_promotion_packages").insert(rows);
+    const { data, error } = await supabase
+      .from("salon_promotion_packages")
+      .insert(rows)
+      .select("id, status");
     if (error) throw new Error(error.message);
+    for (const row of data || []) {
+      if (row.status === "active") {
+        queueFacebookPromotionSync(ctx.salonId, String(row.id), "created");
+      }
+    }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -387,12 +400,23 @@ export async function insertSalonPromotionPackages(payloads: Record<string, unkn
 
 export async function deleteSalonPromotionPackage(packageId: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: pkg } = await supabase
+      .from("salon_promotion_packages")
+      .select("status")
+      .eq("id", packageId)
+      .eq("salon_id", ctx.salonId)
+      .maybeSingle();
+
     const { error } = await supabase
       .from("salon_promotion_packages")
       .delete()
       .eq("id", packageId)
       .eq("salon_id", ctx.salonId);
     if (error) throw new Error(error.message);
+
+    if (pkg?.status === "active") {
+      queueFacebookPromotionSync(ctx.salonId, packageId, "deleted");
+    }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -400,12 +424,26 @@ export async function deleteSalonPromotionPackage(packageId: string) {
 
 export async function updateSalonPromotionPackage(packageId: string, payload: Record<string, unknown>) {
   const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: before } = await supabase
+      .from("salon_promotion_packages")
+      .select("status")
+      .eq("id", packageId)
+      .eq("salon_id", ctx.salonId)
+      .maybeSingle();
+
     const { error } = await supabase
       .from("salon_promotion_packages")
       .update(payload)
       .eq("id", packageId)
       .eq("salon_id", ctx.salonId);
     if (error) throw new Error(error.message);
+
+    const nextStatus = (payload.status as string | undefined) ?? before?.status;
+    if (nextStatus === "active") {
+      const action: FacebookSyncAction =
+        before?.status !== "active" ? "created" : "updated";
+      queueFacebookPromotionSync(ctx.salonId, packageId, action);
+    }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -454,9 +492,24 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
       }
     }
 
+    const { data: beforeService } = await supabase
+      .from("services")
+      .select("status")
+      .eq("id", serviceId)
+      .eq("salon_id", ctx.salonId)
+      .maybeSingle();
+
     const { error } = await supabase.from("services").update(payload).eq("id", serviceId);
     if (error) throw new Error(error.message);
     await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
+
+    const nextStatus =
+      typeof payload.status === "string" ? payload.status : beforeService?.status;
+    if (nextStatus === "active") {
+      const action: FacebookSyncAction =
+        beforeService?.status !== "active" ? "created" : "updated";
+      queueFacebookServiceSync(ctx.salonId, serviceId, action);
+    }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
@@ -465,9 +518,19 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
 export async function deleteSalonService(serviceId: string) {
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonService(supabase, ctx, serviceId);
+    const { data: beforeService } = await supabase
+      .from("services")
+      .select("status")
+      .eq("id", serviceId)
+      .maybeSingle();
+
     const { error } = await supabase.from("services").delete().eq("id", serviceId);
     if (error) throw new Error(error.message);
     await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
+
+    if (beforeService?.status === "active") {
+      queueFacebookServiceSync(ctx.salonId, serviceId, "deleted");
+    }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };

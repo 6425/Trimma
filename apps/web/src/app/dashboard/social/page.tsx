@@ -14,6 +14,8 @@ import {
   Calendar,
   Copy,
   ExternalLink,
+  RefreshCw,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +29,11 @@ import {
   saveFacebookIntegrationSettings,
   selectFacebookPage,
 } from "@/app/actions/facebook-connect";
+import {
+  getFacebookSyncHistory,
+  syncAllActiveCatalogToFacebook,
+  type FacebookSyncLogRow,
+} from "@/app/actions/facebook-sync";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 type FacebookStatus = {
@@ -41,6 +48,7 @@ type FacebookStatus = {
   bookingCtaEnabled: boolean;
   bookingCtaLabel: string;
   autoPublishPromos: boolean;
+  autoPublishServices: boolean;
   salonBookingUrl: string;
   scopes: string[];
 };
@@ -65,6 +73,10 @@ export default function SocialMediaPage() {
   const [bookingCtaEnabled, setBookingCtaEnabled] = useState(true);
   const [bookingCtaLabel, setBookingCtaLabel] = useState("Book Now");
   const [autoPublishPromos, setAutoPublishPromos] = useState(false);
+  const [autoPublishServices, setAutoPublishServices] = useState(true);
+  const [syncHistory, setSyncHistory] = useState<FacebookSyncLogRow[]>([]);
+  const [syncHistoryLoading, setSyncHistoryLoading] = useState(false);
+  const [syncingCatalog, setSyncingCatalog] = useState(false);
 
   const applyFacebookStatus = useCallback((result: Exclude<Awaited<ReturnType<typeof getFacebookConnectStatus>>, { success: false }>) => {
     setFacebookStatus({
@@ -79,6 +91,7 @@ export default function SocialMediaPage() {
       bookingCtaEnabled: result.bookingCtaEnabled,
       bookingCtaLabel: result.bookingCtaLabel,
       autoPublishPromos: result.autoPublishPromos,
+      autoPublishServices: result.autoPublishServices,
       salonBookingUrl: result.salonBookingUrl,
       scopes: result.scopes,
     });
@@ -86,7 +99,16 @@ export default function SocialMediaPage() {
     setBookingCtaEnabled(result.bookingCtaEnabled);
     setBookingCtaLabel(result.bookingCtaLabel || "Book Now");
     setAutoPublishPromos(result.autoPublishPromos);
+    setAutoPublishServices(result.autoPublishServices);
     if (result.needsPageSelection) setShowPageModal(true);
+  }, []);
+
+  const loadSyncHistory = useCallback(async () => {
+    setSyncHistoryLoading(true);
+    const result = await getFacebookSyncHistory(15);
+    setSyncHistoryLoading(false);
+    if (result.success === false) return;
+    setSyncHistory(result.rows);
   }, []);
 
   const loadFacebookStatus = useCallback(async () => {
@@ -99,7 +121,8 @@ export default function SocialMediaPage() {
     }
     applyFacebookStatus(result);
     setFacebookLoading(false);
-  }, [applyFacebookStatus]);
+    if (result.connected) void loadSyncHistory();
+  }, [applyFacebookStatus, loadSyncHistory]);
 
   useEffect(() => {
     void Promise.resolve().then(() => loadFacebookStatus());
@@ -138,6 +161,7 @@ export default function SocialMediaPage() {
       bookingCtaEnabled,
       bookingCtaLabel,
       autoPublishPromos,
+      autoPublishServices,
     });
     setSavingSettings(false);
 
@@ -148,6 +172,47 @@ export default function SocialMediaPage() {
 
     toast.success("Facebook settings saved.");
     await loadFacebookStatus();
+  }
+
+  async function handleSyncAllCatalog() {
+    setSyncingCatalog(true);
+    const result = await syncAllActiveCatalogToFacebook();
+    setSyncingCatalog(false);
+
+    if (result.success === false) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(
+      `Sync complete: ${result.published} published, ${result.failed} failed, ${result.skipped} skipped.`
+    );
+    await loadSyncHistory();
+  }
+
+  function formatSyncEntityLabel(row: FacebookSyncLogRow) {
+    const type =
+      row.entityType === "promotion_package"
+        ? "Promotion"
+        : row.entityType === "service"
+          ? "Service"
+          : row.entityType;
+    const action =
+      row.action === "created"
+        ? "added"
+        : row.action === "updated"
+          ? "updated"
+          : row.action === "deleted"
+            ? "removed"
+            : row.action;
+    return `${type} ${action}`;
+  }
+
+  function formatSyncStatusBadge(status: string) {
+    if (status === "success") return "bg-emerald-50 text-emerald-700 border-emerald-100";
+    if (status === "failed") return "bg-red-50 text-red-700 border-red-100";
+    if (status === "skipped") return "bg-zinc-100 text-zinc-600 border-zinc-200";
+    return "bg-amber-50 text-amber-700 border-amber-100";
   }
 
   async function handleConnectFacebook() {
@@ -394,6 +459,72 @@ export default function SocialMediaPage() {
         ))}
       </div>
 
+      {facebookConnected ? (
+        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <History className="w-5 h-5 text-brand" />
+              <div>
+                <h2 className="font-extrabold text-base text-[#1A1C29]">Facebook sync history</h2>
+                <p className="text-[10px] text-zinc-500">Recent auto-published services and promotions.</p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void loadSyncHistory()}
+              disabled={syncHistoryLoading}
+              className="rounded-xl font-bold text-xs h-9"
+            >
+              {syncHistoryLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              ) : (
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Refresh
+            </Button>
+          </div>
+
+          {syncHistoryLoading && syncHistory.length === 0 ? (
+            <div className="flex items-center gap-2 text-xs text-zinc-500 py-6 justify-center">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading sync history...
+            </div>
+          ) : syncHistory.length === 0 ? (
+            <p className="text-xs text-zinc-500 py-4 text-center">
+              No sync activity yet. Edit an active service or promotion to trigger your first auto-post.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {syncHistory.map((row) => (
+                <li
+                  key={row.id}
+                  className="rounded-2xl border border-zinc-100 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-zinc-900">{formatSyncEntityLabel(row)}</p>
+                    {row.captionPreview ? (
+                      <p className="text-[10px] text-zinc-500 truncate mt-0.5">{row.captionPreview}…</p>
+                    ) : null}
+                    {row.errorMessage ? (
+                      <p className="text-[10px] text-red-600 mt-0.5">{row.errorMessage}</p>
+                    ) : null}
+                    <p className="text-[10px] text-zinc-400 mt-1">
+                      {new Date(row.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 self-start sm:self-center text-[9px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full border ${formatSyncStatusBadge(row.status)}`}
+                  >
+                    {row.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+
       <DashboardModal
         open={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
@@ -534,15 +665,47 @@ export default function SocialMediaPage() {
             )}
           </div>
 
-          <label className="inline-flex items-center gap-2 text-xs font-bold text-zinc-700 rounded-xl border border-zinc-200 px-4 py-3">
-            <input
-              type="checkbox"
-              checked={autoPublishPromos}
-              onChange={(e) => setAutoPublishPromos(e.target.checked)}
-              className="accent-black"
-            />
-            Auto-publish promotion packages to Facebook when marked live
-          </label>
+          <div className="rounded-2xl border border-zinc-100 p-4 space-y-3">
+            <p className="text-xs font-bold text-zinc-900">Step 4 — Auto-publish catalog</p>
+            <p className="text-[10px] text-zinc-500">
+              When enabled, Trimma posts to your Facebook Page whenever an active service or promotion is created,
+              updated, or removed.
+            </p>
+            <label className="inline-flex items-center gap-2 text-xs font-bold text-zinc-700 rounded-xl border border-zinc-200 px-4 py-3 w-full">
+              <input
+                type="checkbox"
+                checked={autoPublishServices}
+                onChange={(e) => setAutoPublishServices(e.target.checked)}
+                className="accent-black"
+              />
+              Auto-publish services when marked active
+            </label>
+            <label className="inline-flex items-center gap-2 text-xs font-bold text-zinc-700 rounded-xl border border-zinc-200 px-4 py-3 w-full">
+              <input
+                type="checkbox"
+                checked={autoPublishPromos}
+                onChange={(e) => setAutoPublishPromos(e.target.checked)}
+                className="accent-black"
+              />
+              Auto-publish promotion packages when marked live
+            </label>
+            {facebookConnected ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleSyncAllCatalog()}
+                disabled={syncingCatalog}
+                className="rounded-xl font-bold h-10 w-full sm:w-auto"
+              >
+                {syncingCatalog ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Sync all active services & promos now
+              </Button>
+            ) : null}
+          </div>
         </div>
       </DashboardModal>
 

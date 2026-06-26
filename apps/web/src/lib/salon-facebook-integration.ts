@@ -19,6 +19,7 @@ export type SalonFacebookIntegrationRow = {
   booking_cta_enabled: boolean;
   booking_cta_label: string;
   auto_publish_promos: boolean;
+  auto_publish_services: boolean;
   pending_pages: StoredFacebookPage[] | null;
 };
 
@@ -57,6 +58,7 @@ function rowFromLegacySocialSettings(salon: Record<string, unknown>): SalonFaceb
         ? settings.booking_cta_label.trim()
         : "Book Now",
     auto_publish_promos: settings.auto_publish_promos === true,
+    auto_publish_services: settings.auto_publish_services !== false,
     pending_pages: normalizePendingPages(settings.facebook_pending_pages),
   };
 }
@@ -80,6 +82,7 @@ function mapRow(data: Record<string, unknown>): SalonFacebookIntegrationRow {
         ? data.booking_cta_label.trim()
         : "Book Now",
     auto_publish_promos: data.auto_publish_promos === true,
+    auto_publish_services: data.auto_publish_services !== false,
     pending_pages: normalizePendingPages(data.pending_pages),
   };
 }
@@ -131,6 +134,7 @@ function emptyIntegrationRow(salonId: string): SalonFacebookIntegrationRow {
     booking_cta_enabled: true,
     booking_cta_label: "Book Now",
     auto_publish_promos: false,
+    auto_publish_services: true,
     pending_pages: [],
   };
 }
@@ -198,6 +202,8 @@ async function upsertLegacySocialSettings(
     booking_cta_enabled: patch.booking_cta_enabled ?? (current as Record<string, unknown>).booking_cta_enabled,
     booking_cta_label: patch.booking_cta_label ?? (current as Record<string, unknown>).booking_cta_label,
     auto_publish_promos: patch.auto_publish_promos ?? (current as Record<string, unknown>).auto_publish_promos,
+    auto_publish_services:
+      patch.auto_publish_services ?? (current as Record<string, unknown>).auto_publish_services,
     facebook_pending_pages: patch.pending_pages ?? (current as Record<string, unknown>).facebook_pending_pages,
   };
 

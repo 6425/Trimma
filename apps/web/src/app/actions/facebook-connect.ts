@@ -77,6 +77,7 @@ export async function getFacebookConnectStatus() {
       bookingCtaEnabled: integration.booking_cta_enabled,
       bookingCtaLabel: integration.booking_cta_label,
       autoPublishPromos: integration.auto_publish_promos,
+      autoPublishServices: integration.auto_publish_services,
       salonBookingUrl: resolveSalonBookingUrl(ctx.salon),
       oauthRedirectUri: config?.redirectUri || null,
       oauthMode: oauth.mode,
@@ -94,6 +95,7 @@ export async function saveFacebookIntegrationSettings(input: {
   bookingCtaEnabled?: boolean;
   bookingCtaLabel?: string;
   autoPublishPromos?: boolean;
+  autoPublishServices?: boolean;
 }) {
   const result = await withSalonDb(async (supabase, ctx) => {
     const pageUrl = input.facebookPageUrl != null ? normalizeFacebookPageUrl(input.facebookPageUrl) : undefined;
@@ -108,6 +110,7 @@ export async function saveFacebookIntegrationSettings(input: {
       booking_cta_enabled: input.bookingCtaEnabled,
       booking_cta_label: bookingCtaLabel || undefined,
       auto_publish_promos: input.autoPublishPromos,
+      auto_publish_services: input.autoPublishServices,
     });
 
     if (pageUrl) {
