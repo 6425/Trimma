@@ -460,16 +460,7 @@ export default function GlobalPromotionPackageManagement() {
                   onValueChange={(val) => setEditingPackage({ ...editingPackage, promotion_type_id: val })}
                 >
                   <SelectTrigger className="h-11 rounded-xl bg-white">
-                    <SelectValue placeholder="Select promotion type">
-                      {editingPackage.promotion_type_id &&
-                      promotionTypes.find((type) => type.id === editingPackage.promotion_type_id) ? (
-                        <span>
-                          {promotionTypes.find((type) => type.id === editingPackage.promotion_type_id)?.name}
-                        </span>
-                      ) : (
-                        "Select promotion type"
-                      )}
-                    </SelectValue>
+                    <SelectValue placeholder="Select promotion type" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {promotionTypes.map((type) => {

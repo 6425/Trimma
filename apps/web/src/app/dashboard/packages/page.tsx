@@ -739,20 +739,11 @@ export default function PackagesPage() {
                   Promotion Type
                 </label>
                 <Select
-                  value={editForm.promotion_type_id}
+                  value={editForm.promotion_type_id || undefined}
                   onValueChange={(val) => setEditForm({ ...editForm, promotion_type_id: val })}
                 >
                   <SelectTrigger className="h-11 rounded-xl bg-white">
-                    <SelectValue placeholder="Select promotion type">
-                      {editForm.promotion_type_id &&
-                      allowedPromotionTypes.find((type) => type.id === editForm.promotion_type_id) ? (
-                        <span>
-                          {allowedPromotionTypes.find((type) => type.id === editForm.promotion_type_id)?.name}
-                        </span>
-                      ) : (
-                        "Select promotion type"
-                      )}
-                    </SelectValue>
+                    <SelectValue placeholder="Select promotion type" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {allowedPromotionTypes.map((type) => {
