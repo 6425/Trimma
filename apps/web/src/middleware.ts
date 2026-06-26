@@ -127,6 +127,11 @@ export async function middleware(req: NextRequest) {
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
+  // Facebook OAuth return URL — salon owners are redirected here from Meta; state is HMAC-signed in the handler.
+  if (pathname.startsWith("/facebook/callback")) {
+    return withRouteHeaders(pathname, NextResponse.next());
+  }
+
   // 2. Allow public routes (exact match or ending in login/signup)
   if (
     publicRoutes.includes(pathname) || 
