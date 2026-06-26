@@ -19,6 +19,11 @@ import {
 import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
 import { getPublicSubscriptionPlans } from "@/app/actions/subscription-plans";
 import { buildReviewSummary, isVerifiedBookingReview } from "@/lib/reviews";
+import {
+  formatLkr,
+  getIntroMonthlyPrice,
+  getListMonthlyPrice,
+} from "@/lib/subscription-pricing";
 
 function isDeletedCatalogStatus(status?: string | null): boolean {
   return (status || "").toLowerCase() === "deleted";
@@ -303,6 +308,86 @@ export async function fetchSalonFinancePage() {
   return { success: true as const, ...result.data, commissionRates };
 }
 
+export type SalonBillingInvoiceRow = {
+  id: string;
+  invoiceNo: string;
+  date: string;
+  planName: string;
+  amount: string;
+  status: string;
+};
+
+function isSubscriptionPayment(raw: unknown): raw is Record<string, unknown> {
+  return Boolean(raw && typeof raw === "object" && (raw as Record<string, unknown>).type === "subscription");
+}
+
+function formatInvoiceStatus(status: string | null | undefined): string {
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "success") return "Paid";
+  if (normalized === "pending") return "Pending";
+  if (normalized === "failed" || normalized === "cancelled") return "Failed";
+  if (!status) return "Unknown";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function formatBillingDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function mapSubscriptionPaymentToInvoice(payment: {
+  id: string;
+  amount: number | string | null;
+  currency?: string | null;
+  status?: string | null;
+  created_at: string;
+  raw_response?: unknown;
+}): SalonBillingInvoiceRow {
+  const raw = (payment.raw_response || {}) as Record<string, unknown>;
+  const planName = (raw.plan_name as string) || "Subscription";
+  const cycle = raw.billing_cycle === "annual" ? "Annual" : "Monthly";
+  const orderId =
+    typeof raw.order_id === "string" && raw.order_id.trim()
+      ? raw.order_id.trim()
+      : `SUB-${payment.id.slice(0, 8).toUpperCase()}`;
+
+  return {
+    id: payment.id,
+    invoiceNo: orderId,
+    date: formatBillingDate(payment.created_at),
+    planName: `${planName} ${cycle}`,
+    amount: formatLkr(Number(payment.amount) || 0),
+    status: formatInvoiceStatus(payment.status),
+  };
+}
+
+function computeNextInvoiceDate(
+  latestPayment: { created_at: string; raw_response?: unknown } | null,
+  plan: { monthly_price?: number | null; intro_monthly_price?: number | null } | null
+): string | null {
+  if (!plan) return null;
+
+  const isFree =
+    getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
+  if (isFree) return null;
+  if (!latestPayment) return null;
+
+  const raw = (latestPayment.raw_response || {}) as Record<string, unknown>;
+  const cycle = raw.billing_cycle === "annual" ? "annual" : "monthly";
+  const next = new Date(latestPayment.created_at);
+  if (cycle === "annual") next.setFullYear(next.getFullYear() + 1);
+  else next.setMonth(next.getMonth() + 1);
+
+  return next.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export async function fetchSalonBillingPage() {
   const [billingResult, plansResult] = await Promise.all([
     withSalonDb(async (supabase, ctx) => {
@@ -311,7 +396,24 @@ export async function fetchSalonBillingPage() {
         ctx.salonId,
         ctx.salon.subscription_plan_id as string | null | undefined
       );
-      return { activePlan: plan };
+
+      const { data: payments, error: paymentsError } = await supabase
+        .from("payments")
+        .select("id, amount, currency, status, created_at, raw_response")
+        .eq("salon_id", ctx.salonId)
+        .eq("status", "success")
+        .order("created_at", { ascending: false })
+        .limit(48);
+
+      if (paymentsError) throw new Error(paymentsError.message);
+
+      const subscriptionPayments = (payments || []).filter((row) =>
+        isSubscriptionPayment(row.raw_response)
+      );
+      const invoices = subscriptionPayments.map(mapSubscriptionPaymentToInvoice);
+      const nextInvoiceDate = computeNextInvoiceDate(subscriptionPayments[0] ?? null, plan);
+
+      return { activePlan: plan, invoices, nextInvoiceDate };
     }),
     getPublicSubscriptionPlans(),
   ]);

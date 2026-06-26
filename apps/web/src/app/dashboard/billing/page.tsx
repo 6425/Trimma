@@ -14,7 +14,10 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchSalonBillingPage } from "@/app/actions/salon-dashboard-data";
+import {
+  fetchSalonBillingPage,
+  type SalonBillingInvoiceRow,
+} from "@/app/actions/salon-dashboard-data";
 import { withTimeout } from "@/lib/promise-timeout";
 import {
   DEFAULT_SUBSCRIPTION_PLANS,
@@ -54,12 +57,8 @@ export default function BillingPage() {
   const [plansLoadError, setPlansLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-
-  const mockInvoices = [
-    { invoiceNo: "TRM-INV-001", date: "May 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
-    { invoiceNo: "TRM-INV-002", date: "Apr 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
-    { invoiceNo: "TRM-INV-003", date: "Mar 01, 2026", planName: "Starter Monthly", amount: "LKR 3,750", status: "Paid" },
-  ];
+  const [invoices, setInvoices] = useState<SalonBillingInvoiceRow[]>([]);
+  const [nextInvoiceDate, setNextInvoiceDate] = useState<string | null>(null);
 
   const fetchBillingData = async () => {
     try {
@@ -68,6 +67,8 @@ export default function BillingPage() {
       if (result.success === false) return;
       if (result.activePlan) setActivePlan(result.activePlan);
       if (result.availablePlans?.length) setAvailablePlans(result.availablePlans);
+      setInvoices(result.invoices ?? []);
+      setNextInvoiceDate(result.nextInvoiceDate ?? null);
       setPlansLoadError(result.plansLoadError ?? null);
     } catch (err: any) {
       console.warn("Failed to load billing details:", err.message);
@@ -151,7 +152,9 @@ export default function BillingPage() {
 
           <div className="relative z-10 bg-black/10 rounded-2xl p-4 border border-black/10 text-left sm:text-right min-w-0 w-full sm:min-w-[200px] sm:w-auto">
             <span className="text-[10px] font-bold text-black/60 uppercase block">Next Invoice Date</span>
-            <div className="text-base font-extrabold mt-0.5 text-black">June 01, 2026</div>
+            <div className="text-base font-extrabold mt-0.5 text-black">
+              {nextInvoiceDate ?? "—"}
+            </div>
             <div className="text-xs text-black/80 mt-1">
               {formatLkr(getDisplayMonthlyPrice(activePlan, billingCycle))} / month
             </div>
@@ -317,22 +320,37 @@ export default function BillingPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {mockInvoices.map((inv) => (
-                <tr
-                  key={inv.invoiceNo}
-                  className="hover:bg-zinc-50/50 transition-colors text-xs font-semibold text-zinc-600"
-                >
-                  <td className="px-6 py-4 font-bold text-zinc-800">{inv.invoiceNo}</td>
-                  <td className="px-6 py-4">{inv.date}</td>
-                  <td className="px-6 py-4">{inv.planName}</td>
-                  <td className="px-6 py-4 text-zinc-800 font-bold">{inv.amount}</td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="bg-emerald-50 text-emerald-600 font-extrabold text-[8px] tracking-wider uppercase px-2.5 py-1 rounded-full border border-emerald-100">
-                      {inv.status}
-                    </span>
+              {invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-10 text-center text-xs text-zinc-500">
+                    No subscription payments yet. Receipts appear here after you upgrade or renew a
+                    paid plan.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                invoices.map((inv) => (
+                  <tr
+                    key={inv.id}
+                    className="hover:bg-zinc-50/50 transition-colors text-xs font-semibold text-zinc-600"
+                  >
+                    <td className="px-6 py-4 font-bold text-zinc-800">{inv.invoiceNo}</td>
+                    <td className="px-6 py-4">{inv.date}</td>
+                    <td className="px-6 py-4">{inv.planName}</td>
+                    <td className="px-6 py-4 text-zinc-800 font-bold">{inv.amount}</td>
+                    <td className="px-6 py-4 text-right">
+                      <span
+                        className={`font-extrabold text-[8px] tracking-wider uppercase px-2.5 py-1 rounded-full border ${
+                          inv.status === "Paid"
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                            : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                        }`}
+                      >
+                        {inv.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
