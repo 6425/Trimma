@@ -18,6 +18,7 @@ import {
 } from "@/lib/salon-loyalty";
 import { fetchSalonLoyaltyRules } from "@/app/actions/salon-loyalty";
 import { getPublicSubscriptionPlans } from "@/app/actions/subscription-plans";
+import { buildReviewSummary, isVerifiedBookingReview } from "@/lib/reviews";
 
 function isDeletedCatalogStatus(status?: string | null): boolean {
   return (status || "").toLowerCase() === "deleted";
@@ -577,6 +578,27 @@ export async function fetchSalonCustomersPage() {
 
     if (error) throw new Error(error.message);
 
+    const { data: reviewRows, error: reviewsError } = await supabase
+      .from("reviews")
+      .select("customer_email, rating, status, booking_id")
+      .eq("salon_id", ctx.salonId)
+      .eq("status", "published");
+
+    if (reviewsError) throw new Error(reviewsError.message);
+
+    const verifiedReviews = (reviewRows || []).filter((row) => isVerifiedBookingReview(row));
+    const reviewSummary = buildReviewSummary(verifiedReviews);
+
+    const ratingsByEmail = new Map<string, { total: number; count: number }>();
+    for (const review of verifiedReviews) {
+      const email = (review.customer_email || "").toLowerCase();
+      if (!email) continue;
+      const current = ratingsByEmail.get(email) || { total: 0, count: 0 };
+      current.total += Number(review.rating || 0);
+      current.count += 1;
+      ratingsByEmail.set(email, current);
+    }
+
     const customersMap = new Map<
       string,
       {
@@ -615,7 +637,7 @@ export async function fetchSalonCustomersPage() {
           phone: user?.phone || "-",
           visits: 0,
           spent: 0,
-          rating: 5,
+          rating: 0,
           lastVisit: b.booking_date || b.created_at,
           lastVisitDate: new Date(b.created_at).getTime(),
         });
@@ -641,6 +663,10 @@ export async function fetchSalonCustomersPage() {
       .map((c) => {
         const displayTier = resolveHighestDisplayTier(c.visits, loyaltyRules);
         const isVip = resolveVipFromVisits(c.visits, loyaltyRules);
+        const reviewStats = ratingsByEmail.get(c.email);
+        const customerRating = reviewStats
+          ? Math.min(5, Math.max(0, Math.round(reviewStats.total / reviewStats.count)))
+          : 0;
         return {
           name: c.name,
           email: c.email,
@@ -651,7 +677,8 @@ export async function fetchSalonCustomersPage() {
           vipMinVisits: loyaltyRules.find((rule) => rule.tier_key === "vip" && rule.enabled)?.min_visits ?? null,
           bookings: c.visits,
           spent: "LKR " + c.spent.toLocaleString(),
-          rating: 5,
+          rating: customerRating,
+          hasReview: customerRating > 0,
           lastVisit: new Date(c.lastVisitDate).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
@@ -664,6 +691,7 @@ export async function fetchSalonCustomersPage() {
       salon: ctx.salon,
       customers: customersList,
       loyaltyRules,
+      reviewSummary,
     };
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);

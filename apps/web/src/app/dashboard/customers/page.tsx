@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { Users, Search, Plus, Filter, Mail, Star, Loader2, Crown } from "lucide-react";
+import { Users, Search, Plus, Mail, Star, Loader2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSalonCustomersPage } from "@/app/actions/salon-dashboard-data";
@@ -18,7 +18,15 @@ type SalonCustomer = {
   bookings: number;
   spent: string;
   rating: number;
+  hasReview: boolean;
   lastVisit: string;
+};
+
+type CustomerFilter = "all" | "vip" | "loyalty" | "reviewed";
+
+type ReviewSummary = {
+  averageRating: number;
+  totalReviews: number;
 };
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -53,7 +61,9 @@ function buildGmailHref(email: string, customerName: string): string | null {
 
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [customerFilter, setCustomerFilter] = useState<CustomerFilter>("all");
   const [customers, setCustomers] = useState<SalonCustomer[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary>({ averageRating: 0, totalReviews: 0 });
   const [vipMinVisits, setVipMinVisits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,6 +72,7 @@ export default function CustomersPage() {
       fetchSalonCustomersPage().then((res) => {
         if (res.success && res.customers) {
           setCustomers(res.customers);
+          setReviewSummary(res.reviewSummary || { averageRating: 0, totalReviews: 0 });
           const vipRule = res.loyaltyRules?.find((rule) => rule.tier_key === "vip" && rule.enabled);
           setVipMinVisits(vipRule?.min_visits ?? null);
         }
@@ -70,12 +81,16 @@ export default function CustomersPage() {
     );
   }, []);
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = useMemo(() => {
+    return customers.filter((c) => {
+      const haystack = `${c.name} ${c.email} ${c.phone}`.toLowerCase();
+      if (!haystack.includes(searchTerm.toLowerCase())) return false;
+      if (customerFilter === "vip") return c.isVip;
+      if (customerFilter === "loyalty") return Boolean(c.loyaltyTierLabel);
+      if (customerFilter === "reviewed") return c.hasReview;
+      return true;
+    });
+  }, [customers, searchTerm, customerFilter]);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -128,8 +143,22 @@ export default function CustomersPage() {
         <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Average Rating</span>
           <h3 className="text-xl font-black text-amber-500 mt-1 flex items-center gap-1">
-            5.0 <Star className="w-5 h-5 fill-amber-500 text-amber-500 inline" />
+            {loading ? (
+              "..."
+            ) : reviewSummary.totalReviews > 0 ? (
+              <>
+                {reviewSummary.averageRating.toFixed(1)}{" "}
+                <Star className="w-5 h-5 fill-amber-500 text-amber-500 inline" />
+              </>
+            ) : (
+              <span className="text-zinc-400 text-base">No reviews yet</span>
+            )}
           </h3>
+          {!loading && reviewSummary.totalReviews > 0 ? (
+            <span className="text-[9px] font-semibold text-zinc-500 mt-2 inline-block">
+              From {reviewSummary.totalReviews} published review{reviewSummary.totalReviews === 1 ? "" : "s"}
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -144,9 +173,19 @@ export default function CustomersPage() {
               className="pl-10 h-11 bg-white rounded-xl border-zinc-200"
             />
           </div>
-          <Button variant="outline" className="h-11 rounded-xl font-bold text-xs flex items-center gap-1.5 border-zinc-200 text-zinc-700 bg-white">
-            <Filter className="w-4 h-4" /> Filters
-          </Button>
+          <label className="block sm:w-48 shrink-0">
+            <span className="sr-only">Filter clients</span>
+            <select
+              value={customerFilter}
+              onChange={(e) => setCustomerFilter(e.target.value as CustomerFilter)}
+              className="w-full h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 outline-none focus:ring-2 focus:ring-brand/30"
+            >
+              <option value="all">All clients</option>
+              <option value="vip">VIP only</option>
+              <option value="loyalty">With loyalty tier</option>
+              <option value="reviewed">Left a review</option>
+            </select>
+          </label>
         </div>
 
         <div className="overflow-x-auto border border-zinc-100 rounded-2xl">
@@ -208,11 +247,18 @@ export default function CustomersPage() {
                       <td className="px-6 py-4 text-sm font-semibold text-zinc-700">{c.bookings} visits</td>
                       <td className="px-6 py-4 text-sm font-black text-brand">{c.spent}</td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-0.5 text-amber-500">
-                          {Array.from({ length: 5 }).map((_, rIdx) => (
-                            <Star key={rIdx} className={`w-3 h-3 ${rIdx < c.rating ? "fill-amber-500" : "text-zinc-200"}`} />
-                          ))}
-                        </div>
+                        {c.hasReview ? (
+                          <div className="flex items-center gap-0.5 text-amber-500">
+                            {Array.from({ length: 5 }).map((_, rIdx) => (
+                              <Star
+                                key={rIdx}
+                                className={`w-3 h-3 ${rIdx < c.rating ? "fill-amber-500" : "text-zinc-200"}`}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-zinc-400">No review</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-xs font-semibold text-zinc-500">{c.lastVisit}</td>
                       <td className="px-6 py-4 text-right">
