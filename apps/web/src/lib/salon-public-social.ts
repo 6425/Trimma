@@ -40,9 +40,15 @@ export function buildSalonCatalogShareUrl(
   id: string,
   origin?: string
 ): string {
-  const pageUrl = new URL(buildSalonPublicPageUrl(salon, origin));
-  pageUrl.searchParams.set(kind === "service" ? "service" : "promo", id);
-  return pageUrl.toString();
+  const base = readAppOrigin(origin);
+  const slug =
+    typeof salon.slug === "string" && salon.slug.trim() ? salon.slug.trim() : String(salon.id || "");
+  const segment = kind === "service" ? "service" : "promo";
+  return `${base}/salons/${slug}/share/${segment}/${encodeURIComponent(id)}`;
+}
+
+function readAppOrigin(origin?: string): string {
+  return (origin || process.env.NEXT_PUBLIC_APP_URL || "https://www.trimma.io").replace(/\/$/, "");
 }
 
 export function buildFacebookShareUrl(targetUrl: string): string {

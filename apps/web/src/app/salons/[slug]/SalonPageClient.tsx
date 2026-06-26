@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -124,10 +124,21 @@ type SalonPageInitialData = {
   promotionPackages: SalonPromotionPackage[];
 } | null;
 
-export default function SalonPage({ initialData }: { initialData?: SalonPageInitialData }) {
+export default function SalonPage({
+  initialData,
+  highlightServiceId,
+  highlightPromoId,
+}: {
+  initialData?: SalonPageInitialData;
+  highlightServiceId?: string;
+  highlightPromoId?: string;
+}) {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
+  const sharedServiceId = highlightServiceId || searchParams.get("service") || undefined;
+  const sharedPromoId = highlightPromoId || searchParams.get("promo") || undefined;
   
   // LIVE DATA STATES — seed from server-pre-fetched data when available (instant render)
   const [salon, setSalon] = useState<any>(initialData?.salon ?? null);
@@ -273,6 +284,22 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
       cancelled = true;
     };
   }, [salon?.id]);
+
+  useEffect(() => {
+    if (loading || !salon) return;
+    const targetId = sharedServiceId
+      ? `service-${sharedServiceId}`
+      : sharedPromoId
+        ? `promo-${sharedPromoId}`
+        : null;
+    if (!targetId) return;
+
+    const timer = window.setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [loading, salon, sharedServiceId, sharedPromoId]);
 
   const getPromotionResolution = (promotion: SalonPromotionPackage) =>
     resolvePromotionBookingServices(promotion, services);
@@ -828,7 +855,13 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="divide-y divide-slate-100">
                   {filteredServices.map((service) => (
-                    <div key={service.id} className="p-4 sm:p-6 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div
+                      key={service.id}
+                      id={`service-${service.id}`}
+                      className={`p-4 sm:p-6 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                        sharedServiceId === String(service.id) ? "bg-amber-50/60 ring-2 ring-brand/40 ring-inset" : ""
+                      }`}
+                    >
                       <div className="flex items-start gap-4 flex-1 min-w-0">
                         <GlobalServiceIconPreview
                           iconImageUrl={service.image_url}
@@ -903,7 +936,10 @@ export default function SalonPage({ initialData }: { initialData?: SalonPageInit
                         return (
                           <div
                             key={promotion.id}
-                            className="p-4 sm:p-6 hover:bg-amber-50/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                            id={`promo-${promotion.id}`}
+                            className={`p-4 sm:p-6 hover:bg-amber-50/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                              sharedPromoId === String(promotion.id) ? "bg-amber-50 ring-2 ring-brand/40 ring-inset" : ""
+                            }`}
                           >
                             <div className="flex-1">
                               <div className="flex flex-wrap items-center gap-2 mb-1">
