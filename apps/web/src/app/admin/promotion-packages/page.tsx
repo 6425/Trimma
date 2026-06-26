@@ -20,14 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { GlobalServiceIconUpload } from "../../../components/admin/GlobalServiceIconUpload";
 import { uploadGlobalPromotionPackageImage } from "@/app/actions/style-images";
 import {
@@ -386,29 +379,56 @@ export default function GlobalPromotionPackageManagement() {
         </div>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        {editingPackage && (
-        <DialogContent className="sm:max-w-[640px] max-h-[90vh] flex flex-col rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-white p-8 text-zinc-900 relative shrink-0">
-            <Gift className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12 pointer-events-none" />
-            <DialogHeader className="relative z-10">
-              <DialogTitle className="text-2xl font-bold tracking-tight">
-                {editingPackage?.id ? "Edit Promotion Package" : "Define Promotion Package"}
-              </DialogTitle>
-              <DialogDescription className="text-zinc-500 font-medium">
-                Salon owners can import and publish this template within their subscription limits.
-              </DialogDescription>
-            </DialogHeader>
+      <DashboardModal
+        open={isDialogOpen && !!editingPackage}
+        onClose={() => setIsDialogOpen(false)}
+        size="lg"
+        title={editingPackage?.id ? "Edit Promotion Package" : "Define Promotion Package"}
+        description="Salon owners can import and publish this template within their subscription limits."
+        footer={
+          <div className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsDialogOpen(false)}
+              className="flex-1 rounded-xl font-bold text-zinc-600 min-h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="admin-promotion-package-form"
+              disabled={isSaving}
+              className="flex-[2] rounded-xl bg-brand hover:bg-brand-hover text-zinc-900 font-bold min-h-11"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Publish Global Package"
+              )}
+            </Button>
           </div>
-
-          <div className="p-8 space-y-6 bg-white flex-1 min-h-0 overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+        }
+      >
+        {editingPackage && (
+          <form
+            id="admin-promotion-package-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSave();
+            }}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2 space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Package Image
                 </label>
                 <GlobalServiceIconUpload
-                  value={editingPackage?.image_url || ""}
+                  value={editingPackage.image_url || ""}
                   onChange={(url) => setEditingPackage({ ...editingPackage, image_url: url })}
                   onClear={() => setEditingPackage({ ...editingPackage, image_url: "" })}
                   uploadAction={uploadGlobalPromotionPackageImage}
@@ -419,29 +439,29 @@ export default function GlobalPromotionPackageManagement() {
                 </p>
               </div>
 
-              <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="sm:col-span-2 space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Package Name *
                 </label>
                 <Input
-                  value={editingPackage?.name || ""}
+                  value={editingPackage.name || ""}
                   onChange={(e) => setEditingPackage({ ...editingPackage, name: e.target.value })}
                   placeholder="e.g. Bridal Glow Premium Bundle"
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium"
+                  className="h-11 rounded-xl"
                 />
               </div>
 
-              <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="sm:col-span-2 space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Promotion Type *
                 </label>
                 <Select
-                  value={editingPackage?.promotion_type_id || undefined}
+                  value={editingPackage.promotion_type_id || undefined}
                   onValueChange={(val) => setEditingPackage({ ...editingPackage, promotion_type_id: val })}
                 >
-                  <SelectTrigger className="h-12 bg-zinc-50 border-none rounded-xl font-medium">
+                  <SelectTrigger className="h-11 rounded-xl bg-white">
                     <SelectValue placeholder="Select promotion type">
-                      {editingPackage?.promotion_type_id &&
+                      {editingPackage.promotion_type_id &&
                       promotionTypes.find((type) => type.id === editingPackage.promotion_type_id) ? (
                         <span>
                           {promotionTypes.find((type) => type.id === editingPackage.promotion_type_id)?.name}
@@ -466,122 +486,98 @@ export default function GlobalPromotionPackageManagement() {
                   </SelectContent>
                 </Select>
                 <p className="text-[10px] text-zinc-400 pl-1">
-                  Package icon is inherited from the selected promotion type.
+                  Without a package image, the promotion type icon is used as a fallback.
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Package Price (LKR)
                 </label>
                 <Input
                   type="number"
-                  value={editingPackage?.package_price || ""}
+                  value={editingPackage.package_price || ""}
                   onChange={(e) => setEditingPackage({ ...editingPackage, package_price: e.target.value })}
                   placeholder="18500"
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium"
+                  className="h-11 rounded-xl"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Original Price (LKR)
                 </label>
                 <Input
                   type="number"
-                  value={editingPackage?.original_price || ""}
+                  value={editingPackage.original_price || ""}
                   onChange={(e) => setEditingPackage({ ...editingPackage, original_price: e.target.value })}
                   placeholder="22700"
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium"
+                  className="h-11 rounded-xl"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Start Date
                 </label>
                 <Input
                   type="date"
-                  value={editingPackage?.start_date || ""}
+                  value={editingPackage.start_date || ""}
                   onChange={(e) => setEditingPackage({ ...editingPackage, start_date: e.target.value })}
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium"
+                  className="h-11 rounded-xl"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   End Date
                 </label>
                 <Input
                   type="date"
-                  value={editingPackage?.end_date || ""}
+                  value={editingPackage.end_date || ""}
                   onChange={(e) => setEditingPackage({ ...editingPackage, end_date: e.target.value })}
-                  className="h-12 bg-zinc-50 border-none rounded-xl font-medium"
+                  className="h-11 rounded-xl"
                 />
               </div>
-              <div className="col-span-2">
+
+              <div className="sm:col-span-2">
                 <p className="text-[10px] text-zinc-400 pl-1">
                   Tentative promotion window copied to salon packages on import.{" "}
-                  {editingPackage?.end_date
+                  {editingPackage.end_date
                     ? getRemainingDaysLabel(editingPackage.end_date)
                     : "Set an end date to show remaining days."}
                 </p>
               </div>
 
-              <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="sm:col-span-2 space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Included Services (one per line)
                 </label>
                 <Textarea
-                  value={editingPackage?.included_services_text || ""}
+                  value={editingPackage.included_services_text || ""}
                   onChange={(e) =>
                     setEditingPackage({ ...editingPackage, included_services_text: e.target.value })
                   }
                   placeholder={"Luxury Hair Spa\nComplete Hair Makeover\nClassic Mani-Pedi"}
-                  className="bg-zinc-50 border-none rounded-xl font-medium min-h-[120px]"
+                  className="rounded-xl min-h-[120px]"
                 />
               </div>
 
-              <div className="col-span-2 space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <div className="sm:col-span-2 space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Description
                 </label>
                 <Textarea
-                  value={editingPackage?.description || ""}
+                  value={editingPackage.description || ""}
                   onChange={(e) => setEditingPackage({ ...editingPackage, description: e.target.value })}
                   placeholder="What makes this promotional package special?"
-                  className="bg-zinc-50 border-none rounded-xl font-medium min-h-[80px]"
+                  className="rounded-xl min-h-[80px]"
                 />
               </div>
             </div>
-
-            <DialogFooter className="pt-4 gap-3">
-              <Button
-                variant="ghost"
-                onClick={() => setIsDialogOpen(false)}
-                className="flex-1 h-12 rounded-xl font-bold text-zinc-500"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-[2] bg-brand hover:bg-brand-hover text-zinc-900 h-12 rounded-xl font-bold shadow-lg"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Saving...
-                  </>
-                ) : (
-                  "Publish Global Package"
-                )}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
+          </form>
         )}
-      </Dialog>
+      </DashboardModal>
     </div>
   );
 }
