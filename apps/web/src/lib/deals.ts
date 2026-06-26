@@ -34,6 +34,7 @@ export type SalonDealRow = {
   status: string | null;
   promotion_type: string | null;
   promotion_type_id: string | null;
+  image_url: string | null;
   salon: DealSalon | null;
 };
 
@@ -164,6 +165,7 @@ export function normalizeDealRows(
         status: pkg.status ?? null,
         promotion_type: pkg.promotion_type ?? null,
         promotion_type_id: pkg.promotion_type_id ?? null,
+        image_url: typeof pkg.image_url === "string" && pkg.image_url.trim() ? pkg.image_url.trim() : null,
         salon,
       } satisfies SalonDealRow;
     })

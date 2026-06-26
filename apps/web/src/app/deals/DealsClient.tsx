@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Gift, MapPin, Search, Sparkles, Tag } from "lucide-react";
+import { ArrowRight, Gift, LayoutGrid, MapPin, Search, Sparkles, Tag } from "lucide-react";
 import {
   getDealLocationKey,
   getDealLocationLabel,
@@ -11,6 +11,13 @@ import {
   type SalonDealRow,
 } from "@/lib/deals";
 import { formatDisplayDate } from "@/lib/promotion-package-dates";
+import { GlobalServiceIconPreview } from "../../components/admin/GlobalServiceIconUpload";
+
+const dealIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  LayoutGrid,
+  Gift,
+  Tag,
+};
 
 type Props = {
   deals: SalonDealRow[];
@@ -168,7 +175,14 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                           className="group bg-[#ffc800] border border-amber-500/50 rounded-3xl p-6 shadow-md shadow-amber-200/60 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >
                           <div className="flex flex-col gap-4">
-                            <div className="min-w-0 flex-1">
+                            <div className="flex items-start gap-4 min-w-0">
+                              <GlobalServiceIconPreview
+                                iconImageUrl={deal.image_url}
+                                iconMap={dealIconMap}
+                                iconName="Gift"
+                                className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border border-black/10"
+                              />
+                              <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2 mb-2">
                                 <h3 className="text-base font-bold text-zinc-950 group-hover:text-black transition-colors">
                                   {deal.name}
@@ -214,6 +228,7 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                                   {deal.end_date ? ` – ${formatDisplayDate(deal.end_date)}` : ""}
                                 </p>
                               )}
+                              </div>
                             </div>
 
                             <div className="flex items-center justify-between pt-4 border-t border-black/10">

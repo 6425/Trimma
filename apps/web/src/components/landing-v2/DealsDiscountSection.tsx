@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Gift, Loader2, Percent } from "lucide-react";
 import { supabase } from "../../config/supabase";
 import {
@@ -25,7 +26,7 @@ export function DealsDiscountSection() {
         const { data: packages, error } = await supabase
           .from("salon_promotion_packages")
           .select(
-            "id, salon_id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, promotion_type_id"
+            "id, salon_id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, promotion_type_id, image_url"
           )
           .eq("status", "active")
           .order("created_at", { ascending: false });
@@ -118,7 +119,22 @@ export function DealsDiscountSection() {
                   href={`/salons/${salon.slug}`}
                   className="bg-[#ffc800] rounded-3xl border border-amber-500/50 shadow-md shadow-amber-200/60 overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="p-6 relative min-h-[140px]">
+                  <div className="relative h-36 w-full bg-black/5 shrink-0">
+                    {deal.image_url ? (
+                      <Image
+                        src={deal.image_url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 25vw"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Gift className="w-10 h-10 text-zinc-900/30" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 relative min-h-[120px]">
                     <div className="absolute top-4 right-4 bg-black/10 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 text-zinc-950">
                       <Percent className="w-3 h-3" />
                       {discount > 0 ? `${discount}% OFF` : "Deal"}

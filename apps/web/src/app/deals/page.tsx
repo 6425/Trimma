@@ -18,7 +18,7 @@ async function loadDealsPageData() {
       supabase
         .from("salon_promotion_packages")
         .select(
-          "id, salon_id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, promotion_type_id"
+          "id, salon_id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, promotion_type_id, image_url"
         )
         .eq("status", "active")
         .order("created_at", { ascending: false }),
