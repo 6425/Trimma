@@ -89,6 +89,10 @@ export async function uploadGlobalServiceImage(formData: FormData) {
   return uploadPublicAssetImage(formData, "global-services", "gsvc");
 }
 
+export async function uploadGlobalPromotionPackageImage(formData: FormData) {
+  return uploadPublicAssetImage(formData, "global-promotions", "gpromo");
+}
+
 export async function uploadSalonServiceImage(formData: FormData, salonId: string) {
   if (!salonId) {
     return { success: false as const, error: "Salon ID is required for service image upload." };

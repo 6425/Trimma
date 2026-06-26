@@ -58,6 +58,7 @@ type SelectedPackageState = {
   promotionTypeId: string;
   package_price: string;
   original_price: string;
+  image_url: string;
   included_services_text: string;
   start_date: string;
   end_date: string;
@@ -171,6 +172,7 @@ export default function PackagesPage() {
             promotionTypeId: pkg.promotion_type_id || "",
             package_price: (pkg.package_price || 0).toString(),
             original_price: (pkg.original_price || 0).toString(),
+            image_url: pkg.image_url || "",
             included_services_text: formatIncludedServices(pkg.included_services),
             start_date: toDateInputValue(pkg.start_date),
             end_date: toDateInputValue(pkg.end_date),
@@ -259,6 +261,7 @@ export default function PackagesPage() {
           description: info.description,
           package_price: parseFloat(info.package_price) || 0,
           original_price: parseFloat(info.original_price) || 0,
+          image_url: info.image_url || null,
           included_services: parseIncludedServices(info.included_services_text),
           start_date,
           end_date,

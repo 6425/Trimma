@@ -14,6 +14,7 @@ export type SavePromotionPackageInput = {
   original_price?: string | number | null;
   included_services?: string[];
   icon?: string | null;
+  image_url?: string | null;
   start_date?: string | null;
   end_date?: string | null;
   is_active?: boolean;
@@ -45,6 +46,7 @@ function buildPayload(input: SavePromotionPackageInput) {
     original_price: input.original_price ? Number(input.original_price) : 0,
     included_services: input.included_services || [],
     icon: input.icon || "Gift",
+    image_url: input.image_url?.trim() || null,
     start_date,
     end_date,
     is_active: input.is_active !== false,

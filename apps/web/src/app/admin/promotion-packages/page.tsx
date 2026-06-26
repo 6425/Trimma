@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { GlobalServiceIconUpload } from "@/components/admin/GlobalServiceIconUpload";
+import { uploadGlobalPromotionPackageImage } from "@/app/actions/style-images";
 import {
   deletePromotionPackage,
   fetchPromotionPackagesCatalog,
@@ -114,6 +116,7 @@ export default function GlobalPromotionPackageManagement() {
         slug: pkg.slug || "",
         promotion_type_id: pkg.promotion_type_id || "",
         description: pkg.description || "",
+        image_url: pkg.image_url || "",
         package_price: pkg.package_price ?? "",
         original_price: pkg.original_price ?? "",
         included_services_text: formatIncludedServices(pkg.included_services),
@@ -127,6 +130,7 @@ export default function GlobalPromotionPackageManagement() {
         slug: "",
         promotion_type_id: "",
         description: "",
+        image_url: "",
         package_price: "",
         original_price: "",
         included_services_text: "",
@@ -169,6 +173,7 @@ export default function GlobalPromotionPackageManagement() {
           original_price: editingPackage.original_price,
           included_services,
           icon: selectedType?.icon || "Gift",
+          image_url: editingPackage.image_url || null,
           start_date: editingPackage.start_date,
           end_date: editingPackage.end_date,
           is_active: editingPackage.is_active !== false,
@@ -383,9 +388,9 @@ export default function GlobalPromotionPackageManagement() {
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {editingPackage && (
-        <DialogContent className="sm:max-w-[640px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-          <div className="bg-white p-8 text-zinc-900 relative">
-            <Gift className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12" />
+        <DialogContent className="sm:max-w-[640px] max-h-[90vh] flex flex-col rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-white p-8 text-zinc-900 relative shrink-0">
+            <Gift className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 rotate-12 pointer-events-none" />
             <DialogHeader className="relative z-10">
               <DialogTitle className="text-2xl font-bold tracking-tight">
                 {editingPackage?.id ? "Edit Promotion Package" : "Define Promotion Package"}
@@ -396,8 +401,24 @@ export default function GlobalPromotionPackageManagement() {
             </DialogHeader>
           </div>
 
-          <div className="p-8 space-y-6 bg-white max-h-[70vh] overflow-y-auto">
+          <div className="p-8 space-y-6 bg-white flex-1 min-h-0 overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 space-y-2">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                  Package Image
+                </label>
+                <GlobalServiceIconUpload
+                  value={editingPackage?.image_url || ""}
+                  onChange={(url) => setEditingPackage({ ...editingPackage, image_url: url })}
+                  onClear={() => setEditingPackage({ ...editingPackage, image_url: "" })}
+                  uploadAction={uploadGlobalPromotionPackageImage}
+                  uploadContextLabel="promotion package"
+                />
+                <p className="text-[10px] text-zinc-400 pl-1">
+                  Square image shown on salon pages and Facebook shares when salons import this package.
+                </p>
+              </div>
+
               <div className="col-span-2 space-y-2">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                   Package Name *
