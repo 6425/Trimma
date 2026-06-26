@@ -415,7 +415,37 @@ export async function rejectOwnerRescheduleRequest(bookingId: string) {
 export async function insertSalonPromotionPackages(payloads: Record<string, unknown>[]) {
   const promotionSyncs: PendingPromotionSync[] = [];
   const result = await withSalonDb(async (supabase, ctx) => {
-    const rows = payloads.map((row) => ({ ...row, salon_id: ctx.salonId }));
+    const globalIds = payloads
+      .map((row) => row.global_promotion_package_id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+    let existingGlobalIds = new Set<string>();
+    if (globalIds.length > 0) {
+      const { data: existingRows, error: existingError } = await supabase
+        .from("salon_promotion_packages")
+        .select("global_promotion_package_id")
+        .eq("salon_id", ctx.salonId)
+        .in("global_promotion_package_id", globalIds);
+      if (existingError) throw new Error(existingError.message);
+      existingGlobalIds = new Set(
+        (existingRows || [])
+          .map((row) => row.global_promotion_package_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0)
+      );
+    }
+
+    const rows = payloads
+      .filter((row) => {
+        const globalId = row.global_promotion_package_id;
+        if (typeof globalId !== "string" || !globalId) return true;
+        return !existingGlobalIds.has(globalId);
+      })
+      .map((row) => ({ ...row, salon_id: ctx.salonId }));
+
+    if (rows.length === 0) {
+      throw new Error("These promotion packages are already published in your salon.");
+    }
+
     const { data, error } = await supabase
       .from("salon_promotion_packages")
       .insert(rows)
@@ -494,11 +524,44 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
       throw new Error(STAFF_REQUIRED_BEFORE_SERVICES_MSG);
     }
 
-    const rows = payloads.map((row) => ({
-      ...row,
-      salon_id: ctx.salonId,
-      status: "inactive",
-    }));
+    const globalIds = payloads
+      .map((row) => row.global_service_id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+    let existingGlobalIds = new Set<string>();
+    if (globalIds.length > 0) {
+      const { data: existingRows, error: existingError } = await supabase
+        .from("services")
+        .select("global_service_id")
+        .eq("salon_id", ctx.salonId)
+        .in("global_service_id", globalIds);
+      if (existingError) throw new Error(existingError.message);
+      existingGlobalIds = new Set(
+        (existingRows || [])
+          .map((row) => row.global_service_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0)
+      );
+    }
+
+    const rows = payloads
+      .filter((row) => {
+        const globalId = row.global_service_id;
+        if (typeof globalId !== "string" || !globalId) return true;
+        return !existingGlobalIds.has(globalId);
+      })
+      .map((row) => {
+        const { category_id: _categoryId, ...rest } = row;
+        return {
+          ...rest,
+          salon_id: ctx.salonId,
+          status: "inactive",
+        };
+      });
+
+    if (rows.length === 0) {
+      throw new Error("These master services are already in your catalog.");
+    }
+
     const { error } = await supabase.from("services").insert(rows);
     if (error) throw new Error(error.message);
     await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);

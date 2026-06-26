@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Scissors, Search, Loader2, Trash2, Edit2, Sparkles, Ban, LayoutGrid, Users } from "lucide-react";
 import Link from "next/link";
@@ -148,6 +148,33 @@ export default function DashboardServices() {
   const catalogServices = services.filter((service) => (service.status || "").toLowerCase() !== "deleted");
   const activeServiceCount = catalogServices.filter((service) => service.status === "active").length;
 
+  const importedGlobalServiceIds = useMemo(
+    () =>
+      new Set(
+        catalogServices
+          .map((service) => service.global_service_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0)
+      ),
+    [catalogServices]
+  );
+
+  const importableGlobalServicesForTab = useMemo(
+    () =>
+      globalServices.filter(
+        (service) =>
+          service.category_id === activeCategoryTab && !importedGlobalServiceIds.has(service.id)
+      ),
+    [globalServices, activeCategoryTab, importedGlobalServiceIds]
+  );
+
+  const openImportModal = () => {
+    if (!hasActiveStaff) {
+      toast.error("Add at least one staff member in the Staff menu before importing services.");
+      return;
+    }
+    setShowImportModal(true);
+  };
+
   const handleToggleSelect = (id: string) => {
     const isCurrentlyChecked = selectedServices[id]?.checked || false;
     const targetService = selectedServices[id];
@@ -243,7 +270,6 @@ export default function DashboardServices() {
         return {
           salon_id: salon.id,
           global_service_id: id,
-          category_id: globalSvc?.category_id || null,
           name: info.name,
           category: info.categoryName,
           price: parseFloat(info.price) || 1500,
@@ -332,15 +358,12 @@ export default function DashboardServices() {
       return;
     }
 
-    const matchedCategory = allowedCategories.find((c) => c.name === customForm.category);
-
     try {
       setAddingCustom(true);
       const result = await insertSalonServices([
         {
           name: customForm.name.trim(),
           category: customForm.category,
-          category_id: matchedCategory?.id || null,
           price: parseFloat(customForm.price) || 0,
           duration_min: parseInt(customForm.duration_min, 10) || 30,
           description: customForm.description.trim() || null,
@@ -484,13 +507,7 @@ export default function DashboardServices() {
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 
-            onClick={() => {
-              if (!hasActiveStaff) {
-                toast.error("Add at least one staff member before importing services.");
-                return;
-              }
-              setShowImportModal(true);
-            }}
+            onClick={openImportModal}
             disabled={!hasActiveStaff}
             variant="dark"
             className="flex-1 md:flex-none rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50"
@@ -548,9 +565,10 @@ export default function DashboardServices() {
                Start by adding custom services or import from the allowed master catalog.
             </p>
             <Button 
-              onClick={() => setShowImportModal(true)}
+              onClick={openImportModal}
+              disabled={!hasActiveStaff}
               variant="dark"
-              className="rounded-xl font-bold"
+              className="rounded-xl font-bold disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4 mr-2" /> Import from Master Catalog
             </Button>
@@ -716,14 +734,17 @@ export default function DashboardServices() {
         }
       >
         <div className="space-y-4">
-          {globalServices.filter((s) => s.category_id === activeCategoryTab).length === 0 ? (
+          {importableGlobalServicesForTab.length === 0 ? (
             <div className="py-16 text-center text-zinc-400">
               <Scissors className="w-12 h-12 mx-auto mb-3 opacity-20" />
-              <p className="font-medium text-sm">No master services loaded under this category.</p>
+              <p className="font-medium text-sm">
+                {globalServices.some((service) => service.category_id === activeCategoryTab)
+                  ? "No master services left to import in this category — they are already in your catalog."
+                  : "No master services loaded under this category."}
+              </p>
             </div>
           ) : (
-            globalServices
-              .filter((s) => s.category_id === activeCategoryTab)
+            importableGlobalServicesForTab
               .map((s) => {
                 const isChecked = selectedServices[s.id]?.checked || false;
                 return (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Tag,
@@ -362,7 +362,24 @@ export default function PackagesPage() {
     }
   };
 
-  const filteredGlobalForTab = globalPackages.filter((pkg) => pkg.promotion_type_id === activeTypeTab);
+  const importedGlobalPackageIds = useMemo(
+    () =>
+      new Set(
+        packages
+          .map((pkg) => pkg.global_promotion_package_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0)
+      ),
+    [packages]
+  );
+
+  const filteredGlobalForTab = useMemo(
+    () =>
+      globalPackages.filter(
+        (pkg) =>
+          pkg.promotion_type_id === activeTypeTab && !importedGlobalPackageIds.has(pkg.id)
+      ),
+    [globalPackages, activeTypeTab, importedGlobalPackageIds]
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -617,7 +634,9 @@ export default function PackagesPage() {
         <div className="space-y-4">
           {filteredGlobalForTab.length === 0 ? (
             <p className="text-center text-zinc-400 text-sm py-12 px-4">
-              No global packages in this promotion type yet.
+              {globalPackages.some((pkg) => pkg.promotion_type_id === activeTypeTab)
+                ? "No packages left to import in this promotion type — you already published them all."
+                : "No global packages in this promotion type yet."}
             </p>
           ) : (
             filteredGlobalForTab.map((pkg) => {
@@ -815,6 +834,17 @@ export default function PackagesPage() {
                   {getRemainingDaysLabel(editForm.end_date)}
                 </p>
               )}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
+                  Description
+                </label>
+                <Textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  placeholder="What makes this promotional package special?"
+                  className="rounded-xl min-h-[80px]"
+                />
+              </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
                   Included Services
