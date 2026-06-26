@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { GlobalServiceIconUpload } from "@/components/admin/GlobalServiceIconUpload";
+import { GlobalServiceIconUpload } from "../../../components/admin/GlobalServiceIconUpload";
 import { uploadGlobalPromotionPackageImage } from "@/app/actions/style-images";
 import {
   deletePromotionPackage,
