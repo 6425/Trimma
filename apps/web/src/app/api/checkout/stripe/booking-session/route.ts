@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
+import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
+import { getClientIp } from "@/lib/email/rate-limit";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimit = checkCheckoutRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait and try again." },
+        {
+          status: 429,
+          headers: rateLimit.retryAfterSec
+            ? { "Retry-After": String(rateLimit.retryAfterSec) }
+            : undefined,
+        }
+      );
+    }
+
     const body = await request.json();
     const {
       customer,

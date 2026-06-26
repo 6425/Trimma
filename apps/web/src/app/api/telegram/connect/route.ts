@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
-import { getRequestSession } from "@/lib/server-request-auth";
 import {
   createTelegramConnectLink,
   getTelegramConnectStatus,
   syncTelegramConnectForUser,
 } from "@/app/actions/telegram-connect";
+import {
+  isRequestAuthError,
+  requireRequestRoles,
+} from "@/lib/server-request-auth";
 
 export async function GET(request: Request) {
-  const authSession = await getRequestSession(request);
-  if (!authSession?.email) {
-    return NextResponse.json({ success: false, error: "Please sign in first." }, { status: 401 });
+  const auth = await requireRequestRoles(request, ["salon_owner"]);
+  if (isRequestAuthError(auth)) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
-  const status = await getTelegramConnectStatus(authSession.email);
+  const status = await getTelegramConnectStatus(auth.email || "");
   if (!status.success) {
     return NextResponse.json(status, { status: 500 });
   }
@@ -21,9 +24,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authSession = await getRequestSession(request);
-  if (!authSession?.email) {
-    return NextResponse.json({ success: false, error: "Please sign in first." }, { status: 401 });
+  const auth = await requireRequestRoles(request, ["salon_owner"]);
+  if (isRequestAuthError(auth)) {
+    return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
   }
 
   let action = "link";
@@ -34,11 +37,13 @@ export async function POST(request: Request) {
     action = "link";
   }
 
+  const ownerEmail = auth.email || "";
+
   if (action === "sync") {
-    const result = await syncTelegramConnectForUser(authSession.email);
+    const result = await syncTelegramConnectForUser(ownerEmail);
     return NextResponse.json(result, { status: result.success ? 200 : 500 });
   }
 
-  const result = await createTelegramConnectLink(authSession.email);
+  const result = await createTelegramConnectLink(ownerEmail);
   return NextResponse.json(result, { status: result.success ? 200 : 500 });
 }

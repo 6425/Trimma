@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { absoluteUrl } from "@/lib/site-url";
 import Image from "next/image";
 import Link from "next/link";
 import { EMAIL_BODY_DEFAULTS } from "@/lib/email-templates";
@@ -133,7 +134,7 @@ const RESERVATION_DEMO_VARS = {
   service_name: "Classic Haircut",
   deposit_paid: "360",
   balance_to_pay: "1,440",
-  dashboard_link: "https://beta.trimma.io/customer",
+  dashboard_link: absoluteUrl("/customer"),
 };
 
 type NotificationLang = "en" | "si" | "ta";

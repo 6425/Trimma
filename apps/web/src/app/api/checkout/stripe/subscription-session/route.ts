@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireSalonOwnerFromCookies();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
+
     const body = await request.json();
     const { customer, chargeAmount, planName, billingCycle } = body;
 
@@ -14,12 +20,13 @@ export async function POST(request: Request) {
       checkoutType: "subscription",
       amount: Number(chargeAmount),
       description: `Trimma ${planName} plan (${billingCycle})`,
-      customerEmail: customer?.email || "",
+      customerEmail: customer?.email || auth.email || "",
       payload: {
         planName,
         billingCycle,
         chargeAmount,
         customer,
+        salonId: auth.salonId,
       },
     });
 

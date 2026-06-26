@@ -43,6 +43,7 @@ function SubscriptionCheckoutForm() {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
   const [stripePendingId, setStripePendingId] = useState<string | null>(null);
+  const [stripePendingToken, setStripePendingToken] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -134,6 +135,7 @@ function SubscriptionCheckoutForm() {
         setStripeClientSecret(result.clientSecret);
         setStripePublishableKey(result.publishableKey);
         setStripePendingId(result.pendingId || null);
+        setStripePendingToken(result.pendingToken || null);
         setStripeEnvironment(result.environment || stripeEnvironment);
       } catch (error) {
         if (!cancelled) {
@@ -151,7 +153,7 @@ function SubscriptionCheckoutForm() {
   }, [planDetails, stripeEnabled, billingCycle, chargeAmount]);
 
   useEffect(() => {
-    if (!stripePendingId || !planDetails) return;
+    if (!stripePendingId || !stripePendingToken || !planDetails) return;
 
     const timer = window.setTimeout(() => {
       void fetch("/api/checkout/stripe/update-pending", {
@@ -159,6 +161,7 @@ function SubscriptionCheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pendingId: stripePendingId,
+          pendingToken: stripePendingToken,
           planName: planDetails.name,
           billingCycle,
           chargeAmount,
@@ -168,7 +171,7 @@ function SubscriptionCheckoutForm() {
     }, 400);
 
     return () => window.clearTimeout(timer);
-  }, [customerDetails, stripePendingId, planDetails, billingCycle, chargeAmount]);
+  }, [customerDetails, stripePendingId, stripePendingToken, planDetails, billingCycle, chargeAmount]);
 
   if (loading) {
     return (

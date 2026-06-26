@@ -47,6 +47,7 @@ export type CheckoutDataResult =
       stripePublishableKey: string | null;
       stripeClientSecret: string | null;
       stripePendingId: string | null;
+      stripePendingToken: string | null;
       stripeSessionError: string | null;
     }
   | { success: false; missingDraft?: boolean; error: string };
@@ -120,6 +121,7 @@ export async function fetchBookingCheckoutData(
           end_date: null,
           status: "active",
           promotion_type: null,
+          image_url: null,
         } as any;
       }
 
@@ -211,6 +213,7 @@ export async function fetchBookingCheckoutData(
 
     let stripeClientSecret: string | null = null;
     let stripePendingId: string | null = null;
+    let stripePendingToken: string | null = null;
     let stripeSessionError: string | null = null;
 
     if (stripeEnabled && stripeKeys.publishableKey) {
@@ -267,6 +270,7 @@ export async function fetchBookingCheckoutData(
 
         stripeClientSecret = stripeSession.clientSecret;
         stripePendingId = stripeSession.pendingId;
+        stripePendingToken = stripeSession.pendingToken;
       } catch (error) {
         stripeSessionError =
           error instanceof Error ? error.message : "Could not prepare Stripe checkout.";
@@ -289,6 +293,7 @@ export async function fetchBookingCheckoutData(
       stripePublishableKey: stripeKeys.publishableKey,
       stripeClientSecret,
       stripePendingId,
+      stripePendingToken,
       stripeSessionError,
     };
   } catch (err) {

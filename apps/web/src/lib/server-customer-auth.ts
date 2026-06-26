@@ -1,6 +1,10 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { getSalonAccessTokenFromCookies } from "@/lib/server-salon-auth";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
+import type { TrimmaUserRole } from "@/lib/auth-routes";
+
+const ALLOWED_CUSTOMER_API_ROLES = new Set<TrimmaUserRole>(["customer", "salon_owner"]);
 
 export type CustomerContext = {
   accessToken: string;
@@ -31,6 +35,11 @@ export async function requireCustomerFromCookies(): Promise<CustomerContext | { 
   }
 
   const email = normalizeEmail(user.email)!;
+  const role = await resolveTrimmaUserRoleServer(user.id, email);
+
+  if (!role || !ALLOWED_CUSTOMER_API_ROLES.has(role)) {
+    return { error: "This endpoint is only available for customer accounts." };
+  }
 
   return {
     accessToken,

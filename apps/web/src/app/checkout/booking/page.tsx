@@ -45,6 +45,7 @@ function BookingCheckoutForm() {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [stripePublishableKey, setStripePublishableKey] = useState<string | null>(null);
   const [stripePendingId, setStripePendingId] = useState<string | null>(null);
+  const [stripePendingToken, setStripePendingToken] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
     firstName: "",
     lastName: "",
@@ -113,6 +114,7 @@ function BookingCheckoutForm() {
         setStripePublishableKey(result.stripePublishableKey);
         setStripeClientSecret(result.stripeClientSecret);
         setStripePendingId(result.stripePendingId);
+        setStripePendingToken(result.stripePendingToken);
         if (result.stripeSessionError) {
           setStripeError(result.stripeSessionError);
         }
@@ -187,12 +189,13 @@ function BookingCheckoutForm() {
     });
 
   const syncPendingCheckout = async () => {
-    if (!stripePendingId || !checkoutData) return;
+    if (!stripePendingId || !stripePendingToken || !checkoutData) return;
     const response = await fetch("/api/checkout/stripe/update-pending", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         pendingId: stripePendingId,
+        pendingToken: stripePendingToken,
         ...buildStripeSessionBody(checkoutData, customerDetails),
       }),
     });
@@ -203,7 +206,7 @@ function BookingCheckoutForm() {
   };
 
   useEffect(() => {
-    if (!stripePendingId || !checkoutData) return;
+    if (!stripePendingId || !stripePendingToken || !checkoutData) return;
 
     const timer = window.setTimeout(() => {
       void fetch("/api/checkout/stripe/update-pending", {
@@ -211,6 +214,7 @@ function BookingCheckoutForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pendingId: stripePendingId,
+          pendingToken: stripePendingToken,
           ...buildStripeSessionBody(checkoutData, customerDetails),
         }),
       }).catch((error) => {
@@ -219,7 +223,7 @@ function BookingCheckoutForm() {
     }, 400);
 
     return () => window.clearTimeout(timer);
-  }, [customerDetails, stripePendingId, checkoutData, totalDuration]);
+  }, [customerDetails, stripePendingId, stripePendingToken, checkoutData, totalDuration]);
 
   if (loading) {
     return (

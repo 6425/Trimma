@@ -1,17 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from '@/config/supabase-admin';
 import { requirePlatformAdminFromCookies } from '@/lib/server-admin-auth';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
 // Dummy services library based on category
 const DEFAULT_SERVICES: Record<string, any[]> = {
   "Barber Salon": [
@@ -53,6 +42,8 @@ export async function POST(request: Request) {
     if (!salonId) {
       return NextResponse.json({ error: 'Salon ID is required' }, { status: 400 });
     }
+
+    const supabaseAdmin = createSupabaseAdminClient();
 
     // 0. Fetch Free Subscription Plan limits
     const { data: freePlan } = await supabaseAdmin

@@ -72,49 +72,25 @@ const iconMap: Record<string, any> = {
   Wind, Wifi, Car, Armchair, Sofa, Coffee, Star, Shield, Sun, CheckCircle, Smartphone, LayoutGrid
 };
 
-// --- MOCK UI FLAIR DATA ---
-// Data not yet supported by DB but required for premium UI look
-const mockExtraData = {
-  rating: 4.9,
-  reviews: 234,
-  status: "Open Now",
-  logo: "https://api.dicebear.com/7.x/initials/svg?seed=Trimma&backgroundColor=ffc107&textColor=000000",
-  featuredImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2940&auto=format&fit=crop",
-  gallery: [
-    "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1521590832167-7bfcfaa6362f?q=80&w=1000&auto=format&fit=crop",
-  ],
-  verticalGallery: [
-    "https://images.unsplash.com/photo-1620331311520-246422fd82f9?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1593702275687-f8b402bf1ef5?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?q=80&w=1000&auto=format&fit=crop"
-  ],
-  extendedGallery: [
-    "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1600948836101-f9ff510529d2?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1580614488960-983de32beec0?q=80&w=1000&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=1000&auto=format&fit=crop"
-  ],
-  subscriptionPlan: 'Pro', 
-  about: "Experience the pinnacle of grooming. Our expert professionals specialize in high quality services. Relax and enjoy a complimentary beverage while our skilled team elevates your style.",
-  amenities: [
-    { icon: <Wifi className="w-4 h-4"/>, name: "Free WiFi" },
-    { icon: <Car className="w-4 h-4"/>, name: "Free Parking" },
-    { icon: <Coffee className="w-4 h-4"/>, name: "Complimentary Drinks" },
-    { icon: <CreditCard className="w-4 h-4"/>, name: "Card Payments" },
-    { icon: <CheckCircle2 className="w-4 h-4"/>, name: "Air Conditioned" }
-  ],
-  hours: [
-    { day: "Monday", time: "09:00 AM - 08:00 PM" },
-    { day: "Tuesday", time: "09:00 AM - 08:00 PM" },
-    { day: "Wednesday", time: "09:00 AM - 08:00 PM" },
-    { day: "Thursday", time: "09:00 AM - 08:00 PM" },
-    { day: "Friday", time: "09:00 AM - 09:00 PM" },
-    { day: "Saturday", time: "09:00 AM - 09:00 PM" },
-    { day: "Sunday", time: "Closed" },
-  ]
-};
+function getSalonInitials(name: string | null | undefined): string {
+  const parts = (name || "Salon")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("") || "S";
+}
+
+function resolveSalonAbout(salon: Record<string, unknown>): string | null {
+  const description =
+    typeof salon.description === "string" ? salon.description.trim() : "";
+  if (description) return description;
+
+  const summary = typeof salon.summary === "string" ? salon.summary.trim() : "";
+  if (summary) return summary;
+
+  return null;
+}
 
 
 type SalonPageInitialData = {
@@ -564,10 +540,14 @@ export default function SalonPage({
   const featuredImages = Array.isArray(salon.featured_images)
     ? salon.featured_images.filter((item: unknown) => typeof item === "string" && item.trim())
     : [];
-  const coverImage = salon.cover_url || mockExtraData.featuredImage;
-  const heroImage = salon.hero_url || mockExtraData.gallery[0];
-  const galleryImage1 = featuredImages.length > 0 ? featuredImages[0] : mockExtraData.gallery[1];
-  const logoImage = salon.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${salon.name}&backgroundColor=ffc107&textColor=000000`;
+  const heroImageUrl =
+    (typeof salon.hero_url === "string" && salon.hero_url.trim()) ||
+    (typeof salon.cover_url === "string" && salon.cover_url.trim()) ||
+    null;
+  const logoImage =
+    typeof salon.logo_url === "string" && salon.logo_url.trim() ? salon.logo_url.trim() : null;
+  const salonInitials = getSalonInitials(typeof salon.name === "string" ? salon.name : null);
+  const salonAbout = resolveSalonAbout(salon);
   const displayRating = reviewSummary.averageRating;
   const displayReviewCount = reviewSummary.totalReviews;
 
@@ -576,8 +556,9 @@ export default function SalonPage({
   const ownerContactEmail = resolvePublicSalonOwnerEmail(salon.owner_email, salon.owner_gmail);
 
   // --- Dynamic Working Hours & Status Calculation ---
-  let parsedWorkingHours = mockExtraData.hours;
-  let currentStatus = "Closed";
+  let parsedWorkingHours: Array<{ day: string; time: string }> = [];
+  let hasWorkingHours = false;
+  let currentStatus = "Hours not listed";
 
   if (salon) {
     try {
@@ -617,7 +598,11 @@ export default function SalonPage({
       console.error("Error parsing working hours", e);
     }
 
-    if (salon.status !== 'active') {
+    hasWorkingHours = parsedWorkingHours.length > 0;
+
+    if (!hasWorkingHours) {
+      currentStatus = "Hours not listed";
+    } else if (salon.status !== 'active') {
       currentStatus = "Closed";
     } else {
       const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long' });
@@ -661,11 +646,18 @@ export default function SalonPage({
       {/* 1. DYNAMIC FULL-WIDTH INTEGRATED HERO BANNER */}
       <div className="relative w-full page-hero-shell text-black overflow-hidden shadow-sm">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={salon.hero_url || salon.cover_url || mockExtraData.gallery[0]} 
-            alt={`${salon.name} Background`} 
-            className="page-hero-image transition-transform duration-700" 
-          />
+          {heroImageUrl ? (
+            <img
+              src={heroImageUrl}
+              alt={`${salon.name} Background`}
+              className="page-hero-image transition-transform duration-700"
+            />
+          ) : (
+            <div
+              className="page-hero-image bg-gradient-to-br from-[#ffc800]/35 via-zinc-800/25 to-zinc-900/55"
+              aria-hidden
+            />
+          )}
           <div className="absolute inset-0 page-hero-overlay" />
         </div>
 
@@ -673,16 +665,16 @@ export default function SalonPage({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
               <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-black/10 shadow-2xl shrink-0 bg-white hidden sm:block">
-                <AvatarImage src={logoImage} className="object-cover" />
-                <AvatarFallback className="bg-[#FFC107] text-black font-bold">S</AvatarFallback>
+                {logoImage ? <AvatarImage src={logoImage} className="object-cover" /> : null}
+                <AvatarFallback className="bg-[#FFC107] text-black font-bold">{salonInitials}</AvatarFallback>
               </Avatar>
               
               <div className="space-y-3 w-full">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <Avatar className="w-16 h-16 rounded-xl border-2 border-black/10 shadow-xl shrink-0 bg-white sm:hidden">
-                      <AvatarImage src={logoImage} className="object-cover" />
-                      <AvatarFallback className="bg-[#FFC107] text-black font-bold">S</AvatarFallback>
+                      {logoImage ? <AvatarImage src={logoImage} className="object-cover" /> : null}
+                      <AvatarFallback className="bg-[#FFC107] text-black font-bold">{salonInitials}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
@@ -766,7 +758,8 @@ export default function SalonPage({
                     <Clock className="w-3.5 h-3.5 text-black" /> Working Hours
                   </h3>
                   <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">
-                    {parsedWorkingHours.map((h: any, i: number) => {
+                    {hasWorkingHours ? (
+                      parsedWorkingHours.map((h, i) => {
                       const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === h.day;
                       const isClosed = h.time.toLowerCase().includes('closed');
                       return (
@@ -793,7 +786,12 @@ export default function SalonPage({
                           </span>
                         </div>
                       );
-                    })}
+                    })
+                    ) : (
+                      <p className="text-sm font-medium text-black/75">
+                        Working hours have not been added yet.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1026,15 +1024,12 @@ export default function SalonPage({
                  {staff.map(st => (
                    <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
                      <Avatar className="w-16 h-16 border border-slate-100">
-                       <AvatarImage
-                         src={
-                           st.avatar_url ||
-                           `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(st.name)}`
-                         }
-                         alt={st.name}
-                         className="object-cover"
-                       />
-                       <AvatarFallback>{st.name[0]}</AvatarFallback>
+                       {st.avatar_url ? (
+                         <AvatarImage src={st.avatar_url} alt={st.name} className="object-cover" />
+                       ) : null}
+                       <AvatarFallback className="bg-[#FFC107] text-black font-bold">
+                         {getSalonInitials(st.name)}
+                       </AvatarFallback>
                      </Avatar>
                      <div className="flex-1">
                        <div className="flex justify-between items-start mb-1">
@@ -1098,7 +1093,13 @@ export default function SalonPage({
             <section id="about" className="grid grid-cols-1 md:grid-cols-2 gap-8">
                <div>
                   <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">About {salon.name}</h2>
-                  <p className="text-zinc-600 leading-relaxed text-sm md:text-base">{mockExtraData.about}</p>
+                  {salonAbout ? (
+                    <p className="text-zinc-600 leading-relaxed text-sm md:text-base whitespace-pre-wrap">{salonAbout}</p>
+                  ) : (
+                    <p className="text-zinc-400 text-sm md:text-base italic">
+                      This salon has not added an about section yet.
+                    </p>
+                  )}
                </div>
                <div>
                   <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-4">Amenities</h2>

@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { getStripeServerClient } from "@/lib/stripe-client";
 import { loadStripeGatewaySettings, toStripeAmountLkr } from "@/lib/stripe-settings";
+import { createStripePendingToken } from "@/lib/stripe-pending-token";
 
 export type StripeCheckoutType = "booking" | "subscription";
 
@@ -72,6 +73,7 @@ export async function createStripePaymentIntent(input: {
     publishableKey: settings.publishableKey,
     paymentIntentId: paymentIntent.id,
     pendingId: pending.id,
+    pendingToken: createStripePendingToken(pending.id),
     environment: settings.environment,
   };
 }

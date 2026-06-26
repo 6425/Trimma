@@ -118,6 +118,8 @@ export default function Logo({
               ? "/logo-dark.svg"
               : "/logo-light.svg";
 
+  const showBetaBadge = process.env.NEXT_PUBLIC_SHOW_BETA_BADGE === "true";
+
   const betaBadgeClass =
     variant === "dark"
       ? "bg-black/10 text-black/80 border-black/20"
@@ -161,11 +163,13 @@ export default function Logo({
               {brandTitle}
             </span>
           </div>
-          <span
-            className={`mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}
-          >
-            Beta
-          </span>
+          {showBetaBadge ? (
+            <span
+              className={`mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}
+            >
+              Beta
+            </span>
+          ) : null}
         </div>
         {displayTagline ? (
           <span
@@ -190,9 +194,11 @@ export default function Logo({
           fetchPriority="high"
           draggable={false}
         />
-        <span className={`ml-1.5 mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}>
-          Beta
-        </span>
+        {showBetaBadge ? (
+          <span className={`ml-1.5 mt-0.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${betaBadgeClass}`}>
+            Beta
+          </span>
+        ) : null}
       </div>
       {displayTagline ? (
         <span

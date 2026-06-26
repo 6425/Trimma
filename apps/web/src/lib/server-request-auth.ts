@@ -57,3 +57,26 @@ export async function requirePlatformAdminFromRequest(
     return { error: message, status: 403 };
   }
 }
+
+export function isRequestAuthError(
+  result: RequestSession | { error: string; status: number }
+): result is { error: string; status: number } {
+  return "error" in result && "status" in result;
+}
+
+export async function requireAgentFromRequest(
+  request: NextRequest | Request
+): Promise<RequestSession | { error: string; status: number }> {
+  return requireRequestRoles(request, ["agent", "regional_head", "admin"]);
+}
+
+export async function requireStaffFromRequest(
+  request: NextRequest | Request
+): Promise<RequestSession | { error: string; status: number }> {
+  return requireRequestRoles(request, [
+    "admin",
+    "regional_head",
+    "agent",
+    "salon_owner",
+  ]);
+}
