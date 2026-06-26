@@ -23,7 +23,9 @@ import {
   formatLkr,
   getIntroMonthlyPrice,
   getListMonthlyPrice,
+  type SubscriptionPlanPricing,
 } from "@/lib/subscription-pricing";
+import type { SalonSubscriptionPlan } from "@/lib/salon-subscription-plan";
 
 function isDeletedCatalogStatus(status?: string | null): boolean {
   return (status || "").toLowerCase() === "deleted";
@@ -366,12 +368,13 @@ function mapSubscriptionPaymentToInvoice(payment: {
 
 function computeNextInvoiceDate(
   latestPayment: { created_at: string; raw_response?: unknown } | null,
-  plan: { monthly_price?: number | null; intro_monthly_price?: number | null } | null
+  plan: SalonSubscriptionPlan | null
 ): string | null {
   if (!plan) return null;
 
+  const pricing = plan as SubscriptionPlanPricing;
   const isFree =
-    getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
+    getListMonthlyPrice(pricing) === 0 && getIntroMonthlyPrice(pricing) === 0;
   if (isFree) return null;
   if (!latestPayment) return null;
 
