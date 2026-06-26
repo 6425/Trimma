@@ -29,7 +29,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
-import { GlobalServiceIconUpload } from "../../../components/admin/GlobalServiceIconUpload";
+import { GlobalServiceIconUpload, GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
 import { uploadGlobalPromotionPackageImage } from "@/app/actions/style-images";
 import {
   deletePromotionPackage,
@@ -309,15 +309,17 @@ export default function GlobalPromotionPackageManagement() {
                 </tr>
               ) : (
                 filteredPackages.map((pkg) => {
-                  const IconComp = iconMap[pkg.promotion_type?.icon || pkg.icon] || LayoutGrid;
                   const savings = getSavingsLabel(pkg);
                   return (
                     <tr key={pkg.id} className="hover:bg-zinc-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center text-zinc-500 group-hover:bg-brand/10 group-hover:text-brand transition-colors">
-                            <IconComp className="w-6 h-6" />
-                          </div>
+                          <GlobalServiceIconPreview
+                            iconImageUrl={pkg.image_url}
+                            iconMap={iconMap}
+                            iconName={pkg.promotion_type?.icon || pkg.icon || "Gift"}
+                            className="w-12 h-12 rounded-2xl"
+                          />
                           <div>
                             <div className="font-bold text-[#1A1C29]">{pkg.name}</div>
                             <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
