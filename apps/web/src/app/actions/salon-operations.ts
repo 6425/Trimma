@@ -37,10 +37,42 @@ import {
 import { notifyOwnerSubmittedForBookingApproval } from "@/lib/agent-lead-notifications";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import {
-  queueFacebookPromotionSync,
-  queueFacebookServiceSync,
+  syncFacebookPromotionChange,
+  syncFacebookServiceChange,
   type FacebookSyncAction,
 } from "@/lib/facebook-sync-engine";
+
+type PendingServiceSync = {
+  salonId: string;
+  serviceId: string;
+  action: FacebookSyncAction;
+};
+
+type PendingPromotionSync = {
+  salonId: string;
+  packageId: string;
+  action: FacebookSyncAction;
+};
+
+async function runFacebookServiceSyncs(jobs: PendingServiceSync[]) {
+  for (const job of jobs) {
+    try {
+      await syncFacebookServiceChange(job.salonId, job.serviceId, job.action);
+    } catch (err) {
+      console.warn("Facebook service sync error:", err);
+    }
+  }
+}
+
+async function runFacebookPromotionSyncs(jobs: PendingPromotionSync[]) {
+  for (const job of jobs) {
+    try {
+      await syncFacebookPromotionChange(job.salonId, job.packageId, job.action);
+    } catch (err) {
+      console.warn("Facebook promotion sync error:", err);
+    }
+  }
+}
 
 const SALON_ONBOARDING_SELECT =
   "id, name, description, phone, address, city, assign_to, source_type, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status, latitude, longitude, logo_url, cover_url, hero_url, hero_image";
@@ -381,6 +413,7 @@ export async function rejectOwnerRescheduleRequest(bookingId: string) {
 }
 
 export async function insertSalonPromotionPackages(payloads: Record<string, unknown>[]) {
+  const promotionSyncs: PendingPromotionSync[] = [];
   const result = await withSalonDb(async (supabase, ctx) => {
     const rows = payloads.map((row) => ({ ...row, salon_id: ctx.salonId }));
     const { data, error } = await supabase
@@ -390,15 +423,17 @@ export async function insertSalonPromotionPackages(payloads: Record<string, unkn
     if (error) throw new Error(error.message);
     for (const row of data || []) {
       if (row.status === "active") {
-        queueFacebookPromotionSync(ctx.salonId, String(row.id), "created");
+        promotionSyncs.push({ salonId: ctx.salonId, packageId: String(row.id), action: "created" });
       }
     }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  await runFacebookPromotionSyncs(promotionSyncs);
   return { success: true as const };
 }
 
 export async function deleteSalonPromotionPackage(packageId: string) {
+  let promotionSync: PendingPromotionSync | null = null;
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: pkg } = await supabase
       .from("salon_promotion_packages")
@@ -415,14 +450,16 @@ export async function deleteSalonPromotionPackage(packageId: string) {
     if (error) throw new Error(error.message);
 
     if (pkg?.status === "active") {
-      queueFacebookPromotionSync(ctx.salonId, packageId, "deleted");
+      promotionSync = { salonId: ctx.salonId, packageId, action: "deleted" };
     }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  if (promotionSync) await runFacebookPromotionSyncs([promotionSync]);
   return { success: true as const };
 }
 
 export async function updateSalonPromotionPackage(packageId: string, payload: Record<string, unknown>) {
+  let promotionSync: PendingPromotionSync | null = null;
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data: before } = await supabase
       .from("salon_promotion_packages")
@@ -442,10 +479,11 @@ export async function updateSalonPromotionPackage(packageId: string, payload: Re
     if (nextStatus === "active") {
       const action: FacebookSyncAction =
         before?.status !== "active" ? "created" : "updated";
-      queueFacebookPromotionSync(ctx.salonId, packageId, action);
+      promotionSync = { salonId: ctx.salonId, packageId, action };
     }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  if (promotionSync) await runFacebookPromotionSyncs([promotionSync]);
   return { success: true as const };
 }
 
@@ -470,6 +508,7 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
 }
 
 export async function updateSalonService(serviceId: string, payload: Record<string, unknown>) {
+  let serviceSync: PendingServiceSync | null = null;
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonService(supabase, ctx, serviceId);
 
@@ -508,14 +547,16 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
     if (nextStatus === "active") {
       const action: FacebookSyncAction =
         beforeService?.status !== "active" ? "created" : "updated";
-      queueFacebookServiceSync(ctx.salonId, serviceId, action);
+      serviceSync = { salonId: ctx.salonId, serviceId, action };
     }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  if (serviceSync) await runFacebookServiceSyncs([serviceSync]);
   return { success: true as const };
 }
 
 export async function deleteSalonService(serviceId: string) {
+  let serviceSync: PendingServiceSync | null = null;
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonService(supabase, ctx, serviceId);
     const { data: beforeService } = await supabase
@@ -529,10 +570,11 @@ export async function deleteSalonService(serviceId: string) {
     await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
 
     if (beforeService?.status === "active") {
-      queueFacebookServiceSync(ctx.salonId, serviceId, "deleted");
+      serviceSync = { salonId: ctx.salonId, serviceId, action: "deleted" };
     }
   });
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+  if (serviceSync) await runFacebookServiceSyncs([serviceSync]);
   return { success: true as const };
 }
 

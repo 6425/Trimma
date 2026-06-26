@@ -122,10 +122,28 @@ export async function syncFacebookServiceChange(
     const integration = await getSalonFacebookIntegration(supabase, salon);
 
     if (integration.facebook_connected !== true) {
-      return { status: "skipped", skippedReason: "Facebook is not connected." };
+      const skippedReason = "Facebook is not connected.";
+      await writeSyncLog({
+        salon_id: salonId,
+        entity_type: "service",
+        entity_id: serviceId,
+        action,
+        status: "skipped",
+        error_message: skippedReason,
+      });
+      return { status: "skipped", skippedReason };
     }
     if (integration.auto_publish_services === false) {
-      return { status: "skipped", skippedReason: "Auto-publish services is off." };
+      const skippedReason = "Auto-publish services is off.";
+      await writeSyncLog({
+        salon_id: salonId,
+        entity_type: "service",
+        entity_id: serviceId,
+        action,
+        status: "skipped",
+        error_message: skippedReason,
+      });
+      return { status: "skipped", skippedReason };
     }
 
     if (action !== "deleted") {
@@ -204,10 +222,28 @@ export async function syncFacebookPromotionChange(
     const integration = await getSalonFacebookIntegration(supabase, salon);
 
     if (integration.facebook_connected !== true) {
-      return { status: "skipped", skippedReason: "Facebook is not connected." };
+      const skippedReason = "Facebook is not connected.";
+      await writeSyncLog({
+        salon_id: salonId,
+        entity_type: "promotion_package",
+        entity_id: packageId,
+        action,
+        status: "skipped",
+        error_message: skippedReason,
+      });
+      return { status: "skipped", skippedReason };
     }
     if (integration.auto_publish_promos === false) {
-      return { status: "skipped", skippedReason: "Auto-publish promotions is off." };
+      const skippedReason = "Auto-publish promotions is off.";
+      await writeSyncLog({
+        salon_id: salonId,
+        entity_type: "promotion_package",
+        entity_id: packageId,
+        action,
+        status: "skipped",
+        error_message: skippedReason,
+      });
+      return { status: "skipped", skippedReason };
     }
 
     if (action !== "deleted") {
