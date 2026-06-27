@@ -17,6 +17,11 @@ export type BusinessResult = {
   logo_url: string | null;
   is_verified: boolean;
   rating: number;
+  review_count?: number;
+  website?: string | null;
+  map_url?: string | null;
+  summary?: string | null;
+  working_hours?: string | null;
   status: string;
   assign_to?: string | null;
   is_taken?: boolean;

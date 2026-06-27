@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { exportDiscoveryLeadsToExcel, mapTerritoryBusinessToDiscoveryExport } from "@/lib/export-discovery-leads";
 import { getAgentMapData, searchBusinessesInTerritories } from "../../actions/agent-territory-map";
 import {
   tryAgentData,
@@ -149,18 +150,13 @@ function TerritoryExplorerContent() {
       toast.error("No data to export");
       return;
     }
-    
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "Name,Category,Address,Phone,Rating,Status\n"
-      + businesses.map(b => `"${b.name}","${b.category || ''}","${b.address || ''}","${b.phone || ''}",${b.rating || 0},"${b.status || ''}"`).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "trimma_territory_export.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    exportDiscoveryLeadsToExcel({
+      rows: businesses.map((business) => mapTerritoryBusinessToDiscoveryExport(business)),
+      sheetTitle: "Territory Explorer Results",
+      fileName: "trimma-territory-discovery.xlsx",
+    });
+    toast.success(`Exported ${businesses.length} businesses to Excel.`);
   };
 
   const handleMaximize = () => {
@@ -211,7 +207,7 @@ function TerritoryExplorerContent() {
             <RefreshCw className={`w-3.5 h-3.5 mr-2 ${searching ? 'animate-spin' : ''}`} /> Refresh Map
           </Button>
           <Button onClick={handleExport} variant="outline" size="sm" className="h-9 rounded-xl font-bold text-xs text-zinc-700 border-zinc-200 hover:bg-zinc-50">
-            <Download className="w-3.5 h-3.5 mr-2" /> Export Results
+            <Download className="w-3.5 h-3.5 mr-2" /> Export Excel
           </Button>
           <Button onClick={handleMaximize} variant="outline" size="icon" className="h-9 w-9 rounded-xl border-zinc-200 hover:bg-zinc-50 text-zinc-700">
             <Maximize className="w-4 h-4" />

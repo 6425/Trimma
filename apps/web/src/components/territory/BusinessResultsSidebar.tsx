@@ -43,7 +43,7 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
     try {
       setCreatingId(biz.id);
       const res = await createLeadFromGooglePlaces({
-        place_id: biz.id, // using id which is place_id for google leads
+        place_id: biz.id,
         name: biz.name,
         address: biz.address || "",
         category: biz.category || "General",
@@ -52,6 +52,11 @@ export function BusinessResultsSidebar({ businesses, selectedBusinessId, onBusin
         longitude: biz.longitude,
         logo_url: biz.logo_url,
         phone: biz.phone,
+        website: biz.website || null,
+        map_url: biz.map_url || null,
+        review_count: biz.review_count || 0,
+        summary: biz.summary || null,
+        working_hours: biz.working_hours || null,
       });
 
       if (!res.success) {

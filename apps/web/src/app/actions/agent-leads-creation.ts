@@ -2,20 +2,13 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
-import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 import {
-  fetchGooglePlaceContactDetails,
-  pickGooglePlacePhone,
-} from "@/lib/google-place-details";
-
-function slugify(value: string) {
-  const base = value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-  return base || `map-${Date.now()}`;
-}
+  fetchGooglePlaceProfile,
+  mapGooglePlaceToSalonRecord,
+  mergeGoogleProfileIntoSalonRow,
+  slugifySalonName,
+} from "@/lib/google-place-profile";
+import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 
 export async function createLeadFromGooglePlaces(businessData: {
   place_id: string;
@@ -27,6 +20,11 @@ export async function createLeadFromGooglePlaces(businessData: {
   longitude: number | null;
   logo_url: string | null;
   phone: string | null;
+  website?: string | null;
+  map_url?: string | null;
+  review_count?: number | null;
+  summary?: string | null;
+  working_hours?: string | null;
 }) {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -35,7 +33,6 @@ export async function createLeadFromGooglePlaces(businessData: {
   const user = { email: auth.email };
 
   try {
-    // 1. Check if place_id already exists to prevent duplicates
     const { data: existingSalon } = await supabaseAdmin
       .from("salons")
       .select("id")
@@ -46,32 +43,46 @@ export async function createLeadFromGooglePlaces(businessData: {
       return { success: false as const, error: "A lead for this business already exists." };
     }
 
-    let phone = businessData.phone?.trim() || null;
-    if (!phone && businessData.place_id) {
-      const details = await fetchGooglePlaceContactDetails(businessData.place_id);
-      phone = pickGooglePlacePhone(details);
-    }
+    const profile = await fetchGooglePlaceProfile(businessData.place_id);
+    const slug = `${slugifySalonName(businessData.name)}-${Date.now()}`;
 
-    const slug = `${slugify(businessData.name)}-${Date.now()}`;
-    const payload = {
-      place_id: businessData.place_id,
-      name: businessData.name,
+    const incoming = profile
+      ? mapGooglePlaceToSalonRecord(businessData.place_id, profile, {
+          category: businessData.category,
+        })
+      : {
+          place_id: businessData.place_id,
+          name: businessData.name,
+          slug,
+          owner_email: `draft-${slug}@trimma.io`,
+          assign_to: user.email,
+          onboarding_status: "ASSIGNED_TO_AGENT",
+          activation_status: "INACTIVE",
+          source_type: "GOOGLE_PLACES",
+          phone: businessData.phone,
+          address: businessData.address,
+          category: businessData.category,
+          latitude: businessData.latitude,
+          longitude: businessData.longitude,
+          rating: businessData.rating,
+          review_count: businessData.review_count || 0,
+          website: businessData.website || null,
+          map_url: businessData.map_url || null,
+          summary: businessData.summary || null,
+          description: businessData.summary || null,
+          working_hours: businessData.working_hours || [],
+          logo_url: businessData.logo_url,
+        };
+
+    const payload = mergeGoogleProfileIntoSalonRow(null, {
+      ...incoming,
       slug,
       owner_email: `draft-${slug}@trimma.io`,
       assign_to: user.email,
       onboarding_status: "ASSIGNED_TO_AGENT",
-      activation_status: "INACTIVE",
-      source_type: "GOOGLE_PLACES",
-      phone,
-      address: businessData.address,
-      category: businessData.category,
-      latitude: businessData.latitude,
-      longitude: businessData.longitude,
-      rating: businessData.rating,
       logo_url: businessData.logo_url,
-    };
+    });
 
-    // 2. Insert into salons
     const { data: newSalon, error: insertError } = await supabaseAdmin
       .from("salons")
       .insert(payload)
@@ -103,7 +114,6 @@ export async function createLeadFromGooglePlaces(businessData: {
       console.warn("Google Places image sync skipped for new lead:", imageErr);
     }
 
-    // 3. Fetch 6 random services and insert
     const { data: globalServices } = await supabaseAdmin
       .from("global_services")
       .select("*")
@@ -111,31 +121,26 @@ export async function createLeadFromGooglePlaces(businessData: {
       .limit(20);
 
     if (globalServices && globalServices.length > 0) {
-      // Shuffle array and pick up to 6
       const shuffled = globalServices.sort(() => 0.5 - Math.random());
       const selectedServices = shuffled.slice(0, 6);
-      
+
       const servicesPayload = selectedServices.map((gs: any) => ({
         salon_id: salonId,
         global_service_id: gs.id,
         category_id: gs.category_id,
         name: gs.name,
-        category: "General", // fallback if no category relation available easily
+        category: "General",
         price: gs.suggested_price || 1500,
         duration_min: gs.suggested_duration_minutes || 30,
         description: gs.description,
         image_url: gs.icon_image_url || null,
-        status: "active"
+        status: "active",
       }));
 
       await supabaseAdmin.from("services").insert(servicesPayload);
     }
 
-    // 4. Fetch 2 random staff roles and insert
-    const { data: globalRoles } = await supabaseAdmin
-      .from("global_staff_roles")
-      .select("*")
-      .limit(10);
+    const { data: globalRoles } = await supabaseAdmin.from("global_staff_roles").select("*").limit(10);
 
     let rolesToUse = ["Senior Stylist", "Assistant"];
     if (globalRoles && globalRoles.length >= 2) {
@@ -149,25 +154,24 @@ export async function createLeadFromGooglePlaces(businessData: {
         name: "Staff 1",
         email: `staff1-${slug}@trimma.io`,
         role: rolesToUse[0],
-        status: "active"
+        status: "active",
       },
       {
         salon_id: salonId,
         name: "Staff 2",
         email: `staff2-${slug}@trimma.io`,
         role: rolesToUse[1],
-        status: "active"
-      }
+        status: "active",
+      },
     ];
 
     await supabaseAdmin.from("salon_staff").insert(staffPayload);
 
-    // 5. Log activity
     await supabaseAdmin.from("onboarding_logs").insert({
       salon_id: salonId,
       actor_email: user.email,
       action: "GOOGLE_LEAD_CREATED",
-      notes: `Agent automatically created lead from Google Places map search.`,
+      notes: `Agent created lead from Google Business profile (${businessData.place_id}).`,
     });
 
     return { success: true as const, salonId };

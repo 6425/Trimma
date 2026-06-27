@@ -8,7 +8,15 @@ export type GooglePlaceContactDetails = {
   url: string | null;
 };
 
-export function pickGooglePlacePhone(details: GooglePlaceContactDetails | null | undefined): string | null {
+export function pickGooglePlacePhone(
+  details:
+    | {
+        international_phone_number?: string | null;
+        formatted_phone_number?: string | null;
+      }
+    | null
+    | undefined
+): string | null {
   if (!details) return null;
   return (
     details.international_phone_number?.trim() ||

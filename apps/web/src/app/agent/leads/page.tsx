@@ -4,7 +4,7 @@
 import React, { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2, UploadCloud, Map, Tag, Users, Plus, Trash2 } from "lucide-react";
+import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2, UploadCloud, Map, Tag, Users, Plus, Trash2, Download } from "lucide-react";
 import { AddProfessionalForm, StaffPayload } from "../../../components/forms/AddProfessionalForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ import { parseSalonAmenityValue } from "@/lib/salon-amenities";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { buildStaffWorkingHoursPayload, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
+import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
 
 
 const SALON_DEFAULT_CURRENCY = "LKR";
@@ -732,6 +733,22 @@ function AgentLeads() {
     (l.address && l.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleExportExcel = () => {
+    const exportRows = [...filteredLeads, ...manualLeads];
+    if (exportRows.length === 0) {
+      toast.error("No salons to export.");
+      return;
+    }
+
+    exportDiscoveryLeadsToExcel({
+      rows: exportRows.map((lead) => mapSalonToDiscoveryExport(lead)),
+      sheetTitle: `Agent Salons — ${activeTab}`,
+      fileName: `trimma-agent-salons-${activeTab}.xlsx`,
+      exportedBy: agentEmail || agentName || undefined,
+    });
+    toast.success(`Exported ${exportRows.length} salons to Excel.`);
+  };
+
   const getStatusBadge = (status: string) => {
     const map: Record<string, string> = {
       ASSIGNED_TO_AGENT: "bg-blue-100 text-blue-700",
@@ -764,6 +781,14 @@ function AgentLeads() {
           <h1 className="text-2xl font-black text-[#1A1C29] tracking-tight">Salon Creation</h1>
           <p className="text-zinc-500 text-sm mt-1">Verify salon details, set owner Gmail, and send invites. See all assigned salons in <Link href={path("/salons")} className="text-brand font-semibold hover:underline">My Salons</Link>.</p>
         </div>
+        <Button
+          onClick={handleExportExcel}
+          variant="outline"
+          className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold text-sm h-11 w-full sm:w-auto"
+        >
+          <Download className="w-4 h-4 mr-2" />
+          Export Excel
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

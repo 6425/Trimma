@@ -12,9 +12,12 @@ import {
 } from "@/lib/agent-territory-resolve";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import {
-  fetchGooglePlaceContactDetails,
-  pickGooglePlacePhone,
-} from "@/lib/google-place-details";
+  fetchGooglePlaceProfile,
+  formatGoogleWorkingHoursText,
+  inferTrimmaCategoryFromGoogleTypes,
+  mapGooglePlaceToSalonRecord,
+  mergeGoogleProfileIntoSalonRow,
+} from "@/lib/google-place-profile";
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
 import { normalizeEmail } from "@/lib/normalize-email";
 
@@ -44,23 +47,36 @@ function mapGooglePlace(
   place: any,
   category: string,
   territoryName: string,
-  phone: string | null = null
+  profile: Awaited<ReturnType<typeof fetchGooglePlaceProfile>> = null
 ) {
+  const resolvedCategory =
+    inferTrimmaCategoryFromGoogleTypes(profile?.types || place.types, category) || category;
+  const phone =
+    profile?.international_phone_number ||
+    profile?.formatted_phone_number ||
+    place.formatted_phone_number ||
+    null;
+
   return {
     id: place.place_id,
     slug: place.place_id,
-    name: place.name,
-    category,
-    address: place.formatted_address,
+    name: profile?.name || place.name,
+    category: resolvedCategory,
+    address: profile?.formatted_address || place.formatted_address,
     city: territoryName,
     phone,
-    latitude: place.geometry?.location?.lat || null,
-    longitude: place.geometry?.location?.lng || null,
+    website: profile?.website || null,
+    map_url: profile?.url || (place.place_id ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}` : null),
+    latitude: profile?.geometry?.location?.lat || place.geometry?.location?.lat || null,
+    longitude: profile?.geometry?.location?.lng || place.geometry?.location?.lng || null,
     location: null,
     logo_url: place.icon || null,
     is_verified: false,
-    rating: place.rating || 0,
-    review_count: place.user_ratings_total || 0,
+    rating: profile?.rating || place.rating || 0,
+    review_count: profile?.user_ratings_total || place.user_ratings_total || 0,
+    working_hours: formatGoogleWorkingHoursText(profile?.opening_hours) || "",
+    summary: profile?.editorial_summary?.overview || "",
+    price_level: profile?.price_level ?? null,
     status: "google_lead",
   };
 }
@@ -77,10 +93,10 @@ async function fetchGoogleTextSearch(query: string, apiKey: string) {
   return [];
 }
 
-async function enrichGooglePlacesWithContactDetails(
+async function enrichGooglePlacesWithProfiles(
   places: any[],
   apiKey: string
-): Promise<any[]> {
+): Promise<Array<{ place: any; profile: Awaited<ReturnType<typeof fetchGooglePlaceProfile>> }>> {
   const unique = new Map<string, any>();
   for (const place of places) {
     if (place?.place_id && !unique.has(place.place_id)) {
@@ -88,19 +104,12 @@ async function enrichGooglePlacesWithContactDetails(
     }
   }
 
-  const enriched = await Promise.all(
+  return Promise.all(
     [...unique.values()].map(async (place) => {
-      const details = await fetchGooglePlaceContactDetails(place.place_id, apiKey);
-      const phone = pickGooglePlacePhone(details);
-      return {
-        ...place,
-        formatted_address: details?.formatted_address || place.formatted_address,
-        formatted_phone_number: phone,
-      };
+      const profile = await fetchGooglePlaceProfile(place.place_id, apiKey);
+      return { place, profile };
     })
   );
-
-  return enriched;
 }
 
 async function resolveTerritoryNames(
@@ -236,17 +245,17 @@ export async function searchBusinessesInTerritories(
     const googleResultsArray = await Promise.all(googlePromises);
     const rawGooglePlaces = googleResultsArray.flat();
     const scopedGooglePlaces = applyTerritoryScope(rawGooglePlaces, terrNames);
-    const enrichedGooglePlaces = await enrichGooglePlacesWithContactDetails(
+    const enrichedGooglePlaces = await enrichGooglePlacesWithProfiles(
       scopedGooglePlaces.slice(0, Math.max(limit || 12, 12)),
       apiKey
     );
 
-    const googleBusinesses = enrichedGooglePlaces.map((place) =>
+    const googleBusinesses = enrichedGooglePlaces.map(({ place, profile }) =>
       mapGooglePlace(
         place,
         trimmedName ? "Business" : searchCategories[0] || "Salon",
         terrNames[0] || "Sri Lanka",
-        place.formatted_phone_number || null
+        profile
       )
     );
 

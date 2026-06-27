@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon } from "lucide-react";
+import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -27,6 +27,7 @@ import {
   createAdminSalonDraft,
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
+import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
 import { getSalonVerificationReadinessIssues } from "@/lib/salon-onboarding-progress";
 import { WorkingHoursEditor } from "../../../components/admin/WorkingHoursEditor";
 import { LeadTables } from "../../../components/admin/LeadTables";
@@ -366,21 +367,21 @@ export default function Leads() {
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      const cachedLeads = localStorage.getItem('trimma_admin_leads_cache');
-      let initialDiscovered = [];
-      if (cachedLeads) {
-        try {
-          initialDiscovered = JSON.parse(cachedLeads);
-        } catch(e) {}
-      }
-      
-      if (initialDiscovered.length > 0) {
-        setLeads(initialDiscovered);
-      }
+    const cachedLeads = localStorage.getItem('trimma_admin_leads_cache');
+    let initialDiscovered = [];
+    if (cachedLeads) {
+      try {
+        initialDiscovered = JSON.parse(cachedLeads);
+      } catch(e) {}
+    }
+    
+    if (initialDiscovered.length > 0) {
+      setLeads(initialDiscovered);
+    }
 
-      fetchLeads();
-      fetchAgents();
-      fetchGlobalRoles();
+    fetchLeads();
+    fetchAgents();
+    fetchGlobalRoles();
       fetchSalonRequests();
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -388,22 +389,22 @@ export default function Leads() {
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      if (!loading) {
+    if (!loading) {
       const discoveredOnly = leads.filter(l => l.onboarding_status === 'DISCOVERED');
       if (discoveredOnly.length > 0) {
-      localStorage.setItem('trimma_admin_leads_cache', JSON.stringify(discoveredOnly));
+        localStorage.setItem('trimma_admin_leads_cache', JSON.stringify(discoveredOnly));
       } else {
-      localStorage.removeItem('trimma_admin_leads_cache');
+        localStorage.removeItem('trimma_admin_leads_cache');
       }
-      }
+    }
     });
   }, [leads, loading]);
 
   // Reset dependent geography dropdowns when parent changes
   useEffect(() => {
     void Promise.resolve().then(() => {
-      setSelectedDistrict("");
-      setSelectedCity("");
+    setSelectedDistrict("");
+    setSelectedCity("");
     });
   }, [selectedProvince]);
 
@@ -872,9 +873,9 @@ export default function Leads() {
 
       const result = await publishAdminLead({
         id: lead.id,
-        name: lead.name,
-        province: selectedProvince || "Western Province",
-        district: selectedDistrict || "Colombo",
+          name: lead.name,
+          province: selectedProvince || "Western Province",
+          district: selectedDistrict || "Colombo",
         city: selectedCity || "Colombo",
         address: lead.address,
       });
@@ -1026,6 +1027,20 @@ export default function Leads() {
     (l.address && l.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleExportExcel = () => {
+    if (filteredLeads.length === 0) {
+      toast.error("No leads to export for the current tab/filter.");
+      return;
+    }
+
+    exportDiscoveryLeadsToExcel({
+      rows: filteredLeads.map((lead) => mapSalonToDiscoveryExport(lead)),
+      sheetTitle: `Admin Discovery — ${activeTab}`,
+      fileName: `trimma-admin-discovery-${activeTab}.xlsx`,
+    });
+    toast.success(`Exported ${filteredLeads.length} salons to Excel.`);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
@@ -1035,6 +1050,14 @@ export default function Leads() {
           <p className="text-zinc-500 text-sm mt-1">Import, discover, and assign draft salons to agents for field verification.</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            onClick={handleExportExcel}
+            variant="outline"
+            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold text-sm h-11"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export Excel
+          </Button>
           <Button 
             onClick={() => {
               setLeads(prev => prev.filter(l => l.onboarding_status !== 'DISCOVERED'));
@@ -1090,6 +1113,9 @@ export default function Leads() {
         <div className="mb-4">
           <h3 className="font-bold text-[#1A1C29] text-base flex items-center gap-2">
             <ScanSearch className="w-5 h-5 text-brand" /> Google Places Lead Discovery
+            <span className="text-[10px] font-medium text-zinc-500 normal-case tracking-normal ml-2">
+              Pulls public Google Business profile fields into salon records
+            </span>
           </h3>
           <p className="text-zinc-500 text-xs mt-0.5">Select a destination in Sri Lanka to query Google Maps and perform intelligent incremental updates on duplicates.</p>
         </div>
@@ -1183,7 +1209,8 @@ export default function Leads() {
           <Button
             onClick={handleDiscoverLeads}
             disabled={discovering || !selectedCity}
-            className="w-full bg-black hover:bg-slate-50 text-zinc-900 rounded-xl font-light h-11 shadow-md flex items-center justify-center gap-2 text-xs disabled:opacity-50"
+            variant="dark"
+            className="w-full rounded-xl font-light h-11 shadow-md flex items-center justify-center gap-2 text-xs"
           >
             {discovering ? (
               <>
@@ -1198,15 +1225,15 @@ export default function Leads() {
       </Card>
       </>
       ) : (
-        <div className="relative">
+                          <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <Input
+                          <Input 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search salon requests by name, email, business, or message..."
             className="w-full pl-12 h-14 bg-white border-none shadow-sm rounded-2xl focus:ring-2 focus:ring-brand/20 transition-all font-medium"
           />
-        </div>
+                          </div>
       )}
 
       {/* PERMANENT INTERACTIVE SPREADSHEET VIEW WITH ALL DB COLUMNS */}
