@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 
 export type PublicSalonSearchParams = {
@@ -67,7 +68,7 @@ export async function fetchPublicSalons(
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  let rows = data || [];
+  let rows = filterPublicSalons(data || []);
   if (categoryFilterActive) {
     rows = rows.filter((row) => {
       const salonCategory = String(row.category || "").toLowerCase();

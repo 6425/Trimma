@@ -33,6 +33,7 @@ export default function GlobalFooter() {
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Discover</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
               <li><Link href="/" className="hover:text-[#ffc800] transition-colors">All Salons</Link></li>
+              <li><Link href="/categories" className="hover:text-[#ffc800] transition-colors">Categories</Link></li>
               <li><Link href="/locations" className="hover:text-[#ffc800] transition-colors">Locations</Link></li>
               <li><Link href="/pricing" className="hover:text-[#ffc800] transition-colors">Pricing Plans</Link></li>
               <li><Link href="/features" className="hover:text-[#ffc800] transition-colors">Features</Link></li>

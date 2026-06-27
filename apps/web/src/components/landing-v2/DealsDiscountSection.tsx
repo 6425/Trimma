@@ -13,6 +13,7 @@ import {
   type DealSalon,
   type SalonDealRow,
 } from "@/lib/deals";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 
 export function DealsDiscountSection() {
   const [deals, setDeals] = useState<SalonDealRow[]>([]);
@@ -48,7 +49,9 @@ export function DealsDiscountSection() {
             .in("id", salonIds)
             .or("status.eq.verified,status.eq.active,is_verified.eq.true");
 
-          salonsById = new Map((salonRows || []).map((salon) => [salon.id, salon as DealSalon]));
+          salonsById = new Map(
+            filterPublicSalons(salonRows || []).map((salon) => [salon.id, salon as DealSalon])
+          );
         }
 
         const normalized = normalizeDealRows(packages, salonsById);

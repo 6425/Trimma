@@ -1,4 +1,5 @@
 import { toDateInputValue } from "@/lib/promotion-package-dates";
+import { isDummySalonRecord } from "@/lib/salon-list-filters";
 
 function formatLocalDateInput(now = new Date()): string {
   const year = now.getFullYear();
@@ -53,6 +54,7 @@ export function parseIncludedServices(value: unknown): string[] {
 
 export function isSalonPubliclyVisible(salon: DealSalon | null | undefined): boolean {
   if (!salon?.slug) return false;
+  if (isDummySalonRecord(salon)) return false;
   if (salon.public_visibility === "hidden") return false;
   return salon.status === "active" || salon.status === "verified" || salon.is_verified === true;
 }

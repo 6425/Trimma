@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
+import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 
 export type LandingCategory = {
   id: string;
@@ -67,6 +68,55 @@ export async function getLandingCategories(): Promise<LandingCategory[]> {
     return enriched;
   } catch (err) {
     console.error("Error fetching landing categories:", err);
+    return [];
+  }
+}
+
+export type LandingTopSalon = {
+  name: string;
+  slug: string;
+  rating: number;
+  reviews: number;
+  badge: string;
+  img: string;
+};
+
+function ratingBadge(rating: number): string {
+  if (rating >= 4.8) return "Excellent";
+  if (rating >= 4.5) return "Superb";
+  if (rating >= 4.0) return "Great";
+  return "Rated";
+}
+
+export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("salons")
+      .select("id, name, slug, rating, review_count, cover_url, hero_url")
+      .order("is_featured", { ascending: false })
+      .order("rating", { ascending: false })
+      .order("review_count", { ascending: false })
+      .limit(Math.max(limit * 4, 16));
+
+    if (error) throw error;
+
+    return filterPublicSalons(data || [])
+      .filter((row) => row.slug?.trim())
+      .slice(0, limit)
+      .map((row) => {
+        const { rating, reviews } = mapVerifiedSalonListingStats(row);
+        return {
+          name: row.name?.trim() || "Salon",
+          slug: row.slug!.trim(),
+          rating,
+          reviews,
+          badge: ratingBadge(rating),
+          img: getSalonListingImage(row, DEFAULT_IMG),
+        };
+      });
+  } catch (err) {
+    console.error("Error fetching top rated salons:", err);
     return [];
   }
 }

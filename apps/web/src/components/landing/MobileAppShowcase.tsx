@@ -50,9 +50,9 @@ export function MobileAppShowcase() {
                   
                   {/* Mock Cards */}
                   {[
-                    { name: "The Crown Salon", rating: 4.9, img: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=200&auto=format&fit=crop", type: "Hair & Spa" },
-                    { name: "Luxe Beauty Bar", rating: 4.8, img: "https://images.unsplash.com/photo-1522337360788-8b13fee7a3af?q=80&w=200&auto=format&fit=crop", type: "Nails & Face" },
-                    { name: "Gentlemen's Cut", rating: 4.9, img: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=200&auto=format&fit=crop", type: "Barbershop" },
+                    { name: "Nearby Salon", rating: 4.9, img: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=200&auto=format&fit=crop", type: "Hair & Spa" },
+                    { name: "Beauty Studio", rating: 4.8, img: "https://images.unsplash.com/photo-1522337360788-8b13fee7a3af?q=80&w=200&auto=format&fit=crop", type: "Nails & Face" },
+                    { name: "Local Barbershop", rating: 4.9, img: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=200&auto=format&fit=crop", type: "Barbershop" },
                   ].map((salon, i) => (
                     <div key={i} className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex gap-3 items-center">
                       <img src={salon.img} alt={salon.name} className="w-16 h-16 bg-slate-100 rounded-xl object-cover shrink-0" />

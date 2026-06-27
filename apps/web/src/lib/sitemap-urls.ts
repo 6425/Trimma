@@ -1,7 +1,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { SRI_LANKA_PROVINCES, slugifyLocation } from "@/lib/sri-lanka-locations";
-import { STATIC_INDEXABLE_PAGES } from "@/lib/site-seo";
+import { KNOWN_CATEGORY_SLUGS, STATIC_INDEXABLE_PAGES } from "@/lib/site-seo";
 import { absoluteUrl } from "@/lib/site-url";
 
 export type SitemapEntry = {
@@ -61,16 +61,19 @@ async function fetchCategoryPaths(): Promise<string[]> {
 
     if (error) {
       console.error("[sitemap] categories:", error.message);
-      return [];
+      return KNOWN_CATEGORY_SLUGS.map((slug) => `/category/${slug}`);
     }
 
-    return (data || [])
+    const fromDb = (data || [])
       .map((row) => row.slug?.trim())
       .filter((slug): slug is string => Boolean(slug))
       .map((slug) => `/category/${slug}`);
+
+    const merged = new Set([...fromDb, ...KNOWN_CATEGORY_SLUGS.map((slug) => `/category/${slug}`)]);
+    return [...merged];
   } catch (err) {
     console.error("[sitemap] categories fetch failed:", err);
-    return [];
+    return KNOWN_CATEGORY_SLUGS.map((slug) => `/category/${slug}`);
   }
 }
 

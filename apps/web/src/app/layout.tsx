@@ -4,6 +4,7 @@ import { CookieConsentBanner } from '@/components/legal/CookieConsentBanner';
 import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
+import { PublicSiteJsonLd } from '@/components/seo/PublicSiteJsonLd';
 import { getSiteUrl } from '@/lib/site-url';
 
 const supabaseOrigin = (() => {
@@ -17,16 +18,24 @@ const supabaseOrigin = (() => {
 
 export const metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: 'Trimma OS - Find. Book. Glow.',
-  description: 'The intelligent operating system for a salon marketplace.',
+  title: {
+    default: 'Trimma OS - Find. Book. Glow.',
+    template: '%s | Trimma',
+  },
+  description:
+    'Find and book salons across Sri Lanka — barbers, beauty parlours, spas, nail studios, and more.',
   robots: {
     index: true,
     follow: true,
   },
+  openGraph: {
+    siteName: 'Trimma',
+    type: 'website',
+  },
   icons: {
     icon: '/favicon.svg',
-  }
-}
+  },
+};
 
 export default function RootLayout({
   children,
@@ -46,6 +55,7 @@ export default function RootLayout({
           <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
         ) : null}
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <PublicSiteJsonLd />
       </head>
       <body className={`font-sans antialiased flex flex-col min-h-screen`} suppressHydrationWarning>
         <ThemeProvider>

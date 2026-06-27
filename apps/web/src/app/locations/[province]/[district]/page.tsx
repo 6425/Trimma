@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { DistrictDetailTemplate, DistrictData } from "../../../../components/marketplace/DistrictDetailTemplate";
 import { supabase } from "@/config/supabase";
+import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import {
   buildCityCards,
@@ -62,7 +63,7 @@ export default function DistrictDetailPage() {
       
       if (error) throw error;
       
-      const formatted = (dbSalons || []).map((s: any, idx: number) => {
+      const formatted = filterPublicSalons(dbSalons || []).map((s: any, idx: number) => {
         const mapped = mapSalonRowToUI(s, idx);
         return {
           ...mapped,
