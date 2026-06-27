@@ -7,9 +7,11 @@ import {
   businessMatchesTerritoryScopes,
   ensureAgentRecord,
   findAgentRecord,
+  googlePlaceToTerritoryHaystack,
   resolveAgentMapAgentId,
   territorySearchOrClause,
 } from "@/lib/agent-territory-resolve";
+import { getAgentOperationalEmails } from "@/lib/agent-hierarchy";
 import { requireAgentFromCookies } from "@/lib/server-agent-auth";
 import {
   fetchGooglePlaceProfile,
@@ -19,7 +21,6 @@ import {
   mergeGoogleProfileIntoSalonRow,
 } from "@/lib/google-place-profile";
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
-import { normalizeEmail } from "@/lib/normalize-email";
 
 function normalizeBusinessName(value: string): string {
   return value
@@ -133,6 +134,36 @@ async function resolveTerritoryNames(
   return [...new Set(terrNames.filter(Boolean))];
 }
 
+async function resolveEffectiveTerritoryNames(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  auth: { email: string; userId: string; role: string },
+  territoryIds: string[]
+): Promise<string[]> {
+  const terrNames = await resolveTerritoryNames(supabase, territoryIds);
+  if (terrNames.length > 0) return terrNames;
+
+  const operationalEmails = await getAgentOperationalEmails(
+    supabase,
+    auth.email,
+    auth.userId,
+    auth.role
+  );
+  const { data: salons } = await supabase
+    .from("salons")
+    .select("province, district, city")
+    .in("assign_to", operationalEmails);
+
+  const names = new Set<string>();
+  for (const salon of salons || []) {
+    for (const part of [salon.city, salon.district, salon.province]) {
+      const trimmed = part?.trim();
+      if (trimmed) names.add(trimmed);
+    }
+  }
+
+  return [...names];
+}
+
 function applyTerritoryScope<T extends Record<string, unknown>>(
   rows: T[],
   territoryNames: string[]
@@ -177,8 +208,20 @@ export async function searchBusinessesInTerritories(
 
   const supabase = createSupabaseAdminClient();
   const trimmedName = businessName?.trim();
-  const terrNames = await resolveTerritoryNames(supabase, territoryIds);
-  const territoryScopes = buildTerritorySearchScopes(terrNames);
+  const selectedTerrNames = await resolveTerritoryNames(supabase, territoryIds);
+  const operationalEmails = await getAgentOperationalEmails(
+    supabase,
+    auth.email,
+    auth.userId,
+    auth.role
+  );
+  const googleTerrNames =
+    selectedTerrNames.length > 0
+      ? selectedTerrNames
+      : await resolveEffectiveTerritoryNames(supabase, auth, territoryIds);
+  const territoryScopes = buildTerritorySearchScopes(
+    googleTerrNames.length > 0 ? googleTerrNames : selectedTerrNames
+  );
 
   let query = supabase
     .from("salons")
@@ -190,12 +233,14 @@ export async function searchBusinessesInTerritories(
 
   const leadsQuery = supabase.from("salon_leads").select("name, address, assign_to");
 
-  if (terrNames.length > 0) {
-    const orClause = territorySearchOrClause(terrNames);
+  if (selectedTerrNames.length > 0) {
+    const orClause = territorySearchOrClause(selectedTerrNames);
     if (orClause) query = query.or(orClause);
-  } else {
-    const email = normalizeEmail(auth.email) || auth.email;
+  } else if (operationalEmails.length === 1) {
+    const email = operationalEmails[0];
     query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
+  } else {
+    query = query.in("assign_to", operationalEmails);
   }
 
   if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
@@ -212,10 +257,10 @@ export async function searchBusinessesInTerritories(
     return { success: false as const, error: error.message };
   }
 
-  let businesses: any[] = applyTerritoryScope(dbData || [], terrNames);
+  let businesses: any[] = applyTerritoryScope(dbData || [], selectedTerrNames);
 
   const apiKey = getGoogleMapsApiKey();
-  if (apiKey && terrNames.length > 0) {
+  if (apiKey && googleTerrNames.length > 0) {
     const googlePromises: Promise<any[]>[] = [];
     const searchCategories =
       categories.length > 0 && !categories.includes("All Categories")
@@ -224,7 +269,7 @@ export async function searchBusinessesInTerritories(
 
     if (trimmedName) {
       const queries = new Set<string>();
-      for (const territoryName of terrNames) {
+      for (const territoryName of googleTerrNames) {
         queries.add(`${trimmedName} in ${territoryName}, Sri Lanka`);
         queries.add(`${trimmedName} ${territoryName} Sri Lanka`);
       }
@@ -233,7 +278,7 @@ export async function searchBusinessesInTerritories(
         googlePromises.push(fetchGoogleTextSearch(searchQuery, apiKey));
       }
     } else {
-      for (const territoryName of terrNames) {
+      for (const territoryName of googleTerrNames) {
         for (const category of searchCategories) {
           googlePromises.push(
             fetchGoogleTextSearch(`${category} in ${territoryName}, Sri Lanka`, apiKey)
@@ -244,7 +289,10 @@ export async function searchBusinessesInTerritories(
 
     const googleResultsArray = await Promise.all(googlePromises);
     const rawGooglePlaces = googleResultsArray.flat();
-    const scopedGooglePlaces = applyTerritoryScope(rawGooglePlaces, terrNames);
+    const googleScopes = buildTerritorySearchScopes(googleTerrNames);
+    const scopedGooglePlaces = rawGooglePlaces.filter((place) =>
+      businessMatchesTerritoryScopes(googlePlaceToTerritoryHaystack(place), googleScopes)
+    );
     const enrichedGooglePlaces = await enrichGooglePlacesWithProfiles(
       scopedGooglePlaces.slice(0, Math.max(limit || 12, 12)),
       apiKey
@@ -254,7 +302,7 @@ export async function searchBusinessesInTerritories(
       mapGooglePlace(
         place,
         trimmedName ? "Business" : searchCategories[0] || "Salon",
-        terrNames[0] || "Sri Lanka",
+        googleTerrNames[0] || "Sri Lanka",
         profile
       )
     );

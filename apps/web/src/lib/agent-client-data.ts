@@ -11,6 +11,7 @@ import {
   calculateSubAgentShare,
   clampSplitPercent,
   findAgentHierarchyRecord,
+  getAgentOperationalEmails,
   isFieldAgentForCommissions,
   isRegionalHeadAgent,
 } from "@/lib/agent-hierarchy";
@@ -470,11 +471,39 @@ export async function searchBusinessesInTerritoriesClient(
     }
   }
 
+  terrNames = [...new Set(terrNames.filter(Boolean))];
+
+  const operationalEmails = await getAgentOperationalEmails(
+    supabase,
+    auth.email,
+    auth.userId,
+    auth.role
+  );
+
+  if (terrNames.length === 0) {
+    const { data: salons } = await supabase
+      .from("salons")
+      .select("province, district, city")
+      .in("assign_to", operationalEmails);
+
+    const names = new Set<string>();
+    for (const salon of salons || []) {
+      for (const part of [salon.city, salon.district, salon.province]) {
+        const trimmed = part?.trim();
+        if (trimmed) names.add(trimmed);
+      }
+    }
+    terrNames = [...names];
+  }
+
   if (terrNames.length > 0) {
     const orClause = territorySearchOrClause(terrNames);
     if (orClause) query = query.or(orClause);
+  } else if (operationalEmails.length === 1) {
+    const email = operationalEmails[0];
+    query = query.or(`assign_to.eq.${email},assign_to.ilike.${email}`);
   } else {
-    query = query.or(`assign_to.eq.${auth.email},assign_to.ilike.${auth.email}`);
+    query = query.in("assign_to", operationalEmails);
   }
 
   if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {

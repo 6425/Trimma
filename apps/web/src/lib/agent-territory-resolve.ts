@@ -6,6 +6,11 @@ import {
   type SriLankaDistrict,
   type SriLankaProvince,
 } from "@/lib/sri-lanka-locations";
+import {
+  findAgentHierarchyRecord,
+  getSubAgentEmailsForRegionalHead,
+  isRegionalHeadAgent,
+} from "@/lib/agent-hierarchy";
 import { findAuthUserIdByEmail } from "@/lib/sync-user-role";
 
 export type TerritorySearchScope = {
@@ -18,11 +23,26 @@ export type TerritorySearchScope = {
 type GeoHaystackBusiness = {
   name?: string | null;
   address?: string | null;
+  formatted_address?: string | null;
   city?: string | null;
   district?: string | null;
   province?: string | null;
   location?: string | null;
 };
+
+/** Google Text Search rows use formatted_address, not address. */
+export function googlePlaceToTerritoryHaystack(place: {
+  name?: string | null;
+  formatted_address?: string | null;
+  vicinity?: string | null;
+  address?: string | null;
+}): GeoHaystackBusiness {
+  return {
+    name: place.name,
+    address: place.formatted_address || place.vicinity || place.address || null,
+    formatted_address: place.formatted_address || null,
+  };
+}
 
 function scopeFromProvince(province: SriLankaProvince, label: string): TerritorySearchScope {
   return {
@@ -158,7 +178,7 @@ export function businessMatchesTerritoryScopes(
   if (scopes.length === 0) return true;
 
   const haystack = normalizeTerritoryToken(
-    `${business.province || ""} ${business.district || ""} ${business.city || ""} ${business.address || ""} ${business.location || ""}`
+    `${business.province || ""} ${business.district || ""} ${business.city || ""} ${business.address || ""} ${business.formatted_address || ""} ${business.location || ""}`
   );
 
   return scopes.some((scope) => {
@@ -307,12 +327,83 @@ export async function buildAgentTerritories(
       });
   }
 
+  if (agentId) {
+    const { data: subAgents } = await supabase
+      .from("agents")
+      .select("id, user_email, territory, territory_id")
+      .eq("reports_to_agent_id", agentId);
+
+    for (const sub of subAgents || []) {
+      if (sub.territory) {
+        sub.territory
+          .split(",")
+          .map((n) => n.trim())
+          .filter(Boolean)
+          .forEach((name) => {
+            pushTerritory(territories, { id: `primary-${name}`, name, type: "team" });
+          });
+      }
+
+      if (sub.territory_id) {
+        const { data: linked } = await supabase
+          .from("territories")
+          .select("id, name, type, slug")
+          .eq("id", sub.territory_id)
+          .maybeSingle();
+        if (linked) pushTerritory(territories, linked);
+      }
+
+      if (sub.id) {
+        const { data: subTerritoryData } = await supabase
+          .from("agent_territories")
+          .select("territory_id, territories ( id, name, type, slug )")
+          .eq("agent_id", sub.id);
+
+        subTerritoryData?.forEach((row) => {
+          const terr = row.territories as
+            | { id?: string; name?: string; type?: string; slug?: string }
+            | { id?: string; name?: string; type?: string; slug?: string }[]
+            | null;
+          const linkedTerritory = Array.isArray(terr) ? terr[0] : terr;
+          pushTerritory(territories, linkedTerritory || {});
+        });
+      }
+    }
+
+    const subEmails = (subAgents || [])
+      .map((row) => normalizeEmail(row.user_email || ""))
+      .filter(Boolean);
+
+    if (subEmails.length > 0) {
+      const { data: teamSalons } = await supabase
+        .from("salons")
+        .select("province, district, city")
+        .in("assign_to", subEmails);
+
+      for (const salon of teamSalons || []) {
+        for (const part of [salon.city, salon.district, salon.province]) {
+          const trimmed = part?.trim();
+          if (trimmed) {
+            pushTerritory(territories, { id: `primary-${trimmed}`, name: trimmed, type: "team" });
+          }
+        }
+      }
+    }
+  }
+
   if (territories.length === 0) {
     const normalized = normalizeEmail(email) || email;
+    let assignEmails = [normalized];
+    const hierarchy = await findAgentHierarchyRecord(supabase, email);
+    if (hierarchy?.id && isRegionalHeadAgent(hierarchy, null)) {
+      const subEmails = await getSubAgentEmailsForRegionalHead(supabase, hierarchy.id);
+      assignEmails = Array.from(new Set([normalized, ...subEmails]));
+    }
+
     const { data: salons } = await supabase
       .from("salons")
       .select("province, district, city")
-      .or(`assign_to.eq.${normalized},assign_to.ilike.${normalized}`);
+      .in("assign_to", assignEmails);
 
     const regionNames = new Set<string>();
     for (const salon of salons || []) {

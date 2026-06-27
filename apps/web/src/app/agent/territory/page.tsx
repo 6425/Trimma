@@ -31,7 +31,7 @@ import { useAgentPortal } from "@/lib/agent-portal-provider";
 
 function TerritoryExplorerContent() {
   const router = useRouter();
-  const { path } = useAgentPortal();
+  const { path, base } = useAgentPortal();
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [territories, setTerritories] = useState<Territory[]>([]);
@@ -130,6 +130,12 @@ function TerritoryExplorerContent() {
       
       if (!res.success) throw new Error(res.error);
       
+      if (res.businesses.length === 0) {
+        toast.message("No businesses matched your search. Try another category, territory, or business name.");
+      } else {
+        toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
+      }
+      
       setBusinesses(res.businesses);
       sessionStorage.setItem("trimma_territory_businesses", JSON.stringify(res.businesses));
       sessionStorage.setItem("trimma_territory_category", selectedCategory);
@@ -137,7 +143,6 @@ function TerritoryExplorerContent() {
       sessionStorage.setItem("trimma_territory_limit", String(resultLimit));
       sessionStorage.setItem("trimma_territory_business_name", businessNameSearch);
       
-      toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
     } catch (err: any) {
       toast.error(err.message || "Failed to search businesses");
     } finally {
@@ -196,7 +201,7 @@ function TerritoryExplorerContent() {
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
             <MapIcon className="w-8 h-8 text-[#FFC107]" />
-            Agent Territory Explorer
+            {base === "/regional-head" ? "Regional Head Territory Explorer" : "Agent Territory Explorer"}
           </h1>
           <p className="text-sm text-zinc-500 font-medium mt-1">
             Explore businesses within your assigned territories and discover growth opportunities.
@@ -246,6 +251,11 @@ function TerritoryExplorerContent() {
               <option value="all">All Assigned Territories</option>
               {territories.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
+            {territories.length === 0 ? (
+              <p className="text-[11px] text-amber-700 font-medium">
+                No territories assigned yet — search will use your team&apos;s salon regions.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -280,7 +290,7 @@ function TerritoryExplorerContent() {
 
           <Button 
             onClick={handleSearch}
-            disabled={searching || territories.length === 0}
+            disabled={searching}
             className="w-full h-11 rounded-xl bg-[#FFC107] hover:bg-[#FFC107]/90 text-zinc-900 font-extrabold shadow-none transition-all gap-2 xl:col-span-2"
           >
             {searching ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
