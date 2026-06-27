@@ -30,7 +30,35 @@ const DEFAULT_GOOGLE_CATEGORY_TERMS = [
 
 const FALLBACK_GOOGLE_TERRITORIES = ["Colombo", "Western Province", "Sri Lanka"];
 
-function normalizeDbSalonRow(row: Record<string, unknown>) {
+/** Row shape returned by territory search (matches MapComponent BusinessResult). */
+export type TerritorySearchBusiness = {
+  id: string;
+  slug?: string;
+  name: string;
+  category: string;
+  address: string | null;
+  city?: string | null;
+  district?: string | null;
+  province?: string | null;
+  phone: string | null;
+  website?: string | null;
+  map_url?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location: string | null;
+  logo_url: string | null;
+  is_verified: boolean;
+  rating: number;
+  review_count?: number;
+  working_hours?: string;
+  summary?: string;
+  price_level?: number | null;
+  status: string;
+  assign_to?: string | null;
+  is_taken?: boolean;
+};
+
+function normalizeDbSalonRow(row: Record<string, unknown>): TerritorySearchBusiness {
   return {
     id: String(row.id || row.slug || ""),
     slug: String(row.slug || row.id || ""),
@@ -155,7 +183,7 @@ function mapGooglePlace(
   category: string,
   territoryName: string,
   profile: Awaited<ReturnType<typeof fetchGooglePlaceProfile>> = null
-) {
+): TerritorySearchBusiness {
   const resolvedCategory =
     inferTrimmaCategoryFromGoogleTypes(profile?.types || place.types, category) || category;
   const phone =
@@ -281,26 +309,26 @@ async function resolveEffectiveTerritoryNames(
   return [...names];
 }
 
-function applyTerritoryScope<T extends Record<string, unknown>>(
-  rows: T[],
+function applyTerritoryScope(
+  rows: TerritorySearchBusiness[],
   territoryNames: string[]
-): T[] {
+): TerritorySearchBusiness[] {
   if (territoryNames.length === 0) return rows;
   const scopes = buildTerritorySearchScopes(territoryNames);
-  return rows.filter((row) => businessMatchesTerritoryScopes(row as any, scopes));
+  return rows.filter((row) => businessMatchesTerritoryScopes(row, scopes));
 }
 
 /** Google Map discoveries first, then Trimma DB rows — so the result cap is not filled only by DB salons. */
 function mergeTerritoryDiscoveryResults(
-  dbRows: Record<string, unknown>[],
-  googleRows: Record<string, unknown>[],
+  dbRows: TerritorySearchBusiness[],
+  googleRows: TerritorySearchBusiness[],
   limit: number
-): Record<string, unknown>[] {
-  const merged: Record<string, unknown>[] = [];
+): TerritorySearchBusiness[] {
+  const merged: TerritorySearchBusiness[] = [];
   const seenIds = new Set<string>();
   const seenNames = new Set<string>();
 
-  const tryPush = (row: Record<string, unknown>) => {
+  const tryPush = (row: TerritorySearchBusiness) => {
     if (limit > 0 && merged.length >= limit) return;
     const idKey = String(row.id || "").toLowerCase();
     const nameKey = String(row.name || "").toLowerCase();
@@ -414,11 +442,11 @@ export async function searchBusinessesInTerritories(
     return { success: false as const, error: error.message };
   }
 
-  let dbBusinesses: Record<string, unknown>[] = applyTerritoryScope(
+  let dbBusinesses: TerritorySearchBusiness[] = applyTerritoryScope(
     (dbData || []).map((row) => normalizeDbSalonRow(row as Record<string, unknown>)),
     selectedTerrNames
   );
-  let googleBusinesses: Record<string, unknown>[] = [];
+  let googleBusinesses: TerritorySearchBusiness[] = [];
   let googleCount = 0;
 
   const apiKey = getGoogleMapsApiKey();
