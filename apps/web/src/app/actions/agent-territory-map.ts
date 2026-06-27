@@ -8,6 +8,7 @@ import {
   ensureAgentRecord,
   findAgentRecord,
   resolveAgentMapAgentId,
+  resolveTerritorySearchScope,
   territorySearchOrClause,
 } from "@/lib/agent-territory-resolve";
 import { getAgentOperationalEmails } from "@/lib/agent-hierarchy";
@@ -16,6 +17,7 @@ import {
   fetchGooglePlaceProfile,
   formatGoogleWorkingHoursText,
   inferTrimmaCategoryFromGoogleTypes,
+  parseGoogleAddressParts,
 } from "@/lib/google-place-profile";
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
 
@@ -108,6 +110,46 @@ function businessNameMatches(
   return place.includes(term) || term.includes(place);
 }
 
+function geoFallbackFromTerritoryLabel(territoryName: string): {
+  city: string;
+  district: string;
+  province: string;
+} {
+  const label = territoryName.trim();
+  if (!label) return { city: "", district: "", province: "" };
+
+  if (/\bprovince\b/i.test(label)) {
+    return { city: "", district: "", province: label };
+  }
+
+  const scope = resolveTerritorySearchScope(label);
+  if (scope) {
+    const districtMatch = scope.districtNames.find(
+      (name) => name.toLowerCase() === label.toLowerCase()
+    );
+    if (districtMatch) {
+      return {
+        city: "",
+        district: districtMatch,
+        province: scope.provinceNames[0] || "",
+      };
+    }
+
+    const cityMatch = scope.cityNames.find(
+      (name) => name.toLowerCase() === label.toLowerCase()
+    );
+    if (cityMatch) {
+      return {
+        city: cityMatch,
+        district: scope.districtNames[0] || "",
+        province: scope.provinceNames[0] || "",
+      };
+    }
+  }
+
+  return { city: label, district: "", province: "" };
+}
+
 function mapGooglePlace(
   place: any,
   category: string,
@@ -121,6 +163,10 @@ function mapGooglePlace(
     profile?.formatted_phone_number ||
     place.formatted_phone_number ||
     null;
+  const addressParts = profile
+    ? parseGoogleAddressParts(profile)
+    : { city: null, district: null, province: null, postalCode: null };
+  const territoryGeo = geoFallbackFromTerritoryLabel(territoryName);
 
   return {
     id: place.place_id,
@@ -128,7 +174,9 @@ function mapGooglePlace(
     name: profile?.name || place.name,
     category: resolvedCategory,
     address: profile?.formatted_address || place.formatted_address,
-    city: territoryName,
+    city: addressParts.city || territoryGeo.city,
+    district: addressParts.district || territoryGeo.district,
+    province: addressParts.province || territoryGeo.province,
     phone,
     website: profile?.website || null,
     map_url: profile?.url || (place.place_id ? `https://www.google.com/maps/place/?q=place_id:${place.place_id}` : null),

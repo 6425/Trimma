@@ -50,14 +50,84 @@ function formatWorkingHours(value: unknown): string {
   return String(value);
 }
 
+/** Keep city / district / province in the correct Excel columns. */
+export function resolveDiscoveryExportGeo(input: {
+  city?: unknown;
+  district?: unknown;
+  province?: unknown;
+  address?: unknown;
+}): Pick<DiscoveryExportRow, "city" | "district" | "province"> {
+  let city = String(input.city || "").trim();
+  let district = String(input.district || "").trim();
+  let province = String(input.province || "").trim();
+
+  if (city && !province && /\bprovince\b/i.test(city)) {
+    province = city;
+    city = "";
+  }
+
+  if (district && !province && /\bprovince\b/i.test(district)) {
+    province = district;
+    district = "";
+  }
+
+  if (city && district && city.toLowerCase() === district.toLowerCase() && !/\bprovince\b/i.test(city)) {
+    district = "";
+  }
+
+  const address = String(input.address || "").trim();
+  if (address.includes(",")) {
+    const parts = address
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const withoutCountry = parts.filter((part) => !/^sri lanka$/i.test(part));
+
+    if (!province) {
+      const provincePart = [...withoutCountry]
+        .reverse()
+        .find((part) => /\bprovince\b/i.test(part));
+      if (provincePart) province = provincePart;
+    }
+
+    if (!city && withoutCountry.length >= 2) {
+      const candidate = withoutCountry[withoutCountry.length - 2];
+      if (candidate && candidate !== province && !/\bprovince\b/i.test(candidate)) {
+        city = candidate;
+      }
+    }
+
+    if (!district && withoutCountry.length >= 3) {
+      const candidate = withoutCountry[withoutCountry.length - 3];
+      if (
+        candidate &&
+        candidate !== province &&
+        candidate !== city &&
+        !/\bprovince\b/i.test(candidate)
+      ) {
+        district = candidate;
+      }
+    }
+  }
+
+  return { city, district, province };
+}
+
 export function mapSalonToDiscoveryExport(row: Record<string, unknown>): DiscoveryExportRow {
+  const geo = resolveDiscoveryExportGeo({
+    city: row.city,
+    district: row.district,
+    province: row.province,
+    address: row.address,
+  });
+
   return {
     name: String(row.name || ""),
     category: String(row.category || ""),
     address: String(row.address || ""),
-    city: String(row.city || ""),
-    district: String(row.district || ""),
-    province: String(row.province || ""),
+    city: geo.city,
+    district: geo.district,
+    province: geo.province,
     phone: String(row.phone || ""),
     website: String(row.website || ""),
     email: String(row.owner_gmail || row.owner_email || ""),
@@ -83,13 +153,20 @@ export function mapSalonToDiscoveryExport(row: Record<string, unknown>): Discove
 }
 
 export function mapTerritoryBusinessToDiscoveryExport(row: Record<string, unknown>): DiscoveryExportRow {
+  const geo = resolveDiscoveryExportGeo({
+    city: row.city,
+    district: row.district,
+    province: row.province,
+    address: row.address,
+  });
+
   return {
     name: String(row.name || ""),
     category: String(row.category || ""),
     address: String(row.address || ""),
-    city: String(row.city || ""),
-    district: String(row.district || ""),
-    province: String(row.province || ""),
+    city: geo.city,
+    district: geo.district,
+    province: geo.province,
     phone: String(row.phone || ""),
     website: String(row.website || ""),
     email: "",

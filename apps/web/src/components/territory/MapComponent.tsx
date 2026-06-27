@@ -10,6 +10,9 @@ export type BusinessResult = {
   name: string;
   category: string;
   address: string;
+  city?: string | null;
+  district?: string | null;
+  province?: string | null;
   phone: string;
   latitude: number | null;
   longitude: number | null;
