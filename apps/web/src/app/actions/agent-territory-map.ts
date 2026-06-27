@@ -290,6 +290,39 @@ function applyTerritoryScope<T extends Record<string, unknown>>(
   return rows.filter((row) => businessMatchesTerritoryScopes(row as any, scopes));
 }
 
+/** Google Map discoveries first, then Trimma DB rows — so the result cap is not filled only by DB salons. */
+function mergeTerritoryDiscoveryResults(
+  dbRows: Record<string, unknown>[],
+  googleRows: Record<string, unknown>[],
+  limit: number
+): Record<string, unknown>[] {
+  const merged: Record<string, unknown>[] = [];
+  const seenIds = new Set<string>();
+  const seenNames = new Set<string>();
+
+  const tryPush = (row: Record<string, unknown>) => {
+    if (limit > 0 && merged.length >= limit) return;
+    const idKey = String(row.id || "").toLowerCase();
+    const nameKey = String(row.name || "").toLowerCase();
+    if (idKey && seenIds.has(idKey)) return;
+    if (nameKey && seenNames.has(nameKey)) return;
+    merged.push(row);
+    if (idKey) seenIds.add(idKey);
+    if (nameKey) seenNames.add(nameKey);
+  };
+
+  for (const row of googleRows) tryPush(row);
+  for (const row of dbRows) {
+    tryPush(
+      row.status === "google_lead"
+        ? row
+        : { ...row, is_taken: row.is_taken ?? true }
+    );
+  }
+
+  return merged;
+}
+
 export async function getAgentMapData() {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -381,11 +414,11 @@ export async function searchBusinessesInTerritories(
     return { success: false as const, error: error.message };
   }
 
-  let businesses: any[] = applyTerritoryScope(
+  let dbBusinesses: Record<string, unknown>[] = applyTerritoryScope(
     (dbData || []).map((row) => normalizeDbSalonRow(row as Record<string, unknown>)),
     selectedTerrNames
   );
-  const dbCount = businesses.length;
+  let googleBusinesses: Record<string, unknown>[] = [];
   let googleCount = 0;
 
   const apiKey = getGoogleMapsApiKey();
@@ -406,12 +439,13 @@ export async function searchBusinessesInTerritories(
       }
     }
 
+    const enrichCap = Math.max((limit || 12) * 2, 24);
     const enrichedGooglePlaces = await enrichGooglePlacesWithProfiles(
-      [...uniqueGooglePlaces.values()].slice(0, Math.max(limit || 12, 24)),
+      [...uniqueGooglePlaces.values()].slice(0, enrichCap),
       apiKey
     );
 
-    const googleBusinesses = enrichedGooglePlaces.map(({ place, profile }) =>
+    const mappedGoogle = enrichedGooglePlaces.map(({ place, profile }) =>
       mapGooglePlace(
         place,
         trimmedName ? "Business" : categories[0] || DEFAULT_GOOGLE_CATEGORY_TERMS[0],
@@ -422,45 +456,54 @@ export async function searchBusinessesInTerritories(
 
     const { data: localLeads } = await leadsQuery;
 
-    const salonNames = new Set(businesses.map((b) => b.name.toLowerCase()));
+    const salonNames = new Set(dbBusinesses.map((b) => String(b.name || "").toLowerCase()));
     const leadByName = new Map<string, { assign_to?: string | null }>();
     for (const l of localLeads || []) {
       if (l?.name) leadByName.set(l.name.toLowerCase(), { assign_to: l.assign_to });
     }
 
     const seenGoogle = new Set<string>();
-    for (const gb of googleBusinesses) {
-      if (trimmedName && !businessNameMatches(gb.name, trimmedName)) continue;
+    for (const gb of mappedGoogle) {
+      if (trimmedName && !businessNameMatches(String(gb.name || ""), trimmedName)) continue;
 
-      const key = (gb.id || gb.name || "").toLowerCase();
-      const nameKey = gb.name?.toLowerCase() || "";
+      const key = String(gb.id || gb.name || "").toLowerCase();
+      const nameKey = String(gb.name || "").toLowerCase();
       if (salonNames.has(nameKey)) continue;
       if (seenGoogle.has(key)) continue;
       seenGoogle.add(key);
 
       const lead = leadByName.get(nameKey);
       if (lead) {
-        businesses.push({ ...gb, is_taken: true, assign_to: lead.assign_to ?? null });
+        googleBusinesses.push({ ...gb, is_taken: true, assign_to: lead.assign_to ?? null });
       } else {
-        businesses.push(gb);
+        googleBusinesses.push(gb);
       }
-      googleCount += 1;
     }
   } else {
     console.warn("[searchBusinessesInTerritories] GOOGLE_API is not configured — Google discovery skipped.");
   }
 
   if (trimmedName) {
-    businesses = businesses.filter((b) => businessNameMatches(b.name, trimmedName));
+    dbBusinesses = dbBusinesses.filter((b) =>
+      businessNameMatches(String(b.name || ""), trimmedName)
+    );
+    googleBusinesses = googleBusinesses.filter((b) =>
+      businessNameMatches(String(b.name || ""), trimmedName)
+    );
   }
 
   if (selectedTerrNames.length > 0) {
-    businesses = applyTerritoryScope(businesses, selectedTerrNames);
+    googleBusinesses = applyTerritoryScope(googleBusinesses, selectedTerrNames);
   }
+
+  googleCount = googleBusinesses.length;
+  const dbCount = dbBusinesses.length;
+
+  const businesses = mergeTerritoryDiscoveryResults(dbBusinesses, googleBusinesses, limit);
 
   return {
     success: true as const,
-    businesses: limit > 0 ? businesses.slice(0, limit) : businesses,
+    businesses,
     meta: {
       dbCount,
       googleCount,

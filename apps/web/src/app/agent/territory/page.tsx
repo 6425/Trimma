@@ -171,7 +171,14 @@ function TerritoryExplorerContent() {
           toast.message("No businesses matched your search. Try another category, territory, or business name.");
         }
       } else {
-        toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
+        const meta = "meta" in res ? (res.meta as { googleConfigured?: boolean; dbCount?: number; googleCount?: number } | undefined) : undefined;
+        const googlePart =
+          meta?.googleCount != null && meta.googleCount > 0
+            ? ` (${meta.googleCount} from Google Maps)`
+            : meta?.dbCount != null && meta.dbCount > 0
+              ? ` (${meta.dbCount} in Trimma)`
+              : "";
+        toast.success(`Found ${res.businesses.length} businesses matching your criteria.${googlePart}`);
       }
       
       setBusinesses(res.businesses);
