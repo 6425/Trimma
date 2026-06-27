@@ -52,13 +52,9 @@ export default function Logo({
   const { theme } = useTheme();
   const isDarkTheme = theme === "dark";
   const [defaultTagline, setDefaultTagline] = useState(DEFAULT_TAGLINE);
-  const [showBetaBadge, setShowBetaBadge] = useState(() =>
-    shouldShowBetaBadge(null)
-  );
-
-  useEffect(() => {
-    setShowBetaBadge(shouldShowBetaBadge(window.location.hostname));
-  }, []);
+  // Per-deployment: live Vercel project sets NEXT_PUBLIC_APP_URL to www.trimma.io (no badge),
+  // beta project sets it to beta.trimma.io (shows badge).
+  const showBetaBadge = shouldShowBetaBadge(null);
 
   useEffect(() => {
     const handleUpdate = (updatedTagline: string) => {
