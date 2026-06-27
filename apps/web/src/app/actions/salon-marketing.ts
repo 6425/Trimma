@@ -262,7 +262,7 @@ export async function sendVipPromoCampaign(packageId: string, channels: PromoCam
     };
   }
 
-  const cooldown = checkEmailRateLimit(`vip-promo-campaign:${packageId}`);
+  const cooldown = await checkEmailRateLimit(`vip-promo-campaign:${packageId}`);
   if (!cooldown.allowed) {
     return {
       success: false as const,

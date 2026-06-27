@@ -1,9 +1,4 @@
-type CheckoutBucket = {
-  count: number;
-  resetAt: number;
-};
-
-const buckets = new Map<string, CheckoutBucket>();
+import { consumeRateLimit } from "@/lib/distributed-rate-limit";
 
 const CHECKOUT_RATE_LIMIT_MAX = 12;
 const CHECKOUT_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -13,23 +8,33 @@ export type CheckoutRateLimitResult = {
   retryAfterSec?: number;
 };
 
-export function checkCheckoutRateLimit(ip: string): CheckoutRateLimitResult {
-  const key = (ip || "unknown").trim().toLowerCase();
-  const now = Date.now();
-  const bucket = buckets.get(key);
+export async function checkCheckoutRateLimit(ip: string): Promise<CheckoutRateLimitResult> {
+  const result = await consumeRateLimit({
+    namespace: "checkout",
+    key: ip,
+    limit: CHECKOUT_RATE_LIMIT_MAX,
+    windowMs: CHECKOUT_RATE_LIMIT_WINDOW_MS,
+  });
 
-  if (!bucket || now >= bucket.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + CHECKOUT_RATE_LIMIT_WINDOW_MS });
-    return { allowed: true };
-  }
+  return {
+    allowed: result.allowed,
+    retryAfterSec: result.retryAfterSec,
+  };
+}
 
-  if (bucket.count >= CHECKOUT_RATE_LIMIT_MAX) {
-    return {
-      allowed: false,
-      retryAfterSec: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
-    };
-  }
+const PASSWORD_RESET_RATE_LIMIT_MAX = 5;
+const PASSWORD_RESET_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
-  bucket.count += 1;
-  return { allowed: true };
+export async function checkPasswordResetRateLimit(ip: string): Promise<CheckoutRateLimitResult> {
+  const result = await consumeRateLimit({
+    namespace: "auth:password-reset",
+    key: ip,
+    limit: PASSWORD_RESET_RATE_LIMIT_MAX,
+    windowMs: PASSWORD_RESET_RATE_LIMIT_WINDOW_MS,
+  });
+
+  return {
+    allowed: result.allowed,
+    retryAfterSec: result.retryAfterSec,
+  };
 }

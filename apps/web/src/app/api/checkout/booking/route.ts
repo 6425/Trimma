@@ -7,7 +7,7 @@ import { validateCardPayment, type CardType } from "@/lib/card-payment";
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request);
-    const rateLimit = checkCheckoutRateLimit(clientIp);
+    const rateLimit = await checkCheckoutRateLimit(clientIp);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many checkout attempts. Please wait and try again." },

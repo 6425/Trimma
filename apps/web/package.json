@@ -25,6 +25,8 @@
     "@trimma/db": "*",
     "@trimma/types": "*",
     "@trimma/ui": "*",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "@vis.gl/react-google-maps": "^1.8.3",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",

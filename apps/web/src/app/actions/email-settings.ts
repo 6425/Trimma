@@ -308,7 +308,7 @@ export async function sendTriggeredEmail(
     return { success: false, error: "Invalid recipient email address." };
   }
 
-  const rate = checkEmailRateLimit(input.rateLimitKey);
+  const rate = await checkEmailRateLimit(input.rateLimitKey);
   if (!rate.allowed) {
     return {
       success: false,
@@ -503,7 +503,7 @@ export async function sendBookingNoShowEmail(bookingNo: string) {
     return { success: false, error: "This email trigger is disabled.", skipped: true };
   }
 
-  const rate = checkEmailRateLimit(`no-show:${bookingNo}`);
+  const rate = await checkEmailRateLimit(`no-show:${bookingNo}`);
   if (!rate.allowed) {
     return {
       success: false,
@@ -641,7 +641,7 @@ export async function sendBookingReminderEmail(bookingNo: string) {
       return { success: false, error: "Booking or customer email not found.", skipped: true };
     }
 
-    const rate = checkEmailRateLimit(`reminder:${bookingNo}`);
+    const rate = await checkEmailRateLimit(`reminder:${bookingNo}`);
     if (!rate.allowed) {
       return {
         success: false,
@@ -729,7 +729,7 @@ export async function sendMarketingPromoEmail(input: {
       return { success: false, error: "Email notifications are disabled.", skipped: true };
     }
 
-    const rate = checkEmailRateLimit(input.rateLimitKey);
+    const rate = await checkEmailRateLimit(input.rateLimitKey);
     if (!rate.allowed) {
       return {
         success: false,

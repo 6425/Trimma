@@ -1,11 +1,5 @@
+import { consumeRateLimit } from "@/lib/distributed-rate-limit";
 import { EMAIL_RATE_LIMIT_MAX, EMAIL_RATE_LIMIT_WINDOW_MS } from "./config";
-
-type RateLimitBucket = {
-  count: number;
-  resetAt: number;
-};
-
-const buckets = new Map<string, RateLimitBucket>();
 
 export type RateLimitResult = {
   allowed: boolean;
@@ -19,25 +13,13 @@ export function buildEmailRateLimitKey(ip: string, userKey: string) {
   return `${normalizedIp}:${normalizedUser}`;
 }
 
-export function checkEmailRateLimit(key: string): RateLimitResult {
-  const now = Date.now();
-  const bucket = buckets.get(key);
-
-  if (!bucket || now >= bucket.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + EMAIL_RATE_LIMIT_WINDOW_MS });
-    return { allowed: true, remaining: EMAIL_RATE_LIMIT_MAX - 1 };
-  }
-
-  if (bucket.count >= EMAIL_RATE_LIMIT_MAX) {
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfterSec: Math.max(1, Math.ceil((bucket.resetAt - now) / 1000)),
-    };
-  }
-
-  bucket.count += 1;
-  return { allowed: true, remaining: EMAIL_RATE_LIMIT_MAX - bucket.count };
+export async function checkEmailRateLimit(key: string): Promise<RateLimitResult> {
+  return consumeRateLimit({
+    namespace: "email",
+    key,
+    limit: EMAIL_RATE_LIMIT_MAX,
+    windowMs: EMAIL_RATE_LIMIT_WINDOW_MS,
+  });
 }
 
 export function getClientIp(request: Request) {

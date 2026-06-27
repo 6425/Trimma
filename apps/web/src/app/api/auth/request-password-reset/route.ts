@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   canUseEmailPassword,
@@ -7,12 +7,28 @@ import {
   isGoogleOnlyAuthUser,
 } from "@/lib/auth-admin-lookup";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { checkPasswordResetRateLimit } from "@/lib/checkout-rate-limit";
+import { getClientIp } from "@/lib/email/rate-limit";
 
 const GENERIC_SUCCESS =
   "If an account with that email exists and supports password login, a reset link has been sent.";
 
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request);
+    const rateLimit = await checkPasswordResetRateLimit(clientIp);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many reset attempts. Please wait and try again." },
+        {
+          status: 429,
+          headers: rateLimit.retryAfterSec
+            ? { "Retry-After": String(rateLimit.retryAfterSec) }
+            : undefined,
+        }
+      );
+    }
+
     const body = await request.json();
     const email = normalizeEmail(body?.email);
 

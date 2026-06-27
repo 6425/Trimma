@@ -6,7 +6,7 @@ import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request);
-    const rateLimit = checkCheckoutRateLimit(clientIp);
+    const rateLimit = await checkCheckoutRateLimit(clientIp);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please wait and try again." },

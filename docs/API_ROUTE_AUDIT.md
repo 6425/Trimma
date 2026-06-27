@@ -56,7 +56,7 @@ Shared helpers: `apps/web/src/lib/server-request-auth.ts`
 | `/api/auth/session` | POST | Valid Supabase access token |
 | `/api/auth/logout` | POST | Public (clears session) |
 | `/api/auth/link-owner` | POST | Valid access token |
-| `/api/auth/request-password-reset` | POST | Public + rate limit |
+| `/api/auth/request-password-reset` | POST | Public + IP rate limit (Upstash when configured) |
 
 ### Checkout — public with validation
 
@@ -99,6 +99,11 @@ Shared helpers: `apps/web/src/lib/server-request-auth.ts`
 |-------|---------|------|
 | `/api/clean-leads` | GET | Returns 404 |
 | `/api/seed-agents` | GET | Returns 404 |
+
+## Recent fixes (2026-06-27)
+
+1. **Distributed rate limits** — checkout, email, and password-reset limits use Upstash Redis when `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` are set; in-memory fallback for local dev.
+2. **`/api/auth/request-password-reset`** — IP rate limit added (5 / 15 min).
 
 ## Recent fixes (2026-06-26)
 
