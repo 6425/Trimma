@@ -46,7 +46,6 @@ const GOOGLE_PROFILE_FIELDS = [
   "business_status",
   "plus_code",
   "utc_offset",
-  "reviews",
 ].join(",");
 
 const GOOGLE_TYPE_CATEGORY_MAP: Record<string, string> = {
@@ -95,6 +94,17 @@ export function formatGoogleWorkingHoursText(
   return null;
 }
 
+export function normalizeGoogleWorkingHours(
+  openingHours?: GooglePlaceProfile["opening_hours"]
+): string | null {
+  const text = formatGoogleWorkingHoursText(openingHours);
+  if (text) return text;
+  if (openingHours?.periods?.length) {
+    return JSON.stringify(openingHours.periods);
+  }
+  return null;
+}
+
 function pickAddressComponent(
   components: GooglePlaceProfile["address_components"],
   type: string
@@ -131,12 +141,6 @@ export function buildGoogleBusinessExtended(details: GooglePlaceProfile): Record
     google_utc_offset: details.utc_offset ?? null,
     google_last_synced_at: new Date().toISOString(),
     postal_code: addressParts.postalCode,
-    google_review_samples: (details.reviews || []).slice(0, 3).map((review) => ({
-      author: review.author_name || null,
-      rating: review.rating ?? null,
-      text: review.text || null,
-      relative_time: review.relative_time_description || null,
-    })),
   };
 }
 
@@ -152,7 +156,14 @@ export async function fetchGooglePlaceProfile(
   try {
     const res = await fetch(url);
     const data = await res.json();
-    if (data.status !== "OK" || !data.result) return null;
+    if (data.status !== "OK" || !data.result) {
+      if (data.status && data.status !== "OK") {
+        console.warn(
+          `[fetchGooglePlaceProfile] ${placeId}: ${data.status}${data.error_message ? ` — ${data.error_message}` : ""}`
+        );
+      }
+      return null;
+    }
     return data.result as GooglePlaceProfile;
   } catch (err) {
     console.error("[fetchGooglePlaceProfile]", err);
@@ -167,6 +178,52 @@ export type GoogleSalonUpsertContext = {
   category?: string | null;
 };
 
+export type GoogleTextSearchPlace = {
+  place_id?: string;
+  name?: string;
+  formatted_address?: string;
+  rating?: number;
+  user_ratings_total?: number;
+  types?: string[];
+  geometry?: { location?: { lat?: number; lng?: number } };
+};
+
+export function mapGoogleTextSearchPlaceToSalonRecord(
+  placeId: string,
+  place: GoogleTextSearchPlace,
+  context: GoogleSalonUpsertContext = {}
+) {
+  const name = place.name?.trim() || "Unnamed Salon";
+  const slug = slugifySalonName(name);
+  const category =
+    inferTrimmaCategoryFromGoogleTypes(place.types, context.category) || context.category || null;
+
+  return {
+    place_id: placeId,
+    name,
+    slug: `${slug}-${Date.now().toString().slice(-4)}`,
+    owner_email: `draft-${slug}-${Date.now().toString().slice(-4)}@trimma.io`,
+    province: context.province || "Western Province",
+    district: context.district || "Colombo",
+    city: context.city || "Colombo",
+    address: place.formatted_address || null,
+    rating: place.rating ?? null,
+    review_count: place.user_ratings_total ?? 0,
+    category,
+    latitude: place.geometry?.location?.lat ?? null,
+    longitude: place.geometry?.location?.lng ?? null,
+    source_type: "GOOGLE_PLACES",
+    onboarding_status: "DISCOVERED",
+    activation_status: "INACTIVE",
+    business_info_extended: {
+      google_place_id: placeId,
+      google_types: place.types || [],
+      google_last_synced_at: new Date().toISOString(),
+      profile_fetch_status: "text_search_only",
+    },
+  };
+}
+
 export function mapGooglePlaceToSalonRecord(
   placeId: string,
   details: GooglePlaceProfile,
@@ -179,7 +236,7 @@ export function mapGooglePlaceToSalonRecord(
   const category =
     inferTrimmaCategoryFromGoogleTypes(details.types, context.category) || context.category || null;
   const summary = details.editorial_summary?.overview?.trim() || null;
-  const hoursText = formatGoogleWorkingHoursText(details.opening_hours);
+  const workingHours = normalizeGoogleWorkingHours(details.opening_hours);
   const googleExt = buildGoogleBusinessExtended({ ...details, place_id: placeId });
 
   return {
@@ -197,7 +254,7 @@ export function mapGooglePlaceToSalonRecord(
     website: details.website?.trim() || null,
     map_url: details.url?.trim() || null,
     category,
-    working_hours: hoursText || details.opening_hours?.periods || [],
+    working_hours: workingHours,
     latitude: details.geometry?.location?.lat ?? null,
     longitude: details.geometry?.location?.lng ?? null,
     price_level: formatGooglePriceLevel(details.price_level),
@@ -218,7 +275,6 @@ export function mergeGoogleProfileIntoSalonRow(
 
   const merged: Record<string, unknown> = { ...incoming };
   merged.slug = existing.slug || incoming.slug;
-  merged.id = existing.id;
 
   const ownerEmail = String(existing.owner_email || "");
   if (ownerEmail && !ownerEmail.startsWith("draft-")) {
@@ -252,4 +308,45 @@ export function mergeGoogleProfileIntoSalonRow(
 
   merged.business_info_extended = { ...existingExt, ...incomingExt };
   return merged;
+}
+
+export function prepareSalonDiscoveryUpsertRow(
+  row: Record<string, unknown>
+): Record<string, unknown> {
+  const { id: _omitId, ...rest } = row;
+  return rest;
+}
+
+/** Columns added after initial discovery rollout — omit when DB patch not applied yet. */
+const OPTIONAL_DISCOVERY_COLUMNS = [
+  "review_count",
+  "business_info_extended",
+  "description",
+] as const;
+
+export function stripOptionalDiscoveryColumns(
+  row: Record<string, unknown>
+): Record<string, unknown> {
+  const copy = { ...row };
+  for (const key of OPTIONAL_DISCOVERY_COLUMNS) {
+    delete copy[key];
+  }
+  return copy;
+}
+
+export function isMissingDiscoveryColumnError(error: unknown): boolean {
+  const message = String(
+    typeof error === "object" && error && "message" in error
+      ? (error as { message: unknown }).message
+      : error instanceof Error
+        ? error.message
+        : error
+  ).toLowerCase();
+
+  return (
+    message.includes("review_count") ||
+    message.includes("business_info_extended") ||
+    message.includes("could not find") ||
+    message.includes("column") && message.includes("salons")
+  );
 }

@@ -3,10 +3,42 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import {
   fetchGooglePlaceProfile,
+  isMissingDiscoveryColumnError,
   mapGooglePlaceToSalonRecord,
+  mapGoogleTextSearchPlaceToSalonRecord,
   mergeGoogleProfileIntoSalonRow,
+  prepareSalonDiscoveryUpsertRow,
+  stripOptionalDiscoveryColumns,
 } from "@/lib/google-place-profile";
 import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
+
+function getRouteErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error) {
+    const message = String((error as { message: unknown }).message);
+    const details =
+      "details" in error && (error as { details?: unknown }).details
+        ? String((error as { details?: unknown }).details)
+        : "";
+    const hint =
+      "hint" in error && (error as { hint?: unknown }).hint
+        ? String((error as { hint?: unknown }).hint)
+        : "";
+    if (details && hint) return `${message} — ${details} (${hint})`;
+    if (details) return `${message} — ${details}`;
+    if (hint) return `${message} (${hint})`;
+    return message;
+  }
+  return "Failed to process lead discovery";
+}
+
+function getRouteErrorDetails(error: unknown): string | undefined {
+  if (typeof error === "object" && error && "details" in error) {
+    const details = String((error as { details?: unknown }).details || "").trim();
+    return details || undefined;
+  }
+  return undefined;
+}
 
 export async function POST(req: Request) {
   try {
@@ -56,29 +88,72 @@ export async function POST(req: Request) {
       .map((entry) => entry.place.place_id)
       .filter((id): id is string => Boolean(id));
 
-    const { data: existingRows } = placeIds.length
+    const existingQuery = placeIds.length
       ? await supabase.from("salons").select("*").in("place_id", placeIds)
-      : { data: [] as Record<string, unknown>[] };
+      : { data: [] as Record<string, unknown>[], error: null };
+
+    if (existingQuery.error) {
+      console.error("Failed to load existing salons for discovery merge:", existingQuery.error);
+      throw existingQuery.error;
+    }
+
+    const existingRows = existingQuery.data;
 
     const existingByPlaceId = new Map(
       (existingRows || []).map((row) => [String(row.place_id), row as Record<string, unknown>])
     );
 
     const salonsToUpsert = enrichedPlaces
-      .filter((entry) => entry.place.place_id && entry.profile)
+      .filter((entry) => entry.place.place_id)
       .map((entry) => {
-        const incoming = mapGooglePlaceToSalonRecord(entry.place.place_id!, entry.profile!, {
-          province,
-          district,
-          city,
-          category,
-        });
-        const existing = existingByPlaceId.get(entry.place.place_id!) || null;
-        return mergeGoogleProfileIntoSalonRow(existing, incoming);
+        const placeId = entry.place.place_id!;
+        const incoming = entry.profile
+          ? mapGooglePlaceToSalonRecord(placeId, entry.profile, {
+              province,
+              district,
+              city,
+              category,
+            })
+          : mapGoogleTextSearchPlaceToSalonRecord(placeId, entry.place, {
+              province,
+              district,
+              city,
+              category,
+            });
+        const existing = existingByPlaceId.get(placeId) || null;
+        return prepareSalonDiscoveryUpsertRow(mergeGoogleProfileIntoSalonRow(existing, incoming));
       });
 
-    const { error } = await supabase.from("salons").upsert(salonsToUpsert, { onConflict: "place_id" });
-    if (error) throw error;
+    if (salonsToUpsert.length === 0) {
+      return NextResponse.json({
+        success: true,
+        count: 0,
+        message: "Google returned places but none could be saved. Check server logs and database columns.",
+      });
+    }
+
+    let upsertWarning: string | undefined;
+    let upsertResult = await supabase
+      .from("salons")
+      .upsert(salonsToUpsert, { onConflict: "place_id" });
+
+    if (upsertResult.error && isMissingDiscoveryColumnError(upsertResult.error)) {
+      console.warn(
+        "[discover-leads] Retrying without optional columns (run packages/db/DISCOVERY_SALON_COLUMNS_PATCH.sql for full Google profile storage):",
+        upsertResult.error
+      );
+      upsertWarning =
+        "Saved basic salon data only. Run DISCOVERY_SALON_COLUMNS_PATCH.sql in Supabase for review_count and business_info_extended.";
+      upsertResult = await supabase.from("salons").upsert(
+        salonsToUpsert.map(stripOptionalDiscoveryColumns),
+        { onConflict: "place_id" }
+      );
+    }
+
+    if (upsertResult.error) {
+      console.error("Supabase upsert execution failed:", upsertResult.error);
+      throw upsertResult.error;
+    }
 
     if (syncImages) {
       const { data: savedRows } = await supabase
@@ -100,14 +175,17 @@ export async function POST(req: Request) {
       }
     }
 
+    const baseMessage = `Discovered and updated ${salonsToUpsert.length} salons with Google Business profile data in ${city} (${district}).`;
+
     return NextResponse.json({
       success: true,
       count: salonsToUpsert.length,
-      message: `Discovered and updated ${salonsToUpsert.length} salons with Google Business profile data in ${city} (${district}).`,
+      message: upsertWarning ? `${baseMessage} ${upsertWarning}` : baseMessage,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to process lead discovery";
+    const message = getRouteErrorMessage(error);
+    const details = getRouteErrorDetails(error);
     console.error("Discover API route failure:", error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, details }, { status: 500 });
   }
 }

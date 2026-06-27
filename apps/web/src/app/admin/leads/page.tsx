@@ -492,10 +492,16 @@ export default function Leads() {
         })
       });
 
-      const resData = await response.json();
+      let resData: { error?: string; message?: string; details?: string } = {};
+      try {
+        resData = await response.json();
+      } catch {
+        throw new Error(`Discovery API returned ${response.status} with a non-JSON response.`);
+      }
 
       if (!response.ok) {
-        throw new Error(resData.error || "Failed to query Google Places");
+        const detail = resData.details ? ` (${resData.details})` : "";
+        throw new Error((resData.error || "Failed to query Google Places") + detail);
       }
 
       toast.success(resData.message || "Salons updated successfully!", { id: "google_discovery" });
