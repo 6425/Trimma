@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { useTheme } from "@/providers/ThemeProvider";
+import { shouldShowBetaBadge } from "@/lib/show-beta-badge";
 
 interface LogoProps {
   className?: string;
@@ -51,6 +52,13 @@ export default function Logo({
   const { theme } = useTheme();
   const isDarkTheme = theme === "dark";
   const [defaultTagline, setDefaultTagline] = useState(DEFAULT_TAGLINE);
+  const [showBetaBadge, setShowBetaBadge] = useState(() =>
+    shouldShowBetaBadge(null)
+  );
+
+  useEffect(() => {
+    setShowBetaBadge(shouldShowBetaBadge(window.location.hostname));
+  }, []);
 
   useEffect(() => {
     const handleUpdate = (updatedTagline: string) => {
@@ -117,8 +125,6 @@ export default function Logo({
             : inverse
               ? "/logo-dark.svg"
               : "/logo-light.svg";
-
-  const showBetaBadge = process.env.NEXT_PUBLIC_SHOW_BETA_BADGE === "true";
 
   const betaBadgeClass =
     variant === "dark"
