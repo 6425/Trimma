@@ -44,6 +44,30 @@ function TerritoryExplorerContent() {
   const [businessNameSearch, setBusinessNameSearch] = useState("");
   const [resultLimit, setResultLimit] = useState<number>(12);
 
+  const TERRITORY_SESSION_KEYS = [
+    "trimma_territory_businesses",
+    "trimma_territory_category",
+    "trimma_territory_id",
+    "trimma_territory_limit",
+    "trimma_territory_business_name",
+  ] as const;
+
+  const clearTerritorySession = useCallback(() => {
+    for (const key of TERRITORY_SESSION_KEYS) {
+      sessionStorage.removeItem(key);
+    }
+  }, []);
+
+  const clearCollectedResults = useCallback(() => {
+    clearTerritorySession();
+    setBusinesses([]);
+    setSelectedBusinessId(null);
+    setSelectedCategory("all");
+    setSelectedTerritoryId("all");
+    setBusinessNameSearch("");
+    setResultLimit(12);
+  }, [clearTerritorySession]);
+
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
@@ -107,6 +131,17 @@ function TerritoryExplorerContent() {
   useEffect(() => {
     setTimeout(() => loadInitialData(), 0);
   }, [loadInitialData]);
+
+  const clearResultList = useCallback(() => {
+    clearTerritorySession();
+    setBusinesses([]);
+    setSelectedBusinessId(null);
+  }, [clearTerritorySession]);
+
+  const handleClearRefresh = () => {
+    clearCollectedResults();
+    toast.success("Map and search results cleared. Adjust filters and click Search Businesses.");
+  };
 
   const handleSearch = async () => {
     setSearching(true);
@@ -211,8 +246,8 @@ function TerritoryExplorerContent() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Button onClick={handleSearch} variant="outline" size="sm" className="h-9 rounded-xl font-bold text-xs text-zinc-700 border-zinc-200 hover:bg-zinc-50" disabled={searching}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${searching ? 'animate-spin' : ''}`} /> Refresh Map
+          <Button onClick={handleClearRefresh} variant="outline" size="sm" className="h-9 rounded-xl font-bold text-xs text-zinc-700 border-zinc-200 hover:bg-zinc-50">
+            <RefreshCw className="w-3.5 h-3.5 mr-2" /> Clear & Refresh
           </Button>
           <Button onClick={handleExport} variant="outline" size="sm" className="h-9 rounded-xl font-bold text-xs text-zinc-700 border-zinc-200 hover:bg-zinc-50">
             <Download className="w-3.5 h-3.5 mr-2" /> Export Excel
@@ -233,7 +268,10 @@ function TerritoryExplorerContent() {
             </label>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                clearResultList();
+              }}
               className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
             >
               <option value="all">All Categories</option>
@@ -247,7 +285,10 @@ function TerritoryExplorerContent() {
             </label>
             <select
               value={selectedTerritoryId}
-              onChange={(e) => setSelectedTerritoryId(e.target.value)}
+              onChange={(e) => {
+                setSelectedTerritoryId(e.target.value);
+                clearResultList();
+              }}
               className="w-full h-11 px-3 border border-slate-200 focus:outline-none rounded-xl text-sm font-bold bg-zinc-50 text-zinc-800 focus:ring-2 focus:ring-[#FFC107]/20 transition-all"
               disabled={territories.length === 0}
             >

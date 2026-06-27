@@ -454,6 +454,10 @@ export async function searchBusinessesInTerritories(
     businesses = businesses.filter((b) => businessNameMatches(b.name, trimmedName));
   }
 
+  if (selectedTerrNames.length > 0) {
+    businesses = applyTerritoryScope(businesses, selectedTerrNames);
+  }
+
   return {
     success: true as const,
     businesses: limit > 0 ? businesses.slice(0, limit) : businesses,

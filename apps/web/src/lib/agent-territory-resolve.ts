@@ -89,7 +89,9 @@ export function resolveTerritorySearchScope(territoryName: string): TerritorySea
   const provinceMatches = SRI_LANKA_PROVINCES.filter((province) => {
     const full = normalizeTerritoryToken(province.name);
     const short = normalizeTerritoryToken(province.shortName);
-    return normalized.includes(full) || full.includes(normalized) || normalized === short;
+    if (normalized === full || normalized === short) return true;
+    // Avoid normalized.includes(full) — "north central province" contains "central province".
+    return full.startsWith(`${normalized} `) || normalized.startsWith(`${full} `);
   }).sort((a, b) => b.name.length - a.name.length);
 
   if (provinceMatches.length > 0) {
@@ -195,6 +197,25 @@ export function businessMatchesTerritoryScopes(
   });
 }
 
+/** PostgREST province filters that avoid Central ↔ North Central substring false positives. */
+export function provinceDatabaseOrClauses(provinceName: string): string[] {
+  const normalized = normalizeTerritoryToken(provinceName);
+  const safe = provinceName.replace(/[%_,"]/g, "").trim();
+  if (!safe) return [];
+
+  if (normalized === "central province" || normalized === "central") {
+    return ['province.eq."Central Province"'];
+  }
+  if (normalized === "north central province" || normalized === "north central") {
+    return ["province.ilike.%North Central%"];
+  }
+  if (normalized === "north western province" || normalized === "north western") {
+    return ["province.ilike.%North Western%", "province.ilike.%North-Western%"];
+  }
+
+  return [`province.eq."${safe.replace(/"/g, "")}"`, `province.ilike.%${safe.replace(/"/g, "")}%`];
+}
+
 export function territorySearchOrClause(names: string[]): string | null {
   const scopes = buildTerritorySearchScopes(names);
   const clauses: string[] = [];
@@ -209,8 +230,7 @@ export function territorySearchOrClause(names: string[]): string | null {
       if (safe) clauses.push(`city.ilike.%${safe}%`);
     }
     for (const provinceName of scope.provinceNames) {
-      const safe = provinceName.replace(/[%_,"]/g, "");
-      if (safe) clauses.push(`province.ilike.%${safe}%`);
+      clauses.push(...provinceDatabaseOrClauses(provinceName));
     }
   }
 
