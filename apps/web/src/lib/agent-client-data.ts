@@ -506,9 +506,19 @@ export async function searchBusinessesInTerritoriesClient(
     query = query.in("assign_to", operationalEmails);
   }
 
-  if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
-    const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
-    query = query.or(orClauses);
+  if (categories.length > 0 && !trimmedName) {
+    const safeCategories = categories
+      .map((cat) => cat.trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    if (safeCategories.length === 1) {
+      query = query.ilike("category", `%${safeCategories[0]}%`);
+    } else if (safeCategories.length > 1) {
+      const orClauses = safeCategories
+        .map((cat) => `category.ilike.%${cat.replace(/,/g, "")}%`)
+        .join(",");
+      query = query.or(orClauses);
+    }
   }
 
   if (trimmedName) {
@@ -534,6 +544,11 @@ export async function searchBusinessesInTerritoriesClient(
   return {
     success: true as const,
     businesses: limit > 0 ? businesses.slice(0, limit) : businesses,
+    meta: {
+      dbCount: businesses.length,
+      googleCount: 0,
+      googleConfigured: false,
+    },
   };
 }
 

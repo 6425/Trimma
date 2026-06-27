@@ -115,13 +115,11 @@ function TerritoryExplorerContent() {
       const terrIds = selectedTerritoryId === "all" ? territories.map(t => t.id) : [selectedTerritoryId];
       const nameQuery = businessNameSearch.trim();
       const catsToSearch =
-        nameQuery
-          ? selectedCategory !== "all"
-            ? [selectedCategory]
-            : []
-          : selectedCategory !== "all"
-            ? [selectedCategory]
-            : categories;
+        selectedCategory !== "all"
+          ? [selectedCategory]
+          : nameQuery
+            ? []
+            : [];
       const res = await tryAgentData(
         () => searchBusinessesInTerritories(catsToSearch, terrIds, resultLimit, businessNameSearch),
         () => searchBusinessesInTerritoriesClient(catsToSearch, terrIds, resultLimit, businessNameSearch),
@@ -131,7 +129,12 @@ function TerritoryExplorerContent() {
       if (!res.success) throw new Error(res.error);
       
       if (res.businesses.length === 0) {
-        toast.message("No businesses matched your search. Try another category, territory, or business name.");
+        const meta = "meta" in res ? (res.meta as { googleConfigured?: boolean; dbCount?: number; googleCount?: number } | undefined) : undefined;
+        if (meta?.googleConfigured === false) {
+          toast.error("No results. Google API (GOOGLE_API) is not configured on the server — contact admin.");
+        } else {
+          toast.message("No businesses matched your search. Try another category, territory, or business name.");
+        }
       } else {
         toast.success(`Found ${res.businesses.length} businesses matching your criteria.`);
       }

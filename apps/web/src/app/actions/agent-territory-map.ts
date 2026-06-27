@@ -7,7 +7,6 @@ import {
   businessMatchesTerritoryScopes,
   ensureAgentRecord,
   findAgentRecord,
-  googlePlaceToTerritoryHaystack,
   resolveAgentMapAgentId,
   territorySearchOrClause,
 } from "@/lib/agent-territory-resolve";
@@ -17,10 +16,75 @@ import {
   fetchGooglePlaceProfile,
   formatGoogleWorkingHoursText,
   inferTrimmaCategoryFromGoogleTypes,
-  mapGooglePlaceToSalonRecord,
-  mergeGoogleProfileIntoSalonRow,
 } from "@/lib/google-place-profile";
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
+
+const DEFAULT_GOOGLE_CATEGORY_TERMS = [
+  "hair salon",
+  "beauty salon",
+  "barber shop",
+  "spa",
+];
+
+const FALLBACK_GOOGLE_TERRITORIES = ["Colombo", "Western Province", "Sri Lanka"];
+
+function normalizeDbSalonRow(row: Record<string, unknown>) {
+  return {
+    id: String(row.id || row.slug || ""),
+    slug: String(row.slug || row.id || ""),
+    name: String(row.name || "Unnamed"),
+    category: String(row.category || "General"),
+    address: (row.address as string | null) || null,
+    city: (row.city as string | null) || null,
+    district: (row.district as string | null) || null,
+    province: (row.province as string | null) || null,
+    phone: (row.phone as string | null) || null,
+    website: null,
+    map_url: null,
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
+    location: (row.location as string | null) || null,
+    logo_url: (row.logo_url as string | null) || null,
+    is_verified: Boolean(row.is_verified),
+    rating: Number(row.rating) || 0,
+    review_count: Number(row.review_count) || 0,
+    working_hours: "",
+    summary: "",
+    price_level: null,
+    status: String(row.status || "active"),
+    assign_to: (row.assign_to as string | null) || null,
+  };
+}
+
+function buildGoogleSearchQueries(
+  territoryNames: string[],
+  categories: string[],
+  businessName?: string
+): string[] {
+  const queries = new Set<string>();
+  const territories =
+    territoryNames.length > 0 ? territoryNames : FALLBACK_GOOGLE_TERRITORIES;
+
+  if (businessName?.trim()) {
+    for (const territoryName of territories) {
+      queries.add(`${businessName.trim()} in ${territoryName}, Sri Lanka`);
+    }
+    return [...queries].slice(0, 8);
+  }
+
+  const terms =
+    categories.length > 0
+      ? categories.slice(0, 4)
+      : DEFAULT_GOOGLE_CATEGORY_TERMS;
+
+  for (const territoryName of territories) {
+    for (const term of terms) {
+      queries.add(`${term} in ${territoryName}, Sri Lanka`);
+    }
+  }
+
+  return [...queries].slice(0, 12);
+}
 
 function normalizeBusinessName(value: string): string {
   return value
@@ -88,6 +152,11 @@ async function fetchGoogleTextSearch(query: string, apiKey: string) {
     const res = await fetch(url);
     const data = await res.json();
     if (data.status === "OK" && data.results) return data.results;
+    if (data.status && data.status !== "ZERO_RESULTS") {
+      console.warn(
+        `[fetchGoogleTextSearch] ${data.status}${data.error_message ? `: ${data.error_message}` : ""} — query: ${query}`
+      );
+    }
   } catch (err) {
     console.error("Google Places API error:", err);
   }
@@ -219,9 +288,6 @@ export async function searchBusinessesInTerritories(
     selectedTerrNames.length > 0
       ? selectedTerrNames
       : await resolveEffectiveTerritoryNames(supabase, auth, territoryIds);
-  const territoryScopes = buildTerritorySearchScopes(
-    googleTerrNames.length > 0 ? googleTerrNames : selectedTerrNames
-  );
 
   let query = supabase
     .from("salons")
@@ -243,9 +309,19 @@ export async function searchBusinessesInTerritories(
     query = query.in("assign_to", operationalEmails);
   }
 
-  if (categories.length > 0 && !categories.includes("All Categories") && !trimmedName) {
-    const orClauses = categories.map((cat) => `category.ilike.%${cat}%`).join(",");
-    query = query.or(orClauses);
+  if (categories.length > 0 && !trimmedName) {
+    const safeCategories = categories
+      .map((cat) => cat.trim())
+      .filter(Boolean)
+      .slice(0, 6);
+    if (safeCategories.length === 1) {
+      query = query.ilike("category", `%${safeCategories[0]}%`);
+    } else if (safeCategories.length > 1) {
+      const orClauses = safeCategories
+        .map((cat) => `category.ilike.%${cat.replace(/,/g, "")}%`)
+        .join(",");
+      query = query.or(orClauses);
+    }
   }
 
   if (trimmedName) {
@@ -257,52 +333,41 @@ export async function searchBusinessesInTerritories(
     return { success: false as const, error: error.message };
   }
 
-  let businesses: any[] = applyTerritoryScope(dbData || [], selectedTerrNames);
+  let businesses: any[] = applyTerritoryScope(
+    (dbData || []).map((row) => normalizeDbSalonRow(row as Record<string, unknown>)),
+    selectedTerrNames
+  );
+  const dbCount = businesses.length;
+  let googleCount = 0;
 
   const apiKey = getGoogleMapsApiKey();
-  if (apiKey && googleTerrNames.length > 0) {
-    const googlePromises: Promise<any[]>[] = [];
-    const searchCategories =
-      categories.length > 0 && !categories.includes("All Categories")
-        ? categories
-        : ["Salon", "Spa"];
-
-    if (trimmedName) {
-      const queries = new Set<string>();
-      for (const territoryName of googleTerrNames) {
-        queries.add(`${trimmedName} in ${territoryName}, Sri Lanka`);
-        queries.add(`${trimmedName} ${territoryName} Sri Lanka`);
-      }
-
-      for (const searchQuery of queries) {
-        googlePromises.push(fetchGoogleTextSearch(searchQuery, apiKey));
-      }
-    } else {
-      for (const territoryName of googleTerrNames) {
-        for (const category of searchCategories) {
-          googlePromises.push(
-            fetchGoogleTextSearch(`${category} in ${territoryName}, Sri Lanka`, apiKey)
-          );
-        }
+  if (apiKey) {
+    const searchQueries = buildGoogleSearchQueries(
+      googleTerrNames,
+      categories,
+      trimmedName || undefined
+    );
+    const googleResultsArray = await Promise.all(
+      searchQueries.map((searchQuery) => fetchGoogleTextSearch(searchQuery, apiKey))
+    );
+    const rawGooglePlaces = googleResultsArray.flat();
+    const uniqueGooglePlaces = new Map<string, any>();
+    for (const place of rawGooglePlaces) {
+      if (place?.place_id && !uniqueGooglePlaces.has(place.place_id)) {
+        uniqueGooglePlaces.set(place.place_id, place);
       }
     }
 
-    const googleResultsArray = await Promise.all(googlePromises);
-    const rawGooglePlaces = googleResultsArray.flat();
-    const googleScopes = buildTerritorySearchScopes(googleTerrNames);
-    const scopedGooglePlaces = rawGooglePlaces.filter((place) =>
-      businessMatchesTerritoryScopes(googlePlaceToTerritoryHaystack(place), googleScopes)
-    );
     const enrichedGooglePlaces = await enrichGooglePlacesWithProfiles(
-      scopedGooglePlaces.slice(0, Math.max(limit || 12, 12)),
+      [...uniqueGooglePlaces.values()].slice(0, Math.max(limit || 12, 24)),
       apiKey
     );
 
     const googleBusinesses = enrichedGooglePlaces.map(({ place, profile }) =>
       mapGooglePlace(
         place,
-        trimmedName ? "Business" : searchCategories[0] || "Salon",
-        googleTerrNames[0] || "Sri Lanka",
+        trimmedName ? "Business" : categories[0] || DEFAULT_GOOGLE_CATEGORY_TERMS[0],
+        googleTerrNames[0] || FALLBACK_GOOGLE_TERRITORIES[0],
         profile
       )
     );
@@ -318,7 +383,6 @@ export async function searchBusinessesInTerritories(
     const seenGoogle = new Set<string>();
     for (const gb of googleBusinesses) {
       if (trimmedName && !businessNameMatches(gb.name, trimmedName)) continue;
-      if (!businessMatchesTerritoryScopes(gb, territoryScopes)) continue;
 
       const key = (gb.id || gb.name || "").toLowerCase();
       const nameKey = gb.name?.toLowerCase() || "";
@@ -332,7 +396,10 @@ export async function searchBusinessesInTerritories(
       } else {
         businesses.push(gb);
       }
+      googleCount += 1;
     }
+  } else {
+    console.warn("[searchBusinessesInTerritories] GOOGLE_API is not configured — Google discovery skipped.");
   }
 
   if (trimmedName) {
@@ -342,5 +409,10 @@ export async function searchBusinessesInTerritories(
   return {
     success: true as const,
     businesses: limit > 0 ? businesses.slice(0, limit) : businesses,
+    meta: {
+      dbCount,
+      googleCount,
+      googleConfigured: Boolean(apiKey),
+    },
   };
 }
