@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isNoindexRoute } from '@/lib/site-seo';
+import {
+  reassembleAccessTokenCookie,
+  resolveVerifiedMiddlewareRole,
+  type MiddlewareUserRole,
+} from '@/lib/middleware-auth';
 
 function withRouteHeaders(pathname: string, response: NextResponse): NextResponse {
   if (isNoindexRoute(pathname)) {
@@ -11,12 +16,9 @@ function withRouteHeaders(pathname: string, response: NextResponse): NextRespons
   return response;
 }
 
-// Define roles and permissions inline to avoid module resolution issues in Edge Runtime
-type UserRole = 'admin' | 'regional_head' | 'salon_owner' | 'agent' | 'customer';
-
-const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> = {
+const RolePermissions: Record<MiddlewareUserRole, { canAccess: (route: string) => boolean }> = {
   admin: {
-    canAccess: (route: string) => true, // Admins can access everything
+    canAccess: () => true,
   },
   salon_owner: {
     canAccess: (route: string) =>
@@ -46,96 +48,78 @@ const RolePermissions: Record<UserRole, { canAccess: (r: string) => boolean }> =
       route.startsWith('/profile') ||
       route.startsWith('/bookings') ||
       route.startsWith('/customer'),
-  }
+  },
 };
 
-function readRoleCookie(value: string | undefined): UserRole | null {
-  if (!value) return null;
-  try {
-    const decoded = decodeURIComponent(value).toLowerCase();
-    if (decoded === "superadmin") return "admin";
-    if (decoded === "regional_admin") return "regional_head";
-    if (
-      decoded === "admin" ||
-      decoded === "regional_head" ||
-      decoded === "salon_owner" ||
-      decoded === "agent" ||
-      decoded === "customer"
-    ) {
-      return decoded;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-const hasPermission = (userRole: UserRole | null | undefined, route: string): boolean => {
+const hasPermission = (userRole: MiddlewareUserRole | null | undefined, route: string): boolean => {
   if (!userRole) return false;
   return RolePermissions[userRole]?.canAccess(route) || false;
 };
 
-// Define public routes that do not require authentication
 const publicRoutes = ['/', '/search', '/login', '/signup', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/pricing', '/deals', '/categories', '/styles', '/unauthorized', '/onboarding', '/privacy-policy', '/terms', '/cookies', '/careers', '/data-deletion', '/customer-help', '/cancellation-help', '/safety', '/features'];
+
+function redirectToLogin(req: NextRequest, pathname: string): NextResponse {
+  let loginPath = '/login';
+  if (pathname.startsWith('/admin')) {
+    loginPath = '/admin/login';
+  } else if (pathname.startsWith('/agent') || pathname.startsWith('/regional-head')) {
+    loginPath = '/agent/login';
+  }
+
+  const loginUrl = new URL(loginPath, req.url);
+  loginUrl.searchParams.set('redirectTo', pathname);
+  return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
+}
+
+function canAccessAgentPortal(role: MiddlewareUserRole | null): boolean {
+  return role === 'agent' || role === 'admin';
+}
+
+function canAccessRegionalHeadPortal(role: MiddlewareUserRole | null): boolean {
+  return role === 'regional_head' || role === 'admin';
+}
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Skip middleware for static files, api routes, Next.js internals
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    pathname.includes('.') || 
+    pathname.includes('.') ||
     pathname.startsWith('/public') ||
     pathname.startsWith('/auth')
   ) {
     return NextResponse.next();
   }
 
-  // Reassemble session cookie early (used for admin login redirect below)
-  let chunkedToken = "";
-  for (let i = 0; i < 5; i++) {
-    const chunk = req.cookies.get(`sb-access-token.${i}`);
-    if (chunk?.value) {
-      chunkedToken += chunk.value;
-    }
-  }
+  const sessionCookieValue = reassembleAccessTokenCookie(req);
+  const hasSession = Boolean(sessionCookieValue);
+  const userRole = await resolveVerifiedMiddlewareRole(req);
 
-  const sessionCookie = chunkedToken
-    ? { value: chunkedToken }
-    : req.cookies.get("sb-access-token") || req.cookies.get("supabase-auth-token");
-  const roleCookie = req.cookies.get("user-role");
-
-  // Admin login: always reachable; password-only (no Google)
-  if (pathname === "/admin/login") {
-    const userRole = readRoleCookie(roleCookie?.value);
-    if (sessionCookie && userRole === "admin") {
-      return NextResponse.redirect(new URL("/admin", req.url));
+  if (pathname === '/admin/login') {
+    if (hasSession && userRole === 'admin') {
+      return NextResponse.redirect(new URL('/admin', req.url));
     }
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
-  // Agent / regional-head login: email + password only
-  if (pathname === "/agent/login") {
-    const userRole = readRoleCookie(roleCookie?.value);
-    if (sessionCookie && userRole === "regional_head") {
-      return NextResponse.redirect(new URL("/regional-head", req.url));
+  if (pathname === '/agent/login') {
+    if (hasSession && userRole === 'regional_head') {
+      return NextResponse.redirect(new URL('/regional-head', req.url));
     }
-    if (sessionCookie && userRole === "agent") {
-      return NextResponse.redirect(new URL("/agent", req.url));
+    if (hasSession && userRole === 'agent') {
+      return NextResponse.redirect(new URL('/agent', req.url));
     }
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
-  // Facebook OAuth return URL — salon owners are redirected here from Meta; state is HMAC-signed in the handler.
-  if (pathname.startsWith("/facebook/callback")) {
+  if (pathname.startsWith('/facebook/callback')) {
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
-  // 2. Allow public routes (exact match or ending in login/signup)
   if (
-    publicRoutes.includes(pathname) || 
-    pathname.endsWith('/login') || 
+    publicRoutes.includes(pathname) ||
+    pathname.endsWith('/login') ||
     pathname.endsWith('/signup') ||
     pathname.startsWith('/salons') ||
     pathname.startsWith('/locations') ||
@@ -147,71 +131,63 @@ export async function middleware(req: NextRequest) {
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
-  // 3. Check Authentication
-  if (!sessionCookie) {
-    let loginPath = "/login";
-    if (pathname.startsWith("/admin")) {
-      loginPath = "/admin/login";
-    } else if (pathname.startsWith("/agent") || pathname.startsWith("/regional-head")) {
-      loginPath = "/agent/login";
-    }
-
-    const loginUrl = new URL(loginPath, req.url);
-    loginUrl.searchParams.set("redirectTo", pathname);
-    return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
+  if (!hasSession || !userRole) {
+    return redirectToLogin(req, pathname);
   }
 
-  if (pathname === "/login") {
-    const loginRole = readRoleCookie(roleCookie?.value);
-    if (loginRole === "salon_owner") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+  if (pathname === '/login') {
+    if (userRole === 'salon_owner') {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-    if (loginRole === "agent") {
-      return NextResponse.redirect(new URL("/agent", req.url));
+    if (userRole === 'agent') {
+      return NextResponse.redirect(new URL('/agent', req.url));
     }
-    if (loginRole === "regional_head") {
-      return NextResponse.redirect(new URL("/regional-head", req.url));
+    if (userRole === 'regional_head') {
+      return NextResponse.redirect(new URL('/regional-head', req.url));
     }
   }
 
-  // 4. Role Validation (RBAC)
-  const userRole = readRoleCookie(roleCookie?.value);
-
-  // Regional heads always use /regional-head routes (never /agent).
-  if (userRole === "regional_head" && pathname.startsWith("/agent")) {
-    const suffix = pathname.slice("/agent".length);
+  if (userRole === 'regional_head' && pathname.startsWith('/agent')) {
+    const suffix = pathname.slice('/agent'.length);
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = `/regional-head${suffix}`;
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Agent / regional-head routes: shell loads for signed-in users; server actions enforce role.
-  if (pathname.startsWith("/agent") || pathname.startsWith("/regional-head")) {
+  if (pathname.startsWith('/regional-head')) {
+    if (!canAccessRegionalHeadPortal(userRole)) {
+      return withRouteHeaders(pathname, NextResponse.redirect(new URL('/unauthorized', req.url)));
+    }
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
-  if (!hasPermission(userRole, pathname)) {
-    if (pathname.startsWith("/admin")) {
-      const loginUrl = new URL("/admin/login", req.url);
-      loginUrl.searchParams.set("redirectTo", pathname);
-      return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
+  if (pathname.startsWith('/agent')) {
+    if (!canAccessAgentPortal(userRole)) {
+      return withRouteHeaders(pathname, NextResponse.redirect(new URL('/unauthorized', req.url)));
     }
-    return withRouteHeaders(pathname, NextResponse.redirect(new URL("/unauthorized", req.url)));
+    return withRouteHeaders(pathname, NextResponse.next());
   }
 
-  // Allow access
+  if (pathname.startsWith('/admin') && userRole !== 'admin') {
+    const loginUrl = new URL('/admin/login', req.url);
+    loginUrl.searchParams.set('redirectTo', pathname);
+    return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
+  }
+
+  if (!hasPermission(userRole, pathname)) {
+    if (pathname.startsWith('/admin')) {
+      const loginUrl = new URL('/admin/login', req.url);
+      loginUrl.searchParams.set('redirectTo', pathname);
+      return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
+    }
+    return withRouteHeaders(pathname, NextResponse.redirect(new URL('/unauthorized', req.url)));
+  }
+
   return withRouteHeaders(pathname, NextResponse.next());
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

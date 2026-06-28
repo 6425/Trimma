@@ -2,11 +2,6 @@
   "experimentalServices": {
     "frontend": {
       "routePrefix": "/"
-    },
-    "api-gateway": {
-      "root": "services/api-gateway",
-      "entrypoint": "src/main.ts",
-      "routePrefix": "/_/api-gateway"
     }
   }
 }

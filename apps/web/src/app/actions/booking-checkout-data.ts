@@ -194,10 +194,9 @@ export async function fetchBookingCheckoutData(
       agent: resolveBookingAgentPercentage(ratesData?.agent_percentage),
     };
 
-    const serviceTotal =
-      typeof draft.promotionPackagePrice === "number" && draft.promotionPackagePrice > 0
-        ? draft.promotionPackagePrice
-        : services.reduce((sum, service) => sum + parseFloat(service.price || 0), 0);
+    const serviceTotal = hasPromotion && promotionPackage
+      ? Number(promotionPackage.package_price || 0)
+      : services.reduce((sum, service) => sum + parseFloat(String(service.price || 0)), 0);
     const depositPercent = getReservationDepositPercentForSalon(salon || undefined);
     const reservationFee = calculateReservationFee(serviceTotal, depositPercent);
 

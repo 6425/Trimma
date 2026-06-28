@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "../../../config/supabase";
 import {
   confirmAdminAccessForSession,
-  setTrimmaMiddlewareCookies,
+  syncTrimmaSecureSession,
   redirectAfterAuth,
 } from "../../../lib/trimma-role";
 import { normalizeEmail } from "@/lib/normalize-email";
@@ -39,7 +39,12 @@ export default function AdminLogin() {
       throw new Error(gate.error || "You are not allowed to access the admin dashboard.");
     }
 
-    setTrimmaMiddlewareCookies(session.access_token, "admin");
+    const sessionResult = await syncTrimmaSecureSession(session.access_token);
+    if ("error" in sessionResult) {
+      await supabase.auth.signOut();
+      throw new Error(sessionResult.error);
+    }
+
     setStatusMessage("Opening admin dashboard…");
     redirectAfterAuth("/admin");
   }, []);

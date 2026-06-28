@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkCheckoutRateLimit } from "@/lib/checkout-rate-limit";
+import { validateBookingCheckoutPrices } from "@/lib/checkout-price-validation";
 import { getClientIp } from "@/lib/email/rate-limit";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
@@ -36,6 +37,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incomplete checkout details." }, { status: 400 });
     }
 
+    const validatedPrices = await validateBookingCheckoutPrices({
+      draft: {
+        salonId: String(draft.salonId),
+        serviceIds: Array.isArray(draft.serviceIds) ? draft.serviceIds : [],
+        promotionPackageId: draft.promotionPackageId ? String(draft.promotionPackageId) : undefined,
+      },
+      serviceTotal: Number(serviceTotal || 0),
+      reservationFee: Number(reservationFee),
+      rates,
+      services: services || [],
+    });
+
     const serviceLabel =
       draft.promotionPackageName ||
       (services || []).map((service: { name?: string }) => service.name).filter(Boolean).join(" + ") ||
@@ -43,17 +56,17 @@ export async function POST(request: Request) {
 
     const result = await createStripePaymentIntent({
       checkoutType: "booking",
-      amount: Number(reservationFee),
+      amount: validatedPrices.reservationFee,
       description: `Trimma booking deposit — ${serviceLabel}`,
       customerEmail: customer.email,
       payload: {
         draft,
         customer,
-        reservationFee,
-        serviceTotal,
-        rates,
+        reservationFee: validatedPrices.reservationFee,
+        serviceTotal: validatedPrices.serviceTotal,
+        rates: validatedPrices.rates,
         salon,
-        services,
+        services: validatedPrices.services,
         staffMemberId,
         totalDuration,
       },

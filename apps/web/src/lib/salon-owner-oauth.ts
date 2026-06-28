@@ -8,7 +8,7 @@ import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { supabase } from "@/config/supabase";
 import { claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
-import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
+import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
 
 export const SALON_OWNER_LOGIN_REDIRECT = "/dashboard/profile";
 
@@ -49,12 +49,15 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
     };
   }
 
-  const role = resolveSalonOwnerOAuthRole(claimResult.role, true);
+  const sessionResult = await syncTrimmaSecureSession(session.access_token);
+  if ("error" in sessionResult) {
+    return { ok: false, error: sessionResult.error };
+  }
+
   clearSalonOwnerOAuthIntent();
-  setTrimmaMiddlewareCookies(session.access_token, role);
   redirectAfterAuth(
     resolveAuthenticatedDestination({
-      role,
+      role: sessionResult.role,
       nextPath: SALON_OWNER_LOGIN_REDIRECT,
       salonOwnerIntent: true,
     })

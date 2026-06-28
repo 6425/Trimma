@@ -2,6 +2,7 @@ import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
+import { validateSubscriptionCheckoutPrice } from "@/lib/checkout-price-validation";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteSubscriptionCheckoutInput = {
@@ -103,11 +104,19 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     throw new Error(auth.error);
   }
 
+  const validated = await validateSubscriptionCheckoutPrice({
+    planName: input.planName,
+    billingCycle: input.billingCycle,
+    chargeAmount: input.chargeAmount,
+  });
+
+  const chargeAmount = validated.chargeAmount;
+
   const supabase = createSupabaseAdminClient();
   const { data: plan, error: planError } = await supabase
     .from("subscription_plans")
     .select("id, name")
-    .ilike("name", input.planName.trim())
+    .eq("id", validated.plan.id)
     .maybeSingle();
 
   if (planError) throw new Error(planError.message);
@@ -120,7 +129,7 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     .insert({
       salon_id: auth.salonId,
       provider: input.stripePayment ? "stripe" : "payhere",
-      amount: input.chargeAmount,
+      amount: chargeAmount,
       currency: "LKR",
       status: "pending",
       raw_response: {
@@ -143,7 +152,7 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
         paymentId: input.stripePayment.paymentId,
         last4: null as string | null,
         provider: "stripe" as const,
-        amount: Number(input.chargeAmount.toFixed(2)),
+        amount: Number(chargeAmount.toFixed(2)),
       }
     : await processBookingCardPayment({
         cardType: input.card!.cardType,
@@ -151,7 +160,7 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
         expiry: input.card!.expiry,
         cvv: input.card!.cvv,
         cardholderName: input.card!.cardholderName,
-        amount: input.chargeAmount,
+        amount: chargeAmount,
         bookingNo: orderId,
         environment: input.payhereEnvironment,
       });
@@ -188,7 +197,7 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
   await recordSubscriptionCommission({
     supabase,
     salonId: auth.salonId,
-    baseAmount: input.chargeAmount,
+    baseAmount: chargeAmount,
     orderId,
     planName: plan.name as string,
     billingCycle: input.billingCycle,

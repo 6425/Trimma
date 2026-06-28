@@ -12,7 +12,7 @@
     "dev:restart": "npm run dev:restart --workspace=@trimma/web",
     "dev:all": "turbo run dev",
     "build": "turbo run build",
-    "start": "node -e \"const cp = require('child_process'); cp.spawn('npm', ['run', 'start', '--workspace=@trimma/web'], { stdio: 'inherit', shell: true }); cp.spawn('npm', ['run', 'start:prod', '--workspace=@trimma/api-gateway'], { stdio: 'inherit', shell: true });\"",
+    "start": "npm run start --workspace=@trimma/web",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "generate:booking-guides": "node apps/web/scripts/generate-booking-guide-docx.mjs",

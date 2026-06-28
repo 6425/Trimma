@@ -7,6 +7,7 @@ import {
   isPlatformAdminRole,
 } from "@/lib/trimma-role-core";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { establishTrimmaSession, type EstablishedTrimmaSession } from "@/lib/establish-trimma-session";
 
 /** Resolve role: user_roles.user_id first, then all users.global_role rows for email (ilike). */
 export async function resolveTrimmaUserRole(
@@ -94,12 +95,10 @@ export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
         : normalized === "salon_owner"
           ? "salon_owner"
           : "customer";
-  
-  // Try to set the full token for backward compatibility, but it might fail if > 4KB
+
   const encodedToken = encodeURIComponent(accessToken);
   document.cookie = `sb-access-token=${encodedToken}; path=/; max-age=86400; SameSite=Lax${secure}`;
 
-  // Chunk the unencoded token into safe pieces
   const maxChunkSize = 2500;
   let chunkCount = 0;
   for (let i = 0; i < accessToken.length; i += maxChunkSize) {
@@ -107,12 +106,20 @@ export function setTrimmaMiddlewareCookies(accessToken: string, role: string) {
     document.cookie = `sb-access-token.${chunkCount}=${chunk}; path=/; max-age=86400; SameSite=Lax${secure}`;
     chunkCount++;
   }
-  // Clear any old extra chunks
   for (let i = chunkCount; i < 5; i++) {
     document.cookie = `sb-access-token.${i}=; path=/; max-age=0; SameSite=Lax${secure}`;
   }
 
   document.cookie = `user-role=${encodeURIComponent(middlewareRole)}; path=/; max-age=86400; SameSite=Lax${secure}`;
+}
+
+/**
+ * HttpOnly cookies + signed trimma-session for middleware RBAC.
+ */
+export async function syncTrimmaSecureSession(
+  accessToken: string
+): Promise<EstablishedTrimmaSession | { error: string }> {
+  return establishTrimmaSession(accessToken);
 }
 
 /** Hard navigation so middleware receives freshly written auth cookies. */
