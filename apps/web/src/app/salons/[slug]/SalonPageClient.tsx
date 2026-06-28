@@ -726,13 +726,13 @@ export default function SalonPage({
                     </div>
                     <a
                       href="#salon-hero-map"
-                      className="text-sm font-semibold text-[#003580] hover:underline shrink-0"
+                      className="text-sm font-semibold text-zinc-900 hover:underline shrink-0"
                     >
                       Excellent location – show map
                     </a>
                     <button
                       type="button"
-                      className="text-sm font-semibold text-[#003580] hover:underline shrink-0"
+                      className="text-sm font-semibold text-zinc-900 hover:underline shrink-0"
                       onClick={() => {
                         const url = getSalonDirectionsUrl(salon);
                         if (url) window.open(url, "_blank", "noopener,noreferrer");
@@ -889,7 +889,7 @@ export default function SalonPage({
                       {displayReviewCount} review{displayReviewCount === 1 ? "" : "s"}
                     </p>
                   </div>
-                  <div className="bg-[#003580] text-white rounded-md px-2.5 py-1.5 text-lg font-bold leading-none min-w-[3rem] text-center">
+                  <div className="bg-zinc-900 text-white rounded-md px-2.5 py-1.5 text-lg font-bold leading-none min-w-[3rem] text-center">
                     {displayRating > 0 ? displayRating.toFixed(1) : "—"}
                   </div>
                 </div>
