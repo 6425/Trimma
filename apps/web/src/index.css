@@ -652,11 +652,20 @@
     h3,
     h4,
     p,
-    span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]),
+    span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]):not([class*="trimma-live-countdown"]),
     label,
     a:not([class*="hero-btn"])
   ) {
     color: #0a0a0a !important;
+  }
+  :is(.page-hero-shell, .page-hero-light) .hero-ink .trimma-live-countdown .trimma-live-countdown-digit {
+    color: #ffffff !important;
+  }
+  :is(.page-hero-shell, .page-hero-light) .hero-ink .trimma-live-countdown .trimma-live-countdown-label {
+    color: rgb(82 82 91) !important;
+  }
+  :is(.page-hero-shell, .page-hero-light) .hero-ink .trimma-live-countdown .trimma-live-countdown-colon {
+    color: rgb(63 63 70) !important;
   }
   :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
     .hero-badge,
@@ -2005,11 +2014,20 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
   h5,
   h6,
   p,
-  span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]),
+  span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]):not([class*="trimma-live-countdown"]),
   label,
   a:not([class*="hero-btn"])
 ) {
   color: #0a0a0a !important;
+}
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink .trimma-live-countdown .trimma-live-countdown-digit {
+  color: #ffffff !important;
+}
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink .trimma-live-countdown .trimma-live-countdown-label {
+  color: rgb(82 82 91) !important;
+}
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink .trimma-live-countdown .trimma-live-countdown-colon {
+  color: rgb(63 63 70) !important;
 }
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
   .hero-badge,
