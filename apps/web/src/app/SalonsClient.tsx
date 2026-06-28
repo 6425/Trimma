@@ -8,6 +8,7 @@ import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "l
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonListRow } from "../components/marketplace/SalonListRow";
+import { LiveCountdown } from "../components/marketplace/LiveCountdown";
 import {
   SalonFiltersPanel,
   countActiveFilters,
@@ -275,6 +276,8 @@ export default function SalonsClient({
               Sri Lanka
             </span>
           </h1>
+
+          <LiveCountdown />
 
           <div className="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100 mt-8">
             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl">
