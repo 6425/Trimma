@@ -1774,6 +1774,21 @@
   stroke: #ffffff !important;
 }
 
+/* Single salon page — black map/directions links and rating badge (all themes/devices) */
+.trimma-salon-page .salon-hero-map-link,
+.trimma-salon-page button.salon-hero-map-link {
+  color: #0a0a0a !important;
+}
+.trimma-salon-page .salon-hero-map-link:is(:hover, :focus-visible),
+.trimma-salon-page button.salon-hero-map-link:is(:hover, :focus-visible) {
+  color: #0a0a0a !important;
+  text-decoration: underline;
+}
+.trimma-salon-page .salon-hero-rating-badge {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
 /* Verified salon badge — brand yellow surface, black label everywhere */
 .trimma-verified-badge,
 .trimma-verified-badge:hover {
