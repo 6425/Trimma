@@ -58,17 +58,12 @@ function Colon() {
 }
 
 export function LiveCountdown() {
-  const [time, setTime] = useState<TimeLeft | null>(null);
+  const [time, setTime] = useState<TimeLeft>(() => computeTimeLeft());
 
   useEffect(() => {
-    setTime(computeTimeLeft());
     const id = window.setInterval(() => setTime(computeTimeLeft()), 1000);
     return () => window.clearInterval(id);
   }, []);
-
-  if (time === null) {
-    return <div className="h-20" aria-hidden />;
-  }
 
   if (time.live) {
     return (
@@ -90,6 +85,7 @@ export function LiveCountdown() {
       <div
         className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-3 rounded-2xl bg-white/95 border border-slate-200 shadow-lg backdrop-blur-sm"
         role="timer"
+        suppressHydrationWarning
         aria-label={`Countdown to 15 July 2026: ${time.days} days, ${time.hours} hours, ${time.minutes} minutes, ${time.seconds} seconds`}
       >
         <DigitBlock value={pad(time.days)} label="Days" />
