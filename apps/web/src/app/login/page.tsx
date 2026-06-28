@@ -16,7 +16,7 @@ import {
 } from "@/lib/trimma-role";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { completeOAuthLogin } from "@/app/actions/login-session";
-import { persistSalonOwnerOAuthIntent } from "@/lib/salon-owner-oauth-intent";
+import { persistSalonOwnerOAuthIntent, persistSalonOwnerInviteSalon } from "@/lib/salon-owner-oauth-intent";
 import type { Session } from "@supabase/supabase-js";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
 
@@ -71,11 +71,21 @@ function LoginForm() {
       searchParams.get("next")
   );
   const salonOwnerIntent = searchParams.get("intent") === "salon-owner";
+  const invitedSalonId = searchParams.get("salon")?.trim() || null;
+
+  useEffect(() => {
+    if (invitedSalonId) {
+      persistSalonOwnerInviteSalon(invitedSalonId);
+    }
+  }, [invitedSalonId]);
 
   const completeGoogleSession = useCallback(
     async (session: Session, isCancelled: () => boolean) => {
       try {
-        const result = await completeOAuthLogin(session.access_token, { salonOwnerIntent });
+        const result = await completeOAuthLogin(session.access_token, {
+          salonOwnerIntent,
+          invitedSalonId,
+        });
         if (isCancelled()) return;
 
         if (result.success) {
@@ -139,7 +149,7 @@ function LoginForm() {
         resolveAuthenticatedDestination({ role, nextPath: redirectTo, salonOwnerIntent })
       );
     },
-    [redirectTo, salonOwnerIntent]
+    [redirectTo, salonOwnerIntent, invitedSalonId]
   );
 
   useEffect(() => {
@@ -167,6 +177,9 @@ function LoginForm() {
     setLoading(true);
     if (salonOwnerIntent) {
       persistSalonOwnerOAuthIntent(redirectTo || "/dashboard/profile");
+      if (invitedSalonId) {
+        persistSalonOwnerInviteSalon(invitedSalonId);
+      }
     }
     const oauthRedirect = salonOwnerIntent
       ? `${window.location.origin}/auth/callback/salon-owner`
@@ -250,6 +263,11 @@ function LoginForm() {
             <div className="rounded-xl border border-[#ffc800]/30 bg-[#ffc800]/10 px-4 py-3 text-sm text-[#ffc800]">
               You were invited as a salon owner. Sign in with Google using{" "}
               <span className="font-semibold">{invitedEmail}</span>.
+            </div>
+          ) : invitedSalonId && salonOwnerIntent ? (
+            <div className="rounded-xl border border-[#ffc800]/30 bg-[#ffc800]/10 px-4 py-3 text-sm text-[#ffc800]">
+              You were invited to join Trimma as a salon owner. Sign in with Google — your Gmail will be linked to your
+              salon profile.
             </div>
           ) : null}
 

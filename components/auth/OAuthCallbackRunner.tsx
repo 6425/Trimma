@@ -11,6 +11,7 @@ import { completeOAuthLogin, claimSalonOwnerFromOnboarding } from "@/app/actions
 import {
   clearSalonOwnerOAuthIntent,
   readSalonOwnerOAuthIntent,
+  readSalonOwnerInviteSalonId,
 } from "@/lib/salon-owner-oauth-intent";
 import { resolveSalonOwnerOAuthRole } from "@/lib/salon-owner-oauth";
 
@@ -29,6 +30,8 @@ function OAuthCallbackRunner({
   useEffect(() => {
     let cancelled = false;
     const storedIntent = readSalonOwnerOAuthIntent();
+    const invitedSalonId =
+      readSalonOwnerInviteSalonId() || searchParams.get("salon")?.trim() || null;
     const salonOwnerIntent =
       forcedSalonOwner ||
       searchParams.get("intent") === "salon-owner" ||
@@ -76,16 +79,22 @@ function OAuthCallbackRunner({
 
         if (!session) {
           setErrorMessage("Sign-in could not be completed. Please try again.");
+          const loginParams = new URLSearchParams();
+          if (salonOwnerIntent) {
+            loginParams.set("intent", "salon-owner");
+            loginParams.set("redirectTo", nextPath || defaultNextPath);
+            if (invitedSalonId) loginParams.set("salon", invitedSalonId);
+          }
           const loginPath = salonOwnerIntent
-            ? `/login?redirectTo=${encodeURIComponent(nextPath || defaultNextPath)}&intent=salon-owner`
+            ? `/login?${loginParams.toString()}`
             : "/login";
           window.setTimeout(() => redirectAfterAuth(loginPath), 2000);
           return;
         }
 
         const result = salonOwnerIntent
-          ? await claimSalonOwnerFromOnboarding(session.access_token)
-          : await completeOAuthLogin(session.access_token, { salonOwnerIntent });
+          ? await claimSalonOwnerFromOnboarding(session.access_token, { invitedSalonId })
+          : await completeOAuthLogin(session.access_token, { salonOwnerIntent, invitedSalonId });
         if (cancelled) return;
 
         if (result.success) {
@@ -122,11 +131,16 @@ function OAuthCallbackRunner({
 
         console.error("OAuth completion failed:", result.error);
         setErrorMessage(result.error || "Could not complete sign-in. Please try again.");
-        const loginPath = salonOwnerIntent
-          ? `/login?redirectTo=${encodeURIComponent(nextPath || defaultNextPath)}&intent=salon-owner`
-          : nextPath
-            ? `/login?redirectTo=${encodeURIComponent(nextPath)}`
-            : "/login";
+        const loginParams = new URLSearchParams();
+        if (salonOwnerIntent) {
+          loginParams.set("intent", "salon-owner");
+          loginParams.set("redirectTo", nextPath || defaultNextPath);
+          if (invitedSalonId) loginParams.set("salon", invitedSalonId);
+          const loginPath = `/login?${loginParams.toString()}`;
+          window.setTimeout(() => redirectAfterAuth(loginPath), 2000);
+          return;
+        }
+        const loginPath = nextPath ? `/login?redirectTo=${encodeURIComponent(nextPath)}` : "/login";
         window.setTimeout(() => redirectAfterAuth(loginPath), 2000);
       } catch (err) {
         console.error("Auth callback failed:", err);
