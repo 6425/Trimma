@@ -32,18 +32,19 @@ import {
   TRIMMA_WHATSAPP_URL,
 } from "@/lib/trimma-contact";
 
-const COMPANY_OPERATOR = "Ceylon Wild Tours (Pvt) Ltd.";
-const LEGAL_DISCLAIMER =
-  "Trimma is a software platform owned and operated by Ceylon Wild Tours (Pvt) Ltd. All commercial operations, billing, contracts, and customer support related to Trimma are managed under Ceylon Wild Tours (Pvt) Ltd.";
+import {
+  TRIMMA_COMPANY_OPERATOR,
+  TRIMMA_LEGAL_DISCLAIMER,
+  TRIMMA_OFFICE_MAP_DIRECTIONS,
+  TRIMMA_OFFICE_MAP_EMBED,
+  TRIMMA_REGISTERED_OFFICE,
+} from "@/lib/trimma-company";
 
-const REGISTERED_OFFICE =
-  "No: 241/1/D, Mahawela Road, Pahala Biyanwila, Kadawatha. 11850. Sri Lanka.";
-
-const OFFICE_MAP_QUERY = encodeURIComponent(
-  "241/1/D Mahawela Road Pahala Biyanwila Kadawatha 11850 Sri Lanka"
-);
-const OFFICE_MAP_EMBED = `https://www.google.com/maps?q=${OFFICE_MAP_QUERY}&z=16&output=embed`;
-const OFFICE_MAP_DIRECTIONS = `https://www.google.com/maps/dir/?api=1&destination=${OFFICE_MAP_QUERY}`;
+const COMPANY_OPERATOR = TRIMMA_COMPANY_OPERATOR;
+const LEGAL_DISCLAIMER = TRIMMA_LEGAL_DISCLAIMER;
+const REGISTERED_OFFICE = TRIMMA_REGISTERED_OFFICE;
+const OFFICE_MAP_EMBED = TRIMMA_OFFICE_MAP_EMBED;
+const OFFICE_MAP_DIRECTIONS = TRIMMA_OFFICE_MAP_DIRECTIONS;
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
