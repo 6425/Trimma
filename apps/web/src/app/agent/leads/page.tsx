@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { notifyAgentApprovedSalonForAdmin } from "../../actions/salon-onboarding-notifications";
+import { normalizeEmail } from "@/lib/normalize-email";
 import { cropImageFile } from "@/lib/crop-image-file";
 import {
   SALON_HERO_IMAGE_HEIGHT,
