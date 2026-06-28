@@ -1,5 +1,6 @@
 import React from "react";
 import { Loader2, Save, X, Sparkles, Store, UploadCloud, Target, MapPin, Scissors, Trash2, User, Pencil, Check } from "lucide-react";
+import { SALON_HERO_IMAGE_ASPECT_CLASS, SALON_HERO_IMAGE_RESOLUTION_LABEL } from "@/lib/salon-hero-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -122,8 +123,10 @@ export function LeadEditorModal({
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">Hero Cover Image URL</label>
-                    <div className="h-32 w-full rounded-2xl bg-zinc-50 border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative group">
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-zinc-500">
+                      Hero Cover Image URL ({SALON_HERO_IMAGE_RESOLUTION_LABEL})
+                    </label>
+                    <div className={`w-full rounded-2xl bg-zinc-50 border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative group ${SALON_HERO_IMAGE_ASPECT_CLASS}`}>
                       {formData.hero_url ? (
                         <img src={formData.hero_url} alt="Hero" className="w-full h-full object-cover" />
                       ) : (

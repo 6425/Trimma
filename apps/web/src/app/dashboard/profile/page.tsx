@@ -49,12 +49,31 @@ import {
   printSalonQrFlyer,
   resolveSalonPublicBaseUrl,
 } from "@/lib/salon-qr-flyer";
+import {
+  SALON_HERO_IMAGE_ASPECT_CLASS,
+  SALON_HERO_IMAGE_HEIGHT,
+  SALON_HERO_IMAGE_MAX_BYTES,
+  SALON_HERO_IMAGE_RESOLUTION_LABEL,
+  SALON_HERO_IMAGE_SIZE_TEXT,
+  SALON_HERO_IMAGE_WIDTH,
+} from "@/lib/salon-hero-image";
+import { blobToBase64, cropImageFile } from "@/lib/crop-image-file";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
   logo: { label: "Square Logo", resolution: "500x500px", sizeText: "2MB max", size: 2 * 1024 * 1024 },
-  hero: { label: "Hero Header", resolution: "1920x680px", sizeText: "8MB max", size: 8 * 1024 * 1024 },
-  gallery: { label: "Featured Image", resolution: "800x600px", sizeText: "3MB max", size: 3 * 1024 * 1024 }
+  hero: {
+    label: "Hero Header",
+    resolution: SALON_HERO_IMAGE_RESOLUTION_LABEL,
+    sizeText: SALON_HERO_IMAGE_SIZE_TEXT,
+    size: SALON_HERO_IMAGE_MAX_BYTES,
+  },
+  gallery: {
+    label: "Featured Image",
+    resolution: SALON_HERO_IMAGE_RESOLUTION_LABEL,
+    sizeText: SALON_HERO_IMAGE_SIZE_TEXT,
+    size: SALON_HERO_IMAGE_MAX_BYTES,
+  },
 };
 
 
@@ -362,7 +381,14 @@ export default function SalonProfilePage() {
 
       setUploadingType(type);
 
-      const base64 = await fileToBase64(file);
+      let base64: string;
+      if (type === "hero" || type === "gallery") {
+        const cropped = await cropImageFile(file, SALON_HERO_IMAGE_WIDTH, SALON_HERO_IMAGE_HEIGHT);
+        base64 = await blobToBase64(cropped);
+      } else {
+        base64 = await fileToBase64(file);
+      }
+
       const uploadResult = await uploadSalonProfileImage(type, base64, file.type || "image/jpeg");
       if (uploadResult.success === false) {
         // Never fall back to storing a base64 data URI: multi-MB strings in the
@@ -912,7 +938,7 @@ export default function SalonProfilePage() {
                   </span>
                   
                   {/* Preview / Placeholder */}
-                  <div className="h-32 w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative">
+                  <div className={`w-full rounded-xl bg-white border border-zinc-100 overflow-hidden shadow-inner flex items-center justify-center relative ${SALON_HERO_IMAGE_ASPECT_CLASS}`}>
                     {heroUrl ? (
                       <>
                         <img src={heroUrl} alt="Hero" className="w-full h-full object-cover" />
@@ -956,9 +982,12 @@ export default function SalonProfilePage() {
               <div>
                 <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                   <ImageIcon className="w-5 h-5 text-brand" />
-                  Featured Showcase Gallery
+                  Featured Salon Images
                 </h3>
-                <p className="text-xs text-zinc-500 mt-1">Upload up to {maxImagesLimit >= 999 ? "unlimited" : maxImagesLimit} images based on your {subscriptionName} plan.</p>
+                <p className="text-xs text-zinc-500 mt-1">
+                  All salon photos use {SIZING_INFO.gallery.resolution}. Upload up to{" "}
+                  {maxImagesLimit >= 999 ? "unlimited" : maxImagesLimit} images on your {subscriptionName} plan.
+                </p>
               </div>
 
               {/* Progress counter cap indicator */}
@@ -973,7 +1002,10 @@ export default function SalonProfilePage() {
             {/* Gallery Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {featuredImages.map((img, index) => (
-                <div key={index} className="relative h-28 rounded-2xl overflow-hidden border border-zinc-100 group shadow-sm bg-zinc-50">
+                <div
+                  key={index}
+                  className={`relative w-full rounded-2xl overflow-hidden border border-zinc-100 group shadow-sm bg-zinc-50 ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
+                >
                   <img src={img} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
                   <button 
                     type="button"
@@ -990,16 +1022,18 @@ export default function SalonProfilePage() {
 
               {/* Upload Slot Trigger */}
               {featuredImages.length < maxImagesLimit ? (
-                <div 
+                <div
                   onClick={() => galleryInputRef.current?.click()}
-                  className="h-28 rounded-2xl border-2 border-dashed border-zinc-200 hover:border-brand hover:bg-rose-50/10 flex flex-col items-center justify-center cursor-pointer transition-all gap-1.5"
+                  className={`w-full rounded-2xl border-2 border-dashed border-zinc-200 hover:border-brand hover:bg-rose-50/10 flex flex-col items-center justify-center cursor-pointer transition-all gap-1.5 ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
                 >
                   <Upload className="w-5 h-5 text-zinc-400" />
                   <span className="text-[10px] font-extrabold uppercase text-zinc-500 tracking-wider">Add Image</span>
                   <span className="text-[8px] text-zinc-400">{SIZING_INFO.gallery.resolution}</span>
                 </div>
               ) : (
-                <div className="h-28 rounded-2xl border border-zinc-100 bg-zinc-50/50 flex flex-col items-center justify-center text-center p-3 text-[10px] font-medium text-zinc-400">
+                <div
+                  className={`w-full rounded-2xl border border-zinc-100 bg-zinc-50/50 flex flex-col items-center justify-center text-center p-3 text-[10px] font-medium text-zinc-400 ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
+                >
                   <span>Capacity Filled</span>
                   <span className="text-[8px] text-brand font-bold mt-1">Upgrade Plan for Slots</span>
                 </div>
@@ -1341,7 +1375,7 @@ export default function SalonProfilePage() {
             
             {/* Real Miniature Storefront Card */}
             <div className="bg-white rounded-2xl overflow-hidden border border-zinc-100 shadow-lg group relative">
-              <div className="h-36 relative overflow-hidden bg-zinc-100">
+              <div className={`relative overflow-hidden bg-zinc-100 ${SALON_HERO_IMAGE_ASPECT_CLASS}`}>
                 <img 
                   src={heroUrl || logoUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80"} 
                   alt="Salon preview" 

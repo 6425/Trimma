@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
-import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag } from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -41,6 +41,7 @@ import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServic
 import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLinks";
 import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
+import { SALON_HERO_IMAGE_ASPECT_CLASS } from "@/lib/salon-hero-image";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffc800] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffc800] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
@@ -133,6 +134,7 @@ export default function SalonPage({
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [initialBookingService, setInitialBookingService] = useState<string | undefined>();
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [galleryLightboxIndex, setGalleryLightboxIndex] = useState<number | null>(null);
 
   // INLINE SCHEDULER STATES
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -782,50 +784,68 @@ export default function SalonPage({
               {galleryImages.length > 0 ? (
                 <>
                   <div className="grid grid-cols-3 grid-rows-2 gap-2 h-[220px] sm:h-[300px] md:h-[360px]">
-                    <div className="col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setGalleryLightboxIndex(0)}
+                      className="col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                    >
                       <img
                         src={galleryImages[0]}
                         alt={`${salon.name} hero`}
                         className="w-full h-full object-cover"
                       />
-                    </div>
+                    </button>
                     {galleryImages[1] ? (
-                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setGalleryLightboxIndex(1)}
+                        className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                      >
                         <img
                           src={galleryImages[1]}
                           alt={`${salon.name} gallery 2`}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                     ) : (
                       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50" />
                     )}
                     {galleryImages[2] ? (
-                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setGalleryLightboxIndex(2)}
+                        className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                      >
                         <img
                           src={galleryImages[2]}
                           alt={`${salon.name} gallery 3`}
                           className="w-full h-full object-cover"
                         />
-                      </div>
+                      </button>
                     ) : (
                       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50" />
                     )}
                   </div>
 
                   {(heroThumbImages.length > 0 || extraGalleryCount > 0) && (
-                    <div className="grid grid-cols-3 gap-2 h-[72px] sm:h-[96px]">
+                    <div className="grid grid-cols-3 gap-2">
                       {heroThumbImages.map((imgUrl, idx) => {
+                        const mosaicIndex = idx + 3;
                         const isLast = idx === heroThumbImages.length - 1 && extraGalleryCount > 0;
                         return (
-                          <a
+                          <button
                             key={`${imgUrl}-${idx}`}
-                            href={isLast ? "#gallery" : undefined}
-                            className={`relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 ${isLast ? "cursor-pointer" : ""}`}
+                            type="button"
+                            onClick={() =>
+                              isLast
+                                ? setGalleryLightboxIndex(HERO_MOSAIC_IMAGE_COUNT)
+                                : setGalleryLightboxIndex(mosaicIndex)
+                            }
+                            className={`relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 cursor-pointer ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
                           >
                             <img
                               src={imgUrl}
-                              alt={`${salon.name} gallery ${idx + 4}`}
+                              alt={`${salon.name} gallery ${mosaicIndex + 1}`}
                               className="w-full h-full object-cover"
                             />
                             {isLast ? (
@@ -835,18 +855,19 @@ export default function SalonPage({
                                 </span>
                               </div>
                             ) : null}
-                          </a>
+                          </button>
                         );
                       })}
                       {heroThumbImages.length === 0 && extraGalleryCount > 0 ? (
-                        <a
-                          href="#gallery"
-                          className="col-span-3 relative overflow-hidden rounded-lg border border-slate-200 bg-slate-900 flex items-center justify-center"
+                        <button
+                          type="button"
+                          onClick={() => setGalleryLightboxIndex(HERO_MOSAIC_IMAGE_COUNT)}
+                          className={`col-span-3 relative overflow-hidden rounded-lg border border-slate-200 bg-slate-900 flex items-center justify-center ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
                         >
                           <span className="text-sm font-bold text-white">
                             +{extraGalleryCount} photo{extraGalleryCount === 1 ? "" : "s"}
                           </span>
-                        </a>
+                        </button>
                       ) : null}
                     </div>
                   )}
@@ -920,44 +941,6 @@ export default function SalonPage({
               </div>
             </aside>
           </div>
-
-          {galleryImages.length > HERO_MOSAIC_IMAGE_COUNT ? (
-            <section id="gallery" className="scroll-mt-24 mb-5">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight text-zinc-900">Featured Gallery</h2>
-                  <p className="text-xs text-zinc-400">
-                    Portfolio works from {salon.name}&apos;s catalog
-                  </p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className="bg-zinc-50 border-zinc-200 text-zinc-500 font-bold text-[9px] uppercase tracking-wider py-1 px-2.5"
-                >
-                  Portfolio Standard (3:4)
-                </Badge>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {galleryImages.map((imgUrl, idx) => (
-                  <div
-                    key={`${imgUrl}-${idx}`}
-                    className="group relative overflow-hidden rounded-xl aspect-[3/4] border border-slate-200 shadow-sm bg-slate-50"
-                  >
-                    <img
-                      src={imgUrl}
-                      alt={`Portfolio item ${idx + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-xs font-bold text-white bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-sm shadow-sm select-none">
-                        View Style
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
 
           {/* Facilities row */}
           {amenities.length > 0 ? (
@@ -1632,6 +1615,64 @@ export default function SalonPage({
           </div>
         </div>
       )}
+
+      {galleryLightboxIndex !== null && galleryImages[galleryLightboxIndex] ? (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setGalleryLightboxIndex(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Salon photo gallery"
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+            onClick={() => setGalleryLightboxIndex(null)}
+            aria-label="Close gallery"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {galleryLightboxIndex > 0 ? (
+            <button
+              type="button"
+              className="absolute left-3 sm:left-6 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+              onClick={(event) => {
+                event.stopPropagation();
+                setGalleryLightboxIndex((index) => (index === null ? null : index - 1));
+              }}
+              aria-label="Previous photo"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          ) : null}
+
+          <img
+            src={galleryImages[galleryLightboxIndex]}
+            alt={`${salon.name} photo ${galleryLightboxIndex + 1}`}
+            className="max-h-[85vh] max-w-full w-auto object-contain rounded-lg"
+            onClick={(event) => event.stopPropagation()}
+          />
+
+          {galleryLightboxIndex < galleryImages.length - 1 ? (
+            <button
+              type="button"
+              className="absolute right-3 sm:right-6 rounded-full bg-black/60 p-2 text-white hover:bg-black/80"
+              onClick={(event) => {
+                event.stopPropagation();
+                setGalleryLightboxIndex((index) => (index === null ? null : index + 1));
+              }}
+              aria-label="Next photo"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          ) : null}
+
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs font-semibold text-white/80">
+            {galleryLightboxIndex + 1} / {galleryImages.length}
+          </p>
+        </div>
+      ) : null}
       
       <div className="h-20 lg:hidden"></div>
     </div>

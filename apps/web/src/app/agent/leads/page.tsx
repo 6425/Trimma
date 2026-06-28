@@ -14,7 +14,12 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
 import { notifyAgentApprovedSalonForAdmin } from "../../actions/salon-onboarding-notifications";
-import { normalizeEmail } from "@/lib/normalize-email";
+import { cropImageFile } from "@/lib/crop-image-file";
+import {
+  SALON_HERO_IMAGE_HEIGHT,
+  SALON_HERO_IMAGE_RESOLUTION_LABEL,
+  SALON_HERO_IMAGE_WIDTH,
+} from "@/lib/salon-hero-image";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { saveAgentLeadData, convertManualLeadToSalon, fetchAgentGlobals } from "../../actions/agent-leads-update";
 import { rejectSalonOwnerSubmission } from "../../actions/agent-approval";
@@ -437,9 +442,11 @@ function AgentLeads() {
     if (!file) return;
     try {
       setUploadingImage(true);
-      const ext = file.name.split('.').pop();
-      const fileName = `salons/${selectedLead?.id}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("salon-images").upload(fileName, file);
+      const cropped = await cropImageFile(file, SALON_HERO_IMAGE_WIDTH, SALON_HERO_IMAGE_HEIGHT);
+      const fileName = `salons/${selectedLead?.id}-${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("salon-images")
+        .upload(fileName, cropped, { contentType: "image/jpeg", upsert: true });
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from("salon-images").getPublicUrl(fileName);
       setFormData({ ...formData, cover_url: data.publicUrl, hero_url: data.publicUrl });
@@ -1150,7 +1157,9 @@ function AgentLeads() {
                     />
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Listing Cover Image</label>
+                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">
+                      Listing Cover Image ({SALON_HERO_IMAGE_RESOLUTION_LABEL})
+                    </label>
                     <div className="flex items-center gap-2">
                       <Input
                         value={formData.cover_url}
