@@ -1112,7 +1112,11 @@ export default function SalonPage({
                             <IconComp className="w-4 h-4" />
                           </div>
                           {am.name}
-                          {am.type === 'number' && am.quantity ? <span className="text-[10px] font-bold bg-brand/10 text-brand px-1.5 py-0.5 rounded">x{am.quantity}</span> : null}
+                          {am.type === 'number' && am.quantity ? (
+                            <span className="text-[10px] font-bold bg-[#ffc800] text-black px-1.5 py-0.5 rounded">
+                              x{am.quantity}
+                            </span>
+                          ) : null}
                         </div>
                       );
                     })}
