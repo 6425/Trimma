@@ -22,6 +22,45 @@ export function CheckoutStyles() {
           border-top-left-radius: 0;
           border-top-right-radius: 0;
         }
+        .trimma-checkout-page {
+          color-scheme: light;
+        }
+        html.dark .trimma-checkout-page.trimma-light-context {
+          --background: #ffffff;
+          --foreground: #18181b;
+          --card: #ffffff;
+          --card-foreground: #18181b;
+          --muted: #f4f4f5;
+          --muted-foreground: #71717a;
+          --accent: #e4e4e7;
+          --accent-foreground: #18181b;
+          --border: rgba(0, 0, 0, 0.08);
+          --input: rgba(0, 0, 0, 0.06);
+          background-color: #ffffff !important;
+          color: #18181b !important;
+        }
+        html.dark .trimma-checkout-page.trimma-light-context :is(
+          .text-zinc-900,
+          .text-zinc-800,
+          .text-zinc-700,
+          .text-zinc-600,
+          .text-zinc-950,
+          .text-black,
+          .text-gray-700,
+          .text-gray-800
+        ) {
+          color: #18181b !important;
+        }
+        html.dark .trimma-checkout-page.trimma-light-context :is(.text-zinc-500, .text-zinc-400, .text-gray-500) {
+          color: #71717a !important;
+        }
+        .trimma-stripe-payment-shell {
+          width: 100%;
+          min-height: 280px;
+        }
+        .trimma-stripe-payment-shell iframe {
+          min-height: 44px !important;
+        }
       `,
       }}
     />

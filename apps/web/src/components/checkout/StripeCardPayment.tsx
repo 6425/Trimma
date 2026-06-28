@@ -36,6 +36,55 @@ function AcceptedCardBrands() {
   );
 }
 
+type StripePaymentFieldsProps = {
+  onPaymentError?: (message: string) => void;
+};
+
+function StripePaymentFields({ onPaymentError }: StripePaymentFieldsProps) {
+  const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  return (
+    <div className="trimma-stripe-payment-shell relative min-h-[280px] w-full">
+      {!ready && !loadError ? (
+        <div
+          className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-white text-sm text-zinc-500"
+          aria-live="polite"
+        >
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading card form…
+        </div>
+      ) : null}
+
+      {loadError ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          {loadError}
+        </div>
+      ) : (
+        <div className={ready ? "relative z-10 w-full" : "relative z-10 w-full opacity-0 pointer-events-none"}>
+          <PaymentElement
+            onReady={() => setReady(true)}
+            onLoadError={(event) => {
+              const message =
+                event.error?.message || "Could not load the secure card form. Please refresh and try again.";
+              setLoadError(message);
+              onPaymentError?.(message);
+            }}
+            options={{
+              layout: "tabs",
+              wallets: {
+                applePay: "never",
+                googlePay: "never",
+                link: "never",
+              },
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 type StripePayButtonProps = {
   returnUrl: string;
   customerDetails: CheckoutCustomerDetails;
@@ -177,17 +226,8 @@ const StripeCardCheckout = memo(function StripeCardCheckout({
       <div className="space-y-8">
         <section>
           <AcceptedCardBrands />
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <PaymentElement
-              options={{
-                layout: "accordion",
-                wallets: {
-                  applePay: "never",
-                  googlePay: "never",
-                  link: "never",
-                },
-              }}
-            />
+          <div className="rounded-xl border border-slate-200 bg-white p-4 overflow-visible">
+            <StripePaymentFields onPaymentError={onPaymentError} />
           </div>
           <p className="mt-2 text-[11px] text-zinc-500">
             Visa, Mastercard, and American Express are accepted through Stripe.
@@ -212,8 +252,8 @@ export { StripeCardCheckout };
 
 export function StripeCheckoutLoading() {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 py-10 text-sm text-zinc-500">
-      <Loader2 className="w-4 h-4 animate-spin" />
+    <div className="trimma-stripe-payment-shell flex min-h-[280px] flex-col items-center justify-center gap-2 py-10 text-sm text-zinc-500">
+      <Loader2 className="w-5 h-5 animate-spin" />
       Loading secure card form…
     </div>
   );
