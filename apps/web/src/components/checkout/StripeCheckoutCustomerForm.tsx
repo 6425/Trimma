@@ -140,8 +140,16 @@ export function StripeCheckoutCustomerForm({
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
           {stripeError}
         </div>
-      ) : stripeLoading || !stripeClientSecret || !stripePublishableKey ? (
+      ) : stripeLoading ? (
         <StripeCheckoutLoading />
+      ) : !stripePublishableKey ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Stripe publishable key is missing. Check Admin → Payments settings.
+        </div>
+      ) : !stripeClientSecret ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Could not prepare Stripe checkout. Please refresh this page and try again.
+        </div>
       ) : (
         <StripeCardCheckout
           key={stripeClientSecret}

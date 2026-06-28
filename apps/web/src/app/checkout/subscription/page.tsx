@@ -213,7 +213,7 @@ function SubscriptionCheckoutForm() {
       <CheckoutStyles />
 
       <div className="min-h-screen flex flex-col lg:flex-row font-sans text-gray-800 antialiased bg-white">
-        <div className="w-full lg:w-1/2 bg-[#ffc800] flex flex-col items-center justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#e6b400] text-zinc-950">
+        <div className="order-2 lg:order-1 w-full lg:w-1/2 bg-[#ffc800] flex flex-col items-center justify-start lg:justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#e6b400] text-zinc-950">
           <div className="w-full max-w-md">
             <Link
               href="/dashboard/billing"
@@ -338,8 +338,8 @@ function SubscriptionCheckoutForm() {
           </div>
         </div>
 
-        <div className="w-full lg:w-1/2 bg-white flex flex-col items-center justify-center p-6 lg:p-16">
-          <div className="w-full max-w-md">
+        <div className="order-1 lg:order-2 w-full lg:w-1/2 bg-white flex flex-col items-center justify-start py-8 px-6 lg:justify-center lg:p-16">
+          <div id="stripe-payment" className="w-full max-w-md scroll-mt-6">
             <StripeCheckoutCustomerForm
               customerDetails={customerDetails}
               setCustomerDetails={setCustomerDetails}
