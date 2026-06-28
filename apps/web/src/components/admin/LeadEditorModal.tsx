@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { WorkingHoursEditor } from "./WorkingHoursEditor";
 import { AdminSalonServiceImporter } from "./AdminSalonServiceImporter";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
+import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { Image as ImageIcon } from "lucide-react";
 
 interface LeadEditorModalProps {
@@ -18,7 +19,6 @@ interface LeadEditorModalProps {
   updating: boolean;
   onSave: () => void;
   handleModalImageUpload: (e: React.ChangeEvent<HTMLInputElement>, field: "hero_url" | "logo_url") => void;
-  discoveryCategories: {value: string, label: string}[];
   agents: any[];
   
   modalServices: any[];
@@ -56,7 +56,7 @@ interface LeadEditorModalProps {
 
 export function LeadEditorModal({
   isOpen, onClose, selectedLead, formData, setFormData, updating, onSave,
-  handleModalImageUpload, discoveryCategories, agents,
+  handleModalImageUpload, agents,
   modalServices, modalStaff, handleDeleteModalService, handleDeleteModalStaff,
   editingStaffId, setEditingStaffId, staffEditData, setStaffEditData,
   globalRoles, handleSaveModalStaff, handleEditModalStaff, servicePicker
@@ -197,18 +197,16 @@ export function LeadEditorModal({
                       className="h-12 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-brand/20 text-sm font-medium"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 md:col-span-2">
                     <label className="font-bold text-zinc-500 uppercase text-[10px] tracking-wide">Category</label>
-                    <select
+                    <CategoryMultiSelect
                       value={formData.category || ""}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full h-12 px-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-brand/20 text-sm font-medium text-zinc-800 shadow-sm"
-                    >
-                      <option value="">Select Category...</option>
-                      {discoveryCategories.map((cat) => (
-                        <option key={cat.value} value={cat.value}>{cat.label}</option>
-                      ))}
-                    </select>
+                      onChange={(cats) => setFormData({ ...formData, category: cats.join(", ") })}
+                      maxCategories={6}
+                      theme="light"
+                      showUpgradeLink={false}
+                      planName="Admin"
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[10px] tracking-wide">Owner Gmail</label>
