@@ -10,8 +10,9 @@
   "scripts": {
     "dev": "npm run dev --workspace=@trimma/web",
     "dev:restart": "npm run dev:restart --workspace=@trimma/web",
-    "dev:all": "turbo run dev",
-    "build": "turbo run build",
+    "dev:gateway": "node -e \"require('child_process').spawn('npm', ['run','start:dev','--workspace=@trimma/api-gateway'], {stdio:'inherit', shell:true, env:{...process.env, TRIMMA_API_GATEWAY_ENABLED:'true'}})\"",
+    "dev:all": "turbo run dev --filter=@trimma/web",
+    "build": "turbo run build --filter=@trimma/web...",
     "start": "npm run start --workspace=@trimma/web",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
