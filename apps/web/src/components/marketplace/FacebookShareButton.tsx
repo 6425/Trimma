@@ -14,9 +14,9 @@ export function FacebookShareButton({ shareUrl, label = "Share", className = "" 
   return (
     <Button
       type="button"
-      variant="outline"
+      variant="default"
       size="sm"
-      className={`rounded-full h-9 px-3 text-xs font-bold border-[#1877F2]/30 text-[#1877F2] hover:bg-[#1877F2]/10 ${className}`}
+      className={`rounded-full h-11 px-3 text-xs font-bold shrink-0 ${className}`}
       onClick={() => openFacebookShare(shareUrl)}
     >
       <Facebook className="w-3.5 h-3.5 mr-1.5" />

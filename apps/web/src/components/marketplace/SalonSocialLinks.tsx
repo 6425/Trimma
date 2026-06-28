@@ -14,6 +14,9 @@ function TikTokIcon({ className }: { className?: string }) {
 const linkClass =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-black/15 bg-black/10 text-black hover:bg-black/20 transition-colors";
 
+const facebookLinkClass =
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#ffc800] bg-[#ffc800] text-black hover:bg-[#ffd633] hover:border-[#ffd633] transition-colors";
+
 type Props = {
   salon: Record<string, unknown> | null | undefined;
   links?: SalonSocialLinks;
@@ -46,7 +49,7 @@ export function SalonSocialLinks({ salon, links, className = "" }: Props) {
           rel="noopener noreferrer"
           title={item.label}
           aria-label={`${item.label} page`}
-          className={linkClass}
+          className={item.key === "facebook" ? facebookLinkClass : linkClass}
         >
           {item.icon}
         </a>
