@@ -104,7 +104,7 @@ Shared helpers: `apps/web/src/lib/server-request-auth.ts`
 
 1. **Server-side checkout price validation** — booking, promotion, and subscription amounts are recomputed from Supabase before PaymentIntent creation and checkout completion (`checkout-price-validation.ts`).
 2. **Middleware RBAC** — uses signed `trimma-session` HMAC cookie only; agent/regional-head routes enforce role; login flows call `/api/auth/session` to mint the signed cookie.
-3. **API Gateway** — removed from Vercel deploy; Nest gateway disabled by default (`TRIMMA_API_GATEWAY_ENABLED`) and requires Supabase Bearer auth when enabled.
+3. **API Gateway** — removed from Vercel deploy; Nest gateway disabled by default (`TRIMMA_API_GATEWAY_ENABLED`); 503 on all routes when disabled; Supabase Bearer auth when enabled; root `npm start` / `npm run build` / `npm run dev` target web only; use `npm run dev:gateway` for local gateway.
 
 ## Recent fixes (2026-06-27)
 
