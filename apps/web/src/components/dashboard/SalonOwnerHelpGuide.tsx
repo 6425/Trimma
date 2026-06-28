@@ -500,7 +500,7 @@ const FAQS = [
   },
   {
     q: "What image sizes should I upload?",
-    a: "Logo: 500×500px (max 2MB). Cover: 1200×400px (max 5MB). Hero: 1920×680px (max 8MB). Use JPEG or PNG for best results.",
+    a: "Logo: 500×500px (max 2MB). Hero and featured photos: 800×600px (max 3MB each). Use JPEG or PNG for best results.",
   },
   {
     q: "How are booking notifications sent?",

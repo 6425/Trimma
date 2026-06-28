@@ -11,6 +11,12 @@ import { approveAdminSalon, updateAdminSalon } from "@/app/actions/admin-operati
 import { refreshSalonGooglePlaceImages } from "@/app/actions/salon-google-images";
 import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
+import {
+  SALON_HERO_IMAGE_ASPECT_CLASS,
+  SALON_HERO_IMAGE_HEIGHT,
+  SALON_HERO_IMAGE_RESOLUTION_LABEL,
+  SALON_HERO_IMAGE_WIDTH,
+} from "@/lib/salon-hero-image";
 import { withTimeout } from "@/lib/promise-timeout";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -160,7 +166,7 @@ export default function Salons() {
       setUploadingImageField(field);
       toast.loading("Uploading image...", { id: `upload-${field}` });
 
-      const publicUrl = await autoCropAndUpload(file, 1920, 680, "hero");
+      const publicUrl = await autoCropAndUpload(file, SALON_HERO_IMAGE_WIDTH, SALON_HERO_IMAGE_HEIGHT, "hero");
 
       setEditForm((prev: any) => ({ ...prev, [field]: publicUrl }));
       toast.success("Image uploaded. Click Save Changes to apply.", { id: `upload-${field}` });
@@ -853,7 +859,7 @@ export default function Salons() {
                       <img
                         src={editForm.hero_url}
                         alt={`${editForm.name || "Salon"} hero preview`}
-                        className="w-full max-h-48 object-cover rounded-xl border border-zinc-200"
+                        className={`w-full object-cover rounded-xl border border-zinc-200 ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
                       />
                     </div>
                   ) : null}
@@ -876,7 +882,7 @@ export default function Salons() {
                   </div>
                   <SalonInviteLinkHint />
                   <p className="text-[10px] text-zinc-500">
-                    Google is the default hero image source. Upload or paste a URL above to override it.
+                    Google is the default hero image source. Upload or paste a URL above to override it ({SALON_HERO_IMAGE_RESOLUTION_LABEL}).
                   </p>
                 </div>
               </div>

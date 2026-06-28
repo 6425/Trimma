@@ -45,6 +45,10 @@ import {
 } from "@/app/actions/salon-onboarding-notifications";
 
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
+import {
+  SALON_HERO_IMAGE_HEIGHT,
+  SALON_HERO_IMAGE_WIDTH,
+} from "@/lib/salon-hero-image";
 import { normalizeAdminLeadCategoryOptions } from "@/lib/admin-lead-categories";
 
 // Sri Lankan Hierarchical Geography Dictionary
@@ -682,7 +686,7 @@ export default function Leads() {
 
     try {
       toast.loading("Cropping and uploading image...", { id: `upload_${leadId}` });
-      const publicUrl = await autoCropAndUpload(file, 1200, 675, "hero");
+      const publicUrl = await autoCropAndUpload(file, SALON_HERO_IMAGE_WIDTH, SALON_HERO_IMAGE_HEIGHT, "hero");
       await handleSaveCell(leadId, "hero_url", publicUrl);
       toast.success("Image cropped and uploaded!", { id: `upload_${leadId}` });
     } catch (err: any) {
@@ -699,8 +703,8 @@ export default function Leads() {
     try {
       toast.loading(`Compressing (<100KB) and uploading ${field.replace('_', ' ')}...`, { id: `upload_modal_${field}` });
       
-      const targetWidth = field === "hero_url" ? 1200 : 400;
-      const targetHeight = field === "hero_url" ? 675 : 400;
+      const targetWidth = field === "hero_url" ? SALON_HERO_IMAGE_WIDTH : 400;
+      const targetHeight = field === "hero_url" ? SALON_HERO_IMAGE_HEIGHT : 400;
       
       const publicUrl = await autoCropAndUpload(file, targetWidth, targetHeight, field);
       setFormData((prev: any) => ({ ...prev, [field]: publicUrl }));
