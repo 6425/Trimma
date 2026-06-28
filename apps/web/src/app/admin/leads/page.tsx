@@ -45,6 +45,7 @@ import {
 } from "@/app/actions/salon-onboarding-notifications";
 
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
+import { normalizeAdminLeadCategoryOptions } from "@/lib/admin-lead-categories";
 
 // Sri Lankan Hierarchical Geography Dictionary
 const SRI_LANKA_GEOGRAPHY: any = {
@@ -152,8 +153,12 @@ export default function Leads() {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [discoveryCategories, setDiscoveryCategories] = useState<{value: string, label: string}[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [discoveryCategories, setDiscoveryCategories] = useState<{ value: string; label: string }[]>(() =>
+    normalizeAdminLeadCategoryOptions([])
+  );
+  const [selectedCategory, setSelectedCategory] = useState(() =>
+    normalizeAdminLeadCategoryOptions([])[0]?.value || ""
+  );
   const [fetchLimit, setFetchLimit] = useState(15);
   const [discovering, setDiscovering] = useState(false);
 
@@ -274,10 +279,9 @@ export default function Leads() {
       }
 
       if (result.categories) {
-        setDiscoveryCategories(result.categories.map((c: string) => ({ value: c, label: c })));
-        if (result.categories.length > 0 && selectedCategory === "") {
-          setSelectedCategory(result.categories[0]);
-        }
+        const options = normalizeAdminLeadCategoryOptions(result.categories);
+        setDiscoveryCategories(options);
+        setSelectedCategory((prev) => prev || options[0]?.value || "");
       }
 
       applyLeadsFromSalons(result.salons || [], limit);
@@ -471,6 +475,10 @@ export default function Leads() {
   const handleDiscoverLeads = async () => {
     if (!selectedProvince || !selectedDistrict || !selectedCity) {
       toast.error("Please select a Province, District, and City to discover salons!");
+      return;
+    }
+    if (!selectedCategory) {
+      toast.error("Please select a category for Google Places discovery.");
       return;
     }
 
@@ -1190,6 +1198,7 @@ export default function Leads() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="w-full h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 text-xs font-light text-zinc-800 shadow-sm"
             >
+              <option value="">Choose category...</option>
               {discoveryCategories.map((cat) => (
                 <option key={cat.value} value={cat.value}>{cat.label}</option>
               ))}
@@ -1214,7 +1223,7 @@ export default function Leads() {
           {/* Fetch Action Button */}
           <Button
             onClick={handleDiscoverLeads}
-            disabled={discovering || !selectedCity}
+            disabled={discovering || !selectedCity || !selectedCategory}
             variant="dark"
             className="w-full rounded-xl font-light h-11 shadow-md flex items-center justify-center gap-2 text-xs"
           >
@@ -1288,7 +1297,6 @@ export default function Leads() {
         updating={updating}
         onSave={handleSaveChanges}
         handleModalImageUpload={handleModalImageUpload}
-        discoveryCategories={discoveryCategories}
         agents={agents}
         modalServices={modalServices}
         modalStaff={modalStaff}
