@@ -16,7 +16,7 @@ import { supabase } from "../../../config/supabase";
 import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { fetchAvailableBookingSlots, validateBookingSlotSelection } from "@/app/actions/booking-slots";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
-import { getSalonDirectionsUrl } from "@/lib/salon-map";
+import { getSalonDirectionsUrl, getSalonFullAddress } from "@/lib/salon-map";
 import {
   type SalonPromotionPackage,
 } from "@/lib/deals";
@@ -40,7 +40,7 @@ import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
 import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLinks";
 import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
-import { buildSalonCatalogShareUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
+import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffc800] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffc800] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
@@ -550,6 +550,32 @@ export default function SalonPage({
   const salonAbout = resolveSalonAbout(salon);
   const displayRating = reviewSummary.averageRating;
   const displayReviewCount = reviewSummary.totalReviews;
+  const fullAddress = getSalonFullAddress(salon);
+  const galleryImages = [
+    ...new Set(
+      [
+        ...(heroImageUrl ? [heroImageUrl] : []),
+        ...featuredImages,
+      ].filter((url): url is string => Boolean(url && url.trim()))
+    ),
+  ];
+  const HERO_MOSAIC_IMAGE_COUNT = 6;
+  const heroThumbImages = galleryImages.slice(3, HERO_MOSAIC_IMAGE_COUNT);
+  const extraGalleryCount = Math.max(0, galleryImages.length - HERO_MOSAIC_IMAGE_COUNT);
+  const featuredReview =
+    salonReviews.find((review) => review.comment?.trim()) ?? salonReviews[0] ?? null;
+  const ratingLabel =
+    displayRating >= 4.5
+      ? "Excellent"
+      : displayRating >= 4
+        ? "Very Good"
+        : displayRating >= 3.5
+          ? "Good"
+          : displayRating >= 3
+            ? "Fair"
+            : displayRating > 0
+              ? "Average"
+              : "New";
 
   const isBookable = isSalonPubliclyBookable(salon);
   const bookabilityMessage = getSalonBookabilityMessage(salon);
@@ -643,187 +669,390 @@ export default function SalonPage({
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans trimma-salon-page">
       
-      {/* 1. DYNAMIC FULL-WIDTH INTEGRATED HERO BANNER */}
-      <div className="relative w-full page-hero-shell text-black overflow-hidden shadow-sm">
-        <div className="absolute inset-0 z-0">
-          {heroImageUrl ? (
-            <img
-              src={heroImageUrl}
-              alt={`${salon.name} Background`}
-              className="page-hero-image transition-transform duration-700"
-            />
-          ) : (
-            <div
-              className="page-hero-image bg-gradient-to-br from-[#ffc800]/35 via-zinc-800/25 to-zinc-900/55"
-              aria-hidden
-            />
-          )}
-          <div className="absolute inset-0 page-hero-overlay" />
-        </div>
+      {/* 1. BOOKING-STYLE SALON HERO */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
+          {/* Header */}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-5">
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star
+                    key={index}
+                    className={`w-4 h-4 ${
+                      displayRating > 0 && index < Math.round(displayRating)
+                        ? "fill-amber-500 text-amber-500"
+                        : "fill-slate-200 text-slate-200"
+                    }`}
+                  />
+                ))}
+              </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-              <Avatar className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border-4 border-black/10 shadow-2xl shrink-0 bg-white hidden sm:block">
-                {logoImage ? <AvatarImage src={logoImage} className="object-cover" /> : null}
-                <AvatarFallback className="bg-[#FFC107] text-black font-bold">{salonInitials}</AvatarFallback>
-              </Avatar>
-              
-              <div className="space-y-3 w-full">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-16 h-16 rounded-xl border-2 border-black/10 shadow-xl shrink-0 bg-white sm:hidden">
-                      {logoImage ? <AvatarImage src={logoImage} className="object-cover" /> : null}
-                      <AvatarFallback className="bg-[#FFC107] text-black font-bold">{salonInitials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-black leading-tight">
-                          {salon.name}
-                        </h1>
-                        {salon.is_verified && (
-                          <ShieldCheck className="w-5 h-5 text-black" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {salon.is_verified ? (
-                          <VerifiedSalonBadge size="xs" />
-                        ) : (
-                          <Badge className="bg-zinc-600 text-white border-zinc-600 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1">
-                            Not Verified
-                          </Badge>
-                        )}
-                        <div className={`flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider text-black ${currentStatus === 'Open Now' ? 'bg-black/10 border-black/20' : 'bg-black/10 border-black/20'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${currentStatus === 'Open Now' ? 'bg-emerald-600 animate-pulse' : 'bg-amber-600'}`} />
-                          {currentStatus}
-                        </div>
-                      </div>
+              <div className="flex items-start gap-3">
+                <Avatar className="w-14 h-14 rounded-xl border border-slate-200 shadow-sm shrink-0 bg-white hidden sm:flex">
+                  {logoImage ? <AvatarImage src={logoImage} className="object-cover" /> : null}
+                  <AvatarFallback className="bg-[#FFC107] text-black font-bold">{salonInitials}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-900 leading-tight">
+                      {salon.name}
+                    </h1>
+                    {salon.is_verified && <ShieldCheck className="w-5 h-5 text-zinc-900 shrink-0" />}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {salon.is_verified ? (
+                      <VerifiedSalonBadge size="xs" />
+                    ) : (
+                      <Badge className="bg-zinc-600 text-white border-zinc-600 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full">
+                        Not Verified
+                      </Badge>
+                    )}
+                    <div className="flex items-center px-2 py-0.5 rounded-full border border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-zinc-700">
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                          currentStatus === "Open Now" ? "bg-emerald-600 animate-pulse" : "bg-amber-600"
+                        }`}
+                      />
+                      {currentStatus}
                     </div>
                   </div>
-                  {/* Quick Actions Panel */}
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <SalonFavoriteButton
-                      salonId={salon.id}
-                      salonName={salon.name}
-                      variant="hero"
-                      className={`h-11 w-11 shrink-0 ${SALON_ACTION_BTN}`}
-                    />
-                    <Button
-                      className={`flex-1 sm:hidden rounded-xl font-bold transition-all h-11 ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`} 
-                      onClick={() => handleBookService()}
-                      disabled={!isBookable}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-600">
+                    <div className="flex items-start gap-1.5 min-w-0">
+                      <MapPin className="w-4 h-4 shrink-0 mt-0.5 text-zinc-500" />
+                      <span className="font-medium">{fullAddress}</span>
+                    </div>
+                    <a
+                      href="#salon-hero-map"
+                      className="text-sm font-semibold text-[#003580] hover:underline shrink-0"
                     >
-                      {isBookable ? "Book" : "Unavailable"}
-                    </Button>
+                      Excellent location – show map
+                    </a>
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-[#003580] hover:underline shrink-0"
+                      onClick={() => {
+                        const url = getSalonDirectionsUrl(salon);
+                        if (url) window.open(url, "_blank", "noopener,noreferrer");
+                        else toast.message("Directions are not available for this salon yet.");
+                      }}
+                    >
+                      Get Directions
+                    </button>
                   </div>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs md:text-sm font-semibold text-black">
-                  <div className="flex items-center text-black bg-black/10 px-2.5 py-1 rounded-lg backdrop-blur-md border border-black/10">
-                    <Star className="w-4 h-4 mr-1.5 fill-amber-600 text-amber-600" />
-                    {displayRating > 0 ? displayRating.toFixed(1) : "New"}{" "}
-                    <span className="font-normal text-black/70 ml-1">
-                      ({displayReviewCount} review{displayReviewCount === 1 ? "" : "s"})
-                    </span>
-                  </div>
-                  <div className="flex items-center text-black transition-colors cursor-pointer" title={salon.address}>
-                    <MapPin className="w-4 h-4 mr-1.5 text-black" />
-                    <span>{salon.district || salon.city || salon.address || "Address not provided"}</span>
-                  </div>
-                  <button
-                    className={`flex items-center transition-colors px-2.5 py-1 rounded-lg border cursor-pointer ${SALON_ACTION_BTN}`}
-                    onClick={() => {
-                      const url = getSalonDirectionsUrl(salon);
-                      if (url) window.open(url, "_blank", "noopener,noreferrer");
-                      else toast.message("Directions are not available for this salon yet.");
-                    }}
-                  >
-                    <Navigation2 className="w-4 h-4 mr-1.5 text-white" />
-                    Get Directions
-                  </button>
                   <SalonSocialLinks salon={salon} links={salonSocialLinks} />
                 </div>
-                
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {serviceCategories.filter(c => c !== "All").map(c => (
-                    <Badge key={c} variant="secondary" className="bg-black/10 hover:bg-black/15 text-black border border-black/10 font-semibold text-[9px] uppercase tracking-wider rounded-lg px-2.5 py-0.5">
-                      {c}
-                    </Badge>
-                  ))}
-                </div>
-
-                {/* WORKING HOURS ROW */}
-                <div className="pt-4 pb-2">
-                  <h3 className="text-xs font-bold text-black uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-black" /> Working Hours
-                  </h3>
-                  <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">
-                    {hasWorkingHours ? (
-                      parsedWorkingHours.map((h, i) => {
-                      const isToday = new Date().toLocaleDateString('en-US', { weekday: 'long' }) === h.day;
-                      const isClosed = h.time.toLowerCase().includes('closed');
-                      return (
-                        <div 
-                          key={i} 
-                          className={`flex flex-col shrink-0 px-3.5 py-2.5 rounded-xl border snap-start min-w-[120px] backdrop-blur-md transition-all ${
-                            isToday 
-                              ? 'bg-black/15 border-black/30 shadow-[0_0_15px_rgba(0,0,0,0.08)]' 
-                              : isClosed
-                                ? 'bg-black/5 border-black/10 opacity-70'
-                                : 'bg-black/5 border-black/10 hover:bg-black/10 hover:border-black/20'
-                          }`}
-                        >
-                          <span className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 text-black ${
-                            isClosed ? 'text-black/60' : ''
-                          }`}>
-                            {h.day}
-                            {isToday && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-700 animate-pulse" />}
-                          </span>
-                          <span className={`text-xs font-semibold whitespace-nowrap text-black ${
-                            isClosed ? 'text-black/60 line-through decoration-black/40' : ''
-                          }`}>
-                            {h.time}
-                          </span>
-                        </div>
-                      );
-                    })
-                    ) : (
-                      <p className="text-sm font-medium text-black/75">
-                        Working hours have not been added yet.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* UNVERIFIED / BOOKING UNAVAILABLE NOTICE */}
-                {!isBookable && bookabilityMessage && (
-                  <div className="mt-4 bg-black/10 border border-black/20 rounded-xl p-4 flex items-start gap-3 backdrop-blur-md max-w-2xl">
-                    <Shield className="w-5 h-5 text-black shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="text-black font-extrabold text-sm uppercase tracking-wide">
-                        {bookabilityMessage.title}
-                      </h4>
-                      <p className="text-black/80 text-xs mt-1.5 font-medium leading-relaxed">
-                        {bookabilityMessage.body}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
               </div>
             </div>
 
-            <div className="hidden sm:flex md:w-[280px] shrink-0 pt-4">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <SalonFavoriteButton
+                salonId={salon.id}
+                salonName={salon.name}
+                variant="hero"
+                className={`h-11 w-11 shrink-0 ${SALON_ACTION_BTN}`}
+              />
+              {showFacebookShare ? (
+                <FacebookShareButton
+                  shareUrl={buildSalonPublicPageUrl(salon, shareOrigin)}
+                  label="Share"
+                />
+              ) : null}
               <Button
                 size="lg"
                 disabled={!isBookable}
-                className={`w-full rounded-2xl font-bold transition-all active:scale-[0.98] text-sm h-14 shadow-xl ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`} 
+                className={`hidden sm:inline-flex rounded-xl font-bold transition-all active:scale-[0.98] text-sm h-11 px-6 shadow-sm ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`}
                 onClick={() => handleBookService()}
               >
-                {!isBookable ? "Booking Unavailable" : "Book Appointment Now"}
+                {!isBookable ? "Unavailable" : "Book Appointment"}
+              </Button>
+              <Button
+                className={`sm:hidden flex-1 rounded-xl font-bold transition-all h-11 ${isBookable ? SALON_ACTION_BTN : "bg-zinc-700 !text-zinc-300 cursor-not-allowed border-zinc-600"}`}
+                onClick={() => handleBookService()}
+                disabled={!isBookable}
+              >
+                {isBookable ? "Book" : "Unavailable"}
               </Button>
             </div>
           </div>
+
+          {/* Photo grid + info sidebar */}
+          <div className="flex flex-col xl:flex-row gap-4 mb-5">
+            <div className="flex-1 min-w-0 space-y-2">
+              {galleryImages.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-3 grid-rows-2 gap-2 h-[220px] sm:h-[300px] md:h-[360px]">
+                    <div className="col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                      <img
+                        src={galleryImages[0]}
+                        alt={`${salon.name} hero`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {galleryImages[1] ? (
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        <img
+                          src={galleryImages[1]}
+                          alt={`${salon.name} gallery 2`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50" />
+                    )}
+                    {galleryImages[2] ? (
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        <img
+                          src={galleryImages[2]}
+                          alt={`${salon.name} gallery 3`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50" />
+                    )}
+                  </div>
+
+                  {(heroThumbImages.length > 0 || extraGalleryCount > 0) && (
+                    <div className="grid grid-cols-3 gap-2 h-[72px] sm:h-[96px]">
+                      {heroThumbImages.map((imgUrl, idx) => {
+                        const isLast = idx === heroThumbImages.length - 1 && extraGalleryCount > 0;
+                        return (
+                          <a
+                            key={`${imgUrl}-${idx}`}
+                            href={isLast ? "#gallery" : undefined}
+                            className={`relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 ${isLast ? "cursor-pointer" : ""}`}
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`${salon.name} gallery ${idx + 4}`}
+                              className="w-full h-full object-cover"
+                            />
+                            {isLast ? (
+                              <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                                <span className="text-xs sm:text-sm font-bold text-white">
+                                  +{extraGalleryCount} photo{extraGalleryCount === 1 ? "" : "s"}
+                                </span>
+                              </div>
+                            ) : null}
+                          </a>
+                        );
+                      })}
+                      {heroThumbImages.length === 0 && extraGalleryCount > 0 ? (
+                        <a
+                          href="#gallery"
+                          className="col-span-3 relative overflow-hidden rounded-lg border border-slate-200 bg-slate-900 flex items-center justify-center"
+                        >
+                          <span className="text-sm font-bold text-white">
+                            +{extraGalleryCount} photo{extraGalleryCount === 1 ? "" : "s"}
+                          </span>
+                        </a>
+                      ) : null}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="h-[220px] sm:h-[300px] md:h-[360px] rounded-xl border border-dashed border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center gap-3">
+                  <Scissors className="w-8 h-8 text-slate-400" />
+                  <p className="text-sm font-medium text-zinc-500">No photos uploaded yet</p>
+                </div>
+              )}
+            </div>
+
+            <aside className="xl:w-[280px] shrink-0 space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-bold text-zinc-900">{ratingLabel}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {displayReviewCount} review{displayReviewCount === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <div className="bg-[#003580] text-white rounded-md px-2.5 py-1.5 text-lg font-bold leading-none min-w-[3rem] text-center">
+                    {displayRating > 0 ? displayRating.toFixed(1) : "—"}
+                  </div>
+                </div>
+              </div>
+
+              {featuredReview ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-bold text-zinc-900 mb-2">Highlights from high-rated reviews</p>
+                  {featuredReview.comment ? (
+                    <p className="text-sm text-zinc-600 leading-relaxed line-clamp-4">
+                      &ldquo;{featuredReview.comment}&rdquo;
+                    </p>
+                  ) : (
+                    <p className="text-sm text-zinc-500 italic">Verified booking review</p>
+                  )}
+                  <div className="flex items-center gap-2 mt-3">
+                    <Avatar className="w-8 h-8 border border-slate-100">
+                      <AvatarFallback className="bg-emerald-100 text-emerald-700 text-xs font-bold">
+                        {featuredReview.authorName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">{featuredReview.authorName}</p>
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Star
+                            key={index}
+                            className={`w-3 h-3 ${
+                              index < featuredReview.rating
+                                ? "fill-amber-500 text-amber-500"
+                                : "fill-slate-200 text-slate-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              <div id="salon-hero-map" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <p className="text-sm font-bold text-zinc-900">Excellent location!</p>
+                    <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">{fullAddress}</p>
+                  </div>
+                </div>
+                <SalonLocationMap salon={salon} compact className="!space-y-2" />
+              </div>
+            </aside>
+          </div>
+
+          {galleryImages.length > HERO_MOSAIC_IMAGE_COUNT ? (
+            <section id="gallery" className="scroll-mt-24 mb-5">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-zinc-900">Featured Gallery</h2>
+                  <p className="text-xs text-zinc-400">
+                    Portfolio works from {salon.name}&apos;s catalog
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-500 font-bold text-[9px] uppercase tracking-wider py-1 px-2.5"
+                >
+                  Portfolio Standard (3:4)
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {galleryImages.map((imgUrl, idx) => (
+                  <div
+                    key={`${imgUrl}-${idx}`}
+                    className="group relative overflow-hidden rounded-xl aspect-[3/4] border border-slate-200 shadow-sm bg-slate-50"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`Portfolio item ${idx + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-xs font-bold text-white bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-sm shadow-sm select-none">
+                        View Style
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {/* Facilities row */}
+          {amenities.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-5">
+              {amenities.map((am, i) => {
+                const IconComp = iconMap[am.icon_name] || CheckCircle;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-zinc-700"
+                  >
+                    <IconComp className="w-4 h-4 shrink-0 text-zinc-600" />
+                    <span className="font-medium truncate">{am.name}</span>
+                    {am.type === "number" && am.quantity ? (
+                      <span className="text-[10px] font-bold bg-[#ffc800] text-black px-1.5 py-0.5 rounded shrink-0">
+                        x{am.quantity}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-1.5 mb-5">
+            {serviceCategories.filter((c) => c !== "All").map((c) => (
+              <Badge
+                key={c}
+                variant="secondary"
+                className="bg-slate-100 hover:bg-slate-200 text-zinc-700 border border-slate-200 font-semibold text-[9px] uppercase tracking-wider rounded-lg px-2.5 py-0.5"
+              >
+                {c}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="mb-5">
+            <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5" /> Working Hours
+            </h3>
+            <div className="flex overflow-x-auto hide-scrollbar gap-2.5 snap-x pb-2">
+              {hasWorkingHours ? (
+                parsedWorkingHours.map((h, i) => {
+                  const isToday = new Date().toLocaleDateString("en-US", { weekday: "long" }) === h.day;
+                  const isClosed = h.time.toLowerCase().includes("closed");
+                  return (
+                    <div
+                      key={i}
+                      className={`flex flex-col shrink-0 px-3.5 py-2.5 rounded-xl border snap-start min-w-[120px] transition-all ${
+                        isToday
+                          ? "bg-brand/10 border-brand/30 shadow-sm"
+                          : isClosed
+                            ? "bg-slate-50 border-slate-200 opacity-70"
+                            : "bg-white border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <span
+                        className={`text-[10px] uppercase font-bold tracking-wider mb-0.5 text-zinc-700 ${
+                          isClosed ? "text-zinc-400" : ""
+                        }`}
+                      >
+                        {h.day}
+                        {isToday && (
+                          <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                        )}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold whitespace-nowrap text-zinc-800 ${
+                          isClosed ? "text-zinc-400 line-through decoration-zinc-300" : ""
+                        }`}
+                      >
+                        {h.time}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm font-medium text-zinc-500">Working hours have not been added yet.</p>
+              )}
+            </div>
+          </div>
+
+          {!isBookable && bookabilityMessage ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3 max-w-2xl">
+              <Shield className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-amber-900 font-extrabold text-sm uppercase tracking-wide">
+                  {bookabilityMessage.title}
+                </h4>
+                <p className="text-amber-800 text-xs mt-1.5 font-medium leading-relaxed">
+                  {bookabilityMessage.body}
+                </p>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -1047,50 +1276,8 @@ export default function SalonPage({
                </div>
             </section>
 
-            {/* 7. PORTFOLIO GALLERY SECTION */}
-            <section id="gallery">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Featured Gallery</h2>
-                  <p className="text-xs text-zinc-400">Branding & design works from {salon.name}&apos;s dynamic portfolio catalog.</p>
-                </div>
-                <Badge variant="outline" className="bg-zinc-50 border-zinc-200 text-zinc-500 font-bold text-[9px] uppercase tracking-wider py-1 px-2.5">
-                  Portfolio Standard (3:4)
-                </Badge>
-              </div>
-
-              {featuredImages.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {featuredImages.map((imgUrl: string, idx: number) => (
-                    <div key={idx} className="group relative overflow-hidden rounded-2xl aspect-[3/4] border border-slate-200 shadow-sm bg-slate-50">
-                      <img 
-                        src={imgUrl} 
-                        alt={`Portfolio item ${idx + 1}`} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-xs font-bold text-white bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-sm shadow-sm select-none">
-                          View Style
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="border border-dashed border-slate-200 bg-white/40 rounded-3xl p-12 text-center shadow-sm">
-                  <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400 shadow-sm">
-                    <Scissors className="w-5 h-5" />
-                  </div>
-                  <h4 className="font-bold text-sm text-zinc-700">No portfolio works uploaded yet</h4>
-                  <p className="text-xs text-zinc-400 max-w-xs mx-auto mt-1 leading-relaxed">
-                    Owners can upload styling showcase photos directly under the **Salon Profile** section in their workspace!
-                  </p>
-                </div>
-              )}
-            </section>
-
-            {/* 9 & 10. ABOUT & AMENITIES */}
-            <section id="about" className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* 9. ABOUT */}
+            <section id="about">
                <div>
                   <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">About {salon.name}</h2>
                   {salonAbout ? (
@@ -1100,30 +1287,6 @@ export default function SalonPage({
                       This salon has not added an about section yet.
                     </p>
                   )}
-               </div>
-               <div>
-                  <h2 className="text-xl font-bold tracking-tight text-zinc-900 mb-4">Amenities</h2>
-                  <div className="grid grid-cols-2 gap-3">
-                    {amenities.map((am, i) => {
-                      const IconComp = iconMap[am.icon_name] || CheckCircle;
-                      return (
-                        <div key={i} className="flex items-center gap-2 text-zinc-600 text-sm">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-zinc-700 shrink-0">
-                            <IconComp className="w-4 h-4" />
-                          </div>
-                          {am.name}
-                          {am.type === 'number' && am.quantity ? (
-                            <span className="text-[10px] font-bold bg-[#ffc800] text-black px-1.5 py-0.5 rounded">
-                              x{am.quantity}
-                            </span>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                    {amenities.length === 0 && (
-                      <div className="col-span-2 text-zinc-400 text-sm italic">No amenities listed yet.</div>
-                    )}
-                  </div>
                </div>
             </section>
 
