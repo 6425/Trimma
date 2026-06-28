@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
+import { validateSubscriptionCheckoutPrice } from "@/lib/checkout-price-validation";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
 export async function POST(request: Request) {
@@ -16,15 +17,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Incomplete subscription checkout details." }, { status: 400 });
     }
 
+    const validated = await validateSubscriptionCheckoutPrice({
+      planName: String(planName),
+      billingCycle: billingCycle === "annual" ? "annual" : "monthly",
+      chargeAmount: Number(chargeAmount),
+    });
+
     const result = await createStripePaymentIntent({
       checkoutType: "subscription",
-      amount: Number(chargeAmount),
-      description: `Trimma ${planName} plan (${billingCycle})`,
+      amount: validated.chargeAmount,
+      description: `Trimma ${validated.plan.name} plan (${billingCycle})`,
       customerEmail: customer?.email || auth.email || "",
       payload: {
-        planName,
+        planName: validated.plan.name,
         billingCycle,
-        chargeAmount,
+        chargeAmount: validated.chargeAmount,
         customer,
         salonId: auth.salonId,
       },

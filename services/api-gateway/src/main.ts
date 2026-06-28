@@ -4,9 +4,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS so Next.js Frontend can communicate with the API
+  // Enable CORS only when explicitly running the gateway in dev/staging.
+  const corsOrigin = process.env.TRIMMA_API_GATEWAY_CORS_ORIGIN || 'http://localhost:3000';
   app.enableCors({
-    origin: '*', // In production, restrict this to your Next.js domain
+    origin: corsOrigin,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

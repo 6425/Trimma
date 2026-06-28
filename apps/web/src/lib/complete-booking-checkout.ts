@@ -17,6 +17,7 @@ import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/b
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import { computeAgentCommissionSnapshot } from "@/lib/booking-commission-snapshot";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { validateBookingCheckoutPrices } from "@/lib/checkout-price-validation";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteBookingCheckoutInput = {
@@ -151,6 +152,18 @@ export async function completeBookingCheckout(
 ): Promise<CompleteBookingCheckoutResult> {
   validateCheckoutInput(input);
 
+  const validatedPrices = await validateBookingCheckoutPrices({
+    draft: {
+      salonId: input.draft.salonId,
+      serviceIds: input.draft.serviceIds,
+      promotionPackageId: input.draft.promotionPackageId,
+    },
+    serviceTotal: input.serviceTotal,
+    reservationFee: input.reservationFee,
+    rates: input.rates,
+    services: input.services,
+  });
+
   const supabase = createSupabaseAdminClient();
   const {
     draft,
@@ -158,15 +171,16 @@ export async function completeBookingCheckout(
     card,
     stripePayment,
     payhereEnvironment,
-    reservationFee: inputReservationFee,
-    serviceTotal,
-    rates,
     salon,
-    services,
     staffMemberId,
     totalDuration,
     clientIp,
   } = input;
+
+  const serviceTotal = validatedPrices.serviceTotal;
+  const inputReservationFee = validatedPrices.reservationFee;
+  const rates = validatedPrices.rates;
+  const services = validatedPrices.services;
 
   const { hh, mm, formattedTime } = parseTimeSlot(draft.timeSlot);
   const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;

@@ -10,7 +10,7 @@ import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import {
-  setTrimmaMiddlewareCookies,
+  syncTrimmaSecureSession,
   redirectAfterAuth,
   resolveTrimmaUserRole,
 } from "@/lib/trimma-role";
@@ -102,10 +102,16 @@ function LoginForm() {
             return;
           }
 
-          setTrimmaMiddlewareCookies(session.access_token, result.role);
+          const sessionResult = await syncTrimmaSecureSession(session.access_token);
+          if ("error" in sessionResult) {
+            alert(sessionResult.error);
+            setIsCheckingSession(false);
+            return;
+          }
+
           redirectAfterAuth(
             resolveAuthenticatedDestination({
-              role: result.role,
+              role: sessionResult.role,
               nextPath: redirectTo,
               onboardingStatus: result.onboardingStatus,
               salonOwnerIntent,
@@ -144,9 +150,15 @@ function LoginForm() {
         return;
       }
 
-      setTrimmaMiddlewareCookies(session.access_token, role);
+      const sessionResult = await syncTrimmaSecureSession(session.access_token);
+      if ("error" in sessionResult) {
+        alert(sessionResult.error);
+        setIsCheckingSession(false);
+        return;
+      }
+
       redirectAfterAuth(
-        resolveAuthenticatedDestination({ role, nextPath: redirectTo, salonOwnerIntent })
+        resolveAuthenticatedDestination({ role: sessionResult.role, nextPath: redirectTo, salonOwnerIntent })
       );
     },
     [redirectTo, salonOwnerIntent, invitedSalonId]

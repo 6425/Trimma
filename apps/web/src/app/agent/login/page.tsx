@@ -12,7 +12,7 @@ import { supabase } from "@/config/supabase";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import {
-  setTrimmaMiddlewareCookies,
+  syncTrimmaSecureSession,
   redirectAfterAuth,
   resolveTrimmaUserRole,
 } from "@/lib/trimma-role";
@@ -84,8 +84,17 @@ function AgentLoginForm() {
         return;
       }
 
-      setTrimmaMiddlewareCookies(session.access_token, role);
-      redirectAfterAuth(resolveAuthenticatedDestination({ role, nextPath: redirectTo }));
+      const sessionResult = await syncTrimmaSecureSession(session.access_token);
+      if ("error" in sessionResult) {
+        await supabase.auth.signOut();
+        alert(sessionResult.error);
+        setIsCheckingSession(false);
+        return;
+      }
+
+      redirectAfterAuth(
+        resolveAuthenticatedDestination({ role: sessionResult.role, nextPath: redirectTo })
+      );
     },
     [redirectTo]
   );
