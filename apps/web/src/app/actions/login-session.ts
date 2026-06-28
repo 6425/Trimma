@@ -5,6 +5,7 @@ import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
 import { linkInvitedOwnerAccount } from "@/lib/link-owner-account";
 import { forceSalonOwnerUpgrade } from "@/lib/force-salon-owner-upgrade";
+import { linkOwnerEmailToSalonInvite } from "@/lib/link-owner-to-salon-invite";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendWelcomeCustomerWhatsApp } from "@/app/actions/whatsapp";
 import { sendWelcomeCustomerEmail } from "@/app/actions/email-settings";
@@ -43,7 +44,7 @@ export async function resolveLoginRole(accessToken: string) {
  */
 export async function completeOAuthLogin(
   accessToken: string,
-  options?: { salonOwnerIntent?: boolean }
+  options?: { salonOwnerIntent?: boolean; invitedSalonId?: string | null }
 ) {
   if (!accessToken?.trim()) {
     return { success: false as const, error: "Missing session token. Please sign in again." };
@@ -67,7 +68,7 @@ export async function completeOAuthLogin(
         verified.email,
         verified.userMetadata?.full_name || verified.userMetadata?.first_name,
         verified.userMetadata?.avatar_url,
-        { salonOwnerIntent: options?.salonOwnerIntent }
+        { salonOwnerIntent: options?.salonOwnerIntent, invitedSalonId: options?.invitedSalonId }
       );
       onboardingStatus = linkResult.onboardingStatus;
       linkedRole = linkResult.role;
@@ -126,7 +127,10 @@ export async function completeOAuthLogin(
 }
 
 /** Dedicated salon-owner claim for /onboarding and recovery on /customer. */
-export async function claimSalonOwnerFromOnboarding(accessToken: string) {
+export async function claimSalonOwnerFromOnboarding(
+  accessToken: string,
+  options?: { invitedSalonId?: string | null }
+) {
   if (!accessToken?.trim()) {
     return { success: false as const, error: "Missing session token. Please sign in again." };
   }
@@ -145,13 +149,29 @@ export async function claimSalonOwnerFromOnboarding(accessToken: string) {
       return { success: true as const, role: existingRole, onboardingStatus: null, salonId: null };
     }
 
-    const { salonId } = await forceSalonOwnerUpgrade(
-      admin,
-      verified.userId,
-      verified.email,
-      verified.userMetadata?.full_name || verified.userMetadata?.first_name,
-      verified.userMetadata?.avatar_url
-    );
+    const invitedSalonId = options?.invitedSalonId?.trim() || null;
+    let salonId: string;
+
+    if (invitedSalonId) {
+      const invite = await linkOwnerEmailToSalonInvite(
+        admin,
+        invitedSalonId,
+        verified.email,
+        verified.userId,
+        verified.userMetadata?.full_name || verified.userMetadata?.first_name,
+        verified.userMetadata?.avatar_url
+      );
+      salonId = invite.salonId;
+    } else {
+      const upgraded = await forceSalonOwnerUpgrade(
+        admin,
+        verified.userId,
+        verified.email,
+        verified.userMetadata?.full_name || verified.userMetadata?.first_name,
+        verified.userMetadata?.avatar_url
+      );
+      salonId = upgraded.salonId;
+    }
 
     const { data: salon } = await admin
       .from("salons")

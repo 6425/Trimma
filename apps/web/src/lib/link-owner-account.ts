@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { forceSalonOwnerUpgrade } from "@/lib/force-salon-owner-upgrade";
+import { linkOwnerEmailToSalonInvite } from "@/lib/link-owner-to-salon-invite";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
@@ -45,7 +46,7 @@ export async function linkInvitedOwnerAccount(
   email: string | null | undefined,
   fullName?: string | null,
   avatarUrl?: string | null,
-  options?: { salonOwnerIntent?: boolean }
+  options?: { salonOwnerIntent?: boolean; invitedSalonId?: string | null }
 ): Promise<LinkOwnerResult> {
   const normalizedEmail = normalizeEmail(email);
   const fallbackRole: TrimmaUserRole = "customer";
@@ -77,6 +78,24 @@ export async function linkInvitedOwnerAccount(
   let salonId: string | null = null;
 
   if (
+    options?.invitedSalonId &&
+    options?.salonOwnerIntent &&
+    role !== "admin" &&
+    role !== "agent" &&
+    role !== "regional_head"
+  ) {
+    const invite = await linkOwnerEmailToSalonInvite(
+      admin,
+      options.invitedSalonId,
+      normalizedEmail,
+      authUserId,
+      fullName || userRow?.full_name,
+      avatarUrl
+    );
+    role = "salon_owner";
+    salonId = invite.salonId;
+    linked = true;
+  } else if (
     options?.salonOwnerIntent &&
     role !== "admin" &&
     role !== "agent" &&

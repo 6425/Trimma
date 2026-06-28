@@ -22,6 +22,7 @@ import {
   notifySalonVerifiedByAdmin,
 } from "@/app/actions/salon-onboarding-notifications";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
+import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -644,6 +645,10 @@ export default function Salons() {
                        Resend WhatsApp Invite
                     </Button>
                  )}
+                 <CopySalonInviteLinkButton
+                   salonId={selectedSalon.id}
+                   ownerEmail={editForm.email || selectedSalon.owner_gmail || selectedSalon.owner_email}
+                 />
                </div>
             </div>
 
@@ -867,10 +872,12 @@ export default function Salons() {
                       )}
                       Sync from Google
                     </Button>
-                    <p className="text-[10px] text-zinc-500 self-center">
-                      Google is the default source. Upload or paste a URL above to override it.
-                    </p>
+                    <CopySalonInviteLinkButton salonId={selectedSalon.id} ownerEmail={editForm.email} />
                   </div>
+                  <SalonInviteLinkHint />
+                  <p className="text-[10px] text-zinc-500">
+                    Google is the default hero image source. Upload or paste a URL above to override it.
+                  </p>
                 </div>
               </div>
 

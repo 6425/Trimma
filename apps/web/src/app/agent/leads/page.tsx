@@ -33,6 +33,7 @@ import {
 } from "@/lib/agent-client-data";
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
+import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
 import { buildStaffWorkingHoursPayload, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
@@ -1432,6 +1433,17 @@ function AgentLeads() {
               </div>
 
               <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="space-y-2 w-full sm:max-w-md">
+                  {selectedLead ? (
+                    <CopySalonInviteLinkButton
+                      salonId={selectedLead.id}
+                      ownerEmail={formData.owner_gmail}
+                      className="w-full sm:w-auto"
+                    />
+                  ) : null}
+                  <SalonInviteLinkHint />
+                </div>
+
                 <Button
                   variant="outline"
                   onClick={() => { setIsModalOpen(false); setSelectedLead(null); }}
