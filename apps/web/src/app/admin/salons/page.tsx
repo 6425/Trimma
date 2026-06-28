@@ -43,7 +43,7 @@ export default function Salons() {
   const [editForm, setEditForm] = useState<any>({});
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isRefreshingImage, setIsRefreshingImage] = useState(false);
-  const [uploadingImageField, setUploadingImageField] = useState<"cover_url" | "hero_url" | "logo_url" | null>(null);
+  const [uploadingImageField, setUploadingImageField] = useState<"hero_url" | null>(null);
 
   const fetchSalons = async () => {
     try {
@@ -98,8 +98,7 @@ export default function Salons() {
       longitude: salon.longitude !== null ? String(salon.longitude) : "",
       rating: salon.rating !== null ? String(salon.rating) : "",
       logo_url: salon.logo_url || "",
-      cover_url: salon.cover_url || "",
-      hero_url: salon.hero_url || "",
+      hero_url: salon.hero_url || salon.cover_url || "",
       place_id: salon.place_id || "",
       status: salon.status || "active",
       working_hours:
@@ -128,8 +127,7 @@ export default function Salons() {
 
       setEditForm((prev: any) => ({
         ...prev,
-        cover_url: result.cover_url,
-        hero_url: result.hero_url,
+        hero_url: result.hero_url || result.cover_url || "",
         place_id: result.place_id,
       }));
       setSelectedSalon({
@@ -151,7 +149,7 @@ export default function Salons() {
 
   const handleAdminImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: "cover_url" | "hero_url" | "logo_url"
+    field: "hero_url"
   ) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -161,9 +159,7 @@ export default function Salons() {
       setUploadingImageField(field);
       toast.loading("Uploading image...", { id: `upload-${field}` });
 
-      const targetWidth = field === "logo_url" ? 500 : field === "cover_url" ? 1200 : 1920;
-      const targetHeight = field === "logo_url" ? 500 : field === "cover_url" ? 400 : 680;
-      const publicUrl = await autoCropAndUpload(file, targetWidth, targetHeight, field.replace("_url", ""));
+      const publicUrl = await autoCropAndUpload(file, 1920, 680, "hero");
 
       setEditForm((prev: any) => ({ ...prev, [field]: publicUrl }));
       toast.success("Image uploaded. Click Save Changes to apply.", { id: `upload-${field}` });
@@ -811,8 +807,8 @@ export default function Salons() {
                 <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5" /> 3. Salon Images
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1 md:col-span-2">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Google Place ID</label>
                     <Input
                       value={editForm.place_id}
@@ -820,31 +816,6 @@ export default function Salons() {
                       placeholder="Optional — used to fetch the real Google photo"
                       className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 font-mono text-[10px]"
                     />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Cover Image URL</label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={editForm.cover_url}
-                        onChange={(e) => setEditForm({ ...editForm, cover_url: e.target.value })}
-                        className="h-10 rounded-xl bg-zinc-50 border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 text-[10px]"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={uploadingImageField === "cover_url"}
-                        className="h-10 px-3 rounded-xl relative overflow-hidden shrink-0 text-xs font-bold"
-                      >
-                        {uploadingImageField === "cover_url" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => handleAdminImageUpload(e, "cover_url")}
-                          disabled={uploadingImageField === "cover_url"}
-                        />
-                      </Button>
-                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Hero Image URL</label>
@@ -871,17 +842,17 @@ export default function Salons() {
                       </Button>
                     </div>
                   </div>
-                  {editForm.cover_url ? (
-                    <div className="md:col-span-2">
+                  {editForm.hero_url ? (
+                    <div>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={editForm.cover_url}
-                        alt={`${editForm.name || "Salon"} cover preview`}
+                        src={editForm.hero_url}
+                        alt={`${editForm.name || "Salon"} hero preview`}
                         className="w-full max-h-48 object-cover rounded-xl border border-zinc-200"
                       />
                     </div>
                   ) : null}
-                  <div className="md:col-span-2 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
                       variant="outline"
