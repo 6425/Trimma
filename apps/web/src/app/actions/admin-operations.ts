@@ -25,6 +25,7 @@ import {
 } from "@/lib/salon-subscription-plan";
 import { parseFeatureFlags } from "@/lib/parse-feature-flags";
 import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
+import { deleteSalonRecordCascade } from "@/lib/admin-salon-delete-core";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 const BRANDING_SETTINGS_ID = "00000000-0000-0000-0000-000000000002";
@@ -846,12 +847,9 @@ export async function bulkInsertAdminSalons(rows: Record<string, unknown>[]) {
 }
 
 export async function deleteAdminSalon(salonId: string) {
-  const result = await withAdminDb(async (supabase) => {
-    const { error } = await supabase.from("salons").delete().eq("id", salonId);
-    if (error) throw new Error(error.message);
-  });
+  const result = await withAdminDb(async (supabase) => deleteSalonRecordCascade(supabase, salonId));
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
-  return { success: true as const };
+  return { success: true as const, name: result.data.name };
 }
 
 export async function uploadAdminSalonImage(fileName: string, base64Data: string, contentType = "image/jpeg") {
