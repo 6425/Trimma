@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { QrCode } from "lucide-react";
-import {
-  buildSalonPublicUrl,
-  buildSalonQrImagePath,
-  resolveSalonPublicBaseUrl,
-} from "@/lib/salon-qr-flyer";
+import { buildSalonPublicUrl, resolveSalonPublicBaseUrl } from "@/lib/salon-qr-flyer";
 
 type SalonPublicQrSectionProps = {
   salonName: string;
@@ -19,11 +16,6 @@ export function SalonPublicQrSection({ salonName, slug }: SalonPublicQrSectionPr
     return buildSalonPublicUrl(slug, resolveSalonPublicBaseUrl());
   }, [slug]);
 
-  const qrImageUrl = useMemo(() => {
-    if (!salonPublicUrl) return "";
-    return buildSalonQrImagePath(salonPublicUrl, 220);
-  }, [salonPublicUrl]);
-
   if (!slug?.trim() || !salonPublicUrl) return null;
 
   return (
@@ -32,20 +24,16 @@ export function SalonPublicQrSection({ salonName, slug }: SalonPublicQrSectionPr
         <div className="flex flex-col sm:flex-row sm:items-center gap-5 md:gap-8">
           <div className="shrink-0 mx-auto sm:mx-0">
             <div className="rounded-2xl border-2 border-zinc-900 bg-white p-3 shadow-sm min-h-[11rem] min-w-[11rem] flex items-center justify-center">
-              {qrImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={qrImageUrl}
-                  alt={`QR code to book ${salonName} on Trimma`}
-                  width={176}
-                  height={176}
-                  className="h-44 w-44 object-contain"
-                  loading="eager"
-                  decoding="async"
-                />
-              ) : (
-                <QrCode className="h-16 w-16 text-zinc-300" aria-hidden />
-              )}
+              <QRCodeSVG
+                value={salonPublicUrl}
+                size={176}
+                level="M"
+                marginSize={2}
+                bgColor="#ffffff"
+                fgColor="#000000"
+                role="img"
+                aria-label={`QR code to book ${salonName} on Trimma`}
+              />
             </div>
           </div>
 
