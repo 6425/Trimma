@@ -40,6 +40,7 @@ import { buildReviewSummary, type SalonReviewSummary } from "@/lib/reviews";
 import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServiceIconUpload";
 import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLinks";
 import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
+import { SalonPublicQrSection } from "../../../components/marketplace/SalonPublicQrSection";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 import { SALON_HERO_IMAGE_ASPECT_CLASS } from "@/lib/salon-hero-image";
 
@@ -1281,6 +1282,10 @@ export default function SalonPage({
             ) : (
               <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
             )}
+
+            {slug ? (
+              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} />
+            ) : null}
 
             {/* Mobile / tablet: map in main column */}
             <section className="lg:hidden">
