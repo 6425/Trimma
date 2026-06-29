@@ -100,6 +100,15 @@ export async function signOutTrimmaSession(redirectTo = "/login") {
     new Promise<void>((resolve) => setTimeout(resolve, 1500)),
   ]);
 
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Continue with client cleanup even if server logout fails.
+  }
+
   clearSupabaseAuthStorage();
 
   const safeRedirect =
