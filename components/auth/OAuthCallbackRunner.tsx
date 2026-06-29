@@ -6,14 +6,13 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
-import { redirectAfterAuth, setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
+import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
 import { completeOAuthLogin, claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
 import {
   clearSalonOwnerOAuthIntent,
   readSalonOwnerOAuthIntent,
   readSalonOwnerInviteSalonId,
 } from "@/lib/salon-owner-oauth-intent";
-import { resolveSalonOwnerOAuthRole } from "@/lib/salon-owner-oauth";
 
 type OAuthCallbackRunnerProps = {
   forcedSalonOwner?: boolean;
@@ -111,16 +110,18 @@ function OAuthCallbackRunner({
             return;
           }
 
-          const role = salonOwnerIntent
-            ? resolveSalonOwnerOAuthRole(result.role, true)
-            : result.role;
-
           clearSalonOwnerOAuthIntent();
-          setTrimmaMiddlewareCookies(session.access_token, role);
+
+          const sessionResult = await syncTrimmaSecureSession(session.access_token);
+          if ("error" in sessionResult) {
+            setErrorMessage(sessionResult.error);
+            window.setTimeout(() => redirectAfterAuth("/login"), 2500);
+            return;
+          }
 
           redirectAfterAuth(
             resolveAuthenticatedDestination({
-              role,
+              role: sessionResult.role,
               nextPath,
               onboardingStatus: result.onboardingStatus,
               salonOwnerIntent,
