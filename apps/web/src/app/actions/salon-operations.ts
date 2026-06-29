@@ -575,38 +575,36 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonService(supabase, ctx, serviceId);
 
-    if (payload.status === "active") {
+    const { data: beforeService, error: beforeReadError } = await supabase
+      .from("services")
+      .select("id, status, global_service_id")
+      .eq("id", serviceId)
+      .eq("salon_id", ctx.salonId)
+      .maybeSingle();
+    if (beforeReadError) throw new Error(beforeReadError.message);
+
+    const nextStatus =
+      typeof payload.status === "string" ? payload.status : beforeService?.status;
+    const wasActive = (beforeService?.status || "").toLowerCase() === "active";
+    const isActivating = nextStatus === "active" && !wasActive;
+
+    if (isActivating) {
       const staff = await loadSalonStaffForCoverage(supabase, ctx.salonId);
       if (!salonHasActiveStaff(staff)) {
         throw new Error(STAFF_REQUIRED_BEFORE_SERVICES_MSG);
       }
 
-      const { data: serviceRow, error: serviceReadError } = await supabase
-        .from("services")
-        .select("id, global_service_id")
-        .eq("id", serviceId)
-        .eq("salon_id", ctx.salonId)
-        .maybeSingle();
-      if (serviceReadError) throw new Error(serviceReadError.message);
-
-      if (!isServiceCoveredByStaff(serviceId, staff, serviceRow?.global_service_id)) {
+      if (
+        !isServiceCoveredByStaff(serviceId, staff, beforeService?.global_service_id)
+      ) {
         throw new Error(SERVICE_NEEDS_STAFF_MSG);
       }
     }
-
-    const { data: beforeService } = await supabase
-      .from("services")
-      .select("status")
-      .eq("id", serviceId)
-      .eq("salon_id", ctx.salonId)
-      .maybeSingle();
 
     const { error } = await supabase.from("services").update(payload).eq("id", serviceId);
     if (error) throw new Error(error.message);
     await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
 
-    const nextStatus =
-      typeof payload.status === "string" ? payload.status : beforeService?.status;
     if (nextStatus === "active") {
       const action: FacebookSyncAction =
         beforeService?.status !== "active" ? "created" : "updated";
