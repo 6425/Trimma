@@ -72,7 +72,11 @@ export default function AdminDashboard() {
           } = await supabase.auth.getSession();
           const stillAdmin =
             session?.user &&
-            (await isAdminForSession(session.user.id, session.user.email));
+            (await isAdminForSession(
+              session.user.id,
+              session.user.email,
+              session.access_token
+            ));
           if (!stillAdmin) {
             router.replace("/admin/login?redirect=/admin");
             return;
@@ -178,12 +182,18 @@ export default function AdminDashboard() {
       } = await supabase.auth.getSession();
 
       if (!session?.user) {
+        setLoading(false);
         router.replace("/admin/login?redirect=/admin");
         return;
       }
 
-      const isAdmin = await isAdminForSession(session.user.id, session.user.email);
+      const isAdmin = await isAdminForSession(
+        session.user.id,
+        session.user.email,
+        session.access_token
+      );
       if (!isAdmin) {
+        setLoading(false);
         toast.error(
           "You are not allowed to access the admin dashboard. Sign in at /admin/login with an admin account."
         );
