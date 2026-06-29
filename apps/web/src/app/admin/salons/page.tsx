@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert, Pencil } from "lucide-react";
+import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fetchAdminSalons, fetchAdminUsers } from "@/app/actions/admin-list-data";
-import { approveAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
+import { approveAdminSalon, deleteAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
 import { refreshSalonGooglePlaceImages } from "@/app/actions/salon-google-images";
 import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
@@ -49,6 +49,7 @@ export default function Salons() {
   const [selectedSalon, setSelectedSalon] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDeletingSalon, setIsDeletingSalon] = useState(false);
   const [isRefreshingImage, setIsRefreshingImage] = useState(false);
   const [uploadingImageField, setUploadingImageField] = useState<"hero_url" | null>(null);
 
@@ -326,6 +327,31 @@ export default function Salons() {
     setRejectModalOpen(true);
   };
 
+  const handleDeleteSalon = async (salon: { id: string; name: string }) => {
+    const confirmed = confirm(
+      `Delete "${salon.name}" permanently?\n\nThis removes the salon, its bookings, payments, services, staff, and all related records. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeletingSalon(true);
+      toast.loading(`Deleting "${salon.name}"...`, { id: "delete_salon" });
+      const result = await deleteAdminSalon(salon.id);
+      if (result.success === false) throw new Error(result.error);
+
+      toast.success(`"${result.name || salon.name}" deleted permanently.`, { id: "delete_salon" });
+      setSalons((prev) => prev.filter((s) => s.id !== salon.id));
+      if (selectedSalon?.id === salon.id) {
+        setViewModalOpen(false);
+        setSelectedSalon(null);
+      }
+    } catch (error: any) {
+      toast.error("Failed to delete salon: " + error.message, { id: "delete_salon" });
+    } finally {
+      setIsDeletingSalon(false);
+    }
+  };
+
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
       toast.error("Please provide a reason for rejection.");
@@ -585,6 +611,16 @@ export default function Salons() {
                           className="text-zinc-500 hover:text-brand hover:bg-zinc-100 rounded-xl ml-2 font-medium"
                         >
                           <Pencil className="w-4 h-4 mr-2" /> Edit Profile
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteSalon(salon)}
+                          disabled={isDeletingSalon}
+                          variant="ghost"
+                          size="sm"
+                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl"
+                          title="Delete salon permanently"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </td>
@@ -890,7 +926,21 @@ export default function Salons() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-100">
+            <div className="flex items-center justify-between gap-3 pt-4 border-t border-zinc-100">
+              <Button
+                variant="outline"
+                onClick={() => handleDeleteSalon(selectedSalon)}
+                disabled={isDeletingSalon || isSavingEdit}
+                className="rounded-xl font-bold h-11 border-rose-200 text-rose-600 hover:bg-rose-50 text-xs"
+              >
+                {isDeletingSalon ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4 mr-2" />
+                )}
+                Delete Salon
+              </Button>
+              <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
                 onClick={() => { setViewModalOpen(false); setSelectedSalon(null); }}
@@ -910,6 +960,7 @@ export default function Salons() {
                 )}
                 Save Changes
               </Button>
+              </div>
             </div>
 
           </div>
