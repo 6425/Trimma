@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
-import OnboardingClient from "./OnboardingClient";
 import { OnboardingHeroCta } from "./OnboardingHeroCta";
 
 export const metadata: Metadata = {
@@ -90,21 +89,8 @@ export default async function OnboardingPage() {
             ))}
           </div>
 
-          <div className="bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto mb-10">
-            <strong>Notice:</strong> We are currently providing dedicated onboarding support only in the above districts to ensure a high-quality experience. Additional districts will be added soon. You may still apply below, and you will be added to our waiting list.
-          </div>
-
-          <div id="partner-waiting-list" className="max-w-3xl mx-auto text-left">
-            <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200">
-              <div className="mb-8 text-center">
-                <h3 className="text-2xl font-extrabold text-zinc-900 mb-2">Join the Waiting List</h3>
-                <p className="text-zinc-500 text-sm leading-relaxed">
-                  Not in a supported district yet, or prefer a Trimma specialist to contact you first?
-                  Submit your details and a regional onboarding agent will reach out when your area opens.
-                </p>
-              </div>
-              <OnboardingClient />
-            </div>
+          <div className="bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto">
+            <strong>Notice:</strong> We are currently providing dedicated onboarding support in the above districts to ensure a high-quality experience. Additional districts will be added soon.
           </div>
         </div>
       </section>
