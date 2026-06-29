@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { TrimmaUserRole } from "@/lib/auth-routes";
+import { SIGNED_SESSION_COOKIE } from "@/lib/auth/cookies";
 import { applySessionCookies } from "@/lib/auth/session-cookies";
+import { verifySignedSessionCookie } from "@/lib/auth/signed-role";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
+
+/** Read the signed HttpOnly trimma-session (used by client gates after password login). */
+export async function GET(request: NextRequest) {
+  const signedSession = request.cookies.get(SIGNED_SESSION_COOKIE)?.value;
+  const payload = await verifySignedSessionCookie(signedSession);
+  if (!payload) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    role: payload.role,
+    userId: payload.userId,
+  });
+}
 
 function getBearerToken(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization");
