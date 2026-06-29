@@ -1274,20 +1274,19 @@ export default function SalonPage({
                </div>
             </section>
 
-            <div className="space-y-6">
-              {reviewsLoading ? (
-                <div className="flex items-center justify-center py-12 text-zinc-400">
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  <span className="text-sm font-medium">Loading reviews...</span>
-                </div>
-              ) : (
-                <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
-              )}
-              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} />
-            </div>
+            {/* Reviews → QR → Map (main column, all screen sizes) */}
+            {reviewsLoading ? (
+              <div className="flex items-center justify-center py-12 text-zinc-400">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <span className="text-sm font-medium">Loading reviews...</span>
+              </div>
+            ) : (
+              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
+            )}
 
-            {/* Mobile / tablet: map in main column */}
-            <section className="lg:hidden">
+            <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} />
+
+            <section id="find-us" className="scroll-mt-24">
               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">Find us</h2>
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
                 <SalonLocationMap salon={salon} />
