@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Bell, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
+import { AdminNotificationBell } from "../../components/admin/AdminNotificationBell";
 import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { 
   Collapsible,
@@ -377,10 +378,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
 
             {/* Bell */}
-            <button type="button" className="trimma-admin-icon-btn relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffc800]" />
-            </button>
+            <AdminNotificationBell />
 
             <div className="w-px h-6 bg-slate-100 mx-1" />
 
