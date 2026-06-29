@@ -7,7 +7,7 @@ import {
   clearSalonOwnerOAuthIntent,
   readSalonOwnerOAuthIntent,
 } from "@/lib/salon-owner-oauth-intent";
-import { setTrimmaMiddlewareCookies } from "@/lib/trimma-role";
+import { syncTrimmaSecureSession } from "@/lib/trimma-role";
 
 /** Recover salon-owner onboarding when a user lands on /customer with an active onboarding intent. */
 export default function OnboardingSalonOwnerRecovery() {
@@ -32,7 +32,9 @@ export default function OnboardingSalonOwnerRecovery() {
       }
 
       clearSalonOwnerOAuthIntent();
-      setTrimmaMiddlewareCookies(session.access_token, "salon_owner");
+      const sessionResult = await syncTrimmaSecureSession(session.access_token);
+      if ("error" in sessionResult) return;
+
       window.location.replace("/dashboard/profile");
     });
   }, []);
