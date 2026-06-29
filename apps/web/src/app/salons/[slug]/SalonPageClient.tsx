@@ -1274,18 +1274,17 @@ export default function SalonPage({
                </div>
             </section>
 
-            {reviewsLoading ? (
-              <div className="flex items-center justify-center py-12 text-zinc-400">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                <span className="text-sm font-medium">Loading reviews...</span>
-              </div>
-            ) : (
-              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
-            )}
-
-            {slug ? (
+            <div className="space-y-6">
+              {reviewsLoading ? (
+                <div className="flex items-center justify-center py-12 text-zinc-400">
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  <span className="text-sm font-medium">Loading reviews...</span>
+                </div>
+              ) : (
+                <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
+              )}
               <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} />
-            ) : null}
+            </div>
 
             {/* Mobile / tablet: map in main column */}
             <section className="lg:hidden">

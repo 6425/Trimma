@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { QrCode } from "lucide-react";
 import {
-  buildQrCodeImageUrl,
   buildSalonPublicUrl,
+  buildSalonQrImagePath,
   resolveSalonPublicBaseUrl,
 } from "@/lib/salon-qr-flyer";
 
@@ -21,26 +21,31 @@ export function SalonPublicQrSection({ salonName, slug }: SalonPublicQrSectionPr
 
   const qrImageUrl = useMemo(() => {
     if (!salonPublicUrl) return "";
-    return buildQrCodeImageUrl(salonPublicUrl, 220);
+    return buildSalonQrImagePath(salonPublicUrl, 220);
   }, [salonPublicUrl]);
 
-  if (!slug?.trim() || !qrImageUrl) return null;
+  if (!slug?.trim() || !salonPublicUrl) return null;
 
   return (
-    <section id="salon-qr" className="scroll-mt-24">
+    <section id="salon-qr" className="scroll-mt-24" aria-label="Salon booking QR code">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-5 md:gap-8">
           <div className="shrink-0 mx-auto sm:mx-0">
-            <div className="rounded-2xl border-2 border-zinc-900 bg-white p-3 shadow-sm">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrImageUrl}
-                alt={`QR code to book ${salonName} on Trimma`}
-                width={176}
-                height={176}
-                className="h-44 w-44 object-contain"
-                loading="lazy"
-              />
+            <div className="rounded-2xl border-2 border-zinc-900 bg-white p-3 shadow-sm min-h-[11rem] min-w-[11rem] flex items-center justify-center">
+              {qrImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={qrImageUrl}
+                  alt={`QR code to book ${salonName} on Trimma`}
+                  width={176}
+                  height={176}
+                  className="h-44 w-44 object-contain"
+                  loading="eager"
+                  decoding="async"
+                />
+              ) : (
+                <QrCode className="h-16 w-16 text-zinc-300" aria-hidden />
+              )}
             </div>
           </div>
 

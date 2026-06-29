@@ -46,6 +46,28 @@ export function buildQrCodeImageUrl(targetUrl: string, size = 400): string {
   return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
 }
 
+/** Same-origin QR image path (avoids third-party image blocking in browsers). */
+export function buildSalonQrImagePath(targetUrl: string, size = 220): string {
+  const params = new URLSearchParams({
+    data: targetUrl,
+    size: String(size),
+  });
+  return `/api/salon-qr?${params.toString()}`;
+}
+
+export function isAllowedSalonQrTarget(targetUrl: string): boolean {
+  try {
+    const parsed = new URL(targetUrl);
+    const host = parsed.hostname.toLowerCase();
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    if (host === "trimma.io" || host.endsWith(".trimma.io")) return true;
+    if (host === "trimma.lk" || host.endsWith(".trimma.lk")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export function printSalonQrFlyer(data: SalonQrFlyerData): void {
   const slug = data.slug?.trim();
   if (!slug) {
