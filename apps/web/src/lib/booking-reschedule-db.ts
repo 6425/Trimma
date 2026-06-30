@@ -45,7 +45,7 @@ export async function updateBookingSchedule(
     extendedPayload.requested_booking_time = null;
   } else if (input.clearRescheduleRequest || input.approvePendingRequest) {
     extendedPayload.reschedule_requested = false;
-    extendedPayload.reschedule_status = input.approvePendingRequest ? "approved" : "none";
+    extendedPayload.reschedule_status = "none";
     extendedPayload.requested_booking_date = null;
     extendedPayload.requested_booking_time = null;
   }

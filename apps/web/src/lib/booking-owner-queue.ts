@@ -47,15 +47,15 @@ export function matchesBookingStatusTab(
       status === "confirmed" ||
       status === "in_progress" ||
       status === "completed" ||
-      status === "pending"
+      status === "pending" ||
+      (status === "rescheduled" && booking.reschedule_requested !== true)
     );
   }
   if (tab === "rescheduled") {
     return (
-      status === "rescheduled" ||
-      booking.reschedule_requested === true ||
-      booking.reschedule_status === "approved" ||
-      booking.reschedule_status === "pending_salon"
+      booking.reschedule_requested === true &&
+      booking.reschedule_status !== "approved" &&
+      booking.reschedule_status !== "rejected"
     );
   }
   if (tab === "canceled") {

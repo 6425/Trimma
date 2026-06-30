@@ -58,6 +58,7 @@ type BookingSalonJoin = {
 type BookingWhatsAppRow = {
   id: string;
   customer_email: string;
+  customer_phone?: string | null;
   booking_date?: string | null;
   booking_time?: string | null;
   amount?: string | number | null;
@@ -1268,34 +1269,30 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
   }
 
   try {
-    // 1. Fetch booking details
-    const { data: booking, error: bookingErr } = await getSupabaseAdmin()
-      .from("bookings")
-      .select("*, salons(name, phone, address, location), services(name)")
-      .eq("booking_no", bookingNo)
-      .single();
+    const booking = await fetchBookingByNumber(
+      bookingNo,
+      "salons(name, phone, address, location)"
+    );
 
-    if (bookingErr || !booking) {
+    if (!booking) {
       return { success: false, error: "Booking record not found." };
     }
 
-    // 2. Fetch customer details
-    const { data: customer } = await getSupabaseAdmin()
-      .from("users")
-      .select("full_name, phone")
-      .eq("email", booking.customer_email)
-      .single();
+    const customer = booking.customer_email
+      ? await fetchCustomerContact(booking.customer_email)
+      : null;
 
-    if (!customer || !customer.phone) {
+    const rawCustomerPhone = customer?.phone?.trim() || booking.customer_phone?.trim();
+    if (!rawCustomerPhone) {
       return { success: false, error: "Customer phone is missing." };
     }
 
-    const customerPhone = cleanPhoneNumber(customer.phone);
+    const customerPhone = cleanPhoneNumber(rawCustomerPhone);
     const customerName = customer.full_name || "Valued Client";
     const salonName = booking.salons?.name || "Trimma Partner Salon";
     const salonAddress = booking.salons?.address || "";
     const salonLocation = booking.salons?.location || "";
-    const serviceName = booking.services?.name || "Premium Styling Service";
+    const serviceName = await resolveServiceName(booking.id, booking.services?.name);
 
     // 📍 GPS coordinate-based Google Maps Directions Link
     let mapsLink = "";

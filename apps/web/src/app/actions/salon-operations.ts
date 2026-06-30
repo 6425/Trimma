@@ -315,9 +315,24 @@ export async function rescheduleOwnerBooking(
     await updateBookingSchedule(supabase, bookingId, {
       bookingDate,
       bookingTime,
+      clearRescheduleRequest: true,
       approvePendingRequest: hadPendingRescheduleRequest,
-      clearRescheduleRequest: hadPendingRescheduleRequest,
     });
+
+    const currentStatus = (booking.status || "").toLowerCase();
+    if (currentStatus === "rescheduled") {
+      const { error: statusErr } = await supabase
+        .from("bookings")
+        .update({ status: "confirmed" })
+        .eq("id", bookingId);
+      if (statusErr) throw new Error(statusErr.message);
+    }
+
+    await supabase
+      .from("reschedule_requests")
+      .update({ status: "approved" })
+      .eq("booking_id", bookingId)
+      .eq("status", "pending");
 
     bookingNo = booking.booking_no as string;
     await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
@@ -326,11 +341,19 @@ export async function rescheduleOwnerBooking(
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
 
   if (bookingNo) {
-    void sendWhatsAppRescheduleNotification(bookingNo);
-    void sendBookingRescheduledEmail(bookingNo);
+    const [whatsapp, email] = await Promise.all([
+      sendWhatsAppRescheduleNotification(bookingNo),
+      sendBookingRescheduledEmail(bookingNo),
+    ]);
+
+    return {
+      success: true as const,
+      bookingNo,
+      notifications: { whatsapp, email },
+    };
   }
 
-  return { success: true as const, bookingNo };
+  return { success: true as const, bookingNo: null };
 }
 
 export async function approveOwnerRescheduleRequest(bookingId: string) {
