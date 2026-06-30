@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -17,6 +17,8 @@ const ACCEPTED_CARD_BRANDS = [
   { src: "/payments/mastercard.svg", alt: "Mastercard" },
   { src: "/payments/amex.svg", alt: "American Express" },
 ] as const;
+
+const STRIPE_LOAD_TIMEOUT_MS = 20000;
 
 function AcceptedCardBrands() {
   return (
@@ -37,18 +39,42 @@ function AcceptedCardBrands() {
 }
 
 type StripePaymentFieldsProps = {
+  remountKey: string;
   onPaymentError?: (message: string) => void;
 };
 
-function StripePaymentFields({ onPaymentError }: StripePaymentFieldsProps) {
+function StripePaymentFields({ remountKey, onPaymentError }: StripePaymentFieldsProps) {
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [layout, setLayout] = useState<"auto" | "tabs">("auto");
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const syncLayout = () => setLayout(media.matches ? "auto" : "tabs");
+    syncLayout();
+    media.addEventListener("change", syncLayout);
+    return () => media.removeEventListener("change", syncLayout);
+  }, []);
+
+  useEffect(() => {
+    setReady(false);
+    setLoadError(null);
+
+    const timer = window.setTimeout(() => {
+      setLoadError((current) => {
+        if (current) return current;
+        return "Card form is taking too long to load. Check your connection and tap Retry.";
+      });
+    }, STRIPE_LOAD_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [remountKey]);
 
   return (
-    <div className="trimma-stripe-payment-shell relative min-h-[280px] w-full">
+    <div className="trimma-stripe-payment-shell relative min-h-[300px] w-full">
       {!ready && !loadError ? (
         <div
-          className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-white text-sm text-zinc-500"
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-lg bg-white text-sm text-zinc-500"
           aria-live="polite"
         >
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -57,12 +83,25 @@ function StripePaymentFields({ onPaymentError }: StripePaymentFieldsProps) {
       ) : null}
 
       {loadError ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
-          {loadError}
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 space-y-3">
+          <p>{loadError}</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              setLoadError(null);
+              setReady(false);
+              window.location.reload();
+            }}
+          >
+            Retry
+          </Button>
         </div>
       ) : (
-        <div className={ready ? "relative z-10 w-full" : "relative z-10 w-full opacity-0 pointer-events-none"}>
+        <div className="relative z-10 w-full min-h-[300px]">
           <PaymentElement
+            key={`${remountKey}-${layout}`}
             onReady={() => setReady(true)}
             onLoadError={(event) => {
               const message =
@@ -71,7 +110,7 @@ function StripePaymentFields({ onPaymentError }: StripePaymentFieldsProps) {
               onPaymentError?.(message);
             }}
             options={{
-              layout: "tabs",
+              layout,
               wallets: {
                 applePay: "never",
                 googlePay: "never",
@@ -208,7 +247,7 @@ const StripeCardCheckout = memo(function StripeCardCheckout({
     () => ({
       clientSecret,
       appearance: { theme: "stripe" as const },
-      loader: "auto" as const,
+      loader: "never" as const,
     }),
     [clientSecret]
   );
@@ -222,12 +261,12 @@ const StripeCardCheckout = memo(function StripeCardCheckout({
   }
 
   return (
-    <Elements stripe={stripePromise} options={elementsOptions}>
+    <Elements stripe={stripePromise} options={elementsOptions} key={clientSecret}>
       <div className="space-y-8">
         <section>
           <AcceptedCardBrands />
           <div className="rounded-xl border border-slate-200 bg-white p-4 overflow-visible">
-            <StripePaymentFields onPaymentError={onPaymentError} />
+            <StripePaymentFields remountKey={clientSecret} onPaymentError={onPaymentError} />
           </div>
           <p className="mt-2 text-[11px] text-zinc-500">
             Visa, Mastercard, and American Express are accepted through Stripe.
@@ -252,7 +291,7 @@ export { StripeCardCheckout };
 
 export function StripeCheckoutLoading() {
   return (
-    <div className="trimma-stripe-payment-shell flex min-h-[280px] flex-col items-center justify-center gap-2 py-10 text-sm text-zinc-500">
+    <div className="trimma-stripe-payment-shell flex min-h-[300px] flex-col items-center justify-center gap-2 py-10 text-sm text-zinc-500">
       <Loader2 className="w-5 h-5 animate-spin" />
       Loading secure card form…
     </div>

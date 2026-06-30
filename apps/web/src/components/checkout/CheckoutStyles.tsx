@@ -56,10 +56,33 @@ export function CheckoutStyles() {
         }
         .trimma-stripe-payment-shell {
           width: 100%;
-          min-height: 280px;
+          min-height: 300px;
+          color-scheme: light;
         }
         .trimma-stripe-payment-shell iframe {
+          width: 100% !important;
           min-height: 44px !important;
+        }
+        html.dark .trimma-checkout-page,
+        html.dark .trimma-checkout-page :is(.bg-white, .trimma-stripe-payment-shell) {
+          background-color: #ffffff !important;
+          color: #18181b !important;
+          color-scheme: light;
+        }
+        html.dark .trimma-checkout-page :is(
+          .text-zinc-900,
+          .text-zinc-800,
+          .text-zinc-700,
+          .text-zinc-600,
+          .text-zinc-950,
+          .text-black,
+          .text-gray-700,
+          .text-gray-800
+        ) {
+          color: #18181b !important;
+        }
+        html.dark .trimma-checkout-page :is(.text-zinc-500, .text-zinc-400, .text-gray-500) {
+          color: #71717a !important;
         }
       `,
       }}
