@@ -26,6 +26,7 @@ export function buildDefaultEmailTemplateFields(): Record<string, string | boole
     welcomeCustomerEnabled: true,
     agentLeadAssignedEnabled: true,
     partnerLeadReceivedEnabled: true,
+    subscriptionUpgradedEnabled: true,
   };
 
   for (const trigger of EMAIL_TRIGGER_CATALOG) {
