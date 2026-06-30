@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   Elements,
   PaymentElement,
@@ -19,6 +19,16 @@ const ACCEPTED_CARD_BRANDS = [
 ] as const;
 
 const STRIPE_LOAD_TIMEOUT_MS = 20000;
+
+function subscribeToMobileLayout(onStoreChange: () => void) {
+  const media = window.matchMedia("(max-width: 767px)");
+  media.addEventListener("change", onStoreChange);
+  return () => media.removeEventListener("change", onStoreChange);
+}
+
+function getMobilePaymentLayout(): "auto" | "tabs" {
+  return window.matchMedia("(max-width: 767px)").matches ? "auto" : "tabs";
+}
 
 function AcceptedCardBrands() {
   return (
@@ -39,36 +49,29 @@ function AcceptedCardBrands() {
 }
 
 type StripePaymentFieldsProps = {
-  remountKey: string;
   onPaymentError?: (message: string) => void;
 };
 
-function StripePaymentFields({ remountKey, onPaymentError }: StripePaymentFieldsProps) {
+function StripePaymentFields({ onPaymentError }: StripePaymentFieldsProps) {
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [layout, setLayout] = useState<"auto" | "tabs">("auto");
+  const layout = useSyncExternalStore(
+    subscribeToMobileLayout,
+    getMobilePaymentLayout,
+    () => "auto" as const
+  );
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px)");
-    const syncLayout = () => setLayout(media.matches ? "auto" : "tabs");
-    syncLayout();
-    media.addEventListener("change", syncLayout);
-    return () => media.removeEventListener("change", syncLayout);
-  }, []);
-
-  useEffect(() => {
-    setReady(false);
-    setLoadError(null);
+    if (ready || loadError) return;
 
     const timer = window.setTimeout(() => {
-      setLoadError((current) => {
-        if (current) return current;
-        return "Card form is taking too long to load. Check your connection and tap Retry.";
-      });
+      setLoadError(
+        "Card form is taking too long to load. Check your connection and tap Retry."
+      );
     }, STRIPE_LOAD_TIMEOUT_MS);
 
     return () => window.clearTimeout(timer);
-  }, [remountKey]);
+  }, [ready, loadError]);
 
   return (
     <div className="trimma-stripe-payment-shell relative min-h-[300px] w-full">
@@ -101,7 +104,7 @@ function StripePaymentFields({ remountKey, onPaymentError }: StripePaymentFields
       ) : (
         <div className="relative z-10 w-full min-h-[300px]">
           <PaymentElement
-            key={`${remountKey}-${layout}`}
+            key={layout}
             onReady={() => setReady(true)}
             onLoadError={(event) => {
               const message =
@@ -266,7 +269,7 @@ const StripeCardCheckout = memo(function StripeCardCheckout({
         <section>
           <AcceptedCardBrands />
           <div className="rounded-xl border border-slate-200 bg-white p-4 overflow-visible">
-            <StripePaymentFields remountKey={clientSecret} onPaymentError={onPaymentError} />
+            <StripePaymentFields key={clientSecret} onPaymentError={onPaymentError} />
           </div>
           <p className="mt-2 text-[11px] text-zinc-500">
             Visa, Mastercard, and American Express are accepted through Stripe.
