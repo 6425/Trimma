@@ -111,6 +111,15 @@ Business: {salon_name}
 Location: {salon_address}
 
 අපි ඉක්මනින් සම්බන්ධ වෙමු.`,
+
+  subscriptionUpgraded: `{salon_name} සඳහා Trimma subscription එක update වී ඇත.
+
+Plan: {plan_name}
+Billing: {billing_cycle}
+ගෙවූ මුදල: LKR {amount_paid}
+Reference: {order_id}
+
+Billing: {dashboard_link}`,
 } as const;
 
 export const EMAIL_BODY_DEFAULTS_TAMIL = {
@@ -215,4 +224,13 @@ Business: {salon_name}
 Location: {salon_address}
 
 விரைவில் தொடர்பு கொள்வோம்.`,
+
+  subscriptionUpgraded: `{salon_name} Trimma subscription update ஆனது.
+
+Plan: {plan_name}
+Billing: {billing_cycle}
+செலுத்திய தொகை: LKR {amount_paid}
+Reference: {order_id}
+
+Billing: {dashboard_link}`,
 } as const;

@@ -23,6 +23,7 @@ export const EMAIL_SUBJECT_DEFAULTS = {
   agentLeadAssigned: "New salon lead assigned: {salon_name}",
   partnerLeadReceived: "We received your Trimma partner application",
   ownerSubmissionRejected: "Action required: {salon_name} profile update",
+  subscriptionUpgraded: "Subscription updated · {salon_name}",
 } as const;
 
 export const EMAIL_BODY_DEFAULTS = {
@@ -202,6 +203,19 @@ Update profile: {dashboard_link}
 
 Thank you,
 The Trimma Team`,
+
+  subscriptionUpgraded: `Hi there,
+
+Your Trimma subscription for {salon_name} has been updated successfully.
+
+Plan: {plan_name}
+Billing: {billing_cycle}
+Amount paid: LKR {amount_paid}
+Reference: {order_id}
+
+Manage billing and invoices: {dashboard_link}
+
+Thank you for growing with Trimma.`,
 } as const;
 
 export type EmailSubjectKey = keyof typeof EMAIL_SUBJECT_DEFAULTS;
@@ -524,6 +538,30 @@ export const EMAIL_TRIGGER_CATALOG = [
     ctaLabel: "Update profile",
     mergeTags: ["{salon_name}", "{rejection_reason}", "{dashboard_link}"],
     sharesToggleWith: "agent-approval-owner",
+  },
+  {
+    id: "subscription-upgraded",
+    order: 17,
+    title: "Subscription Upgraded — Salon Owner",
+    recipient: "Salon owner",
+    whenFired: "After a salon owner completes a paid subscription plan upgrade.",
+    toggleKey: "subscriptionUpgradedEnabled" as const,
+    subjectKey: "subjectSubscriptionUpgraded" as const,
+    bodyKey: "templateSubscriptionUpgraded" as const,
+    bodyKeySi: "templateSubscriptionUpgradedSi" as const,
+    bodyKeyTa: "templateSubscriptionUpgradedTa" as const,
+    defaultSubject: "subscriptionUpgraded" as const,
+    defaultBody: "subscriptionUpgraded" as const,
+    ctaVariable: "dashboard_link" as const,
+    ctaLabel: "Open billing",
+    mergeTags: [
+      "{salon_name}",
+      "{plan_name}",
+      "{billing_cycle}",
+      "{amount_paid}",
+      "{order_id}",
+      "{dashboard_link}",
+    ],
   },
 ] as const;
 

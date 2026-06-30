@@ -171,6 +171,60 @@ export async function createRescheduleRequestNotification(
   }
 }
 
+export async function createSubscriptionUpgradedNotification(
+  supabase: SupabaseClient,
+  input: {
+    salonId: string;
+    planName: string;
+    billingCycle: "monthly" | "annual";
+    amount: number;
+    orderId: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const ownerEmail = await resolveSalonOwnerEmail(supabase, input.salonId);
+    if (!ownerEmail) {
+      return { success: false, error: "Salon owner email not configured." };
+    }
+
+    const cycleLabel = input.billingCycle === "annual" ? "Annual" : "Monthly";
+    const metadata: SalonOwnerNotificationMetadata = {
+      amount: input.amount,
+      payment_status: "paid",
+    };
+
+    const title = `Subscription updated — ${input.planName}`;
+    const body = `Your salon is now on the ${input.planName} plan (${cycleLabel}). Payment reference: ${input.orderId}.`;
+
+    const { error } = await supabase.from("salon_owner_notifications").insert({
+      user_email: ownerEmail,
+      salon_id: input.salonId,
+      booking_id: null,
+      notification_type: "subscription_upgraded",
+      title,
+      body,
+      metadata,
+    });
+
+    if (error) {
+      if (
+        error.message.toLowerCase().includes("does not exist") ||
+        error.message.toLowerCase().includes("schema cache")
+      ) {
+        console.warn("salon_owner_notifications table missing — run SALON_OWNER_NOTIFICATIONS_PATCH.sql");
+        return { success: false, error: error.message };
+      }
+      throw new Error(error.message);
+    }
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not create notification.";
+    console.error("createSubscriptionUpgradedNotification:", message);
+    return { success: false, error: message };
+  }
+}
+
 export async function markBookingNotificationsRead(
   supabase: SupabaseClient,
   salonId: string,

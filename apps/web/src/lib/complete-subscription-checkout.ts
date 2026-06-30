@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import { validateSubscriptionCheckoutPrice } from "@/lib/checkout-price-validation";
+import { runSubscriptionCheckoutNotifications } from "@/lib/subscription-checkout-notifications";
 import type { CardType } from "@/lib/card-payment";
 
 export type CompleteSubscriptionCheckoutInput = {
@@ -203,10 +204,34 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     billingCycle: input.billingCycle,
   });
 
+  const notificationResult = await runSubscriptionCheckoutNotifications({
+    supabase,
+    salonId: auth.salonId,
+    planName: plan.name as string,
+    billingCycle: input.billingCycle,
+    chargeAmount,
+    orderId,
+  });
+
+  if (!notificationResult.emailSent && notificationResult.emailError) {
+    console.warn(
+      "[completeSubscriptionCheckout] Owner email notification failed:",
+      notificationResult.emailError
+    );
+  }
+  if (!notificationResult.inAppSent && notificationResult.inAppError) {
+    console.warn(
+      "[completeSubscriptionCheckout] In-app notification failed:",
+      notificationResult.inAppError
+    );
+  }
+
   return {
     success: true as const,
     orderId,
     planName: plan.name as string,
     paymentId: paymentResult.paymentId,
+    emailSent: notificationResult.emailSent,
+    emailError: notificationResult.emailError,
   };
 }
