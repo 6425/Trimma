@@ -27,6 +27,43 @@ import { resolveBookingFinancialBreakdown } from "@/lib/booking-commission-snaps
 import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { AddBookingModal } from "../../../components/modals/AddBookingModal";
+import { toDateInputValue } from "@/lib/promotion-package-dates";
+
+function toTimeInputValue(time: string | null | undefined): string {
+  if (!time) return "";
+  return String(time).slice(0, 5);
+}
+
+function showRescheduleNotificationToasts(notifications?: {
+  whatsapp?: { success?: boolean; error?: string; skipped?: boolean };
+  email?: { success?: boolean; error?: string; skipped?: boolean };
+}) {
+  const whatsapp = notifications?.whatsapp;
+  const email = notifications?.email;
+
+  if (whatsapp?.success) {
+    toast.message("Customer notified on WhatsApp.");
+  } else if (email?.success) {
+    toast.message("Customer notified by email.");
+  }
+
+  if (whatsapp && !whatsapp.success && !whatsapp.skipped) {
+    toast.message(`WhatsApp not sent: ${whatsapp.error || "unknown error"}`);
+  }
+  if (email && !email.success && !email.skipped) {
+    toast.message(`Email not sent: ${email.error || "unknown error"}`);
+  }
+  if (
+    whatsapp &&
+    !whatsapp.success &&
+    whatsapp.skipped &&
+    email &&
+    !email.success &&
+    email.skipped
+  ) {
+    toast.message("Customer alerts are disabled in Admin settings.");
+  }
+}
 
 import { ChevronDown } from "lucide-react";
 
@@ -282,9 +319,8 @@ export default function DashboardBookings() {
         return;
       }
       setReschedulingBooking(booking);
-      setNewDate(booking.booking_date || "");
-      const timeValue = (booking.booking_time || "12:00:00").slice(0, 5);
-      setNewTime(timeValue);
+      setNewDate(toDateInputValue(booking.booking_date));
+      setNewTime(toTimeInputValue(booking.booking_time) || "12:00");
       return;
     }
     setProcessingId(bookingId);
@@ -394,9 +430,11 @@ export default function DashboardBookings() {
         return;
       }
       setReschedulingBooking(booking);
-      setNewDate(booking.requested_booking_date || booking.booking_date || "");
+      setNewDate(
+        toDateInputValue(booking.requested_booking_date || booking.booking_date)
+      );
       setNewTime(
-        (booking.requested_booking_time || booking.booking_time || "12:00:00").slice(0, 5)
+        toTimeInputValue(booking.requested_booking_time || booking.booking_time) || "12:00"
       );
       toast.info("Choose the new date and time, then confirm to approve the reschedule request.");
       return;
@@ -416,7 +454,11 @@ export default function DashboardBookings() {
   };
 
   const handleRescheduleSave = async () => {
-    if (!reschedulingBooking || !newDate || !newTime) return;
+    if (!reschedulingBooking) return;
+    if (!newDate || !newTime) {
+      toast.error("Choose a new appointment date and time.");
+      return;
+    }
     setProcessingId(reschedulingBooking.id);
     try {
       const formattedTime = newTime.length === 5 ? `${newTime}:00` : newTime;
@@ -424,22 +466,12 @@ export default function DashboardBookings() {
       if (result.success === false) throw new Error(result.error);
 
       toast.success("Appointment successfully rescheduled!");
-
-      const whatsapp = result.notifications?.whatsapp;
-      const email = result.notifications?.email;
-      if (whatsapp?.success) {
-        toast.message("Customer notified on WhatsApp.");
-      } else if (email && "success" in email && email.success) {
-        toast.message("Customer notified by email.");
-      }
-      if (whatsapp && !whatsapp.success && !("message" in whatsapp && whatsapp.message === "Disabled")) {
-        toast.message(`WhatsApp not sent: ${"error" in whatsapp ? whatsapp.error : "unknown error"}`);
-      }
-      if (email && "success" in email && !email.success && !("skipped" in email && email.skipped)) {
-        toast.message(`Email not sent: ${"error" in email ? email.error : "unknown error"}`);
-      }
+      showRescheduleNotificationToasts(result.notifications);
 
       setReschedulingBooking(null);
+      if (statusTab !== "confirmed") {
+        router.replace("/dashboard/bookings?tab=confirmed", { scroll: false });
+      }
       await fetchBookings();
     } catch (e: any) {
       toast.error("Failed to reschedule: " + e.message);

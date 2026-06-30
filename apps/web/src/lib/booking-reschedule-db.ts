@@ -31,45 +31,56 @@ export async function updateBookingSchedule(
   bookingId: string,
   input: ScheduleUpdateInput
 ): Promise<{ rescheduleColumnsAvailable: boolean }> {
-  const basePayload = {
-    booking_date: input.bookingDate,
-    booking_time: input.bookingTime,
-  };
+  const { error: scheduleErr } = await supabase
+    .from("bookings")
+    .update({
+      booking_date: input.bookingDate,
+      booking_time: input.bookingTime,
+    })
+    .eq("id", bookingId);
 
-  const extendedPayload: Record<string, unknown> = { ...basePayload };
-
-  if (input.rejectPendingRequest) {
-    extendedPayload.reschedule_requested = false;
-    extendedPayload.reschedule_status = "rejected";
-    extendedPayload.requested_booking_date = null;
-    extendedPayload.requested_booking_time = null;
-  } else if (input.clearRescheduleRequest || input.approvePendingRequest) {
-    extendedPayload.reschedule_requested = false;
-    extendedPayload.reschedule_status = "none";
-    extendedPayload.requested_booking_date = null;
-    extendedPayload.requested_booking_time = null;
+  if (scheduleErr) {
+    throw new Error(scheduleErr.message);
   }
 
-  const { error } = await supabase.from("bookings").update(extendedPayload).eq("id", bookingId);
+  const shouldTouchRescheduleFlags =
+    input.rejectPendingRequest || input.clearRescheduleRequest || input.approvePendingRequest;
 
-  if (!error) {
+  if (!shouldTouchRescheduleFlags) {
     return { rescheduleColumnsAvailable: true };
   }
 
-  if (!isMissingRescheduleColumnError(error.message)) {
-    throw new Error(error.message);
+  const flagPayload: Record<string, unknown> = input.rejectPendingRequest
+    ? {
+        reschedule_requested: false,
+        reschedule_status: "rejected",
+        requested_booking_date: null,
+        requested_booking_time: null,
+      }
+    : {
+        reschedule_requested: false,
+        reschedule_status: "none",
+        requested_booking_date: null,
+        requested_booking_time: null,
+      };
+
+  const { error: flagErr } = await supabase
+    .from("bookings")
+    .update(flagPayload)
+    .eq("id", bookingId);
+
+  if (!flagErr) {
+    return { rescheduleColumnsAvailable: true };
+  }
+
+  if (!isMissingRescheduleColumnError(flagErr.message)) {
+    throw new Error(flagErr.message);
   }
 
   if (input.rejectPendingRequest) {
     throw new Error(rescheduleColumnsMissingMessage());
   }
 
-  const { error: retryErr } = await supabase
-    .from("bookings")
-    .update(basePayload)
-    .eq("id", bookingId);
-
-  if (retryErr) throw new Error(retryErr.message);
   return { rescheduleColumnsAvailable: false };
 }
 

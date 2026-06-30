@@ -15,6 +15,9 @@ export function mapSalonDbError(message: string, hint?: string): string {
   if (lower.includes("salons_slug_key")) {
     return "That salon URL slug is already taken. Try a slightly different salon name.";
   }
+  if (lower.includes("unique_active_staff_booking_slot")) {
+    return "That time slot is already booked for this staff member. Choose a different date or time.";
+  }
   if (lower.includes("duplicate key")) {
     return "This save conflicted with existing data. Refresh the page and try again.";
   }

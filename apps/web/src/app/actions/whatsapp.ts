@@ -1253,16 +1253,26 @@ export async function sendWhatsAppNoShowNotification(bookingNo: string) {
  */
 export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
   mirrorTelegramReschedule(bookingNo);
-  const { 
-    enabled, 
-    phoneId, 
-    accessToken, 
+  const {
+    enabled,
+    phoneId,
+    accessToken,
     bookingRescheduledEnabled,
-    templateRescheduled
+    templateRescheduled,
+    metaTemplateConfirmed,
+    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
-  if (!enabled) return { success: true, message: "Disabled" };
-  if (!bookingRescheduledEnabled) return { success: true, message: "Reschedule Alerts Disabled" };
+  if (!enabled) {
+    return { success: false, error: "WhatsApp alerts are disabled in Admin settings.", skipped: true };
+  }
+  if (!bookingRescheduledEnabled) {
+    return {
+      success: false,
+      error: "Reschedule WhatsApp alerts are disabled in Admin settings.",
+      skipped: true,
+    };
+  }
 
   if (!phoneId || !accessToken) {
     return { success: false, error: "WhatsApp credentials not configured." };
@@ -1288,13 +1298,12 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     }
 
     const customerPhone = cleanPhoneNumber(rawCustomerPhone);
-    const customerName = customer.full_name || "Valued Client";
+    const customerName = customer?.full_name || "Valued Client";
     const salonName = booking.salons?.name || "Trimma Partner Salon";
     const salonAddress = booking.salons?.address || "";
     const salonLocation = booking.salons?.location || "";
     const serviceName = await resolveServiceName(booking.id, booking.services?.name);
 
-    // 📍 GPS coordinate-based Google Maps Directions Link
     let mapsLink = "";
     if (salonLocation && salonLocation.includes(",")) {
       mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(salonLocation.trim())}`;
@@ -1302,50 +1311,41 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
       mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(salonName + ", " + salonAddress)}`;
     }
 
-    // 3. Format Dynamic Reschedule Template
     const variables = {
       customer_name: customerName,
+      booking_no: bookingNo,
       salon_name: salonName,
       booking_date: booking.booking_date || "",
       booking_time: booking.booking_time || "",
       service_name: serviceName,
       salon_address: salonAddress,
-      maps_link: mapsLink
+      maps_link: mapsLink,
     };
 
     const rescheduleMessage = parseTemplate(templateRescheduled || D.rescheduled, variables);
 
-    console.log(`🚀 Dispatching WhatsApp Booking Reschedule to ${customerPhone}:`);
+    const sendResult = await sendWhatsAppCustomerMessage({
+      trigger: "confirmed",
+      phoneId,
+      accessToken,
+      customerPhone,
+      textBody: rescheduleMessage,
+      variables,
+      metaTemplateName: metaTemplateConfirmed,
+      metaTemplateLanguage: metaTemplateLanguage,
+    });
 
-    // 4. Dispatch WhatsApp
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: customerPhone,
-          type: "text",
-          text: {
-            preview_url: false,
-            body: rescheduleMessage,
-          },
-        }),
-      }
-    );
+    if (!sendResult.success) {
+      return { success: false, error: sendResult.error || "Failed to send WhatsApp reschedule alert." };
+    }
 
-    const result = await response.json();
-    if (!response.ok) return { success: false, error: formatWhatsAppApiError(result) };
-
-    return { success: true, messageId: result.messages?.[0]?.id };
-  } catch (error: any) {
+    return { success: true, messageId: sendResult.messageId, delivery: sendResult.delivery };
+  } catch (error: unknown) {
     console.error("WhatsApp Reschedule Error:", error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to send WhatsApp reschedule alert.",
+    };
   }
 }
 
