@@ -16,6 +16,8 @@ import {
   type SalonFilters,
 } from "../components/marketplace/SalonFiltersPanel";
 import { optimizeHeroImageUrl } from "@/lib/optimize-image-url";
+import { DealsDiscountSection } from "@/components/landing-v2/DealsDiscountSection";
+import type { SalonDealRow } from "@/lib/deals";
 
 const HERO_BACKGROUND = optimizeHeroImageUrl(
   "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop",
@@ -59,6 +61,7 @@ interface Props {
   initialSearch: InitialSearch;
   initialSalons?: Salon[];
   initialHasMore?: boolean;
+  initialDeals?: SalonDealRow[];
 }
 
 type SortOption = "recommended" | "rating" | "price_low" | "price_high";
@@ -86,6 +89,7 @@ export default function SalonsClient({
   initialSearch,
   initialSalons = [],
   initialHasMore = true,
+  initialDeals = [],
 }: Props) {
   const router = useRouter();
   const skipInitialFetchRef = useRef(initialSalons.length > 0);
@@ -484,6 +488,8 @@ export default function SalonsClient({
           </div>
         </div>
       </div>
+
+      <DealsDiscountSection initialDeals={initialDeals} />
 
       {/* Mobile filters drawer */}
       {mobileFiltersOpen && (
