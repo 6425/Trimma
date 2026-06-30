@@ -45,7 +45,7 @@ export default function SiteChrome({
 
   if (isCheckout) {
     return withProviders(
-      <main className="min-h-screen trimma-marketplace-shell">{children}</main>
+      <main className="min-h-screen bg-white trimma-checkout-page text-zinc-900">{children}</main>
     );
   }
 
