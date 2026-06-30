@@ -10,12 +10,16 @@ export const TRIMMA_META_TEMPLATE_CONFIRMED = "confirmmessage";
 /** Meta template for salon owner new-booking alerts (customer appointment → notify owner). */
 export const TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED = "appointment_confirmation_1";
 
+/** Meta template for customer reschedule alerts (separate from checkout confirmation). */
+export const TRIMMA_META_TEMPLATE_RESCHEDULED = "appointment_rescheduled";
+
 /** Default when Admin language is blank — most Meta English templates use en_US. */
 export const TRIMMA_META_TEMPLATE_LANGUAGE = "en_US";
 
 export type WhatsAppMetaTemplateTrigger =
   | "reservation-paid"
   | "confirmed"
+  | "rescheduled"
   | "owner-booking-created";
 
 export type WhatsAppMetaSendInput = {
@@ -68,6 +72,9 @@ function formatMetaBookingTime(raw: string): string {
 /**
  * confirmmessage (Meta):
  * Hello {{1}}, … {{2}} … {{3}} on {{4}} at {{5}} is confirmed
+ *
+ * appointment_rescheduled (Meta) — same {{1}}–{{5}} order, different fixed body text:
+ * Hello {{1}}, your appointment at {{2}} has been rescheduled. Service {{3}}. New date {{4}}, time {{5}}.
  */
 function buildConfirmMessageParameters(variables: Record<string, string>): string[] {
   const v = (key: string) => String(variables[key] ?? "").trim() || "—";
@@ -101,6 +108,10 @@ export function buildMetaBodyParameters(
   const normalizedTemplate = (templateName || "").trim().toLowerCase();
 
   if (trigger === "confirmed" && normalizedTemplate === TRIMMA_META_TEMPLATE_CONFIRMED) {
+    return buildConfirmMessageParameters(variables);
+  }
+
+  if (trigger === "rescheduled") {
     return buildConfirmMessageParameters(variables);
   }
 

@@ -189,6 +189,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     whenFired: "When a salon or admin approves a reschedule request with a new date/time.",
     toggleKey: "bookingRescheduledEnabled" as const,
     templateKey: "templateRescheduled" as const,
+    metaTemplateKey: "metaTemplateRescheduled" as const,
     defaultTemplate: "rescheduled" as const,
     mergeTags: [
       "{customer_name}",
@@ -335,4 +336,24 @@ export const WHATSAPP_OWNER_BOOKING_META_CONFIG = {
   defaultTemplateName: "appointment_confirmation_1",
   metaParameterHint:
     "appointment_confirmation_1: {{1}} customer name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time (same order as confirmmessage).",
+} as const;
+
+/** Customer reschedule alert — must use a dedicated Meta template (not confirmmessage). */
+export const WHATSAPP_RESCHEDULE_META_CONFIG = {
+  title: "Booking rescheduled alert (Meta)",
+  description:
+    "Sent when a salon owner reschedules an appointment. Requires its own Meta-approved template — do not reuse confirmmessage or customers will see a booking confirmation instead of a reschedule notice.",
+  metaTemplateKey: "metaTemplateRescheduled" as const,
+  defaultTemplateName: "appointment_rescheduled",
+  metaParameterHint:
+    "appointment_rescheduled: {{1}} customer name, {{2}} salon, {{3}} service, {{4}} new date, {{5}} new time.",
+  suggestedBody: `Hello {{1}},
+
+Your appointment at {{2}} has been rescheduled.
+
+Service: {{3}}
+New date: {{4}}
+New time: {{5}}
+
+Thank you for choosing Trimma.`,
 } as const;

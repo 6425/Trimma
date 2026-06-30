@@ -1,63 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Gift, Loader2, Percent } from "lucide-react";
+import { ArrowRight, Gift, Loader2, Percent } from "lucide-react";
 import { supabase } from "../../config/supabase";
 import {
+  fetchPublicDeals,
   getDealDiscountPercent,
   getDealLocationLabel,
-  normalizeDealRows,
   pickTopDiscountDeals,
-  type DealSalon,
   type SalonDealRow,
 } from "@/lib/deals";
-import { filterPublicSalons } from "@/lib/salon-list-filters";
 
-export function DealsDiscountSection() {
-  const [deals, setDeals] = useState<SalonDealRow[]>([]);
-  const [loading, setLoading] = useState(true);
+const LANDING_DEAL_LIMIT = 8;
+
+type Props = {
+  /** Server-fetched deals — skips client loading when provided. */
+  initialDeals?: SalonDealRow[];
+};
+
+export function DealsDiscountSection({ initialDeals }: Props) {
+  const [deals, setDeals] = useState<SalonDealRow[]>(initialDeals ?? []);
+  const [loading, setLoading] = useState(initialDeals === undefined);
 
   useEffect(() => {
+    if (initialDeals !== undefined) return;
+
     let cancelled = false;
 
-    async function loadTopDeals() {
+    async function loadDeals() {
       try {
-        const { data: packages, error } = await supabase
-          .from("salon_promotion_packages")
-          .select(
-            "id, salon_id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, promotion_type_id, image_url"
-          )
-          .eq("status", "active")
-          .order("created_at", { ascending: false });
-
-        if (error || !packages?.length) {
-          if (!cancelled) setDeals([]);
-          return;
-        }
-
-        const salonIds = [...new Set(packages.map((pkg) => pkg.salon_id).filter(Boolean))];
-        let salonsById = new Map<string, DealSalon>();
-
-        if (salonIds.length > 0) {
-          const { data: salonRows } = await supabase
-            .from("salons")
-            .select(
-              "id, name, slug, city, district, province, category, logo_url, status, is_verified, public_visibility"
-            )
-            .in("id", salonIds)
-            .or("status.eq.verified,status.eq.active,is_verified.eq.true");
-
-          salonsById = new Map(
-            filterPublicSalons(salonRows || []).map((salon) => [salon.id, salon as DealSalon])
-          );
-        }
-
-        const normalized = normalizeDealRows(packages, salonsById);
-        if (!cancelled) {
-          setDeals(pickTopDiscountDeals(normalized, 4));
-        }
+        const normalized = await fetchPublicDeals(supabase);
+        if (!cancelled) setDeals(normalized);
       } catch {
         if (!cancelled) setDeals([]);
       } finally {
@@ -65,56 +40,61 @@ export function DealsDiscountSection() {
       }
     }
 
-    void loadTopDeals();
+    void loadDeals();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialDeals]);
+
+  const displayDeals = useMemo(
+    () => pickTopDiscountDeals(deals, LANDING_DEAL_LIMIT),
+    [deals]
+  );
+
+  if (!loading && displayDeals.length === 0) {
+    return null;
+  }
 
   return (
-    <section id="deals-discount" className="py-12 bg-zinc-50 scroll-mt-24">
-      <div className="max-w-7xl mx-auto px-8 lg:px-12">
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-2">
-            <Gift className="w-3.5 h-3.5" />
-            Exclusive Special Deals
+    <section id="deals-discount" className="py-12 bg-zinc-50 border-t border-zinc-200 scroll-mt-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 font-extrabold text-[10px] tracking-wider uppercase px-3 py-1 rounded-full mb-2">
+              <Gift className="w-3.5 h-3.5" />
+              Available deals
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-900">
+              Deals &amp; Discounts
+            </h2>
+            <p className="text-zinc-500 text-sm font-medium mt-1">
+              Live promotion packages from Trimma salon partners — book directly from each salon page.
+            </p>
           </div>
-          <h2>
-            Deals &amp; Discounts
-          </h2>
-          <p className="text-zinc-500 text-sm font-medium mt-1">
-            Top savings on salon services — tap a deal to view the salon and book.
-          </p>
+          {deals.length > 0 ? (
+            <Link
+              href="/deals"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-zinc-900 hover:text-brand transition-colors shrink-0"
+            >
+              View all deals
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : null}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500">
             <Loader2 className="w-6 h-6 animate-spin mr-2" />
-            Loading best deals…
-          </div>
-        ) : deals.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center">
-            <p className="text-zinc-700 font-medium">Fresh deals are on the way.</p>
-            <p className="text-sm text-zinc-500 mt-1">
-              Check the full deals page for promotions from salon partners.
-            </p>
-            <Link
-              href="/deals"
-              className="inline-block mt-4 text-sm font-semibold text-[#ffc800] hover:underline"
-            >
-              Browse all deals
-            </Link>
+            Loading deals…
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {deals.map((deal) => {
+            {displayDeals.map((deal) => {
               const salon = deal.salon;
               if (!salon?.slug) return null;
 
               const discount = getDealDiscountPercent(deal);
-              const serviceLabel =
-                deal.included_services[0] ||
-                deal.name;
+              const serviceLabel = deal.included_services[0] || deal.name;
 
               return (
                 <Link
@@ -172,6 +152,18 @@ export function DealsDiscountSection() {
             })}
           </div>
         )}
+
+        {!loading && deals.length > LANDING_DEAL_LIMIT ? (
+          <div className="flex justify-center mt-8">
+            <Link
+              href="/deals"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-900 text-white font-bold text-sm px-6 py-3 hover:bg-zinc-800 transition-colors min-h-11"
+            >
+              See all {deals.length} deals
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

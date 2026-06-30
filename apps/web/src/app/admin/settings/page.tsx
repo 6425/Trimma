@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { 
   getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection, validateWhatsAppCredentials
 } from "../../actions/whatsapp";
-import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG, WHATSAPP_OWNER_BOOKING_META_CONFIG } from "@/lib/whatsapp-templates";
+import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG, WHATSAPP_OWNER_BOOKING_META_CONFIG, WHATSAPP_RESCHEDULE_META_CONFIG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
 import { FacebookSettingsPanel } from "../../../components/admin/FacebookSettingsPanel";
 import { TelegramSettingsPanel } from "../../../components/admin/TelegramSettingsPanel";
@@ -56,6 +56,7 @@ function SettingsPanelContent() {
   const [templateAgentLeadAssigned, setTemplateAgentLeadAssigned] = useState("");
   const [metaTemplateReservationPaid, setMetaTemplateReservationPaid] = useState("");
   const [metaTemplateConfirmed, setMetaTemplateConfirmed] = useState("");
+  const [metaTemplateRescheduled, setMetaTemplateRescheduled] = useState("");
   const [metaTemplateBookingCreatedOwner, setMetaTemplateBookingCreatedOwner] = useState("");
   const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en_US");
 
@@ -107,6 +108,7 @@ function SettingsPanelContent() {
       setTemplateAgentLeadAssigned(config.templateAgentLeadAssigned || "");
       setMetaTemplateReservationPaid(config.metaTemplateReservationPaid || "");
       setMetaTemplateConfirmed(config.metaTemplateConfirmed || "");
+      setMetaTemplateRescheduled(config.metaTemplateRescheduled || "");
       setMetaTemplateBookingCreatedOwner(config.metaTemplateBookingCreatedOwner || "");
       setMetaTemplateLanguage(config.metaTemplateLanguage || "en_US");
       setConfigSource(config.credentialsSource || config.source);
@@ -165,6 +167,7 @@ function SettingsPanelContent() {
         templateAgentLeadAssigned,
         metaTemplateReservationPaid,
         metaTemplateConfirmed,
+        metaTemplateRescheduled,
         metaTemplateBookingCreatedOwner,
         metaTemplateLanguage
       );
@@ -246,6 +249,7 @@ function SettingsPanelContent() {
   const metaTemplateValues: Record<string, string> = {
     metaTemplateReservationPaid,
     metaTemplateConfirmed,
+    metaTemplateRescheduled,
     metaTemplateBookingCreatedOwner,
   };
 
@@ -253,6 +257,7 @@ function SettingsPanelContent() {
     const setters: Record<string, (value: string) => void> = {
       metaTemplateReservationPaid: setMetaTemplateReservationPaid,
       metaTemplateConfirmed: setMetaTemplateConfirmed,
+      metaTemplateRescheduled: setMetaTemplateRescheduled,
       metaTemplateBookingCreatedOwner: setMetaTemplateBookingCreatedOwner,
     };
     setters[key]?.(value);
@@ -525,6 +530,34 @@ function SettingsPanelContent() {
                       {WHATSAPP_OWNER_BOOKING_META_CONFIG.metaParameterHint}
                     </p>
                   </div>
+
+                  <div className="p-4 bg-sky-50 border border-sky-200 rounded-2xl space-y-3">
+                    <div>
+                      <div className="text-xs font-extrabold text-sky-900">
+                        {WHATSAPP_RESCHEDULE_META_CONFIG.title}
+                      </div>
+                      <p className="text-[10px] text-sky-800 mt-0.5 leading-relaxed">
+                        {WHATSAPP_RESCHEDULE_META_CONFIG.description}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[9px] font-black uppercase tracking-widest text-sky-900">
+                        Meta template name
+                      </Label>
+                      <Input
+                        value={metaTemplateRescheduled}
+                        onChange={(e) => setMetaTemplateRescheduled(e.target.value)}
+                        placeholder={WHATSAPP_RESCHEDULE_META_CONFIG.defaultTemplateName}
+                        className="h-9 border-sky-200 rounded-lg text-xs font-mono"
+                      />
+                    </div>
+                    <p className="text-[9px] text-sky-900/90 leading-relaxed">
+                      {WHATSAPP_RESCHEDULE_META_CONFIG.metaParameterHint}
+                    </p>
+                    <pre className="text-[9px] text-sky-900/90 leading-relaxed whitespace-pre-wrap font-sans bg-white/70 border border-sky-100 rounded-lg p-3">
+                      {WHATSAPP_RESCHEDULE_META_CONFIG.suggestedBody}
+                    </pre>
+                  </div>
                   
                   <div className="space-y-6">
                     {WHATSAPP_TRIGGER_CATALOG.map((trigger) => {
@@ -563,7 +596,7 @@ function SettingsPanelContent() {
 
                           {isEnabled && (
                             <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                              {"metaTemplateKey" in trigger && trigger.metaTemplateKey && trigger.id !== "booking-created-owner" && (
+                              {"metaTemplateKey" in trigger && trigger.metaTemplateKey && trigger.id !== "booking-created-owner" && trigger.id !== "rescheduled" && (
                                 <div className="space-y-2 pb-2">
                                   <Label className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
                                     Meta template name

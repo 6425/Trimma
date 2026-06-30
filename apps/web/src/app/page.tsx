@@ -4,6 +4,7 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
+import { fetchPublicDeals } from "@/lib/deals";
 import SalonsClient from "./SalonsClient";
 
 export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
@@ -20,7 +21,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const supabase = createServerSupabaseClient();
 
-  const [categories, listingResult] = await Promise.all([
+  const [categories, listingResult, deals] = await Promise.all([
     fetchPublicCategories(),
     (async () => {
       try {
@@ -35,6 +36,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
         return { salons: [], hasMore: false };
       }
     })(),
+    fetchPublicDeals(supabase).catch(() => []),
   ]);
 
   const initialSalons = listingResult.salons;
@@ -50,6 +52,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
       }}
       initialSalons={initialSalons}
       initialHasMore={initialHasMore}
+      initialDeals={deals}
     />
   );
 }

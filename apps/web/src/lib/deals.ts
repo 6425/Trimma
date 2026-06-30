@@ -1,5 +1,6 @@
 import { toDateInputValue } from "@/lib/promotion-package-dates";
-import { isDummySalonRecord } from "@/lib/salon-list-filters";
+import { isDummySalonRecord, filterPublicSalons } from "@/lib/salon-list-filters";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 function formatLocalDateInput(now = new Date()): string {
   const year = now.getFullYear();
@@ -197,4 +198,43 @@ export function pickTopDiscountDeals(deals: SalonDealRow[], limit = 4): SalonDea
   return [...deals]
     .sort((a, b) => getDealDiscountPercent(b) - getDealDiscountPercent(a))
     .slice(0, limit);
+}
+
+/** Active promotion packages from publicly visible salons (marketplace / landing). */
+export async function fetchPublicDeals(supabase: SupabaseClient): Promise<SalonDealRow[]> {
+  const { data: packages, error } = await supabase
+    .from("salon_promotion_packages")
+    .select(
+      "id, salon_id, name, description, package_price, original_price, included_services, start_date, end_date, status, promotion_type, promotion_type_id, image_url"
+    )
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  if (error || !packages?.length) {
+    if (error) console.error("Failed to load public deals:", error.message);
+    return [];
+  }
+
+  const salonIds = [...new Set(packages.map((pkg) => pkg.salon_id).filter(Boolean))];
+  let salonsById = new Map<string, DealSalon>();
+
+  if (salonIds.length > 0) {
+    const { data: salonRows, error: salonsError } = await supabase
+      .from("salons")
+      .select(
+        "id, name, slug, city, district, province, category, logo_url, status, is_verified, public_visibility"
+      )
+      .in("id", salonIds)
+      .or("status.eq.verified,status.eq.active,is_verified.eq.true");
+
+    if (salonsError) {
+      console.error("Failed to load deal salons:", salonsError.message);
+    } else {
+      salonsById = new Map(
+        filterPublicSalons(salonRows || []).map((salon) => [salon.id, salon as DealSalon])
+      );
+    }
+  }
+
+  return normalizeDealRows(packages, salonsById);
 }
