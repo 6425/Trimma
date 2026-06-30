@@ -16,7 +16,7 @@ import {
   type SalonFilters,
 } from "../components/marketplace/SalonFiltersPanel";
 import { optimizeHeroImageUrl } from "@/lib/optimize-image-url";
-import { DealsDiscountSection } from "@/components/landing-v2/DealsDiscountSection";
+import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSection";
 import type { SalonDealRow } from "@/lib/deals";
 
 const HERO_BACKGROUND = optimizeHeroImageUrl(
