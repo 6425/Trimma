@@ -169,7 +169,7 @@ export async function approveRescheduleFromNotification(
     await markSalonNotificationRead(notificationId);
   }
 
-  return { success: true as const, bookingNo: result.bookingNo };
+  return { success: true as const, bookingNo: result.bookingNo, notifications: result.notifications };
 }
 
 export async function rejectRescheduleFromNotification(

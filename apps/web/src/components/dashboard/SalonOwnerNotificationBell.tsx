@@ -250,6 +250,19 @@ export function SalonOwnerNotificationBell() {
       );
       if (result.success === false) throw new Error(result.error);
       toast.success(`Reschedule approved${result.bookingNo ? ` for ${result.bookingNo}` : ""}.`);
+      if (result.notifications) {
+        const whatsapp = result.notifications.whatsapp;
+        const email = result.notifications.email;
+        if (whatsapp?.success) {
+          toast.message("Customer notified on WhatsApp.");
+        } else if (email && "success" in email && email.success) {
+          toast.message("Customer notified by email.");
+        } else if (whatsapp && !whatsapp.success && !("skipped" in whatsapp && whatsapp.skipped)) {
+          toast.message(`WhatsApp not sent: ${"error" in whatsapp ? whatsapp.error : "unknown error"}`);
+        } else if (email && "success" in email && !email.success && !("skipped" in email && email.skipped)) {
+          toast.message(`Email not sent: ${"error" in email ? email.error : "unknown error"}`);
+        }
+      }
       window.dispatchEvent(new Event("trimma:dashboard-refresh"));
       await loadNotifications();
     } catch (err) {

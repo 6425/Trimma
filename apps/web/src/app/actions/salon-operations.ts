@@ -286,11 +286,33 @@ export async function confirmOwnerBooking(bookingId: string) {
 
 const NON_RESCHEDULABLE_STATUSES = new Set(["completed", "canceled", "cancelled", "no_show"]);
 
+function normalizeOwnerBookingTime(time: string): string {
+  const trimmed = time.trim();
+  if (!trimmed) return "";
+  return trimmed.length === 5 ? `${trimmed}:00` : trimmed;
+}
+
+function bookingScheduleMatches(
+  booking: { booking_date?: string | null; booking_time?: string | null },
+  bookingDate: string,
+  bookingTime: string
+): boolean {
+  const savedDate = String(booking.booking_date || "").slice(0, 10);
+  const savedTime = normalizeOwnerBookingTime(String(booking.booking_time || "").slice(0, 8));
+  return savedDate === bookingDate && savedTime === bookingTime;
+}
+
 export async function rescheduleOwnerBooking(
   bookingId: string,
   bookingDate: string,
   bookingTime: string
 ) {
+  const normalizedDate = bookingDate.trim().slice(0, 10);
+  const normalizedTime = normalizeOwnerBookingTime(bookingTime);
+  if (!normalizedDate || !normalizedTime) {
+    return { success: false as const, error: "Choose a new appointment date and time." };
+  }
+
   let bookingNo: string | null = null;
 
   const result = await withSalonDb(async (supabase, ctx) => {
@@ -313,11 +335,36 @@ export async function rescheduleOwnerBooking(
     const hadPendingRescheduleRequest = rescheduleState?.rescheduleRequested === true;
 
     await updateBookingSchedule(supabase, bookingId, {
-      bookingDate,
-      bookingTime,
+      bookingDate: normalizedDate,
+      bookingTime: normalizedTime,
+      clearRescheduleRequest: true,
       approvePendingRequest: hadPendingRescheduleRequest,
-      clearRescheduleRequest: hadPendingRescheduleRequest,
     });
+
+    const { data: updatedBooking, error: verifyErr } = await supabase
+      .from("bookings")
+      .select("booking_date, booking_time")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (verifyErr) throw new Error(verifyErr.message);
+    if (!updatedBooking || !bookingScheduleMatches(updatedBooking, normalizedDate, normalizedTime)) {
+      throw new Error("The appointment time could not be saved. Refresh and try again.");
+    }
+
+    const currentStatus = (booking.status || "").toLowerCase();
+    if (currentStatus === "rescheduled") {
+      const { error: statusErr } = await supabase
+        .from("bookings")
+        .update({ status: "confirmed" })
+        .eq("id", bookingId);
+      if (statusErr) throw new Error(statusErr.message);
+    }
+
+    await supabase
+      .from("reschedule_requests")
+      .update({ status: "approved" })
+      .eq("booking_id", bookingId)
+      .eq("status", "pending");
 
     bookingNo = booking.booking_no as string;
     await markBookingNotificationsRead(supabase, ctx.salonId, bookingId);
@@ -326,11 +373,19 @@ export async function rescheduleOwnerBooking(
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
 
   if (bookingNo) {
-    void sendWhatsAppRescheduleNotification(bookingNo);
-    void sendBookingRescheduledEmail(bookingNo);
+    const [whatsapp, email] = await Promise.all([
+      sendWhatsAppRescheduleNotification(bookingNo),
+      sendBookingRescheduledEmail(bookingNo),
+    ]);
+
+    return {
+      success: true as const,
+      bookingNo,
+      notifications: { whatsapp, email },
+    };
   }
 
-  return { success: true as const, bookingNo };
+  return { success: true as const, bookingNo: null };
 }
 
 export async function approveOwnerRescheduleRequest(bookingId: string) {
