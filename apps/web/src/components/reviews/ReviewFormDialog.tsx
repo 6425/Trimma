@@ -50,7 +50,11 @@ export function ReviewFormDialog({
 
   const handleSubmit = async () => {
     if (!rating) {
-      toast.error("Please select a star rating.");
+      toast.error("Please select a star rating for the salon.");
+      return;
+    }
+    if (staffName && !staffRating) {
+      toast.error("Please select a star rating for your stylist.");
       return;
     }
 
@@ -61,7 +65,7 @@ export function ReviewFormDialog({
         bookingId,
         rating,
         reviewText,
-        staffRating: staffName ? staffRating || undefined : undefined,
+        staffRating: staffName ? staffRating : undefined,
       });
 
       if (!result.success) {

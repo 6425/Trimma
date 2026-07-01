@@ -8,6 +8,7 @@ import {
   dedupeStaffByNameRole,
   syncStaffServiceAssignmentsForSalon,
 } from "@/lib/salon-staff-service-sync";
+import { fetchStaffReviewStatsByStaffIds } from "@/lib/staff-review-stats";
 
 const SALON_COLUMNS =
   "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, business_info_extended, description, summary";
@@ -31,6 +32,7 @@ export type PublicSalonStaff = {
   role: string;
   experience: string;
   rating: number;
+  reviewCount: number;
   completed: number;
   availableToday: boolean;
   working_hours: unknown;
@@ -190,11 +192,28 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       role: member.role || "Professional",
       experience: "5 yrs",
       rating: 0,
+      reviewCount: 0,
       completed: 0,
       availableToday: true,
       working_hours: member.working_hours,
       avatar_url: member.avatar_url || null,
     }));
+
+    const staffIds = staff.map((member) => member.id).filter(Boolean);
+    const staffReviewStats = await fetchStaffReviewStatsByStaffIds(supabase, staffIds);
+
+    const staffWithRatings = staff.map((member) => {
+      const stats = staffReviewStats.get(member.id);
+      const reviewCount = stats?.reviewCount || 0;
+      const averageRating = stats?.averageRating || 0;
+
+      return {
+        ...member,
+        rating: averageRating,
+        reviewCount,
+        completed: reviewCount,
+      };
+    });
 
     const globalMap = Object.fromEntries((globalAmenitiesRes.data || []).map((row) => [row.id, row]));
     const amenities = (amenitiesRes.data || [])
@@ -211,7 +230,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
       success: true,
       salon: salonData,
       services,
-      staff,
+      staff: staffWithRatings,
       amenities,
       promotionPackages,
     };

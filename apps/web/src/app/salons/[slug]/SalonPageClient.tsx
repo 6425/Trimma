@@ -1254,10 +1254,13 @@ export default function SalonPage({
                          <h3 className="font-bold text-zinc-900">{st.name}</h3>
                          <div className="flex items-center text-sm font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md">
                            <Star className="w-3.5 h-3.5 mr-1 fill-amber-500 text-amber-500" />
-                           {st.rating}
+                           {st.reviewCount > 0 ? st.rating.toFixed(1) : "New"}
                          </div>
                        </div>
-                       <p className="text-sm text-zinc-500 font-medium mb-2">{st.role} • {st.experience}</p>
+                       <p className="text-sm text-zinc-500 font-medium mb-2">
+                         {st.role} • {st.experience}
+                         {st.reviewCount > 0 ? ` • ${st.reviewCount} review${st.reviewCount === 1 ? "" : "s"}` : ""}
+                       </p>
                      </div>
                    </div>
                  ))}
@@ -1372,7 +1375,10 @@ export default function SalonPage({
                    >
                      <option value="any">Anyone Available (Fastest)</option>
                      {staff.map(s => (
-                       <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                       <option key={s.id} value={s.id}>
+                         {s.name} ({s.role}
+                         {s.reviewCount > 0 ? ` · ${s.rating.toFixed(1)}★` : ""})
+                       </option>
                      ))}
                    </select>
                  </div>

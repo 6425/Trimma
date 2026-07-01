@@ -14,6 +14,7 @@ import {
   validateReviewText,
   type SalonReviewSummary,
 } from "@/lib/reviews";
+import { refreshStaffReviewStats } from "@/lib/staff-review-stats";
 
 export type PublicSalonReview = {
   id: string;
@@ -323,6 +324,21 @@ async function upsertStaffReviewForBooking(
   if (error) throw error;
 }
 
+async function saveStaffReviewForBooking(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  input: {
+    bookingId: string;
+    salonId: string;
+    staffId: string;
+    customerEmail: string;
+    staffRating: number;
+    comment: string | null;
+  }
+) {
+  await upsertStaffReviewForBooking(admin, input);
+  await refreshStaffReviewStats(admin, input.staffId);
+}
+
 export async function submitBookingReview(input: {
   accessToken: string;
   bookingId: string;
@@ -368,6 +384,19 @@ export async function submitBookingReview(input: {
       };
     }
 
+    if (booking.staff_id) {
+      if (typeof input.staffRating !== "number") {
+        return {
+          success: false as const,
+          error: "Please rate your stylist as well as the salon.",
+        };
+      }
+      const staffRatingResult = validateReviewRating(input.staffRating);
+      if (!staffRatingResult.ok) {
+        return { success: false as const, error: staffRatingResult.error };
+      }
+    }
+
     const payload = {
       booking_id: booking.id,
       salon_id: booking.salon_id,
@@ -388,11 +417,11 @@ export async function submitBookingReview(input: {
       const { error } = await admin.from("reviews").update(payload).eq("id", existing.id);
       if (error) throw error;
 
-      if (typeof input.staffRating === "number" && booking.staff_id) {
+      if (booking.staff_id && typeof input.staffRating === "number") {
         const staffRatingResult = validateReviewRating(input.staffRating);
         if (staffRatingResult.ok) {
           try {
-            await upsertStaffReviewForBooking(admin, {
+            await saveStaffReviewForBooking(admin, {
               bookingId: booking.id,
               salonId: booking.salon_id,
               staffId: booking.staff_id,
@@ -406,7 +435,7 @@ export async function submitBookingReview(input: {
               success: true as const,
               reviewId: existing.id,
               updated: true,
-              staffReviewWarning: "Salon review saved, but stylist rating could not be saved. Run packages/db/STAFF_REVIEWS_PATCH.sql.",
+              staffReviewWarning: "Salon review saved, but stylist rating could not be saved. Run packages/db/STAFF_REVIEWS_PATCH.sql and packages/db/SALON_STAFF_RATING_PATCH.sql.",
             };
           }
         }
@@ -423,11 +452,11 @@ export async function submitBookingReview(input: {
 
     if (insertError) throw insertError;
 
-    if (typeof input.staffRating === "number" && booking.staff_id) {
+    if (booking.staff_id && typeof input.staffRating === "number") {
       const staffRatingResult = validateReviewRating(input.staffRating);
       if (staffRatingResult.ok) {
         try {
-          await upsertStaffReviewForBooking(admin, {
+          await saveStaffReviewForBooking(admin, {
             bookingId: booking.id,
             salonId: booking.salon_id,
             staffId: booking.staff_id,
@@ -441,7 +470,7 @@ export async function submitBookingReview(input: {
             success: true as const,
             reviewId: inserted.id,
             updated: false,
-            staffReviewWarning: "Salon review saved, but stylist rating could not be saved. Run packages/db/STAFF_REVIEWS_PATCH.sql.",
+            staffReviewWarning: "Salon review saved, but stylist rating could not be saved. Run packages/db/STAFF_REVIEWS_PATCH.sql and packages/db/SALON_STAFF_RATING_PATCH.sql.",
           };
         }
       }
