@@ -41,6 +41,7 @@ import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServic
 import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLinks";
 import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
 import { SalonPublicQrSection } from "../../../components/marketplace/SalonPublicQrSection";
+import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 import { SALON_HERO_IMAGE_ASPECT_CLASS } from "@/lib/salon-hero-image";
 
@@ -1149,7 +1150,7 @@ export default function SalonPage({
                           <div
                             key={promotion.id}
                             id={`promo-${promotion.id}`}
-                            className={`p-4 sm:p-6 hover:bg-amber-50/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                            className={`p-4 sm:p-6 hover:bg-amber-50/40 transition-colors flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
                               sharedPromoId === String(promotion.id) ? "bg-amber-50 ring-2 ring-brand/40 ring-inset" : ""
                             }`}
                           >
@@ -1170,14 +1171,12 @@ export default function SalonPage({
                                 )}
                               </div>
                               {promotion.description && (
-                                <p className="text-zinc-500 text-sm mb-2 max-w-md">{promotion.description}</p>
+                                <p className="text-zinc-500 text-sm mb-3 leading-relaxed">{promotion.description}</p>
                               )}
-                              {promotion.included_services.length > 0 && (
-                                <p className="text-xs text-zinc-500 mb-2">
-                                  Includes: {promotion.included_services.slice(0, 4).join(", ")}
-                                  {promotion.included_services.length > 4 ? "…" : ""}
-                                </p>
-                              )}
+                              <PromotionPackageIncludes
+                                services={promotion.included_services}
+                                className="mb-3"
+                              />
                               <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-zinc-500">
                                 {(promotion.start_date || promotion.end_date) && (
                                   <span>
@@ -1274,7 +1273,7 @@ export default function SalonPage({
                </div>
             </section>
 
-            {/* Reviews → QR → Map (main column, all screen sizes) */}
+            {/* Verified reviews (replaces duplicate main-column map) */}
             {reviewsLoading ? (
               <div className="flex items-center justify-center py-12 text-zinc-400">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -1284,32 +1283,9 @@ export default function SalonPage({
               <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
             )}
 
-            <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} />
-
-            <section id="find-us" className="scroll-mt-24">
-              <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">Find us</h2>
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-                <SalonLocationMap salon={salon} />
-                <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-brand mt-0.5 shrink-0" />
-                    <span className="text-sm text-zinc-700 leading-snug">{salon.address || salon.district || salon.city || "Address not provided"}</span>
-                  </div>
-                  {salon.phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-brand shrink-0" />
-                      <span className="text-sm text-zinc-700">{salon.phone}</span>
-                    </div>
-                  )}
-                  {ownerContactEmail && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-brand shrink-0" />
-                      <span className="text-sm text-zinc-700">{ownerContactEmail}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
+            <div className="lg:hidden">
+              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} variant="sidebar" />
+            </div>
           </div>
 
           {/* RIGHT SIDEBAR - QUICK BOOKING BAR (INLINE SMART SCHEDULING ENGINE) */}
@@ -1322,12 +1298,18 @@ export default function SalonPage({
                  </div>
 
                  {selectedPromotionPackage && (
-                   <div className="rounded-xl border border-brand/20 bg-brand/5 p-3">
-                     <p className="text-[10px] font-bold uppercase tracking-widest text-brand mb-1">Promotion Package</p>
-                     <p className="text-sm font-semibold text-zinc-900">{selectedPromotionPackage.name}</p>
-                     <p className="text-xs text-zinc-500 mt-1">
-                       Package price: {formatPrice(selectedPromotionPackage.package_price)}
-                     </p>
+                   <div className="rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-3">
+                     <div>
+                       <p className="text-[10px] font-bold uppercase tracking-widest text-brand mb-1">Promotion Package</p>
+                       <p className="text-sm font-semibold text-zinc-900">{selectedPromotionPackage.name}</p>
+                       <p className="text-xs text-zinc-500 mt-1">
+                         Package price: {formatPrice(selectedPromotionPackage.package_price)}
+                       </p>
+                     </div>
+                     <PromotionPackageIncludes
+                       services={selectedPromotionPackage.included_services}
+                       label="Package includes"
+                     />
                    </div>
                  )}
 
@@ -1500,7 +1482,13 @@ export default function SalonPage({
                   </Button>
                 </div>
 
-               <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 space-y-4">
+               <SalonPublicQrSection
+                 salonName={salon.name || "Salon"}
+                 slug={slug}
+                 variant="sidebar"
+               />
+
+               <div id="find-us" className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 space-y-4 scroll-mt-24">
                  <SalonLocationMap salon={salon} />
                  <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
                   <div className="flex items-start gap-3">

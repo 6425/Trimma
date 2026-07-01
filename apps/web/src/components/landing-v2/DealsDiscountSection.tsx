@@ -12,6 +12,7 @@ import {
   pickTopDiscountDeals,
   type SalonDealRow,
 } from "@/lib/deals";
+import { PromotionPackageIncludes } from "../marketplace/PromotionPackageIncludes";
 
 const LANDING_DEAL_LIMIT = 8;
 
@@ -94,7 +95,6 @@ export function DealsDiscountSection({ initialDeals }: Props) {
               if (!salon?.slug) return null;
 
               const discount = getDealDiscountPercent(deal);
-              const serviceLabel = deal.included_services[0] || deal.name;
 
               return (
                 <Link
@@ -127,9 +127,16 @@ export function DealsDiscountSection({ initialDeals }: Props) {
                   </div>
 
                   <div className="px-5 pb-5 flex flex-col flex-1">
-                    <p className="text-zinc-800 text-xs leading-relaxed mb-3 font-medium line-clamp-2">
-                      {deal.description || serviceLabel}
-                    </p>
+                    {deal.description ? (
+                      <p className="text-zinc-800 text-xs leading-relaxed mb-3 font-medium">
+                        {deal.description}
+                      </p>
+                    ) : null}
+                    <PromotionPackageIncludes
+                      services={deal.included_services}
+                      variant="chips"
+                      className="mb-3"
+                    />
                     <p className="text-[11px] text-zinc-700 mb-3">{getDealLocationLabel(salon)}</p>
                     <div className="mt-auto flex items-end justify-between pt-3 border-t border-black/10">
                       <div>
