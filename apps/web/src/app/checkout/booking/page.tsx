@@ -21,6 +21,7 @@ import {
 import { buildBookingStripePayload } from "@/lib/booking-stripe-session";
 import { preloadStripe } from "@/lib/stripe-js-client";
 import { ArrowLeft, CalendarRange, Clock, Loader2, Scissors, User } from "lucide-react";
+import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
 
 type LoadedBookingCheckout = {
   draft: BookingCheckoutDraft;
@@ -311,6 +312,13 @@ function BookingCheckoutForm() {
                 Package description
               </p>
               <p className="text-sm text-zinc-900 leading-relaxed font-medium">{packageDescription}</p>
+              {checkoutData.draft.promotionPackageIncludedServices?.length ? (
+                <PromotionPackageIncludes
+                  services={checkoutData.draft.promotionPackageIncludedServices}
+                  className="mt-4 pt-4 border-t border-zinc-100"
+                  label="Package includes"
+                />
+              ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-white border border-zinc-900/10 shadow-sm text-[11px] font-bold text-zinc-900 mb-6">

@@ -12,6 +12,7 @@ import {
 } from "@/lib/deals";
 import { formatDisplayDate } from "@/lib/promotion-package-dates";
 import { GlobalServiceIconPreview } from "../../components/admin/GlobalServiceIconUpload";
+import { PromotionPackageIncludes } from "../../components/marketplace/PromotionPackageIncludes";
 
 const dealIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutGrid,
@@ -206,20 +207,15 @@ export default function DealsClient({ deals, categories, locations }: Props) {
                               </p>
 
                               {deal.description ? (
-                                <p className="text-sm text-zinc-800 mt-3 leading-relaxed line-clamp-2">
+                                <p className="text-sm text-zinc-800 mt-3 leading-relaxed">
                                   {deal.description}
                                 </p>
                               ) : null}
 
-                              {deal.included_services.length > 0 ? (
-                                <p className="text-xs text-zinc-800 mt-3 flex items-start gap-1.5">
-                                  <Tag className="w-3.5 h-3.5 text-zinc-900 shrink-0 mt-0.5" />
-                                  <span>
-                                    Includes: {deal.included_services.slice(0, 4).join(", ")}
-                                    {deal.included_services.length > 4 ? "…" : ""}
-                                  </span>
-                                </p>
-                              ) : null}
+                              <PromotionPackageIncludes
+                                services={deal.included_services}
+                                className="mt-3"
+                              />
 
                               {(deal.start_date || deal.end_date) && (
                                 <p className="text-xs text-zinc-700 mt-2 font-medium">
