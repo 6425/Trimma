@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import { APP_BASE_URL } from "@/lib/email/config";
+import { isEmailSendFailure } from "@/lib/email/result";
 import { formatLkr } from "@/lib/subscription-pricing";
 import {
   createSubscriptionUpgradedNotification,
@@ -59,7 +60,7 @@ export async function runSubscriptionCheckoutNotifications(
 
     if (emailResult.success) {
       emailSent = true;
-    } else if (!emailResult.skipped) {
+    } else if (isEmailSendFailure(emailResult) && !emailResult.skipped) {
       emailError = emailResult.error || "Email could not be sent.";
     }
   } else {
