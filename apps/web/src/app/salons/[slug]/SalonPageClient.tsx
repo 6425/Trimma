@@ -9,7 +9,8 @@ import { format } from "date-fns";
 import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StaffPortrait } from "@/components/staff/StaffPortrait";
 import { SalonFavoriteButton } from "../../../components/marketplace/SalonFavoriteButton";
 import { VerifiedSalonBadge } from "../../../components/marketplace/VerifiedSalonBadge";
 import { supabase } from "../../../config/supabase";
@@ -1241,14 +1242,7 @@ export default function SalonPage({
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {staff.map(st => (
                    <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
-                     <Avatar className="w-16 h-16 border border-slate-100">
-                       {st.avatar_url ? (
-                         <AvatarImage src={st.avatar_url} alt={st.name} className="object-cover" />
-                       ) : null}
-                       <AvatarFallback className="bg-[#FFC107] text-black font-bold">
-                         {getSalonInitials(st.name)}
-                       </AvatarFallback>
-                     </Avatar>
+                     <StaffPortrait name={st.name} avatarUrl={st.avatar_url} widthClass="w-20" />
                      <div className="flex-1">
                        <div className="flex justify-between items-start mb-1">
                          <h3 className="font-bold text-zinc-900">{st.name}</h3>

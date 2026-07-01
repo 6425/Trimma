@@ -11,10 +11,15 @@ import {
   DEFAULT_STAFF_COMMISSION_RATE,
 } from "@/lib/salon-staff-insert";
 import { Upload, Users, Clock, Tag, X, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import {
+  STAFF_AVATAR_ASPECT,
+  STAFF_AVATAR_HEIGHT_PX,
+  STAFF_AVATAR_WIDTH_PX,
+} from '@/lib/salon-staff-avatar';
+import { StaffPortrait } from '@/components/staff/StaffPortrait';
 
 const defaultSchedule = {
   monday: { isWorking: true, start: "09:00", end: "18:00" },
@@ -226,7 +231,7 @@ export function AddProfessionalForm({
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
     const crop = centerCrop(
-      makeAspectCrop({ unit: '%', width: 90 }, 1, width, height),
+      makeAspectCrop({ unit: '%', width: 90 }, STAFF_AVATAR_ASPECT, width, height),
       width,
       height
     );
@@ -238,19 +243,29 @@ export function AddProfessionalForm({
     const canvas = document.createElement('canvas');
     const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
     const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-    
-    canvas.width = 250;
-    canvas.height = 250;
+
+    canvas.width = STAFF_AVATAR_WIDTH_PX;
+    canvas.height = STAFF_AVATAR_HEIGHT_PX;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingQuality = 'high';
-    
+
     const cropX = completedCrop.x * scaleX;
     const cropY = completedCrop.y * scaleY;
     const cropWidth = completedCrop.width * scaleX;
     const cropHeight = completedCrop.height * scaleY;
 
-    ctx.drawImage(imgRef.current, cropX, cropY, cropWidth, cropHeight, 0, 0, 250, 250);
+    ctx.drawImage(
+      imgRef.current,
+      cropX,
+      cropY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      STAFF_AVATAR_WIDTH_PX,
+      STAFF_AVATAR_HEIGHT_PX
+    );
 
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -317,15 +332,15 @@ export function AddProfessionalForm({
             </h3>
             <div className="flex flex-col items-center gap-2 mb-2">
               <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                  {avatarPreviewUrl ? (
-                    <AvatarImage src={avatarPreviewUrl} className="object-cover" />
-                  ) : (
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newName || 'New')}`} />
-                  )}
-                  <AvatarFallback>SP</AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <StaffPortrait
+                  name={newName || "New"}
+                  avatarUrl={
+                    avatarPreviewUrl ||
+                    `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(newName || "New")}`
+                  }
+                  widthClass="w-24"
+                />
+                <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Upload className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -582,15 +597,17 @@ export function AddProfessionalForm({
       {isCropModalOpen && !!imgSrc && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full mx-auto shadow-2xl relative">
-            <h3 className="text-lg font-black text-zinc-900 mb-4">Position your photo</h3>
-            <div className="bg-slate-100 rounded-xl overflow-hidden flex justify-center items-center h-64 mb-6">
+            <h3 className="text-lg font-black text-zinc-900 mb-1">Position your photo</h3>
+            <p className="text-xs text-zinc-500 mb-4">
+              Portrait crop · {STAFF_AVATAR_WIDTH_PX}×{STAFF_AVATAR_HEIGHT_PX}px
+            </p>
+            <div className="bg-slate-100 rounded-xl overflow-hidden flex justify-center items-center min-h-64 mb-6">
               <ReactCrop
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
                 onComplete={(c) => setCompletedCrop(c)}
-                aspect={1}
-                circularCrop
-                className="max-h-full"
+                aspect={STAFF_AVATAR_ASPECT}
+                className="max-h-80"
               >
                 <img
                   ref={imgRef}

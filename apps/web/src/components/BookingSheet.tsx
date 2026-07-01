@@ -18,6 +18,7 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { calculateCommissionSplit, calculateReservationFee, getReservationDepositPercentForSalon, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
+import { StaffPortrait } from "@/components/staff/StaffPortrait";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
 
 const bookingServiceIconMap = { LayoutGrid, Scissors };
@@ -463,20 +464,13 @@ export function BookingSheet({
                       isSelected ? 'border-zinc-900 ring-1 ring-zinc-900' : 'border-slate-100 hover:border-slate-200'
                     }`}
                   >
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 border border-slate-100 ${s.id === 'any' ? 'bg-zinc-50' : 'bg-slate-50'}`}>
-                       {s.id === 'any' ? (
-                         <Sparkles className="w-6 h-6 text-zinc-400" />
-                       ) : (
-                         <img
-                           src={
-                             s.avatar_url ||
-                             `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(s.name)}`
-                           }
-                           alt={s.name}
-                           className="w-full h-full rounded-full object-cover"
-                         />
-                       )}
-                    </div>
+                    {s.id === 'any' ? (
+                      <div className="w-14 aspect-[300/400] rounded-xl flex items-center justify-center shrink-0 border border-slate-100 bg-zinc-50">
+                        <Sparkles className="w-6 h-6 text-zinc-400" />
+                      </div>
+                    ) : (
+                      <StaffPortrait name={s.name} avatarUrl={s.avatar_url} widthClass="w-14" />
+                    )}
                     <div className="flex-1">
                       <div className="font-bold text-zinc-900 flex items-center gap-1.5">
                         {s.name}

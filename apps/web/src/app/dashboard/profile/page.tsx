@@ -38,6 +38,7 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
+import { StaffPortrait } from "@/components/staff/StaffPortrait";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { BusinessInfoForm } from "../../../components/forms/BusinessInfoForm";
 import { BankInfoForm } from "../../../components/forms/BankInfoForm";
@@ -1249,13 +1250,7 @@ export default function SalonProfilePage() {
                           onClick={() => openEditStaffModal(idx)}
                           className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
                         >
-                          <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-white font-bold text-xs uppercase overflow-hidden shrink-0">
-                            {st.avatar_url ? (
-                              <img src={st.avatar_url} alt={st.name} className="w-full h-full object-cover" />
-                            ) : (
-                              st.name.substring(0, 2)
-                            )}
-                          </div>
+                          <StaffPortrait name={st.name} avatarUrl={st.avatar_url} widthClass="w-8" />
                           <div className="min-w-0">
                             <h5 className="text-xs font-bold text-zinc-900 truncate">{st.name}</h5>
                             <p className="text-[10px] text-zinc-500 font-medium truncate">{st.role}</p>

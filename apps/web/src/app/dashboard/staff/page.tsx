@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Users, Loader2, Clock, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { StaffPortrait } from "@/components/staff/StaffPortrait";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonStaffPage, fetchSalonServicesPage } from "@/app/actions/salon-dashboard-data";
 import {
@@ -482,14 +482,7 @@ export default function DashboardStaff() {
              {staff.map(member => (
                 <div key={member.id} className="p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between hover:bg-zinc-50/50 transition-colors">
                    <div className="flex items-center gap-4">
-                     <Avatar className="w-16 h-16 border-2 border-slate-100 shadow-sm rounded-full">
-                       {member.avatar_url ? (
-                         <AvatarImage src={member.avatar_url} className="object-cover" />
-                       ) : (
-                         <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(member.name)}`} />
-                       )}
-                       <AvatarFallback>{member.name[0]}</AvatarFallback>
-                     </Avatar>
+                     <StaffPortrait name={member.name} avatarUrl={member.avatar_url} widthClass="w-20" />
                      <div>
                        <h3 className="font-bold text-black text-lg flex items-center gap-2">
                          {member.name}
