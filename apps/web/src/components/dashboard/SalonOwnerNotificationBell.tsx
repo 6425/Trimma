@@ -2,24 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Calendar, CheckCircle2, Loader2, User, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Bell, Calendar, Loader2, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  approveRescheduleFromNotification,
-  confirmBookingFromNotification,
   fetchSalonOwnerNotifications,
   markAllSalonNotificationsRead,
   markSalonNotificationRead,
-  rejectRescheduleFromNotification,
   type SalonOwnerNotificationItem,
 } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
-import { isBookingAwaitingOwnerConfirmation } from "@/lib/booking-owner-queue";
 import { toast } from "sonner";
 
 function formatTimeLabel(time?: string) {
@@ -33,33 +28,15 @@ function normalizeStatus(status?: string | null) {
 
 function NotificationCard({
   item,
-  processingId,
-  onConfirm,
-  onApproveReschedule,
-  onDeclineReschedule,
   onDismiss,
 }: {
   item: SalonOwnerNotificationItem;
-  processingId: string | null;
-  onConfirm: (item: SalonOwnerNotificationItem) => void;
-  onApproveReschedule: (item: SalonOwnerNotificationItem) => void;
-  onDeclineReschedule: (item: SalonOwnerNotificationItem) => void;
   onDismiss: (item: SalonOwnerNotificationItem) => void;
 }) {
   const meta = item.metadata || {};
   const bookingStatus = normalizeStatus(item.bookingStatus || (meta.booking_status as string));
-  const paymentStatus = normalizeStatus(meta.payment_status as string);
-  const awaitingConfirmation =
-    isBookingAwaitingOwnerConfirmation({
-      status: bookingStatus || "pending",
-      payment_status: paymentStatus || undefined,
-      reservation_fee_paid: paymentStatus === "reservation_paid" ? true : undefined,
-    }) || (item.notificationType === "booking_pending_confirm" && bookingStatus === "pending");
-  const isPendingConfirm =
-    item.notificationType === "booking_pending_confirm" && awaitingConfirmation && item.bookingId;
   const isRescheduleRequest =
     item.notificationType === "booking_reschedule_request" && item.bookingId;
-  const isProcessing = processingId === item.id;
   const showBookingDetails =
     item.notificationType === "booking_pending_confirm" ||
     item.notificationType === "booking_reschedule_request";
@@ -107,46 +84,14 @@ function NotificationCard({
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {isPendingConfirm ? (
-          <Button
-            size="sm"
-            disabled={isProcessing}
-            onClick={() => onConfirm(item)}
-            className="h-7 flex-1 min-w-[120px] rounded-lg bg-emerald-600 text-[10px] font-bold text-white hover:bg-emerald-700"
+        {isRescheduleRequest ? (
+          <Link
+            href="/dashboard/bookings?tab=rescheduled"
+            onClick={() => onDismiss(item)}
+            className="inline-flex h-7 flex-1 min-w-[140px] items-center justify-center rounded-lg bg-amber-600 px-2 text-[10px] font-bold text-white hover:bg-amber-700 transition-colors"
           >
-            {isProcessing ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-            )}
-            Confirm Appointment
-          </Button>
-        ) : isRescheduleRequest ? (
-          <>
-            <Button
-              size="sm"
-              disabled={isProcessing}
-              onClick={() => onApproveReschedule(item)}
-              className="h-7 flex-1 min-w-[100px] rounded-lg bg-emerald-600 text-[10px] font-bold text-white hover:bg-emerald-700"
-            >
-              {isProcessing ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-              )}
-              Approve New Time
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={isProcessing}
-              onClick={() => onDeclineReschedule(item)}
-              className="h-7 rounded-lg border-rose-200 text-[10px] font-bold text-rose-600 hover:bg-rose-50"
-            >
-              <XCircle className="h-3 w-3 mr-1" />
-              Decline
-            </Button>
-          </>
+            Open Rescheduled queue
+          </Link>
         ) : bookingStatus === "confirmed" ? (
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
             Confirmed
@@ -169,10 +114,12 @@ function NotificationCard({
 export function SalonOwnerNotificationBell() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<SalonOwnerNotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const unreadCountRef = useRef(0);
+  const hasRescheduleQueueItems = notifications.some(
+    (item) => item.notificationType === "booking_reschedule_request"
+  );
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -216,79 +163,6 @@ export function SalonOwnerNotificationBell() {
       void Promise.resolve().then(() => {
         void loadNotifications();
       });
-    }
-  };
-
-  const handleConfirm = async (item: SalonOwnerNotificationItem) => {
-    if (!item.bookingId) return;
-    setProcessingId(item.id);
-    try {
-      const result = await withTimeout(
-        confirmBookingFromNotification(item.bookingId, item.id),
-        20000,
-        "Confirm timed out."
-      );
-      if (result.success === false) throw new Error(result.error);
-      toast.success(`Booking ${result.bookingNo || ""} confirmed!`);
-      window.dispatchEvent(new Event("trimma:dashboard-refresh"));
-      await loadNotifications();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not confirm booking.");
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleApproveReschedule = async (item: SalonOwnerNotificationItem) => {
-    if (!item.bookingId) return;
-    setProcessingId(item.id);
-    try {
-      const result = await withTimeout(
-        approveRescheduleFromNotification(item.bookingId, item.id),
-        20000,
-        "Approve timed out."
-      );
-      if (result.success === false) throw new Error(result.error);
-      toast.success(`Reschedule approved${result.bookingNo ? ` for ${result.bookingNo}` : ""}.`);
-      if (result.notifications) {
-        const whatsapp = result.notifications.whatsapp;
-        const email = result.notifications.email;
-        if (whatsapp?.success) {
-          toast.message("Customer notified on WhatsApp.");
-        } else if (email && "success" in email && email.success) {
-          toast.message("Customer notified by email.");
-        } else if (whatsapp && !whatsapp.success && !("skipped" in whatsapp && whatsapp.skipped)) {
-          toast.message(`WhatsApp not sent: ${"error" in whatsapp ? whatsapp.error : "unknown error"}`);
-        } else if (email && "success" in email && !email.success && !("skipped" in email && email.skipped)) {
-          toast.message(`Email not sent: ${"error" in email ? email.error : "unknown error"}`);
-        }
-      }
-      window.dispatchEvent(new Event("trimma:dashboard-refresh"));
-      await loadNotifications();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not approve reschedule.");
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleDeclineReschedule = async (item: SalonOwnerNotificationItem) => {
-    if (!item.bookingId) return;
-    setProcessingId(item.id);
-    try {
-      const result = await withTimeout(
-        rejectRescheduleFromNotification(item.bookingId, item.id),
-        20000,
-        "Decline timed out."
-      );
-      if (result.success === false) throw new Error(result.error);
-      toast.success("Reschedule request declined.");
-      window.dispatchEvent(new Event("trimma:dashboard-refresh"));
-      await loadNotifications();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not decline reschedule.");
-    } finally {
-      setProcessingId(null);
     }
   };
 
@@ -361,26 +235,22 @@ export function SalonOwnerNotificationBell() {
             </div>
           ) : (
             notifications.map((item) => (
-              <NotificationCard
-                key={item.id}
-                item={item}
-                processingId={processingId}
-                onConfirm={handleConfirm}
-                onApproveReschedule={handleApproveReschedule}
-                onDeclineReschedule={handleDeclineReschedule}
-                onDismiss={handleDismiss}
-              />
+              <NotificationCard key={item.id} item={item} onDismiss={handleDismiss} />
             ))
           )}
         </div>
 
         <div className="border-t border-slate-100 p-3">
           <Link
-            href="/dashboard/bookings?tab=confirmed"
+            href={
+              hasRescheduleQueueItems
+                ? "/dashboard/bookings?tab=rescheduled"
+                : "/dashboard/bookings?tab=confirmed"
+            }
             onClick={() => setOpen(false)}
             className="flex h-9 w-full items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-zinc-700 hover:bg-slate-200 transition-colors"
           >
-            Open bookings
+            {hasRescheduleQueueItems ? "Open Rescheduled queue" : "Open bookings"}
           </Link>
         </div>
       </DropdownMenuContent>

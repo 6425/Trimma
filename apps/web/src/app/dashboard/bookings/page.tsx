@@ -74,7 +74,7 @@ const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
 ];
 
 // Context-Aware Action Menu — portaled so it is not clipped by the table card
-const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onAction: (id: string, action: string) => void, processingId: string | null }) => {
+const ActionMenu = ({ booking, onAction, processingId, hideOwnerReschedule = false }: { booking: any, onAction: (id: string, action: string) => void, processingId: string | null, hideOwnerReschedule?: boolean }) => {
   const handleFire = (action: string) => {
     onAction(booking.id, action);
   };
@@ -93,8 +93,11 @@ const ActionMenu = ({ booking, onAction, processingId }: { booking: any, onActio
     lifecycleActions.push({ key: 'complete', label: 'Complete Service', color: 'text-emerald-700', hoverBg: 'hover:bg-emerald-50' });
   }
 
-  if (!isTerminal) {
+  if (!isTerminal && !hideOwnerReschedule) {
     lifecycleActions.push({ key: 'reschedule', label: 'Reschedule', color: 'text-blue-700', hoverBg: 'hover:bg-blue-50' });
+    lifecycleActions.push({ key: 'no_show', label: 'Mark No-Show', color: 'text-amber-700', hoverBg: 'hover:bg-amber-50' });
+    lifecycleActions.push({ key: 'cancel', label: 'Cancel Booking', color: 'text-rose-600', hoverBg: 'hover:bg-rose-50' });
+  } else if (!isTerminal && hideOwnerReschedule) {
     lifecycleActions.push({ key: 'no_show', label: 'Mark No-Show', color: 'text-amber-700', hoverBg: 'hover:bg-amber-50' });
     lifecycleActions.push({ key: 'cancel', label: 'Cancel Booking', color: 'text-rose-600', hoverBg: 'hover:bg-rose-50' });
   }
@@ -514,9 +517,7 @@ export default function DashboardBookings() {
     () =>
       bookings.filter(
         (b) =>
-          b.reschedule_requested === true &&
-          b.reschedule_status !== "approved" &&
-          b.reschedule_status !== "rejected"
+          b.reschedule_requested === true && b.reschedule_status === "pending_salon"
       ),
     [bookings]
   );
@@ -565,42 +566,30 @@ export default function DashboardBookings() {
         </div>
       </div>
 
-      {/* Premium Reschedule Requests Alert Banner */}
-      {pendingRequests.length > 0 && (
-        <div className="bg-amber-50/50 border border-amber-100/70 rounded-2xl p-5 space-y-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-2 text-amber-800 font-extrabold text-sm uppercase tracking-wider">
-            <AlertCircle className="w-5 h-5 text-amber-600 animate-pulse shrink-0" />
-            <span>Rescheduling Requests ({pendingRequests.length})</span>
-          </div>
-          <div className="space-y-2.5">
-            {pendingRequests.map(req => (
-              <div key={req.id} className="bg-white border border-amber-100/50 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
-                <div>
-                  <div className="font-extrabold text-zinc-900 text-sm">{req.customer_email || 'Walk-in Customer'}</div>
-                  <div className="text-[11px] text-zinc-400 mt-1 font-medium">
-                    Booking No: <span className="font-bold text-zinc-700">{req.booking_no}</span> &bull;{" "}
-                    Current:{" "}
-                    <span className="font-bold text-zinc-700">
-                      {req.booking_date} at {(req.booking_time || "").slice(0, 5)}
-                    </span>
-                    {req.requested_booking_date ? (
-                      <>
-                        {" "}
-                        &bull; Requested:{" "}
-                        <span className="font-bold text-amber-700">
-                          {req.requested_booking_date} at{" "}
-                          {(req.requested_booking_time || "").slice(0, 5)}
-                        </span>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <Button size="sm" disabled={processingId === req.id} onClick={() => handleActionReschedule(req.id, 'approved')} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 h-8 rounded-lg">Approve & Reschedule</Button>
-                  <Button size="sm" variant="outline" disabled={processingId === req.id} onClick={() => handleActionReschedule(req.id, 'rejected')} className="border-rose-100 text-rose-600 hover:bg-rose-50 text-xs font-bold px-3 py-1.5 h-8 rounded-lg">Decline</Button>
-                </div>
+      {/* Customer reschedule requests — approve/decline only in Rescheduled tab */}
+      {pendingRequests.length > 0 && statusTab !== "rescheduled" && (
+        <div className="bg-amber-50/50 border border-amber-100/70 rounded-2xl p-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-2 text-amber-800">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-extrabold text-sm">
+                  {pendingRequests.length} customer reschedule request
+                  {pendingRequests.length === 1 ? "" : "s"} waiting
+                </p>
+                <p className="text-[11px] text-amber-700/90 mt-0.5 font-medium">
+                  Open the Rescheduled queue to approve or decline.
+                </p>
               </div>
-            ))}
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => handleStatusTabChange("rescheduled")}
+              className="bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold h-9 rounded-lg shrink-0"
+            >
+              Open Rescheduled queue
+            </Button>
           </div>
         </div>
       )}
@@ -779,8 +768,44 @@ export default function DashboardBookings() {
                     
                     {/* Actions */}
                     <td className="px-2 py-2 text-right align-top">
-                      <div className="flex items-start justify-end">
-                        <ActionMenu booking={b} onAction={handleBookingLifecycleAction} processingId={processingId} />
+                      <div className="flex items-start justify-end gap-1.5">
+                        {statusTab === "rescheduled" &&
+                        b.reschedule_requested === true &&
+                        b.reschedule_status === "pending_salon" ? (
+                          <div className="flex flex-col gap-1.5 items-stretch min-w-[108px]">
+                            <Button
+                              size="sm"
+                              disabled={processingId === b.id}
+                              onClick={() => handleActionReschedule(b.id, "approved")}
+                              className="h-7 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg px-2"
+                            >
+                              {processingId === b.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+                              ) : (
+                                "Approve"
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={processingId === b.id}
+                              onClick={() => handleActionReschedule(b.id, "rejected")}
+                              className="h-7 border-rose-200 text-rose-600 hover:bg-rose-50 text-[10px] font-bold rounded-lg px-2"
+                            >
+                              Decline
+                            </Button>
+                          </div>
+                        ) : (
+                          <ActionMenu
+                            booking={b}
+                            onAction={handleBookingLifecycleAction}
+                            processingId={processingId}
+                            hideOwnerReschedule={
+                              b.reschedule_requested === true &&
+                              b.reschedule_status === "pending_salon"
+                            }
+                          />
+                        )}
                       </div>
                     </td>
                   </tr>

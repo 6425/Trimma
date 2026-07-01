@@ -448,6 +448,9 @@ export async function approveOwnerRescheduleRequest(bookingId: string) {
     if (rescheduleState.rescheduleRequested !== true) {
       throw new Error("This booking has no pending reschedule request.");
     }
+    if (rescheduleState.rescheduleStatus !== "pending_salon") {
+      throw new Error("Only customer reschedule requests can be approved here.");
+    }
 
     const bookingDate = String(
       booking.requested_booking_date || booking.booking_date || ""
@@ -488,6 +491,9 @@ export async function rejectOwnerRescheduleRequest(bookingId: string) {
     }
     if (rescheduleState.rescheduleRequested !== true) {
       throw new Error("This booking has no pending reschedule request.");
+    }
+    if (rescheduleState.rescheduleStatus !== "pending_salon") {
+      throw new Error("Only customer reschedule requests can be declined here.");
     }
 
     const updateResult = await updateBookingSchedule(supabase, bookingId, {

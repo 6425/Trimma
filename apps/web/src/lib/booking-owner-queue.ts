@@ -68,8 +68,7 @@ export function matchesBookingStatusTab(
   if (tab === "rescheduled") {
     return (
       booking.reschedule_requested === true &&
-      booking.reschedule_status !== "approved" &&
-      booking.reschedule_status !== "rejected"
+      booking.reschedule_status === "pending_salon"
     );
   }
   if (tab === "canceled") {
