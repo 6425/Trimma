@@ -1,5 +1,4 @@
 export const RESERVATION_DEPOSIT_PERCENT = 20;
-export const VERIFIED_RESERVATION_DEPOSIT_PERCENT = 50;
 export const DEFAULT_BOOKING_AGENT_PERCENT = 20;
 
 /** commission_master may seed booking agent % as 0 — treat that as "use default". */
@@ -14,14 +13,10 @@ export type BookingCommissionRates = {
 };
 
 import type { SalonOnboardingSnapshot } from "@/lib/salon-onboarding-progress";
-import { canCollectVerifiedReservationDeposit } from "@/lib/salon-onboarding-progress";
 
 export function getReservationDepositPercentForSalon(
-  salon: SalonOnboardingSnapshot | null | undefined
+  _salon?: SalonOnboardingSnapshot | null
 ): number {
-  if (salon && canCollectVerifiedReservationDeposit(salon)) {
-    return VERIFIED_RESERVATION_DEPOSIT_PERCENT;
-  }
   return RESERVATION_DEPOSIT_PERCENT;
 }
 
