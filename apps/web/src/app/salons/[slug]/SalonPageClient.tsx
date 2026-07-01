@@ -727,8 +727,14 @@ export default function SalonPage({
                       <span className="font-medium">{fullAddress}</span>
                     </div>
                     <a
+                      href="#find-us"
+                      className="salon-hero-map-link text-sm font-semibold text-zinc-900 hover:underline shrink-0 hidden lg:inline"
+                    >
+                      Excellent location – show map
+                    </a>
+                    <a
                       href="#salon-hero-map"
-                      className="salon-hero-map-link text-sm font-semibold text-zinc-900 hover:underline shrink-0"
+                      className="salon-hero-map-link text-sm font-semibold text-zinc-900 hover:underline shrink-0 lg:hidden"
                     >
                       Excellent location – show map
                     </a>
@@ -932,7 +938,7 @@ export default function SalonPage({
                 </div>
               ) : null}
 
-              <div id="salon-hero-map" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div id="salon-hero-map" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:hidden">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div>
                     <p className="text-sm font-bold text-zinc-900">Excellent location!</p>
