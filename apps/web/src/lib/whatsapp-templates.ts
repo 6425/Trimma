@@ -246,7 +246,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     id: "review",
     order: 4,
     title: "Feedback Review Prompt",
-    whenFired: "When the salon marks a booking as completed.",
+    whenFired: "When the salon owner marks a booking as fully paid (balance collected at salon).",
     toggleKey: "bookingReviewEnabled" as const,
     templateKey: "templateReview" as const,
     defaultTemplate: "review" as const,

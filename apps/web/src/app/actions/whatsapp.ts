@@ -1481,13 +1481,12 @@ export async function sendReviewRequestAlert(bookingNo: string) {
 
     const msg = parseTemplate(templateReview || D.review, variables);
 
-    await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: customerPhone, type: "text", text: { body: msg } })
-    });
+    const textResult = await sendWhatsAppTextMessage(phoneId, accessToken, customerPhone, msg);
+    if (!textResult.success) {
+      return { success: false, error: textResult.error || "Failed to send review WhatsApp." };
+    }
 
-    return { success: true };
+    return { success: true, messageId: textResult.messageId };
   } catch (err: any) {
     console.error("WhatsApp review request error:", err);
     return { success: false, error: err.message };

@@ -14,11 +14,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } from "@/app/actions/whatsapp";
 import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
-import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchSalonBookingsPage } from "@/app/actions/salon-dashboard-data";
-import { rescheduleOwnerBooking, rejectOwnerRescheduleRequest, sendOwnerBookingReminder, updateOwnerBooking } from "@/app/actions/salon-operations";
+import { rescheduleOwnerBooking, rejectOwnerRescheduleRequest, sendOwnerBookingReminder, updateOwnerBooking, markOwnerBookingFullyPaid } from "@/app/actions/salon-operations";
 import { markBookingNotificationsReadForOwner } from "@/app/actions/salon-notifications";
 import { withTimeout } from "@/lib/promise-timeout";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
@@ -69,6 +68,7 @@ import { ChevronDown } from "lucide-react";
 
 const BOOKING_STATUS_TABS: { key: BookingStatusTab; label: string }[] = [
   { key: "confirmed", label: "Confirmed" },
+  { key: "fully_paid", label: "Fully Paid" },
   { key: "rescheduled", label: "Rescheduled" },
   { key: "canceled", label: "Cancelled" },
 ];
@@ -397,9 +397,15 @@ export default function DashboardBookings() {
         case 'reservation_paid': 
           updatePayload.payment_status = 'reservation_paid'; 
           break;
-        case 'mark_paid': 
-          updatePayload.payment_status = 'paid'; 
-          break;
+        case 'mark_paid': {
+          const paidResult = await markOwnerBookingFullyPaid(bookingId);
+          if (paidResult.success === false) throw new Error(paidResult.error);
+          toast.success("Booking marked fully paid. Review request sent to customer.");
+          router.replace("/dashboard/bookings?tab=fully_paid", { scroll: false });
+          await fetchBookings();
+          setProcessingId(null);
+          return;
+        }
         default:
           toast.error("Unknown action: " + action);
           setProcessingId(null);
@@ -408,10 +414,6 @@ export default function DashboardBookings() {
 
       const result = await updateOwnerBooking(bookingId, updatePayload);
       if (result.success === false) throw new Error(result.error);
-
-      if (action === "complete" && bookingNo) {
-        void sendBookingReviewRequests(bookingNo);
-      }
 
       toast.success(`Booking successfully updated!`);
       await fetchBookings(); // Refresh UI
@@ -618,6 +620,8 @@ export default function DashboardBookings() {
                   active
                     ? tab.key === "confirmed"
                       ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                      : tab.key === "fully_paid"
+                        ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
                       : tab.key === "rescheduled"
                         ? "bg-brand text-black border-brand shadow-sm"
                         : "bg-rose-600 text-white border-rose-600 shadow-sm"

@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { fetchSalonBookingDetail } from "@/app/actions/salon-dashboard-data";
-import { updateOwnerBooking } from "@/app/actions/salon-operations";
+import { updateOwnerBooking, markOwnerBookingFullyPaid } from "@/app/actions/salon-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { sendWhatsAppCancellationNotification, sendWhatsAppNoShowNotification } from "@/app/actions/whatsapp";
 import { sendBookingCancelledEmail, sendBookingNoShowEmail } from "@/app/actions/email-settings";
-import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { resolveStaffMemberFromBooking, getBookingServiceDisplayName } from "@/lib/staff-allocation";
 import { resolveBookingFinancialBreakdown } from "@/lib/booking-commission-snapshot";
 import { ArrowLeft, Loader2, Calendar, Clock, User, Mail, Phone, DollarSign, Scissors, MapPin, CheckCircle2, XCircle, AlertTriangle, CreditCard, Hash, UserCheck, PlayCircle, Ban, EyeOff } from "lucide-react";
@@ -99,9 +98,14 @@ export default function BookingDetailPage() {
         case "complete":
           updatePayload.status = "completed";
           break;
-        case "mark_paid":
-          updatePayload.payment_status = "paid";
-          break;
+        case "mark_paid": {
+          const paidResult = await markOwnerBookingFullyPaid(bookingId);
+          if (paidResult.success === false) throw new Error(paidResult.error);
+          toast.success("Booking marked fully paid. Review request sent to customer.");
+          await fetchBooking();
+          setProcessingAction(null);
+          return;
+        }
         case "no_show":
           updatePayload.status = "no_show";
           break;
@@ -112,10 +116,6 @@ export default function BookingDetailPage() {
 
       const result = await updateOwnerBooking(bookingId, updatePayload);
       if (result.success === false) throw new Error(result.error);
-
-      if (action === "complete" && booking?.booking_no) {
-        void sendBookingReviewRequests(booking.booking_no);
-      }
 
       if (action === "cancel" && booking?.booking_no) {
         await sendWhatsAppCancellationNotification(booking.booking_no);

@@ -34,7 +34,21 @@ export function isUnpaidPendingBooking(booking: BookingOwnerQueueRow): boolean {
   );
 }
 
-export type BookingStatusTab = "confirmed" | "rescheduled" | "canceled";
+export function isBookingFullyPaid(booking: BookingOwnerQueueRow): boolean {
+  return normalizePaymentStatus(booking.payment_status) === "paid";
+}
+
+export type BookingStatusTab = "confirmed" | "fully_paid" | "rescheduled" | "canceled";
+
+function matchesActiveBookingStatus(status: string, booking: BookingOwnerQueueRow): boolean {
+  return (
+    status === "confirmed" ||
+    status === "in_progress" ||
+    status === "completed" ||
+    status === "pending" ||
+    (status === "rescheduled" && booking.reschedule_requested !== true)
+  );
+}
 
 export function matchesBookingStatusTab(
   booking: BookingOwnerQueueRow,
@@ -42,14 +56,14 @@ export function matchesBookingStatusTab(
 ): boolean {
   const status = normalizeBookingStatus(booking.status);
 
+  if (tab === "fully_paid") {
+    if (!isBookingFullyPaid(booking)) return false;
+    return status !== "canceled" && status !== "cancelled" && status !== "no_show";
+  }
+
   if (tab === "confirmed") {
-    return (
-      status === "confirmed" ||
-      status === "in_progress" ||
-      status === "completed" ||
-      status === "pending" ||
-      (status === "rescheduled" && booking.reschedule_requested !== true)
-    );
+    if (isBookingFullyPaid(booking)) return false;
+    return matchesActiveBookingStatus(status, booking);
   }
   if (tab === "rescheduled") {
     return (

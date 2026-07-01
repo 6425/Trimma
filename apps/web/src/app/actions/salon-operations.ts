@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendBookingConfirmedEmail, sendBookingReminderEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
+import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
 import { sendWhatsAppBookingReminder, sendWhatsAppNotification, sendWhatsAppRescheduleNotification } from "@/app/actions/whatsapp";
 import { sendTelegramBookingReminder } from "@/app/actions/telegram";
 import { markBookingNotificationsRead } from "@/lib/salon-owner-notifications";
@@ -181,6 +182,44 @@ export async function updateOwnerBooking(bookingId: string, payload: Record<stri
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
   return { success: true as const };
+}
+
+export async function markOwnerBookingFullyPaid(bookingId: string) {
+  let bookingNo: string | null = null;
+
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: booking, error: readErr } = await supabase
+      .from("bookings")
+      .select("id, salon_id, booking_no, payment_status")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!booking || booking.salon_id !== ctx.salonId) {
+      throw new Error("Booking not found for your salon.");
+    }
+
+    const paymentStatus = String(booking.payment_status || "unpaid").toLowerCase();
+    if (paymentStatus === "paid") {
+      throw new Error("This booking is already marked fully paid.");
+    }
+
+    const { error: updateErr } = await supabase
+      .from("bookings")
+      .update({ payment_status: "paid" })
+      .eq("id", bookingId);
+    if (updateErr) throw new Error(updateErr.message);
+
+    bookingNo = String(booking.booking_no || "");
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result);
+
+  let reviewNotifications: Awaited<ReturnType<typeof sendBookingReviewRequests>> | null = null;
+  if (bookingNo) {
+    reviewNotifications = await sendBookingReviewRequests(bookingNo);
+  }
+
+  return { success: true as const, bookingNo, reviewNotifications };
 }
 
 type ReminderChannelResult = {
