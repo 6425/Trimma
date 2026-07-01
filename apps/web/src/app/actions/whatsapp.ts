@@ -22,6 +22,7 @@ import {
   TRIMMA_META_TEMPLATE_LANGUAGE,
   TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED,
   TRIMMA_META_TEMPLATE_RESCHEDULED,
+  TRIMMA_META_TEMPLATE_RESCHEDULE_REQUEST_OWNER,
   type WhatsAppMetaTemplateTrigger,
 } from "@/lib/whatsapp-meta-send";
 import {
@@ -62,6 +63,8 @@ type BookingWhatsAppRow = {
   customer_phone?: string | null;
   booking_date?: string | null;
   booking_time?: string | null;
+  requested_booking_date?: string | null;
+  requested_booking_time?: string | null;
   amount?: string | number | null;
   payment_status?: string | null;
   services?: { name?: string | null } | null;
@@ -133,6 +136,30 @@ function parseTemplate(template: string, variables: Record<string, string>): str
     result = result.replace(regex, value);
   }
   return result;
+}
+
+async function sendWhatsAppTextMessage(
+  phoneId: string,
+  accessToken: string,
+  to: string,
+  body: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const response = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "text",
+      text: { preview_url: false, body },
+    }),
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    return { success: false, error: formatWhatsAppApiError(result) };
+  }
+  return { success: true, messageId: result.messages?.[0]?.id };
 }
 
 /**
@@ -218,7 +245,8 @@ function resolveSalonWhatsAppPhone(salon: {
 function metaTemplateMissingLabel(trigger: WhatsAppMetaTemplateTrigger): string {
   if (trigger === "reservation-paid") return "Template 1 (slot locked)";
   if (trigger === "owner-booking-created") return "Salon owner new booking alert (trigger #6)";
-  if (trigger === "rescheduled") return "Booking rescheduled alert (Meta)";
+  if (trigger === "owner-reschedule-request") return "Customer reschedule request — salon owner (Meta)";
+  if (trigger === "rescheduled") return "Booking rescheduled alert — customer (Meta)";
   return "Checkout confirmation (confirmmessage)";
 }
 
@@ -272,7 +300,8 @@ async function sendWhatsAppCustomerMessage(input: {
   variables: Record<string, string>;
   metaTemplateName?: string | null;
   metaTemplateLanguage?: string | null;
-}): Promise<{ success: boolean; messageId?: string; error?: string; delivery?: "meta-template" | "text" }> {
+}): Promise<{ success: boolean; messageId?: string; error?: string; delivery?: "meta-template" }> {
+  // Meta template only — used for first customer checkout (confirmmessage).
   return sendWhatsAppMetaAlert({
     trigger: input.trigger,
     phoneId: input.phoneId,
@@ -355,6 +384,7 @@ export async function getWhatsAppConfig() {
         whatsapp_booking_review_enabled,
         whatsapp_onboarding_invite_enabled,
         whatsapp_booking_created_enabled,
+        whatsapp_reschedule_request_enabled,
         whatsapp_agent_approval_enabled,
         whatsapp_admin_approval_enabled,
         whatsapp_welcome_customer_enabled,
@@ -367,6 +397,7 @@ export async function getWhatsAppConfig() {
         whatsapp_template_onboarding_invite,
         whatsapp_template_booking_created_customer,
         whatsapp_template_booking_created_owner,
+        whatsapp_template_reschedule_request_owner,
         whatsapp_template_agent_approval_owner,
         whatsapp_template_agent_approval_admin,
         whatsapp_template_admin_approval_owner,
@@ -377,6 +408,7 @@ export async function getWhatsAppConfig() {
         whatsapp_meta_template_confirmed,
         whatsapp_meta_template_rescheduled,
         whatsapp_meta_template_booking_created_owner,
+        whatsapp_meta_template_reschedule_request_owner,
         whatsapp_meta_template_language
       `)
       .single();
@@ -415,6 +447,7 @@ export async function getWhatsAppConfig() {
     const bookingReviewEnabled = dbSettings.whatsapp_booking_review_enabled !== false;
     const onboardingInviteEnabled = dbSettings.whatsapp_onboarding_invite_enabled !== false;
     const bookingCreatedEnabled = dbSettings.whatsapp_booking_created_enabled !== false;
+    const rescheduleRequestEnabled = dbSettings.whatsapp_reschedule_request_enabled !== false;
     const agentApprovalEnabled = dbSettings.whatsapp_agent_approval_enabled !== false;
     const adminApprovalEnabled = dbSettings.whatsapp_admin_approval_enabled !== false;
     const welcomeCustomerEnabled = dbSettings.whatsapp_welcome_customer_enabled !== false;
@@ -431,6 +464,8 @@ export async function getWhatsAppConfig() {
       dbSettings.whatsapp_template_booking_created_customer || D.bookingCreatedCustomer;
     const templateBookingCreatedOwner =
       dbSettings.whatsapp_template_booking_created_owner || D.bookingCreatedOwner;
+    const templateRescheduleRequestOwner =
+      dbSettings.whatsapp_template_reschedule_request_owner || D.rescheduleRequestOwner;
     const templateAgentApprovalOwner =
       dbSettings.whatsapp_template_agent_approval_owner || D.agentApprovalOwner;
     const templateAgentApprovalAdmin =
@@ -448,10 +483,13 @@ export async function getWhatsAppConfig() {
     const metaTemplateConfirmed =
       dbSettings.whatsapp_meta_template_confirmed?.trim() || TRIMMA_META_TEMPLATE_CONFIRMED;
     const metaTemplateRescheduled =
-      dbSettings.whatsapp_meta_template_rescheduled?.trim() || "";
+      dbSettings.whatsapp_meta_template_rescheduled?.trim() || TRIMMA_META_TEMPLATE_RESCHEDULED;
     const metaTemplateBookingCreatedOwner =
       dbSettings.whatsapp_meta_template_booking_created_owner?.trim() ||
       TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED;
+    const metaTemplateRescheduleRequestOwner =
+      dbSettings.whatsapp_meta_template_reschedule_request_owner?.trim() ||
+      TRIMMA_META_TEMPLATE_RESCHEDULE_REQUEST_OWNER;
     const metaTemplateLanguage =
       dbSettings.whatsapp_meta_template_language?.trim() || TRIMMA_META_TEMPLATE_LANGUAGE;
 
@@ -472,6 +510,7 @@ export async function getWhatsAppConfig() {
       bookingReviewEnabled,
       onboardingInviteEnabled,
       bookingCreatedEnabled,
+      rescheduleRequestEnabled,
       agentApprovalEnabled,
       adminApprovalEnabled,
       welcomeCustomerEnabled,
@@ -484,6 +523,7 @@ export async function getWhatsAppConfig() {
       templateOnboardingInvite,
       templateBookingCreatedCustomer,
       templateBookingCreatedOwner,
+      templateRescheduleRequestOwner,
       templateAgentApprovalOwner,
       templateAgentApprovalAdmin,
       templateAdminApprovalOwner,
@@ -494,6 +534,7 @@ export async function getWhatsAppConfig() {
       metaTemplateConfirmed,
       metaTemplateRescheduled,
       metaTemplateBookingCreatedOwner,
+      metaTemplateRescheduleRequestOwner,
       metaTemplateLanguage,
       source,
     };
@@ -523,6 +564,7 @@ export async function getWhatsAppConfig() {
       bookingReviewEnabled: true,
       onboardingInviteEnabled: true,
       bookingCreatedEnabled: true,
+      rescheduleRequestEnabled: true,
       agentApprovalEnabled: true,
       adminApprovalEnabled: true,
       welcomeCustomerEnabled: true,
@@ -536,6 +578,7 @@ export async function getWhatsAppConfig() {
       templateOnboardingInvite: D.onboardingInvite,
       templateBookingCreatedCustomer: D.bookingCreatedCustomer,
       templateBookingCreatedOwner: D.bookingCreatedOwner,
+      templateRescheduleRequestOwner: D.rescheduleRequestOwner,
       templateAgentApprovalOwner: D.agentApprovalOwner,
       templateAgentApprovalAdmin: D.agentApprovalAdmin,
       templateAdminApprovalOwner: D.adminApprovalOwner,
@@ -544,8 +587,9 @@ export async function getWhatsAppConfig() {
       templateAgentLeadAssigned: D.agentLeadAssigned,
       metaTemplateReservationPaid: "",
       metaTemplateConfirmed: TRIMMA_META_TEMPLATE_CONFIRMED,
-      metaTemplateRescheduled: "",
-      metaTemplateBookingCreatedOwner: "",
+      metaTemplateRescheduled: TRIMMA_META_TEMPLATE_RESCHEDULED,
+      metaTemplateBookingCreatedOwner: TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED,
+      metaTemplateRescheduleRequestOwner: TRIMMA_META_TEMPLATE_RESCHEDULE_REQUEST_OWNER,
       metaTemplateLanguage: TRIMMA_META_TEMPLATE_LANGUAGE,
       source,
     };
@@ -593,11 +637,13 @@ export async function saveWhatsAppSettings(
   templateReview?: string,
   templateOnboardingInvite?: string,
   bookingCreatedEnabled?: boolean,
+  rescheduleRequestEnabled?: boolean,
   agentApprovalEnabled?: boolean,
   adminApprovalEnabled?: boolean,
   adminAlertPhone?: string,
   templateBookingCreatedCustomer?: string,
   templateBookingCreatedOwner?: string,
+  templateRescheduleRequestOwner?: string,
   templateAgentApprovalOwner?: string,
   templateAgentApprovalAdmin?: string,
   templateAdminApprovalOwner?: string,
@@ -610,6 +656,7 @@ export async function saveWhatsAppSettings(
   metaTemplateConfirmed?: string,
   metaTemplateRescheduled?: string,
   metaTemplateBookingCreatedOwner?: string,
+  metaTemplateRescheduleRequestOwner?: string,
   metaTemplateLanguage?: string
 ) {
   try {
@@ -657,6 +704,7 @@ export async function saveWhatsAppSettings(
         whatsapp_booking_review_enabled: bookingReviewEnabled !== false,
         whatsapp_onboarding_invite_enabled: onboardingInviteEnabled !== false,
         whatsapp_booking_created_enabled: bookingCreatedEnabled !== false,
+        whatsapp_reschedule_request_enabled: rescheduleRequestEnabled !== false,
         whatsapp_agent_approval_enabled: agentApprovalEnabled !== false,
         whatsapp_admin_approval_enabled: adminApprovalEnabled !== false,
         whatsapp_welcome_customer_enabled: welcomeCustomerEnabled !== false,
@@ -669,6 +717,7 @@ export async function saveWhatsAppSettings(
         whatsapp_template_onboarding_invite: templateOnboardingInvite || null,
         whatsapp_template_booking_created_customer: templateBookingCreatedCustomer || null,
         whatsapp_template_booking_created_owner: templateBookingCreatedOwner || null,
+        whatsapp_template_reschedule_request_owner: templateRescheduleRequestOwner || null,
         whatsapp_template_agent_approval_owner: templateAgentApprovalOwner || null,
         whatsapp_template_agent_approval_admin: templateAgentApprovalAdmin || null,
         whatsapp_template_admin_approval_owner: templateAdminApprovalOwner || null,
@@ -680,6 +729,8 @@ export async function saveWhatsAppSettings(
         whatsapp_meta_template_rescheduled: metaTemplateRescheduled?.trim() || null,
         whatsapp_meta_template_booking_created_owner:
           metaTemplateBookingCreatedOwner?.trim() || null,
+        whatsapp_meta_template_reschedule_request_owner:
+          metaTemplateRescheduleRequestOwner?.trim() || null,
         whatsapp_meta_template_language: metaTemplateLanguage?.trim() || TRIMMA_META_TEMPLATE_LANGUAGE,
       });
 
@@ -764,8 +815,6 @@ export async function sendWhatsAppReservationPaidNotification(
     accessToken,
     reservationPaidEnabled,
     templateReservationPaid,
-    metaTemplateReservationPaid,
-    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
@@ -822,22 +871,17 @@ export async function sendWhatsAppReservationPaidNotification(
 
     const customerMessage = parseTemplate(templateReservationPaid || D.reservationPaid, variables);
 
-    const sendResult = await sendWhatsAppCustomerMessage({
-      trigger: "reservation-paid",
+    const textResult = await sendWhatsAppTextMessage(
       phoneId,
       accessToken,
       customerPhone,
-      textBody: customerMessage,
-      variables,
-      metaTemplateName: metaTemplateReservationPaid,
-      metaTemplateLanguage: metaTemplateLanguage,
-    });
-
-    if (!sendResult.success) {
-      return { success: false, error: sendResult.error };
+      customerMessage
+    );
+    if (!textResult.success) {
+      return { success: false, error: textResult.error };
     }
 
-    return { success: true, messageId: sendResult.messageId, delivery: sendResult.delivery };
+    return { success: true, messageId: textResult.messageId, delivery: "text" as const };
   } catch (err: unknown) {
     return {
       success: false,
@@ -847,8 +891,7 @@ export async function sendWhatsAppReservationPaidNotification(
 }
 
 /**
- * Alerts the salon owner when a new paid booking is received.
- * Uses Meta-approved template (required outside 24h window). Plain text is only tried as last resort.
+ * Notifies the salon owner of a new confirmed paid booking (app text only).
  */
 export async function sendOwnerBookingRequestWhatsApp(
   bookingNo: string,
@@ -861,8 +904,6 @@ export async function sendOwnerBookingRequestWhatsApp(
     accessToken,
     bookingCreatedEnabled,
     templateBookingCreatedOwner,
-    metaTemplateBookingCreatedOwner,
-    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled || !bookingCreatedEnabled) {
@@ -903,64 +944,18 @@ export async function sendOwnerBookingRequestWhatsApp(
       payment_status: formatPaymentStatusForWhatsApp(paymentStatus),
     };
 
-    const metaName = (metaTemplateBookingCreatedOwner || "").trim();
-    if (metaName) {
-      const metaResult = await sendWhatsAppMetaAlert({
-        trigger: "owner-booking-created",
-        phoneId,
-        accessToken,
-        to: ownerPhone,
-        variables,
-        metaTemplateName: metaName,
-        metaTemplateLanguage,
-      });
-
-      if (metaResult.success) {
-        return {
-          success: true,
-          messageId: metaResult.messageId,
-          delivery: "meta-template" as const,
-        };
-      }
-
-      console.error("Owner booking WhatsApp Meta template failed:", metaResult.error);
-    } else {
-      console.warn(
-        "Owner booking WhatsApp: no Meta template configured. Set Admin → Global Settings → Salon owner new booking alert (Meta)."
-      );
-    }
-
     const ownerMessage = parseTemplate(templateBookingCreatedOwner || D.bookingCreatedOwner, variables);
 
-    const textResponse = await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: ownerPhone,
-        type: "text",
-        text: { preview_url: false, body: ownerMessage },
-      }),
-    });
-
-    const textResult = await textResponse.json();
-    if (textResponse.ok) {
-      return {
-        success: true,
-        messageId: textResult.messages?.[0]?.id,
-        delivery: "text" as const,
-      };
+    const textResult = await sendWhatsAppTextMessage(phoneId, accessToken, ownerPhone, ownerMessage);
+    if (!textResult.success) {
+      console.error("Owner booking WhatsApp failed:", textResult.error);
+      return { success: false, error: textResult.error || "Failed to send owner booking alert." };
     }
 
-    const textError = formatWhatsAppApiError(textResult);
-    const metaHint = metaName
-      ? ` Meta template "${metaName}" also failed.`
-      : " Add your approved owner-booking Meta template name in Admin → Global Settings.";
-    console.error("Owner booking WhatsApp text fallback failed:", textError);
     return {
-      success: false,
-      error: `${textError}${metaHint}`,
+      success: true,
+      messageId: textResult.messageId,
+      delivery: "text" as const,
     };
   } catch (err: unknown) {
     return {
@@ -971,7 +966,7 @@ export async function sendOwnerBookingRequestWhatsApp(
 }
 
 /**
- * Salon confirmation notification sender (after owner confirms a reserved booking).
+ * Customer booking confirmation at checkout — Meta confirmmessage only (first contact).
  */
 export async function sendWhatsAppNotification(
   bookingNo: string,
@@ -1268,8 +1263,6 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     accessToken,
     bookingRescheduledEnabled,
     templateRescheduled,
-    metaTemplateRescheduled,
-    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
@@ -1333,27 +1326,111 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
 
     const rescheduleMessage = parseTemplate(templateRescheduled || D.rescheduled, variables);
 
-    const sendResult = await sendWhatsAppCustomerMessage({
-      trigger: "rescheduled",
+    const textResult = await sendWhatsAppTextMessage(
       phoneId,
       accessToken,
       customerPhone,
-      textBody: rescheduleMessage,
-      variables,
-      metaTemplateName: metaTemplateRescheduled,
-      metaTemplateLanguage: metaTemplateLanguage,
-    });
-
-    if (!sendResult.success) {
-      return { success: false, error: sendResult.error || "Failed to send WhatsApp reschedule alert." };
+      rescheduleMessage
+    );
+    if (!textResult.success) {
+      return { success: false, error: textResult.error || "Failed to send WhatsApp reschedule alert." };
     }
 
-    return { success: true, messageId: sendResult.messageId, delivery: sendResult.delivery };
+    return { success: true, messageId: textResult.messageId, delivery: "text" as const };
   } catch (error: unknown) {
     console.error("WhatsApp Reschedule Error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to send WhatsApp reschedule alert.",
+    };
+  }
+}
+
+/**
+ * Alerts the salon owner when a customer submits a reschedule request.
+ */
+export async function sendOwnerRescheduleRequestWhatsApp(
+  bookingNo: string,
+  overrides?: {
+    customerName?: string;
+    customerEmail?: string;
+    serviceName?: string;
+    currentDate?: string;
+    currentTime?: string;
+    requestedDate?: string;
+    requestedTime?: string;
+  }
+) {
+  const {
+    enabled,
+    phoneId,
+    accessToken,
+    rescheduleRequestEnabled,
+    templateRescheduleRequestOwner,
+  } = await getWhatsAppMessagingConfig();
+
+  if (!enabled || !rescheduleRequestEnabled) {
+    return { success: true, message: "Disabled", skipped: true };
+  }
+
+  if (!phoneId || !accessToken) {
+    return { success: false, error: "WhatsApp credentials not configured." };
+  }
+
+  try {
+    const booking = await fetchBookingByNumber(
+      bookingNo,
+      "salons(name, phone, business_info_extended)"
+    );
+    if (!booking) return { success: false, error: "Booking not found." };
+
+    const ownerPhone = resolveSalonWhatsAppPhone(booking.salons);
+    if (!ownerPhone) {
+      return {
+        success: false,
+        error: "Salon WhatsApp/phone is missing. Add it in Salon Profile → Business Info.",
+        skipped: true,
+      };
+    }
+
+    const customer = booking.customer_email
+      ? await fetchCustomerContact(booking.customer_email)
+      : null;
+    const customerName = overrides?.customerName || customer?.full_name || "Customer";
+    const customerEmail = overrides?.customerEmail || booking.customer_email || "";
+    const serviceName =
+      overrides?.serviceName ||
+      (await resolveServiceName(booking.id, booking.services?.name));
+
+    const variables = {
+      customer_name: customerName,
+      customer_email: customerEmail,
+      service_name: serviceName,
+      booking_date: overrides?.currentDate || booking.booking_date || "",
+      booking_time: overrides?.currentTime || booking.booking_time || "",
+      requested_date:
+        overrides?.requestedDate || String(booking.requested_booking_date || "").slice(0, 10),
+      requested_time:
+        overrides?.requestedTime || String(booking.requested_booking_time || "").slice(0, 8),
+      booking_no: bookingNo,
+      dashboard_link: `${APP_BASE_URL}/dashboard/bookings?tab=rescheduled`,
+    };
+
+    const ownerMessage = parseTemplate(
+      templateRescheduleRequestOwner || D.rescheduleRequestOwner,
+      variables
+    );
+
+    const textResult = await sendWhatsAppTextMessage(phoneId, accessToken, ownerPhone, ownerMessage);
+    if (!textResult.success) {
+      return { success: false, error: textResult.error || "Failed to send owner reschedule-request WhatsApp." };
+    }
+
+    return { success: true, messageId: textResult.messageId, delivery: "text" as const };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send owner reschedule-request WhatsApp.",
     };
   }
 }
@@ -1755,13 +1832,7 @@ Trimma Partner Support`;
 
 /** Manual appointment reminder — salon owner dashboard (WhatsApp). */
 export async function sendWhatsAppBookingReminder(bookingNo: string) {
-  const {
-    enabled,
-    phoneId,
-    accessToken,
-    metaTemplateConfirmed,
-    metaTemplateLanguage,
-  } = await getWhatsAppMessagingConfig();
+  const { enabled, phoneId, accessToken } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
     return { success: false, error: "WhatsApp alerts are disabled in Admin settings.", skipped: true };
@@ -1807,16 +1878,17 @@ export async function sendWhatsAppBookingReminder(bookingNo: string) {
 
     const customerMessage = parseTemplate(D.appointmentReminder, variables);
 
-    return await sendWhatsAppCustomerMessage({
-      trigger: "confirmed",
+    const textResult = await sendWhatsAppTextMessage(
       phoneId,
       accessToken,
       customerPhone,
-      textBody: customerMessage,
-      variables,
-      metaTemplateName: metaTemplateConfirmed,
-      metaTemplateLanguage: metaTemplateLanguage,
-    });
+      customerMessage
+    );
+    if (!textResult.success) {
+      return { success: false, error: textResult.error || "Failed to send WhatsApp reminder." };
+    }
+
+    return { success: true, messageId: textResult.messageId, delivery: "text" as const };
   } catch (err: unknown) {
     return {
       success: false,

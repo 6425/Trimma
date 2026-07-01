@@ -13,6 +13,9 @@ export const TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED = "appointment_confirmat
 /** Meta template for customer reschedule alerts (separate from checkout confirmation). */
 export const TRIMMA_META_TEMPLATE_RESCHEDULED = "appointment_rescheduled";
 
+/** Meta template for salon owner when a customer requests a new appointment time. */
+export const TRIMMA_META_TEMPLATE_RESCHEDULE_REQUEST_OWNER = "appointment_reschedule_request";
+
 /** Default when Admin language is blank — most Meta English templates use en_US. */
 export const TRIMMA_META_TEMPLATE_LANGUAGE = "en_US";
 
@@ -20,7 +23,8 @@ export type WhatsAppMetaTemplateTrigger =
   | "reservation-paid"
   | "confirmed"
   | "rescheduled"
-  | "owner-booking-created";
+  | "owner-booking-created"
+  | "owner-reschedule-request";
 
 export type WhatsAppMetaSendInput = {
   phoneId: string;
@@ -99,6 +103,19 @@ function buildOwnerBookingCreatedParameters(variables: Record<string, string>): 
   ];
 }
 
+function buildOwnerRescheduleRequestParameters(variables: Record<string, string>): string[] {
+  const v = (key: string) => String(variables[key] ?? "").trim() || "—";
+  return [
+    v("customer_name"),
+    v("service_name"),
+    formatMetaBookingDate(v("booking_date")),
+    formatMetaBookingTime(v("booking_time")),
+    formatMetaBookingDate(v("requested_date")),
+    formatMetaBookingTime(v("requested_time")),
+    v("booking_no"),
+  ];
+}
+
 export function buildMetaBodyParameters(
   trigger: WhatsAppMetaTemplateTrigger,
   variables: Record<string, string>,
@@ -113,6 +130,10 @@ export function buildMetaBodyParameters(
 
   if (trigger === "rescheduled") {
     return buildConfirmMessageParameters(variables);
+  }
+
+  if (trigger === "owner-reschedule-request") {
+    return buildOwnerRescheduleRequestParameters(variables);
   }
 
   if (

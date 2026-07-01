@@ -3,6 +3,7 @@
 import { withCustomerDb, isCustomerDbSuccess, customerDbFailure } from "@/lib/with-customer-db";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { createRescheduleRequestNotification } from "@/lib/salon-owner-notifications";
+import { sendOwnerRescheduleRequestWhatsApp } from "@/app/actions/whatsapp";
 
 const NON_RESCHEDULABLE_STATUSES = new Set(["completed", "canceled", "cancelled", "no_show"]);
 
@@ -20,6 +21,16 @@ export async function requestCustomerReschedule(
   }
 
   const formattedTime = formatBookingTime(requestedTime);
+
+  let notifyPayload: {
+    bookingNo: string;
+    customerEmail: string;
+    serviceName: string;
+    currentDate: string;
+    currentTime: string;
+    requestedDate: string;
+    requestedTime: string;
+  } | null = null;
 
   const result = await withCustomerDb(async (supabase, ctx) => {
     const { data: booking, error: readErr } = await supabase
@@ -72,6 +83,8 @@ export async function requestCustomerReschedule(
     }
 
     const service = Array.isArray(booking.services) ? booking.services[0] : booking.services;
+    const serviceName = (service as { name?: string } | null)?.name || "Appointment";
+
     await createRescheduleRequestNotification(supabase, {
       salonId: booking.salon_id as string,
       bookingId: booking.id as string,
@@ -81,10 +94,32 @@ export async function requestCustomerReschedule(
       currentTime: String(booking.booking_time || ""),
       requestedDate,
       requestedTime: formattedTime,
-      serviceName: (service as { name?: string } | null)?.name || "Appointment",
+      serviceName,
     });
+
+    notifyPayload = {
+      bookingNo: String(booking.booking_no || ""),
+      customerEmail,
+      serviceName,
+      currentDate: String(booking.booking_date || ""),
+      currentTime: String(booking.booking_time || ""),
+      requestedDate,
+      requestedTime: formattedTime,
+    };
   });
 
   if (!isCustomerDbSuccess(result)) return customerDbFailure(result);
+
+  if (notifyPayload?.bookingNo) {
+    void sendOwnerRescheduleRequestWhatsApp(notifyPayload.bookingNo, {
+      customerEmail: notifyPayload.customerEmail,
+      serviceName: notifyPayload.serviceName,
+      currentDate: notifyPayload.currentDate,
+      currentTime: notifyPayload.currentTime,
+      requestedDate: notifyPayload.requestedDate,
+      requestedTime: notifyPayload.requestedTime,
+    }).catch((err) => console.error("Owner reschedule-request WhatsApp failed:", err));
+  }
+
   return { success: true as const };
 }

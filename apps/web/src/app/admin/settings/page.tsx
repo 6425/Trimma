@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { 
   getWhatsAppConfig, saveWhatsAppSettings, testWhatsAppConnection, validateWhatsAppCredentials
 } from "../../actions/whatsapp";
-import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG, WHATSAPP_OWNER_BOOKING_META_CONFIG, WHATSAPP_RESCHEDULE_META_CONFIG } from "@/lib/whatsapp-templates";
+import { WHATSAPP_TRIGGER_CATALOG, WHATSAPP_CHECKOUT_META_CONFIG } from "@/lib/whatsapp-templates";
 import { EmailSettingsPanel } from "../../../components/admin/EmailSettingsPanel";
 import { FacebookSettingsPanel } from "../../../components/admin/FacebookSettingsPanel";
 import { TelegramSettingsPanel } from "../../../components/admin/TelegramSettingsPanel";
@@ -31,6 +31,7 @@ function SettingsPanelContent() {
   const [bookingReviewEnabled, setBookingReviewEnabled] = useState(true);
   const [onboardingInviteEnabled, setOnboardingInviteEnabled] = useState(true);
   const [bookingCreatedEnabled, setBookingCreatedEnabled] = useState(true);
+  const [rescheduleRequestEnabled, setRescheduleRequestEnabled] = useState(true);
   const [agentApprovalEnabled, setAgentApprovalEnabled] = useState(true);
   const [adminApprovalEnabled, setAdminApprovalEnabled] = useState(true);
   const [welcomeCustomerEnabled, setWelcomeCustomerEnabled] = useState(true);
@@ -48,6 +49,7 @@ function SettingsPanelContent() {
   const [templateOnboardingInvite, setTemplateOnboardingInvite] = useState("");
   const [templateBookingCreatedCustomer, setTemplateBookingCreatedCustomer] = useState("");
   const [templateBookingCreatedOwner, setTemplateBookingCreatedOwner] = useState("");
+  const [templateRescheduleRequestOwner, setTemplateRescheduleRequestOwner] = useState("");
   const [templateAgentApprovalOwner, setTemplateAgentApprovalOwner] = useState("");
   const [templateAgentApprovalAdmin, setTemplateAgentApprovalAdmin] = useState("");
   const [templateAdminApprovalOwner, setTemplateAdminApprovalOwner] = useState("");
@@ -58,6 +60,7 @@ function SettingsPanelContent() {
   const [metaTemplateConfirmed, setMetaTemplateConfirmed] = useState("");
   const [metaTemplateRescheduled, setMetaTemplateRescheduled] = useState("");
   const [metaTemplateBookingCreatedOwner, setMetaTemplateBookingCreatedOwner] = useState("");
+  const [metaTemplateRescheduleRequestOwner, setMetaTemplateRescheduleRequestOwner] = useState("");
   const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en_US");
 
   // Show/Hide Access Token
@@ -87,6 +90,7 @@ function SettingsPanelContent() {
       setBookingReviewEnabled(config.bookingReviewEnabled !== false);
       setOnboardingInviteEnabled(config.onboardingInviteEnabled !== false);
       setBookingCreatedEnabled(config.bookingCreatedEnabled !== false);
+      setRescheduleRequestEnabled(config.rescheduleRequestEnabled !== false);
       setAgentApprovalEnabled(config.agentApprovalEnabled !== false);
       setAdminApprovalEnabled(config.adminApprovalEnabled !== false);
       setWelcomeCustomerEnabled(config.welcomeCustomerEnabled !== false);
@@ -100,6 +104,7 @@ function SettingsPanelContent() {
       setTemplateOnboardingInvite(config.templateOnboardingInvite || "");
       setTemplateBookingCreatedCustomer(config.templateBookingCreatedCustomer || "");
       setTemplateBookingCreatedOwner(config.templateBookingCreatedOwner || "");
+      setTemplateRescheduleRequestOwner(config.templateRescheduleRequestOwner || "");
       setTemplateAgentApprovalOwner(config.templateAgentApprovalOwner || "");
       setTemplateAgentApprovalAdmin(config.templateAgentApprovalAdmin || "");
       setTemplateAdminApprovalOwner(config.templateAdminApprovalOwner || "");
@@ -110,6 +115,7 @@ function SettingsPanelContent() {
       setMetaTemplateConfirmed(config.metaTemplateConfirmed || "");
       setMetaTemplateRescheduled(config.metaTemplateRescheduled || "");
       setMetaTemplateBookingCreatedOwner(config.metaTemplateBookingCreatedOwner || "");
+      setMetaTemplateRescheduleRequestOwner(config.metaTemplateRescheduleRequestOwner || "");
       setMetaTemplateLanguage(config.metaTemplateLanguage || "en_US");
       setConfigSource(config.credentialsSource || config.source);
 
@@ -152,11 +158,13 @@ function SettingsPanelContent() {
         templateReview,
         templateOnboardingInvite,
         bookingCreatedEnabled,
+        rescheduleRequestEnabled,
         agentApprovalEnabled,
         adminApprovalEnabled,
         adminAlertPhone,
         templateBookingCreatedCustomer,
         templateBookingCreatedOwner,
+        templateRescheduleRequestOwner,
         templateAgentApprovalOwner,
         templateAgentApprovalAdmin,
         templateAdminApprovalOwner,
@@ -169,6 +177,7 @@ function SettingsPanelContent() {
         metaTemplateConfirmed,
         metaTemplateRescheduled,
         metaTemplateBookingCreatedOwner,
+        metaTemplateRescheduleRequestOwner,
         metaTemplateLanguage
       );
       if (res.success) {
@@ -223,6 +232,7 @@ function SettingsPanelContent() {
     bookingReviewEnabled,
     onboardingInviteEnabled,
     bookingCreatedEnabled,
+    rescheduleRequestEnabled,
     agentApprovalEnabled,
     adminApprovalEnabled,
     welcomeCustomerEnabled,
@@ -238,6 +248,7 @@ function SettingsPanelContent() {
       bookingReviewEnabled: setBookingReviewEnabled,
       onboardingInviteEnabled: setOnboardingInviteEnabled,
       bookingCreatedEnabled: setBookingCreatedEnabled,
+      rescheduleRequestEnabled: setRescheduleRequestEnabled,
       agentApprovalEnabled: setAgentApprovalEnabled,
       adminApprovalEnabled: setAdminApprovalEnabled,
       welcomeCustomerEnabled: setWelcomeCustomerEnabled,
@@ -251,6 +262,7 @@ function SettingsPanelContent() {
     metaTemplateConfirmed,
     metaTemplateRescheduled,
     metaTemplateBookingCreatedOwner,
+    metaTemplateRescheduleRequestOwner,
   };
 
   const setMetaTemplateValue = (key: string, value: string) => {
@@ -259,6 +271,7 @@ function SettingsPanelContent() {
       metaTemplateConfirmed: setMetaTemplateConfirmed,
       metaTemplateRescheduled: setMetaTemplateRescheduled,
       metaTemplateBookingCreatedOwner: setMetaTemplateBookingCreatedOwner,
+      metaTemplateRescheduleRequestOwner: setMetaTemplateRescheduleRequestOwner,
     };
     setters[key]?.(value);
   };
@@ -272,6 +285,7 @@ function SettingsPanelContent() {
     templateOnboardingInvite,
     templateBookingCreatedCustomer,
     templateBookingCreatedOwner,
+    templateRescheduleRequestOwner,
     templateAgentApprovalOwner,
     templateAgentApprovalAdmin,
     templateAdminApprovalOwner,
@@ -290,6 +304,7 @@ function SettingsPanelContent() {
       templateOnboardingInvite: setTemplateOnboardingInvite,
       templateBookingCreatedCustomer: setTemplateBookingCreatedCustomer,
       templateBookingCreatedOwner: setTemplateBookingCreatedOwner,
+      templateRescheduleRequestOwner: setTemplateRescheduleRequestOwner,
       templateAgentApprovalOwner: setTemplateAgentApprovalOwner,
       templateAgentApprovalAdmin: setTemplateAgentApprovalAdmin,
       templateAdminApprovalOwner: setTemplateAdminApprovalOwner,
@@ -465,7 +480,7 @@ function SettingsPanelContent() {
                       Automated Notification Trigger Events & Templates
                     </h4>
                     <p className="text-[10px] text-zinc-500 mt-0.5">
-                      Other automated WhatsApp alerts (salon owner, reschedule, reviews, etc.). Customer checkout confirmation uses the Meta block below.
+                      Only customer checkout uses a Meta template (green block). All other triggers send editable app text.
                     </p>
                   </div>
 
@@ -505,59 +520,6 @@ function SettingsPanelContent() {
                       {WHATSAPP_CHECKOUT_META_CONFIG.metaParameterHint}
                     </p>
                   </div>
-
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
-                    <div>
-                      <div className="text-xs font-extrabold text-amber-900">
-                        {WHATSAPP_OWNER_BOOKING_META_CONFIG.title}
-                      </div>
-                      <p className="text-[10px] text-amber-800 mt-0.5 leading-relaxed">
-                        {WHATSAPP_OWNER_BOOKING_META_CONFIG.description}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase tracking-widest text-amber-900">
-                        Meta template name
-                      </Label>
-                      <Input
-                        value={metaTemplateBookingCreatedOwner}
-                        onChange={(e) => setMetaTemplateBookingCreatedOwner(e.target.value)}
-                        placeholder={WHATSAPP_OWNER_BOOKING_META_CONFIG.defaultTemplateName}
-                        className="h-9 border-amber-200 rounded-lg text-xs font-mono"
-                      />
-                    </div>
-                    <p className="text-[9px] text-amber-900/90 leading-relaxed">
-                      {WHATSAPP_OWNER_BOOKING_META_CONFIG.metaParameterHint}
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-sky-50 border border-sky-200 rounded-2xl space-y-3">
-                    <div>
-                      <div className="text-xs font-extrabold text-sky-900">
-                        {WHATSAPP_RESCHEDULE_META_CONFIG.title}
-                      </div>
-                      <p className="text-[10px] text-sky-800 mt-0.5 leading-relaxed">
-                        {WHATSAPP_RESCHEDULE_META_CONFIG.description}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[9px] font-black uppercase tracking-widest text-sky-900">
-                        Meta template name
-                      </Label>
-                      <Input
-                        value={metaTemplateRescheduled}
-                        onChange={(e) => setMetaTemplateRescheduled(e.target.value)}
-                        placeholder={WHATSAPP_RESCHEDULE_META_CONFIG.defaultTemplateName}
-                        className="h-9 border-sky-200 rounded-lg text-xs font-mono"
-                      />
-                    </div>
-                    <p className="text-[9px] text-sky-900/90 leading-relaxed">
-                      {WHATSAPP_RESCHEDULE_META_CONFIG.metaParameterHint}
-                    </p>
-                    <pre className="text-[9px] text-sky-900/90 leading-relaxed whitespace-pre-wrap font-sans bg-white/70 border border-sky-100 rounded-lg p-3">
-                      {WHATSAPP_RESCHEDULE_META_CONFIG.suggestedBody}
-                    </pre>
-                  </div>
                   
                   <div className="space-y-6">
                     {WHATSAPP_TRIGGER_CATALOG.map((trigger) => {
@@ -596,30 +558,8 @@ function SettingsPanelContent() {
 
                           {isEnabled && (
                             <div className="space-y-2 pt-2 border-t border-slate-200/50">
-                              {"metaTemplateKey" in trigger && trigger.metaTemplateKey && trigger.id !== "booking-created-owner" && trigger.id !== "rescheduled" && (
-                                <div className="space-y-2 pb-2">
-                                  <Label className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
-                                    Meta template name
-                                  </Label>
-                                  <Input
-                                    value={metaTemplateValues[trigger.metaTemplateKey] || ""}
-                                    onChange={(e) => setMetaTemplateValue(trigger.metaTemplateKey, e.target.value)}
-                                    placeholder="confirmmessage"
-                                    className="h-9 border-emerald-200 rounded-lg text-xs font-mono"
-                                  />
-                                  <p className="text-[9px] text-zinc-500">
-                                    {"metaParameterHint" in trigger &&
-                                    typeof trigger.metaParameterHint === "string" &&
-                                    trigger.metaParameterHint
-                                      ? trigger.metaParameterHint
-                                      : `Required outside the 24-hour window. Body variables map to merge tags in order (${`{{1}}`} = first tag).`}
-                                  </p>
-                                </div>
-                              )}
                               <Label className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
-                                {trigger.id === "booking-created-owner"
-                                  ? "Reference copy (Meta template above is used for delivery)"
-                                  : "Fallback template text"}
+                                App message template
                               </Label>
                               <textarea
                                 value={templateValues[templateKey] || ""}

@@ -106,16 +106,27 @@ We received your booking request at *{salon_name}* for *{service_name}* on {book
 
 Status: *Pending* salon confirmation — we'll notify you once they respond! ✂️`,
 
-  bookingCreatedOwner: `🔔 *NEW BOOKING REQUEST* 🔔
+  bookingCreatedOwner: `🔔 *NEW CONFIRMED BOOKING* 🔔
 
-You have a new booking request from *{customer_name}*.
+You have a new confirmed appointment from *{customer_name}*.
 
 📅 Date: {booking_date}
 ⏰ Time: {booking_time}
 💇 Service: {service_name}
 💳 Payment: {payment_status}
 
-Please open your Trimma Dashboard to Confirm or Decline.`,
+Open Trimma Dashboard → Bookings for details.`,
+
+  rescheduleRequestOwner: `🔔 *RESCHEDULE REQUEST* 🔔
+
+*{customer_name}* ({customer_email}) asked to move *{service_name}*.
+
+📅 Current: {booking_date} · ⏰ {booking_time}
+📅 Requested: {requested_date} · ⏰ {requested_time}
+📋 Ref: {booking_no}
+
+Open Trimma Dashboard → Bookings to approve or decline:
+{dashboard_link}`,
 
   agentApprovalOwner: `🎉 *Congratulations from Trimma!* 🎉
 
@@ -166,10 +177,9 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     order: 1,
     title: "Reservation Payment Received (Template 1 — Slot Locked)",
     whenFired:
-      "Immediately after the customer pays the 20% reservation fee and the slot is locked. Uses your Meta-approved Template 1 when configured.",
+      "Optional legacy alert after reservation payment. Not used at checkout (checkout sends confirmmessage). App text only if enabled.",
     toggleKey: "reservationPaidEnabled" as const,
     templateKey: "templateReservationPaid" as const,
-    metaTemplateKey: "metaTemplateReservationPaid" as const,
     defaultTemplate: "reservationPaid" as const,
     mergeTags: [
       "{customer_name}",
@@ -185,11 +195,11 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   {
     id: "rescheduled",
     order: 2,
-    title: "Booking Rescheduled Alert",
-    whenFired: "When a salon or admin approves a reschedule request with a new date/time.",
+    title: "Booking Rescheduled Alert — Customer",
+    whenFired:
+      "When a salon owner reschedules an appointment, or approves a customer reschedule request. App text (customer already received confirmmessage at booking).",
     toggleKey: "bookingRescheduledEnabled" as const,
     templateKey: "templateRescheduled" as const,
-    metaTemplateKey: "metaTemplateRescheduled" as const,
     defaultTemplate: "rescheduled" as const,
     mergeTags: [
       "{customer_name}",
@@ -199,6 +209,27 @@ export const WHATSAPP_TRIGGER_CATALOG = [
       "{service_name}",
       "{salon_address}",
       "{maps_link}",
+    ],
+  },
+  {
+    id: "reschedule-request-owner",
+    order: 13,
+    title: "Reschedule Request — Salon Owner Alert",
+    whenFired:
+      "When a customer submits a reschedule request. App text to salon owner (after their first booking alert in the same session).",
+    toggleKey: "rescheduleRequestEnabled" as const,
+    templateKey: "templateRescheduleRequestOwner" as const,
+    defaultTemplate: "rescheduleRequestOwner" as const,
+    mergeTags: [
+      "{customer_name}",
+      "{customer_email}",
+      "{service_name}",
+      "{booking_date}",
+      "{booking_time}",
+      "{requested_date}",
+      "{requested_time}",
+      "{booking_no}",
+      "{dashboard_link}",
     ],
   },
   {
@@ -234,9 +265,9 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   {
     id: "booking-created-owner",
     order: 6,
-    title: "New Booking — Salon Owner Alert",
+    title: "New Confirmed Booking — Salon Owner Alert",
     whenFired:
-      "Sent to the salon WhatsApp/phone on profile when a customer pays a reservation. Requires a Meta-approved template (see block above trigger #6).",
+      "Sent to the salon WhatsApp/phone when a customer pays and the appointment is confirmed. App text only — not a Meta template.",
     toggleKey: "bookingCreatedEnabled" as const,
     templateKey: "templateBookingCreatedOwner" as const,
     defaultTemplate: "bookingCreatedOwner" as const,
@@ -248,9 +279,6 @@ export const WHATSAPP_TRIGGER_CATALOG = [
       "{booking_time}",
       "{payment_status}",
     ],
-    metaTemplateKey: "metaTemplateBookingCreatedOwner" as const,
-    metaParameterHint:
-      "appointment_confirmation_1: {{1}} customer, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.",
   },
   {
     id: "agent-approval-owner",
@@ -316,44 +344,13 @@ export const WHATSAPP_TRIGGER_CATALOG = [
   },
 ] as const;
 
-/** Checkout Meta template — not listed in the legacy trigger catalog. */
+/** Only Meta template required — first customer contact at online checkout. */
 export const WHATSAPP_CHECKOUT_META_CONFIG = {
-  title: "Checkout booking confirmation (Meta)",
+  title: "Customer checkout confirmation (Meta — required)",
   description:
-    "Sent once when the customer completes online payment. This is your working confirmmessage template — not a separate follow-up message.",
+    "The only automated WhatsApp message that uses a Meta template. Sent once when the customer pays online (confirmmessage). All other alerts use editable app templates below.",
   metaTemplateKey: "metaTemplateConfirmed" as const,
   defaultTemplateName: "confirmmessage",
   metaParameterHint:
     "confirmmessage: {{1}} name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.",
-} as const;
-
-/** Salon owner new-booking alert — Meta template required (free text is blocked outside 24h window). */
-export const WHATSAPP_OWNER_BOOKING_META_CONFIG = {
-  title: "Salon owner new booking alert (Meta)",
-  description:
-    "Sent to the salon WhatsApp/phone on profile when a customer pays a reservation. Meta template is required — plain text is rejected outside the 24-hour session window.",
-  metaTemplateKey: "metaTemplateBookingCreatedOwner" as const,
-  defaultTemplateName: "appointment_confirmation_1",
-  metaParameterHint:
-    "appointment_confirmation_1: {{1}} customer name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time (same order as confirmmessage).",
-} as const;
-
-/** Customer reschedule alert — must use a dedicated Meta template (not confirmmessage). */
-export const WHATSAPP_RESCHEDULE_META_CONFIG = {
-  title: "Booking rescheduled alert (Meta)",
-  description:
-    "Sent when a salon owner reschedules an appointment. Requires its own Meta-approved template — do not reuse confirmmessage or customers will see a booking confirmation instead of a reschedule notice.",
-  metaTemplateKey: "metaTemplateRescheduled" as const,
-  defaultTemplateName: "appointment_rescheduled",
-  metaParameterHint:
-    "appointment_rescheduled: {{1}} customer name, {{2}} salon, {{3}} service, {{4}} new date, {{5}} new time.",
-  suggestedBody: `Hello {{1}},
-
-Your appointment at {{2}} has been rescheduled.
-
-Service: {{3}}
-New date: {{4}}
-New time: {{5}}
-
-Thank you for choosing Trimma.`,
 } as const;
