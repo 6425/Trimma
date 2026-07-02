@@ -32,37 +32,10 @@ function displaySlotToMinutes(slot: string): number {
   return hh * 60 + mm;
 }
 
-const BIRTHDAY_YEAR_OPTIONS = Array.from({ length: 100 }, (_, index) => {
-  const year = new Date().getFullYear() - index;
-  return { value: String(year), label: String(year) };
-});
+const BIRTHDAY_MIN_DATE = `${new Date().getFullYear() - 100}-01-01`;
+const BIRTHDAY_MAX_DATE = format(new Date(), "yyyy-MM-dd");
 
-const BIRTHDAY_MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => {
-  const month = index + 1;
-  return {
-    value: String(month).padStart(2, "0"),
-    label: format(new Date(2000, index, 1), "MMMM"),
-  };
-});
-
-function parseBirthdayParts(value: string) {
-  const [year = "", month = "", day = ""] = value.split("-");
-  return { year, month, day };
-}
-
-function composeBirthday(year: string, month: string, day: string) {
-  if (!year || !month || !day) return "";
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
-
-function daysInMonth(year: string, month: string) {
-  const yearNum = Number(year);
-  const monthNum = Number(month);
-  if (!yearNum || !monthNum) return 31;
-  return new Date(yearNum, monthNum, 0).getDate();
-}
-
-export function BookingSheet({ 
+export function BookingSheet({
   isOpen, 
   onOpenChange, 
   initialServiceName,
@@ -668,75 +641,16 @@ export function BookingSheet({
                       </select>
                     </div>
                     <div className="space-y-2 min-w-0">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Birthday</label>
-                      {(() => {
-                        const { year, month, day } = parseBirthdayParts(birthday);
-                        const maxDays = daysInMonth(year, month);
-                        const dayOptions = Array.from({ length: maxDays }, (_, index) => {
-                          const value = String(index + 1).padStart(2, "0");
-                          return { value, label: String(index + 1) };
-                        });
-                        const fieldClass =
-                          "w-full min-w-0 max-w-full h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800 bg-white";
-
-                        const updateBirthday = (next: { year?: string; month?: string; day?: string }) => {
-                          const nextYear = next.year ?? year;
-                          const nextMonth = next.month ?? month;
-                          let nextDay = next.day ?? day;
-                          const nextMaxDays = daysInMonth(nextYear, nextMonth);
-                          if (nextDay && Number(nextDay) > nextMaxDays) {
-                            nextDay = String(nextMaxDays).padStart(2, "0");
-                          }
-                          setBirthday(composeBirthday(nextYear, nextMonth, nextDay));
-                        };
-
-                        return (
-                          <div className="space-y-2 min-w-0">
-                            <select
-                              value={year}
-                              onChange={(e) => updateBirthday({ year: e.target.value })}
-                              className={fieldClass}
-                              aria-label="Birth year"
-                            >
-                              <option value="">Year</option>
-                              {BIRTHDAY_YEAR_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="grid grid-cols-2 gap-2 min-w-0">
-                              <select
-                                value={month}
-                                onChange={(e) => updateBirthday({ month: e.target.value })}
-                                className={fieldClass}
-                                aria-label="Birth month"
-                              >
-                                <option value="">Month</option>
-                                {BIRTHDAY_MONTH_OPTIONS.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
-                                value={day}
-                                onChange={(e) => updateBirthday({ day: e.target.value })}
-                                className={fieldClass}
-                                aria-label="Birth day"
-                                disabled={!month}
-                              >
-                                <option value="">Day</option>
-                                {dayOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={birthday}
+                        onChange={(e) => setBirthday(e.target.value)}
+                        min={BIRTHDAY_MIN_DATE}
+                        max={BIRTHDAY_MAX_DATE}
+                        className="w-full min-w-0 h-11 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-zinc-900 text-sm font-semibold text-zinc-800 bg-white"
+                        aria-label="Date of birth"
+                      />
                     </div>
                   </div>
 

@@ -45,6 +45,10 @@ import { SalonPublicQrSection } from "../../../components/marketplace/SalonPubli
 import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 import { SALON_HERO_IMAGE_ASPECT_CLASS } from "@/lib/salon-hero-image";
+import {
+  SALON_PAGE_SQUARE_IMAGE_CLASS,
+  SALON_PAGE_STAFF_IMAGE_CLASS,
+} from "@/lib/salon-page-images";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffc800] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffc800] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
@@ -1086,7 +1090,7 @@ export default function SalonPage({
                         <GlobalServiceIconPreview
                           iconImageUrl={service.image_url}
                           iconMap={salonServiceIconMap}
-                          className="w-14 h-14 rounded-2xl"
+                          className={SALON_PAGE_SQUARE_IMAGE_CLASS}
                         />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -1166,7 +1170,7 @@ export default function SalonPage({
                                 iconImageUrl={promotion.image_url}
                                 iconMap={salonPromotionIconMap}
                                 iconName="Gift"
-                                className="w-14 h-14 rounded-2xl"
+                                className={SALON_PAGE_SQUARE_IMAGE_CLASS}
                               />
                               <div className="flex-1 min-w-0">
                               <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -1242,7 +1246,12 @@ export default function SalonPage({
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {staff.map(st => (
                    <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
-                     <StaffPortrait name={st.name} avatarUrl={st.avatar_url} widthClass="w-20" />
+                     <StaffPortrait
+                       name={st.name}
+                       avatarUrl={st.avatar_url}
+                       widthClass="w-20"
+                       className={SALON_PAGE_STAFF_IMAGE_CLASS}
+                     />
                      <div className="flex-1">
                        <div className="flex justify-between items-start mb-1">
                          <h3 className="font-bold text-zinc-900">{st.name}</h3>
