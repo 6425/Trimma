@@ -1,7 +1,8 @@
-import { Facebook, Youtube } from "lucide-react";
+import { Facebook, Instagram, Youtube } from "lucide-react";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import {
   TRIMMA_FACEBOOK_URL,
+  TRIMMA_INSTAGRAM_URL,
   TRIMMA_TIKTOK_URL,
   TRIMMA_YOUTUBE_URL,
   trimmaSocialIconClass,
@@ -22,6 +23,15 @@ export function TrimmaSocialLinks({ className = "flex items-center gap-3" }: Tri
         className={trimmaSocialIconClass}
       >
         <Facebook className="w-5 h-5" />
+      </a>
+      <a
+        href={TRIMMA_INSTAGRAM_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Trimma on Instagram"
+        className={trimmaSocialIconClass}
+      >
+        <Instagram className="w-5 h-5" />
       </a>
       <a
         href={TRIMMA_YOUTUBE_URL}
