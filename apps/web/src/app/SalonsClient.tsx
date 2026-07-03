@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonListRow } from "../components/marketplace/SalonListRow";
 import { LiveCountdown } from "../components/marketplace/LiveCountdown";
+import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
 import {
   SalonFiltersPanel,
   countActiveFilters,
@@ -282,6 +283,13 @@ export default function SalonsClient({
           </h1>
 
           <LiveCountdown />
+
+          <div className="mt-6 flex flex-col items-center gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">
+              Follow Trimma
+            </p>
+            <TrimmaSocialLinks className="flex items-center justify-center gap-3" />
+          </div>
 
           <div className="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100 mt-8">
             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl">
