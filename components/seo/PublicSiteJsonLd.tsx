@@ -1,11 +1,10 @@
-import { PUBLIC_SITE_NAV_LINKS } from "@/lib/site-seo";
+import { absoluteUrl } from "@/lib/site-url";
 import {
   TRIMMA_FACEBOOK_URL,
   TRIMMA_INSTAGRAM_URL,
   TRIMMA_TIKTOK_URL,
   TRIMMA_YOUTUBE_URL,
 } from "@/lib/trimma-social-links";
-import { absoluteUrl } from "@/lib/site-url";
 
 export function PublicSiteJsonLd() {
   const siteUrl = absoluteUrl("/");
@@ -33,19 +32,6 @@ export function PublicSiteJsonLd() {
     sameAs: [TRIMMA_FACEBOOK_URL, TRIMMA_INSTAGRAM_URL, TRIMMA_YOUTUBE_URL, TRIMMA_TIKTOK_URL],
   };
 
-  const siteNavigation = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "Trimma public pages",
-    itemListElement: PUBLIC_SITE_NAV_LINKS.map((link, index) => ({
-      "@type": "SiteNavigationElement",
-      position: index + 1,
-      name: link.name,
-      description: link.description,
-      url: absoluteUrl(link.path),
-    })),
-  };
-
   return (
     <>
       <script
@@ -55,10 +41,6 @@ export function PublicSiteJsonLd() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organization) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavigation) }}
       />
     </>
   );

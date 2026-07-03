@@ -45,6 +45,7 @@ import { VerifiedSalonBadge } from "../marketplace/VerifiedSalonBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonOwnerGuideDownloads } from "../help/SalonOwnerGuideDownloads";
+import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
 
 const SALON = {
   name: "Sampath Barber Saloon",
@@ -1105,6 +1106,12 @@ export function SalonOwnerHelpGuide() {
                     <MessageCircle className="w-5 h-5 text-emerald-400" />
                     WhatsApp Live Chat · {TRIMMA_WHATSAPP_DISPLAY}
                   </a>
+                  <div className="pt-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-2">
+                      Follow Trimma
+                    </p>
+                    <TrimmaSocialLinks />
+                  </div>
                   <Link href="/dashboard/profile">
                     <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
                       Return to {SALON.name} profile
