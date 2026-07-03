@@ -56,7 +56,7 @@ export function SalonDashboardGuideCard() {
         <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {LANG_OPTIONS.map(({ code, native }) => {
             const doc = docsByLang[code];
-            const href = doc?.download_url || doc?.file_url || `/help/salon-owner-guide/trimma-salon-owner-guide-${code}.docx`;
+            const href = doc?.download_url || doc?.file_url || `/help/salon-owner-guide/trimma-salon-owner-guide-${code}.pdf`;
             return (
               <a
                 key={code}

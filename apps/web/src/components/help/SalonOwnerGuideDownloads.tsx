@@ -68,10 +68,10 @@ export function SalonOwnerGuideDownloads() {
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight mb-1">
-              Download Salon Owner Handbook (Word)
+              Download Salon Owner Handbook (PDF)
             </h2>
             <p className="text-sm text-zinc-600 leading-relaxed max-w-2xl">
-              Professional step-by-step guides for Trimma salon owners — profile setup, bookings,
+              Professional step-by-step PDF guides for Trimma salon owners — profile setup, bookings,
               staff, finance, and growing your business. Available in English, Sinhala, and Tamil.
             </p>
           </div>
@@ -95,13 +95,13 @@ export function SalonOwnerGuideDownloads() {
                 {doc.description && (
                   <p className="text-xs text-zinc-500 mt-1 leading-relaxed line-clamp-3">{doc.description}</p>
                 )}
-                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} Word doc</p>}
+                {size && <p className="text-[10px] text-zinc-400 mt-2 font-semibold">{size} PDF</p>}
               </div>
               <div className="flex flex-col gap-2 mt-auto">
                 <a href={href} target="_blank" rel="noopener noreferrer" download>
                   <Button className="w-full h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
                     <Download className="w-4 h-4 mr-2" />
-                    Download Word Handbook
+                    Download PDF Handbook
                   </Button>
                 </a>
                 <Button
