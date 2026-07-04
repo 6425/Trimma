@@ -37,7 +37,7 @@ export function SalonDashboardGuideCard() {
 
           <div className="flex flex-col sm:flex-row gap-2 shrink-0">
             <Link href="/dashboard/help">
-              <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
+              <Button variant="default" className="w-full sm:w-auto h-10 rounded-xl font-bold text-xs">
                 Read Salon Help
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -45,7 +45,7 @@ export function SalonDashboardGuideCard() {
             <Link href="/dashboard/help#guides">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto h-10 rounded-xl border-white/20 bg-white/5 !text-white hover:bg-white/10 hover:!text-white font-bold text-xs"
+                className="w-full sm:w-auto h-10 rounded-xl border-slate-200 text-zinc-900 hover:bg-slate-50 font-bold text-xs"
               >
                 All downloads
               </Button>
@@ -53,7 +53,7 @@ export function SalonDashboardGuideCard() {
           </div>
         </div>
 
-        <div className="mt-5 pt-5 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-5 pt-5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {LANG_OPTIONS.map(({ code, native }) => {
             const doc = docsByLang[code];
             const href = doc?.download_url || doc?.file_url || `/help/salon-owner-guide/trimma-salon-owner-guide-${code}.pdf`;
@@ -64,15 +64,15 @@ export function SalonDashboardGuideCard() {
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:border-[#ffc800]/40 hover:bg-[#ffc800]/10 transition-colors"
+                className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 hover:border-[#ffc800]/50 hover:bg-[#ffc800]/10 transition-colors"
               >
                 <div className="min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-[#ffc800]">{native}</div>
-                  <div className="text-xs font-semibold text-white/90 truncate mt-0.5">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-zinc-600">{native}</div>
+                  <div className="text-xs font-semibold text-zinc-900 truncate mt-0.5">
                     {doc?.title || `Salon Owner Handbook (${code})`}
                   </div>
                 </div>
-                <Download className="w-4 h-4 text-white/50 group-hover:text-[#ffc800] shrink-0" />
+                <Download className="w-4 h-4 text-zinc-400 group-hover:text-[#ffc800] shrink-0" />
               </a>
             );
           })}
