@@ -21,10 +21,12 @@ import {
   TRIMMA_META_TEMPLATE_CONFIRMED,
   TRIMMA_META_TEMPLATE_LANGUAGE,
   TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED,
+  TRIMMA_META_TEMPLATE_CANCELLED,
   TRIMMA_META_TEMPLATE_RESCHEDULED,
   TRIMMA_META_TEMPLATE_RESCHEDULE_REQUEST_OWNER,
   type WhatsAppMetaTemplateTrigger,
 } from "@/lib/whatsapp-meta-send";
+import { isWithinWhatsAppCustomerSessionWindow } from "@/lib/whatsapp-customer-session";
 import {
   clearWhatsAppPhoneResolutionCache,
   resolveWhatsAppPhoneNumberId,
@@ -67,6 +69,7 @@ type BookingWhatsAppRow = {
   requested_booking_time?: string | null;
   amount?: string | number | null;
   payment_status?: string | null;
+  created_at?: string | null;
   services?: { name?: string | null } | null;
   salons?: BookingSalonJoin | null;
 };
@@ -247,6 +250,7 @@ function metaTemplateMissingLabel(trigger: WhatsAppMetaTemplateTrigger): string 
   if (trigger === "owner-booking-created") return "Salon owner new booking alert (trigger #6)";
   if (trigger === "owner-reschedule-request") return "Customer reschedule request — salon owner (Meta)";
   if (trigger === "rescheduled") return "Booking rescheduled alert — customer (Meta)";
+  if (trigger === "cancelled") return "Booking cancelled alert — customer (Meta)";
   return "Checkout confirmation (confirmmessage)";
 }
 
@@ -302,6 +306,43 @@ async function sendWhatsAppCustomerMessage(input: {
   metaTemplateLanguage?: string | null;
 }): Promise<{ success: boolean; messageId?: string; error?: string; delivery?: "meta-template" }> {
   // Meta template only — used for first customer checkout (confirmmessage).
+  return sendWhatsAppMetaAlert({
+    trigger: input.trigger,
+    phoneId: input.phoneId,
+    accessToken: input.accessToken,
+    to: input.customerPhone,
+    variables: input.variables,
+    metaTemplateName: input.metaTemplateName,
+    metaTemplateLanguage: input.metaTemplateLanguage,
+  });
+}
+
+type CustomerSessionOrMetaTrigger = Extract<WhatsAppMetaTemplateTrigger, "cancelled" | "rescheduled">;
+
+async function sendWhatsAppCustomerSessionOrMetaMessage(input: {
+  trigger: CustomerSessionOrMetaTrigger;
+  sessionStartedAt: string | null | undefined;
+  phoneId: string;
+  accessToken: string;
+  customerPhone: string;
+  textBody: string;
+  variables: Record<string, string>;
+  metaTemplateName?: string | null;
+  metaTemplateLanguage?: string | null;
+}): Promise<{ success: boolean; messageId?: string; error?: string; delivery?: "text" | "meta-template" }> {
+  if (isWithinWhatsAppCustomerSessionWindow(input.sessionStartedAt)) {
+    const textResult = await sendWhatsAppTextMessage(
+      input.phoneId,
+      input.accessToken,
+      input.customerPhone,
+      input.textBody
+    );
+    if (!textResult.success) {
+      return { success: false, error: textResult.error, delivery: "text" };
+    }
+    return { success: true, messageId: textResult.messageId, delivery: "text" };
+  }
+
   return sendWhatsAppMetaAlert({
     trigger: input.trigger,
     phoneId: input.phoneId,
@@ -407,6 +448,7 @@ export async function getWhatsAppConfig() {
         whatsapp_meta_template_reservation_paid,
         whatsapp_meta_template_confirmed,
         whatsapp_meta_template_rescheduled,
+        whatsapp_meta_template_cancelled,
         whatsapp_meta_template_booking_created_owner,
         whatsapp_meta_template_reschedule_request_owner,
         whatsapp_meta_template_language
@@ -484,6 +526,8 @@ export async function getWhatsAppConfig() {
       dbSettings.whatsapp_meta_template_confirmed?.trim() || TRIMMA_META_TEMPLATE_CONFIRMED;
     const metaTemplateRescheduled =
       dbSettings.whatsapp_meta_template_rescheduled?.trim() || TRIMMA_META_TEMPLATE_RESCHEDULED;
+    const metaTemplateCancelled =
+      dbSettings.whatsapp_meta_template_cancelled?.trim() || TRIMMA_META_TEMPLATE_CANCELLED;
     const metaTemplateBookingCreatedOwner =
       dbSettings.whatsapp_meta_template_booking_created_owner?.trim() ||
       TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED;
@@ -533,6 +577,7 @@ export async function getWhatsAppConfig() {
       metaTemplateReservationPaid,
       metaTemplateConfirmed,
       metaTemplateRescheduled,
+      metaTemplateCancelled,
       metaTemplateBookingCreatedOwner,
       metaTemplateRescheduleRequestOwner,
       metaTemplateLanguage,
@@ -588,6 +633,7 @@ export async function getWhatsAppConfig() {
       metaTemplateReservationPaid: "",
       metaTemplateConfirmed: TRIMMA_META_TEMPLATE_CONFIRMED,
       metaTemplateRescheduled: TRIMMA_META_TEMPLATE_RESCHEDULED,
+      metaTemplateCancelled: TRIMMA_META_TEMPLATE_CANCELLED,
       metaTemplateBookingCreatedOwner: TRIMMA_META_TEMPLATE_OWNER_BOOKING_CREATED,
       metaTemplateRescheduleRequestOwner: TRIMMA_META_TEMPLATE_RESCHEDULE_REQUEST_OWNER,
       metaTemplateLanguage: TRIMMA_META_TEMPLATE_LANGUAGE,
@@ -655,6 +701,7 @@ export async function saveWhatsAppSettings(
   metaTemplateReservationPaid?: string,
   metaTemplateConfirmed?: string,
   metaTemplateRescheduled?: string,
+  metaTemplateCancelled?: string,
   metaTemplateBookingCreatedOwner?: string,
   metaTemplateRescheduleRequestOwner?: string,
   metaTemplateLanguage?: string
@@ -727,6 +774,7 @@ export async function saveWhatsAppSettings(
         whatsapp_meta_template_reservation_paid: metaTemplateReservationPaid?.trim() || null,
         whatsapp_meta_template_confirmed: metaTemplateConfirmed?.trim() || null,
         whatsapp_meta_template_rescheduled: metaTemplateRescheduled?.trim() || null,
+        whatsapp_meta_template_cancelled: metaTemplateCancelled?.trim() || null,
         whatsapp_meta_template_booking_created_owner:
           metaTemplateBookingCreatedOwner?.trim() || null,
         whatsapp_meta_template_reschedule_request_owner:
@@ -1084,12 +1132,14 @@ export async function sendWhatsAppNotification(
  */
 export async function sendWhatsAppCancellationNotification(bookingNo: string) {
   mirrorTelegramCancellation(bookingNo);
-  const { 
-    enabled, 
-    phoneId, 
-    accessToken, 
+  const {
+    enabled,
+    phoneId,
+    accessToken,
     bookingCancelledEnabled,
-    templateCancelled
+    templateCancelled,
+    metaTemplateCancelled,
+    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled) return { success: true, message: "Disabled" };
@@ -1100,71 +1150,58 @@ export async function sendWhatsAppCancellationNotification(bookingNo: string) {
   }
 
   try {
-    // 1. Fetch booking details
-    const { data: booking, error: bookingErr } = await getSupabaseAdmin()
-      .from("bookings")
-      .select("*, salons(name), services(name)")
-      .eq("booking_no", bookingNo)
-      .single();
+    const booking = await fetchBookingByNumber(bookingNo, "salons(name)");
+    if (!booking) return { success: false, error: "Booking not found." };
 
-    if (bookingErr || !booking) return { success: false, error: "Booking not found." };
+    const customer = booking.customer_email
+      ? await fetchCustomerContact(booking.customer_email)
+      : null;
 
-    // 2. Fetch customer details
-    const { data: customer } = await getSupabaseAdmin()
-      .from("users")
-      .select("full_name, phone")
-      .eq("email", booking.customer_email)
-      .single();
+    const rawCustomerPhone = customer?.phone?.trim() || booking.customer_phone?.trim();
+    if (!rawCustomerPhone) return { success: false, error: "Customer phone is missing." };
 
-    if (!customer || !customer.phone) return { success: false, error: "Customer phone is missing." };
-
-    const customerPhone = cleanPhoneNumber(customer.phone);
-    const customerName = customer.full_name || "Valued Client";
+    const customerPhone = cleanPhoneNumber(rawCustomerPhone);
+    const customerName = customer?.full_name || "Valued Client";
     const salonName = booking.salons?.name || "Trimma Partner Salon";
-    const serviceName = booking.services?.name || "Premium Styling Service";
+    const serviceName = await resolveServiceName(booking.id, booking.services?.name);
 
-    // 3. Format Dynamic Cancellation Template
     const variables = {
       customer_name: customerName,
       salon_name: salonName,
       booking_date: booking.booking_date || "",
       booking_time: booking.booking_time || "",
-      service_name: serviceName
+      service_name: serviceName,
     };
 
     const cancelMessage = parseTemplate(templateCancelled || D.cancelled, variables);
 
-    console.log(`❌ Dispatching WhatsApp Booking Cancellation to ${customerPhone}:`);
+    const sendResult = await sendWhatsAppCustomerSessionOrMetaMessage({
+      trigger: "cancelled",
+      sessionStartedAt: booking.created_at,
+      phoneId,
+      accessToken,
+      customerPhone,
+      textBody: cancelMessage,
+      variables,
+      metaTemplateName: metaTemplateCancelled,
+      metaTemplateLanguage: metaTemplateLanguage,
+    });
 
-    // 4. Dispatch WhatsApp
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${phoneId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: customerPhone,
-          type: "text",
-          text: {
-            preview_url: false,
-            body: cancelMessage,
-          },
-        }),
-      }
-    );
+    if (!sendResult.success) {
+      return { success: false, error: sendResult.error };
+    }
 
-    const result = await response.json();
-    if (!response.ok) return { success: false, error: formatWhatsAppApiError(result) };
-
-    return { success: true, messageId: result.messages?.[0]?.id };
-  } catch (err: any) {
+    return {
+      success: true,
+      messageId: sendResult.messageId,
+      delivery: sendResult.delivery,
+    };
+  } catch (err: unknown) {
     console.error("❌ Unhandled cancellation WhatsApp error:", err);
-    return { success: false, error: err.message };
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to send cancellation WhatsApp.",
+    };
   }
 }
 
@@ -1263,6 +1300,8 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
     accessToken,
     bookingRescheduledEnabled,
     templateRescheduled,
+    metaTemplateRescheduled,
+    metaTemplateLanguage,
   } = await getWhatsAppMessagingConfig();
 
   if (!enabled) {
@@ -1326,17 +1365,27 @@ export async function sendWhatsAppRescheduleNotification(bookingNo: string) {
 
     const rescheduleMessage = parseTemplate(templateRescheduled || D.rescheduled, variables);
 
-    const textResult = await sendWhatsAppTextMessage(
+    const sendResult = await sendWhatsAppCustomerSessionOrMetaMessage({
+      trigger: "rescheduled",
+      sessionStartedAt: booking.created_at,
       phoneId,
       accessToken,
       customerPhone,
-      rescheduleMessage
-    );
-    if (!textResult.success) {
-      return { success: false, error: textResult.error || "Failed to send WhatsApp reschedule alert." };
+      textBody: rescheduleMessage,
+      variables,
+      metaTemplateName: metaTemplateRescheduled,
+      metaTemplateLanguage: metaTemplateLanguage,
+    });
+
+    if (!sendResult.success) {
+      return { success: false, error: sendResult.error || "Failed to send WhatsApp reschedule alert." };
     }
 
-    return { success: true, messageId: textResult.messageId, delivery: "text" as const };
+    return {
+      success: true,
+      messageId: sendResult.messageId,
+      delivery: sendResult.delivery,
+    };
   } catch (error: unknown) {
     console.error("WhatsApp Reschedule Error:", error);
     return {

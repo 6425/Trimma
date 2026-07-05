@@ -46,16 +46,16 @@ We look forward to seeing you! ✂️`,
 
   rescheduled: `Hi {customer_name}! 🌟
 
-Your appointment at *{salon_name}* has been *rescheduled* to a new date and time.
+Your appointment at *{salon_name}* has been successfully *RESCHEDULED* to a new date and time!
 
-📅 *New date:* {booking_date}
-⏰ *New time:* {booking_time}
+📅 *New Date:* {booking_date}
+⏰ *New Time:* {booking_time}
 💇 *Service:* {service_name}
 
-📍 *Location:* {salon_address}
-🗺️ *Directions:* {maps_link}
+📍 *Salon Location:* {salon_address}
+🗺️ *Navigate on Google Maps:* {maps_link}
 
-Thank you for choosing Trimma! ✂️`,
+Thank you for choosing Trimma! See you soon! ✂️`,
 
   noShow: `Hello {customer_name},
 
@@ -71,13 +71,11 @@ Trimma Notification Services ✂️`,
 
   cancelled: `Hello {customer_name},
 
-Your appointment at *{salon_name}* has been *cancelled* by the salon.
+This is to notify you that your appointment at *{salon_name}* has been *CANCELLED* by the salon.
 
-📅 *Original date:* {booking_date}
-⏰ *Original time:* {booking_time}
+📅 *Original Date:* {booking_date}
+⏰ *Original Time:* {booking_time}
 💇 *Service:* {service_name}
-
-Your 20% online reservation deposit is non-refundable. Please contact *{salon_name}* directly with any questions.
 
 Trimma Notification Services ✂️`,
 
@@ -197,7 +195,7 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     order: 2,
     title: "Booking Rescheduled Alert — Customer",
     whenFired:
-      "When a salon owner reschedules an appointment, or approves a customer reschedule request. App text (customer already received confirmmessage at booking).",
+      "When a salon reschedules or approves a customer reschedule. Within 24h of booking: editable app text below. After 24h: Meta template (appointment_rescheduled).",
     toggleKey: "bookingRescheduledEnabled" as const,
     templateKey: "templateRescheduled" as const,
     defaultTemplate: "rescheduled" as const,
@@ -236,7 +234,8 @@ export const WHATSAPP_TRIGGER_CATALOG = [
     id: "cancelled",
     order: 3,
     title: "Booking Cancelled Alert",
-    whenFired: "When the salon owner cancels a booking from the dashboard.",
+    whenFired:
+      "When the salon cancels a booking. Within 24h of booking: editable app text below. After 24h: Meta template (appointment_cancelled).",
     toggleKey: "bookingCancelledEnabled" as const,
     templateKey: "templateCancelled" as const,
     defaultTemplate: "cancelled" as const,

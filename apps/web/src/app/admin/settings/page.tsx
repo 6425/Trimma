@@ -59,6 +59,7 @@ function SettingsPanelContent() {
   const [metaTemplateReservationPaid, setMetaTemplateReservationPaid] = useState("");
   const [metaTemplateConfirmed, setMetaTemplateConfirmed] = useState("");
   const [metaTemplateRescheduled, setMetaTemplateRescheduled] = useState("");
+  const [metaTemplateCancelled, setMetaTemplateCancelled] = useState("");
   const [metaTemplateBookingCreatedOwner, setMetaTemplateBookingCreatedOwner] = useState("");
   const [metaTemplateRescheduleRequestOwner, setMetaTemplateRescheduleRequestOwner] = useState("");
   const [metaTemplateLanguage, setMetaTemplateLanguage] = useState("en_US");
@@ -114,6 +115,7 @@ function SettingsPanelContent() {
       setMetaTemplateReservationPaid(config.metaTemplateReservationPaid || "");
       setMetaTemplateConfirmed(config.metaTemplateConfirmed || "");
       setMetaTemplateRescheduled(config.metaTemplateRescheduled || "");
+      setMetaTemplateCancelled(config.metaTemplateCancelled || "");
       setMetaTemplateBookingCreatedOwner(config.metaTemplateBookingCreatedOwner || "");
       setMetaTemplateRescheduleRequestOwner(config.metaTemplateRescheduleRequestOwner || "");
       setMetaTemplateLanguage(config.metaTemplateLanguage || "en_US");
@@ -176,6 +178,7 @@ function SettingsPanelContent() {
         metaTemplateReservationPaid,
         metaTemplateConfirmed,
         metaTemplateRescheduled,
+        metaTemplateCancelled,
         metaTemplateBookingCreatedOwner,
         metaTemplateRescheduleRequestOwner,
         metaTemplateLanguage
@@ -261,6 +264,7 @@ function SettingsPanelContent() {
     metaTemplateReservationPaid,
     metaTemplateConfirmed,
     metaTemplateRescheduled,
+    metaTemplateCancelled,
     metaTemplateBookingCreatedOwner,
     metaTemplateRescheduleRequestOwner,
   };
@@ -270,6 +274,7 @@ function SettingsPanelContent() {
       metaTemplateReservationPaid: setMetaTemplateReservationPaid,
       metaTemplateConfirmed: setMetaTemplateConfirmed,
       metaTemplateRescheduled: setMetaTemplateRescheduled,
+      metaTemplateCancelled: setMetaTemplateCancelled,
       metaTemplateBookingCreatedOwner: setMetaTemplateBookingCreatedOwner,
       metaTemplateRescheduleRequestOwner: setMetaTemplateRescheduleRequestOwner,
     };
@@ -480,7 +485,7 @@ function SettingsPanelContent() {
                       Automated Notification Trigger Events & Templates
                     </h4>
                     <p className="text-[10px] text-zinc-500 mt-0.5">
-                      Only customer checkout uses a Meta template (green block). All other triggers send editable app text.
+                      Checkout uses a Meta template (green). Cancel &amp; reschedule use editable app text within 24h of booking, then Meta templates (amber block).
                     </p>
                   </div>
 
@@ -519,6 +524,47 @@ function SettingsPanelContent() {
                     <p className="text-[9px] text-emerald-800/90 leading-relaxed">
                       {WHATSAPP_CHECKOUT_META_CONFIG.metaParameterHint}
                     </p>
+                  </div>
+
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-3">
+                    <div>
+                      <div className="text-xs font-extrabold text-amber-950">
+                        After 24h — cancellation &amp; reschedule (Meta templates)
+                      </div>
+                      <p className="text-[10px] text-amber-900 mt-0.5 leading-relaxed">
+                        When a booking is older than 24 hours, salon cancel/reschedule alerts must use approved Meta templates. Within 24h, triggers #2 and #3 below send the editable app text instead.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-amber-900">
+                          Cancelled — Meta template name
+                        </Label>
+                        <Input
+                          value={metaTemplateCancelled}
+                          onChange={(e) => setMetaTemplateCancelled(e.target.value)}
+                          placeholder="appointment_cancelled"
+                          className="h-9 border-amber-200 rounded-lg text-xs font-mono"
+                        />
+                        <p className="text-[9px] text-amber-800/90">
+                          Body params: {"{{1}}"} name, {"{{2}}"} salon, {"{{3}}"} service, {"{{4}}"} date, {"{{5}}"} time.
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-amber-900">
+                          Rescheduled — Meta template name
+                        </Label>
+                        <Input
+                          value={metaTemplateRescheduled}
+                          onChange={(e) => setMetaTemplateRescheduled(e.target.value)}
+                          placeholder="appointment_rescheduled"
+                          className="h-9 border-amber-200 rounded-lg text-xs font-mono"
+                        />
+                        <p className="text-[9px] text-amber-800/90">
+                          Same {"{{1}}"}–{"{{5}}"} order as cancellation; new date/time in {"{{4}}"} / {"{{5}}"}.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="space-y-6">
