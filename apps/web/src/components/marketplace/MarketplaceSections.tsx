@@ -63,7 +63,7 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
           return (
             <div 
               key={salon.id} 
-              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl sm:hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative h-full"
+              className="trimma-marketplace-card bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl sm:hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative h-full"
             >
               <div className="aspect-[4/3] sm:h-52 sm:aspect-auto relative overflow-hidden bg-slate-100">
                 <Image 

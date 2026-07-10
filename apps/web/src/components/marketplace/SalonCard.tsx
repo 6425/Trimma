@@ -45,7 +45,7 @@ export function SalonCard(props: SalonCardInternalProps) {
   const [imageSrc, setImageSrc] = useState(originalImage);
 
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative h-full">
+    <div className="trimma-marketplace-card bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative h-full">
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
         <Image
           src={imageSrc}
@@ -88,7 +88,7 @@ export function SalonCard(props: SalonCardInternalProps) {
           )}
         </div>
       </div>
-      <div className="p-2.5 sm:p-[var(--trimma-card-padding)] flex flex-col flex-1 trimma-surface-light min-w-0">
+      <div className="p-2.5 sm:p-[var(--trimma-card-padding)] flex flex-col flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1 sm:mb-2 gap-1">
           <h3 className="font-bold text-sm sm:text-xl text-zinc-900 line-clamp-2 sm:line-clamp-1 group-hover:text-brand-pink transition-colors leading-snug">
             <Link href={linkTarget}>{salon.name}</Link>

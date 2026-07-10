@@ -1804,12 +1804,12 @@
 /* ── Dark mode (html.dark) — public marketplace + customer shell ── */
 html.dark {
   color-scheme: dark;
-  --foreground: #ffc800;
+  --foreground: #ffffff;
 }
 
 html.dark .trimma-marketplace-shell {
   background-color: #0b0b0b;
-  color: #ffc800;
+  color: #ffffff;
 }
 
 html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) {
@@ -1818,6 +1818,14 @@ html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) {
 
 html.dark .trimma-marketplace-shell .bg-slate-50 {
   background-color: #0f0f0f !important;
+}
+
+html.dark .trimma-marketplace-shell .bg-slate-100 {
+  background-color: #262626 !important;
+}
+
+html.dark .trimma-marketplace-shell .bg-zinc-50 {
+  background-color: #1a1a1a !important;
 }
 
 html.dark .trimma-marketplace-shell :is(
@@ -1830,16 +1838,16 @@ html.dark .trimma-marketplace-shell :is(
   .text-[#1A1C29],
   .dark\:text-zinc-100,
   .text-zinc-100
-):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not(.text-white) {
-  color: #ffc800 !important;
+):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#ffc800]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-primary"]):not(.text-white) {
+  color: #ffffff !important;
 }
 
-html.dark .trimma-marketplace-shell :is(.text-zinc-500, .text-zinc-400, .text-zinc-300):not(:is(.page-hero-shell *, .page-hero-light *)) {
-  color: #ffd633 !important;
+html.dark .trimma-marketplace-shell :is(.text-zinc-500, .text-zinc-400, .text-zinc-300, .text-slate-300):not(:is(.page-hero-shell *, .page-hero-light *)) {
+  color: #a1a1aa !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.border-zinc-200, .border-zinc-100, .border-slate-200, .border-slate-100, .border-black\/10) {
-  border-color: rgba(255, 200, 0, 0.18) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.hover\:bg-zinc-100:hover, .hover\:bg-zinc-50:hover, .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover):not(header *) {
@@ -1848,20 +1856,20 @@ html.dark .trimma-marketplace-shell :is(.hover\:bg-zinc-100:hover, .hover\:bg-zi
 
 html.dark .trimma-marketplace-shell .trimma-light-context {
   --background: #0b0b0b;
-  --foreground: #ffc800;
+  --foreground: #ffffff;
   --card: #151515;
-  --card-foreground: #ffc800;
+  --card-foreground: #ffffff;
   --muted: #1a1a1a;
-  --muted-foreground: #ffd633;
+  --muted-foreground: #a1a1aa;
   --accent: #262626;
-  --accent-foreground: #ffc800;
-  --border: rgba(255, 200, 0, 0.18);
-  color: #ffc800;
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 html.dark .trimma-marketplace-shell header.trimma-light-context,
 html.dark .trimma-marketplace-shell footer {
-  color: #ffc800;
+  color: #ffffff;
 }
 
 /* Dark mode header nav — yellow hover pill with black label (readable on black bar) */
@@ -2088,4 +2096,75 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) :is(svg, [class*="lucide"]) {
   color: #ffc800 !important;
   stroke: #ffc800 !important;
+}
+
+/* Salon / marketplace cards — readable white type on dark card surfaces */
+html.dark .trimma-marketplace-shell .trimma-marketplace-card {
+  color: #ffffff;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card :is(
+  .text-zinc-900,
+  .text-zinc-800,
+  .text-zinc-700,
+  .text-zinc-600,
+  .text-zinc-950,
+  .text-[#1A1C29],
+  .text-black
+) {
+  color: #ffffff !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card :is(
+  .text-zinc-500,
+  .text-zinc-400,
+  .text-zinc-300,
+  .text-slate-300,
+  .text-slate-400
+) {
+  color: #a1a1aa !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card .bg-slate-100 :is(
+  .text-zinc-600,
+  .text-zinc-500,
+  .text-zinc-400,
+  .text-slate-400
+) {
+  color: #d4d4d8 !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card :is(.bg-amber-50, .text-amber-700) {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card :is(.bg-emerald-50, .text-emerald-700) {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card a[class*="border-slate"] {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card a[class*="border-slate"]:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffc800 !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-marketplace-card .bg-slate-100.text-slate-400 {
+  background-color: #262626 !important;
+  color: #71717a !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) :is(input, select, textarea, option) {
+  color: #ffffff !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) :is(input, select, textarea)::placeholder {
+  color: #71717a !important;
 }

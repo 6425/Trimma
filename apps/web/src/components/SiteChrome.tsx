@@ -67,7 +67,7 @@ export default function SiteChrome({
   }
 
   return withProviders(
-    <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-[#ffc800]">
+    <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-white">
       <GlobalHeader navCategories={navCategories} />
       <main className="flex-1">{children}</main>
       <GlobalFooter />
