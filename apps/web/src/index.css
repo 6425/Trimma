@@ -2168,3 +2168,66 @@ html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) :is(input, selec
 html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) :is(input, select, textarea)::placeholder {
   color: #71717a !important;
 }
+
+/* Hero search panel — readable white type on dark fields (beats page-hero black-text rules) */
+html.dark .trimma-marketplace-shell .trimma-hero-search:not([class*="bg-[#ffc800]"]) {
+  background-color: #151515 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff;
+}
+
+html.dark .trimma-marketplace-shell .trimma-hero-search :is(.bg-zinc-50, .bg-white) {
+  background-color: #1f1f1f !important;
+}
+
+html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .trimma-hero-search :is(
+  input,
+  select,
+  textarea,
+  .text-zinc-900,
+  .text-zinc-800,
+  .text-zinc-700,
+  .text-zinc-600,
+  .text-zinc-500,
+  .text-zinc-400,
+  .text-black,
+  .text-[#1A1C29]
+) {
+  color: #ffffff !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-hero-search :is(
+  input,
+  select,
+  textarea,
+  .text-zinc-900,
+  .text-zinc-800,
+  .text-zinc-700,
+  .text-zinc-600,
+  .text-zinc-500,
+  .text-zinc-400,
+  .text-black,
+  .text-[#1A1C29]
+) {
+  color: #ffffff !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-hero-search input::placeholder {
+  color: #a1a1aa !important;
+  opacity: 1;
+}
+
+html.dark .trimma-marketplace-shell .trimma-hero-search select option {
+  color: #0a0a0a;
+  background-color: #ffffff;
+}
+
+html.dark .trimma-marketplace-shell .trimma-hero-search :is(svg, [class*="lucide"]) {
+  color: #ffc800 !important;
+  stroke: #ffc800 !important;
+}
+
+html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+}

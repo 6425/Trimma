@@ -99,7 +99,7 @@ export function SearchHeroWidget() {
       <div className="relative z-20 px-4 sm:px-6 flex flex-col items-center -mt-36 md:-mt-10 mb-8 sm:mb-12">
         <form
           onSubmit={handleSearch}
-          className="bg-[#ffc800] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-2xl w-full max-w-5xl flex flex-col md:flex-row gap-3 md:gap-1.5 border-[4px] border-white dark:border-[#0B0B0B]"
+          className="trimma-hero-search bg-[#ffc800] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-2xl w-full max-w-5xl flex flex-col md:flex-row gap-3 md:gap-1.5 border-[4px] border-white dark:border-[#0B0B0B]"
         >
           {/* Location */}
           <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#ffc800] transition-colors shadow-sm md:shadow-none">
