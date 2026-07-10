@@ -8,6 +8,7 @@ import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "l
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonListRow } from "../components/marketplace/SalonListRow";
+import { SalonCard } from "../components/marketplace/SalonCard";
 import { LiveCountdown } from "../components/marketplace/LiveCountdown";
 import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
 import {
@@ -225,6 +226,24 @@ export default function SalonsClient({
     featured: s.featured,
     isVerified: s.isVerified,
   });
+
+  const mapToCardProps = (s: Salon) => {
+    const row = mapToRowProps(s);
+    return {
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      image: row.image,
+      status: row.status,
+      rating: row.rating,
+      reviews: row.reviews,
+      city: row.city,
+      categories: row.categories,
+      nextAvailable: row.nextAvailable,
+      priceFrom: row.priceFrom,
+      isVerified: row.isVerified,
+    };
+  };
 
   const locationLabel = selectedLocation
     ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1)
@@ -464,15 +483,22 @@ export default function SalonsClient({
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredSalons.map((salon, index) => (
-                  <SalonListRow
-                    key={salon.id}
-                    salon={mapToRowProps(salon)}
-                    priority={index < 4}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 gap-3 lg:hidden">
+                  {filteredSalons.map((salon) => (
+                    <SalonCard key={salon.id} salon={mapToCardProps(salon)} />
+                  ))}
+                </div>
+                <div className="hidden lg:flex lg:flex-col lg:space-y-4">
+                  {filteredSalons.map((salon, index) => (
+                    <SalonListRow
+                      key={salon.id}
+                      salon={mapToRowProps(salon)}
+                      priority={index < 4}
+                    />
+                  ))}
+                </div>
+              </>
             )}
 
             {isLoading && page > 0 && (

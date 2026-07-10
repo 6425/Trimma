@@ -55,7 +55,7 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
         {featured.map(salon => {
           const linkTarget = `/salons/${salon.slug || salon.id}`;
           const isVerified = isSalonVerified(salon.isVerified);
@@ -63,14 +63,14 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
           return (
             <div 
               key={salon.id} 
-              className="bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative"
+              className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-xl sm:hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col group relative h-full"
             >
-              <div className="h-52 relative overflow-hidden bg-slate-100">
+              <div className="aspect-[4/3] sm:h-52 sm:aspect-auto relative overflow-hidden bg-slate-100">
                 <Image 
                   src={salon.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2940&auto=format&fit=crop"} 
                   alt={salon.name} 
                   fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                  sizes="(max-width: 1024px) 50vw, (max-width: 1200px) 33vw, 25vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-700" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent" />
@@ -83,9 +83,9 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                   </div>
                 )}
                 
-                <div className="absolute top-3 left-3 flex gap-2 z-20 flex-wrap">
-                  <Badge className="bg-amber-500 font-extrabold border-none shadow-sm text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
-                    <Star className="w-3 h-3 mr-1 fill-white" /> Featured Elite
+                <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 sm:gap-2 z-20 flex-wrap max-w-[calc(100%-0.5rem)]">
+                  <Badge className="bg-amber-500 font-extrabold border-none shadow-sm text-white text-[8px] sm:text-[10px] uppercase tracking-wider px-1.5 py-0.5 sm:px-2.5 sm:py-1">
+                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1 fill-white" /> Featured
                   </Badge>
                   {isVerified && <VerifiedSalonBadge size="xs" />}
                   {salon.status === "Open Now" && (
@@ -96,8 +96,8 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                 </div>
               </div>
 
-              <div className="p-6 flex-1 flex flex-col">
-                <div className="flex items-start gap-4 mb-4">
+              <div className="p-2.5 sm:p-6 flex-1 flex flex-col min-w-0">
+                <div className="hidden sm:flex items-start gap-4 mb-4">
                   <Avatar className="w-12 h-12 border-2 border-white shadow-md rounded-xl bg-white shrink-0">
                     <AvatarImage src={salon.logo || salon.image} className="object-cover" />
                     <AvatarFallback>{salon.name[0]}</AvatarFallback>
@@ -114,38 +114,43 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-sm font-medium text-zinc-500 mb-5">
-                  <div className="flex items-center text-zinc-900 font-bold">
-                    <Star className="w-4 h-4 text-amber-400 fill-amber-400 mr-1" /> {salon.rating} 
-                    <span className="text-zinc-400 ml-1 font-medium">({salon.reviews} reviews)</span>
+                <h3 className="sm:hidden font-bold text-zinc-900 text-sm group-hover:text-brand-pink transition-colors line-clamp-2 leading-snug mb-1.5">
+                  <Link href={linkTarget}>{salon.name}</Link>
+                </h3>
+
+                <div className="flex items-center gap-1.5 sm:gap-3 text-[11px] sm:text-sm font-medium text-zinc-500 mb-2 sm:mb-5 min-w-0">
+                  <div className="flex items-center text-zinc-900 font-bold shrink-0">
+                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400 fill-amber-400 mr-0.5 sm:mr-1" /> {salon.rating} 
+                    <span className="text-zinc-400 ml-0.5 sm:ml-1 font-medium hidden sm:inline">({salon.reviews} reviews)</span>
                   </div>
-                  <span className="text-slate-300">•</span>
-                  <div className="flex items-center font-semibold">
-                    <MapPin className="w-4 h-4 mr-1 text-zinc-400" /> {salon.city}
+                  <span className="text-slate-300 shrink-0">•</span>
+                  <div className="flex items-center font-semibold min-w-0 truncate">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1 text-zinc-400 shrink-0" />
+                    <span className="truncate">{salon.city}</span>
                   </div>
                 </div>
 
-                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                  <div className="text-zinc-500 text-xs font-medium">
-                    From <span className="text-base font-bold text-zinc-900 block">LKR {salon.priceFrom}</span>
+                <div className="mt-auto pt-2 sm:pt-4 border-t border-slate-100 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-zinc-500 text-[11px] sm:text-xs font-medium">
+                    From <span className="text-sm sm:text-base font-bold text-zinc-900 sm:block">LKR {salon.priceFrom.toLocaleString()}</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Link 
                       href={linkTarget}
-                      className="inline-flex items-center justify-center rounded-xl font-bold border border-slate-200 text-zinc-700 text-xs h-9 px-3.5 hover:bg-slate-50 transition-colors"
+                      className="hidden sm:inline-flex items-center justify-center rounded-xl font-bold border border-slate-200 text-zinc-700 text-xs h-9 px-3.5 hover:bg-slate-50 transition-colors"
                     >
                       Details
                     </Link>
                     {isVerified ? (
                       <Link 
                         href={`${linkTarget}?action=book`}
-                        className="inline-flex items-center justify-center rounded-xl px-4 bg-primary-gradient hover:opacity-95 text-white text-xs font-black shadow-md shadow-brand-pink/15 transition-all h-9 border-none"
+                        className="inline-flex flex-1 sm:flex-none items-center justify-center rounded-xl px-3 sm:px-4 min-h-11 sm:min-h-9 bg-primary-gradient hover:opacity-95 text-white text-xs font-black shadow-md shadow-brand-pink/15 transition-all border-none"
                       >
-                        Book Now
+                        Book
                       </Link>
                     ) : (
-                      <div className="inline-flex items-center justify-center rounded-xl px-4 bg-slate-100 text-slate-400 text-xs font-black h-9 border-none cursor-not-allowed">
-                        Book Now
+                      <div className="inline-flex flex-1 sm:flex-none items-center justify-center rounded-xl px-3 sm:px-4 min-h-11 sm:min-h-9 bg-slate-100 text-slate-400 text-xs font-black border-none cursor-not-allowed">
+                        Book
                       </div>
                     )}
                   </div>
@@ -182,7 +187,7 @@ export function PopularSalonsSection({ salons, contextName }: MarketplaceSection
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
         {popular.map(salon => (
           <SalonCard key={salon.id} salon={salon} />
         ))}
