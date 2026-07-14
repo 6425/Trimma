@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 /** Trimma public launch — midnight Sri Lanka (UTC+5:30). */
-const LIVE_AT = new Date("2026-07-15T00:00:00+05:30").getTime();
+const LIVE_AT = new Date("2026-07-19T00:00:00+05:30").getTime();
 
 type TimeLeft = {
   days: number;
@@ -80,13 +80,13 @@ export function LiveCountdown() {
   return (
     <div className="trimma-live-countdown mt-5 mb-1">
       <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.22em] text-zinc-700 mb-3">
-        Going live · 15 July 2026
+        Going live · 19 July 2026
       </p>
       <div
         className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-3 rounded-2xl bg-white/95 border border-slate-200 shadow-lg backdrop-blur-sm"
         role="timer"
         suppressHydrationWarning
-        aria-label={`Countdown to 15 July 2026: ${time.days} days, ${time.hours} hours, ${time.minutes} minutes, ${time.seconds} seconds`}
+        aria-label={`Countdown to 19 July 2026: ${time.days} days, ${time.hours} hours, ${time.minutes} minutes, ${time.seconds} seconds`}
       >
         <DigitBlock value={pad(time.days)} label="Days" />
         <Colon />
