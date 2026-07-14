@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Sparkles, Save, RefreshCw, Palette, Layers, Sliders, Type, Upload, Trash2, Crop, ZoomIn, Move, FileImage, Code } from "lucide-react";
+import { sanitizeSvgMarkup } from "@/lib/sanitize-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ export default function AdminBrandingPage() {
   
   // Visual Asset State
   const [logoSvgRaw, setLogoSvgRaw] = useState("");
+  const safeLogoSvgRaw = useMemo(() => sanitizeSvgMarkup(logoSvgRaw), [logoSvgRaw]);
   const [logoImageUrl, setLogoImageUrl] = useState("");
 
   // Crop / Upload Workspace State
@@ -329,7 +331,7 @@ export default function AdminBrandingPage() {
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 flex items-center justify-center">
                     {logoSvgRaw ? (
-                      <div className="w-full h-full object-contain [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full" dangerouslySetInnerHTML={{ __html: logoSvgRaw }} />
+                      <div className="w-full h-full object-contain [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full" dangerouslySetInnerHTML={{ __html: safeLogoSvgRaw }} />
                     ) : (
                       <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
                         <circle cx="50" cy="50" r="46" fill="url(#logo-grad-bg)" stroke={logoNameColor} strokeWidth="3" />
@@ -739,7 +741,7 @@ export default function AdminBrandingPage() {
                   {/* Icon Thumbnail preview frame */}
                   <div className="w-16 h-16 rounded-xl border border-slate-200 bg-white flex items-center justify-center relative overflow-hidden flex-shrink-0">
                     {logoSvgRaw ? (
-                      <div className="w-full h-full p-2 object-contain [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full" dangerouslySetInnerHTML={{ __html: logoSvgRaw }} />
+                      <div className="w-full h-full p-2 object-contain [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full" dangerouslySetInnerHTML={{ __html: safeLogoSvgRaw }} />
                     ) : (
                       <FileImage className="w-8 h-8 text-slate-355" />
                     )}

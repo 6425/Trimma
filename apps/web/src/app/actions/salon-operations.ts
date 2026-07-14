@@ -28,6 +28,7 @@ import {
 } from "@/lib/staff-allocation";
 import { normalizeSalonStaffInsertRow } from "@/lib/salon-staff-insert";
 import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
+import { sanitizeTextFields } from "@/lib/sanitize-input";
 import { syncSalonOperatingHours, syncStaffSchedules } from "@/lib/salon-operating-hours";
 import {
   calculateSalonOnboardingScore,
@@ -540,7 +541,10 @@ export async function insertSalonPromotionPackages(payloads: Record<string, unkn
         if (typeof globalId !== "string" || !globalId) return true;
         return !existingGlobalIds.has(globalId);
       })
-      .map((row) => ({ ...row, salon_id: ctx.salonId }));
+      .map((row) => ({
+        ...sanitizeTextFields(row, ["name", "description"]),
+        salon_id: ctx.salonId,
+      }));
 
     if (rows.length === 0) {
       throw new Error("These promotion packages are already published in your salon.");
@@ -600,7 +604,7 @@ export async function updateSalonPromotionPackage(packageId: string, payload: Re
 
     const { error } = await supabase
       .from("salon_promotion_packages")
-      .update(payload)
+      .update(sanitizeTextFields(payload, ["name", "description"]))
       .eq("id", packageId)
       .eq("salon_id", ctx.salonId);
     if (error) throw new Error(error.message);
@@ -652,7 +656,7 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
       .map((row) => {
         const { category_id: _categoryId, ...rest } = row;
         return {
-          ...rest,
+          ...sanitizeTextFields(rest, ["name", "description", "category"]),
           salon_id: ctx.salonId,
           status: "inactive",
         };
@@ -701,7 +705,10 @@ export async function updateSalonService(serviceId: string, payload: Record<stri
       }
     }
 
-    const { error } = await supabase.from("services").update(payload).eq("id", serviceId);
+    const { error } = await supabase
+      .from("services")
+      .update(sanitizeTextFields(payload, ["name", "description", "category"]))
+      .eq("id", serviceId);
     if (error) throw new Error(error.message);
     await publishSalonCatalogUpdates(supabase, ctx.salonId, ctx.salon);
 
@@ -743,7 +750,10 @@ export async function insertSalonStaff(payload: Record<string, unknown>) {
   const result = await withSalonDb(async (supabase, ctx) => {
     const { data, error } = await supabase
       .from("salon_staff")
-      .insert({ ...payload, salon_id: ctx.salonId })
+      .insert({
+        ...sanitizeTextFields(payload, ["name", "role", "email", "experience"]),
+        salon_id: ctx.salonId,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -760,7 +770,10 @@ export async function insertSalonStaff(payload: Record<string, unknown>) {
 export async function updateSalonStaff(staffId: string, payload: Record<string, unknown>) {
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonStaffMember(supabase, ctx, staffId);
-    const { error } = await supabase.from("salon_staff").update(payload).eq("id", staffId);
+    const { error } = await supabase
+      .from("salon_staff")
+      .update(sanitizeTextFields(payload, ["name", "role", "email", "experience"]))
+      .eq("id", staffId);
     if (error) throw new Error(error.message);
     if (payload.working_hours != null) {
       await syncStaffSchedules(supabase, staffId, payload.working_hours);
@@ -1085,9 +1098,12 @@ export async function saveOwnerVerificationData(
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null
 ) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const finalPayload = await applySalonSlugOnNameChange(supabase, ctx.salonId, {
-      ...updatePayload,
-    });
+    const finalPayload = sanitizeTextFields(
+      await applySalonSlugOnNameChange(supabase, ctx.salonId, {
+        ...updatePayload,
+      }),
+      ["name", "phone", "email", "address", "city", "province", "district", "description", "summary", "category", "map_url", "website"]
+    );
 
     // 2. Update Salon Data
     const { error: updateError } = await supabase
@@ -1115,7 +1131,12 @@ export async function saveOwnerVerificationData(
       if (servicesData.svcsToAdd.length > 0) {
         const { error: s1 } = await supabase
           .from("services")
-          .insert(servicesData.svcsToAdd.map((s) => ({ ...s, salon_id: ctx.salonId })));
+          .insert(
+            servicesData.svcsToAdd.map((s) => ({
+              ...sanitizeTextFields(s, ["name", "description", "category"]),
+              salon_id: ctx.salonId,
+            }))
+          );
         if (s1) throw new Error(s1.message);
       }
     }

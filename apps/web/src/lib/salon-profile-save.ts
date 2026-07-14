@@ -1,4 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sanitizeText } from "@/lib/sanitize-input";
+
+
+const SALON_PROFILE_TEXT_FIELDS = [
+  "name",
+  "phone",
+  "email",
+  "address",
+  "city",
+  "province",
+  "district",
+  "description",
+  "summary",
+  "category",
+  "map_url",
+  "website",
+] as const;
 
 export const SALON_PROFILE_UPDATE_FIELDS = [
   "name",
@@ -116,6 +133,12 @@ export function pickSalonProfileUpdate(
   for (const key of SALON_PROFILE_UPDATE_FIELDS) {
     if (key in profile) {
       payload[key] = profile[key];
+    }
+  }
+
+  for (const key of SALON_PROFILE_TEXT_FIELDS) {
+    if (typeof payload[key] === "string") {
+      payload[key] = sanitizeText(payload[key] as string);
     }
   }
 
