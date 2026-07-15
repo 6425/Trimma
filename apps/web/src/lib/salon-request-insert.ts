@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { sanitizeText } from "@/lib/sanitize-input";
 import type { OnboardingLeadFormInput } from "@/lib/onboarding-lead-insert";
 
 export type SalonRequestInsertInput = {
@@ -66,13 +67,13 @@ export async function insertSalonRequest(
   const { data, error } = await supabase
     .from("salon_requests")
     .insert({
-      full_name: input.full_name,
+      full_name: sanitizeText(input.full_name),
       email: input.email,
-      phone: input.phone || null,
-      business_name: input.business_name || null,
-      business_type: input.business_type || null,
-      inquiry_type: input.inquiry_type,
-      message: input.message,
+      phone: sanitizeText(input.phone || "") || null,
+      business_name: sanitizeText(input.business_name || "") || null,
+      business_type: sanitizeText(input.business_type || "") || null,
+      inquiry_type: sanitizeText(input.inquiry_type),
+      message: sanitizeText(input.message),
       source: input.source,
       status: input.status || "new",
       admin_notes: input.admin_notes || null,

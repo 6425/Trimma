@@ -5,6 +5,7 @@ import { parseDisplayTimeSlot, resolveStaffForBookingSlot } from "@/lib/booking-
 import { filterStaffQualifiedForServices, assertQualifiedStaffForServices, filterServicesWithStaffCoverage, computeBookingStaffCommission } from "@/lib/staff-allocation";
 import { enrichBookingsWithDurations } from "@/lib/booking-conflict-data";
 import { insertBookingRecord } from "@/lib/booking-insert";
+import { sanitizeText } from "@/lib/sanitize-input";
 import { calculateCommissionSplit, getReservationDepositPercentForSalon, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
 import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notifications";
 import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
@@ -77,7 +78,9 @@ export async function createDirectBooking(
   try {
     const supabase = createSupabaseAdminClient();
     const customerEmail = (customerDetails.email || "guest@trimma.com").trim().toLowerCase();
-    const { customerName } = splitCustomerName(customerDetails.fullName);
+    const { customerName: rawCustomerName } = splitCustomerName(customerDetails.fullName);
+    const customerName = sanitizeText(rawCustomerName);
+    const customerPhone = sanitizeText(customerDetails.phone);
 
     const { data: existingUser } = await supabase
       .from("users")
@@ -89,14 +92,14 @@ export async function createDirectBooking(
       const { error: userInsertError } = await supabase.from("users").insert({
         email: customerEmail,
         full_name: customerName,
-        phone: customerDetails.phone,
+        phone: customerPhone,
         global_role: "customer",
       });
       if (userInsertError) throw new Error(userInsertError.message);
     } else {
       const { error: userUpdateError } = await supabase
         .from("users")
-        .update({ full_name: customerName, phone: customerDetails.phone })
+        .update({ full_name: customerName, phone: customerPhone })
         .eq("email", customerEmail);
       if (userUpdateError) throw new Error(userUpdateError.message);
     }

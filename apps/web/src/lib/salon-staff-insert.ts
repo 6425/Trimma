@@ -1,3 +1,5 @@
+import { sanitizeText } from "@/lib/sanitize-input";
+
 type StaffServiceConfig = {
   enabled?: boolean;
   commission?: string | number;
@@ -435,9 +437,9 @@ export function normalizeSalonStaffInsertRow(
 
   return {
     salon_id: salonId,
-    name: staff.name || "Staff",
-    email: staff.email || null,
-    role: staff.role || "stylist",
+    name: sanitizeText(staff.name || "Staff"),
+    email: sanitizeText(staff.email || "") || null,
+    role: sanitizeText(staff.role || "stylist"),
     commission_rate: staff.commission_rate ?? 0,
     status: staff.status || "active",
     avatar_url: staff.avatar_url || null,

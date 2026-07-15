@@ -10,6 +10,7 @@ import { saveAdminSalonRecord } from "@/lib/admin-salon-save-core";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { sanitizeSvgMarkup } from "@/lib/sanitize-input";
 import { findAuthUserIdByEmail, syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import {
   saveBookingCommissionMaster,
@@ -252,11 +253,15 @@ export async function simulateAdminTestPayment() {
 // ─── Branding & profile ─────────────────────────────────────────────────────
 
 export async function saveGlobalBrandingSettings(input: Record<string, unknown>) {
+  const safeInput = { ...input };
+  if ("logo_svg_raw" in safeInput) {
+    safeInput.logo_svg_raw = sanitizeSvgMarkup(safeInput.logo_svg_raw);
+  }
   const result = await withAdminDb(async (supabase) => {
     const { error } = await supabase.from("global_branding_settings").upsert({
       id: BRANDING_SETTINGS_ID,
       updated_at: new Date().toISOString(),
-      ...input,
+      ...safeInput,
     });
     if (error) throw new Error(error.message);
   });

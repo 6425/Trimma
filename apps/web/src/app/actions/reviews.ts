@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { sanitizeText } from "@/lib/sanitize-input";
 import {
   buildReviewSummary,
   isBookingAppointmentPast,
@@ -534,7 +535,7 @@ export async function submitSalonReviewReply(input: {
     const payload = {
       review_id: review.id,
       salon_owner_email: email,
-      reply_text: replyText,
+      reply_text: sanitizeText(replyText),
       updated_at: new Date().toISOString(),
     };
 

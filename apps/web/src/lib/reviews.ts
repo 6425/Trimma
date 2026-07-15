@@ -1,4 +1,5 @@
 import { APP_BASE_URL } from "@/lib/email/config";
+import { sanitizeText } from "@/lib/sanitize-input";
 
 export function buildCustomerReviewLink(bookingId: string, baseUrl = APP_BASE_URL) {
   return `${baseUrl}/customer/bookings?review=${encodeURIComponent(bookingId)}`;
@@ -105,7 +106,7 @@ export function validateReviewText(reviewText: string) {
       error: "Please remove phone numbers, email addresses, or external links.",
     };
   }
-  return { ok: true as const, value: trimmed };
+  return { ok: true as const, value: sanitizeText(trimmed) };
 }
 
 export function containsBlockedReviewContent(text: string) {

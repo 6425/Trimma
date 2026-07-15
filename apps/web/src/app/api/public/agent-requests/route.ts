@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { sanitizeText } from "@/lib/sanitize-input";
 
 export type AgentRequestInput = {
   firstName: string;
@@ -72,16 +73,16 @@ export async function POST(req: Request) {
     const { data, error } = await supabase
       .from("agent_requests")
       .insert({
-        first_name: body.firstName!.trim(),
-        last_name: body.lastName!.trim(),
+        first_name: sanitizeText(body.firstName!.trim()),
+        last_name: sanitizeText(body.lastName!.trim()),
         email,
-        phone: body.phone?.trim() || null,
-        province: body.province!.trim(),
-        district: body.district!.trim(),
-        city: body.city?.trim() || null,
-        address: body.address!.trim(),
-        nic_no: body.nicNo!.trim(),
-        account_details: body.accountDetails!.trim(),
+        phone: sanitizeText(body.phone?.trim() || "") || null,
+        province: sanitizeText(body.province!.trim()),
+        district: sanitizeText(body.district!.trim()),
+        city: sanitizeText(body.city?.trim() || "") || null,
+        address: sanitizeText(body.address!.trim()),
+        nic_no: sanitizeText(body.nicNo!.trim()),
+        account_details: sanitizeText(body.accountDetails!.trim()),
         status: "pending",
       })
       .select("id")
