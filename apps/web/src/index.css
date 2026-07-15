@@ -817,6 +817,14 @@
   .page-hero-image {
     @apply w-full h-full object-cover opacity-25 mix-blend-multiply;
   }
+  /* Homepage hero: show the photo clearly, keep black text readable */
+  .home-hero .page-hero-image {
+    opacity: 1;
+    mix-blend-mode: normal;
+  }
+  .home-hero .page-hero-overlay {
+    background: linear-gradient(to top, rgba(255,255,255,0.80), rgba(255,255,255,0.58), rgba(255,255,255,0.70));
+  }
   .text-gradient {
     background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
     -webkit-background-clip: text;

@@ -22,7 +22,7 @@ import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSect
 import type { SalonDealRow } from "@/lib/deals";
 
 const HERO_BACKGROUND = optimizeHeroImageUrl(
-  "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2938&auto=format&fit=crop",
   1280
 );
 
@@ -273,7 +273,7 @@ export default function SalonsClient({
       </Suspense>
 
       {/* HERO */}
-      <section className="page-hero-shell py-10 md:py-14">
+      <section className="page-hero-shell home-hero py-10 md:py-14">
         <div className="absolute inset-0 z-0">
           <img
             src={HERO_BACKGROUND}
