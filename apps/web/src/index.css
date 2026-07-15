@@ -660,15 +660,15 @@
   .page-hero-shell {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
-    border-bottom: 1px solid rgb(245 183 0 / 0.3);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid rgb(0 0 0 / 0.06);
     color: #0a0a0a;
   }
   .page-hero-light {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
-    border-bottom: 1px solid rgb(245 183 0 / 0.2);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 1px solid rgb(0 0 0 / 0.06);
     color: #0a0a0a;
   }
   .hero-ink,
@@ -812,7 +812,7 @@
     font-size: 0.875rem;
   }
   .page-hero-overlay {
-    background: linear-gradient(to top, rgba(255,253,64, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28));
+    background: linear-gradient(to top, rgba(255,255,255,0.80), rgba(255,255,255,0.88), rgba(255,255,255,0.95));
   }
   .page-hero-image {
     @apply w-full h-full object-cover opacity-25 mix-blend-multiply;
@@ -2040,9 +2040,9 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
 
 /* Hero bands stay yellow in dark mode — black type for readability */
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) {
-  background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
   color: #0a0a0a !important;
-  border-bottom-color: rgb(245 183 0 / 0.3) !important;
+  border-bottom-color: rgb(0 0 0 / 0.06) !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
@@ -2110,7 +2110,7 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .page-hero-overlay {
-  background: linear-gradient(to top, rgba(255,253,64, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28)) !important;
+  background: linear-gradient(to top, rgba(255,255,255,0.80), rgba(255,255,255,0.88), rgba(255,255,255,0.95)) !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) {
