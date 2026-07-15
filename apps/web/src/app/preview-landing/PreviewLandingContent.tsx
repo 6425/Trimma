@@ -117,11 +117,13 @@ const features = [
     icon: CalendarDays,
     title: "Calendar",
     text: "Smart calendar. No clashes. Always organised.",
+    image: "/assets/features/steps/step-4-reserve-slot.png",
   },
   {
     icon: Tag,
     title: "Promotions",
     text: "Create offers. Send campaigns. Fill your chairs.",
+    image: "/assets/features/dashboard/income-breakdown.png",
   },
   {
     icon: BarChart3,
@@ -133,6 +135,7 @@ const features = [
     icon: Smartphone,
     title: "Mobile App",
     text: "Run your salon from your pocket. iOS & Android.",
+    image: "/assets/login_mockup.webp",
   },
   {
     icon: Brain,
@@ -144,6 +147,7 @@ const features = [
     icon: Bell,
     title: "Automated Reminders",
     text: "WhatsApp & email reminders reduce no-shows.",
+    image: "/assets/features/steps/step-5-confirmed-email.png",
   },
 ];
 
@@ -210,6 +214,33 @@ const faqs = [
   {
     q: "How do payments work?",
     a: "Customers can pay a reservation deposit online securely, or pay in full at the salon. You control the policy per service.",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Nimali Perera",
+    role: "Owner, Bloom Beauty Lounge",
+    location: "Colombo",
+    avatar: "https://i.pravatar.cc/160?img=47",
+    quote:
+      "No-shows dropped almost overnight. My chairs stay full on weekdays now, and I finally stopped chasing customers on WhatsApp.",
+  },
+  {
+    name: "Ashan Fernando",
+    role: "Founder, Sharp Cuts Barber",
+    location: "Kandy",
+    avatar: "https://i.pravatar.cc/160?img=13",
+    quote:
+      "Staff commissions used to take my whole Sunday. Trimma calculates everything automatically — I just review and pay.",
+  },
+  {
+    name: "Dilani Jayawardena",
+    role: "Manager, Serenity Spa & Salon",
+    location: "Galle",
+    avatar: "https://i.pravatar.cc/160?img=32",
+    quote:
+      "The reports show me exactly which services make money. We opened our second branch within a year of switching.",
   },
 ];
 
@@ -482,6 +513,45 @@ export function PreviewLandingContent() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TESTIMONIALS ============ */}
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <h2 className="text-3xl lg:text-4xl font-black text-center tracking-tight">
+            Loved by Salon Owners
+          </h2>
+          <p className="mt-4 text-center text-zinc-600 max-w-2xl mx-auto">
+            Real results from beauty businesses growing with Trimma across Sri Lanka.
+          </p>
+          <div className="mt-12 grid md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="rounded-3xl border border-zinc-100 bg-white p-7 shadow-sm hover:shadow-xl transition-shadow duration-300 flex flex-col"
+              >
+                <StarRow />
+                <p className="mt-4 text-sm text-zinc-700 leading-relaxed flex-1">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="mt-6 flex items-center gap-3">
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-[#FFFD40]"
+                  />
+                  <div className="leading-tight">
+                    <div className="text-sm font-black">{t.name}</div>
+                    <div className="text-[11px] text-zinc-500 font-medium">{t.role}</div>
+                    <div className="text-[11px] text-zinc-400 font-medium flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3 h-3" /> {t.location}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
