@@ -6,7 +6,7 @@ import { TRIMMA_WHATSAPP_DISPLAY, TRIMMA_WHATSAPP_URL } from "@/lib/trimma-conta
 
 export default function GlobalFooter() {
   return (
-    <footer className="bg-white border-t border-zinc-100 dark:bg-[#0b0b0b] dark:border-[#ffc800]/15">
+    <footer className="bg-white border-t border-zinc-100 dark:bg-[#0b0b0b] dark:border-[#FFFD40]/15">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -16,12 +16,12 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Support</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/customer-help" className="hover:text-[#ffc800] transition-colors">Customer Help</Link></li>
-              <li><Link href="/cancellation-help" className="hover:text-[#ffc800] transition-colors">Cancellation options</Link></li>
-              <li><Link href="/safety" className="hover:text-[#ffc800] transition-colors">Safety Resource Center</Link></li>
-              <li><Link href="/contact" className="hover:text-[#ffc800] transition-colors">Contact</Link></li>
+              <li><Link href="/customer-help" className="hover:text-[#FFFD40] transition-colors">Customer Help</Link></li>
+              <li><Link href="/cancellation-help" className="hover:text-[#FFFD40] transition-colors">Cancellation options</Link></li>
+              <li><Link href="/safety" className="hover:text-[#FFFD40] transition-colors">Safety Resource Center</Link></li>
+              <li><Link href="/contact" className="hover:text-[#FFFD40] transition-colors">Contact</Link></li>
               <li>
-                <a href={TRIMMA_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#ffc800] transition-colors">
+                <a href={TRIMMA_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#FFFD40] transition-colors">
                   WhatsApp {TRIMMA_WHATSAPP_DISPLAY}
                 </a>
               </li>
@@ -32,11 +32,11 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Discover</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/" className="hover:text-[#ffc800] transition-colors">All Salons</Link></li>
-              <li><Link href="/categories" className="hover:text-[#ffc800] transition-colors">Categories</Link></li>
-              <li><Link href="/locations" className="hover:text-[#ffc800] transition-colors">Locations</Link></li>
-              <li><Link href="/pricing" className="hover:text-[#ffc800] transition-colors">Pricing Plans</Link></li>
-              <li><Link href="/features" className="hover:text-[#ffc800] transition-colors">Features</Link></li>
+              <li><Link href="/" className="hover:text-[#FFFD40] transition-colors">All Salons</Link></li>
+              <li><Link href="/categories" className="hover:text-[#FFFD40] transition-colors">Categories</Link></li>
+              <li><Link href="/locations" className="hover:text-[#FFFD40] transition-colors">Locations</Link></li>
+              <li><Link href="/pricing" className="hover:text-[#FFFD40] transition-colors">Pricing Plans</Link></li>
+              <li><Link href="/features" className="hover:text-[#FFFD40] transition-colors">Features</Link></li>
             </ul>
           </div>
 
@@ -44,10 +44,10 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Partner with us</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/agent/login" className="hover:text-[#ffc800] transition-colors">Partner portal login</Link></li>
-              <li><Link href="/onboarding" className="hover:text-[#ffc800] transition-colors">Add your salon</Link></li>
-              <li><Link href="/about" className="hover:text-[#ffc800] transition-colors">About Trimma</Link></li>
-              <li><Link href="/careers" className="hover:text-[#ffc800] transition-colors">Careers</Link></li>
+              <li><Link href="/agent/login" className="hover:text-[#FFFD40] transition-colors">Partner portal login</Link></li>
+              <li><Link href="/onboarding" className="hover:text-[#FFFD40] transition-colors">Add your salon</Link></li>
+              <li><Link href="/about" className="hover:text-[#FFFD40] transition-colors">About Trimma</Link></li>
+              <li><Link href="/careers" className="hover:text-[#FFFD40] transition-colors">Careers</Link></li>
               {/* Affiliate program temporarily removed from public access (page retained at /affiliates) */}
             </ul>
           </div>
@@ -56,11 +56,11 @@ export default function GlobalFooter() {
           <div className="col-span-1 space-y-4">
             <h4 className="text-zinc-950 dark:text-zinc-100 font-bold mb-4">Useful Links</h4>
             <ul className="space-y-3 text-sm text-zinc-600">
-              <li><Link href="/terms" className="hover:text-[#ffc800] transition-colors">Terms &amp; Conditions</Link></li>
-              <li><Link href="/privacy-policy" className="hover:text-[#ffc800] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/cookies" className="hover:text-[#ffc800] transition-colors">Cookie Policy</Link></li>
-              <li><CookieSettingsLink className="hover:text-[#ffc800] transition-colors" /></li>
-              <li><Link href="/data-deletion" className="hover:text-[#ffc800] transition-colors">Data Deletion</Link></li>
+              <li><Link href="/terms" className="hover:text-[#FFFD40] transition-colors">Terms &amp; Conditions</Link></li>
+              <li><Link href="/privacy-policy" className="hover:text-[#FFFD40] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/cookies" className="hover:text-[#FFFD40] transition-colors">Cookie Policy</Link></li>
+              <li><CookieSettingsLink className="hover:text-[#FFFD40] transition-colors" /></li>
+              <li><Link href="/data-deletion" className="hover:text-[#FFFD40] transition-colors">Data Deletion</Link></li>
             </ul>
           </div>
 

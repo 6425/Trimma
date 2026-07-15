@@ -111,7 +111,7 @@ export function ProfileAvatarUpload({
       <div className={`relative group ${className}`}>
         <Avatar className={avatarClassName}>
           {previewUrl ? <AvatarImage src={previewUrl} className="object-cover" /> : null}
-          <AvatarFallback className="bg-[#ffc800] text-black font-black text-xl">
+          <AvatarFallback className="bg-[#FFFD40] text-black font-black text-xl">
             {fallbackLabel}
           </AvatarFallback>
         </Avatar>

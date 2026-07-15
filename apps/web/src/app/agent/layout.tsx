@@ -186,9 +186,9 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
           >
-            <Avatar className="w-8 h-8 border border-[#ffc800]/30">
+            <Avatar className="w-8 h-8 border border-[#FFFD40]/30">
               {agentAvatar && <AvatarImage src={agentAvatar} alt={agentName} />}
-              <AvatarFallback className="bg-[#ffc800]/10 text-[#ffc800] text-xs font-bold">
+              <AvatarFallback className="bg-[#FFFD40]/10 text-[#FFFD40] text-xs font-bold">
                 {agentName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -213,7 +213,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center px-3 py-1.5 bg-slate-50 rounded-lg w-64 border border-slate-200 focus-within:border-[#ffc800]/50 focus-within:ring-1 focus-within:ring-[#ffc800]/30 transition-all">
+          <div className="hidden lg:flex items-center px-3 py-1.5 bg-slate-50 rounded-lg w-64 border border-slate-200 focus-within:border-[#FFFD40]/50 focus-within:ring-1 focus-within:ring-[#FFFD40]/30 transition-all">
             <Search className="w-4 h-4 text-zinc-400 mr-2 shrink-0" />
             <input
               type="text"
@@ -233,7 +233,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-700 hover:text-zinc-900 hover:bg-slate-100 transition-colors">
               <Bell className="w-5 h-5" />
               {hasUnreadNotifications && (
-                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffc800]" />
+                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FFFD40]" />
               )}
             </button>
           </div>

@@ -99,10 +99,10 @@ export function SearchHeroWidget() {
       <div className="relative z-20 px-4 sm:px-6 flex flex-col items-center -mt-36 md:-mt-10 mb-8 sm:mb-12">
         <form
           onSubmit={handleSearch}
-          className="trimma-hero-search bg-[#ffc800] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-2xl w-full max-w-5xl flex flex-col md:flex-row gap-3 md:gap-1.5 border-[4px] border-white dark:border-[#0B0B0B]"
+          className="trimma-hero-search bg-[#FFFD40] p-3 sm:p-2.5 md:p-1.5 rounded-2xl md:rounded-lg shadow-2xl w-full max-w-5xl flex flex-col md:flex-row gap-3 md:gap-1.5 border-[4px] border-white dark:border-[#0B0B0B]"
         >
           {/* Location */}
-          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#ffc800] transition-colors shadow-sm md:shadow-none">
+          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#FFFD40] transition-colors shadow-sm md:shadow-none">
             <MapPin className="w-5 h-5 text-zinc-400 shrink-0" aria-hidden="true" />
             <input
               type="text"
@@ -114,7 +114,7 @@ export function SearchHeroWidget() {
           </div>
 
           {/* Service */}
-          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#ffc800] transition-colors shadow-sm md:shadow-none">
+          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#FFFD40] transition-colors shadow-sm md:shadow-none">
             <Search className="w-5 h-5 text-zinc-400 shrink-0" aria-hidden="true" />
             <input
               type="text"
@@ -126,7 +126,7 @@ export function SearchHeroWidget() {
           </div>
 
           {/* Date */}
-          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#ffc800] transition-colors shadow-sm md:shadow-none">
+          <div className="flex-1 bg-white flex items-center gap-3 px-4 min-h-[52px] h-14 rounded-xl md:rounded-md border-2 border-transparent focus-within:border-[#FFFD40] transition-colors shadow-sm md:shadow-none">
             <Calendar className="w-5 h-5 text-zinc-400 shrink-0" aria-hidden="true" />
             <input
               type="date"
@@ -156,10 +156,10 @@ export function SearchHeroWidget() {
                   key={cat.id} 
                   className="group flex flex-col items-center gap-2 cursor-pointer transition-all duration-300"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border-2 border-transparent group-hover:border-[#ffc800] group-hover:bg-zinc-50 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
-                    <Icon className="w-5 h-5 text-zinc-600 group-hover:text-[#ffc800] transition-colors duration-300" />
+                  <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border-2 border-transparent group-hover:border-[#FFFD40] group-hover:bg-zinc-50 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
+                    <Icon className="w-5 h-5 text-zinc-600 group-hover:text-[#FFFD40] transition-colors duration-300" />
                   </div>
-                  <span className="text-sm font-bold text-zinc-700 group-hover:text-[#ffc800] transition-colors duration-300 drop-shadow-sm">
+                  <span className="text-sm font-bold text-zinc-700 group-hover:text-[#FFFD40] transition-colors duration-300 drop-shadow-sm">
                     {cat.name}
                   </span>
                 </Link>

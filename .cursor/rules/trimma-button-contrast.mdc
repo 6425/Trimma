@@ -11,8 +11,8 @@ Use `@/components/ui/button` variants — never one-off button colors.
 
 | Fill | Text | Hover text | Hover fill |
 |------|------|------------|------------|
-| Yellow `#ffc800` (`variant="default"`) | Black `#000` | Black | Lighter yellow `#ffd633` |
-| Black / dark (`variant="dark"`) | White `#fff` | Brand yellow `#ffc800` | Stay black |
+| Yellow `#FFFD40` (`variant="default"`) | Black `#000` | Black | Lighter yellow `#FFFE73` |
+| Black / dark (`variant="dark"`) | White `#fff` | Brand yellow `#FFFD40` | Stay black |
 
 ## Implementation
 

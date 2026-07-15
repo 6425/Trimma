@@ -33,6 +33,8 @@ import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
 const serviceIconMap = { LayoutGrid, Scissors };
 
+const MIN_SERVICE_PRICE_LKR = 700;
+
 export default function DashboardServices() {
   const router = useRouter();
   const [services, setServices] = useState<any[]>([]);
@@ -261,6 +263,16 @@ export default function DashboardServices() {
       );
     }
 
+    const belowMinServices = selectedIds.filter(id => {
+      const info = selectedServices[id];
+      return (parseFloat(info.price) || 0) < MIN_SERVICE_PRICE_LKR;
+    });
+    if (belowMinServices.length > 0) {
+      return toast.error(
+        `${belowMinServices.length} selected service(s) have a price below LKR ${MIN_SERVICE_PRICE_LKR.toLocaleString()}. Update them before importing.`
+      );
+    }
+
     try {
       setImporting(true);
       
@@ -340,6 +352,12 @@ export default function DashboardServices() {
       return;
     }
 
+    const parsedPrice = parseFloat(customForm.price) || 0;
+    if (parsedPrice < MIN_SERVICE_PRICE_LKR) {
+      toast.error(`Minimum service price is LKR ${MIN_SERVICE_PRICE_LKR.toLocaleString()}.`);
+      return;
+    }
+
     const maxServicesAllowed = subscriptionPlan?.max_services || 6;
     if (catalogServices.length >= maxServicesAllowed) {
       toast.error(
@@ -364,7 +382,7 @@ export default function DashboardServices() {
         {
           name: customForm.name.trim(),
           category: customForm.category,
-          price: parseFloat(customForm.price) || 0,
+          price: parsedPrice,
           duration_min: parseInt(customForm.duration_min, 10) || 30,
           description: customForm.description.trim() || null,
           status: "inactive",
@@ -403,12 +421,18 @@ export default function DashboardServices() {
     e.preventDefault();
     if (!editingServiceId) return;
 
+    const parsedEditPrice = parseFloat(editForm.price) || 0;
+    if (parsedEditPrice < MIN_SERVICE_PRICE_LKR) {
+      toast.error(`Minimum service price is LKR ${MIN_SERVICE_PRICE_LKR.toLocaleString()}.`);
+      return;
+    }
+
     try {
       setUpdating(true);
       const result = await updateSalonService(editingServiceId, {
           name: editForm.name,
           category: editForm.category,
-          price: parseFloat(editForm.price) || 0,
+          price: parsedEditPrice,
           duration_min: parseInt(editForm.duration_min) || 0,
           description: editForm.description,
           status: editForm.status,
@@ -866,10 +890,11 @@ export default function DashboardServices() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR)</label>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR) — min {MIN_SERVICE_PRICE_LKR}</label>
                   <Input 
                     type="number"
                     required
+                    min={MIN_SERVICE_PRICE_LKR}
                     value={editForm.price}
                     onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
                     className="h-11 rounded-xl border-zinc-200 font-bold text-zinc-800"
@@ -1010,11 +1035,11 @@ export default function DashboardServices() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR)</label>
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR) — min {MIN_SERVICE_PRICE_LKR}</label>
             <Input
               type="number"
               required
-              min="0"
+              min={MIN_SERVICE_PRICE_LKR}
               value={customForm.price}
               onChange={(e) => setCustomForm((prev) => ({ ...prev, price: e.target.value }))}
               className="h-11 rounded-xl border-zinc-200 font-bold text-zinc-800"
