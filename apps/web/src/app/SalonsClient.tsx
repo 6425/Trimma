@@ -22,7 +22,7 @@ import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSect
 import type { SalonDealRow } from "@/lib/deals";
 
 const HERO_BACKGROUND = optimizeHeroImageUrl(
-  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=2938&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=2400&auto=format&fit=crop",
   1280
 );
 
