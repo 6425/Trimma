@@ -823,7 +823,7 @@
     mix-blend-mode: normal;
   }
   .home-hero .page-hero-overlay {
-    background: linear-gradient(to top, rgba(255,222,90,0.82), rgba(255,222,90,0.52), rgba(255,222,90,0.70));
+    background: linear-gradient(to bottom, rgba(15,15,18,0.55) 0%, rgba(15,15,18,0.32) 42%, rgba(15,15,18,0.50) 100%);
   }
   .text-gradient {
     background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
@@ -2284,4 +2284,28 @@ html.dark .trimma-marketplace-shell .trimma-hero-search :is(svg, [class*="lucide
 html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
   opacity: 0.85;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Homepage hero: full-colour photo with white heading + captions.
+   Un-layered + scoped so it wins over the black hero-ink rules
+   (light and dark). Search card + countdown card keep dark text
+   because they sit on their own white surfaces. */
+.trimma-marketplace-shell .home-hero .hero-ink h1,
+.trimma-marketplace-shell .home-hero .hero-ink h1 span,
+html.dark .trimma-marketplace-shell .home-hero .hero-ink h1,
+html.dark .trimma-marketplace-shell .home-hero .hero-ink h1 span {
+  color: #ffffff !important;
+}
+.trimma-marketplace-shell .home-hero .hero-ink h1 span,
+html.dark .trimma-marketplace-shell .home-hero .hero-ink h1 span {
+  text-decoration-color: rgba(255, 255, 255, 0.4) !important;
+}
+.trimma-marketplace-shell .home-hero .hero-ink > div > p,
+html.dark .trimma-marketplace-shell .home-hero .hero-ink > div > p {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+.trimma-marketplace-shell .home-hero .hero-ink .trimma-live-countdown > p,
+html.dark .trimma-marketplace-shell .home-hero .hero-ink .trimma-live-countdown > p {
+  color: rgba(255, 255, 255, 0.92) !important;
 }
