@@ -264,17 +264,13 @@ export function PreviewLandingContent() {
   return (
     <div className="bg-white text-zinc-900 font-sans overflow-x-hidden">
       {/* ============ HERO ============ */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#FFFEF0] to-white">
-        <div className="absolute -top-24 -right-24 w-[380px] h-[380px] rounded-full bg-[#FFFD40]/40 blur-[120px]" />
+      <section className="relative overflow-hidden bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-12 items-center relative z-10">
           <div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-zinc-900">
               Grow Your Salon.
               <br />
-              <span className="relative inline-block">
-                Not Your Stress.
-                <span className="absolute left-0 -bottom-1 w-full h-3 bg-[#FFFD40] -z-10" />
-              </span>
+              Not Your Stress.
             </h1>
             <p className="mt-6 text-lg text-zinc-600 max-w-xl leading-relaxed">
               Get more bookings, reduce no-shows, manage your team, increase
@@ -301,7 +297,6 @@ export function PreviewLandingContent() {
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 bg-[#FFFD40]/30 blur-3xl rounded-full scale-90" />
             <img
               src="/assets/dashboard_mockup.jpg"
               alt="Trimma salon dashboard on laptop, tablet and phone"
