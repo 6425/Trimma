@@ -732,7 +732,7 @@ export function FeaturesContent() {
               </ul>
             </div>
             <div className="bg-[#0B0B0B] border border-[#FFFD40]/20 rounded-3xl p-8 shadow-xl relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.12)_0%,_transparent_55%)] pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,253,64,0.12)_0%,_transparent_55%)] pointer-events-none" />
               <div className="relative">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-[#FFFD40]/20 flex items-center justify-center">
@@ -953,7 +953,7 @@ export function FeaturesContent() {
 
       {/* ── Final CTA ── */}
       <section className="py-24 bg-[#0B0B0B] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.18)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,253,64,0.18)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
             Ready to Find, Book &amp; Glow?

@@ -687,7 +687,7 @@ export default function ContactPage() {
 
       {/* ── Partner CTA ── */}
       <section className="py-24 bg-zinc-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.18)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,253,64,0.18)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-6">
             Ready to Grow Your Business?

@@ -104,7 +104,7 @@ const SearchBarMockup = () => (
       <h3 className="text-xl font-bold text-white mb-4">Search</h3>
       <div className="relative">
         <div className="absolute left-3 top-2.5 text-zinc-900"><Search className="w-4 h-4" /></div>
-        <input disabled value="Barber Salon" className="w-full bg-white text-zinc-900 rounded-xl pl-9 pr-4 py-2 text-sm font-bold border border-zinc-200 outline-none shadow-[0_0_0_4px_rgba(255, 253, 64,0.3)]" />
+        <input disabled value="Barber Salon" className="w-full bg-white text-zinc-900 rounded-xl pl-9 pr-4 py-2 text-sm font-bold border border-zinc-200 outline-none shadow-[0_0_0_4px_rgba(255,253,64,0.3)]" />
       </div>
     </div>
     <div className="absolute top-28 left-6 right-6 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
@@ -128,7 +128,7 @@ const SearchBarMockup = () => (
 const SelectSalonMockup = () => (
   <div className="w-full h-[400px] bg-zinc-50 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 flex flex-col relative mx-auto font-sans">
     <div className="p-6 h-full flex flex-col justify-center">
-      <div className="bg-white rounded-2xl border border-[#FFFD40] overflow-hidden shadow-[0_10px_40px_rgba(255, 253, 64,0.15)] transform scale-105 transition-transform">
+      <div className="bg-white rounded-2xl border border-[#FFFD40] overflow-hidden shadow-[0_10px_40px_rgba(255,253,64,0.15)] transform scale-105 transition-transform">
         <div className="h-24 bg-zinc-800 relative">
            <div className="absolute -bottom-6 left-4 w-12 h-12 bg-white rounded-xl border-2 border-white flex items-center justify-center font-bold text-xs">SS</div>
         </div>

@@ -386,7 +386,7 @@ export function CareersContent() {
               </div>
             </div>
             <div className="bg-[#0B0B0B] rounded-3xl p-8 border border-[#FFFD40]/20 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.12)_0%,_transparent_55%)] pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,253,64,0.12)_0%,_transparent_55%)] pointer-events-none" />
               <div className="relative space-y-4">
                 <div className="text-xs font-bold uppercase tracking-widest text-[#FFFD40] mb-2">
                   Onboarding Pipeline
@@ -503,7 +503,7 @@ export function CareersContent() {
 
       {/* ── Final CTA ── */}
       <section className="py-24 bg-[#0B0B0B] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.18)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,253,64,0.18)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
             Ready to Start Your Agent Career?
