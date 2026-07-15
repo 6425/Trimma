@@ -160,7 +160,7 @@ export default function AboutPage() {
 
       {/* Industries */}
       <section className="py-20 bg-zinc-950 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,253,64,0.15)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,222,90,0.15)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-7xl mx-auto px-6 lg:px-12 text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">Built for Every Beauty &amp; Wellness Business</h2>
           <p className="text-zinc-400 max-w-xl mx-auto mb-10">
@@ -192,7 +192,7 @@ export default function AboutPage() {
               Trimma is proudly developed in Sri Lanka, serving salons across the island and expanding to
               support beauty and wellness businesses globally.
             </p>
-            <div className="bg-[#FFFD40]/10 border border-[#FFFD40]/30 rounded-2xl px-5 py-4">
+            <div className="bg-[#ffde5a]/10 border border-[#ffde5a]/30 rounded-2xl px-5 py-4">
               <p className="text-sm text-zinc-700 leading-relaxed">{TRIMMA_LEGAL_DISCLAIMER}</p>
             </div>
             <div className="flex items-center gap-3 text-sm text-zinc-600">

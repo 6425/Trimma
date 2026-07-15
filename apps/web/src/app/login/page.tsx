@@ -222,7 +222,7 @@ function LoginForm() {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-[#121212] text-zinc-400">
         <div className="flex flex-col items-center">
-          <div className="w-8 h-8 border-4 border-[#FFFD40] border-t-transparent rounded-full animate-spin mb-4" />
+          <div className="w-8 h-8 border-4 border-[#ffde5a] border-t-transparent rounded-full animate-spin mb-4" />
           <p className="text-sm font-semibold text-white/70">Authenticating...</p>
         </div>
       </div>
@@ -232,13 +232,13 @@ function LoginForm() {
   return (
     <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#121212]">
       <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:h-[100dvh] lg:w-1/2 lg:fixed lg:top-0 lg:left-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[#FFFD40]" aria-hidden="true">
+        <div className="absolute inset-0 bg-[#ffde5a]" aria-hidden="true">
           <img
             src={LOGIN_HERO_IMAGE}
             alt=""
             className="h-full w-full object-cover object-center grayscale opacity-15 mix-blend-multiply scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#FFFD40]/40 via-[#FFFD40]/70 to-[#FFFD40]/95" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#ffde5a]/40 via-[#ffde5a]/70 to-[#ffde5a]/95" />
         </div>
 
         <Link
@@ -272,12 +272,12 @@ function LoginForm() {
           </div>
 
           {invitedEmail ? (
-            <div className="rounded-xl border border-[#FFFD40]/30 bg-[#FFFD40]/10 px-4 py-3 text-sm text-[#FFFD40]">
+            <div className="rounded-xl border border-[#ffde5a]/30 bg-[#ffde5a]/10 px-4 py-3 text-sm text-[#ffde5a]">
               You were invited as a salon owner. Sign in with Google using{" "}
               <span className="font-semibold">{invitedEmail}</span>.
             </div>
           ) : invitedSalonId && salonOwnerIntent ? (
-            <div className="rounded-xl border border-[#FFFD40]/30 bg-[#FFFD40]/10 px-4 py-3 text-sm text-[#FFFD40]">
+            <div className="rounded-xl border border-[#ffde5a]/30 bg-[#ffde5a]/10 px-4 py-3 text-sm text-[#ffde5a]">
               You were invited to join Trimma as a salon owner. Sign in with Google — your Gmail will be linked to your
               salon profile.
             </div>
@@ -304,7 +304,7 @@ function LoginForm() {
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Partner portal</p>
             <p className="text-sm text-zinc-400 mt-2">
               Trimma Agent or Regional Head?{" "}
-              <Link href="/agent/login" className="font-medium text-[#FFFD40] hover:text-[#FFFE73] hover:underline">
+              <Link href="/agent/login" className="font-medium text-[#ffde5a] hover:text-[#ffe680] hover:underline">
                 Partner sign in
               </Link>
             </p>
@@ -312,7 +312,7 @@ function LoginForm() {
 
           <p className="text-center text-sm text-zinc-400">
             New to Trimma?{" "}
-            <Link href="/signup" className="font-medium text-[#FFFD40] hover:text-[#FFFE73] hover:underline">
+            <Link href="/signup" className="font-medium text-[#ffde5a] hover:text-[#ffe680] hover:underline">
               Create an account
             </Link>
           </p>

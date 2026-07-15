@@ -65,7 +65,7 @@ export function TopRatedSalons() {
               <div className="flex items-center gap-2 mt-1 mb-2">
                 {salon.rating > 0 ? (
                   <>
-                    <div className="flex items-center text-sm font-bold bg-[#FFFD40] text-black px-1.5 py-0.5 rounded-sm">
+                    <div className="flex items-center text-sm font-bold bg-[#ffde5a] text-black px-1.5 py-0.5 rounded-sm">
                       {salon.rating}
                     </div>
                     <span className="text-sm font-bold text-zinc-900">{salon.badge}</span>

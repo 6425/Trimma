@@ -286,7 +286,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         
         {/* Sidebar Footer */}
-        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-white/8 space-y-0.5 bg-[#FFFD40]">
+        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-white/8 space-y-0.5 bg-[#ffde5a]">
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
@@ -337,7 +337,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <input
                 type="search"
                 placeholder="Search..."
-                className="h-9 w-full rounded-lg bg-slate-50 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-[#FFFD40]/50 focus:ring-1 focus:ring-[#FFFD40]/30 transition-all"
+                className="h-9 w-full rounded-lg bg-slate-50 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-[#ffde5a]/50 focus:ring-1 focus:ring-[#ffde5a]/30 transition-all"
               />
             </div>
           </div>
@@ -371,9 +371,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="trimma-salon-name text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
                 <div className="text-xs text-zinc-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
-              <Avatar className="h-8 w-8 border-2 border-[#FFFD40]/30 bg-[#FFFD40]">
+              <Avatar className="h-8 w-8 border-2 border-[#ffde5a]/30 bg-[#ffde5a]">
                 <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(role === 'admin' ? 'Admin' : salonName)}`} />
-                <AvatarFallback className="bg-[#FFFD40] text-black text-xs font-bold">
+                <AvatarFallback className="bg-[#ffde5a] text-black text-xs font-bold">
                   {role === 'admin' ? 'AD' : 'SA'}
                 </AvatarFallback>
               </Avatar>

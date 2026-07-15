@@ -17,7 +17,7 @@ const badgeVariants = cva(
         outline:
           "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         hero:
-          "hero-badge hero-eyebrow h-auto gap-2 px-4 py-1.5 !bg-[#0a0a0a] !text-[#FFFD40] !border-[#0a0a0a] font-extrabold text-[10px] tracking-wider uppercase [&_svg]:!text-[#FFFD40] [&_svg]:!stroke-[#FFFD40] [&_svg]:size-3.5",
+          "hero-badge hero-eyebrow h-auto gap-2 px-4 py-1.5 !bg-[#0a0a0a] !text-[#ffde5a] !border-[#0a0a0a] font-extrabold text-[10px] tracking-wider uppercase [&_svg]:!text-[#ffde5a] [&_svg]:!stroke-[#ffde5a] [&_svg]:size-3.5",
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",

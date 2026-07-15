@@ -352,7 +352,7 @@ export default function AdminStyleManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 tracking-tight flex items-center gap-2">
-            <Scissors className="w-7 h-7 text-[#FFFD40]" />
+            <Scissors className="w-7 h-7 text-[#ffde5a]" />
             Style Management
           </h1>
           <p className="text-zinc-500 text-sm mt-0.5">
@@ -428,7 +428,7 @@ export default function AdminStyleManagementPage() {
                 value={formData.category_id}
                 onChange={(e) => setFormData((p) => ({ ...p, category_id: e.target.value }))}
                 required
-                className="w-full h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:outline-none focus:border-[#FFFD40]"
+                className="w-full h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus:outline-none focus:border-[#ffde5a]"
               >
                 <option value="">Select a salon category...</option>
                 {categories.map((cat) => (
@@ -470,14 +470,14 @@ export default function AdminStyleManagementPage() {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center aspect-[4/5] w-full max-w-[200px] rounded-xl border-2 border-dashed border-zinc-200 bg-slate-50 cursor-pointer hover:border-[#FFFD40]/50 transition-colors">
+                <label className="flex flex-col items-center justify-center aspect-[4/5] w-full max-w-[200px] rounded-xl border-2 border-dashed border-zinc-200 bg-slate-50 cursor-pointer hover:border-[#ffde5a]/50 transition-colors">
                   <Upload className="w-6 h-6 text-zinc-400 mb-2" />
                   <span className="text-[10px] font-bold text-zinc-500 text-center px-2">Upload &amp; crop</span>
                   <input type="file" accept="image/*" className="hidden" onChange={onSelectFile} />
                 </label>
               )}
               {formData.image_url && (
-                <label className="inline-flex items-center gap-2 text-xs font-bold text-[#FFFD40] cursor-pointer">
+                <label className="inline-flex items-center gap-2 text-xs font-bold text-[#ffde5a] cursor-pointer">
                   <Upload className="w-3.5 h-3.5" /> Replace image
                   <input type="file" accept="image/*" className="hidden" onChange={onSelectFile} />
                 </label>

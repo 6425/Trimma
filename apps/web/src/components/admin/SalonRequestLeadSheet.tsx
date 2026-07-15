@@ -223,7 +223,7 @@ export function SalonRequestLeadSheet({
                   <td className="px-4 py-4 pr-6 text-center">
                     <Button
                       size="sm"
-                      className="bg-[#FFFD40] hover:bg-[#FFFE73] text-black font-bold h-8"
+                      className="bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold h-8"
                       disabled={savingId === row.id}
                       onClick={() => void handleAssign(row)}
                     >

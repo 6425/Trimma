@@ -15,7 +15,7 @@ const linkClass =
   "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-black/15 bg-black/10 text-black hover:bg-black/20 transition-colors";
 
 const facebookLinkClass =
-  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#FFFD40] bg-[#FFFD40] text-black hover:bg-[#FFFE73] hover:border-[#FFFE73] transition-colors";
+  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#ffde5a] bg-[#ffde5a] text-black hover:bg-[#ffe680] hover:border-[#ffe680] transition-colors";
 
 type Props = {
   salon: Record<string, unknown> | null | undefined;

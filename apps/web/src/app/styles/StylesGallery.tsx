@@ -98,8 +98,8 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                 onClick={() => setActiveCategoryId("all")}
                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                   activeCategoryId === "all"
-                    ? "bg-[#FFFD40] text-black"
-                    : "bg-white border border-slate-200 text-zinc-600 hover:border-[#FFFD40]/40"
+                    ? "bg-[#ffde5a] text-black"
+                    : "bg-white border border-slate-200 text-zinc-600 hover:border-[#ffde5a]/40"
                 }`}
               >
                 All Categories
@@ -111,8 +111,8 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                   onClick={() => setActiveCategoryId(category.id)}
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                     activeCategoryId === category.id
-                      ? "bg-[#FFFD40] text-black"
-                      : "bg-white border border-slate-200 text-zinc-600 hover:border-[#FFFD40]/40"
+                      ? "bg-[#ffde5a] text-black"
+                      : "bg-white border border-slate-200 text-zinc-600 hover:border-[#ffde5a]/40"
                   }`}
                 >
                   {category.name}
@@ -131,7 +131,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                   </div>
                   <Link
                     href={`/category/${category.slug}`}
-                    className="text-xs font-bold text-[#FFFD40] hover:underline shrink-0"
+                    className="text-xs font-bold text-[#ffde5a] hover:underline shrink-0"
                   >
                     Find salons →
                   </Link>

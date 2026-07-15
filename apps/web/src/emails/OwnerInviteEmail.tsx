@@ -51,7 +51,7 @@ const mutedStyle: React.CSSProperties = {
 };
 
 const buttonStyle: React.CSSProperties = {
-  backgroundColor: "#FFFD40",
+  backgroundColor: "#ffde5a",
   borderRadius: "12px",
   color: "#18181b",
   display: "inline-block",

@@ -47,7 +47,7 @@ export function CustomerHelpContent() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 sm:px-6 sm:py-14 space-y-10">
       <header className="space-y-4 border-b border-zinc-200 pb-8">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#FFFD40]/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-800">
+        <span className="inline-flex items-center gap-2 rounded-full bg-[#ffde5a]/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-800">
           <HelpCircle className="w-3.5 h-3.5" />
           For customers
         </span>
@@ -77,7 +77,7 @@ export function CustomerHelpContent() {
 
       <section id="how-to-book" className="scroll-mt-24 space-y-4">
         <div className="flex items-center gap-2">
-          <Search className="w-5 h-5 text-[#FFFD40]" />
+          <Search className="w-5 h-5 text-[#ffde5a]" />
           <h2 className="text-xl font-bold text-zinc-900">How to book</h2>
         </div>
         <ol className="space-y-3">
@@ -86,7 +86,7 @@ export function CustomerHelpContent() {
               key={step}
               className="flex gap-3 rounded-2xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 leading-relaxed"
             >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FFFD40] text-xs font-black text-zinc-900">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#ffde5a] text-xs font-black text-zinc-900">
                 {index + 1}
               </span>
               <span>{step}</span>
@@ -97,7 +97,7 @@ export function CustomerHelpContent() {
 
       <section id="payment" className="scroll-mt-24 rounded-2xl border border-zinc-200 bg-zinc-50 p-6 space-y-3">
         <div className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-[#FFFD40]" />
+          <CreditCard className="w-5 h-5 text-[#ffde5a]" />
           <h2 className="text-lg font-bold text-zinc-900">Deposit and payment</h2>
         </div>
         <p className="text-sm text-zinc-600 leading-relaxed">
@@ -110,7 +110,7 @@ export function CustomerHelpContent() {
 
       <section id="account" className="scroll-mt-24 space-y-4">
         <div className="flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-[#FFFD40]" />
+          <BookOpen className="w-5 h-5 text-[#ffde5a]" />
           <h2 className="text-xl font-bold text-zinc-900">Your customer account</h2>
         </div>
         <p className="text-sm text-zinc-600 leading-relaxed">
@@ -122,10 +122,10 @@ export function CustomerHelpContent() {
             <Link
               key={item.path}
               href={`/login?redirectTo=${encodeURIComponent(item.path)}`}
-              className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-[#FFFD40]/50 transition-colors group"
+              className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-[#ffde5a]/50 transition-colors group"
             >
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#FFFD40]/15 text-zinc-900 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#ffde5a]/15 text-zinc-900 flex items-center justify-center shrink-0">
                   {ICONS[item.title]}
                 </div>
                 <div className="min-w-0">
@@ -156,7 +156,7 @@ export function CustomerHelpContent() {
         <div className="space-y-3">
           <a
             href={`mailto:${TRIMMA_SUPPORT_EMAIL}`}
-            className="flex items-center gap-2 text-sm font-semibold text-white hover:text-[#FFFD40] transition-colors"
+            className="flex items-center gap-2 text-sm font-semibold text-white hover:text-[#ffde5a] transition-colors"
           >
             <Mail className="w-4 h-4" />
             {TRIMMA_SUPPORT_EMAIL}
@@ -165,14 +165,14 @@ export function CustomerHelpContent() {
             href={TRIMMA_WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-semibold text-white/90 hover:text-[#FFFD40] transition-colors"
+            className="flex items-center gap-2 text-sm font-semibold text-white/90 hover:text-[#ffde5a] transition-colors"
           >
             <MessageCircle className="w-4 h-4 text-emerald-400" />
             WhatsApp · {TRIMMA_WHATSAPP_DISPLAY}
           </a>
           <Link
             href="/contact"
-            className="inline-flex text-sm font-bold text-[#FFFD40] hover:underline"
+            className="inline-flex text-sm font-bold text-[#ffde5a] hover:underline"
           >
             Contact Trimma →
           </Link>
@@ -181,7 +181,7 @@ export function CustomerHelpContent() {
 
       <p className="text-xs text-zinc-500 text-center pb-4">
         Salon owners and partners should use{" "}
-        <Link href="/dashboard/help" className="font-semibold text-zinc-700 underline hover:text-[#FFFD40]">
+        <Link href="/dashboard/help" className="font-semibold text-zinc-700 underline hover:text-[#ffde5a]">
           Salon Help
         </Link>{" "}
         in the salon dashboard instead of this page.

@@ -79,9 +79,9 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
                   properties: { name: t.name }
                 });
                 map.data.setStyle({
-                  fillColor: "#FFFD40",
+                  fillColor: "#ffde5a",
                   fillOpacity: 0.25, 
-                  strokeColor: "#FFFD40",
+                  strokeColor: "#ffde5a",
                   strokeWeight: 2,
                   clickable: false 
                 });
@@ -98,7 +98,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
                 color: "#000000",
                 fontWeight: "900",
                 fontSize: "14px",
-                className: "bg-[#FFFD40] px-2 py-1 rounded shadow font-sans"
+                className: "bg-[#ffde5a] px-2 py-1 rounded shadow font-sans"
               },
               icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
             });
@@ -125,10 +125,10 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
             
             const rectangle = new google.maps.Rectangle({
               bounds: vp,
-              strokeColor: "#FFFD40",
+              strokeColor: "#ffde5a",
               strokeOpacity: 0.8,
               strokeWeight: 2,
-              fillColor: "#FFFD40",
+              fillColor: "#ffde5a",
               fillOpacity: 0.15,
               clickable: false,
               map
@@ -142,7 +142,7 @@ function TerritoryBounds({ territories }: { territories: Territory[] }) {
                 color: "#000000",
                 fontWeight: "900",
                 fontSize: "14px",
-                className: "bg-[#FFFD40] px-2 py-1 rounded shadow font-sans"
+                className: "bg-[#ffde5a] px-2 py-1 rounded shadow font-sans"
               },
               icon: { path: google.maps.SymbolPath.CIRCLE, scale: 0 }
             });

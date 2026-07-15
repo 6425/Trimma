@@ -21,16 +21,16 @@ export function AgentDashboardGuideCard() {
   const docsByLang = Object.fromEntries(AGENT_GUIDE_FALLBACKS.map((d) => [d.language, d]));
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-[#FFFD40]/25 bg-zinc-950 text-white shadow-sm">
-      <BookOpen className="absolute -right-6 -top-6 w-32 h-32 text-[#FFFD40]/8 pointer-events-none" />
+    <section className="relative overflow-hidden rounded-2xl border border-[#ffde5a]/25 bg-zinc-950 text-white shadow-sm">
+      <BookOpen className="absolute -right-6 -top-6 w-32 h-32 text-[#ffde5a]/8 pointer-events-none" />
       <div className="relative z-10 p-5 lg:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="flex items-start gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-[#FFFD40]/15 border border-[#FFFD40]/30 flex items-center justify-center shrink-0">
-              <FileText className="w-6 h-6 text-[#FFFD40]" />
+            <div className="w-12 h-12 rounded-2xl bg-[#ffde5a]/15 border border-[#ffde5a]/30 flex items-center justify-center shrink-0">
+              <FileText className="w-6 h-6 text-[#ffde5a]" />
             </div>
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-1.5 bg-[#FFFD40]/15 text-[#FFFD40] border border-[#FFFD40]/25 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
+              <span className="inline-flex items-center gap-1.5 bg-[#ffde5a]/15 text-[#ffde5a] border border-[#ffde5a]/25 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
                 Agent Field Handbook
               </span>
               <h2 className="text-lg font-black tracking-tight mb-1">Full Agent Portal Guide</h2>
@@ -43,7 +43,7 @@ export function AgentDashboardGuideCard() {
 
           <div className="flex flex-col sm:flex-row gap-2 shrink-0">
             <Link href={path("/help")}>
-              <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black font-bold text-xs">
+              <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black font-bold text-xs">
                 Read full guide
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -71,15 +71,15 @@ export function AgentDashboardGuideCard() {
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:border-[#FFFD40]/40 hover:bg-[#FFFD40]/10 transition-colors"
+                className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 hover:border-[#ffde5a]/40 hover:bg-[#ffde5a]/10 transition-colors"
               >
                 <div className="min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-[#FFFD40]">{native}</div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-[#ffde5a]">{native}</div>
                   <div className="text-xs font-semibold text-white/90 truncate mt-0.5">
                     {doc?.title || `Agent Guide (${code})`}
                   </div>
                 </div>
-                <Download className="w-4 h-4 text-white/50 group-hover:text-[#FFFD40] shrink-0" />
+                <Download className="w-4 h-4 text-white/50 group-hover:text-[#ffde5a] shrink-0" />
               </a>
             );
           })}

@@ -80,8 +80,8 @@ export default function AdminReviewsPage() {
   const tabClass = (tab: ReviewTab) =>
     `rounded-xl px-4 py-2 text-xs font-bold transition-all ${
       activeTab === tab
-        ? "bg-[#FFFD40] text-black shadow-sm"
-        : "bg-white text-zinc-600 border border-zinc-200 hover:border-[#FFFD40]/40"
+        ? "bg-[#ffde5a] text-black shadow-sm"
+        : "bg-white text-zinc-600 border border-zinc-200 hover:border-[#ffde5a]/40"
     }`;
 
   if (loading) {

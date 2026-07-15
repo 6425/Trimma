@@ -28,10 +28,10 @@ export function StyleSaveButton({
   const stateClass =
     variant === "overlay"
       ? saved
-        ? "bg-[#FFFD40] text-black border-[#FFFD40] shadow-sm"
+        ? "bg-[#ffde5a] text-black border-[#ffde5a] shadow-sm"
         : "bg-black/40 text-white border-white/20 hover:bg-black/60"
       : saved
-        ? "bg-[#FFFD40]/15 text-[#FFFD40] border-[#FFFD40]/30"
+        ? "bg-[#ffde5a]/15 text-[#ffde5a] border-[#ffde5a]/30"
         : "bg-white/5 text-zinc-300 border-white/10 hover:bg-white/10";
 
   return (

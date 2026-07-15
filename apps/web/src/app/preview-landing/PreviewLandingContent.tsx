@@ -248,7 +248,7 @@ function StarRow() {
   return (
     <div className="flex items-center gap-0.5">
       {[0, 1, 2, 3, 4].map((i) => (
-        <Star key={i} className="w-4 h-4 fill-[#FFFD40] text-[#FFFD40]" />
+        <Star key={i} className="w-4 h-4 fill-[#ffde5a] text-[#ffde5a]" />
       ))}
     </div>
   );
@@ -355,14 +355,14 @@ export function PreviewLandingContent() {
             {betterDay.map((d, i) => (
               <div key={d.time} className="relative">
                 <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-zinc-100 h-full">
-                  <div className="w-12 h-12 rounded-xl bg-[#FFFD40] flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#ffde5a] flex items-center justify-center mb-4">
                     <d.icon className="w-6 h-6 text-black" />
                   </div>
                   <h3 className="font-black text-lg">{d.time}</h3>
                   <p className="mt-2 text-sm text-zinc-600 leading-relaxed">{d.text}</p>
                 </div>
                 {i < betterDay.length - 1 && (
-                  <ArrowRight className="hidden md:block absolute top-1/2 -right-4 -translate-y-1/2 w-6 h-6 text-[#FFFD40] z-10" />
+                  <ArrowRight className="hidden md:block absolute top-1/2 -right-4 -translate-y-1/2 w-6 h-6 text-[#ffde5a] z-10" />
                 )}
               </div>
             ))}
@@ -382,7 +382,7 @@ export function PreviewLandingContent() {
                 key={f.title}
                 className="group rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#FFFD40] flex items-center justify-center mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#ffde5a] flex items-center justify-center mb-4">
                   <f.icon className="w-6 h-6 text-black" />
                 </div>
                 <h3 className="font-black text-lg">{f.title}</h3>
@@ -425,9 +425,9 @@ export function PreviewLandingContent() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl bg-[#FFFD40] text-black p-7 shadow-2xl shadow-[#FFFD40]/20 relative">
+            <div className="rounded-2xl bg-[#ffde5a] text-black p-7 shadow-2xl shadow-[#ffde5a]/20 relative">
               <div className="w-11 h-11 rounded-xl bg-black flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-[#FFFD40]" />
+                <Sparkles className="w-6 h-6 text-[#ffde5a]" />
               </div>
               <h3 className="font-black text-lg">Trimma</h3>
               <ul className="mt-5 space-y-3">
@@ -475,7 +475,7 @@ export function PreviewLandingContent() {
               {customerJourney.map((step, i) => (
                 <div key={step.label} className="flex items-center">
                   <div className="flex flex-col items-center w-16 text-center">
-                    <div className="w-11 h-11 rounded-full bg-[#FFFD40] flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-[#ffde5a] flex items-center justify-center">
                       <step.icon className="w-5 h-5 text-black" />
                     </div>
                     <span className="mt-2 text-[10px] font-semibold text-zinc-600 leading-tight">
@@ -496,7 +496,7 @@ export function PreviewLandingContent() {
                 <div key={step.label} className="flex items-center">
                   <div className="flex flex-col items-center w-16 text-center">
                     <div className="w-11 h-11 rounded-full bg-black flex items-center justify-center">
-                      <step.icon className="w-5 h-5 text-[#FFFD40]" />
+                      <step.icon className="w-5 h-5 text-[#ffde5a]" />
                     </div>
                     <span className="mt-2 text-[10px] font-semibold text-zinc-600 leading-tight">
                       {step.label}
@@ -535,7 +535,7 @@ export function PreviewLandingContent() {
                   <img
                     src={t.avatar}
                     alt={t.name}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-[#FFFD40]"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-[#ffde5a]"
                   />
                   <div className="leading-tight">
                     <div className="text-sm font-black">{t.name}</div>
@@ -607,13 +607,13 @@ export function PreviewLandingContent() {
                   }`}
                 >
                   {isPro && (
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FFFD40] text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#ffde5a] text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
                       Most Popular
                     </div>
                   )}
                   <h3
                     className={`text-sm font-bold uppercase tracking-widest ${
-                      isPro ? "text-[#FFFD40]" : "text-zinc-500"
+                      isPro ? "text-[#ffde5a]" : "text-zinc-500"
                     }`}
                   >
                     {displayName}
@@ -635,21 +635,21 @@ export function PreviewLandingContent() {
 
                   <ul className="mt-6 space-y-3 flex-1">
                     <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}>
-                      <Check className="w-4 h-4 text-[#FFFD40] shrink-0" /> Up to {plan.max_staff} staff
+                      <Check className="w-4 h-4 text-[#ffde5a] shrink-0" /> Up to {plan.max_staff} staff
                     </li>
                     <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}>
-                      <Check className="w-4 h-4 text-[#FFFD40] shrink-0" />{" "}
+                      <Check className="w-4 h-4 text-[#ffde5a] shrink-0" />{" "}
                       {plan.max_services >= 9999 ? "Unlimited" : plan.max_services} services
                     </li>
                     <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}>
-                      <Check className="w-4 h-4 text-[#FFFD40] shrink-0" /> {plan.max_images} gallery images
+                      <Check className="w-4 h-4 text-[#ffde5a] shrink-0" /> {plan.max_images} gallery images
                     </li>
                     {features.map((feat) => (
                       <li
                         key={feat}
                         className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}
                       >
-                        <Check className="w-4 h-4 text-[#FFFD40] shrink-0" /> {feat}
+                        <Check className="w-4 h-4 text-[#ffde5a] shrink-0" /> {feat}
                       </li>
                     ))}
                   </ul>
@@ -713,7 +713,7 @@ export function PreviewLandingContent() {
             <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-tight">
               Your salon deserves more
               <br />
-              than <span className="text-[#FFFD40]">notebooks and spreadsheets</span>
+              than <span className="text-[#ffde5a]">notebooks and spreadsheets</span>
             </h2>
             <div className="mt-5 flex items-center gap-3">
               <StarRow />

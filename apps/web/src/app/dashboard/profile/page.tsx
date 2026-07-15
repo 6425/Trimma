@@ -354,7 +354,7 @@ export default function SalonProfilePage() {
         <Button
           onClick={handleCompleteOnboarding}
           disabled={saving}
-          className="bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black shadow-md shadow-[#FFFD40]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+          className="bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black shadow-md shadow-[#ffde5a]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} 
           {onboardingStatus === "OWNER_ACTIVATED" ? "Resubmit Booking Approval" : "Submit for Booking Approval"}
@@ -786,7 +786,7 @@ export default function SalonProfilePage() {
             <Button 
               onClick={handleSave} 
               disabled={saving}
-              className="bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black shadow-md shadow-[#FFFD40]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
+              className="bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black shadow-md shadow-[#ffde5a]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
             >
               {saving ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
@@ -1379,7 +1379,7 @@ export default function SalonProfilePage() {
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-zinc-900 shadow-sm flex items-center gap-1">
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> {rating ? `${rating} verified` : "New"}
                 </div>
-                <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${status === 'active' ? 'bg-[#FFFD40] text-black' : 'bg-amber-600 text-white'}`}>
+                <div className={`absolute bottom-3 left-3 px-3 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${status === 'active' ? 'bg-[#ffde5a] text-black' : 'bg-amber-600 text-white'}`}>
                   {status === 'active' ? 'LIVE NOW' : 'DRAFT'}
                 </div>
               </div>
@@ -1452,7 +1452,7 @@ export default function SalonProfilePage() {
                 <Button 
                   onClick={() => window.open(`/salons/${slug}`, "_blank")}
                   variant="ghost" 
-                  className="w-full border border-[#FFFD40]/50 bg-[#FFFD40]/10 text-[#FFFD40] hover:bg-[#FFFD40]/20 hover:border-[#FFFD40] hover:text-[#FFFE73] font-bold h-12 rounded-xl flex items-center justify-center gap-2"
+                  className="w-full border border-[#ffde5a]/50 bg-[#ffde5a]/10 text-[#ffde5a] hover:bg-[#ffde5a]/20 hover:border-[#ffde5a] hover:text-[#ffe680] font-bold h-12 rounded-xl flex items-center justify-center gap-2"
                 >
                   <ExternalLink className="w-4 h-4 text-brand" /> Open Live Page
                 </Button>
