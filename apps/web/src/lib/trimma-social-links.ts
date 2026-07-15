@@ -5,4 +5,4 @@ export const TRIMMA_YOUTUBE_URL = "https://www.youtube.com/@Trimma-io";
 
 /** Yellow icon on black tile — Trimma brand social buttons */
 export const trimmaSocialIconClass =
-  "w-9 h-9 rounded-lg bg-black text-[#ffc800] hover:text-[#ffd633] flex items-center justify-center transition-colors shrink-0";
+  "w-9 h-9 rounded-lg bg-black text-[#FFFD40] hover:text-[#FFFE73] flex items-center justify-center transition-colors shrink-0";

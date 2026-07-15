@@ -5,7 +5,10 @@ import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
 import { PublicSiteJsonLd } from '@/components/seo/PublicSiteJsonLd';
-import { getSiteUrl } from '@/lib/site-url';
+import { DEFAULT_OG_IMAGE_PATH } from '@/lib/public-page-metadata';
+import { absoluteUrl, getSiteUrl } from '@/lib/site-url';
+
+const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
 
 const supabaseOrigin = (() => {
   try {
@@ -31,10 +34,18 @@ export const metadata = {
   openGraph: {
     siteName: 'Trimma',
     type: 'website',
+    images: [{ url: absoluteUrl(DEFAULT_OG_IMAGE_PATH), alt: 'Trimma — Find. Book. Glow.' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: [absoluteUrl(DEFAULT_OG_IMAGE_PATH)],
   },
   icons: {
     icon: '/favicon.svg',
   },
+  ...(googleSiteVerification
+    ? { verification: { google: googleSiteVerification } }
+    : {}),
 };
 
 export default function RootLayout({

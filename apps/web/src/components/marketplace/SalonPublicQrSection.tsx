@@ -46,7 +46,7 @@ export function SalonPublicQrSection({
             aria-label={`QR code to book ${salonName} on Trimma`}
             className="mx-auto"
           />
-          <span className="text-[9px] font-extrabold tracking-widest text-[#ffc800] uppercase block mt-2">
+          <span className="text-[9px] font-extrabold tracking-widest text-[#FFFD40] uppercase block mt-2">
             Scan to Book
           </span>
         </div>
@@ -72,7 +72,7 @@ export function SalonPublicQrSection({
                 aria-label={`QR code to book ${salonName} on Trimma`}
                 className="mx-auto"
               />
-              <span className="text-[10px] font-extrabold tracking-widest text-[#ffc800] uppercase block mt-3">
+              <span className="text-[10px] font-extrabold tracking-widest text-[#FFFD40] uppercase block mt-3">
                 Scan to Book
               </span>
             </div>

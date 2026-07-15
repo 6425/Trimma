@@ -96,7 +96,7 @@ function FavoritesContent() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-[#ffc800]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#FFFD40]" />
           <p className="text-sm text-zinc-400 font-bold">Loading your favorites...</p>
         </div>
       ) : loadError ? (
@@ -133,7 +133,7 @@ function FavoritesContent() {
             return (
               <div
                 key={favorite.id}
-                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#ffc800]/50 transition-all shadow-sm"
+                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#FFFD40]/50 transition-all shadow-sm"
               >
                 <div className="relative h-44 bg-zinc-100">
                   <Image
@@ -162,16 +162,16 @@ function FavoritesContent() {
 
                 <div className="p-5 space-y-3">
                   <div>
-                    <Link href={linkTarget} className="font-extrabold text-zinc-900 text-lg hover:text-[#ffc800] transition-colors">
+                    <Link href={linkTarget} className="font-extrabold text-zinc-900 text-lg hover:text-[#FFFD40] transition-colors">
                       {ui.name}
                     </Link>
                     <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1.5">
                       <span className="inline-flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 text-[#ffc800] fill-[#ffc800]" />
+                        <Star className="w-3.5 h-3.5 text-[#FFFD40] fill-[#FFFD40]" />
                         <span className="font-bold text-zinc-700">{ui.rating}</span>
                       </span>
                       <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#ffc800]/80" />
+                        <MapPin className="w-3.5 h-3.5 text-[#FFFD40]/80" />
                         {ui.location}
                       </span>
                     </div>

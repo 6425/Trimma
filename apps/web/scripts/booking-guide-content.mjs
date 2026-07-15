@@ -4,8 +4,8 @@
  */
 
 export const BRAND = {
-  gold: "#ffc800",
-  goldDark: "#e6b400",
+  gold: "#FFFD40",
+  goldDark: "#E6E43A",
   black: "#0B0B0B",
   ink: "#1A1C29",
   muted: "#64748b",
@@ -399,7 +399,7 @@ export function buildGuideHtml(lang) {
     body { font-family: ${meta.fontFamily}; color: #18181b; background: #fff; font-size: 11pt; line-height: 1.55; }
     .cover {
       min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: linear-gradient(135deg, ${BRAND.gold} 0%, #ffe066 45%, #fff8dc 100%);
+      background: linear-gradient(135deg, ${BRAND.gold} 0%, #FFFE99 45%, #fff8dc 100%);
       padding: 48px; text-align: center; page-break-after: always;
     }
     .logo { font-size: 28pt; font-weight: 900; letter-spacing: -1px; color: ${BRAND.black}; margin-bottom: 8px; }
@@ -448,7 +448,7 @@ export function buildGuideHtml(lang) {
     .chip { background: ${BRAND.gold}; color: #000; font-weight: 800; padding: 4px 8px; border-radius: 6px; font-size: 7.5pt; }
     .card { display: flex; gap: 10px; background: #fff; margin: 0 10px 10px; padding: 10px; border-radius: 10px; border: 1px solid #e4e4e7; }
     .thumb { width: 44px; height: 44px; background: #e4e4e7; border-radius: 8px; flex-shrink: 0; }
-    .tag { display: inline-block; margin-top: 4px; background: rgba(255,200,0,0.15); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: 700; }
+    .tag { display: inline-block; margin-top: 4px; background: rgba(255, 253, 64,0.15); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: 700; }
     .hero-band { background: ${BRAND.black}; color: #fff; padding: 12px; font-weight: 800; }
     .svc, .svc.dim { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
     .svc.dim { opacity: 0.55; }
@@ -456,9 +456,9 @@ export function buildGuideHtml(lang) {
     .step { padding: 6px 12px; border-bottom: 1px solid #f1f5f9; color: #71717a; }
     .step.on { color: #000; font-weight: 800; }
     .pick { margin: 8px 12px; padding: 8px; border-radius: 8px; border: 1px solid #e4e4e7; }
-    .pick.on { border-color: ${BRAND.gold}; background: rgba(255,200,0,0.08); font-weight: 700; }
+    .pick.on { border-color: ${BRAND.gold}; background: rgba(255, 253, 64,0.08); font-weight: 700; }
     .avatar-row { display: flex; gap: 10px; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; align-items: center; }
-    .avatar-row.on { background: rgba(255,200,0,0.1); }
+    .avatar-row.on { background: rgba(255, 253, 64,0.1); }
     .av { width: 32px; height: 32px; border-radius: 8px; background: ${BRAND.gold}; color: #000; font-weight: 800; display: flex; align-items: center; justify-content: center; }
     .av.dim { background: #e4e4e7; color: #71717a; }
     .days, .slots { display: flex; gap: 6px; padding: 10px 12px; flex-wrap: wrap; }
@@ -469,7 +469,7 @@ export function buildGuideHtml(lang) {
     .inp { margin-top: 4px; border: 1px solid #e4e4e7; border-radius: 8px; padding: 8px; font-weight: 600; color: #3f3f46; }
     .inp.tall { min-height: 48px; text-align: left; }
     .line { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
-    .gold-box { background: rgba(255,200,0,0.12); font-weight: 800; }
+    .gold-box { background: rgba(255, 253, 64,0.12); font-weight: 800; }
     .check { padding: 10px 12px; font-size: 8pt; color: #3f3f46; }
     .pay-btn { margin: 10px 12px; background: ${BRAND.black}; color: #fff; text-align: center; padding: 10px; border-radius: 10px; font-weight: 800; }
     .pay-btn.dark { background: ${BRAND.black}; }

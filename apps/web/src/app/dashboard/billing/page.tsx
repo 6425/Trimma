@@ -12,6 +12,8 @@ import {
   Scissors,
   Tag,
   Users,
+  ShieldCheck,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +25,7 @@ import {
   DEFAULT_SUBSCRIPTION_PLANS,
   formatLkr,
   formatPromotionPackageLimit,
+  getAnnualTotal,
   getCheckoutAmount,
   getDiscountPercentage,
   getDisplayMonthlyPrice,
@@ -185,16 +188,20 @@ export default function BillingPage() {
             const canUpgrade = !isActive && !isFree && planRank > activeTierRank;
             const displayMonthly = getDisplayMonthlyPrice(plan, billingCycle);
             const checkoutAmount = getCheckoutAmount(plan, billingCycle);
+            const annualTotal = getAnnualTotal(plan);
             const discountPercent = getDiscountPercentage(plan);
             const strikethroughMonthly = billingCycle === "monthly" ? getStrikethroughMonthlyPrice(plan) : null;
             const pricingDescription = getPlanPricingCopy(plan, billingCycle);
             const checkoutHref = buildCheckoutHref(plan.name, billingCycle);
             const maxServices = plan.max_services ?? 0;
+            const flags = plan.feature_flags || {};
+            const features = flags.features || [];
+            const catLimit = flags.allowed_categories_limit ?? 0;
 
             return (
               <div
                 key={plan.id}
-                className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between gap-5 relative min-h-[480px] ${
+                className={`rounded-3xl p-6 sm:p-7 border flex flex-col justify-between gap-5 relative min-h-[520px] ${
                   isActive
                     ? "border-brand bg-rose-50/10 shadow-sm"
                     : "border-zinc-100 bg-white hover:border-zinc-200"
@@ -208,7 +215,7 @@ export default function BillingPage() {
 
                 <div className="flex flex-col flex-1 gap-5 pt-2 min-h-0">
                   <div className="pr-14">
-                    <h4 className="font-extrabold text-sm text-zinc-800">{plan.name}</h4>
+                    <h4 className="font-extrabold text-sm text-zinc-800 uppercase tracking-widest">{plan.name} Tier</h4>
                     {strikethroughMonthly ? (
                       <p className="text-[10px] text-zinc-400 line-through mt-2">{strikethroughMonthly}</p>
                     ) : null}
@@ -223,11 +230,19 @@ export default function BillingPage() {
                         Intro price — {discountPercent}% off
                       </p>
                     )}
-                    {!isFree && billingCycle === "annual" && (
-                      <p className="text-[10px] text-zinc-500 mt-1 font-semibold">
-                        {formatLkr(checkoutAmount, 2)} billed annually
+                    {isFree && billingCycle === "monthly" && (
+                      <p className="text-[10px] text-emerald-600 font-bold mt-1 uppercase tracking-wide">
+                        Standard value — 100% off
                       </p>
                     )}
+                    {!isFree && billingCycle === "annual" && (
+                      <p className="text-[10px] text-zinc-500 mt-1 font-semibold">
+                        {formatLkr(annualTotal, 2)} billed annually
+                      </p>
+                    )}
+                    <p className="text-xs text-zinc-500 mt-2 font-medium leading-relaxed">
+                      {pricingDescription}
+                    </p>
                   </div>
 
                   <div className="rounded-2xl bg-zinc-50 border border-zinc-100 px-3.5 py-3 space-y-2.5">
@@ -257,19 +272,22 @@ export default function BillingPage() {
                     ))}
                   </div>
 
-                  <div
-                    className={`flex-1 rounded-2xl border px-3.5 py-3 min-h-[96px] ${
-                      isActive
-                        ? "border-rose-100 bg-white/80"
-                        : "border-zinc-200 bg-zinc-50/80"
-                    }`}
-                  >
-                    <p className="text-[9px] font-extrabold uppercase tracking-wider text-zinc-400 mb-2">
-                      {billingCycle === "annual" ? "Annual plan details" : "Monthly plan details"}
-                    </p>
-                    <p className="text-xs text-zinc-600 leading-relaxed whitespace-pre-wrap">
-                      {pricingDescription}
-                    </p>
+                  <div className="space-y-2.5 px-1">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-zinc-700">
+                      <ShieldCheck className="w-4 h-4 text-rose-500" />
+                      <span>Categories: {catLimit >= 999 ? "All Categories" : `${catLimit} Allowed`}</span>
+                    </div>
+                    {features.length > 0 && (
+                      <>
+                        <div className="h-px bg-zinc-100"></div>
+                        {features.map((feature: string, idx: number) => (
+                          <div key={idx} className="flex items-start gap-2.5 text-xs">
+                            <Check className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                            <span className="font-medium text-zinc-600">{feature}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
                   </div>
                 </div>
 

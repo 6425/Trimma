@@ -67,12 +67,12 @@ export function LiveCountdown() {
 
   if (time.live) {
     return (
-      <div className="mt-5 mb-1 inline-flex items-center gap-2 rounded-full bg-zinc-950 border border-[#ffc800]/40 px-5 py-2.5">
+      <div className="mt-5 mb-1 inline-flex items-center gap-2 rounded-full bg-zinc-950 border border-[#FFFD40]/40 px-5 py-2.5">
         <span className="relative flex h-2.5 w-2.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#ffc800] opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#ffc800]" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFFD40] opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFFD40]" />
         </span>
-        <span className="text-sm font-black uppercase tracking-widest text-[#ffc800]">We&apos;re live</span>
+        <span className="text-sm font-black uppercase tracking-widest text-[#FFFD40]">We&apos;re live</span>
       </div>
     );
   }

@@ -38,6 +38,60 @@ export const NOINDEX_PUBLIC_PREFIXES = [
   "/reset-password",
 ] as const;
 
+/** Primary marketing pages — used for JSON-LD site navigation and internal linking signals. */
+export const PUBLIC_SITE_NAV_LINKS = [
+  {
+    name: "Features",
+    path: "/features",
+    description: "Salon booking, dashboard, staff scheduling, deals, and analytics for Sri Lanka salons.",
+  },
+  {
+    name: "Pricing",
+    path: "/pricing",
+    description: "Trimma subscription plans for salon owners — list your salon and accept online bookings.",
+  },
+  {
+    name: "About Trimma",
+    path: "/about",
+    description: "Learn about Trimma, the beauty and wellness booking platform built for salons in Sri Lanka.",
+  },
+  {
+    name: "Contact",
+    path: "/contact",
+    description: "Contact the Trimma team for customer support, salon partnerships, and general enquiries.",
+  },
+  {
+    name: "Terms & Conditions",
+    path: "/terms",
+    description: "Trimma terms and conditions for customers, salon partners, and platform users.",
+  },
+  {
+    name: "Privacy Policy",
+    path: "/privacy-policy",
+    description: "How Trimma collects, uses, and protects personal data on the salon booking platform.",
+  },
+  {
+    name: "List Your Salon",
+    path: "/onboarding",
+    description: "Join Trimma and start accepting online salon bookings across Sri Lanka.",
+  },
+  {
+    name: "Salon Locations",
+    path: "/locations",
+    description: "Browse salons by province, district, and city across Sri Lanka.",
+  },
+  {
+    name: "Categories",
+    path: "/categories",
+    description: "Explore salon categories — barbers, spas, beauty parlours, nail studios, and more.",
+  },
+  {
+    name: "Deals",
+    path: "/deals",
+    description: "Current salon deals and promotions on Trimma across Sri Lanka.",
+  },
+] as const;
+
 /** Marketing and discovery pages safe to index. */
 export const STATIC_INDEXABLE_PAGES = [
   "/",

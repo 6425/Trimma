@@ -79,10 +79,10 @@ function SalonOwnerDashboardShowcase() {
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
         </div>
         <div className="mx-auto flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold text-zinc-500">
-          <LayoutDashboard className="h-3.5 w-3.5 text-[#ffc800]" />
+          <LayoutDashboard className="h-3.5 w-3.5 text-[#FFFD40]" />
           trimma.io/dashboard
         </div>
-        <span className="hidden rounded-full bg-[#ffc800]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-800 sm:inline">
+        <span className="hidden rounded-full bg-[#FFFD40]/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-800 sm:inline">
           Salon Owner
         </span>
       </div>
@@ -432,8 +432,8 @@ function SectionBadge({
     );
   }
   return (
-    <div className="inline-flex items-center gap-2 bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
-      <Sparkles className="w-4 h-4 text-[#ffc800]" />
+    <div className="inline-flex items-center gap-2 bg-[#FFFD40]/10 border border-[#FFFD40]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
+      <Sparkles className="w-4 h-4 text-[#FFFD40]" />
       {children}
     </div>
   );
@@ -484,7 +484,7 @@ function StepVisual({ stepIndex }: { stepIndex: number }) {
 
   return (
     <div className="relative w-full max-w-xl mx-auto">
-      <div className="absolute inset-0 rounded-[2rem] bg-[#ffc800]/12 blur-3xl scale-105 pointer-events-none" />
+      <div className="absolute inset-0 rounded-[2rem] bg-[#FFFD40]/12 blur-3xl scale-105 pointer-events-none" />
       <div className="relative overflow-hidden rounded-[1.75rem] border border-zinc-200 bg-white shadow-2xl shadow-zinc-200/70">
         <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-3">
           <div className="flex items-center gap-1.5">
@@ -493,7 +493,7 @@ function StepVisual({ stepIndex }: { stepIndex: number }) {
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           </div>
           <div className="mx-auto flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[11px] font-semibold text-zinc-500">
-            <Sparkles className="h-3.5 w-3.5 text-[#ffc800]" />
+            <Sparkles className="h-3.5 w-3.5 text-[#FFFD40]" />
             trimma.io — Step {stepNumber}
           </div>
         </div>
@@ -589,7 +589,7 @@ export function FeaturesContent() {
             </div>
           </div>
           <div className="relative">
-            <div className="absolute -inset-4 rounded-[2rem] bg-[#ffc800]/10 blur-2xl pointer-events-none" />
+            <div className="absolute -inset-4 rounded-[2rem] bg-[#FFFD40]/10 blur-2xl pointer-events-none" />
             <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-200">
               <Image
                 src="/assets/dashboard_mockup.jpg"
@@ -629,14 +629,14 @@ export function FeaturesContent() {
                     onClick={() => setActiveStep(index)}
                     className={`w-full text-left rounded-2xl border p-5 transition-all duration-300 ${
                       isActive
-                        ? "bg-white border-[#ffc800]/40 shadow-lg shadow-[#ffc800]/10"
+                        ? "bg-white border-[#FFFD40]/40 shadow-lg shadow-[#FFFD40]/10"
                         : "bg-white/60 border-zinc-200 hover:border-zinc-300 hover:bg-white"
                     }`}
                   >
                     <div className="flex items-start gap-4">
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm ${
-                          isActive ? "bg-[#ffc800] text-black" : "bg-zinc-100 text-zinc-500"
+                          isActive ? "bg-[#FFFD40] text-black" : "bg-zinc-100 text-zinc-500"
                         }`}
                       >
                         {isActive ? <Icon className="w-5 h-5" /> : item.step}
@@ -676,10 +676,10 @@ export function FeaturesContent() {
               return (
                 <div
                   key={feature.title}
-                  className="group bg-white border border-zinc-200 hover:border-[#ffc800]/40 rounded-3xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  className="group bg-white border border-zinc-200 hover:border-[#FFFD40]/40 rounded-3xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-[#ffc800]/10 flex items-center justify-center group-hover:bg-[#ffc800]/20 transition-colors">
-                    <Icon className="w-6 h-6 text-[#B8860B] group-hover:text-[#ffc800] transition-colors" />
+                  <div className="w-12 h-12 rounded-2xl bg-[#FFFD40]/10 flex items-center justify-center group-hover:bg-[#FFFD40]/20 transition-colors">
+                    <Icon className="w-6 h-6 text-[#B8860B] group-hover:text-[#FFFD40] transition-colors" />
                   </div>
                   <div>
                     <h3 className="font-bold text-zinc-900 text-lg mb-2">{feature.title}</h3>
@@ -731,12 +731,12 @@ export function FeaturesContent() {
                 ))}
               </ul>
             </div>
-            <div className="bg-[#0B0B0B] border border-[#ffc800]/20 rounded-3xl p-8 shadow-xl relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,200,0,0.12)_0%,_transparent_55%)] pointer-events-none" />
+            <div className="bg-[#0B0B0B] border border-[#FFFD40]/20 rounded-3xl p-8 shadow-xl relative overflow-hidden">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.12)_0%,_transparent_55%)] pointer-events-none" />
               <div className="relative">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-[#ffc800]/20 flex items-center justify-center">
-                    <Check className="w-5 h-5 text-[#ffc800]" />
+                  <div className="w-10 h-10 rounded-xl bg-[#FFFD40]/20 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-[#FFFD40]" />
                   </div>
                   <h3 className="font-bold text-white text-xl">After Trimma</h3>
                 </div>
@@ -744,7 +744,7 @@ export function FeaturesContent() {
                 <ul className="space-y-3">
                   {AFTER_ITEMS.map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm text-zinc-300">
-                      <Check className="w-4 h-4 text-[#ffc800] shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-[#FFFD40] shrink-0 mt-0.5" />
                       {item}
                     </li>
                   ))}
@@ -792,7 +792,7 @@ export function FeaturesContent() {
                 key={label}
                 className="flex items-center gap-3 bg-white border border-zinc-200 rounded-2xl px-4 py-3 shadow-sm"
               >
-                <Icon className="w-5 h-5 text-[#ffc800]" />
+                <Icon className="w-5 h-5 text-[#FFFD40]" />
                 <span className="text-sm font-semibold text-zinc-800">{label}</span>
               </div>
             ))}
@@ -819,7 +819,7 @@ export function FeaturesContent() {
                 onClick={() => setActiveUseCase(uc.id)}
                 className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
                   activeUseCase === uc.id
-                    ? "bg-[#ffc800] text-black shadow-lg shadow-[#ffc800]/25"
+                    ? "bg-[#FFFD40] text-black shadow-lg shadow-[#FFFD40]/25"
                     : "bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-300"
                 }`}
               >
@@ -831,7 +831,7 @@ export function FeaturesContent() {
           <div className="bg-white border border-zinc-200 rounded-3xl p-8 lg:p-12 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
             <div>
               <div className="inline-flex items-baseline gap-2 mb-4">
-                <span className="text-4xl font-black text-[#ffc800]">{currentUseCase.stat}</span>
+                <span className="text-4xl font-black text-[#FFFD40]">{currentUseCase.stat}</span>
                 <span className="text-sm font-semibold text-zinc-500">{currentUseCase.statLabel}</span>
               </div>
               <h3 className="text-2xl font-extrabold text-zinc-950 mb-3">{currentUseCase.title}</h3>
@@ -839,14 +839,14 @@ export function FeaturesContent() {
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
                 {currentUseCase.bullets.map((b) => (
                   <li key={b} className="flex items-center gap-2 text-sm text-zinc-700 font-medium">
-                    <Check className="w-4 h-4 text-[#ffc800] shrink-0" />
+                    <Check className="w-4 h-4 text-[#FFFD40] shrink-0" />
                     {b}
                   </li>
                 ))}
               </ul>
               <Link
                 href={currentUseCase.cta.href}
-                className="inline-flex items-center gap-2 bg-[#ffc800] hover:bg-[#ffd633] text-black font-bold px-6 py-3 rounded-xl transition-all"
+                className="inline-flex items-center gap-2 bg-[#FFFD40] hover:bg-[#FFFE73] text-black font-bold px-6 py-3 rounded-xl transition-all"
               >
                 {currentUseCase.cta.label}
                 <ArrowRight className="w-4 h-4" />
@@ -858,7 +858,7 @@ export function FeaturesContent() {
                   key={label}
                   className={`rounded-2xl px-4 py-3 text-sm font-semibold border ${
                     i === 0
-                      ? "bg-[#ffc800]/10 border-[#ffc800]/30 text-[#B8860B]"
+                      ? "bg-[#FFFD40]/10 border-[#FFFD40]/30 text-[#B8860B]"
                       : "bg-zinc-50 border-zinc-200 text-zinc-500"
                   }`}
                 >
@@ -887,8 +887,8 @@ export function FeaturesContent() {
               const Icon = item.icon;
               return (
                 <div key={item.title} className="rounded-3xl border border-zinc-200 bg-white p-6 hover:shadow-md transition-shadow">
-                  <div className="w-11 h-11 rounded-xl bg-[#ffc800]/10 flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5 text-[#ffc800]" />
+                  <div className="w-11 h-11 rounded-xl bg-[#FFFD40]/10 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-[#FFFD40]" />
                   </div>
                   <h3 className="font-bold text-zinc-900 text-lg mb-2">{item.title}</h3>
                   <p className="text-zinc-500 text-sm leading-relaxed">{item.description}</p>
@@ -917,7 +917,7 @@ export function FeaturesContent() {
               >
                 <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#ffc800] text-[#ffc800]" />
+                    <Star key={i} className="w-4 h-4 fill-[#FFFD40] text-[#FFFD40]" />
                   ))}
                 </div>
                 <p className="text-zinc-600 text-sm leading-relaxed flex-1 mb-5">&ldquo;{t.quote}&rdquo;</p>
@@ -935,8 +935,8 @@ export function FeaturesContent() {
       <section className="py-24">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
-              <HelpCircle className="w-4 h-4 text-[#ffc800]" />
+            <div className="inline-flex items-center gap-2 bg-[#FFFD40]/10 border border-[#FFFD40]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">
+              <HelpCircle className="w-4 h-4 text-[#FFFD40]" />
               FAQ
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
@@ -953,7 +953,7 @@ export function FeaturesContent() {
 
       {/* ── Final CTA ── */}
       <section className="py-24 bg-[#0B0B0B] relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255,200,0,0.18)_0%,_transparent_55%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(255, 253, 64,0.18)_0%,_transparent_55%)] pointer-events-none" />
         <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
             Ready to Find, Book &amp; Glow?
@@ -965,14 +965,14 @@ export function FeaturesContent() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 bg-[#ffc800] hover:bg-[#ffd633] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#ffc800]/20"
+              className="inline-flex items-center justify-center gap-2 bg-[#FFFD40] hover:bg-[#FFFE73] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#FFFD40]/20"
             >
               <Search className="w-4 h-4" />
               Book a Salon
             </Link>
             <Link
               href="/onboarding"
-              className="inline-flex items-center justify-center gap-2 border border-[#ffc800]/50 bg-[#ffc800]/10 text-[#ffc800] hover:bg-[#ffc800]/20 hover:text-[#ffd633] font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03]"
+              className="inline-flex items-center justify-center gap-2 border border-[#FFFD40]/50 bg-[#FFFD40]/10 text-[#FFFD40] hover:bg-[#FFFD40]/20 hover:text-[#FFFE73] font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03]"
             >
               <Store className="w-4 h-4" />
               List Your Salon

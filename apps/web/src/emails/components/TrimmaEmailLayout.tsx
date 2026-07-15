@@ -61,7 +61,7 @@ const headerStyle: React.CSSProperties = {
 };
 
 const brandStyle: React.CSSProperties = {
-  color: "#ffc800",
+  color: "#FFFD40",
   fontSize: "14px",
   fontWeight: 700,
   letterSpacing: "0.08em",

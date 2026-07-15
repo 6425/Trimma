@@ -106,7 +106,7 @@ function ResetPasswordForm() {
   if (checkingSession) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-[#121212] text-zinc-400">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#ffc800]" />
+        <Loader2 className="mr-2 h-5 w-5 animate-spin text-[#FFFD40]" />
         Verifying reset link…
       </div>
     );
@@ -127,19 +127,19 @@ function ResetPasswordForm() {
             </div>
             <Link
               href="/forgot-password"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[#ffc800] hover:text-[#ffd633]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#FFFD40] hover:text-[#FFFE73]"
             >
               Request a new reset link
             </Link>
           </div>
         ) : success ? (
           <div className="space-y-6">
-            <div className="rounded-xl border border-[#ffc800]/30 bg-[#ffc800]/10 px-4 py-4 text-sm text-[#ffc800]">
+            <div className="rounded-xl border border-[#FFFD40]/30 bg-[#FFFD40]/10 px-4 py-4 text-sm text-[#FFFD40]">
               Your password has been updated. Redirecting you to sign in…
             </div>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[#ffc800] hover:text-[#ffd633]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#FFFD40] hover:text-[#FFFE73]"
             >
               Go to sign in now
             </Link>
@@ -169,7 +169,7 @@ function ResetPasswordForm() {
                       required
                       minLength={6}
                       autoComplete="new-password"
-                      className="h-11 border-zinc-700 bg-[#1a1a1a] pl-10 pr-10 text-white placeholder:text-zinc-500 focus-visible:border-[#ffc800] focus-visible:ring-[#ffc800]/30"
+                      className="h-11 border-zinc-700 bg-[#1a1a1a] pl-10 pr-10 text-white placeholder:text-zinc-500 focus-visible:border-[#FFFD40] focus-visible:ring-[#FFFD40]/30"
                     />
                     <button
                       type="button"
@@ -194,7 +194,7 @@ function ResetPasswordForm() {
                     required
                     minLength={6}
                     autoComplete="new-password"
-                    className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#ffc800] focus-visible:ring-[#ffc800]/30"
+                    className="h-11 border-zinc-700 bg-[#1a1a1a] text-white placeholder:text-zinc-500 focus-visible:border-[#FFFD40] focus-visible:ring-[#FFFD40]/30"
                   />
                 </div>
               </div>
@@ -208,7 +208,7 @@ function ResetPasswordForm() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="h-11 w-full rounded-md bg-[#ffc800] text-black hover:bg-[#ffd633] hover:text-black"
+                className="h-11 w-full rounded-md bg-[#FFFD40] text-black hover:bg-[#FFFE73] hover:text-black"
               >
                 {loading ? (
                   <>
@@ -222,7 +222,7 @@ function ResetPasswordForm() {
 
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-[#ffc800]"
+                className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-[#FFFD40]"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to sign in

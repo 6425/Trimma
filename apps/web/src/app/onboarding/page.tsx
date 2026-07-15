@@ -1,13 +1,7 @@
-import { Metadata } from "next";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
 import { OnboardingHeroCta } from "./OnboardingHeroCta";
-
-export const metadata: Metadata = {
-  title: "List Your Salon | Trimma",
-  description: "Join Sri Lanka's next-generation salon discovery and booking platform.",
-};
 
 export default async function OnboardingPage() {
   const result = await getPublicSubscriptionPlans();
@@ -89,7 +83,7 @@ export default async function OnboardingPage() {
             ))}
           </div>
 
-          <div className="bg-[#ffc800]/10 border border-[#ffc800]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto">
+          <div className="bg-[#FFFD40]/10 border border-[#FFFD40]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto">
             <strong>Notice:</strong> We are currently providing dedicated onboarding support in the above districts to ensure a high-quality experience. Additional districts will be added soon.
           </div>
         </div>

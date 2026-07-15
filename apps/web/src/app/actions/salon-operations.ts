@@ -617,7 +617,16 @@ export async function updateSalonPromotionPackage(packageId: string, payload: Re
   return { success: true as const };
 }
 
+const MIN_SERVICE_PRICE_LKR = 700;
+
 export async function insertSalonServices(payloads: Record<string, unknown>[]) {
+  for (const row of payloads) {
+    const price = Number(row.price);
+    if (!Number.isFinite(price) || price < MIN_SERVICE_PRICE_LKR) {
+      return { success: false as const, error: `Minimum service price is LKR ${MIN_SERVICE_PRICE_LKR}.` };
+    }
+  }
+
   const result = await withSalonDb(async (supabase, ctx) => {
     const staff = await loadSalonStaffForCoverage(supabase, ctx.salonId);
     if (!salonHasActiveStaff(staff)) {
@@ -671,6 +680,13 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
 }
 
 export async function updateSalonService(serviceId: string, payload: Record<string, unknown>) {
+  if (payload.price !== undefined) {
+    const price = Number(payload.price);
+    if (!Number.isFinite(price) || price < MIN_SERVICE_PRICE_LKR) {
+      return { success: false as const, error: `Minimum service price is LKR ${MIN_SERVICE_PRICE_LKR}.` };
+    }
+  }
+
   let serviceSync: PendingServiceSync | null = null;
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonService(supabase, ctx, serviceId);

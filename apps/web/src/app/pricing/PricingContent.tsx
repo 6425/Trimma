@@ -65,7 +65,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
               onClick={() => setIsAnnual(false)}
               className={cn(
                 "rounded-full h-11 px-5 text-sm font-bold",
-                !isAnnual && "ring-2 ring-[#ffc800] ring-offset-2 ring-offset-[#ffc800]/30"
+                !isAnnual && "ring-2 ring-[#FFFD40] ring-offset-2 ring-offset-[#FFFD40]/30"
               )}
             >
               Billed Monthly
@@ -76,7 +76,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
               onClick={() => setIsAnnual(true)}
               className={cn(
                 "rounded-full h-11 px-5 text-sm font-bold gap-2",
-                isAnnual && "ring-2 ring-[#ffc800] ring-offset-2 ring-offset-[#ffc800]/30"
+                isAnnual && "ring-2 ring-[#FFFD40] ring-offset-2 ring-offset-[#FFFD40]/30"
               )}
             >
               <span>Billed Annually</span>

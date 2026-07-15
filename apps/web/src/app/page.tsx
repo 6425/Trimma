@@ -2,10 +2,18 @@
 // Data is fetched on the server and HTML is sent to the browser pre-populated.
 
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
 import { fetchPublicDeals } from "@/lib/deals";
 import SalonsClient from "./SalonsClient";
+
+export const metadata = buildPublicPageMetadata({
+  title: "Trimma OS - Find. Book. Glow.",
+  description:
+    "Find and book salons across Sri Lanka — barbers, beauty parlours, spas, nail studios, and more.",
+  path: "/",
+});
 
 export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
 
