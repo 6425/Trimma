@@ -442,7 +442,7 @@ export function PreviewLandingContent() {
 
       {/* ============ JOURNEYS ============ */}
       <section className="py-16 lg:py-20 bg-[#FFFEF0]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 gap-12">
           <div>
             <h3 className="text-xl font-black text-center mb-8">Customer Journey</h3>
             <div className="flex flex-wrap justify-center gap-x-2 gap-y-5">
