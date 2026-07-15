@@ -56,7 +56,7 @@ const hasPermission = (userRole: MiddlewareUserRole | null | undefined, route: s
   return RolePermissions[userRole]?.canAccess(route) || false;
 };
 
-const publicRoutes = ['/', '/search', '/login', '/signup', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/pricing', '/deals', '/categories', '/styles', '/unauthorized', '/onboarding', '/privacy-policy', '/terms', '/cookies', '/careers', '/data-deletion', '/customer-help', '/cancellation-help', '/safety', '/features'];
+const publicRoutes = ['/', '/search', '/login', '/signup', '/register', '/forgot-password', '/reset-password', '/about', '/contact', '/pricing', '/deals', '/categories', '/styles', '/unauthorized', '/onboarding', '/privacy-policy', '/terms', '/cookies', '/careers', '/data-deletion', '/customer-help', '/cancellation-help', '/safety', '/features', '/preview-landing'];
 
 function redirectToLogin(req: NextRequest, pathname: string): NextResponse {
   let loginPath = '/login';

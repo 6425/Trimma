@@ -1,0 +1,33 @@
+---
+description: Trimma global button contrast — yellow vs dark fills
+alwaysApply: true
+---
+
+# Trimma button contrast (global)
+
+Use `@/components/ui/button` variants — never one-off button colors.
+
+## Contract
+
+| Fill | Text | Hover text | Hover fill |
+|------|------|------------|------------|
+| Yellow `#FFFD40` (`variant="default"`) | Black `#000` | Black | Lighter yellow `#FFFE73` |
+| Black / dark (`variant="dark"`) | White `#fff` | Brand yellow `#FFFD40` | Stay black |
+
+## Implementation
+
+- **Yellow CTAs**: `<Button variant="default">` or `buttonVariants({ variant: "default" })` on links.
+- **Dark CTAs**: `<Button variant="dark">` or `trimmaDarkBtnClass` from `@/lib/customer-dashboard-ui` (re-exports global `dark` variant).
+- **Filter tabs**: `trimmaFilterTabClass(active)` + `.trimma-filter-tab` CSS — do not invent new tab styles.
+- Global safeguards live in `apps/web/src/index.css` (dark hover → yellow text; solid yellow → black text).
+
+## Do not
+
+- Add `trimma-customer-btn` or page-specific button color classes.
+- Put white text on solid yellow buttons or dark text on solid black buttons.
+- Override hover to white text on dark buttons.
+
+## Mobile
+
+- Interactive controls: minimum **44px** touch height on mobile (`min-h-11` or global `.trimma-customer-dashboard` rules).
+- Header CTAs: `w-full sm:w-auto` on narrow viewports.

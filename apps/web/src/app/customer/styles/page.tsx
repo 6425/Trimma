@@ -94,7 +94,7 @@ function SavedStylesContent() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <Loader2 className="w-8 h-8 animate-spin text-[#ffc800]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#FFFD40]" />
           <p className="text-sm text-zinc-400 font-bold">Loading your saved styles...</p>
         </div>
       ) : loadError ? (
@@ -128,7 +128,7 @@ function SavedStylesContent() {
             return (
               <div
                 key={row.id}
-                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#ffc800]/50 transition-all shadow-sm"
+                className="bg-white rounded-2xl border border-zinc-200 overflow-hidden hover:border-[#FFFD40]/50 transition-all shadow-sm"
               >
                 <div className="relative aspect-[4/5] bg-zinc-100">
                   <Image
@@ -142,7 +142,7 @@ function SavedStylesContent() {
                     type="button"
                     disabled={removingId === row.id}
                     onClick={() => handleRemove(row.id, style.id, style.title)}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md text-[#ffc800] hover:bg-white border border-white transition-colors disabled:opacity-50"
+                    className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-md text-[#FFFD40] hover:bg-white border border-white transition-colors disabled:opacity-50"
                     aria-label={`Remove ${style.title} from saved styles`}
                   >
                     <Bookmark className="w-5 h-5 fill-current" />

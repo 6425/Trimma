@@ -65,12 +65,12 @@ export default function ForgotPasswordPage() {
 
         {successMessage ? (
           <div className="space-y-6">
-            <div className="rounded-xl border border-[#ffc800]/30 bg-[#ffc800]/10 px-4 py-4 text-sm text-[#ffc800]">
+            <div className="rounded-xl border border-[#FFFD40]/30 bg-[#FFFD40]/10 px-4 py-4 text-sm text-[#FFFD40]">
               {successMessage}
             </div>
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-[#ffc800] hover:text-[#ffd633]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#FFFD40] hover:text-[#FFFE73]"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to sign in
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
                   placeholder="owner@salon.com"
                   required
                   autoComplete="email"
-                  className="h-11 border-zinc-700 bg-[#1a1a1a] pl-10 text-white placeholder:text-zinc-500 focus-visible:border-[#ffc800] focus-visible:ring-[#ffc800]/30"
+                  className="h-11 border-zinc-700 bg-[#1a1a1a] pl-10 text-white placeholder:text-zinc-500 focus-visible:border-[#FFFD40] focus-visible:ring-[#FFFD40]/30"
                 />
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-11 w-full rounded-md bg-[#ffc800] text-black hover:bg-[#ffd633] hover:text-black"
+              className="h-11 w-full rounded-md bg-[#FFFD40] text-black hover:bg-[#FFFE73] hover:text-black"
             >
               {loading ? (
                 <>
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
 
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-[#ffc800]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-[#FFFD40]"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to sign in

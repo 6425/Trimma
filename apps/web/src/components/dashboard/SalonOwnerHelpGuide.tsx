@@ -132,7 +132,7 @@ function SidebarMockup() {
           <div
             key={label}
             className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium ${
-              active ? "bg-[#ffc800] text-black font-semibold" : "text-white/90"
+              active ? "bg-[#FFFD40] text-black font-semibold" : "text-white/90"
             }`}
           >
             <Icon className="w-3 h-3 shrink-0" />
@@ -144,7 +144,7 @@ function SidebarMockup() {
         <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] text-white/80">
           <Settings className="w-3 h-3" /> Settings
         </div>
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[#ffc800] text-black text-[10px] font-semibold">
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[#FFFD40] text-black text-[10px] font-semibold">
           <HelpCircle className="w-3 h-3" /> Salon Help
         </div>
         <div className="flex items-center gap-2 px-2 py-1.5 text-[10px] text-red-400">
@@ -168,7 +168,7 @@ function HeaderMockup() {
         </button>
         <div className="relative p-1.5">
           <Bell className="w-4 h-4 text-white" />
-          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#ffc800]" />
+          <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-[#FFFD40]" />
         </div>
         <div className="flex items-center gap-2 pl-2 border-l border-white/10">
           <div className="text-right hidden sm:block">
@@ -177,7 +177,7 @@ function HeaderMockup() {
             </div>
             <div className="text-[9px] text-white/50">Business Plan</div>
           </div>
-          <div className="w-7 h-7 rounded-full bg-[#ffc800] text-black text-[9px] font-black flex items-center justify-center border-2 border-[#ffc800]/30">
+          <div className="w-7 h-7 rounded-full bg-[#FFFD40] text-black text-[9px] font-black flex items-center justify-center border-2 border-[#FFFD40]/30">
             SA
           </div>
         </div>
@@ -522,9 +522,9 @@ export function SalonOwnerHelpGuide() {
     <div className="max-w-6xl mx-auto p-4 pb-16 space-y-8">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 border border-white/10">
-        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#ffc800]/10" />
+        <Sparkles className="absolute -right-8 -top-8 w-40 h-40 text-[#FFFD40]/10" />
         <div className="relative z-10 max-w-2xl">
-          <span className="inline-flex items-center gap-1.5 bg-[#ffc800]/15 text-[#ffc800] border border-[#ffc800]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
+          <span className="inline-flex items-center gap-1.5 bg-[#FFFD40]/15 text-[#FFFD40] border border-[#FFFD40]/25 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-4">
             <BookOpen className="w-3.5 h-3.5" />
             Salon Owner Handbook
           </span>
@@ -537,14 +537,14 @@ export function SalonOwnerHelpGuide() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Link href="/dashboard/profile">
-              <Button className="h-9 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black text-xs font-bold">
+              <Button className="h-9 rounded-xl bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black text-xs font-bold">
                 Complete {SALON.name} profile
               </Button>
             </Link>
             <Link href={`/salons/${SALON.slug}`} target="_blank">
               <Button
                 variant="outline"
-                className="h-9 rounded-xl border-[#ffc800]/50 bg-[#ffc800]/10 !text-[#ffc800] hover:bg-[#ffc800]/20 hover:border-[#ffc800] hover:!text-[#ffd633] text-xs font-bold"
+                className="h-9 rounded-xl border-[#FFFD40]/50 bg-[#FFFD40]/10 !text-[#FFFD40] hover:bg-[#FFFD40]/20 hover:border-[#FFFD40] hover:!text-[#FFFE73] text-xs font-bold"
               >
                 View public listing
               </Button>
@@ -1092,7 +1092,7 @@ export function SalonOwnerHelpGuide() {
                 <div className="space-y-4">
                   <a
                     href="mailto:support@trimma.com"
-                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#ffc800] transition-colors"
+                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#FFFD40] transition-colors"
                   >
                     <Mail className="w-5 h-5 text-brand" />
                     support@trimma.com
@@ -1101,7 +1101,7 @@ export function SalonOwnerHelpGuide() {
                     href={TRIMMA_WHATSAPP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#ffc800] transition-colors"
+                    className="flex items-center gap-3 text-sm font-semibold text-white/90 hover:text-[#FFFD40] transition-colors"
                   >
                     <MessageCircle className="w-5 h-5 text-emerald-400" />
                     WhatsApp Live Chat · {TRIMMA_WHATSAPP_DISPLAY}
@@ -1113,7 +1113,7 @@ export function SalonOwnerHelpGuide() {
                     <TrimmaSocialLinks />
                   </div>
                   <Link href="/dashboard/profile">
-                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#ffc800] hover:bg-[#ffc800]/90 text-black font-bold text-xs">
+                    <Button className="w-full sm:w-auto h-10 rounded-xl bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black font-bold text-xs">
                       Return to {SALON.name} profile
                     </Button>
                   </Link>

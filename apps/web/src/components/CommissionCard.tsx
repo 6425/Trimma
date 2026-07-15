@@ -19,12 +19,12 @@ export const CommissionCard: React.FC<Props> = ({ row }) => {
     agent: "🤝",
   };
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl bg-[#ffc800]/10 border border-[#ffc800]/30 dark:bg-[#ffc800]/10 dark:border-[#ffc800]/20">
+    <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFD40]/10 border border-[#FFFD40]/30 dark:bg-[#FFFD40]/10 dark:border-[#FFFD40]/20">
       <div className="text-2xl">{icons[entity_type] || "💰"}</div>
       <div className="flex flex-col">
         <span className="font-bold text-lg text-zinc-950 dark:text-zinc-50">{formatted}</span>
         <span className="text-sm text-zinc-800 dark:text-zinc-100">{description}</span>
-        <span className="text-xs uppercase text-[#8a7600] dark:text-[#ffc800] mt-1">{entity_type}</span>
+        <span className="text-xs uppercase text-[#8a7600] dark:text-[#FFFD40] mt-1">{entity_type}</span>
       </div>
     </div>
   );

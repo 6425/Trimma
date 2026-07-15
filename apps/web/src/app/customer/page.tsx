@@ -151,7 +151,7 @@ function DashboardContent() {
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-8 md:space-y-12 min-w-0">
       <section className="bg-white rounded-3xl p-6 md:p-10 text-zinc-900 relative overflow-hidden shadow-sm border border-zinc-200">
         <div className="absolute inset-0 bg-gradient-to-r from-white to-zinc-50 z-0"></div>
-        <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#ffc800]/10 blur-3xl rounded-full z-0"></div>
+        <div className="absolute -right-20 -top-20 w-64 h-64 bg-[#FFFD40]/10 blur-3xl rounded-full z-0"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
@@ -164,7 +164,7 @@ function DashboardContent() {
                 {getGreeting()}, {userName} 👋
               </h1>
               <div className="flex items-center gap-3 text-sm text-zinc-600">
-                <Badge variant="secondary" className="bg-[#ffc800] text-black border border-black/10 font-semibold text-xs px-2.5 py-0.5">
+                <Badge variant="secondary" className="bg-[#FFFD40] text-black border border-black/10 font-semibold text-xs px-2.5 py-0.5">
                   {userRole}
                 </Badge>
               </div>
@@ -221,12 +221,12 @@ function DashboardContent() {
               return (
                 <div
                   key={booking.id}
-                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#ffc800]/50 hover:bg-[#ffc800]/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 hover:border-[#FFFD40]/50 hover:bg-[#FFFD40]/5 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold text-zinc-900">{booking.salons?.name || "Trimma Partner Salon"}</h3>
                     <div className="flex items-center gap-2 mt-1 text-sm text-zinc-600">
-                      <CalendarDays className="w-4 h-4 text-[#ffc800]/80" />
+                      <CalendarDays className="w-4 h-4 text-[#FFFD40]/80" />
                       <span>
                         {booking.booking_date} at {booking.booking_time}
                       </span>
@@ -238,7 +238,7 @@ function DashboardContent() {
 
                     {["confirmed", "pending", "reservation_paid"].includes(String(booking.status || "").toLowerCase()) ? (
                       <>
-                        <Badge className="bg-[#ffc800]/10 hover:bg-[#ffc800]/20 text-[#ffc800] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
+                        <Badge className="bg-[#FFFD40]/10 hover:bg-[#FFFD40]/20 text-[#FFFD40] border-none font-bold text-[9px] px-1.5 py-0.5 uppercase tracking-wide">
                           Deposit Paid (Rs. {formatLkr(paid)})
                         </Badge>
                         <span className="text-[9px] text-zinc-500 font-medium text-right">

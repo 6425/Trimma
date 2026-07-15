@@ -39,7 +39,7 @@ function Section({
   return (
     <section className="scroll-mt-24">
       <div className="flex items-center gap-3 mb-4">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#ffc800] text-sm font-bold text-zinc-900">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFFD40] text-sm font-bold text-zinc-900">
           {index}
         </span>
         <h2 className="text-2xl font-bold text-zinc-900">{title}</h2>
@@ -54,8 +54,8 @@ export default function CookiePolicyPage() {
     <div className="bg-white">
       <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
         <header className="border-b border-zinc-100 pb-10">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#ffc800]/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-yellow-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ffc800]" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#FFFD40]/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-yellow-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#FFFD40]" />
             Legal
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-5xl">
@@ -85,7 +85,7 @@ export default function CookiePolicyPage() {
             <ul className="space-y-3">
               {cookieTypes.map((item) => (
                 <li key={item.label} className="flex gap-3 text-gray-600 leading-7">
-                  <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffc800]" />
+                  <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFFD40]" />
                   <span>
                     <span className="font-semibold text-zinc-900">{item.label}:</span>{" "}
                     {item.text}
@@ -98,15 +98,15 @@ export default function CookiePolicyPage() {
           <Section index={3} title="How We Use Cookies">
             <ul className="space-y-3">
               <li className="flex gap-3 text-gray-600 leading-7">
-                <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffc800]" />
+                <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFFD40]" />
                 <span>Keep you signed in and secure your session.</span>
               </li>
               <li className="flex gap-3 text-gray-600 leading-7">
-                <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffc800]" />
+                <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFFD40]" />
                 <span>Personalize content and remember your preferences.</span>
               </li>
               <li className="flex gap-3 text-gray-600 leading-7">
-                <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffc800]" />
+                <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FFFD40]" />
                 <span>Analyze usage to improve platform performance.</span>
               </li>
             </ul>
@@ -150,7 +150,7 @@ export default function CookiePolicyPage() {
               </p>
               <a
                 href="mailto:support@trimma.io"
-                className="mt-1 inline-block text-lg font-bold text-zinc-900 underline decoration-[#ffc800] decoration-2 underline-offset-4 hover:text-yellow-700"
+                className="mt-1 inline-block text-lg font-bold text-zinc-900 underline decoration-[#FFFD40] decoration-2 underline-offset-4 hover:text-yellow-700"
               >
                 support@trimma.io
               </a>

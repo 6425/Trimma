@@ -89,7 +89,7 @@ export default function SettingsPortalPage() {
             </p>
           </div>
         </div>
-        <Button className="rounded-2xl border border-[#ffc800]/50 bg-[#ffc800]/10 text-[#ffc800] hover:bg-[#ffc800]/20 hover:border-[#ffc800] hover:text-[#ffd633] font-bold h-11 px-6 whitespace-nowrap">
+        <Button className="rounded-2xl border border-[#FFFD40]/50 bg-[#FFFD40]/10 text-[#FFFD40] hover:bg-[#FFFD40]/20 hover:border-[#FFFD40] hover:text-[#FFFE73] font-bold h-11 px-6 whitespace-nowrap">
           Access Vault
         </Button>
       </div>
