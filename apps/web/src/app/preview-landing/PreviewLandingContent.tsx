@@ -118,6 +118,7 @@ const showcase = [
       "Fewer no-shows, more revenue",
     ],
     image: "/assets/features/steps/step-3-booking-form.png",
+    narrow: true,
   },
   {
     icon: BarChart3,
@@ -438,7 +439,11 @@ export function PreviewLandingContent() {
                       ))}
                     </ul>
                   </div>
-                  <div className={flip ? "lg:order-1" : ""}>
+                  <div
+                    className={`${flip ? "lg:order-1" : ""} ${
+                      s.narrow ? "mx-auto w-full max-w-[300px] lg:max-w-[320px]" : ""
+                    }`}
+                  >
                     <BrowserFrame src={s.image} alt={s.title} />
                   </div>
                 </div>
