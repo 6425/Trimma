@@ -94,61 +94,64 @@ const betterDay = [
   },
 ];
 
-const features = [
+const showcase = [
+  {
+    icon: Store,
+    eyebrow: "All-in-one dashboard",
+    title: "Run your entire salon from one screen",
+    text: "Bookings, staff, payments and customers — every part of your business in a single real-time dashboard, built for salon owners.",
+    bullets: [
+      "Live view of today's appointments & revenue",
+      "Occupancy and performance at a glance",
+      "No spreadsheets, no guesswork",
+    ],
+    image: "/assets/trimma-os-dashboard.png",
+  },
   {
     icon: CalendarClock,
-    title: "Online Booking",
-    text: "Let customers book anytime, anywhere.",
+    eyebrow: "Online booking",
+    title: "A booking page that fills your calendar",
+    text: "Customers book in seconds from anywhere. Trimma prevents double-bookings and confirms every slot automatically.",
+    bullets: [
+      "24/7 self-service booking",
+      "Deposits collected upfront",
+      "Fewer no-shows, more revenue",
+    ],
     image: "/assets/features/steps/step-3-booking-form.png",
   },
   {
-    icon: Users,
-    title: "Staff Management",
-    text: "Manage staff, shifts, commissions & performance.",
-    image: "/assets/features/dashboard/staff-commission.png",
-  },
-  {
-    icon: Heart,
-    title: "Customer CRM",
-    text: "Build relationships. Track history. Grow loyalty.",
-    image: "/assets/features/dashboard/recent-activity.png",
-  },
-  {
-    icon: CalendarDays,
-    title: "Calendar",
-    text: "Smart calendar. No clashes. Always organised.",
-    image: "/assets/features/steps/step-4-reserve-slot.png",
-  },
-  {
-    icon: Tag,
-    title: "Promotions",
-    text: "Create offers. Send campaigns. Fill your chairs.",
-    image: "/assets/features/dashboard/income-breakdown.png",
-  },
-  {
     icon: BarChart3,
-    title: "Reports",
-    text: "Real-time insights. Make better decisions.",
+    eyebrow: "Reports & analytics",
+    title: "Know your numbers at a glance",
+    text: "See revenue trends, staff performance and what's driving growth — updated in real time, no accountant required.",
+    bullets: [
+      "Daily revenue breakdown",
+      "Per-staff booking trends",
+      "Smarter decisions, backed by data",
+    ],
     image: "/assets/features/dashboard/analytics-charts.png",
   },
   {
-    icon: Smartphone,
-    title: "Mobile App",
-    text: "Run your salon from your pocket. iOS & Android.",
-    image: "/assets/login_mockup.webp",
+    icon: Users,
+    eyebrow: "Staff & commissions",
+    title: "Pay your team the right amount, automatically",
+    text: "Commissions are calculated for every booking. Review and pay in minutes instead of spending your Sunday on a calculator.",
+    bullets: [
+      "Automatic commission per service",
+      "Per-staff performance tracking",
+      "Payroll-ready summaries",
+    ],
+    image: "/assets/features/dashboard/staff-commission.png",
   },
-  {
-    icon: Brain,
-    title: "AI Business Insights",
-    text: "Predict trends. Get smart recommendations.",
-    image: "/assets/features/dashboard/salon-performance.png",
-  },
-  {
-    icon: Bell,
-    title: "Automated Reminders",
-    text: "WhatsApp & email reminders reduce no-shows.",
-    image: "/assets/features/steps/step-5-confirmed-email.png",
-  },
+];
+
+const moreFeatures = [
+  { icon: Heart, title: "Customer CRM", text: "Build relationships, track history and grow loyalty." },
+  { icon: Tag, title: "Promotions", text: "Create offers and campaigns that fill empty chairs." },
+  { icon: Smartphone, title: "Mobile App", text: "Run your salon from your pocket — iOS & Android." },
+  { icon: Brain, title: "AI Business Insights", text: "Predict trends and get smart recommendations." },
+  { icon: Bell, title: "Automated Reminders", text: "WhatsApp & email reminders cut down no-shows." },
+  { icon: CalendarDays, title: "Smart Calendar", text: "No clashes, no double-bookings. Always organised." },
 ];
 
 const otherSystems = ["Booking only", "No marketing", "Complicated", "Expensive"];
@@ -254,6 +257,19 @@ function StarRow() {
   );
 }
 
+function BrowserFrame({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="rounded-2xl overflow-hidden bg-white ring-1 ring-zinc-200/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.25)]">
+      <div className="flex items-center gap-1.5 px-4 h-9 bg-zinc-50 border-b border-zinc-100">
+        <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#ffde5a]" />
+        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+      </div>
+      <img src={src} alt={alt} className="w-full h-auto block" loading="lazy" />
+    </div>
+  );
+}
+
 export function PreviewLandingContent() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -264,10 +280,19 @@ export function PreviewLandingContent() {
   return (
     <div className="bg-white text-zinc-900 font-sans overflow-x-hidden">
       {/* ============ HERO ============ */}
-      <section className="relative overflow-hidden bg-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-zinc-50 to-white">
+        {/* soft ambient backdrop */}
+        <div className="pointer-events-none absolute inset-0 -z-0">
+          <div className="absolute -top-24 -right-24 w-[36rem] h-[36rem] rounded-full bg-[#ffde5a]/20 blur-3xl" />
+          <div className="absolute top-40 -left-32 w-[30rem] h-[30rem] rounded-full bg-indigo-200/30 blur-3xl" />
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-12 items-center relative z-10">
           <div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-zinc-900">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white ring-1 ring-zinc-200 px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-900" />
+              The all-in-one salon platform for Sri Lanka
+            </span>
+            <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-zinc-900">
               Grow Your Salon.
               <br />
               Not Your Stress.
@@ -297,6 +322,7 @@ export function PreviewLandingContent() {
           </div>
 
           <div className="relative">
+            <div className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-gradient-to-tr from-[#ffde5a]/30 via-transparent to-indigo-300/20 blur-2xl" />
             <img
               src="/assets/dashboard_mockup.jpg"
               alt="Trimma salon dashboard on laptop, tablet and phone"
@@ -370,28 +396,68 @@ export function PreviewLandingContent() {
         </div>
       </section>
 
-      {/* ============ FEATURES GRID ============ */}
+      {/* ============ PRODUCT SHOWCASE (zig-zag) ============ */}
       <section className="py-16 lg:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl lg:text-4xl font-black text-center tracking-tight">
-            Everything You Need to Grow
-          </h2>
-          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f) => (
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-black tracking-tight">
+              Everything You Need to Grow
+            </h2>
+            <p className="mt-4 text-zinc-600">
+              One connected platform — see exactly how Trimma runs your salon.
+            </p>
+          </div>
+
+          <div className="mt-16 space-y-20 lg:space-y-28">
+            {showcase.map((s, i) => {
+              const flip = i % 2 === 1;
+              return (
+                <div
+                  key={s.title}
+                  className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center"
+                >
+                  <div className={flip ? "lg:order-2" : ""}>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#FFFEF0] ring-1 ring-[#ffde5a]/60 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zinc-800">
+                      <s.icon className="w-3.5 h-3.5" />
+                      {s.eyebrow}
+                    </span>
+                    <h3 className="mt-4 text-2xl lg:text-3xl font-black tracking-tight leading-tight">
+                      {s.title}
+                    </h3>
+                    <p className="mt-4 text-zinc-600 leading-relaxed max-w-lg">
+                      {s.text}
+                    </p>
+                    <ul className="mt-6 space-y-3">
+                      {s.bullets.map((b) => (
+                        <li key={b} className="flex items-start gap-2.5 text-sm font-medium text-zinc-700">
+                          <span className="mt-0.5 w-5 h-5 rounded-full bg-[#ffde5a] flex items-center justify-center shrink-0">
+                            <Check className="w-3 h-3 text-black" />
+                          </span>
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className={flip ? "lg:order-1" : ""}>
+                    <BrowserFrame src={s.image} alt={s.title} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Secondary features */}
+          <div className="mt-20 lg:mt-28 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {moreFeatures.map((f) => (
               <div
                 key={f.title}
-                className="group rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                className="group rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#ffde5a] flex items-center justify-center mb-4">
-                  <f.icon className="w-6 h-6 text-black" />
+                <div className="w-11 h-11 rounded-xl bg-[#ffde5a] flex items-center justify-center mb-4">
+                  <f.icon className="w-5 h-5 text-black" />
                 </div>
-                <h3 className="font-black text-lg">{f.title}</h3>
-                <p className="mt-2 text-sm text-zinc-600 leading-relaxed">{f.text}</p>
-                {f.image && (
-                  <div className="mt-4 rounded-xl overflow-hidden ring-1 ring-zinc-100">
-                    <img src={f.image} alt={f.title} className="w-full h-32 object-cover object-top" />
-                  </div>
-                )}
+                <h4 className="font-black">{f.title}</h4>
+                <p className="mt-1.5 text-sm text-zinc-600 leading-relaxed">{f.text}</p>
               </div>
             ))}
           </div>
