@@ -293,10 +293,10 @@ export default function SalonsClient({
             Discover Premium Grooming
           </Badge>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-black mb-4 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)]">
             Best Salons &amp; Spas <br />
             in{" "}
-            <span className="text-black underline decoration-black/20 decoration-4 underline-offset-4">
+            <span className="text-white underline decoration-white/40 decoration-4 underline-offset-4">
               Sri Lanka
             </span>
           </h1>
