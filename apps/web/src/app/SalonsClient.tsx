@@ -22,6 +22,7 @@ import type { SalonDealRow } from "@/lib/deals";
 
 const LANDING_HERO_IMAGE = "/assets/beauty-salon-hero.webp";
 
+
 interface Salon {
   id: string;
   name: string;
@@ -268,26 +269,22 @@ export default function SalonsClient({
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      {/* HERO — copy on left 50%, contained image on right 50% */}
-      <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden">
-        <div className="home-hero-split-grid h-full">
-          <div className="home-hero-split-left relative">
-            <div className="pointer-events-none absolute inset-0 z-0 lg:hidden" aria-hidden="true">
-              <img
-                src={LANDING_HERO_IMAGE}
-                alt=""
-                width={1920}
-                height={1080}
-                decoding="async"
-                fetchPriority="high"
-                className="home-hero-mobile-image"
-              />
-              <div className="home-hero-mobile-overlay" />
-            </div>
-            <div className="home-hero-left-overlay pointer-events-none absolute inset-0 z-0 hidden lg:block" aria-hidden="true" />
+      {/* HERO — full background image, copy on left 50% */}
+      <section className="page-hero-shell home-hero home-hero-split relative h-[500px] overflow-hidden">
+        <img
+          src={LANDING_HERO_IMAGE}
+          alt=""
+          width={1920}
+          height={1080}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="home-hero-left-overlay absolute inset-y-0 left-0 w-1/2 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-            <div className="home-hero-inner relative z-10 h-full">
-              <div className="home-hero-content hero-ink text-left">
+        <div className="container relative z-10 h-full mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left h-full w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
             <div className="home-hero-top">
               <Badge variant="hero" className="mb-3">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
@@ -359,20 +356,6 @@ export default function SalonsClient({
               </p>
               <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
             </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="home-hero-split-right pointer-events-none hidden lg:flex" aria-hidden="true">
-            <img
-              src={LANDING_HERO_IMAGE}
-              alt=""
-              width={1920}
-              height={1080}
-              decoding="async"
-              fetchPriority="high"
-              className="home-hero-right-image"
-            />
           </div>
         </div>
       </section>
