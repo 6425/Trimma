@@ -2263,10 +2263,19 @@ html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-web
   background: transparent !important;
   border-bottom-color: rgb(0 0 0 / 0.12) !important;
   color: #ffffff !important;
+  min-height: 500px;
+  height: 500px;
+  max-height: 500px;
 }
 html.dark .trimma-marketplace-shell .home-hero-split {
   background: transparent !important;
   color: #ffffff !important;
+}
+@media (max-width: 639px) {
+  .home-hero-split {
+    height: auto;
+    max-height: none;
+  }
 }
 .home-hero-split .home-hero-bg-image {
   position: absolute;
@@ -2281,10 +2290,10 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   inset: 0;
   background: linear-gradient(
     to right,
-    rgb(0 0 0 / 0.78) 0%,
-    rgb(0 0 0 / 0.62) 42%,
-    rgb(0 0 0 / 0.28) 58%,
-    rgb(0 0 0 / 0.08) 72%,
+    rgb(0 0 0 / 0.88) 0%,
+    rgb(0 0 0 / 0.74) 40%,
+    rgb(0 0 0 / 0.48) 56%,
+    rgb(0 0 0 / 0.18) 70%,
     transparent 82%
   );
 }
@@ -2293,10 +2302,43 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgb(0 0 0 / 0.72) 0%,
-    rgb(0 0 0 / 0.55) 45%,
-    rgb(0 0 0 / 0.35) 100%
+    rgb(0 0 0 / 0.82) 0%,
+    rgb(0 0 0 / 0.64) 45%,
+    rgb(0 0 0 / 0.42) 100%
   );
+}
+.home-hero-split .home-hero-inner {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+}
+.home-hero-split .home-hero-content {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3%;
+}
+.home-hero-split .home-hero-top,
+.home-hero-split .home-hero-middle,
+.home-hero-split .home-hero-bottom {
+  min-width: 0;
+}
+.home-hero-split .home-hero-middle {
+  flex: 0 1 auto;
+}
+.home-hero-split .hero-ink h1 {
+  margin-bottom: 0.5rem;
+}
+.home-hero-split .hero-ink > p {
+  margin-bottom: 0;
+}
+.home-hero-split .trimma-hero-search {
+  margin-top: 0;
 }
 .trimma-marketplace-shell .home-hero-split .hero-ink h1,
 .trimma-marketplace-shell .home-hero-split .hero-ink h1 span,
@@ -2326,8 +2368,16 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .trimma-live-coun
   color: rgb(228 228 231) !important;
 }
 @media (min-width: 1024px) {
-  .home-hero-split .home-hero-content,
-  .home-hero-split .hero-ink {
+  .home-hero-split .home-hero-content {
+    width: 50%;
     max-width: 50%;
   }
+}
+.trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats {
+  color: rgb(212 212 216) !important;
+}
+.trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats .home-hero-stats-dot,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats .home-hero-stats-dot {
+  background-color: rgb(161 161 170) !important;
 }
