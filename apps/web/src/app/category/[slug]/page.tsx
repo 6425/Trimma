@@ -30,7 +30,8 @@ import {
 import { SalonCard } from "../../../components/marketplace/SalonCard";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
-  "barber-salon": "/assets/category-barber-salon-hero.webp",
+  "barber-salon": "/assets/barber-salon-hero.webp",
+  "spa-wellness": "/assets/spa-wellness-hero.webp",
 };
 
 const DEFAULT_HERO_IMAGE =

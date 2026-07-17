@@ -20,7 +20,7 @@ import {
 import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSection";
 import type { SalonDealRow } from "@/lib/deals";
 
-const LANDING_HERO_IMAGE = "/assets/landing-hero.webp";
+const LANDING_HERO_IMAGE = "/assets/beauty-salon-hero.webp";
 
 interface Salon {
   id: string;
