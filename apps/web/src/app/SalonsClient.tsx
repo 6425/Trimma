@@ -269,24 +269,26 @@ export default function SalonsClient({
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      {/* HERO — full background image, copy on left 50% */}
+      {/* HERO — copy on left 50%, contained image on right 50% */}
       <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-          <img
-            src={LANDING_HERO_IMAGE}
-            alt=""
-            width={1920}
-            height={1080}
-            decoding="async"
-            fetchPriority="high"
-            className="home-hero-bg-image"
-          />
-          <div className="home-hero-left-overlay hidden lg:block" />
-          <div className="home-hero-mobile-overlay lg:hidden" />
-        </div>
+        <div className="home-hero-split-grid h-full">
+          <div className="home-hero-split-left relative">
+            <div className="pointer-events-none absolute inset-0 z-0 lg:hidden" aria-hidden="true">
+              <img
+                src={LANDING_HERO_IMAGE}
+                alt=""
+                width={1920}
+                height={1080}
+                decoding="async"
+                fetchPriority="high"
+                className="home-hero-mobile-image"
+              />
+              <div className="home-hero-mobile-overlay" />
+            </div>
+            <div className="home-hero-left-overlay pointer-events-none absolute inset-0 z-0 hidden lg:block" aria-hidden="true" />
 
-        <div className="home-hero-inner relative z-10 mx-auto max-w-7xl h-full">
-          <div className="home-hero-content hero-ink text-left">
+            <div className="home-hero-inner relative z-10 h-full">
+              <div className="home-hero-content hero-ink text-left">
             <div className="home-hero-top">
               <Badge variant="hero" className="mb-3">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
@@ -358,6 +360,20 @@ export default function SalonsClient({
               </p>
               <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
             </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="home-hero-split-right pointer-events-none hidden lg:flex" aria-hidden="true">
+            <img
+              src={LANDING_HERO_IMAGE}
+              alt=""
+              width={1920}
+              height={1080}
+              decoding="async"
+              fetchPriority="high"
+              className="home-hero-right-image"
+            />
           </div>
         </div>
       </section>
