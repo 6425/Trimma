@@ -29,6 +29,13 @@ import {
 } from "../../../components/marketplace/MarketplaceSections";
 import { SalonCard } from "../../../components/marketplace/SalonCard";
 
+const CATEGORY_HERO_IMAGES: Record<string, string> = {
+  "barber-salon": "/assets/category-barber-salon-hero.webp",
+};
+
+const DEFAULT_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
+
 export default function CategoryPage() {
   const { slug } = useParams();
   const slugStr = String(slug || "");
@@ -122,7 +129,9 @@ export default function CategoryPage() {
   };
 
   const currentCategory = categories.find(c => c.slug === slug);
-  const heroImage = currentCategory?.image_url || "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
+  const splitHeroImage = CATEGORY_HERO_IMAGES[slugStr];
+  const heroImage = splitHeroImage || currentCategory?.image_url || DEFAULT_HERO_IMAGE;
+  const useSplitHero = Boolean(splitHeroImage);
   const categoryName = currentCategory?.name || (slug ? (slug as string).split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Salons & Spas");
 
   const filteredSalons = salons;
@@ -131,70 +140,146 @@ export default function CategoryPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       
       {/* 1. HERO SECTION */}
-      <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImage} 
-            alt="Category Hero" 
-            className="page-hero-image"
-          />
-          <div className="absolute inset-0 page-hero-overlay" />
-        </div>
-
-        <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
-          <Badge variant="hero" className="mb-6">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
-          </Badge>
-          
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
-            Best {categoryName} <br />
-            in <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">Sri Lanka</span>
-          </h1>
-          
-          <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
-            Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
-          </p>
-          
-          <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
-             <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
-             <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
-             <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
+      {useSplitHero ? (
+        <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden min-h-[480px]">
+          <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+            <img
+              src={heroImage}
+              alt=""
+              width={1920}
+              height={1080}
+              decoding="async"
+              fetchPriority="high"
+              className="home-hero-bg-image"
+            />
+            <div className="home-hero-left-overlay hidden lg:block" />
+            <div className="home-hero-mobile-overlay lg:hidden" />
           </div>
 
-          {/* Centered Premium Search Bar */}
-          <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100">
-             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
-               <Search className="w-5 h-5 text-brand-pink mr-3 animate-pulse" />
-               <input 
-                 type="text" 
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 placeholder={`Search in ${categoryName}...`} 
-                 className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold"
-               />
-             </div>
-             
-             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
-               <MapPin className="w-5 h-5 text-brand-pink mr-3" />
-               <select 
-                 value={selectedLocation}
-                 onChange={(e) => setSelectedLocation(e.target.value)}
-                 className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
-               >
-                 <option value="" className="text-zinc-900">Any Location</option>
-                 <option value="colombo" className="text-zinc-900">Colombo</option>
-                 <option value="gampaha" className="text-zinc-900">Gampaha</option>
-                 <option value="kandy" className="text-zinc-900">Kandy</option>
-                 <option value="anuradhapura" className="text-zinc-900">Anuradhapura</option>
-               </select>
-             </div>
-             
-             <Button onClick={handleSearch} size="lg" variant="hero" className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md">
-               Search
-             </Button>
+          <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-10 md:py-14 lg:py-16">
+            <div className="home-hero-content">
+              <div className="hero-ink text-left min-w-0">
+                <Badge variant="hero" className="mb-5">
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
+                </Badge>
+
+                <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight mb-4 leading-[1.05]">
+                  Best {categoryName}{" "}
+                  <span className="underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                    in Sri Lanka
+                  </span>
+                </h1>
+
+                <p className="text-base md:text-lg font-medium max-w-lg leading-relaxed mb-6">
+                  Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
+                </p>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold mb-2">
+                  <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 hidden sm:block" />
+                  <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
+                </div>
+
+                <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-8 w-full">
+                  <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                    <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={`Search in ${categoryName}...`}
+                      className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold min-w-0"
+                    />
+                  </div>
+
+                  <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                    <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
+                    <select
+                      value={selectedLocation}
+                      onChange={(e) => setSelectedLocation(e.target.value)}
+                      className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
+                    >
+                      <option value="" className="text-zinc-900">Any Location</option>
+                      <option value="colombo" className="text-zinc-900">Colombo</option>
+                      <option value="gampaha" className="text-zinc-900">Gampaha</option>
+                      <option value="kandy" className="text-zinc-900">Kandy</option>
+                      <option value="anuradhapura" className="text-zinc-900">Anuradhapura</option>
+                    </select>
+                  </div>
+
+                  <Button onClick={handleSearch} size="lg" variant="hero" className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md shrink-0">
+                    Search
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
+          <div className="absolute inset-0 z-0">
+            <img
+              src={heroImage}
+              alt="Category Hero"
+              className="page-hero-image"
+            />
+            <div className="absolute inset-0 page-hero-overlay" />
+          </div>
+
+          <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl">
+            <Badge variant="hero" className="mb-6">
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
+            </Badge>
+
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
+              Best {categoryName} <br />
+              in <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">Sri Lanka</span>
+            </h1>
+
+            <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
+              Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
+            </p>
+
+            <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
+              <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
+            </div>
+
+            <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100">
+              <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
+                <Search className="w-5 h-5 text-brand-pink mr-3 animate-pulse" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={`Search in ${categoryName}...`}
+                  className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold"
+                />
+              </div>
+
+              <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
+                <MapPin className="w-5 h-5 text-brand-pink mr-3" />
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
+                >
+                  <option value="" className="text-zinc-900">Any Location</option>
+                  <option value="colombo" className="text-zinc-900">Colombo</option>
+                  <option value="gampaha" className="text-zinc-900">Gampaha</option>
+                  <option value="kandy" className="text-zinc-900">Kandy</option>
+                  <option value="anuradhapura" className="text-zinc-900">Anuradhapura</option>
+                </select>
+              </div>
+
+              <Button onClick={handleSearch} size="lg" variant="hero" className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md">
+                Search
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Categories Bar */}
       <section className="py-6 bg-white border-b border-slate-200">
