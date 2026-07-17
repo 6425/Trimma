@@ -2286,7 +2286,7 @@ html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-web
   opacity: 0.85;
 }
 
-/* Homepage hero — full background image, copy on left 50% */
+/* Homepage hero — copy on left 50%, contained image on right 50% */
 .home-hero-split {
   background: transparent !important;
   border-bottom-color: rgb(0 0 0 / 0.12) !important;
@@ -2305,7 +2305,39 @@ html.dark .trimma-marketplace-shell .home-hero-split {
     max-height: none;
   }
 }
-.home-hero-split .home-hero-bg-image {
+.home-hero-split-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 100%;
+  height: 100%;
+}
+@media (min-width: 1024px) {
+  .home-hero-split-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.home-hero-split-left {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.home-hero-split-right {
+  position: relative;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  min-width: 0;
+  height: 100%;
+}
+.home-hero-right-image {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: right center;
+}
+.home-hero-mobile-image {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -2314,15 +2346,11 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   object-position: center;
 }
 .home-hero-split .home-hero-left-overlay {
-  position: absolute;
-  inset: 0;
   background: linear-gradient(
     to right,
-    rgb(255 255 255 / 0.85) 0%,
-    rgb(255 255 255 / 0.65) 40%,
-    rgb(255 255 255 / 0.35) 56%,
-    rgb(255 255 255 / 0.12) 70%,
-    transparent 82%
+    rgb(255 255 255 / 0.88) 0%,
+    rgb(255 255 255 / 0.72) 75%,
+    rgb(255 255 255 / 0.45) 100%
   );
 }
 .home-hero-split .home-hero-mobile-overlay {
@@ -2394,12 +2422,6 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .trimma-live-coun
 .trimma-marketplace-shell .home-hero-split .hero-ink .trimma-live-countdown .trimma-live-countdown-colon,
 html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .trimma-live-countdown .trimma-live-countdown-colon {
   color: rgb(63 63 70) !important;
-}
-@media (min-width: 1024px) {
-  .home-hero-split .home-hero-content {
-    width: 50%;
-    max-width: 50%;
-  }
 }
 .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats,
 html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats {
