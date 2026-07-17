@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonListRow } from "../components/marketplace/SalonListRow";
 import { SalonCard } from "../components/marketplace/SalonCard";
-import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
 import {
   SalonFiltersPanel,
   countActiveFilters,
@@ -345,13 +344,6 @@ export default function SalonsClient({
                   Search
                 </Button>
               </div>
-            </div>
-
-            <div className="home-hero-bottom flex flex-col items-start gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                Follow Trimma
-              </p>
-              <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
             </div>
           </div>
         </div>
