@@ -2309,3 +2309,36 @@ html.dark .trimma-marketplace-shell .home-hero .hero-ink > div > p {
 html.dark .trimma-marketplace-shell .home-hero .hero-ink .trimma-live-countdown > p {
   color: rgba(255, 255, 255, 0.92) !important;
 }
+
+/* Split homepage hero — copy left 50%, visual right 50% */
+.home-hero-split {
+  background: linear-gradient(135deg, #fffef5 0%, #ffffff 48%, #fff9e6 100%) !important;
+  border-bottom-color: rgb(0 0 0 / 0.06) !important;
+}
+html.dark .trimma-marketplace-shell .home-hero-split {
+  background: linear-gradient(135deg, #ffd633 0%, #ffde5a 100%) !important;
+}
+.trimma-marketplace-shell .home-hero-split .hero-ink h1,
+.trimma-marketplace-shell .home-hero-split .hero-ink h1 span,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink h1,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink h1 span {
+  color: #0a0a0a !important;
+  text-shadow: none !important;
+}
+.trimma-marketplace-shell .home-hero-split .hero-ink h1 span,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink h1 span {
+  text-decoration-color: #ffde5a !important;
+}
+.trimma-marketplace-shell .home-hero-split .hero-ink > p,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink > p {
+  color: rgb(82 82 91) !important;
+}
+.trimma-marketplace-shell .home-hero-split .hero-ink > div > p,
+html.dark .trimma-marketplace-shell .home-hero-split .hero-ink > div > p {
+  color: rgb(113 113 122) !important;
+}
+@media (min-width: 1024px) {
+  .home-hero-split .hero-ink {
+    max-width: 50%;
+  }
+}

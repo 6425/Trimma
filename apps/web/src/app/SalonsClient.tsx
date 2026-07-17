@@ -17,14 +17,10 @@ import {
   defaultSalonFilters,
   type SalonFilters,
 } from "../components/marketplace/SalonFiltersPanel";
-import { optimizeHeroImageUrl } from "@/lib/optimize-image-url";
 import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSection";
 import type { SalonDealRow } from "@/lib/deals";
 
-const HERO_BACKGROUND = optimizeHeroImageUrl(
-  "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=2400&auto=format&fit=crop",
-  1280
-);
+const LANDING_HERO_IMAGE = "/assets/landing-hero.webp";
 
 interface Salon {
   id: string;
@@ -272,84 +268,99 @@ export default function SalonsClient({
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      {/* HERO */}
-      <section className="page-hero-shell home-hero py-10 md:py-14">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={HERO_BACKGROUND}
-            alt=""
-            width={1280}
-            height={720}
-            decoding="async"
-            fetchPriority="high"
-            className="page-hero-image"
-          />
-          <div className="absolute inset-0 page-hero-overlay" />
+      {/* HERO — split: copy left 50%, hero visual right 50% */}
+      <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 -z-0">
+          <div className="absolute -top-24 -right-24 h-[28rem] w-[28rem] rounded-full bg-[#ffde5a]/25 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-[22rem] w-[22rem] rounded-full bg-white/60 blur-3xl" />
         </div>
 
-        <div className="container relative z-10 mx-auto px-4 text-center max-w-4xl hero-ink">
-          <Badge variant="hero" className="mb-6">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
-            Discover Premium Grooming
-          </Badge>
+        <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-10 md:py-14 lg:py-16">
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
+            <div className="hero-ink text-left min-w-0">
+              <Badge variant="hero" className="mb-5">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
+                Discover Premium Grooming
+              </Badge>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight drop-shadow-[0_2px_14px_rgba(0,0,0,0.55)]">
-            Best Salons &amp; Spas <br />
-            in{" "}
-            <span className="text-white underline decoration-white/40 decoration-4 underline-offset-4">
-              Sri Lanka
-            </span>
-          </h1>
+              <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-[1.05]">
+                Best Salons &amp; Spas{" "}
+                <span className="text-zinc-900 underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  in Sri Lanka
+                </span>
+              </h1>
 
-          <LiveCountdown />
+              <p className="text-base md:text-lg text-zinc-600 font-medium max-w-lg leading-relaxed mb-6">
+                Book trusted salons, spas, and barbers instantly — compare ratings, prices, and
+                availability across the island.
+              </p>
 
-          <div className="mt-6 flex flex-col items-center gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">
-              Follow Trimma
-            </p>
-            <TrimmaSocialLinks className="flex items-center justify-center gap-3" />
-          </div>
+              <LiveCountdown />
 
-          <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100 mt-8">
-            <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl">
-              <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(0);
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Haircut, color, spa..."
-                className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold"
-              />
+              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-8 w-full">
+                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                  <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setPage(0);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="Haircut, color, spa..."
+                    className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold min-w-0"
+                  />
+                </div>
+                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                  <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => {
+                      setSelectedLocation(e.target.value);
+                      setPage(0);
+                    }}
+                    className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
+                  >
+                    <option value="">Any Location</option>
+                    <option value="colombo">Colombo</option>
+                    <option value="gampaha">Gampaha</option>
+                    <option value="kandy">Kandy</option>
+                    <option value="anuradhapura">Anuradhapura</option>
+                  </select>
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  size="lg"
+                  variant="hero"
+                  className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md w-full sm:w-auto shrink-0"
+                >
+                  Search
+                </Button>
+              </div>
+
+              <div className="mt-6 flex flex-col items-start gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                  Follow Trimma
+                </p>
+                <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
+              </div>
             </div>
-            <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl">
-              <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
-              <select
-                value={selectedLocation}
-                onChange={(e) => {
-                  setSelectedLocation(e.target.value);
-                  setPage(0);
-                }}
-                className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
-              >
-                <option value="">Any Location</option>
-                <option value="colombo">Colombo</option>
-                <option value="gampaha">Gampaha</option>
-                <option value="kandy">Kandy</option>
-                <option value="anuradhapura">Anuradhapura</option>
-              </select>
+
+            <div className="relative w-full lg:max-w-none">
+              <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-gradient-to-tr from-[#ffde5a]/35 via-transparent to-zinc-200/40 blur-2xl" />
+              <div className="relative overflow-hidden rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.28)] ring-1 ring-black/5 bg-white">
+                <img
+                  src={LANDING_HERO_IMAGE}
+                  alt="Book premium salons and spas with Trimma"
+                  width={960}
+                  height={960}
+                  decoding="async"
+                  fetchPriority="high"
+                  className="w-full h-auto object-cover object-center block"
+                />
+              </div>
             </div>
-            <Button
-              onClick={handleSearch}
-              size="lg"
-              variant="hero"
-              className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md"
-            >
-              Search
-            </Button>
           </div>
         </div>
       </section>
