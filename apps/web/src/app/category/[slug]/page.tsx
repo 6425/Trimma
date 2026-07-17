@@ -30,14 +30,15 @@ import {
 import { SalonCard } from "../../../components/marketplace/SalonCard";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
-  "barber-salon": "/assets/barber-salon-hero.webp",
+  "barber-salon": "/assets/category-barber-salon-hero.webp",
   "beauty-parlours": "/assets/category-beauty-parlours-hero.webp",
   "bridal-beauty": "/assets/category-bridal-beauty-hero.webp",
+  "bridal-and-beauty": "/assets/category-bridal-beauty-hero.webp",
   "mens-grooming": "/assets/category-mens-grooming-hero.webp",
   "nail-studio": "/assets/category-nail-studio-hero.webp",
   "skincare-clinics": "/assets/category-skincare-clinics-hero.webp",
-  "spa-and-wellness": "/assets/category-spa-and-wellness-hero.webp",
-  "spa-wellness": "/assets/spa-wellness-hero.webp",
+  "spa-wellness": "/assets/category-spa-wellness-hero.webp",
+  "spa-and-wellness": "/assets/category-spa-wellness-hero.webp",
   "tattoo-studio": "/assets/category-tattoo-studio-hero.webp",
   "yoga-studio": "/assets/category-yoga-studio-hero.webp",
 };
