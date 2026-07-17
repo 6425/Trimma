@@ -31,6 +31,7 @@ import { SalonCard } from "../../../components/marketplace/SalonCard";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
   "barber-salon": "/assets/category-barber-salon-hero.webp",
+  "beauty-salon": "/assets/category-beauty-salon-hero.webp",
   "beauty-parlours": "/assets/category-beauty-parlours-hero.webp",
   "bridal-beauty": "/assets/category-bridal-beauty-hero.webp",
   "bridal-and-beauty": "/assets/category-bridal-beauty-hero.webp",
