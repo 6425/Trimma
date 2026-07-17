@@ -270,21 +270,21 @@ export default function SalonsClient({
       </Suspense>
 
       {/* HERO — full background image, copy on left 50% */}
-      <section className="page-hero-shell home-hero home-hero-split relative h-[500px] overflow-hidden">
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
         <img
           src={LANDING_HERO_IMAGE}
           alt=""
           width={1920}
-          height={1080}
+          height={500}
           decoding="async"
           fetchPriority="high"
-          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
-        <div className="home-hero-left-overlay absolute inset-y-0 left-0 w-1/2 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
         <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-        <div className="container relative z-10 h-full mx-auto max-w-7xl">
-          <div className="home-hero-content-col home-hero-content hero-ink text-left h-full w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
             <div className="home-hero-top">
               <Badge variant="hero" className="mb-3">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />

@@ -2264,8 +2264,9 @@ html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-web
   border-bottom-color: rgb(0 0 0 / 0.12) !important;
   color: #0a0a0a !important;
   min-height: 500px;
-  height: 500px;
-  max-height: 500px;
+  height: auto;
+  max-height: none;
+  overflow: visible !important;
 }
 html.dark .trimma-marketplace-shell .home-hero-split {
   background: transparent !important;
@@ -2288,9 +2289,11 @@ html.dark .trimma-marketplace-shell .home-hero-split {
 .home-hero-split .home-hero-left-overlay {
   background: linear-gradient(
     to right,
-    rgb(255 255 255 / 0.88) 0%,
-    rgb(255 255 255 / 0.72) 75%,
-    rgb(255 255 255 / 0.45) 100%
+    rgb(255 255 255 / 0.92) 0%,
+    rgb(255 255 255 / 0.82) 22%,
+    rgb(255 255 255 / 0.55) 40%,
+    rgb(255 255 255 / 0.2) 52%,
+    rgb(255 255 255 / 0) 60%
   );
 }
 .home-hero-split .home-hero-mobile-overlay {
@@ -2306,10 +2309,11 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   box-sizing: border-box;
   display: flex;
   width: 100%;
-  height: 100%;
+  min-height: 500px;
   min-width: 0;
   flex-direction: column;
   justify-content: space-between;
+  gap: 0.75rem;
   padding: 3%;
 }
 @media (min-width: 1024px) {
