@@ -141,7 +141,7 @@ export default function CategoryPage() {
       
       {/* 1. HERO SECTION */}
       {useSplitHero ? (
-        <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden min-h-[480px]">
+        <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
             <img
               src={heroImage}
@@ -156,37 +156,40 @@ export default function CategoryPage() {
             <div className="home-hero-mobile-overlay lg:hidden" />
           </div>
 
-          <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-10 md:py-14 lg:py-16">
-            <div className="home-hero-content">
-              <div className="hero-ink text-left min-w-0">
-                <Badge variant="hero" className="mb-5">
+          <div className="home-hero-inner relative z-10 mx-auto max-w-7xl h-full">
+            <div className="home-hero-content hero-ink text-left">
+              <div className="home-hero-top">
+                <Badge variant="hero" className="mb-3">
                   <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
                 </Badge>
 
-                <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight mb-4 leading-[1.05]">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-black tracking-tight leading-[1.05]">
                   Best {categoryName}{" "}
                   <span className="underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                     in Sri Lanka
                   </span>
                 </h1>
 
-                <p className="text-base md:text-lg font-medium max-w-lg leading-relaxed mb-6">
+                <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed mt-2">
                   Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
                 </p>
+              </div>
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold mb-2">
+              <div className="home-hero-middle">
+                <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold mb-3 sm:mb-4">
                   <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 hidden sm:block" />
+                  <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
                   <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
                 </div>
 
-                <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-8 w-full">
+                <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
                   <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                     <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       placeholder={`Search in ${categoryName}...`}
                       className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold min-w-0"
                     />
@@ -207,7 +210,12 @@ export default function CategoryPage() {
                     </select>
                   </div>
 
-                  <Button onClick={handleSearch} size="lg" variant="hero" className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md shrink-0">
+                  <Button
+                    onClick={handleSearch}
+                    size="lg"
+                    variant="hero"
+                    className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md w-full sm:w-auto shrink-0"
+                  >
                     Search
                   </Button>
                 </div>

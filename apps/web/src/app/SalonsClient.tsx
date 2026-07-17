@@ -269,7 +269,7 @@ export default function SalonsClient({
       </Suspense>
 
       {/* HERO — full background image, copy on left 50% */}
-      <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden min-h-[480px]">
+      <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
           <img
             src={LANDING_HERO_IMAGE}
@@ -284,29 +284,31 @@ export default function SalonsClient({
           <div className="home-hero-mobile-overlay lg:hidden" />
         </div>
 
-        <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-10 md:py-14 lg:py-16">
-          <div className="home-hero-content">
-            <div className="hero-ink text-left min-w-0">
-              <Badge variant="hero" className="mb-5">
+        <div className="home-hero-inner relative z-10 mx-auto max-w-7xl h-full">
+          <div className="home-hero-content hero-ink text-left">
+            <div className="home-hero-top">
+              <Badge variant="hero" className="mb-3">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
                 Discover Premium Grooming
               </Badge>
 
-              <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight mb-4 leading-[1.05]">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-black tracking-tight leading-[1.05]">
                 Best Salons &amp; Spas{" "}
                 <span className="underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                   in Sri Lanka
                 </span>
               </h1>
 
-              <p className="text-base md:text-lg font-medium max-w-lg leading-relaxed mb-6">
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed mt-2">
                 Book trusted salons, spas, and barbers instantly — compare ratings, prices, and
                 availability across the island.
               </p>
+            </div>
 
+            <div className="home-hero-middle">
               <LiveCountdown />
 
-              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-8 w-full">
+              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-3 sm:mt-4 w-full">
                 <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                   <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
                   <input
@@ -347,13 +349,13 @@ export default function SalonsClient({
                   Search
                 </Button>
               </div>
+            </div>
 
-              <div className="mt-6 flex flex-col items-start gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                  Follow Trimma
-                </p>
-                <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
-              </div>
+            <div className="home-hero-bottom flex flex-col items-start gap-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
+                Follow Trimma
+              </p>
+              <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
             </div>
           </div>
         </div>
