@@ -269,29 +269,38 @@ export default function SalonsClient({
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      {/* HERO — split: copy left 50%, hero visual right 50% */}
-      <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-0">
-          <div className="absolute -top-24 -right-24 h-[28rem] w-[28rem] rounded-full bg-[#ffde5a]/25 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-[22rem] w-[22rem] rounded-full bg-white/60 blur-3xl" />
+      {/* HERO — full background image, copy on left 50% */}
+      <section className="page-hero-shell home-hero home-hero-split relative overflow-hidden min-h-[480px]">
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+          <img
+            src={LANDING_HERO_IMAGE}
+            alt=""
+            width={1920}
+            height={1080}
+            decoding="async"
+            fetchPriority="high"
+            className="home-hero-bg-image"
+          />
+          <div className="home-hero-left-overlay hidden lg:block" />
+          <div className="home-hero-mobile-overlay lg:hidden" />
         </div>
 
         <div className="container relative z-10 mx-auto max-w-7xl px-4 sm:px-6 py-10 md:py-14 lg:py-16">
-          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
+          <div className="home-hero-content">
             <div className="hero-ink text-left min-w-0">
               <Badge variant="hero" className="mb-5">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
                 Discover Premium Grooming
               </Badge>
 
-              <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-[1.05]">
+              <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tight mb-4 leading-[1.05]">
                 Best Salons &amp; Spas{" "}
-                <span className="text-zinc-900 underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                <span className="underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                   in Sri Lanka
                 </span>
               </h1>
 
-              <p className="text-base md:text-lg text-zinc-600 font-medium max-w-lg leading-relaxed mb-6">
+              <p className="text-base md:text-lg font-medium max-w-lg leading-relaxed mb-6">
                 Book trusted salons, spas, and barbers instantly — compare ratings, prices, and
                 availability across the island.
               </p>
@@ -341,25 +350,10 @@ export default function SalonsClient({
               </div>
 
               <div className="mt-6 flex flex-col items-start gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
                   Follow Trimma
                 </p>
                 <TrimmaSocialLinks className="flex items-center justify-start gap-3" />
-              </div>
-            </div>
-
-            <div className="relative w-full lg:max-w-none">
-              <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-gradient-to-tr from-[#ffde5a]/35 via-transparent to-zinc-200/40 blur-2xl" />
-              <div className="relative overflow-hidden rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.28)] ring-1 ring-black/5 bg-white">
-                <img
-                  src={LANDING_HERO_IMAGE}
-                  alt="Book premium salons and spas with Trimma"
-                  width={960}
-                  height={960}
-                  decoding="async"
-                  fetchPriority="high"
-                  className="w-full h-auto object-cover object-center block"
-                />
               </div>
             </div>
           </div>
