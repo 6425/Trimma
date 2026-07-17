@@ -284,26 +284,26 @@ export default function SalonsClient({
         <div className="container relative z-10 mx-auto max-w-7xl">
           <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
             <div className="home-hero-top">
-              <Badge variant="hero" className="mb-3">
+              <Badge variant="hero">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
                 Discover Premium Grooming
               </Badge>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-black tracking-tight leading-[1.05]">
-                Best Salons &amp; Spas{" "}
-                <span className="underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Best Salons &amp; Spas</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                   in Sri Lanka
                 </span>
               </h1>
 
-              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed mt-2">
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
                 Book trusted salons, spas, and barbers instantly — compare ratings, prices, and
                 availability across the island.
               </p>
             </div>
 
             <div className="home-hero-middle">
-              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-3 sm:mt-4 w-full">
+              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
                 <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                   <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
                   <input

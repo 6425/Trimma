@@ -168,24 +168,24 @@ export default function CategoryPage() {
           <div className="container relative z-10 mx-auto max-w-7xl">
             <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
               <div className="home-hero-top">
-                <Badge variant="hero" className="mb-3">
+                <Badge variant="hero">
                   <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> {categoryName} Specialists
                 </Badge>
 
-                <h1 className="text-3xl sm:text-4xl md:text-5xl xl:text-6xl font-black tracking-tight leading-[1.05]">
-                  Best {categoryName}{" "}
-                  <span className="underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                  <span className="home-hero-title-line">Best {categoryName}</span>
+                  <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                     in Sri Lanka
                   </span>
                 </h1>
 
-                <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed mt-2">
+                <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
                   Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
                 </p>
               </div>
 
               <div className="home-hero-middle">
-                <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold mb-3 sm:mb-4">
+                <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
                   <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
                   <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
                   <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
