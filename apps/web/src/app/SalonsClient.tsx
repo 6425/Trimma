@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalonListRow } from "../components/marketplace/SalonListRow";
 import { SalonCard } from "../components/marketplace/SalonCard";
-import { LiveCountdown } from "../components/marketplace/LiveCountdown";
 import { TrimmaSocialLinks } from "@/components/TrimmaSocialLinks";
 import {
   SalonFiltersPanel,
@@ -305,8 +304,6 @@ export default function SalonsClient({
             </div>
 
             <div className="home-hero-middle">
-              <LiveCountdown />
-
               <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 mt-3 sm:mt-4 w-full">
                 <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                   <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
