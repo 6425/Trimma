@@ -2242,6 +2242,9 @@ html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-web
 
 /* Homepage hero — full background image, copy on left 50% */
 .home-hero-split {
+  /* Shared hero spacing scale — keeps landing + category vertical rhythm identical */
+  --hero-gap-block: 1.5rem; /* gap between the top group and the middle (search) group */
+  --hero-gap-item: 0.75rem; /* gap between items within a group (badge, heading, subtitle, stats, search) */
   background: transparent !important;
   border-bottom-color: rgb(0 0 0 / 0.12) !important;
   color: #0a0a0a !important;
@@ -2249,6 +2252,12 @@ html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-web
   height: auto;
   max-height: none;
   overflow: visible !important;
+}
+@media (min-width: 768px) {
+  .home-hero-split {
+    --hero-gap-block: 1.75rem;
+    --hero-gap-item: 1rem;
+  }
 }
 html.dark .trimma-marketplace-shell .home-hero-split {
   background: transparent !important;
@@ -2294,8 +2303,8 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   min-height: 500px;
   min-width: 0;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: var(--hero-gap-block);
   padding: 3%;
 }
 @media (min-width: 1024px) {
@@ -2309,18 +2318,39 @@ html.dark .trimma-marketplace-shell .home-hero-split {
 .home-hero-split .home-hero-middle,
 .home-hero-split .home-hero-bottom {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--hero-gap-item);
 }
 .home-hero-split .home-hero-middle {
   flex: 0 1 auto;
 }
-.home-hero-split .hero-ink h1 {
-  margin-bottom: 0.5rem;
+/* Two-row hero heading: force the accented phrase onto its own line so the
+   heading reliably renders on exactly two rows across breakpoints. */
+.home-hero-split .home-hero-title {
+  margin: 0;
+  line-height: 1.1;
+  text-wrap: balance;
 }
-.home-hero-split .hero-ink > p {
-  margin-bottom: 0;
+.home-hero-split .home-hero-title-line,
+.home-hero-split .home-hero-title-accent {
+  display: block;
+}
+.home-hero-split .home-hero-title-accent {
+  width: fit-content;
+  max-width: 100%;
+}
+.home-hero-split .hero-ink > p,
+.home-hero-split .home-hero-top > p {
+  margin: 0;
+}
+.home-hero-split .home-hero-middle .home-hero-stats {
+  margin: 0;
 }
 .home-hero-split .trimma-hero-search {
-  margin-top: 0;
+  margin: 0;
+  width: 100%;
 }
 .trimma-marketplace-shell .home-hero-split .hero-ink h1,
 .trimma-marketplace-shell .home-hero-split .hero-ink h1 span,
