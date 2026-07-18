@@ -558,47 +558,49 @@ export function FeaturesContent() {
 
   return (
     <div className="bg-white text-zinc-900 font-sans">
-      {/* ── Hero ── */}
-      <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <SectionBadge hero>#1 Salon Booking Platform</SectionBadge>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-[1.1] mb-6 tracking-tight">
-              Find. Book.{" "}
-              <span className="hero-accent">Glow.</span>
-            </h1>
-            <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
-              Sri Lanka&apos;s beauty &amp; wellness marketplace and salon operating system — discover top salons,
-              book instantly, and power your business with Trimma OS.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/"
-                className="hero-btn-primary px-8 py-4 rounded-2xl"
-              >
-                <Search className="w-4 h-4" />
-                Explore Salons
-              </Link>
-              <Link
-                href="/onboarding"
-                className="hero-btn-secondary px-8 py-4 rounded-2xl"
-              >
-                <Store className="w-4 h-4" />
-                List Your Business
-              </Link>
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/featured-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <SectionBadge hero>#1 Salon Booking Platform</SectionBadge>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Find. Book.</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Glow.
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Sri Lanka&apos;s beauty &amp; wellness marketplace and salon operating system — discover top salons,
+                book instantly, and power your business with Trimma OS.
+              </p>
             </div>
-          </div>
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-[2rem] bg-[#ffde5a]/10 blur-2xl pointer-events-none" />
-            <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden shadow-2xl border border-zinc-200">
-              <Image
-                src="/assets/dashboard_mockup.jpg"
-                alt="Trimma dashboard preview"
-                fill
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover object-center"
-                priority
-              />
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/" className="hero-btn-primary px-8 py-4 rounded-2xl">
+                  <Search className="w-4 h-4" />
+                  Explore Salons
+                </Link>
+                <Link href="/onboarding" className="hero-btn-secondary px-8 py-4 rounded-2xl">
+                  <Store className="w-4 h-4" />
+                  List Your Business
+                </Link>
+              </div>
             </div>
           </div>
         </div>
