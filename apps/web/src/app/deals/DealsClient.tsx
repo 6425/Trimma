@@ -68,23 +68,53 @@ export default function DealsClient({ deals, categories, locations }: Props) {
   return (
     <div className="bg-white text-zinc-900 min-h-screen">
       {/* Hero */}
-      <section className="page-hero-light pt-20 pb-16 lg:pt-24 lg:pb-20">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-            <Gift className="w-3.5 h-3.5" />
-            Salon Deals &amp; Packages
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/deals-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Gift className="w-3.5 h-3.5" />
+                Salon Deals &amp; Packages
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Salon</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Deals
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Promotion packages published by salon owners, browsable by location and category.
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a href="#deals-results" className="hero-btn-primary px-8 py-4 rounded-2xl">
+                  Browse Deals
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-5">
-            Deals
-          </h1>
-          <p className="text-lg hero-lead leading-relaxed max-w-2xl mx-auto">
-            Promotion packages published by salon owners, browsable by location and category.
-          </p>
         </div>
       </section>
 
       {/* Filters + Results */}
-      <section className="pb-24">
+      <section id="deals-results" className="pb-24 pt-16 lg:pt-20 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 space-y-8">
           {/* Filter bar */}
           <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
