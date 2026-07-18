@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
@@ -8,31 +9,59 @@ export default async function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Hero Section */}
-      <section className="page-hero-shell py-20 px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-zinc-900 tracking-tight mb-6">
-            Grow Your Salon with Trimma
-          </h1>
-          <p className="text-xl text-zinc-700 mb-4 max-w-2xl mx-auto leading-relaxed">
-            Sign in with Google to open your salon owner dashboard, complete your profile, and submit for booking approval.
-            Trimma assigns a field agent in your area to review your submission before you go live.
-          </p>
-          <ol className="text-sm text-zinc-600 max-w-xl mx-auto mb-8 text-left space-y-2 list-decimal list-inside">
-            <li>Google sign-in → your salon draft is created</li>
-            <li>Complete profile in the owner dashboard</li>
-            <li>Submit for booking approval</li>
-            <li>Your Trimma agent reviews → admin verifies → live on Trimma</li>
-          </ol>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-            <OnboardingHeroCta />
-          </div>
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/onboarding-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm font-medium text-zinc-600">
-            <span className="flex items-center gap-2">✓ No setup fees</span>
-            <span className="flex items-center gap-2">✓ No technical knowledge required</span>
-            <span className="flex items-center gap-2">✓ Personal assistance from Trimma</span>
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                Salon Onboarding
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Grow Your Salon</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  with Trimma
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Sign in with Google to open your salon owner dashboard, complete your profile, and submit for booking approval.
+                Trimma assigns a field agent in your area to review your submission before you go live.
+              </p>
+
+              <ol className="text-sm max-w-lg text-left space-y-2 list-decimal list-inside font-medium">
+                <li>Google sign-in → your salon draft is created</li>
+                <li>Complete profile in the owner dashboard</li>
+                <li>Submit for booking approval</li>
+                <li>Your Trimma agent reviews → admin verifies → live on Trimma</li>
+              </ol>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <OnboardingHeroCta />
+              </div>
+
+              <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm font-medium">
+                <span className="flex items-center gap-2">✓ No setup fees</span>
+                <span className="flex items-center gap-2">✓ No technical knowledge required</span>
+                <span className="flex items-center gap-2">✓ Personal assistance from Trimma</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

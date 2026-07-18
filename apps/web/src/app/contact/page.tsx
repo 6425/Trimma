@@ -185,60 +185,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function HeroIllustration() {
-  return (
-    <div className="relative w-full max-w-md mx-auto">
-      <div className="absolute inset-0 rounded-3xl bg-[#ffde5a]/20 blur-3xl scale-110 pointer-events-none" />
-      <div className="relative bg-white rounded-3xl shadow-2xl border border-zinc-100 p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#ffde5a] flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-black" />
-            </div>
-            <span className="font-bold text-zinc-900 text-sm">Trimma Support</span>
-          </div>
-          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-semibold flex items-center gap-1">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-            Online
-          </span>
-        </div>
-        <div className="space-y-3">
-          {[
-            { from: "support", text: "Hi! How can we help your salon today?", time: "10:02 AM" },
-            { from: "user", text: "I'd like to get in touch about listing my salon.", time: "10:03 AM" },
-            { from: "support", text: "Absolutely! Let me connect you with our onboarding team.", time: "10:03 AM" },
-          ].map((msg, i) => (
-            <div key={i} className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}>
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
-                  msg.from === "user"
-                    ? "bg-[#ffde5a] text-black font-medium"
-                    : "bg-zinc-100 text-zinc-700"
-                }`}
-              >
-                {msg.text}
-                <div className={`text-[9px] mt-1 ${msg.from === "user" ? "text-black/50" : "text-zinc-400"}`}>
-                  {msg.time}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 bg-zinc-50 rounded-xl px-4 py-2.5">
-          <div className="flex-1 text-xs text-zinc-400">Type a message...</div>
-          <div className="w-7 h-7 rounded-lg bg-[#ffde5a] flex items-center justify-center">
-            <Send className="w-3.5 h-3.5 text-black" />
-          </div>
-        </div>
-      </div>
-      <div className="absolute -top-3 -right-3 bg-[#ffde5a] text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
-        <Sparkles className="w-3.5 h-3.5" />
-        Avg. reply &lt; 2h
-      </div>
-    </div>
-  );
-}
-
 const EMPTY_FORM = {
   name: "",
   email: "",
@@ -292,43 +238,58 @@ export default function ContactPage() {
 
   return (
     <div className="bg-white text-zinc-900">
-      {/* ── Hero ── */}
-      <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-              <Sparkles className="w-3.5 h-3.5" />
-              Contact Us
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6">
-              Let&apos;s Connect
-            </h1>
-            <p className="text-lg hero-lead leading-relaxed mb-4 max-w-lg">
-              Whether you&apos;re a salon owner looking to grow your business, a customer seeking support,
-              or a partner interested in working with us, our team is ready to help.
-            </p>
-            <p className="text-sm text-zinc-800 leading-relaxed mb-8 max-w-lg">
-              <strong className="text-zinc-950">Trimma</strong> is a product and brand operated by{" "}
-              <strong className="text-zinc-950">{COMPANY_OPERATOR}</strong>
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="#contact-form"
-                className="hero-btn-primary px-8 py-4 rounded-2xl"
-              >
-                <Mail className="w-4 h-4" />
-                Contact Our Team
-              </a>
-              <a
-                href="#contact-form"
-                className="hero-btn-secondary px-8 py-4 rounded-2xl"
-              >
-                <Mail className="w-4 h-4" />
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/contact-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
                 Contact Us
-              </a>
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Let&apos;s</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Connect
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Whether you&apos;re a salon owner looking to grow your business, a customer seeking support,
+                or a partner interested in working with us, our team is ready to help.
+              </p>
+              <p className="text-sm font-medium max-w-lg leading-relaxed">
+                <strong>Trimma</strong> is a product and brand operated by{" "}
+                <strong>{COMPANY_OPERATOR}</strong>
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a href="#contact-form" className="hero-btn-primary px-8 py-4 rounded-2xl">
+                  <Mail className="w-4 h-4" />
+                  Contact Our Team
+                </a>
+                <a href="#contact-form" className="hero-btn-secondary px-8 py-4 rounded-2xl">
+                  <Mail className="w-4 h-4" />
+                  Contact Us
+                </a>
+              </div>
             </div>
           </div>
-          <HeroIllustration />
         </div>
       </section>
 
