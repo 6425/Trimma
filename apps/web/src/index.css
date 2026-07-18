@@ -54,13 +54,13 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
 
-    /* Override Tailwind amber palette to match Trimma brand yellow #FFFD40 */
+    /* Override Tailwind amber palette to match Trimma brand yellow #ffde5a */
     --color-amber-50: #FFFEF5;
     --color-amber-100: #FFFED9;
     --color-amber-200: #FFFEB3;
     --color-amber-300: #FFFE8C;
     --color-amber-400: #ffde5a;
-    --color-amber-500: #FFFD40;
+    --color-amber-500: #ffde5a;
     --color-amber-600: #E6E43A;
     --color-amber-700: #CCCA33;
     --color-amber-800: #B3B12D;
@@ -73,7 +73,7 @@
     --color-yellow-200: #FFFEB3;
     --color-yellow-300: #FFFE8C;
     --color-yellow-400: #ffde5a;
-    --color-yellow-500: #FFFD40;
+    --color-yellow-500: #ffde5a;
     --color-yellow-600: #E6E43A;
     --color-yellow-700: #CCCA33;
     --color-yellow-800: #B3B12D;
@@ -88,8 +88,8 @@
     --spacing-trimma-2xl: var(--space-2xl);
     
     /* Official Trimma Branding Colors */
-    --color-brand-pink: #FFFD40;
-    --color-brand-purple: #FFFE73;
+    --color-brand-pink: #ffde5a;
+    --color-brand-purple: #ffe680;
     --color-brand-dark: #0B0B0B;
     --color-brand-surface-dark: #151515;
     --color-brand-surface-light: #151515;
@@ -98,8 +98,8 @@
     --color-brand-secondary-text: #B3B3B3;
 
     /* Semantic Aliases for script replacements */
-    --color-brand: #FFFD40;
-    --color-brand-hover: #FFFE73;
+    --color-brand: #ffde5a;
+    --color-brand-hover: #ffe680;
 
     /* Globally alias pink variations to yellow (amber) per user request */
     --color-rose-50: var(--color-amber-50);
@@ -128,8 +128,8 @@
 }
 
 :root {
-    --trimma-yellow: #FFFD40;
-    --trimma-yellow-hover: #FFFE73;
+    --trimma-yellow: #ffde5a;
+    --trimma-yellow-hover: #ffe680;
     --trimma-yellow-soft: #FFFE99;
     --trimma-yellow-deep: #E6E43A;
     --background: #0B0B0B;
@@ -140,11 +140,11 @@
     --popover-foreground: #FFFFFF;
     
     /* Primary brand color for buttons, selections, etc. */
-    --primary: #FFFD40;
+    --primary: #ffde5a;
     --primary-foreground: #000000;
     
     /* Secondary brand color */
-    --secondary: #FFFE73;
+    --secondary: #ffe680;
     --secondary-foreground: #000000;
     
     --muted: #151515;
@@ -154,9 +154,9 @@
     --destructive: #EF4444;
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
-    --ring: #FFFD40;
-    --chart-1: #FFFD40;
-    --chart-2: #FFFE73;
+    --ring: #ffde5a;
+    --chart-1: #ffde5a;
+    --chart-2: #ffe680;
     --chart-3: #6366F1;
     --chart-4: #F59E0B;
     --chart-5: #10B981;
@@ -190,12 +190,12 @@
     
     --sidebar: #151515;
     --sidebar-foreground: #FFFFFF;
-    --sidebar-primary: #FFFD40;
+    --sidebar-primary: #ffde5a;
     --sidebar-primary-foreground: #000000;
     --sidebar-accent: #151515;
-    --sidebar-accent-foreground: #FFFD40;
+    --sidebar-accent-foreground: #ffde5a;
     --sidebar-border: rgba(255, 255, 255, 0.08);
-    --sidebar-ring: #FFFD40;
+    --sidebar-ring: #ffde5a;
 
     /* Completely Banish Pink & Rose via CSS Variables Override */
     --color-pink-50: var(--color-yellow-50) !important;
@@ -203,7 +203,7 @@
     --color-pink-200: var(--color-yellow-200) !important;
     --color-pink-300: var(--color-yellow-300) !important;
     --color-pink-400: var(--color-yellow-400) !important;
-    --color-pink-500: #FFFD40 !important;
+    --color-pink-500: #ffde5a !important;
     --color-pink-600: #E6E43A !important;
     --color-pink-700: var(--color-yellow-700) !important;
     --color-pink-800: var(--color-yellow-800) !important;
@@ -215,7 +215,7 @@
     --color-rose-200: var(--color-yellow-200) !important;
     --color-rose-300: var(--color-yellow-300) !important;
     --color-rose-400: var(--color-yellow-400) !important;
-    --color-rose-500: #FFFD40 !important;
+    --color-rose-500: #ffde5a !important;
     --color-rose-600: #E6E43A !important;
     --color-rose-700: var(--color-yellow-700) !important;
     --color-rose-800: var(--color-yellow-800) !important;
@@ -228,8 +228,8 @@
     --color-blue-200: var(--color-yellow-200) !important;
     --color-blue-300: var(--color-yellow-300) !important;
     --color-blue-400: var(--color-yellow-400) !important;
-    --color-blue-500: #FFFD40 !important;
-    --color-blue-600: #FFFD40 !important;
+    --color-blue-500: #ffde5a !important;
+    --color-blue-600: #ffde5a !important;
     --color-blue-700: #E6E43A !important;
     --color-blue-800: var(--color-yellow-800) !important;
     --color-blue-900: var(--color-yellow-900) !important;
@@ -244,10 +244,10 @@
     --popover: #151515;
     --popover-foreground: #FFFFFF;
     
-    --primary: #FFFD40;
+    --primary: #ffde5a;
     --primary-foreground: #000000;
     
-    --secondary: #FFFE73;
+    --secondary: #ffe680;
     --secondary-foreground: #000000;
     
     --muted: #1A1A1A;
@@ -257,21 +257,21 @@
     --destructive: #EF4444;
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.08);
-    --ring: #FFFD40;
-    --chart-1: #FFFD40;
-    --chart-2: #FFFE73;
+    --ring: #ffde5a;
+    --chart-1: #ffde5a;
+    --chart-2: #ffe680;
     --chart-3: #6366F1;
     --chart-4: #F59E0B;
     --chart-5: #10B981;
     
     --sidebar: #151515;
     --sidebar-foreground: #FFFFFF;
-    --sidebar-primary: #FFFD40;
+    --sidebar-primary: #ffde5a;
     --sidebar-primary-foreground: #000000;
     --sidebar-accent: #1A1A1A;
-    --sidebar-accent-foreground: #FFFD40;
+    --sidebar-accent-foreground: #ffde5a;
     --sidebar-border: rgba(255, 255, 255, 0.08);
-    --sidebar-ring: #FFFD40;
+    --sidebar-ring: #ffde5a;
 
     /* Completely Banish Pink & Rose via CSS Variables Override */
     --color-pink-50: var(--color-yellow-50) !important;
@@ -279,7 +279,7 @@
     --color-pink-200: var(--color-yellow-200) !important;
     --color-pink-300: var(--color-yellow-300) !important;
     --color-pink-400: var(--color-yellow-400) !important;
-    --color-pink-500: #FFFD40 !important;
+    --color-pink-500: #ffde5a !important;
     --color-pink-600: #E6E43A !important;
     --color-pink-700: var(--color-yellow-700) !important;
     --color-pink-800: var(--color-yellow-800) !important;
@@ -291,7 +291,7 @@
     --color-rose-200: var(--color-yellow-200) !important;
     --color-rose-300: var(--color-yellow-300) !important;
     --color-rose-400: var(--color-yellow-400) !important;
-    --color-rose-500: #FFFD40 !important;
+    --color-rose-500: #ffde5a !important;
     --color-rose-600: #E6E43A !important;
     --color-rose-700: var(--color-yellow-700) !important;
     --color-rose-800: var(--color-yellow-800) !important;
@@ -304,8 +304,8 @@
     --color-blue-200: var(--color-yellow-200) !important;
     --color-blue-300: var(--color-yellow-300) !important;
     --color-blue-400: var(--color-yellow-400) !important;
-    --color-blue-500: #FFFD40 !important;
-    --color-blue-600: #FFFD40 !important;
+    --color-blue-500: #ffde5a !important;
+    --color-blue-600: #ffde5a !important;
     --color-blue-700: #E6E43A !important;
     --color-blue-800: var(--color-yellow-800) !important;
     --color-blue-900: var(--color-yellow-900) !important;
@@ -399,7 +399,7 @@
     [class*="bg-gradient-to"][class*="from-[#1A1C29]"]
   ) :where(
     h1, h2, h3, h4, h5, h6, p, span, label, button, a, li, td, th, svg
-  ):not([class*="bg-[#FFFD40]"]):not([class*="bg-brand"]):not([class*="bg-primary"]):not([class*="text-[#FFFD40]"]):not([class*="text-brand"]) {
+  ):not([class*="bg-[#ffde5a]"]):not([class*="bg-brand"]):not([class*="bg-primary"]):not([class*="text-[#ffde5a]"]):not([class*="text-brand"]) {
     color: inherit;
   }
 
@@ -415,7 +415,7 @@
     [class*="hover:bg-accent"]:hover,
     [class*="focus:bg-accent"]:focus,
     [class*="focus:bg-accent"]:focus-visible
-  ):not([class*="bg-[#FFFD40]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
+  ):not([class*="bg-[#ffde5a]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
     color: var(--text-dark) !important;
   }
 
@@ -435,7 +435,7 @@
     [class*="hover:bg-[#1A1C29]"]:hover,
     [class*="focus:bg-accent"]:focus,
     [class*="focus:bg-accent"]:focus-visible
-  ):not([class*="bg-[#FFFD40]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
+  ):not([class*="bg-[#ffde5a]"]):not([class*="bg-brand"]):not([class*="bg-primary"]) {
     color: var(--text-light) !important;
   }
 
@@ -452,8 +452,8 @@
   }
 
   /* Yellow/Brand backgrounds must have dark text (default + hover) */
-  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#FFFD40\],
-  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#FFFD40\]:hover, .hover\:bg-\[\#FFFE73\]:hover,
+  .bg-brand, .bg-primary, .bg-brand-hover, .bg-yellow-400, .bg-yellow-500, .bg-amber-400, .bg-amber-500, .bg-amber-600, .bg-yellow-600, .bg-pink-500, .bg-rose-500, .bg-blue-500, .bg-blue-600, .bg-blue-700, .bg-\[\#003B95\], .bg-\[\#006CE4\], .bg-\[\#ffde5a\],
+  .hover\:bg-brand:hover, .hover\:bg-primary:hover, .hover\:bg-\[\#ffde5a\]:hover, .hover\:bg-\[\#ffe680\]:hover,
   .hover\:bg-blue-500:hover, .hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover,
   .bg-primary-gradient, [class*="bg-primary-gradient"] {
     color: #000000 !important;
@@ -508,22 +508,22 @@
     .hover\:bg-blue-500:hover, .hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover,
     .hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover
   ) {
-    background-color: #FFFD40 !important;
-    border-color: #FFFD40 !important;
+    background-color: #ffde5a !important;
+    border-color: #ffde5a !important;
     color: #000000 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
     .hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover
   ) {
-    background-color: #FFFE73 !important;
-    border-color: #FFFE73 !important;
+    background-color: #ffe680 !important;
+    border-color: #ffe680 !important;
     color: #000000 !important;
   }
 
   /* Brand token alias — always yellow, never pink */
   .text-brand-pink, .text-brand-purple {
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]).bg-black:not(.bg-brand):not([class*="bg-brand/"]),
@@ -547,16 +547,16 @@
   /* Dark solid buttons — white label default, yellow label on hover, fill stays black */
   :is(button, a, [role="button"], [data-slot="button"]):is(
     .bg-black, .bg-zinc-900, .bg-zinc-950
-  ):not(.bg-brand):not([class*="bg-[#FFFD40]"]):not(.hero-btn-primary):not(.hero-btn-secondary):not(.trimma-sidebar-nav-item):is(:hover, :focus-visible, :active):not(:disabled) {
+  ):not(.bg-brand):not([class*="bg-[#ffde5a]"]):not(.hero-btn-primary):not(.hero-btn-secondary):not(.trimma-sidebar-nav-item):is(:hover, :focus-visible, :active):not(:disabled) {
     background-color: #000000 !important;
     border-color: #000000 !important;
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
     .bg-black, .bg-zinc-900, .bg-zinc-950
-  ):not(.bg-brand):not([class*="bg-[#FFFD40]"]):not(.hero-btn-primary):not(.hero-btn-secondary):not(.trimma-sidebar-nav-item):is(:hover, :focus-visible, :active):not(:disabled) :is(svg, span) {
-    color: #FFFD40 !important;
+  ):not(.bg-brand):not([class*="bg-[#ffde5a]"]):not(.hero-btn-primary):not(.hero-btn-secondary):not(.trimma-sidebar-nav-item):is(:hover, :focus-visible, :active):not(:disabled) :is(svg, span) {
+    color: #ffde5a !important;
   }
 
   /*
@@ -564,58 +564,58 @@
    * Excludes low-opacity brand tints (/10, /20) used for outline secondary on dark panels.
    */
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .bg-brand, .bg-\[\#FFFD40\], .bg-brand-hover, .bg-primary-gradient, [class*="bg-primary-gradient"]
-  ):not(.hero-btn-primary):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#FFFD40]/1"]):not([class*="bg-[#FFFD40]/2"]):not([class*="bg-[#FFFD40]/3"]),
-  :is(.bg-brand, .bg-\[\#FFFD40\], .bg-primary-gradient):not(.hero-btn-primary):not(.hero-btn-secondary)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#FFFD40]/1"]),
-  :is(.bg-brand, .bg-\[\#FFFD40\]):not(.hero-btn-primary):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#FFFD40]/1"]):not([class*="bg-[#FFFD40]/2"]) {
+    .bg-brand, .bg-\[\#ffde5a\], .bg-brand-hover, .bg-primary-gradient, [class*="bg-primary-gradient"]
+  ):not(.hero-btn-primary):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-brand/3"]):not([class*="bg-[#ffde5a]/1"]):not([class*="bg-[#ffde5a]/2"]):not([class*="bg-[#ffde5a]/3"]),
+  :is(.bg-brand, .bg-\[\#ffde5a\], .bg-primary-gradient):not(.hero-btn-primary):not(.hero-btn-secondary)[class*="text-white"]:not([class*="bg-brand/1"]):not([class*="bg-[#ffde5a]/1"]),
+  :is(.bg-brand, .bg-\[\#ffde5a\]):not(.hero-btn-primary):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#ffde5a]/1"]):not([class*="bg-[#ffde5a]/2"]) {
     color: #000000 !important;
   }
 
   /* Outline secondary on dark surfaces — yellow label must stay readable */
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    [class*="bg-[#FFFD40]/10"], [class*="bg-[#FFFD40]/20"],
+    [class*="bg-[#ffde5a]/10"], [class*="bg-[#ffde5a]/20"],
     [class*="bg-brand/10"], [class*="bg-brand/20"]
   ),
-  :is(button, a, [role="button"], [data-slot="button"])[class~="text-[#FFFD40]"],
-  :is(button, a, [role="button"], [data-slot="button"])[class~="text-brand"]:not(.bg-brand):not(.bg-\[\#FFFD40\]) {
-    color: #FFFD40 !important;
+  :is(button, a, [role="button"], [data-slot="button"])[class~="text-[#ffde5a]"],
+  :is(button, a, [role="button"], [data-slot="button"])[class~="text-brand"]:not(.bg-brand):not(.bg-\[\#ffde5a\]) {
+    color: #ffde5a !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    [class*="hover:bg-[#FFFD40]/20"], [class*="hover:bg-brand/20"]
+    [class*="hover:bg-[#ffde5a]/20"], [class*="hover:bg-brand/20"]
   ):hover,
-  :is(button, a, [role="button"], [data-slot="button"])[class*="hover:text-[#FFFE73]"]:hover {
-    color: #FFFE73 !important;
+  :is(button, a, [role="button"], [data-slot="button"])[class*="hover:text-[#ffe680]"]:hover {
+    color: #ffe680 !important;
   }
 
   /* Secondary actions on dark panels — yellow outline, never white ghost */
   :is(button, a, [role="button"], [data-slot="button"])[class*="border-white/20"][class*="bg-white/5"][class*="text-white"]:not(.trimma-sidebar-nav-item),
   :is(button, a, [role="button"], [data-slot="button"])[class*="bg-white/10"][class*="text-white"]:not([class*="bg-zinc-9"]):not([class*="bg-black"]):not(.trimma-sidebar-nav-item) {
-    border-color: rgba(255,253,64, 0.5) !important;
-    background-color: rgba(255,253,64, 0.1) !important;
-    color: #FFFD40 !important;
+    border-color: rgba(255,222,90, 0.5) !important;
+    background-color: rgba(255,222,90, 0.1) !important;
+    color: #ffde5a !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"])[class*="border-white/20"][class*="bg-white/5"][class*="text-white"]:not(.trimma-sidebar-nav-item):hover,
   :is(button, a, [role="button"], [data-slot="button"])[class*="bg-white/10"][class*="text-white"]:not([class*="bg-zinc-9"]):not([class*="bg-black"]):not(.trimma-sidebar-nav-item):hover {
-    background-color: rgba(255,253,64, 0.2) !important;
-    border-color: #FFFD40 !important;
-    color: #FFFE73 !important;
+    background-color: rgba(255,222,90, 0.2) !important;
+    border-color: #ffde5a !important;
+    color: #ffe680 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    .bg-brand, .bg-\[\#FFFD40\], .bg-brand-hover
-  ):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#FFFD40]/1"]):not([class*="bg-[#FFFD40]/2"]),
-  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-[#FFFD40]/90"]:hover) {
-    background-color: #FFFE73 !important;
+    .bg-brand, .bg-\[\#ffde5a\], .bg-brand-hover
+  ):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#ffde5a]/1"]):not([class*="bg-[#ffde5a]/2"]),
+  :is(.hover\:bg-brand:hover, .hover\:bg-brand-hover:hover, .hover\:bg-brand\/90:hover, [class*="hover:bg-[#ffde5a]/90"]:hover) {
+    background-color: #ffe680 !important;
     color: #000000 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]):is(
-    [class*="hover:bg-[#FFFD40]/20"], [class*="hover:bg-brand/20"]
+    [class*="hover:bg-[#ffde5a]/20"], [class*="hover:bg-brand/20"]
   ):hover {
-    background-color: rgba(255,253,64, 0.2) !important;
-    color: #FFFE73 !important;
+    background-color: rgba(255,222,90, 0.2) !important;
+    color: #ffe680 !important;
   }
 
   /* Remove legacy pink button hovers */
@@ -623,7 +623,7 @@
   .hover\:bg-\[\#b01849\]:hover,
   [class*="hover:bg-[#c21b52]"]:hover,
   [class*="hover:bg-[#b01849]"]:hover {
-    background-color: #FFFE73 !important;
+    background-color: #ffe680 !important;
     color: #000000 !important;
   }
 
@@ -632,7 +632,7 @@
     :is(button, a, [role="button"], [data-slot="button"])[class*="hover:bg-rose-50"]:hover,
   :is(.bg-white, .bg-zinc-50, .bg-slate-50, .trimma-light-context)
     :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-rose-50:hover {
-    background-color: rgba(255,253,64, 0.1) !important;
+    background-color: rgba(255,222,90, 0.1) !important;
     color: var(--text-dark) !important;
   }
 
@@ -652,22 +652,22 @@
 
 @layer utilities {
   .bg-primary-gradient {
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
+    background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
   }
   .bg-dark-gradient {
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
+    background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
   }
   .page-hero-shell {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
+    background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
     border-bottom: 1px solid rgb(245 183 0 / 0.3);
     color: #0a0a0a;
   }
   .page-hero-light {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
+    background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
     border-bottom: 1px solid rgb(245 183 0 / 0.2);
     color: #0a0a0a;
   }
@@ -693,7 +693,7 @@
   ) {
     background-color: #0a0a0a !important;
     border-color: #0a0a0a !important;
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
   }
   :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
     .hero-badge,
@@ -702,8 +702,8 @@
     [class*="hero-eyebrow"],
     [data-slot="badge"]
   ) :is(svg, [class*="lucide"]) {
-    color: #FFFD40 !important;
-    stroke: #FFFD40 !important;
+    color: #ffde5a !important;
+    stroke: #ffde5a !important;
   }
   .hero-badge,
   .hero-eyebrow {
@@ -712,13 +712,13 @@
     gap: 0.5rem;
     background-color: #0a0a0a !important;
     border: 1px solid #0a0a0a !important;
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
     box-shadow: 0 4px 14px -6px rgb(0 0 0 / 0.4);
   }
   .hero-badge :is(svg, [class*="lucide"]),
   .hero-eyebrow :is(svg, [class*="lucide"]) {
-    color: #FFFD40 !important;
-    stroke: #FFFD40 !important;
+    color: #ffde5a !important;
+    stroke: #ffde5a !important;
   }
   .hero-eyebrow {
     font-weight: 800;
@@ -730,11 +730,11 @@
   :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) {
     background-color: #0a0a0a !important;
     border-color: #0a0a0a !important;
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
   }
   :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) :is(svg, [class*="lucide"]) {
-    color: #FFFD40 !important;
-    stroke: #FFFD40 !important;
+    color: #ffde5a !important;
+    stroke: #ffde5a !important;
   }
   .hero-lead {
     color: rgb(0 0 0 / 0.72);
@@ -753,7 +753,7 @@
     justify-content: center;
     gap: 0.5rem;
     background-color: #0a0a0a !important;
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
     font-weight: 700;
     border: none !important;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
@@ -766,16 +766,16 @@
   .hero-btn-primary:active,
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
     background-color: #1a1a1a !important;
-    color: #FFFE73 !important;
+    color: #ffe680 !important;
     transform: scale(1.02);
   }
   .hero-btn-primary :is(svg, span),
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
   }
   .hero-btn-primary:hover :is(svg, span),
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
-    color: #FFFE73 !important;
+    color: #ffe680 !important;
   }
   .hero-btn-secondary,
   :is(button, a, [role="button"], [data-slot="button"]).hero-btn-secondary {
@@ -803,21 +803,21 @@
     font-size: 0.875rem;
   }
   .page-hero-overlay {
-    background: linear-gradient(to top, rgba(255,253,64, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28));
+    background: linear-gradient(to top, rgba(255,222,90, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28));
   }
   .page-hero-image {
     @apply w-full h-full object-cover opacity-25 mix-blend-multiply;
   }
   .text-gradient {
-    background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%);
+    background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .shadow-soft-glow {
-    box-shadow: 0 0 20px rgba(255,253,64, 0.15);
+    box-shadow: 0 0 20px rgba(255,222,90, 0.15);
   }
   .hover-glow:hover {
-    box-shadow: 0 0 25px rgba(255,253,64, 0.25);
+    box-shadow: 0 0 25px rgba(255,222,90, 0.25);
     transform: translateY(-1px);
   }
   .glassmorphism {
@@ -878,16 +878,16 @@
 
   /* ── Replace ALL remaining pink/rose Tailwind classes with brand yellow ──
      This is a CSS-level safeguard for any inline classes not yet converted. */
-  .text-pink-500, .text-rose-500 { color: #FFFD40 !important; }
+  .text-pink-500, .text-rose-500 { color: #ffde5a !important; }
   .text-pink-600, .text-rose-600 { color: #E6E43A !important; }
-  .text-pink-400, .text-rose-400 { color: #FFFE73 !important; }
-  .bg-pink-500,   .bg-rose-500   { background-color: #FFFD40 !important; color: #000000 !important; }
+  .text-pink-400, .text-rose-400 { color: #ffe680 !important; }
+  .bg-pink-500,   .bg-rose-500   { background-color: #ffde5a !important; color: #000000 !important; }
   .bg-pink-600,   .bg-rose-600   { background-color: #E6E43A !important; color: #000000 !important; }
-  .bg-pink-100,   .bg-rose-100   { background-color: rgba(255,253,64,0.12) !important; color: #000000 !important; }
+  .bg-pink-100,   .bg-rose-100   { background-color: rgba(255,222,90,0.12) !important; color: #000000 !important; }
   .bg-pink-50,    .bg-rose-50,
-  .hover\:bg-rose-50:hover, .hover\:bg-pink-50:hover { background-color: rgba(255,253,64,0.08) !important; }
-  .border-pink-500, .border-rose-500 { border-color: #FFFD40 !important; }
-  .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #FFFD40 !important; }
+  .hover\:bg-rose-50:hover, .hover\:bg-pink-50:hover { background-color: rgba(255,222,90,0.08) !important; }
+  .border-pink-500, .border-rose-500 { border-color: #ffde5a !important; }
+  .ring-pink-500,   .ring-rose-500   { --tw-ring-color: #ffde5a !important; }
 
   /* Blue Tailwind fills on interactive controls → brand yellow + black text */
   :is(button, a, [role="button"], [data-slot="button"]).bg-blue-500,
@@ -895,23 +895,23 @@
   :is(button, a, [role="button"], [data-slot="button"]).bg-blue-700,
   :is(button, a, [role="button"], [data-slot="button"]).bg-indigo-600,
   :is(button, a, [role="button"], [data-slot="button"]).bg-indigo-700 {
-    background-color: #FFFD40 !important;
-    border-color: #FFFD40 !important;
+    background-color: #ffde5a !important;
+    border-color: #ffde5a !important;
     color: #000000 !important;
   }
 
   :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-blue-700:hover,
   :is(button, a, [role="button"], [data-slot="button"]).hover\:bg-indigo-700:hover {
-    background-color: #FFFE73 !important;
-    border-color: #FFFE73 !important;
+    background-color: #ffe680 !important;
+    border-color: #ffe680 !important;
     color: #000000 !important;
   }
 
   /* Override hardcoded Booking.com blues to Yellow */
-  .bg-\[\#003B95\] { background-color: #FFFD40 !important; color: #000000 !important; }
-  .text-\[\#003B95\] { color: #FFFD40 !important; }
+  .bg-\[\#003B95\] { background-color: #ffde5a !important; color: #000000 !important; }
+  .text-\[\#003B95\] { color: #ffde5a !important; }
   
-  .bg-\[\#006CE4\] { background-color: #FFFD40 !important; color: #000000 !important; }
+  .bg-\[\#006CE4\] { background-color: #ffde5a !important; color: #000000 !important; }
   .text-\[\#006CE4\] { color: #000000 !important; } /* In footer, links are this color, dark text */
   
   .hover\:bg-\[\#0057b8\]:hover { background-color: #E6E43A !important; }
@@ -923,8 +923,8 @@
   .text-\[\#001D40\] { color: #0B0B0B !important; }
   
   /* Gradients that use the blue */
-  .from-\[\#003B95\] { --tw-gradient-from: #FFFD40 var(--tw-gradient-from-position); }
-  .via-\[\#003B95\]\/80 { --tw-gradient-to: rgba(255,253,64, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgba(255,253,64, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to); }
+  .from-\[\#003B95\] { --tw-gradient-from: #ffde5a var(--tw-gradient-from-position); }
+  .via-\[\#003B95\]\/80 { --tw-gradient-to: rgba(255,222,90, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), rgba(255,222,90, 0.8) var(--tw-gradient-via-position), var(--tw-gradient-to); }
   
   .from-\[\#001D40\] { --tw-gradient-from: #0B0B0B var(--tw-gradient-from-position); }
 
@@ -1050,7 +1050,7 @@
    */
   :is(.trimma-dashboard-sidebar, .trimma-agent-sidebar, .trimma-admin-sidebar),
   .trimma-marketplace-shell > aside {
-    background-color: #FFFD40 !important;
+    background-color: #ffde5a !important;
     border-color: rgba(0, 0, 0, 0.12) !important;
     color: #000000;
   }
@@ -1120,7 +1120,7 @@
   .trimma-dashboard-sidebar-head {
     flex-shrink: 0;
     z-index: 10;
-    background-color: #FFFD40 !important;
+    background-color: #ffde5a !important;
   }
 
   .trimma-dashboard-sidebar-footer,
@@ -1286,13 +1286,13 @@
 
   :is(.trimma-dark-context, .trimma-portal-body) .trimma-portal-main.trimma-light-context :is(
     h1, h2, h3, h4, h5, h6, p, span, label, td, th, li
-  ):not([class*="text-white"]):not([class*="text-[#FFFD40]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-green"]):not([class*="text-blue"]) {
+  ):not([class*="text-white"]):not([class*="text-[#ffde5a]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-green"]):not([class*="text-blue"]) {
     color: inherit;
   }
 
   /* Mobile bottom nav — yellow bar, black default, black hover/active with white text */
   .trimma-mobile-bottom-nav {
-    background-color: #FFFD40 !important;
+    background-color: #ffde5a !important;
     border-color: rgba(0, 0, 0, 0.12) !important;
   }
 
@@ -1442,7 +1442,7 @@
    * Solid brand/yellow panels — never allow white text on the yellow fill itself.
    * Semi-transparent overlays on brand may keep their own contrast.
    */
-  :is(.bg-brand, .bg-\[\#FFFD40\]):not([class*="bg-brand/"]):not([class*="bg-\[\#FFFD40\]/"]):not([class*="bg-brand/1"]):not([class*="bg-\[\#FFFD40\]/1"]) :is(
+  :is(.bg-brand, .bg-\[\#ffde5a\]):not([class*="bg-brand/"]):not([class*="bg-\[\#ffde5a\]/"]):not([class*="bg-brand/1"]):not([class*="bg-\[\#ffde5a\]/1"]) :is(
     h1, h2, h3, h4, h5, h6, p, span, label, div, a, button
   ):is([class*="text-white"]) {
     color: #000000 !important;
@@ -1584,7 +1584,7 @@
   ):not(
     .hero-btn-secondary,
     [class*="bg-white"],
-    [class*="bg-[#FFFD40]"],
+    [class*="bg-[#ffde5a]"],
     [class*="bg-brand"],
     [class*="bg-primary-gradient"],
     [class*="bg-amber-"],
@@ -1610,12 +1610,12 @@
     button, a, [role="button"], [data-slot="button"]
   ):is(
     .hero-btn-primary,
-    .bg-brand, .bg-\[\#FFFD40\], .bg-primary-gradient, [class*="bg-primary-gradient"],
+    .bg-brand, .bg-\[\#ffde5a\], .bg-primary-gradient, [class*="bg-primary-gradient"],
     .bg-amber-400, .bg-amber-500
-  ):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-[#FFFD40]/1"]) {
+  ):not(.hero-btn-secondary):not([class*="bg-brand/1"]):not([class*="bg-[#ffde5a]/1"]) {
     background-color: #0a0a0a !important;
     border-color: #0a0a0a !important;
-    color: #FFFD40 !important;
+    color: #ffde5a !important;
   }
 
   :is(.page-hero-shell, .page-hero-light) :is(
@@ -1628,12 +1628,12 @@
     button, a, [role="button"], [data-slot="button"]
   ):is(
     .hero-btn-primary,
-    .bg-brand, .bg-\[\#FFFD40\], .bg-primary-gradient, [class*="bg-primary-gradient"],
+    .bg-brand, .bg-\[\#ffde5a\], .bg-primary-gradient, [class*="bg-primary-gradient"],
     .bg-amber-400, .bg-amber-500
-  ):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-[#FFFD40]/1"]) {
+  ):not(.hero-btn-secondary):is(:hover, :focus-visible, :active):not([class*="bg-brand/1"]):not([class*="bg-[#ffde5a]/1"]) {
     background-color: #1a1a1a !important;
     border-color: #1a1a1a !important;
-    color: #FFFE73 !important;
+    color: #ffe680 !important;
   }
 
   :is(.page-hero-shell, .page-hero-light) :is(
@@ -1646,10 +1646,10 @@
     button, a, [role="button"], [data-slot="button"]
   ):is(
     .hero-btn-primary,
-    .bg-brand, .bg-\[\#FFFD40\], .bg-primary-gradient, [class*="bg-primary-gradient"]
+    .bg-brand, .bg-\[\#ffde5a\], .bg-primary-gradient, [class*="bg-primary-gradient"]
   ):not(.hero-btn-secondary) :is(svg, [class*="lucide"]) {
-    color: #FFFD40 !important;
-    stroke: #FFFD40 !important;
+    color: #ffde5a !important;
+    stroke: #ffde5a !important;
   }
 
 }
@@ -1664,18 +1664,18 @@
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
   background-color: #0a0a0a !important;
   border-color: #0a0a0a !important;
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover,
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:focus-visible,
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:active {
-  color: #FFFE73 !important;
+  color: #ffe680 !important;
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span) {
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:hover :is(svg, span) {
-  color: #FFFE73 !important;
+  color: #ffe680 !important;
 }
 
 /*
@@ -1707,13 +1707,13 @@
   .bg-white, .bg-slate-50, .bg-zinc-50, .bg-zinc-100, .bg-slate-100
 ) :is(
   [class*="text-white"], .text-white
-):not([class*="bg-\[#0B0B0B\]"]):not([class*="bg-\[#1A1C29\]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-brand"]):not([class*="bg-\[#FFFD40\]"]) {
+):not([class*="bg-\[#0B0B0B\]"]):not([class*="bg-\[#1A1C29\]"]):not([class*="bg-zinc-9"]):not([class*="bg-black"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-brand"]):not([class*="bg-\[#ffde5a\]"]) {
   color: #18181b !important;
 }
 
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
-  [class*="bg-brand"], [class*="bg-\[#FFFD40\]"], [class*="text-\[#FFFD40\]"], [class*="text-brand"],
+  [class*="bg-brand"], [class*="bg-\[#ffde5a\]"], [class*="text-\[#ffde5a\]"], [class*="text-brand"],
   [class*="text-white"], .trimma-sidebar-nav-item, .trimma-filter-tab
 ) {
   color: #3f3f46 !important;
@@ -1721,7 +1721,7 @@
 
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
   [class*="bg-white"], .bg-white
-):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#FFFD40\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
+):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#ffde5a\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
   color: #18181b !important;
   background-color: #ffffff !important;
   border-color: #e4e4e7 !important;
@@ -1736,8 +1736,8 @@
 
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context [data-slot="button"]:is(:hover, :focus-visible):not(
   [class*="bg-\[#0B0B0B\]"], [class*="bg-\[#1A1C29\]"], [class*="bg-zinc-9"], [class*="bg-black"],
-  [class*="bg-brand"], [class*="bg-\[#FFFD40\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
-  [class*="hover:bg-black"], [class*="text-\[#FFFD40\]"], [class*="text-brand"], [class*="text-white"],
+  [class*="bg-brand"], [class*="bg-\[#ffde5a\]"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
+  [class*="hover:bg-black"], [class*="text-\[#ffde5a\]"], [class*="text-brand"], [class*="text-white"],
   .trimma-filter-tab
 ) {
   color: #18181b !important;
@@ -1809,9 +1809,9 @@
 /* Verified salon badge — brand yellow surface, black label everywhere */
 .trimma-verified-badge,
 .trimma-verified-badge:hover {
-  background-color: #FFFD40 !important;
+  background-color: #ffde5a !important;
   color: #0a0a0a !important;
-  border-color: #FFFD40 !important;
+  border-color: #ffde5a !important;
 }
 .trimma-verified-badge :is(svg, [class*="lucide"]) {
   color: #0a0a0a !important;
@@ -1855,7 +1855,7 @@ html.dark .trimma-marketplace-shell :is(
   .text-[#1A1C29],
   .dark\:text-zinc-100,
   .text-zinc-100
-):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#FFFD40]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-primary"]):not(.text-white) {
+):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#ffde5a]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-primary"]):not(.text-white) {
   color: #ffffff !important;
 }
 
@@ -1868,7 +1868,7 @@ html.dark .trimma-marketplace-shell :is(.border-zinc-200, .border-zinc-100, .bor
 }
 
 html.dark .trimma-marketplace-shell :is(.hover\:bg-zinc-100:hover, .hover\:bg-zinc-50:hover, .hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover):not(header *) {
-  background-color: rgba(255,253,64, 0.08) !important;
+  background-color: rgba(255,222,90, 0.08) !important;
 }
 
 html.dark .trimma-marketplace-shell .trimma-light-context {
@@ -1895,27 +1895,27 @@ html.dark header.trimma-light-context :is(a, button):not(.trimma-header-icon-btn
   [class*="hover:bg-zinc-50"]:hover,
   [class*="hover:bg-zinc-200"]:hover
 ) {
-  background-color: #FFFD40 !important;
+  background-color: #ffde5a !important;
   color: #0a0a0a !important;
 }
 
 html.dark header.trimma-light-context :is(a, button)[class*="bg-zinc-100"] {
-  background-color: #FFFD40 !important;
+  background-color: #ffde5a !important;
   color: #0a0a0a !important;
 }
 
 /* Icon-only header controls — always yellow fill + black glyph in dark mode */
 html.dark header.trimma-light-context .trimma-header-icon-btn {
-  background-color: #FFFD40 !important;
+  background-color: #ffde5a !important;
   color: #0a0a0a !important;
-  border-color: #FFFD40 !important;
+  border-color: #ffde5a !important;
 }
 
 html.dark header.trimma-light-context .trimma-header-icon-btn:hover,
 html.dark header.trimma-light-context .trimma-header-icon-btn:focus-visible {
-  background-color: #FFFE73 !important;
+  background-color: #ffe680 !important;
   color: #0a0a0a !important;
-  border-color: #FFFE73 !important;
+  border-color: #ffe680 !important;
 }
 
 html.dark header.trimma-light-context .trimma-header-icon-btn :is(svg, [class*="lucide"]) {
@@ -1929,7 +1929,7 @@ html.dark header.trimma-light-context :is(a, button):not(.trimma-header-icon-btn
 }
 
 html.dark .trimma-mobile-bottom-nav--light {
-  background-color: #FFFD40 !important;
+  background-color: #ffde5a !important;
   border-color: rgba(0, 0, 0, 0.12) !important;
   color: #000000 !important;
 }
@@ -1942,8 +1942,8 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn {
 
 html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focus-visible) {
   color: #0a0a0a !important;
-  background-color: rgba(255,253,64, 0.25) !important;
-  border-color: rgba(255,253,64, 0.45) !important;
+  background-color: rgba(255,222,90, 0.25) !important;
+  border-color: rgba(255,222,90, 0.45) !important;
 }
 
 /* Global filter/tab pills — dark active, yellow hover on dark */
@@ -1965,17 +1965,17 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
 }
 
 .trimma-filter-tab.is-active:is(:hover, :focus-visible) {
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 
 .trimma-filter-tab.is-active:is(:hover, :focus-visible) :is(svg, span) {
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 
 .trimma-filter-tab:not(.is-active):is(:hover, :focus-visible) {
   background-color: #000000 !important;
   border-color: #000000 !important;
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 
 /* Customer portal — never gray labels on solid black controls */
@@ -2000,7 +2000,7 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
   [data-slot="button"][class*="bg-black"],
   a[class*="bg-black"]
 ):is(:hover, :focus-visible):not(:disabled) {
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 
 /* Customer portal — mobile SaaS touch targets & layout polish (styles only) */
@@ -2031,7 +2031,7 @@ html.dark .trimma-marketplace-shell .trimma-customer-action-btn:is(:hover, :focu
 
 /* Hero bands stay yellow in dark mode — black type for readability */
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) {
-  background: linear-gradient(135deg, #FFFE73 0%, #FFFD40 100%) !important;
+  background: linear-gradient(135deg, #ffe680 0%, #ffde5a 100%) !important;
   color: #0a0a0a !important;
   border-bottom-color: rgb(245 183 0 / 0.3) !important;
 }
@@ -2069,7 +2069,7 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .her
 ) {
   background-color: #0a0a0a !important;
   border-color: #0a0a0a !important;
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
   .hero-badge,
@@ -2078,8 +2078,8 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .her
   [class*="hero-eyebrow"],
   [data-slot="badge"]
 ) :is(svg, [class*="lucide"]) {
-  color: #FFFD40 !important;
-  stroke: #FFFD40 !important;
+  color: #ffde5a !important;
+  stroke: #ffde5a !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
@@ -2092,18 +2092,18 @@ html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) .page-hero-overlay {
-  background: linear-gradient(to top, rgba(255,253,64, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28)) !important;
+  background: linear-gradient(to top, rgba(255,222,90, 0.82), rgba(255, 214, 51, 0.52), rgba(255, 214, 51, 0.28)) !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) {
   background-color: #0a0a0a !important;
   border-color: #0a0a0a !important;
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.page-hero-shell, .page-hero-light) :is(.hero-badge, .hero-eyebrow) :is(svg, [class*="lucide"]) {
-  color: #FFFD40 !important;
-  stroke: #FFFD40 !important;
+  color: #ffde5a !important;
+  stroke: #ffde5a !important;
 }
 
 /* Salon / marketplace cards — readable white type on dark card surfaces */
@@ -2161,7 +2161,7 @@ html.dark .trimma-marketplace-shell .trimma-marketplace-card a[class*="border-sl
 
 html.dark .trimma-marketplace-shell .trimma-marketplace-card a[class*="border-slate"]:hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
-  color: #FFFD40 !important;
+  color: #ffde5a !important;
 }
 
 html.dark .trimma-marketplace-shell .trimma-marketplace-card .bg-slate-100.text-slate-400 {
@@ -2178,7 +2178,7 @@ html.dark .trimma-marketplace-shell :is(.bg-white, .bg-zinc-50) :is(input, selec
 }
 
 /* Hero search panel — readable white type on dark fields (beats page-hero black-text rules) */
-html.dark .trimma-marketplace-shell .trimma-hero-search:not([class*="bg-[#FFFD40]"]) {
+html.dark .trimma-marketplace-shell .trimma-hero-search:not([class*="bg-[#ffde5a]"]) {
   background-color: #151515 !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: #ffffff;
@@ -2231,8 +2231,8 @@ html.dark .trimma-marketplace-shell .trimma-hero-search select option {
 }
 
 html.dark .trimma-marketplace-shell .trimma-hero-search :is(svg, [class*="lucide"]) {
-  color: #FFFD40 !important;
-  stroke: #FFFD40 !important;
+  color: #ffde5a !important;
+  stroke: #ffde5a !important;
 }
 
 html.dark .trimma-marketplace-shell .trimma-hero-search input[type="date"]::-webkit-calendar-picker-indicator {
