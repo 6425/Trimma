@@ -56,24 +56,48 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <section className="page-hero-shell py-12 md:py-16">
-        <div className="container mx-auto px-4 max-w-6xl relative z-10 text-center">
-          <Badge variant="hero" className="mb-6">
-            <Sparkles className="w-3.5 h-3.5 inline mr-1.5" />
-            Trimma Style Lookbook
-          </Badge>
-          <h1 className="text-3xl md:text-5xl font-black text-zinc-900 tracking-tight mb-3">
-            Latest Styles by Category
-          </h1>
-          <p className="text-zinc-700 text-sm md:text-base max-w-xl mx-auto">
-            Browse looks grouped by salon service category. Bookmark styles to save them in your customer dashboard.
-          </p>
-          <Link
-            href="/customer/styles"
-            className="inline-flex mt-6 text-sm font-bold text-zinc-900 hover:underline underline-offset-4"
-          >
-            View my saved styles →
-          </Link>
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/styles-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <Badge variant="hero" className="mb-6">
+                <Sparkles className="w-3.5 h-3.5 inline mr-1.5" />
+                Trimma Style Lookbook
+              </Badge>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Latest Styles</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  by Category
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Browse looks grouped by salon service category. Bookmark styles to save them in your customer dashboard.
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/customer/styles" className="hero-btn-primary px-8 py-4 rounded-2xl">
+                  View my saved styles →
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
