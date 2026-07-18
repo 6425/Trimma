@@ -356,7 +356,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <input
                 type="search"
                 placeholder="Search..."
-                className="h-9 w-full rounded-lg bg-slate-100 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-600 outline-none focus:border-[#FFFD40]/50 focus:ring-1 focus:ring-[#FFFD40]/30 transition-all"
+                className="h-9 w-full rounded-lg bg-slate-100 border border-slate-200 pl-9 pr-4 text-sm text-zinc-900 placeholder:text-zinc-600 outline-none focus:border-[#ffde5a]/50 focus:ring-1 focus:ring-[#ffde5a]/30 transition-all"
               />
             </div>
           </div>
@@ -391,9 +391,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="trimma-salon-name text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
                 <div className="text-xs text-zinc-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
               </div>
-              <Avatar className="h-8 w-8 border-2 border-[#FFFD40]/30">
+              <Avatar className="h-8 w-8 border-2 border-[#ffde5a]/30">
                 <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'admin' ? 'Admin' : 'Salon'}`} />
-                <AvatarFallback className="bg-[#FFFD40] text-black text-xs font-bold">
+                <AvatarFallback className="bg-[#ffde5a] text-black text-xs font-bold">
                   {role === 'admin' ? 'AD' : 'SA'}
                 </AvatarFallback>
               </Avatar>

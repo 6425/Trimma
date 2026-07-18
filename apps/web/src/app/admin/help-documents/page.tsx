@@ -71,7 +71,7 @@ export default function AdminHelpDocumentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
-            <FileText className="w-8 h-8 text-[#FFFD40]" />
+            <FileText className="w-8 h-8 text-[#ffde5a]" />
             Help Documents
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -118,7 +118,7 @@ export default function AdminHelpDocumentsPage() {
             >
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <Badge className="bg-[#FFFD40]/15 text-zinc-900 border-none text-[10px] font-bold">
+                  <Badge className="bg-[#ffde5a]/15 text-zinc-900 border-none text-[10px] font-bold">
                     {LANG[doc.language] || doc.language}
                   </Badge>
                   {doc.is_published ? (

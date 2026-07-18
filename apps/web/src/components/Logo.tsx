@@ -126,7 +126,7 @@ export default function Logo({
     variant === "dark"
       ? "bg-black/10 text-black/80 border-black/20"
       : isDarkTheme
-        ? "bg-[#FFFD40]/15 text-[#FFFD40] border-[#FFFD40]/35"
+        ? "bg-[#ffde5a]/15 text-[#ffde5a] border-[#ffde5a]/35"
         : inverse
           ? "bg-white/10 text-white/90 border-white/20"
           : "bg-slate-100 text-slate-500 border-slate-200";
@@ -135,7 +135,7 @@ export default function Logo({
     variant === "dark"
       ? "text-black/70"
       : isDarkTheme
-        ? "text-[#FFFD40]/75"
+        ? "text-[#ffde5a]/75"
         : inverse
           ? "text-white/60"
           : "text-zinc-500";

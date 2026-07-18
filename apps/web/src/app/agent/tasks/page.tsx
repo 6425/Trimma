@@ -271,7 +271,7 @@ export default function AgentTasksQueue() {
                         </div>
 
                         <Button 
-                          className="w-full sm:w-auto bg-brand hover:bg-[#D4D030] text-black font-semibold rounded-xl gap-2 shadow-[0_0_15px_rgba(255,253,64,0.2)] group-hover:shadow-[0_0_20px_rgba(255,253,64,0.4)] transition-all"
+                          className="w-full sm:w-auto bg-brand hover:bg-[#D4D030] text-black font-semibold rounded-xl gap-2 shadow-[0_0_15px_rgba(255,222,90,0.2)] group-hover:shadow-[0_0_20px_rgba(255,222,90,0.4)] transition-all"
                         >
                           {item.recommendedAction}
                           <ArrowRight className="w-4 h-4" />

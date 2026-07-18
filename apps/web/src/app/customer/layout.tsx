@@ -68,7 +68,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
       )}
 
       {/* ── SIDEBAR (Desktop in-flow | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#FFFD40] border-r border-black/10 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${
+      <aside className={`trimma-dashboard-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffde5a] border-r border-black/10 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${
         mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.1)]' : '-translate-x-full lg:translate-x-0'
       }`}>
 
@@ -145,7 +145,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
         </div>
 
         {/* Sidebar Footer */}
-        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-black/10 bg-[#FFFD40]">
+        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-black/10 bg-[#ffde5a]">
           <button
             type="button"
             onClick={handleLogout}
@@ -178,7 +178,7 @@ export default function CustomerDashboardLayout({ children }: { children: React.
             {/* Bell */}
             <button className="relative w-9 h-9 flex items-center justify-center rounded-lg text-zinc-500 hover:text-black hover:bg-black/5 transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FFFD40]" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#ffde5a]" />
             </button>
           </div>
         </header>

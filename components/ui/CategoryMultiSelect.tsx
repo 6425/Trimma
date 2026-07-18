@@ -101,8 +101,8 @@ export function CategoryMultiSelect({
     "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all select-none";
   const itemActive =
     theme === "dark"
-      ? "bg-[#FFFD40]/15 border border-[#FFFD40]/30"
-      : "bg-[#FFFD40]/10 border border-[#FFFD40]/30";
+      ? "bg-[#ffde5a]/15 border border-[#ffde5a]/30"
+      : "bg-[#ffde5a]/10 border border-[#ffde5a]/30";
   const itemIdle =
     theme === "dark"
       ? "hover:bg-white/5 border border-transparent"
@@ -114,7 +114,7 @@ export function CategoryMultiSelect({
 
   const checkboxBase =
     "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all";
-  const checkboxActive = "bg-[#FFFD40] border-[#FFFD40]";
+  const checkboxActive = "bg-[#ffde5a] border-[#ffde5a]";
   const checkboxIdle =
     theme === "dark" ? "border-white/30 bg-transparent" : "border-zinc-300 bg-transparent";
 
@@ -150,7 +150,7 @@ export function CategoryMultiSelect({
             className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               atLimit
                 ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-                : "bg-[#FFFD40]/10 text-[#FFFD40] border border-[#FFFD40]/20"
+                : "bg-[#ffde5a]/10 text-[#ffde5a] border border-[#ffde5a]/20"
             }`}
           >
             {planName} Plan · {maxCategories} max
@@ -240,7 +240,7 @@ export function CategoryMultiSelect({
             {showUpgradeLink && (
               <Link
                 href="/dashboard/billing"
-                className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-[#FFFD40] hover:underline"
+                className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-[#ffde5a] hover:underline"
               >
                 <Sparkles className="w-3 h-3" />
                 Upgrade plan
@@ -258,8 +258,8 @@ export function CategoryMultiSelect({
               key={name}
               className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${
                 theme === "dark"
-                  ? "bg-[#FFFD40]/15 text-[#FFFD40] border border-[#FFFD40]/25"
-                  : "bg-[#FFFD40]/10 text-[#C99700] border border-[#FFFD40]/30"
+                  ? "bg-[#ffde5a]/15 text-[#ffde5a] border border-[#ffde5a]/25"
+                  : "bg-[#ffde5a]/10 text-[#C99700] border border-[#ffde5a]/30"
               }`}
             >
               <Tag className="w-2.5 h-2.5" />

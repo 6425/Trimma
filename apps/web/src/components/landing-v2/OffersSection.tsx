@@ -18,19 +18,19 @@ export function OffersSection() {
           <button
             type="button"
             onClick={scrollToDeals}
-            className="text-left bg-white border border-zinc-200 rounded-lg p-6 shadow-sm flex flex-col sm:flex-row gap-6 relative overflow-hidden hover:border-[#FFFD40]/40 hover:shadow-md transition-all cursor-pointer"
+            className="text-left bg-white border border-zinc-200 rounded-lg p-6 shadow-sm flex flex-col sm:flex-row gap-6 relative overflow-hidden hover:border-[#ffde5a]/40 hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex-1 z-10">
               <h3 className="text-xl font-bold text-zinc-900 mb-2">Special Offers & Promotions</h3>
               <p className="text-zinc-600 mb-6 max-w-sm">Discover exclusive salon deals, seasonal campaigns, service bundles, and limited-time offers from trusted professionals.</p>
-              <span className="inline-block bg-[#FFFD40] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
+              <span className="inline-block bg-[#ffde5a] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
                 View Offers
               </span>
             </div>
-            <div className="hidden sm:block absolute right-0 top-0 bottom-0 w-1/3 bg-[#FFFD40]/8 rounded-l-[100px] border-l border-[#FFFD40]/20" />
+            <div className="hidden sm:block absolute right-0 top-0 bottom-0 w-1/3 bg-[#ffde5a]/8 rounded-l-[100px] border-l border-[#ffde5a]/20" />
             <div className="hidden sm:flex items-center justify-center absolute right-12 top-1/2 -translate-y-1/2 z-10">
-              <div className="w-16 h-16 rounded-full bg-[#FFFD40]/15 flex items-center justify-center">
-                <Tag className="w-8 h-8 text-[#FFFD40]" />
+              <div className="w-16 h-16 rounded-full bg-[#ffde5a]/15 flex items-center justify-center">
+                <Tag className="w-8 h-8 text-[#ffde5a]" />
               </div>
             </div>
           </button>
@@ -42,7 +42,7 @@ export function OffersSection() {
             <div className="flex-1 z-10">
               <h3 className="text-xl font-bold text-zinc-900 mb-2">Deals & Discounts</h3>
               <p className="text-zinc-600 mb-6 max-w-sm">Browse all active promotions, savings opportunities, and featured salon offers available through Trimma.</p>
-              <span className="inline-block bg-[#FFFD40] hover:bg-[#E6E43A] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
+              <span className="inline-block bg-[#ffde5a] hover:bg-[#E6E43A] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
                 Explore Deals
               </span>
             </div>

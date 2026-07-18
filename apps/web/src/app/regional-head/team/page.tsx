@@ -94,7 +94,7 @@ export default function RegionalHeadTeamPage() {
             View field agents on your team and set what share they receive from your agent commission.
           </p>
         </div>
-        <Badge className="bg-[#FFFD40]/15 text-[#8a7600] border-none font-bold">
+        <Badge className="bg-[#ffde5a]/15 text-[#8a7600] border-none font-bold">
           {subAgents.length} sub-agent{subAgents.length === 1 ? "" : "s"}
         </Badge>
       </div>

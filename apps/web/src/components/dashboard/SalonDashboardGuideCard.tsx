@@ -16,15 +16,15 @@ export function SalonDashboardGuideCard() {
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white text-zinc-900 shadow-sm">
-      <BookOpen className="absolute -right-6 -top-6 w-32 h-32 text-[#FFFD40]/10 pointer-events-none" />
+      <BookOpen className="absolute -right-6 -top-6 w-32 h-32 text-[#ffde5a]/10 pointer-events-none" />
       <div className="relative z-10 p-5 lg:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
           <div className="flex items-start gap-4 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-[#FFFD40]/15 border border-[#FFFD40]/30 flex items-center justify-center shrink-0">
-              <FileText className="w-6 h-6 text-[#FFFD40]" />
+            <div className="w-12 h-12 rounded-2xl bg-[#ffde5a]/15 border border-[#ffde5a]/30 flex items-center justify-center shrink-0">
+              <FileText className="w-6 h-6 text-[#ffde5a]" />
             </div>
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-1.5 bg-[#FFFD40]/15 text-[#FFFD40] border border-[#FFFD40]/25 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
+              <span className="inline-flex items-center gap-1.5 bg-[#ffde5a]/15 text-[#ffde5a] border border-[#ffde5a]/25 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider mb-2">
                 Salon Owner Handbook
               </span>
               <h2 className="text-lg font-black tracking-tight mb-1 text-zinc-900">Trimma Workspace Guide</h2>
@@ -64,7 +64,7 @@ export function SalonDashboardGuideCard() {
                 target="_blank"
                 rel="noopener noreferrer"
                 download
-                className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 hover:border-[#FFFD40]/50 hover:bg-[#FFFD40]/10 transition-colors"
+                className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 hover:border-[#ffde5a]/50 hover:bg-[#ffde5a]/10 transition-colors"
               >
                 <div className="min-w-0">
                   <div className="text-[10px] font-black uppercase tracking-wider text-zinc-600">{native}</div>
@@ -72,7 +72,7 @@ export function SalonDashboardGuideCard() {
                     {doc?.title || `Salon Owner Handbook (${code})`}
                   </div>
                 </div>
-                <Download className="w-4 h-4 text-zinc-400 group-hover:text-[#FFFD40] shrink-0" />
+                <Download className="w-4 h-4 text-zinc-400 group-hover:text-[#ffde5a] shrink-0" />
               </a>
             );
           })}

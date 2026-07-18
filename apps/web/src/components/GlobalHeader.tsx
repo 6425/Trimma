@@ -29,26 +29,26 @@ const PROVINCES = [
 const navDesktopClass = (active: boolean) =>
   `text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
     active
-      ? "text-zinc-900 bg-zinc-100 dark:bg-[#FFFD40] dark:text-black"
-      : "text-zinc-700 hover:bg-zinc-100 dark:text-[#FFFD40] dark:hover:bg-[#FFFD40] dark:hover:text-black"
+      ? "text-zinc-900 bg-zinc-100 dark:bg-[#ffde5a] dark:text-black"
+      : "text-zinc-700 hover:bg-zinc-100 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
   }`;
 
 const navMobileClass = (active: boolean) =>
   `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
     active
-      ? "text-zinc-900 bg-zinc-100 dark:bg-[#FFFD40] dark:text-black"
-      : "text-zinc-700 hover:bg-zinc-100 dark:text-[#FFFD40] dark:hover:bg-[#FFFD40] dark:hover:text-black"
+      ? "text-zinc-900 bg-zinc-100 dark:bg-[#ffde5a] dark:text-black"
+      : "text-zinc-700 hover:bg-zinc-100 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
   }`;
 
 const navCategoryPillClass = (active: boolean) =>
   `flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-full transition-colors border whitespace-nowrap shrink-0 ${
     active
-      ? "text-zinc-900 bg-zinc-100 border-zinc-200 dark:bg-[#FFFD40] dark:text-black dark:border-[#FFFD40]"
-      : "text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200 dark:text-[#FFFD40] dark:hover:bg-[#FFFD40] dark:hover:text-black dark:hover:border-[#FFFD40]"
+      ? "text-zinc-900 bg-zinc-100 border-zinc-200 dark:bg-[#ffde5a] dark:text-black dark:border-[#ffde5a]"
+      : "text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black dark:hover:border-[#ffde5a]"
   }`;
 
 const navActionClass =
-  "text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors dark:text-[#FFFD40] dark:hover:bg-[#FFFD40] dark:hover:text-black";
+  "text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black";
 
 export default function GlobalHeader({ navCategories }: { navCategories: PublicCategory[] }) {
   const [user, setUser] = useState<any>(null);
@@ -152,8 +152,8 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   };
 
   return (
-    <header className="trimma-site-nav sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200 trimma-light-context dark:bg-[#0b0b0b] dark:text-[#FFFD40] dark:border-[#FFFD40]/15">
-      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white dark:bg-[#0b0b0b] dark:border-[#FFFD40]/15">
+    <header className="trimma-site-nav sticky top-0 z-[60] w-full bg-white text-zinc-900 shadow-sm border-b border-zinc-200 trimma-light-context dark:bg-[#0b0b0b] dark:text-[#ffde5a] dark:border-[#ffde5a]/15">
+      <div className="w-full border-b border-zinc-100 shadow-[0_4px_12px_-6px_rgba(0,0,0,0.05)] relative z-10 bg-white dark:bg-[#0b0b0b] dark:border-[#ffde5a]/15">
         <div className="trimma-site-nav-bar w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
           <Link href="/" className="hover:opacity-90 transition-opacity shrink-0">
             <Logo iconSize={32} />
@@ -236,12 +236,12 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                             onMouseEnter={() => setActiveProvince(prov.name)}
                             className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
                               activeProvince === prov.name 
-                                ? 'bg-white text-[#FFFD40] font-bold shadow-[inset_2px_0_0_#FFFD40]' 
+                                ? 'bg-white text-[#ffde5a] font-bold shadow-[inset_2px_0_0_#ffde5a]' 
                                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
                             }`}
                           >
                             <span className="truncate">{prov.name.replace(" Province", "")}</span>
-                            {activeProvince === prov.name && <span className="text-[#FFFD40] text-[10px] shrink-0">▶</span>}
+                            {activeProvince === prov.name && <span className="text-[#ffde5a] text-[10px] shrink-0">▶</span>}
                           </div>
                         ))}
                       </div>
@@ -253,7 +253,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                             <Link
                               key={dist}
                               href={`/?l=${encodeURIComponent(dist)}`}
-                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#FFFD40] transition-colors"
+                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#ffde5a] transition-colors"
                             >
                               {dist}
                             </Link>
@@ -292,7 +292,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href={getDashboardLink()}
-                    className="text-xs sm:text-sm font-medium flex items-center gap-2 text-zinc-800 bg-zinc-100 hover:bg-zinc-200 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors border border-zinc-200 dark:text-black dark:bg-[#FFFD40] dark:border-[#FFFD40] dark:hover:bg-[#FFFE73]"
+                    className="text-xs sm:text-sm font-medium flex items-center gap-2 text-zinc-800 bg-zinc-100 hover:bg-zinc-200 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors border border-zinc-200 dark:text-black dark:bg-[#ffde5a] dark:border-[#ffde5a] dark:hover:bg-[#ffe680]"
                   >
                     <Building2 className="w-4 h-4 shrink-0" />
                     <span className="hidden sm:inline">Dashboard</span>
@@ -300,7 +300,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                   <button
                     type="button"
                     onClick={() => { void signOutTrimmaSession(); }}
-                    className="trimma-header-icon-btn flex items-center justify-center p-2 rounded-lg border border-transparent text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:border-[#FFFD40] dark:bg-[#FFFD40] dark:text-black dark:hover:bg-[#FFFE73] dark:hover:text-black"
+                    className="trimma-header-icon-btn flex items-center justify-center p-2 rounded-lg border border-transparent text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors dark:border-[#ffde5a] dark:bg-[#ffde5a] dark:text-black dark:hover:bg-[#ffe680] dark:hover:text-black"
                     title="Sign Out"
                   >
                     <LogOut className="w-4 h-4 shrink-0 text-current" />
@@ -310,7 +310,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href="/login"
-                    className="text-xs sm:text-sm font-normal text-zinc-600 hover:text-zinc-900 bg-transparent hover:bg-zinc-100 transition-colors px-2 sm:px-3 py-1.5 sm:py-2 rounded-md whitespace-nowrap dark:text-[#FFFD40] dark:hover:bg-[#FFFD40] dark:hover:text-black"
+                    className="text-xs sm:text-sm font-normal text-zinc-600 hover:text-zinc-900 bg-transparent hover:bg-zinc-100 transition-colors px-2 sm:px-3 py-1.5 sm:py-2 rounded-md whitespace-nowrap dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
                   >
                     Sign in
                   </Link>
@@ -318,7 +318,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               )}
 
               <button
-                className="lg:hidden flex items-center justify-center p-2 -mr-1 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors shrink-0 dark:text-[#FFFD40] dark:hover:bg-[#FFFD40] dark:hover:text-black"
+                className="lg:hidden flex items-center justify-center p-2 -mr-1 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors shrink-0 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
                 onClick={() => {
                   window.dispatchEvent(new Event("trimma:close-dashboard-menu"));
                   setMobileMenuOpen(!mobileMenuOpen);
@@ -335,7 +335,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
 
       {/* Desktop category icon + name row — PC/laptop only (lg+) */}
       {navCategories.length > 0 && (
-            <div className="hidden lg:block bg-white dark:bg-[#0b0b0b] border-b border-zinc-100 dark:border-[#FFFD40]/15">
+            <div className="hidden lg:block bg-white dark:bg-[#0b0b0b] border-b border-zinc-100 dark:border-[#ffde5a]/15">
           <div className="trimma-site-nav-categories w-full px-4 sm:px-6 lg:px-8 py-2">
             <nav
               className="flex items-center gap-2 overflow-x-auto hide-scrollbar"
@@ -361,7 +361,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
       )}
 
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-zinc-100 dark:border-[#FFFD40]/15 bg-white dark:bg-[#111111] pb-4 max-h-[70vh] overflow-y-auto">
+        <div className="lg:hidden border-t border-zinc-100 dark:border-[#ffde5a]/15 bg-white dark:bg-[#111111] pb-4 max-h-[70vh] overflow-y-auto">
           <nav className="px-4 pt-2 pb-4 flex flex-col gap-1" aria-label="Site navigation">
             <Link
               href="/features"

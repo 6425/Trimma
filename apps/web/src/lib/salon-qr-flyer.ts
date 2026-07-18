@@ -114,7 +114,7 @@ export function printSalonQrFlyer(data: SalonQrFlyerData): void {
         flex-direction: column;
         justify-content: space-between;
         background:
-          radial-gradient(circle at top right, rgba(255,253,64, 0.18), transparent 38%),
+          radial-gradient(circle at top right, rgba(255,222,90, 0.18), transparent 38%),
           #ffffff;
       }
       .brand-bar {
@@ -136,11 +136,11 @@ export function printSalonQrFlyer(data: SalonQrFlyerData): void {
         width: 14px;
         height: 14px;
         border-radius: 999px;
-        background: #FFFD40;
-        box-shadow: 0 0 0 4px rgba(255,253,64, 0.25);
+        background: #ffde5a;
+        box-shadow: 0 0 0 4px rgba(255,222,90, 0.25);
       }
       .badge {
-        background: #FFFD40;
+        background: #ffde5a;
         color: #111;
         font-size: 11px;
         font-weight: 800;
@@ -158,7 +158,7 @@ export function printSalonQrFlyer(data: SalonQrFlyerData): void {
         height: 88px;
         border-radius: 24px;
         object-fit: cover;
-        border: 4px solid #FFFD40;
+        border: 4px solid #ffde5a;
         margin: 0 auto 16px;
         display: block;
         background: #fff;

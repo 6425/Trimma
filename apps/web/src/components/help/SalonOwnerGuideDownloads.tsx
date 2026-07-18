@@ -99,7 +99,7 @@ export function SalonOwnerGuideDownloads() {
               </div>
               <div className="flex flex-col gap-2 mt-auto">
                 <a href={href} target="_blank" rel="noopener noreferrer" download>
-                  <Button className="w-full h-10 rounded-xl bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black font-bold text-xs">
+                  <Button className="w-full h-10 rounded-xl bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black font-bold text-xs">
                     <Download className="w-4 h-4 mr-2" />
                     Download PDF Handbook
                   </Button>

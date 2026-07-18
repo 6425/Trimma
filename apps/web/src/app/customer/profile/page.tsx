@@ -163,7 +163,7 @@ function ProfileFormContent() {
                 <p className="text-[10px] text-zinc-400 font-semibold uppercase mt-1">
                   Click photo to upload
                 </p>
-                <span className="inline-flex items-center gap-1.5 text-xs text-[#FFFD40] bg-[#FFFD40]/10 px-2.5 py-0.5 rounded-full font-bold mt-2">
+                <span className="inline-flex items-center gap-1.5 text-xs text-[#ffde5a] bg-[#ffde5a]/10 px-2.5 py-0.5 rounded-full font-bold mt-2">
                   <ShieldCheck className="w-3.5 h-3.5" /> Verified Customer Account
                 </span>
               </div>
@@ -181,7 +181,7 @@ function ProfileFormContent() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#FFFD40] rounded-xl"
+                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#ffde5a] rounded-xl"
                   />
                 </div>
               </div>
@@ -195,7 +195,7 @@ function ProfileFormContent() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#FFFD40] rounded-xl"
+                    className="h-11 bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-[#ffde5a] rounded-xl"
                   />
                 </div>
               </div>

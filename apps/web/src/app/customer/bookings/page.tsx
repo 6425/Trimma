@@ -212,8 +212,8 @@ function BookingsListContent() {
       </div>
 
       {!loading && bookings.length > 0 ? (
-        <div className="rounded-2xl border border-[#FFFD40]/20 bg-[#FFFD40]/5 px-4 py-3 flex gap-3 items-start">
-          <Star className="w-4 h-4 text-[#FFFD40] shrink-0 mt-0.5" />
+        <div className="rounded-2xl border border-[#ffde5a]/20 bg-[#ffde5a]/5 px-4 py-3 flex gap-3 items-start">
+          <Star className="w-4 h-4 text-[#ffde5a] shrink-0 mt-0.5" />
           <p className="text-xs text-zinc-700 leading-relaxed">
             <span className="font-bold text-zinc-900">How reviews work:</span> Once your confirmed appointment time has
             passed, a <span className="font-bold">Leave review</span> button appears here. You can rate the salon and
@@ -238,7 +238,7 @@ function BookingsListContent() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#FFFD40]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ffde5a]"></div>
           <p className="text-sm text-zinc-400 font-bold">Loading your appointments...</p>
         </div>
       ) : bookings.length === 0 ? (
@@ -278,7 +278,7 @@ function BookingsListContent() {
           {filteredBookings.map((booking) => (
             <div
               key={booking.id}
-              className="bg-white rounded-2xl border border-zinc-200 hover:border-[#FFFD40]/50 hover:bg-[#FFFD40]/5 transition-all p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm"
+              className="bg-white rounded-2xl border border-zinc-200 hover:border-[#ffde5a]/50 hover:bg-[#ffde5a]/5 transition-all p-5 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 flex items-center justify-center shrink-0">
@@ -292,7 +292,7 @@ function BookingsListContent() {
                       variant={booking.status === "confirmed" ? "default" : booking.status === "pending" ? "secondary" : "outline"}
                       className={`text-[9px] font-black uppercase px-2 py-0.5 tracking-wide rounded-md border-none ${
                         booking.status === "confirmed"
-                          ? "bg-[#FFFD40]/10 text-[#FFFD40]"
+                          ? "bg-[#ffde5a]/10 text-[#ffde5a]"
                           : booking.status === "pending"
                             ? "bg-amber-500/10 text-amber-500"
                             : booking.status === "completed"
@@ -305,7 +305,7 @@ function BookingsListContent() {
                   </div>
 
                   <div className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#FFFD40]/80" />
+                    <MapPin className="w-3.5 h-3.5 text-[#ffde5a]/80" />
                     <span>{booking.salonSlug ? booking.salonName : "Sri Lanka"}</span>
                   </div>
 
@@ -318,7 +318,7 @@ function BookingsListContent() {
               <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start sm:items-center md:items-end lg:items-center gap-4 sm:gap-10 md:gap-4 lg:gap-10 pt-4 md:pt-0 border-t border-zinc-200 md:border-t-0 justify-between">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2 text-zinc-800 text-xs font-extrabold">
-                    <CalendarDays className="w-4 h-4 text-[#FFFD40]" />
+                    <CalendarDays className="w-4 h-4 text-[#ffde5a]" />
                     <span>{booking.bookingDate}</span>
                   </div>
                   <div className="flex items-center gap-2 text-zinc-600 text-xs font-semibold">
@@ -374,7 +374,7 @@ function BookingsListContent() {
           <div className="bg-white rounded-3xl p-8 max-w-md w-full border border-zinc-200 shadow-2xl space-y-6 text-left">
             <div>
               <h3 className="text-lg font-black text-zinc-900 tracking-tight flex items-center gap-2">
-                <CalendarClock className="w-5 h-5 text-[#FFFD40]" />
+                <CalendarClock className="w-5 h-5 text-[#ffde5a]" />
                 Request reschedule
               </h3>
               <p className="text-xs text-zinc-500 mt-1 font-medium">
@@ -392,7 +392,7 @@ function BookingsListContent() {
                   type="date"
                   value={rescheduleDate}
                   onChange={(e) => setRescheduleDate(e.target.value)}
-                  className="w-full h-11 px-4 border border-zinc-200 focus:border-[#FFFD40] rounded-xl text-sm focus:outline-none"
+                  className="w-full h-11 px-4 border border-zinc-200 focus:border-[#ffde5a] rounded-xl text-sm focus:outline-none"
                   required
                 />
               </div>
@@ -404,7 +404,7 @@ function BookingsListContent() {
                   type="time"
                   value={rescheduleTime}
                   onChange={(e) => setRescheduleTime(e.target.value)}
-                  className="w-full h-11 px-4 border border-zinc-200 focus:border-[#FFFD40] rounded-xl text-sm focus:outline-none"
+                  className="w-full h-11 px-4 border border-zinc-200 focus:border-[#ffde5a] rounded-xl text-sm focus:outline-none"
                   required
                 />
               </div>

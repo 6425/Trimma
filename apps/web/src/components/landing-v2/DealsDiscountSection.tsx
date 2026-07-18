@@ -100,7 +100,7 @@ export function DealsDiscountSection({ initialDeals }: Props) {
                 <Link
                   key={deal.id}
                   href={`/salons/${salon.slug}`}
-                  className="bg-[#FFFD40] rounded-3xl border border-amber-500/50 shadow-md shadow-amber-200/60 overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  className="bg-[#ffde5a] rounded-3xl border border-amber-500/50 shadow-md shadow-amber-200/60 overflow-hidden flex flex-col group hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 >
                   <div className="relative h-36 w-full bg-black/5 shrink-0">
                     {deal.image_url ? (

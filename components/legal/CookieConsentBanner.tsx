@@ -80,8 +80,8 @@ export function CookieConsentBanner() {
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#FFFD40]/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#FFFD40]" />
+            <p className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#ffde5a]/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#ffde5a]" />
               Cookie preferences
             </p>
             <h2 id="cookie-consent-title" className="text-lg font-extrabold text-zinc-900 dark:text-white">
@@ -90,7 +90,7 @@ export function CookieConsentBanner() {
             <p id="cookie-consent-description" className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
               Essential cookies are required for sign-in, security, and booking. You can choose
               whether to allow performance, functional, and marketing cookies. Read our{" "}
-              <Link href="/cookies" className="font-semibold text-zinc-900 underline decoration-[#FFFD40] decoration-2 underline-offset-4 dark:text-white">
+              <Link href="/cookies" className="font-semibold text-zinc-900 underline decoration-[#ffde5a] decoration-2 underline-offset-4 dark:text-white">
                 Cookie Policy
               </Link>
               .
@@ -148,7 +148,7 @@ export function CookieConsentBanner() {
                         [option.key]: event.target.checked,
                       }))
                     }
-                    className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-[#FFFD40]"
+                    className="mt-1 h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-[#ffde5a]"
                   />
                   <span>
                     <span className="block text-sm font-semibold text-zinc-900 dark:text-white">
@@ -173,7 +173,7 @@ export function CookieConsentBanner() {
               <button
                 type="button"
                 onClick={() => persist(preferences)}
-                className="h-11 rounded-xl bg-[#FFFD40] px-4 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#E6E43A]"
+                className="h-11 rounded-xl bg-[#ffde5a] px-4 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#E6E43A]"
               >
                 Save preferences
               </button>

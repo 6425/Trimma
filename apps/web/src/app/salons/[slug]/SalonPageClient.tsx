@@ -51,7 +51,7 @@ import {
 } from "@/lib/salon-page-images";
 
 const SALON_ACTION_BTN =
-  "bg-black !text-white hover:bg-zinc-800 hover:!text-[#FFFD40] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#FFFD40] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
+  "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffde5a] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffde5a] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
 import {
   getDiscountedServicePrice,
   getServiceDiscountLabel,
@@ -968,7 +968,7 @@ export default function SalonPage({
                     <IconComp className="w-4 h-4 shrink-0 text-zinc-600" />
                     <span className="font-medium truncate">{am.name}</span>
                     {am.type === "number" && am.quantity ? (
-                      <span className="text-[10px] font-bold bg-[#FFFD40] text-black px-1.5 py-0.5 rounded shrink-0">
+                      <span className="text-[10px] font-bold bg-[#ffde5a] text-black px-1.5 py-0.5 rounded shrink-0">
                         x{am.quantity}
                       </span>
                     ) : null}

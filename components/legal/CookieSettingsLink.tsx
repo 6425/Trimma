@@ -7,7 +7,7 @@ export function CookieSettingsLink({ className }: { className?: string }) {
     <button
       type="button"
       onClick={reopenCookieConsentPreferences}
-      className={className || "hover:text-[#FFFD40] transition-colors text-left"}
+      className={className || "hover:text-[#ffde5a] transition-colors text-left"}
     >
       Cookie settings
     </button>

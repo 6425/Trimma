@@ -72,7 +72,7 @@ export function AdminNotificationBell() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FFFD40] text-black text-[10px] font-black flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ffde5a] text-black text-[10px] font-black flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -110,7 +110,7 @@ export function AdminNotificationBell() {
                 key={item.id}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3 hover:border-[#FFFD40]/40 hover:bg-amber-50/40 transition-colors"
+                className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-3 hover:border-[#ffde5a]/40 hover:bg-amber-50/40 transition-colors"
               >
                 <div className="mt-0.5 shrink-0">{notificationIcon(item.type)}</div>
                 <div className="min-w-0 flex-1">

@@ -173,7 +173,7 @@ function ProfileFormContent() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#FFFD40]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ffde5a]"></div>
           <p className="text-sm text-zinc-500 font-bold">Loading your profile...</p>
         </div>
       ) : loadError ? (
@@ -185,7 +185,7 @@ function ProfileFormContent() {
               setLoading(true);
               void loadProfile();
             }}
-            className="bg-[#FFFD40] hover:bg-[#FFFD40]/90 text-black rounded-xl font-bold"
+            className="bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black rounded-xl font-bold"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Retry
@@ -210,7 +210,7 @@ function ProfileFormContent() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 -mt-12 md:-mt-16 mb-8 relative z-10">
                 <div className="flex flex-col md:flex-row items-center md:items-end gap-5">
                   <div className="relative group">
-                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-[#FFFD40] text-black font-black text-4xl flex items-center justify-center shadow-lg overflow-hidden ring-4 ring-white">
+                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-[#ffde5a] text-black font-black text-4xl flex items-center justify-center shadow-lg overflow-hidden ring-4 ring-white">
                       {avatarUrl ? (
                         <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                       ) : (

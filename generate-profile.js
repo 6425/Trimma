@@ -34,7 +34,7 @@ import { supabase } from "@/config/supabase";
 
 function getStatusBadge(status: string) {
   if (status === "ACTIVE") return "bg-emerald-100 text-emerald-700";
-  if (status === "OWNER_ACTIVATED") return "bg-[#FFFD40] text-black";
+  if (status === "OWNER_ACTIVATED") return "bg-[#ffde5a] text-black";
   return "bg-amber-100 text-amber-700";
 }
 
@@ -226,7 +226,7 @@ export default function SalonProfilePage() {
         <Button 
           onClick={handleSave} 
           disabled={saving}
-          className="bg-[#FFFD40] hover:bg-[#FFFE73] text-black font-bold px-8 h-12 rounded-xl text-sm tracking-wide shadow-md flex items-center gap-2"
+          className="bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold px-8 h-12 rounded-xl text-sm tracking-wide shadow-md flex items-center gap-2"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
           SEND FOR VERIFICATION
