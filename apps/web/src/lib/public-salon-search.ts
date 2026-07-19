@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
+import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 
 export type PublicSalonSearchParams = {
   q?: string;
@@ -30,18 +31,21 @@ export async function fetchPublicSalons(
     .from("salons")
     .select(`
       id, name, slug, rating, review_count,
-      city, district, category, logo_url, cover_url, hero_url,
+      city, district, province, category, logo_url, cover_url, hero_url,
       is_featured, is_verified, working_hours,
       services ( id, name, price, category )
     `);
 
   if (q) {
     query = query.or(
-      `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%`
+      `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
     );
   }
   if (location) {
-    query = query.or(`city.ilike.%${location}%,district.ilike.%${location}%`);
+    const locationFilter = buildSalonLocationOrFilter(location);
+    if (locationFilter) {
+      query = query.or(locationFilter);
+    }
   }
   if (minRating > 0) {
     query = query.gt("review_count", 0).gte("rating", minRating);

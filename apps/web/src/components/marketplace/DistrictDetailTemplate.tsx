@@ -95,7 +95,7 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
             <ChevronRight className="w-3.5 h-3.5" />
             <Link href="/locations" className="hover:text-zinc-900 transition-colors">Locations</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href={`/locations/${data.provinceSlug || data.province.toLowerCase().replace(" province", "").replace(/\s+/g, "-")}`} className="hover:text-zinc-900 transition-colors">{data.province}</Link>
+            <Link href={`/?l=${encodeURIComponent(data.province)}`} className="hover:text-zinc-900 transition-colors">{data.province}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-zinc-800">{data.name}</span>
           </div>

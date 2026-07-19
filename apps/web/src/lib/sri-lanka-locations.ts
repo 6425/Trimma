@@ -168,6 +168,51 @@ export function getProvinceByRouteSlug(slug: string | null | undefined): SriLank
   return SRI_LANKA_PROVINCES.find((p) => p.slug === normalized);
 }
 
+/** Home directory search URL — same pattern districts use in the nav (`/?l=Colombo`). */
+export function buildLocationSearchHref(location: string): string {
+  return `/?l=${encodeURIComponent(location)}`;
+}
+
+/** Resolve a free-text location query to a known province (name, short name, or slug). */
+export function resolveProvinceForLocationQuery(location: string): SriLankaProvince | undefined {
+  const trimmed = location.trim();
+  if (!trimmed) return undefined;
+  const lower = trimmed.toLowerCase();
+  const slug = slugifyLocation(trimmed.replace(/\s+province$/i, ""));
+  return SRI_LANKA_PROVINCES.find(
+    (p) =>
+      p.name.toLowerCase() === lower ||
+      p.shortName.toLowerCase() === lower ||
+      p.slug === slug ||
+      p.dbSlug === slugifyLocation(trimmed)
+  );
+}
+
+/**
+ * PostgREST `.or(...)` filter for salon location search.
+ * Provinces expand to province + district/city matches so results work even when
+ * `salons.province` is empty (same discovery path as district `/?l=` links).
+ */
+export function buildSalonLocationOrFilter(location: string): string {
+  const trimmed = location.trim();
+  if (!trimmed) return "";
+
+  const province = resolveProvinceForLocationQuery(trimmed);
+  if (province) {
+    const clauses = [
+      `province.ilike.%${province.name}%`,
+      `province.ilike.%${province.shortName}%`,
+      ...province.districts.flatMap((d) => [
+        `district.ilike.%${d.name}%`,
+        `city.ilike.%${d.name}%`,
+      ]),
+    ];
+    return clauses.join(",");
+  }
+
+  return `city.ilike.%${trimmed}%,district.ilike.%${trimmed}%,province.ilike.%${trimmed}%`;
+}
+
 export function getDistrictBySlugs(
   provinceSlug: string | null | undefined,
   districtSlug: string | null | undefined
