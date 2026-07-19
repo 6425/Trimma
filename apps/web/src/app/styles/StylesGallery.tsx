@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Scissors, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StyleSaveButton } from "../../components/styles/StyleSaveButton";
+import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 import type { PublicPlatformStyle } from "../actions/platform-styles";
 
 type StylesGalleryProps = {
@@ -194,6 +195,8 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
           </div>
         )}
       </div>
+
+      <FindBookGlowCta />
     </div>
   );
 }

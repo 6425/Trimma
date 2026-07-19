@@ -23,8 +23,8 @@ import {
   PopularSalonsSection,
   DiscountsOffersSection,
   WhyTrimmaSection,
-  SalonOnboardingCTA,
 } from "../../../../../components/marketplace/MarketplaceSections";
+import { FindBookGlowCta } from "../../../../../components/marketplace/FindBookGlowCta";
 
 const IconMap: Record<string, any> = {
   Scissors,
@@ -331,12 +331,11 @@ export default function CityDetailPage() {
             
             {/* Why Trimma Section */}
             <WhyTrimmaSection />
-            
-            {/* Salon Onboarding CTA */}
-            <SalonOnboardingCTA />
           </>
         )}
       </div>
+
+      <FindBookGlowCta />
     </div>
   );
 }

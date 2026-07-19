@@ -20,14 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/config/supabase";
-import { 
-  FeaturedSalonsSection, 
-  PopularSalonsSection, 
-  DiscountsOffersSection, 
-  WhyTrimmaSection, 
-  SalonOnboardingCTA 
-} from "../../../components/marketplace/MarketplaceSections";
 import { SalonCard } from "../../../components/marketplace/SalonCard";
+import { FindBookGlowCta } from "../../../components/marketplace/FindBookGlowCta";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
   "barber-salon": "/assets/category-barber-salon-hero.webp",
@@ -401,6 +395,8 @@ export default function CategoryPage() {
             })()}
 
       </div>
+
+      <FindBookGlowCta />
     </div>
   );
 }

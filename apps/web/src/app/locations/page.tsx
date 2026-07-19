@@ -8,6 +8,7 @@ import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star 
 import { supabase } from "@/config/supabase";
 import { buildLocationSearchHref, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { ProvinceNavLinks } from "../../components/locations/ProvinceNavLinks";
+import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 
 const provinces = SRI_LANKA_PROVINCES.map((province) => ({
   id: province.slug,
@@ -256,7 +257,7 @@ export default function LocationsHubPage() {
       </section>
 
       {/* 3. PREMIUM ADVANTAGE BLOCK */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 md:mt-36">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-24 md:mt-36 mb-16 md:mb-24">
          <div className="bg-white rounded-3xl p-10 md:p-14 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-8 md:gap-12 text-center md:text-left">
             <div className="w-20 h-20 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0 shadow-sm">
                <Navigation2 className="w-10 h-10 animate-pulse" />
@@ -269,6 +270,8 @@ export default function LocationsHubPage() {
             </div>
          </div>
       </section>
+
+      <FindBookGlowCta />
     </div>
   );
 }

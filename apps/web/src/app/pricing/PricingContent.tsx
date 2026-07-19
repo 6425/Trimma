@@ -22,6 +22,7 @@ import {
   getStrikethroughMonthlyPrice,
 } from "@/lib/subscription-pricing-copy";
 import type { PublicSubscriptionPlan } from "../actions/subscription-plans";
+import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 
 type PricingContentProps = {
   initialPlans: PublicSubscriptionPlan[];
@@ -42,7 +43,7 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
   const pricingFaqs = useMemo(() => buildPricingPageFaqs(plans), [plans]);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-24 selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-rose-500 selection:text-white">
       <section className="page-hero-shell text-zinc-900 pt-28 pb-36 text-center px-4 relative overflow-hidden">
         <img
           src="/assets/pricing-hero.webp"
@@ -269,6 +270,10 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
           ))}
         </div>
       </section>
+
+      <div className="mt-24">
+        <FindBookGlowCta />
+      </div>
     </div>
   );
 }
