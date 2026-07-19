@@ -13,6 +13,7 @@ import {
 import { formatDisplayDate } from "@/lib/promotion-package-dates";
 import { GlobalServiceIconPreview } from "../../components/admin/GlobalServiceIconUpload";
 import { PromotionPackageIncludes } from "../../components/marketplace/PromotionPackageIncludes";
+import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 
 const dealIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutGrid,
@@ -287,6 +288,8 @@ export default function DealsClient({ deals, categories, locations }: Props) {
           )}
         </div>
       </section>
+
+      <FindBookGlowCta />
     </div>
   );
 }

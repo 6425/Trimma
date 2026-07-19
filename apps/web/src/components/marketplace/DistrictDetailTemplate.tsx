@@ -14,8 +14,8 @@ import {
   PopularSalonsSection, 
   DiscountsOffersSection, 
   WhyTrimmaSection, 
-  SalonOnboardingCTA 
 } from "./MarketplaceSections";
+import { FindBookGlowCta } from "./FindBookGlowCta";
 
 export interface DistrictData {
   id: string;
@@ -300,13 +300,12 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
               
               {/* Why Trimma Section */}
               <WhyTrimmaSection />
-              
-              {/* Salon Onboarding CTA */}
-              <SalonOnboardingCTA />
             </>
           );
         })()}
       </div>
+
+      <FindBookGlowCta />
       
       {/* MOBILE BOTTOM STICKY BAR */}
       <div className="md:hidden fixed bottom-16 left-0 right-0 p-3 bg-white/80 backdrop-blur-md border-t border-slate-200 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex justify-center gap-2 w-full pb-safe">
