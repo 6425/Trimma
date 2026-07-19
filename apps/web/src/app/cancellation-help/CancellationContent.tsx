@@ -1,14 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { absoluteUrl } from "@/lib/site-url";
 import Image from "next/image";
 import Link from "next/link";
-import { EMAIL_BODY_DEFAULTS } from "@/lib/email-templates";
-import {
-  EMAIL_BODY_DEFAULTS_SINHALA,
-  EMAIL_BODY_DEFAULTS_TAMIL,
-} from "@/lib/email-multilingual-defaults";
 import {
   ArrowRight,
   Calendar,
@@ -125,92 +119,6 @@ const FAQS = [
   },
 ];
 
-const RESERVATION_DEMO_VARS = {
-  customer_name: "John Client",
-  salon_name: "Sampath Barber Saloon",
-  booking_no: "TRM-342201",
-  booking_date: "2026-06-14",
-  booking_time: "17:30:00",
-  service_name: "Classic Haircut",
-  deposit_paid: "360",
-  balance_to_pay: "1,440",
-  dashboard_link: absoluteUrl("/customer"),
-};
-
-type NotificationLang = "en" | "si" | "ta";
-
-const NOTIFICATION_TABS: { key: NotificationLang; label: string }[] = [
-  { key: "en", label: "English" },
-  { key: "si", label: "Sinhala" },
-  { key: "ta", label: "Tamil" },
-];
-
-const NOTIFICATION_BODIES: Record<NotificationLang, string> = {
-  en: EMAIL_BODY_DEFAULTS.reservationPaid,
-  si: EMAIL_BODY_DEFAULTS_SINHALA.reservationPaid,
-  ta: EMAIL_BODY_DEFAULTS_TAMIL.reservationPaid,
-};
-
-function fillNotificationTemplate(template: string) {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) => {
-    return RESERVATION_DEMO_VARS[key as keyof typeof RESERVATION_DEMO_VARS] ?? `{${key}}`;
-  });
-}
-
-function ReservationNotificationPreview() {
-  const [lang, setLang] = useState<NotificationLang>("en");
-  const body = fillNotificationTemplate(NOTIFICATION_BODIES[lang]);
-
-  return (
-    <div className="relative w-full max-w-md mx-auto">
-      <div className="absolute inset-0 rounded-3xl bg-amber-400/15 blur-3xl scale-110 pointer-events-none" />
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-zinc-200 bg-white">
-        <div className="bg-zinc-950 px-6 py-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 mb-2">
-            Trimma
-          </p>
-          <p className="text-white font-bold text-base leading-snug">
-            Reservation payment received &bull; {RESERVATION_DEMO_VARS.booking_no}
-          </p>
-        </div>
-
-        <div className="flex border-b border-zinc-200 bg-zinc-50">
-          {NOTIFICATION_TABS.map((tab) => {
-            const active = lang === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setLang(tab.key)}
-                className={`flex-1 px-3 py-3 text-xs font-bold transition-colors ${
-                  active
-                    ? "bg-white text-zinc-900 border-b-2 border-amber-400"
-                    : "text-zinc-500 hover:text-zinc-700 hover:bg-white/70"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="px-6 py-5">
-          <p className="text-sm text-zinc-700 leading-relaxed whitespace-pre-wrap">{body}</p>
-          <button
-            type="button"
-            className="mt-6 inline-flex items-center justify-center bg-amber-400 hover:bg-amber-500 text-zinc-900 font-bold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
-          >
-            View my bookings
-          </button>
-        </div>
-      </div>
-      <p className="mt-4 text-center text-xs font-semibold text-zinc-500">
-        Customers receive reservation confirmations by email in English, Sinhala, or Tamil.
-      </p>
-    </div>
-  );
-}
-
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -299,34 +207,55 @@ function RescheduleIllustration() {
 export function CancellationContent() {
   return (
     <div className="bg-white text-zinc-900">
-      {/* Section 1: Hero */}
-      <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-              <Sparkles className="w-3.5 h-3.5" />
-              Booking Policy
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/cancellation-help-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                Booking Policy
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Cancellation &amp; Reservation</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Policy
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Transparent policies designed to protect customers, salon owners, and appointment
+                availability for everyone.
+              </p>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6">
-              Cancellation &amp; Reservation Policy
-            </h1>
-            <p className="text-lg hero-lead leading-relaxed mb-8 max-w-lg">
-              Transparent policies designed to protect customers, salon owners, and appointment
-              availability for everyone.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              {TRUST_BADGES.map((badge) => (
-                <div
-                  key={badge.label}
-                  className="inline-flex items-center gap-2 bg-white border border-zinc-200 rounded-full px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm"
-                >
-                  <badge.icon className="w-4 h-4 text-amber-500" />
-                  {badge.label}
-                </div>
-              ))}
+
+            <div className="home-hero-middle">
+              <div className="flex flex-wrap gap-3">
+                {TRUST_BADGES.map((badge) => (
+                  <div
+                    key={badge.label}
+                    className="inline-flex items-center gap-2 bg-white/90 border border-zinc-200 rounded-full px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm"
+                  >
+                    <badge.icon className="w-4 h-4 text-amber-500" />
+                    {badge.label}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <ReservationNotificationPreview />
         </div>
       </section>
 
