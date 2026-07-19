@@ -117,9 +117,9 @@ export default function DealsClient({ deals, categories, locations }: Props) {
       <section id="deals-results" className="pb-24 pt-16 lg:pt-20 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 space-y-8">
           {/* Filter bar */}
-          <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-[#ffde5a] border border-amber-500/50 rounded-3xl p-6 shadow-md shadow-amber-200/60 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Location</span>
+              <span className="text-xs font-semibold text-zinc-900 uppercase tracking-wide">Location</span>
               <select
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
@@ -135,7 +135,7 @@ export default function DealsClient({ deals, categories, locations }: Props) {
             </label>
 
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Category</span>
+              <span className="text-xs font-semibold text-zinc-900 uppercase tracking-wide">Category</span>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
@@ -151,7 +151,7 @@ export default function DealsClient({ deals, categories, locations }: Props) {
             </label>
 
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Search</span>
+              <span className="text-xs font-semibold text-zinc-900 uppercase tracking-wide">Search</span>
               <div className="mt-2 flex items-center h-11 rounded-xl border border-zinc-200 bg-white px-3 focus-within:ring-2 focus-within:ring-amber-400 focus-within:border-transparent transition">
                 <Search className="w-4 h-4 text-zinc-400 mr-2 shrink-0" />
                 <input
