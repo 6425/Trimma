@@ -135,7 +135,7 @@ function SalonOwnerDashboardShowcase() {
 const STEP_SCREENSHOTS = {
   step1: [
     {
-      src: "/assets/features/steps/step-1-search.png",
+      src: "/assets/features-discover-salon.png",
       alt: "Search salons by service and location on Trimma",
       tab: "Search & Explore",
     },
