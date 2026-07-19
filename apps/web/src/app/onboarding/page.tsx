@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
+import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
 import { OnboardingHeroCta } from "./OnboardingHeroCta";
 
@@ -123,28 +124,29 @@ export default async function OnboardingPage() {
         <PricingContent
           initialPlans={result.plans}
           loadError={result.success ? null : result.error}
+          showFindBookGlowCta={false}
         />
       </section>
 
       {/* Why We Use Regional Onboarding Agents */}
-      <section className="py-24 px-4 bg-slate-900 text-white">
+      <section className="py-24 px-4 bg-[#0B0B0B] text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold mb-6">Verified Salon Listings</h2>
-          <p className="text-lg text-slate-300 mb-10 leading-relaxed">
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6">Verified Salon Listings</h2>
+          <p className="text-lg text-zinc-400 mb-10 leading-relaxed">
             Every salon on Trimma completes a guided onboarding flow: you build your profile in the owner dashboard,
             your regional agent verifies the details, and Trimma admin gives final approval before bookings open.
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
-            <ul className="space-y-4 text-slate-300">
-              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Verify business authenticity</li>
-              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Ensure accurate service information</li>
-              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Maintain updated pricing</li>
+            <ul className="space-y-4 text-zinc-400">
+              <li className="flex items-center gap-3"><span className="text-[#ffde5a] text-xl font-bold">✓</span> Verify business authenticity</li>
+              <li className="flex items-center gap-3"><span className="text-[#ffde5a] text-xl font-bold">✓</span> Ensure accurate service information</li>
+              <li className="flex items-center gap-3"><span className="text-[#ffde5a] text-xl font-bold">✓</span> Maintain updated pricing</li>
             </ul>
-            <ul className="space-y-4 text-slate-300">
-              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Improve customer trust</li>
-              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Provide personalized support</li>
-              <li className="flex items-center gap-3"><span className="text-brand-pink text-xl">✓</span> Add online visibility to your salon</li>
+            <ul className="space-y-4 text-zinc-400">
+              <li className="flex items-center gap-3"><span className="text-[#ffde5a] text-xl font-bold">✓</span> Improve customer trust</li>
+              <li className="flex items-center gap-3"><span className="text-[#ffde5a] text-xl font-bold">✓</span> Provide personalized support</li>
+              <li className="flex items-center gap-3"><span className="text-[#ffde5a] text-xl font-bold">✓</span> Add online visibility to your salon</li>
             </ul>
           </div>
         </div>
@@ -165,6 +167,8 @@ export default async function OnboardingPage() {
           </div>
         </div>
       </section>
+
+      <FindBookGlowCta />
     </div>
   );
 }

@@ -27,9 +27,15 @@ import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 type PricingContentProps = {
   initialPlans: PublicSubscriptionPlan[];
   loadError?: string | null;
+  /** When false, omit the bottom FindBookGlowCta (e.g. onboarding places it above the footer). Default true. */
+  showFindBookGlowCta?: boolean;
 };
 
-export function PricingContent({ initialPlans, loadError }: PricingContentProps) {
+export function PricingContent({
+  initialPlans,
+  loadError,
+  showFindBookGlowCta = true,
+}: PricingContentProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const plans = initialPlans;
 
@@ -53,6 +59,11 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
           decoding="async"
           fetchPriority="high"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        {/* Soft white wash for text readability — not yellow */}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/35 pointer-events-none"
+          aria-hidden="true"
         />
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-white/20 rounded-full blur-[120px] -translate-y-1/2"></div>
         <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-white/15 rounded-full blur-[120px] -translate-y-1/2"></div>
@@ -270,9 +281,11 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
         </div>
       </section>
 
-      <div className="mt-24">
-        <FindBookGlowCta />
-      </div>
+      {showFindBookGlowCta ? (
+        <div className="mt-24">
+          <FindBookGlowCta />
+        </div>
+      ) : null}
     </div>
   );
 }
