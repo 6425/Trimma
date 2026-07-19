@@ -54,7 +54,6 @@ export function PricingContent({ initialPlans, loadError }: PricingContentProps)
           fetchPriority="high"
           className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
-        <div className="absolute inset-0 bg-[#ffde5a]/55 pointer-events-none" aria-hidden="true" />
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-white/20 rounded-full blur-[120px] -translate-y-1/2"></div>
         <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-white/15 rounded-full blur-[120px] -translate-y-1/2"></div>
 
