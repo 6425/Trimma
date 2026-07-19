@@ -66,6 +66,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const isPricingActive = pathname === "/pricing" || pathname?.startsWith("/pricing/");
   const isAboutActive = pathname === "/about" || pathname?.startsWith("/about/");
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
+  const isLocationsActive = pathname === "/locations" || pathname?.startsWith("/locations/");
   const isDealsActive = pathname === "/deals";
   const isStylesActive = pathname === "/styles";
   const isContactActive = pathname === "/contact";
@@ -215,26 +216,33 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                   setActiveProvince(null);
                 }}
               >
-                <button
-                  type="button"
+                <Link
+                  href="/locations"
                   aria-haspopup="true"
                   aria-expanded={locationsOpen}
-                  className={`flex items-center gap-1.5 ${navDesktopClass(locationsOpen || false)}`}
+                  className={`flex items-center gap-1.5 ${navDesktopClass(isLocationsActive || locationsOpen)}`}
                 >
                   Locations
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${locationsOpen ? 'rotate-180' : ''}`} />
-                </button>
+                </Link>
 
                 {locationsOpen && (
                   <div className="absolute top-full left-0 pt-1 z-50">
                     <div className="flex bg-white rounded-xl border border-zinc-200 shadow-xl overflow-hidden max-h-[400px]">
                       {/* Provinces Column */}
                       <div className="w-[200px] overflow-y-auto bg-zinc-50/50 py-2 border-r border-zinc-100">
+                        <Link
+                          href="/locations"
+                          className="block px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 hover:bg-white/60 transition-colors border-b border-zinc-100 mb-1"
+                        >
+                          All locations
+                        </Link>
                         {PROVINCES.map((prov) => (
-                          <div
+                          <Link
                             key={prov.name}
+                            href={`/?l=${encodeURIComponent(prov.name)}`}
                             onMouseEnter={() => setActiveProvince(prov.name)}
-                            className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                            className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors ${
                               activeProvince === prov.name 
                                 ? 'bg-white text-[#ffde5a] font-bold shadow-[inset_2px_0_0_#ffde5a]' 
                                 : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
@@ -242,7 +250,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                           >
                             <span className="truncate">{prov.name.replace(" Province", "")}</span>
                             {activeProvince === prov.name && <span className="text-[#ffde5a] text-[10px] shrink-0">▶</span>}
-                          </div>
+                          </Link>
                         ))}
                       </div>
 
@@ -417,48 +425,66 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                 })}
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => setMobileLocationsOpen(!mobileLocationsOpen)}
-              className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full ${navActionClass}`}
-              aria-expanded={mobileLocationsOpen}
-            >
-              <span className="flex items-center gap-3">
-                <MapPin className="w-4 h-4 shrink-0" />
-                Locations
-              </span>
-              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${mobileLocationsOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {mobileLocationsOpen && (
-              <div className="ml-4 pl-3 border-l border-zinc-100 flex flex-col gap-1 mb-1">
-                {PROVINCES.map((prov) => (
-                  <div key={prov.name} className="flex flex-col">
-                    <button
-                      type="button"
-                      onClick={() => setMobileActiveProvince(mobileActiveProvince === prov.name ? null : prov.name)}
-                      className="flex items-center justify-between py-2 pr-3 text-sm font-medium text-zinc-700 hover:text-zinc-900"
-                    >
-                      {prov.name}
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileActiveProvince === prov.name ? 'rotate-180' : ''}`} />
-                    </button>
-                    {mobileActiveProvince === prov.name && (
-                      <div className="pl-3 border-l border-zinc-100 flex flex-col gap-0.5 mt-1 mb-2">
-                        {prov.districts.map((dist) => (
-                          <Link
-                            key={dist}
-                            href={`/?l=${encodeURIComponent(dist)}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="py-1.5 text-sm font-normal text-zinc-500 hover:text-zinc-900"
-                          >
-                            {dist}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1">
+                <Link
+                  href="/locations"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex-1 ${navMobileClass(isLocationsActive)}`}
+                >
+                  <MapPin className="w-4 h-4 shrink-0" />
+                  Locations
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setMobileLocationsOpen(!mobileLocationsOpen)}
+                  className={`flex items-center justify-center p-3 rounded-lg transition-colors ${navActionClass}`}
+                  aria-label={mobileLocationsOpen ? "Collapse locations" : "Expand locations"}
+                  aria-expanded={mobileLocationsOpen}
+                >
+                  <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${mobileLocationsOpen ? 'rotate-180' : ''}`} />
+                </button>
               </div>
-            )}
+              {mobileLocationsOpen && (
+                <div className="ml-4 pl-3 border-l border-zinc-100 flex flex-col gap-1 mb-1">
+                  {PROVINCES.map((prov) => (
+                    <div key={prov.name} className="flex flex-col">
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/?l=${encodeURIComponent(prov.name)}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex-1 py-2 pr-2 text-sm font-medium text-zinc-700 hover:text-zinc-900"
+                        >
+                          {prov.name}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setMobileActiveProvince(mobileActiveProvince === prov.name ? null : prov.name)}
+                          className="p-2 text-zinc-500"
+                          aria-label={`Toggle ${prov.name} districts`}
+                        >
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileActiveProvince === prov.name ? 'rotate-180' : ''}`} />
+                        </button>
+                      </div>
+                      {mobileActiveProvince === prov.name && (
+                        <div className="pl-3 border-l border-zinc-100 flex flex-col gap-0.5 mt-1 mb-2">
+                          {prov.districts.map((dist) => (
+                            <Link
+                              key={dist}
+                              href={`/?l=${encodeURIComponent(dist)}`}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="py-1.5 text-sm font-normal text-zinc-500 hover:text-zinc-900"
+                            >
+                              {dist}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Link
               href="/styles"

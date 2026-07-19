@@ -6,7 +6,7 @@ import Link from "next/link";
 import * as Icons from "lucide-react";
 import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star } from "lucide-react";
 import { supabase } from "@/config/supabase";
-import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { buildLocationSearchHref, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { ProvinceNavLinks } from "../../components/locations/ProvinceNavLinks";
 
 const provinces = SRI_LANKA_PROVINCES.map((province) => ({
@@ -217,7 +217,7 @@ export default function LocationsHubPage() {
           {provinces.map((province) => (
             <Link 
               key={province.id} 
-              href={`/locations/${province.id}`}
+              href={buildLocationSearchHref(province.name)}
               className="w-[290px] md:w-[calc((100%-64px)/3)] shrink-0 snap-start bg-white rounded-3xl overflow-hidden border border-slate-200 hover:border-zinc-300 shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 group flex flex-col justify-between"
             >
               <div className="relative h-56 overflow-hidden bg-slate-100 shrink-0">

@@ -162,7 +162,7 @@ export default function CityDetailPage() {
             <ChevronRight className="w-3.5 h-3.5" />
             <Link href="/locations" className="hover:text-zinc-900 transition-colors">Locations</Link>
             <ChevronRight className="w-3.5 h-3.5" />
-            <Link href={`/locations/${provinceSlug}`} className="hover:text-zinc-900 transition-colors">{data.province}</Link>
+            <Link href={`/?l=${encodeURIComponent(data.province)}`} className="hover:text-zinc-900 transition-colors">{data.province}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <Link href={`/locations/${provinceSlug}/${districtSlug}`} className="hover:text-zinc-900 transition-colors">{data.district}</Link>
             <ChevronRight className="w-3.5 h-3.5" />
