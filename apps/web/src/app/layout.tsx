@@ -5,7 +5,11 @@ import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
 import { PublicSiteJsonLd } from '@/components/seo/PublicSiteJsonLd';
-import { DEFAULT_OG_IMAGE_PATH } from '@/lib/public-page-metadata';
+import {
+  DEFAULT_OG_IMAGE_ALT,
+  DEFAULT_OG_IMAGE_PATH,
+  DEFAULT_OG_IMAGE_SIZE,
+} from '@/lib/public-page-metadata';
 import { absoluteUrl, getSiteUrl } from '@/lib/site-url';
 
 const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
@@ -34,7 +38,14 @@ export const metadata = {
   openGraph: {
     siteName: 'Trimma',
     type: 'website',
-    images: [{ url: absoluteUrl(DEFAULT_OG_IMAGE_PATH), alt: 'Trimma — Find. Book. Glow.' }],
+    images: [
+      {
+        url: absoluteUrl(DEFAULT_OG_IMAGE_PATH),
+        alt: DEFAULT_OG_IMAGE_ALT,
+        width: DEFAULT_OG_IMAGE_SIZE.width,
+        height: DEFAULT_OG_IMAGE_SIZE.height,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
