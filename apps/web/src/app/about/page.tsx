@@ -57,39 +57,63 @@ const INDUSTRIES = [
 export default function AboutPage() {
   return (
     <div className="bg-white text-zinc-900">
-      {/* Hero */}
-      <section className="page-hero-light pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
-          <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-            <Sparkles className="w-3.5 h-3.5" />
-            About Trimma
-          </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-950 leading-tight mb-6 max-w-4xl mx-auto">
-            The Salon Engine for Modern Beauty &amp; Wellness
-          </h1>
-          <p className="text-lg hero-lead leading-relaxed max-w-2xl mx-auto mb-4">
-            Trimma is an AI-powered appointment booking and business management platform helping salons,
-            spas, and wellness businesses attract customers, streamline operations, and grow revenue.
-          </p>
-          <p className="text-sm text-zinc-800 leading-relaxed max-w-2xl mx-auto mb-10">
-            <strong className="text-zinc-950">Trimma</strong> is a product and brand operated by{" "}
-            <strong className="text-zinc-950">{TRIMMA_COMPANY_OPERATOR}</strong>
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/onboarding"
-              className="hero-btn-primary px-8 py-4 rounded-2xl"
-            >
-              <Building2 className="w-4 h-4" />
-              List Your Salon
-            </Link>
-            <Link
-              href="/contact"
-              className="hero-btn-secondary px-8 py-4 rounded-2xl"
-            >
-              Contact Us
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* Hero — full background image, copy on left 50% (landing style) */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/about-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
+
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                About Trimma
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">The Salon Engine for</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Modern Beauty &amp; Wellness
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Trimma is an AI-powered appointment booking and business management platform helping salons,
+                spas, and wellness businesses attract customers, streamline operations, and grow revenue.
+              </p>
+              <p className="text-sm font-medium max-w-lg leading-relaxed">
+                <strong>Trimma</strong> is a product and brand operated by{" "}
+                <strong>{TRIMMA_COMPANY_OPERATOR}</strong>
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/onboarding"
+                  className="hero-btn-primary px-8 py-4 rounded-2xl"
+                >
+                  <Building2 className="w-4 h-4" />
+                  List Your Salon
+                </Link>
+                <Link
+                  href="/contact"
+                  className="hero-btn-secondary px-8 py-4 rounded-2xl"
+                >
+                  Contact Us
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
