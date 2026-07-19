@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Cookie Policy | Trimma",
@@ -51,27 +52,51 @@ function Section({
 
 export default function CookiePolicyPage() {
   return (
-    <div className="bg-white">
-      <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
-        <header className="border-b border-zinc-100 pb-10">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#ffde5a]/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-yellow-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ffde5a]" />
-            Legal
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-5xl">
-            Cookie Policy
-          </h1>
-          <p className="mt-4 max-w-3xl text-gray-600 leading-7">
-            This Cookie Policy explains how Trimma uses cookies and similar
-            technologies to recognize you, remember your preferences, and improve
-            your experience on our platform.
-          </p>
-          <p className="mt-4 text-sm font-semibold text-zinc-500">
-            Effective date: <span className="text-zinc-900">{EFFECTIVE_DATE}</span>
-          </p>
-        </header>
+    <div className="bg-white text-zinc-900">
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/cookies-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-        <div className="space-y-10 pt-10">
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                Legal
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Cookie</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Policy
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                This Cookie Policy explains how Trimma uses cookies and similar
+                technologies to recognize you, remember your preferences, and improve
+                your experience on our platform.
+              </p>
+              <p className="mt-4 text-sm font-semibold">
+                Effective date: <span>{EFFECTIVE_DATE}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-20">
+        <div className="space-y-10">
           <Section index={1} title="What Are Cookies?">
             <p className="text-gray-600 leading-7">
               Cookies are small text files stored on your device when you visit a
