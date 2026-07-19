@@ -61,7 +61,7 @@ export default function LocationsHubPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-32 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 font-sans relative overflow-hidden">
       {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
       <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
         <img
