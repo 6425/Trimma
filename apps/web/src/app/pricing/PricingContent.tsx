@@ -50,7 +50,7 @@ export function PricingContent({
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-rose-500 selection:text-white">
-      <section className="page-hero-shell text-zinc-900 pt-28 pb-36 text-center px-4 relative overflow-hidden">
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
         <img
           src="/assets/pricing-hero.webp"
           alt=""
@@ -58,60 +58,66 @@ export function PricingContent({
           height={500}
           decoding="async"
           fetchPriority="high"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
         />
-        {/* Soft white wash for text readability — not yellow */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/35 pointer-events-none"
-          aria-hidden="true"
-        />
-        <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-white/20 rounded-full blur-[120px] -translate-y-1/2"></div>
-        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-white/15 rounded-full blur-[120px] -translate-y-1/2"></div>
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-            <Scissors className="w-3.5 h-3.5 animate-spin-slow" /> Introductory Discounts Available Now
-          </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6 text-zinc-900">
-            Choose the Perfect Plan for <br className="hidden md:inline" /> Your Salon&apos;s Growth
-          </h2>
-          <p className="text-lg md:text-xl text-zinc-700 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-            Introduction rates apply to monthly billing. Annual plans use a lower monthly equivalent billed once per year.
-          </p>
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Scissors className="w-3.5 h-3.5 animate-spin-slow" /> Introductory Discounts Available Now
+              </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
-            <Button
-              type="button"
-              variant="dark"
-              onClick={() => setIsAnnual(false)}
-              className={cn(
-                "rounded-full h-11 px-5 text-sm font-bold",
-                !isAnnual && "ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30"
-              )}
-            >
-              Billed Monthly
-            </Button>
-            <Button
-              type="button"
-              variant="dark"
-              onClick={() => setIsAnnual(true)}
-              className={cn(
-                "rounded-full h-11 px-5 text-sm font-bold gap-2",
-                isAnnual && "ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30"
-              )}
-            >
-              <span>Billed Annually</span>
-              {maxAnnualSavings > 0 ? (
-                <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                  Save up to {maxAnnualSavings}%
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Choose the Perfect Plan for</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Your Salon&apos;s Growth
                 </span>
-              ) : null}
-            </Button>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Introduction rates apply to monthly billing. Annual plans use a lower monthly equivalent billed once per year.
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-wrap items-center justify-start gap-3">
+                <Button
+                  type="button"
+                  variant="dark"
+                  onClick={() => setIsAnnual(false)}
+                  className={cn(
+                    "rounded-full h-11 px-5 text-sm font-bold",
+                    !isAnnual && "ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30"
+                  )}
+                >
+                  Billed Monthly
+                </Button>
+                <Button
+                  type="button"
+                  variant="dark"
+                  onClick={() => setIsAnnual(true)}
+                  className={cn(
+                    "rounded-full h-11 px-5 text-sm font-bold gap-2",
+                    isAnnual && "ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30"
+                  )}
+                >
+                  <span>Billed Annually</span>
+                  {maxAnnualSavings > 0 ? (
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider">
+                      Save up to {maxAnnualSavings}%
+                    </span>
+                  ) : null}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 -mt-10 pt-6 relative z-20">
+      <section className="max-w-7xl mx-auto px-4 mt-10 pt-6 relative z-20">
         {loadError && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Showing default pricing — live plans could not be loaded ({loadError}).
