@@ -10,13 +10,13 @@ import {
   HelpCircle,
   Home,
   LifeBuoy,
+  LogIn,
   Mail,
   MessageCircle,
   Scissors,
   Search,
   User,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { BookingGuideDownloads } from "@/components/help/BookingGuideDownloads";
 import { CustomerHelpFaq } from "@/components/help/CustomerHelpFaq";
 import { CUSTOMER_DASHBOARD_OPTIONS } from "@/lib/customer-help-faq";
@@ -45,36 +45,59 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export function CustomerHelpContent() {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 sm:px-6 sm:py-14 space-y-10">
-      <header className="space-y-4 border-b border-zinc-200 pb-8">
-        <span className="inline-flex items-center gap-2 rounded-full bg-[#ffde5a]/15 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-800">
-          <HelpCircle className="w-3.5 h-3.5" />
-          For customers
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-900">
-          Customer Help
-        </h1>
-        <p className="text-sm sm:text-base text-zinc-600 leading-relaxed max-w-2xl">
-          How to find salons, book appointments, pay your deposit, and manage your Trimma account.
-          This page is for <strong className="text-zinc-900">customers</strong> — not salon owners.
-        </p>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Link href="/">
-            <Button className="h-10 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 font-bold text-sm">
-              Find a salon
-            </Button>
-          </Link>
-          <Link href="/login?redirectTo=/customer">
-            <Button
-              variant="outline"
-              className="h-10 rounded-xl border-zinc-300 font-bold text-sm"
-            >
-              Sign in to your account
-            </Button>
-          </Link>
-        </div>
-      </header>
+    <div className="bg-white text-zinc-900">
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/customer-help-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <HelpCircle className="w-3.5 h-3.5" />
+                For customers
+              </div>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Customer</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Help
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                How to find salons, book appointments, pay your deposit, and manage your Trimma account.
+                This page is for <strong>customers</strong> — not salon owners.
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/" className="hero-btn-primary px-8 py-4 rounded-2xl">
+                  <Search className="w-4 h-4" />
+                  Find a salon
+                </Link>
+                <Link href="/login?redirectTo=/customer" className="hero-btn-secondary px-8 py-4 rounded-2xl">
+                  <LogIn className="w-4 h-4" />
+                  Sign in to your account
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-4xl mx-auto px-4 py-10 sm:px-6 sm:py-14 space-y-10">
       <section id="how-to-book" className="scroll-mt-24 space-y-4">
         <div className="flex items-center gap-2">
           <Search className="w-5 h-5 text-[#ffde5a]" />
@@ -186,6 +209,7 @@ export function CustomerHelpContent() {
         </Link>{" "}
         in the salon dashboard instead of this page.
       </p>
+      </div>
     </div>
   );
 }

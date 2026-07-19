@@ -5,8 +5,6 @@ import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import * as Icons from "lucide-react";
 import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { ProvinceNavLinks } from "../../components/locations/ProvinceNavLinks";
@@ -63,67 +61,79 @@ export default function LocationsHubPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-32 relative overflow-hidden">
-      {/* 1. PREMIUM FULL-WIDTH INTEGRATED HERO */}
-      <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=2836&auto=format&fit=crop" 
-            alt="Sri Lanka scenic grooming locations" 
-            className="page-hero-image"
-          />
-          <div className="absolute inset-0 page-hero-overlay"></div>
-        </div>
+      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <img
+          src="/assets/locations-hero.webp"
+          alt=""
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center w-full">
-          <Badge variant="hero" className="mb-6">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" /> Islandwide Discovery Hub
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
-            Find Your Next Salon
-          </h1>
-          <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
-            Discover the highest-rated beauty salons, barbers, and premium Ayurvedic spas across the scenic provinces of Sri Lanka.
-          </p>
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
+            <div className="home-hero-top">
+              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                Islandwide Discovery Hub
+              </div>
 
-          {/* Centered Premium Search Bar */}
-          <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100">
-             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
-               <Search className="w-5 h-5 text-brand-pink mr-3 animate-pulse" />
-               <input 
-                 type="text" 
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 placeholder="Haircut, color, spa..." 
-                 className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold"
-               />
-             </div>
-             
-             <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
-               <MapPin className="w-5 h-5 text-brand-pink mr-3" />
-               <select 
-                 value={selectedLocation}
-                 onChange={(e) => setSelectedLocation(e.target.value)}
-                 className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
-               >
-                 <option value="" className="text-zinc-900">Any District</option>
-                 {SRI_LANKA_PROVINCES.map((province) => (
-                   <optgroup key={province.slug} label={province.name}>
-                     {province.districts.map((district) => (
-                       <option key={district.slug} value={district.slug} className="text-zinc-900">
-                         {district.name}
-                       </option>
-                     ))}
-                   </optgroup>
-                 ))}
-               </select>
-             </div>
-             
-             <Link 
-               href={`/?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
-               className="h-12 px-8 rounded-xl hero-btn-primary hero-btn-compact font-bold border-none shadow-md flex items-center justify-center text-sm"
-             >
-               Search
-             </Link>
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Find Your Next</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Salon
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Discover the highest-rated beauty salons, barbers, and premium Ayurvedic spas across the scenic provinces of Sri Lanka.
+              </p>
+            </div>
+
+            <div className="home-hero-middle">
+              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
+                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                  <Search className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Haircut, color, spa..."
+                    className="w-full h-12 bg-transparent text-zinc-900 placeholder:text-zinc-400 outline-none text-sm font-semibold min-w-0"
+                  />
+                </div>
+                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                  <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
+                  >
+                    <option value="" className="text-zinc-900">Any District</option>
+                    {SRI_LANKA_PROVINCES.map((province) => (
+                      <optgroup key={province.slug} label={province.name}>
+                        {province.districts.map((district) => (
+                          <option key={district.slug} value={district.slug} className="text-zinc-900">
+                            {district.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                <Link
+                  href={`/?q=${encodeURIComponent(searchQuery)}&l=${encodeURIComponent(selectedLocation)}`}
+                  className="h-12 px-8 rounded-xl hero-btn-primary hero-btn-compact font-bold border-none shadow-md flex items-center justify-center text-sm w-full sm:w-auto shrink-0"
+                >
+                  Search
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
