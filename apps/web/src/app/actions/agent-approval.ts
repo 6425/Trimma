@@ -6,6 +6,7 @@ import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { ownerResubmitStatusAfterRejection } from "@/lib/salon-onboarding-paths";
 import { notifyOwnerSubmissionRejected } from "@/app/actions/salon-onboarding-notifications";
+import { isMissingRejectionReasonColumnError } from "@/lib/with-admin-db";
 
 /** Return owner to field editing after agent rejects their submitted profile (Field Editor only). */
 export async function rejectSalonOwnerSubmission(salonId: string, reason: string) {
@@ -28,16 +29,32 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
 
     const resubmitStatus = ownerResubmitStatusAfterRejection(existing.source_type);
 
-    const { error: updateError, data: salon } = await supabase
+    const rejectPayload = {
+      onboarding_status: resubmitStatus,
+      booking_enabled: false,
+      rejection_reason: trimmedReason,
+    };
+
+    let { error: updateError, data: salon } = await supabase
       .from("salons")
-      .update({
-        onboarding_status: resubmitStatus,
-        booking_enabled: false,
-        rejection_reason: trimmedReason,
-      })
+      .update(rejectPayload)
       .eq("id", salonId)
       .select("owner_id, owner_email, owner_gmail, phone, name, assign_to, source_type")
       .single();
+
+    // Older DBs may lack rejection_reason; still reject and keep the note in admin_notes.
+    if (updateError && isMissingRejectionReasonColumnError(updateError.message)) {
+      ({ error: updateError, data: salon } = await supabase
+        .from("salons")
+        .update({
+          onboarding_status: resubmitStatus,
+          booking_enabled: false,
+          admin_notes: `Rejection reason: ${trimmedReason}`,
+        })
+        .eq("id", salonId)
+        .select("owner_id, owner_email, owner_gmail, phone, name, assign_to, source_type")
+        .single());
+    }
 
     if (updateError) throw updateError;
 
