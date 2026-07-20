@@ -5,6 +5,10 @@
 -- Safe to re-run. No CHECK constraint currently enforces platform+salon sum;
 -- admin/app validation enforces sum === 30.
 --
+-- Live commission_master columns: id, commission_type, platform_percentage,
+-- salon_percentage, agent_percentage, payhere_percentage, active, created_at.
+-- (No effective_from / effective_to / updated_at on production.)
+--
 -- Deactivates the current active booking commission_master row and inserts
 -- the new 10/20 split (keeps agent_percentage / payhere_percentage from the
 -- previous active row when present).
@@ -13,9 +17,7 @@
 BEGIN;
 
 UPDATE public.commission_master
-SET active = false,
-    effective_to = NOW(),
-    updated_at = NOW()
+SET active = false
 WHERE commission_type = 'booking'
   AND active = true
   AND (
