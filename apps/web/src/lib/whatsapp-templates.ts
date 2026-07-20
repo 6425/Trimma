@@ -3,7 +3,7 @@
 export const WHATSAPP_TEMPLATE_DEFAULTS = {
   reservationPaid: `Hi {customer_name}! 🎉
 
-Great news — your *20% reservation payment* for *{salon_name}* went through successfully! Your time slot is now *locked* 🔒
+Great news — your *30% reservation payment* for *{salon_name}* went through successfully! Your time slot is now *locked* 🔒
 
 📋 Ref: {booking_no}
 📅 {booking_date} · ⏰ {booking_time}
@@ -65,7 +65,7 @@ Your appointment at *{salon_name}* was marked as a *no-show* because you did not
 ⏰ *Original time:* {booking_time}
 💇 *Service:* {service_name}
 
-Your 20% online reservation deposit is non-refundable. Please contact *{salon_name}* directly with any questions.
+Your 30% online reservation deposit is non-refundable. Please contact *{salon_name}* directly with any questions.
 
 Trimma Notification Services ✂️`,
 

@@ -168,7 +168,7 @@ const SalonPageMockup = () => (
             <div className="text-xs text-zinc-500">20 mins</div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <div className="font-bold text-sm text-zinc-900">LKR 800</div>
+            <div className="font-bold text-sm text-zinc-900">LKR 700</div>
             <div className="px-3 py-1 bg-zinc-100 text-zinc-900 text-[10px] font-bold rounded-md">Add</div>
           </div>
         </div>
@@ -228,7 +228,7 @@ const CheckoutMockup = () => (
 
       <div className="bg-[#ffde5a]/10 border border-[#ffde5a]/30 p-4 rounded-xl space-y-2">
         <div className="flex justify-between items-center">
-           <div className="text-xs font-bold text-zinc-900">Required Deposit (20%)</div>
+           <div className="text-xs font-bold text-zinc-900">Required Deposit (30%)</div>
            <div className="font-black text-sm text-zinc-900">LKR 300</div>
         </div>
         <p className="text-[10px] text-zinc-600">You will pay the remaining LKR 1,200 at the salon.</p>
@@ -252,7 +252,7 @@ const WhatsAppPendingMockup = () => (
       <div className="bg-white rounded-lg rounded-tl-none p-3 max-w-[85%] shadow-sm relative">
         <div className="text-[10px] text-zinc-800 leading-snug">
           Hi Pathum! 🎉<br/><br/>
-          Great news — your <b>20% reservation payment</b> for <b>Sampath Salon</b> went through successfully! Your time slot is now <b>locked</b> 🔒<br/><br/>
+          Great news — your <b>30% reservation payment</b> for <b>Sampath Salon</b> went through successfully! Your time slot is now <b>locked</b> 🔒<br/><br/>
           📋 Ref: #TRM-8921<br/>
           📅 Tomorrow · ⏰ 11:00 AM<br/>
           💇 Premium Haircut<br/>
@@ -391,7 +391,7 @@ const steps = [
   {
     id: "step-7",
     title: "Check Out Page",
-    description: "Review your cart and pay a small 20% secure deposit to lock in your reservation instantly.",
+    description: "Review your cart and pay a 30% secure deposit to lock in your reservation instantly.",
     mockup: <CheckoutMockup />
   },
   {
@@ -409,7 +409,7 @@ const steps = [
   {
     id: "step-10",
     title: "Get the Service & Pay",
-    description: "Visit the salon, enjoy your premium service, and easily pay the remaining 80% balance in person.",
+    description: "Visit the salon, enjoy your premium service, and easily pay the remaining 70% balance in person.",
     mockup: <VisitMockup />
   },
   {

@@ -3,7 +3,7 @@ import { SupabaseService } from '../../integrations/supabase/supabase.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 
 /** Keep in sync with apps/web/src/lib/service-pricing.ts */
-const MIN_SERVICE_PRICE_LKR = 800;
+const MIN_SERVICE_PRICE_LKR = 700;
 const MIN_SERVICE_FEE_MESSAGE = `Minimum service fee is LKR ${MIN_SERVICE_PRICE_LKR.toFixed(2)}`;
 
 @Injectable()

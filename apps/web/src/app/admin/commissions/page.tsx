@@ -11,6 +11,11 @@ import {
   saveCommissionRules,
   saveSubscriptionCommissionMaster,
 } from "@/app/actions/commission-master";
+import {
+  DEFAULT_BOOKING_PLATFORM_PERCENT,
+  DEFAULT_BOOKING_SALON_PERCENT,
+  RESERVATION_DEPOSIT_PERCENT,
+} from "@/lib/booking-pricing";
 import { withTimeout } from "@/lib/promise-timeout";
 
 export default function CommissionManagement() {
@@ -71,7 +76,10 @@ export default function CommissionManagement() {
         setBookingConfig(bookingData);
         setBookingForm({ platform: bookingData.platform_percentage, salon: bookingData.salon_percentage });
       } else {
-        setBookingForm({ platform: 10, salon: 10 });
+        setBookingForm({
+          platform: DEFAULT_BOOKING_PLATFORM_PERCENT,
+          salon: DEFAULT_BOOKING_SALON_PERCENT,
+        });
       }
 
       const subData = commissionMaster
@@ -103,8 +111,8 @@ export default function CommissionManagement() {
 
   // Save Booking Commission (creates new immutable version)
   async function saveBookingCommission() {
-    if (bookingForm.platform + bookingForm.salon !== 20) {
-      toast.error("Platform + Salon must equal 20% (The Reservation Fee)");
+    if (bookingForm.platform + bookingForm.salon !== RESERVATION_DEPOSIT_PERCENT) {
+      toast.error(`Platform + Salon must equal ${RESERVATION_DEPOSIT_PERCENT}% (The Reservation Fee)`);
       return;
     }
     setSaving(true);
@@ -235,7 +243,7 @@ export default function CommissionManagement() {
                  {editBooking ? (
                    <div className="flex items-baseline gap-1">
                      <input 
-                       type="number" step="0.1" min="0" max="20"
+                       type="number" step="0.1" min="0" max="30"
                        value={bookingForm.platform}
                        onChange={(e) => {
                          const v = Number(e.target.value);
@@ -255,7 +263,7 @@ export default function CommissionManagement() {
                  {editBooking ? (
                    <div className="flex items-baseline gap-1">
                      <input 
-                       type="number" step="0.1" min="0" max="20"
+                       type="number" step="0.1" min="0" max="30"
                        value={bookingForm.salon}
                        onChange={(e) => {
                          const v = Number(e.target.value);
@@ -272,15 +280,15 @@ export default function CommissionManagement() {
                </div>
                {!editBooking && (
                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-zinc-500 font-medium col-span-2">
-                   <span>Total Reservation: <span className="font-bold text-zinc-900">20%</span></span>
+                   <span>Total Reservation: <span className="font-bold text-zinc-900">{RESERVATION_DEPOSIT_PERCENT}%</span></span>
                  </div>
                )}
               </div>
-              {editBooking && (bookingForm.platform + bookingForm.salon !== 20) && (
-                <p className="text-xs font-bold text-rose-500 mt-3">⚠ Total must equal 20% (Currently {bookingForm.platform + bookingForm.salon}%)</p>
+              {editBooking && (bookingForm.platform + bookingForm.salon !== RESERVATION_DEPOSIT_PERCENT) && (
+                <p className="text-xs font-bold text-rose-500 mt-3">⚠ Total must equal {RESERVATION_DEPOSIT_PERCENT}% (Currently {bookingForm.platform + bookingForm.salon}%)</p>
               )}
-              {editBooking && (bookingForm.platform + bookingForm.salon === 20) && (
-                <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Validated: Total is 20%</p>
+              {editBooking && (bookingForm.platform + bookingForm.salon === RESERVATION_DEPOSIT_PERCENT) && (
+                <p className="text-xs font-bold text-emerald-600 mt-3 flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Validated: Total is {RESERVATION_DEPOSIT_PERCENT}%</p>
               )}
              <div className="mt-4 text-xs font-semibold text-zinc-500 flex items-center justify-between">
                 <span>Last updated: {bookingConfig?.created_at ? new Date(bookingConfig.created_at).toLocaleDateString() : "Pending"}</span>

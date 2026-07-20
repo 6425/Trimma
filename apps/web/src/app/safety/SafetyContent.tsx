@@ -138,7 +138,7 @@ const PAYMENT_STEPS = [
   {
     step: 1,
     title: "Book & Reserve",
-    description: "Customer pays a 20% reservation fee to secure the appointment slot.",
+    description: "Customer pays a 30% reservation fee to secure the appointment slot.",
   },
   {
     step: 2,

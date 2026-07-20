@@ -48,7 +48,7 @@ export default function FinanceDashboard() {
 
   const [globalRates, setGlobalRates] = useState({ 
     platform: 10, 
-    salon: 10, 
+    salon: 20, 
     agent: 20 
   });
 

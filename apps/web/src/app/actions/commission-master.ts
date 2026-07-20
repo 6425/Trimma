@@ -1,5 +1,6 @@
 "use server";
 
+import { RESERVATION_DEPOSIT_PERCENT } from "@/lib/booking-pricing";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
 export type BookingCommissionInput = {
@@ -25,8 +26,11 @@ export type CommissionRuleInput = {
 };
 
 export async function saveBookingCommissionMaster(input: BookingCommissionInput) {
-  if (input.platform + input.salon !== 20) {
-    return { success: false as const, error: "Platform + Salon must equal 20%." };
+  if (input.platform + input.salon !== RESERVATION_DEPOSIT_PERCENT) {
+    return {
+      success: false as const,
+      error: `Platform + Salon must equal ${RESERVATION_DEPOSIT_PERCENT}%.`,
+    };
   }
 
   const result = await withAdminDb(async (supabase) => {

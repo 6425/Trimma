@@ -358,8 +358,8 @@ function ListingMockup() {
 
 function CommissionMockup() {
   const amount = 2000;
-  const resFee = amount * 0.2;
-  const salon = amount * 0.1;
+  const resFee = amount * 0.3;
+  const salon = amount * 0.2;
   const platformNet = amount * 0.08;
   const agent = amount * 0.02;
 
@@ -370,8 +370,8 @@ function CommissionMockup() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
         {[
-          { label: "Reservation (20%)", value: resFee, color: "text-zinc-800" },
-          { label: "Salon (10%)", value: salon, color: "text-teal-700" },
+          { label: "Reservation (30%)", value: resFee, color: "text-zinc-800" },
+          { label: "Salon (20%)", value: salon, color: "text-teal-700" },
           { label: "Platform net (8%)", value: platformNet, color: "text-zinc-900" },
           { label: "Agent (2%)", value: agent, color: "text-brand" },
         ].map((row) => (
@@ -384,8 +384,8 @@ function CommissionMockup() {
         ))}
       </div>
       <p className="text-[10px] text-zinc-500 leading-relaxed">
-        The customer pays a 20% reservation fee online. Half goes to your salon upfront; the
-        platform share may include a referring agent commission when applicable.
+        The customer pays a 30% reservation fee online. Two-thirds (20% of service) goes to your
+        salon upfront; the platform 10% share may include a referring agent commission when applicable.
       </p>
     </div>
   );
@@ -1004,7 +1004,7 @@ export function SalonOwnerHelpGuide() {
               Reservation commission model
             </h2>
             <p className="text-sm text-zinc-600 mb-6 leading-relaxed">
-              When a customer books {SALON.service} online, Trimma collects a 20% reservation fee.
+              When a customer books {SALON.service} online, Trimma collects a 30% reservation fee.
               The table below uses a LKR 2,000 example (multiple services or premium cuts).
             </p>
             <CommissionMockup />
@@ -1019,8 +1019,8 @@ export function SalonOwnerHelpGuide() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-zinc-700">
                   {[
-                    ["Customer reservation fee", "20%", "400"],
-                    ["Salon upfront share", "10%", "200"],
+                    ["Customer reservation fee", "30%", "600"],
+                    ["Salon upfront share", "20%", "400"],
                     ["Platform (net, after agent)", "8%", "160"],
                     ["Referring agent (if any)", "2%", "40"],
                   ].map(([party, pct, amt]) => (

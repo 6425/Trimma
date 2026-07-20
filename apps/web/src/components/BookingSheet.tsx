@@ -67,7 +67,7 @@ export function BookingSheet({
   const [confirmedBookingId, setConfirmedBookingId] = useState("");
 
   // Dynamic Commission Rates
-  const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, agent: 20 });
+  const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 20, agent: 20 });
 
   // Fetch global commission rates
   useEffect(() => {
@@ -718,7 +718,7 @@ export function BookingSheet({
                  </div>
               </div>
 
-              {/* Deposit Info (Locked 20%) */}
+              {/* Deposit Info (locked reservation %) */}
               <div className="space-y-3">
                  <h4 className="font-bold text-zinc-900 text-sm">Payment Model</h4>
                  

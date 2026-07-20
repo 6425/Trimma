@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.agent_tiers (
 -- 3. Insert Default Initial Values
 INSERT INTO public.commission_master (commission_type, platform_percentage, salon_percentage, agent_percentage, payhere_percentage)
 VALUES 
-    ('booking', 10.0, 10.0, 0.0, 3.0),
+    ('booking', 10.0, 20.0, 0.0, 3.0),
     ('subscription', 80.0, 0.0, 20.0, 0.0);
 
 INSERT INTO public.agent_tiers (tier_name, minimum_sales_volume, subscription_percentage, booking_percentage)

@@ -1,4 +1,10 @@
-export const RESERVATION_DEPOSIT_PERCENT = 20;
+/** Customer reservation deposit as % of service total (platform + salon shares). */
+export const RESERVATION_DEPOSIT_PERCENT = 30;
+/** Default platform share of service total (subset of the reservation deposit). */
+export const DEFAULT_BOOKING_PLATFORM_PERCENT = 10;
+/** Default salon share of service total (subset of the reservation deposit). */
+export const DEFAULT_BOOKING_SALON_PERCENT = 20;
+/** Agent cut is % of the platform share only — not of the full deposit. */
 export const DEFAULT_BOOKING_AGENT_PERCENT = 20;
 
 /** commission_master may seed booking agent % as 0 — treat that as "use default". */

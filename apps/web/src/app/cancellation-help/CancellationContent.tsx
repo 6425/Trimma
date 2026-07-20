@@ -31,9 +31,9 @@ const TRUST_BADGES = [
 const RESERVATION_FEE_CARDS = [
   {
     icon: Wallet,
-    title: "20% Reservation Fee",
+    title: "30% Reservation Fee",
     description:
-      "When an appointment is booked through Trimma, only a reservation fee equivalent to 20% of the total booking value is collected.",
+      "When an appointment is booked through Trimma, only a reservation fee equivalent to 30% of the total booking value is collected.",
     iconBg: "bg-amber-50",
     iconColor: "text-amber-600",
   },
@@ -103,7 +103,7 @@ const SALON_RESPONSIBILITIES = [
 const FAQS = [
   {
     q: "Does Trimma collect the full appointment amount?",
-    a: "No. Trimma only collects a reservation fee equal to 20% of the total booking value.",
+    a: "No. Trimma only collects a reservation fee equal to 30% of the total booking value.",
   },
   {
     q: "Who can cancel an appointment?",

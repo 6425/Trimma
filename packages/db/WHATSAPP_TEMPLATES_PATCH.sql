@@ -26,7 +26,7 @@ SET
     '⏰ *Time:* {booking_time}' || E'\n' ||
     '💇 *Service:* {service_name}' || E'\n' ||
     '💰 *Total Price:* LKR {total_price}' || E'\n' ||
-    '✅ *20% Deposit Paid:* LKR {deposit_paid}' || E'\n' ||
+    '✅ *30% Deposit Paid:* LKR {deposit_paid}' || E'\n' ||
     '💵 *Balance to pay at salon:* LKR {balance_to_pay}' || E'\n\n' ||
     '📍 *Salon Location:* {salon_address}' || E'\n' ||
     '🗺️ *Navigate on Google Maps:* {maps_link}' || E'\n\n' ||
@@ -50,7 +50,7 @@ SET
     '📅 *Original Date:* {booking_date}' || E'\n' ||
     '⏰ *Original Time:* {booking_time}' || E'\n' ||
     '💇 *Service:* {service_name}' || E'\n\n' ||
-    'Your 20% online reservation deposit is non-refundable. For any questions about your booking, please contact the salon directly.' || E'\n\n' ||
+    'Your 30% online reservation deposit is non-refundable. For any questions about your booking, please contact the salon directly.' || E'\n\n' ||
     'Trimma Notification Services ✂️'
   ),
   whatsapp_template_review = COALESCE(

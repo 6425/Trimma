@@ -4,7 +4,7 @@
 -- Run in Supabase SQL Editor (safe to re-run).
 --
 -- Adds:
---   • Trigger #1: Reservation payment received (20% fee, slot locked)
+--   • Trigger #1: Reservation payment received (30% fee, slot locked)
 --   • Sinhala (_si) and Tamil (_ta) email body columns for all 14 triggers
 --   • Matching WhatsApp reservation-paid + welcome + agent-lead templates
 -- ==============================================================================
