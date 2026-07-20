@@ -78,14 +78,33 @@ function formatMetaBookingTime(raw: string): string {
 }
 
 /**
- * confirmmessage (Meta):
- * Hello {{1}}, … {{2}} … {{3}} on {{4}} at {{5}} is confirmed
- *
- * appointment_rescheduled (Meta) — same {{1}}–{{5}} order, different fixed body text:
- * Hello {{1}}, your appointment at {{2}} has been rescheduled. Service {{3}}. New date {{4}}, time {{5}}.
- *
- * appointment_cancelled (Meta) — same {{1}}–{{5}} order:
- * Hello {{1}}, your appointment at {{2}} was cancelled. Service {{3}}. Original date {{4}}, time {{5}}.
+ * confirmmessage (Meta) — 12 body params:
+ * Hi {{1}}, Your appointment at {{2}} is confirmed.
+ * Reference: {{3}} · Date: {{4}} · Time: {{5}} · Service: {{6}}
+ * Total: LKR {{7}} · Deposit paid: LKR {{8}} · Balance at salon: LKR {{9}}
+ * Salon address: {{10}} · Directions: {{11}} · View your bookings: {{12}}
+ */
+function buildCheckoutConfirmMessageParameters(variables: Record<string, string>): string[] {
+  const v = (key: string) => String(variables[key] ?? "").trim() || "—";
+  return [
+    v("customer_name"),
+    v("salon_name"),
+    v("booking_no"),
+    formatMetaBookingDate(v("booking_date")),
+    formatMetaBookingTime(v("booking_time")),
+    v("service_name"),
+    v("total_price"),
+    v("deposit_paid"),
+    v("balance_to_pay"),
+    v("salon_address"),
+    v("maps_link"),
+    v("bookings_link"),
+  ];
+}
+
+/**
+ * Shared {{1}}–{{5}} order for reschedule / cancel / owner Meta templates:
+ * {{1}} name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.
  */
 function buildConfirmMessageParameters(variables: Record<string, string>): string[] {
   const v = (key: string) => String(variables[key] ?? "").trim() || "—";
@@ -131,8 +150,8 @@ export function buildMetaBodyParameters(
   const v = (key: string) => String(variables[key] ?? "").trim() || "—";
   const normalizedTemplate = (templateName || "").trim().toLowerCase();
 
-  if (trigger === "confirmed" && normalizedTemplate === TRIMMA_META_TEMPLATE_CONFIRMED) {
-    return buildConfirmMessageParameters(variables);
+  if (trigger === "confirmed") {
+    return buildCheckoutConfirmMessageParameters(variables);
   }
 
   if (trigger === "rescheduled" || trigger === "cancelled") {
