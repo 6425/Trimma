@@ -14,14 +14,14 @@ export const SECTIONS = [
     id: "overview",
     title: "1. Overview",
     paragraphs: [
-      "Trimma uses a 20% online reservation deposit model. Customers pay 20% online to secure their slot; the remaining 80% is paid at the salon after the service.",
+      "Trimma uses a 30% online reservation deposit model. Customers pay 30% online to secure their slot; the remaining 70% is paid at the salon after the service.",
       "After successful payment, the booking is set to confirmed with payment status reservation_paid. The customer is notified immediately. There is no separate wait-for-salon-to-confirm step for new online bookings.",
     ],
     table: {
       headers: ["Payment", "When", "Amount"],
       rows: [
-        ["Reservation deposit", "Online at checkout", "20% of service total"],
-        ["Balance", "At the salon after service", "80% of service total"],
+        ["Reservation deposit", "Online at checkout", "30% of service total"],
+        ["Balance", "At the salon after service", "70% of service total"],
       ],
     },
   },
@@ -68,7 +68,7 @@ export const SECTIONS = [
         ["2", "Choose stylist", "Pick a staff member"],
         ["3", "Date & time", "Pick date and available time slot (live availability check)"],
         ["4", "Your details", "Full name, email, and phone (phone required for WhatsApp)"],
-        ["5", "Booking summary", "Review total, 20% deposit, and 80% balance"],
+        ["5", "Booking summary", "Review total, 30% deposit, and 70% balance"],
       ],
     },
     bullets: ["No customer messages are sent during these steps."],
@@ -77,7 +77,7 @@ export const SECTIONS = [
     id: "checkout",
     title: "4. Phase C — Checkout & Payment",
     paragraphs: [
-      "Checkout URL: /checkout/booking. Payment is processed via Stripe (card). Only the 20% reservation deposit is charged online. Phone number is mandatory.",
+      "Checkout URL: /checkout/booking. Payment is processed via Stripe (card). Only the 30% reservation deposit is charged online. Phone number is mandatory.",
     ],
     bullets: [
       "Booking is created (initially pending / unpaid).",
@@ -110,7 +110,7 @@ export const SECTIONS = [
               "Email",
               "Booking Confirmed (trigger: confirmed)",
               "Right after payment",
-              "Full confirmation: reference, date, time, service, total, 20% paid, 80% balance, salon address, maps link, My Bookings link",
+              "Full confirmation: reference, date, time, service, total, 30% paid, 70% balance, salon address, maps link, My Bookings link",
             ],
           ],
         },
@@ -154,7 +154,7 @@ export const SECTIONS = [
       headers: ["Event", "WhatsApp trigger", "Email trigger", "Meta note"],
       rows: [
         ["Salon reschedules", "Booking Rescheduled", "Booking Rescheduled", "WhatsApp needs Meta template for reliable delivery"],
-        ["Salon cancels", "Booking Cancelled", "Booking Cancelled", "20% deposit non-refundable; contact salon"],
+        ["Salon cancels", "Booking Cancelled", "Booking Cancelled", "30% deposit non-refundable; contact salon"],
         ["Salon marks no-show", "No-show alert", "Per admin config", "WhatsApp needs Meta template"],
         ["Salon marks completed", "Review request", "Review request", "Includes link to leave a Trimma review"],
       ],
@@ -184,9 +184,9 @@ export const SECTIONS = [
     id: "timeline",
     title: "9. Customer Timeline (Simple View)",
     bullets: [
-      "Day 0 — Books online, pays 20%, receives WhatsApp (confirmmessage) + email confirmation.",
+      "Day 0 — Books online, pays 30%, receives WhatsApp (confirmmessage) + email confirmation.",
       "Before appointment — Optional reschedule message if salon changes date/time.",
-      "Appointment day — Pays remaining 80% at salon.",
+      "Appointment day — Pays remaining 70% at salon.",
       "After visit — Review invite when salon marks Completed; or cancellation / no-show message if applicable.",
     ],
   },
@@ -216,7 +216,7 @@ export const SECTIONS = [
     id: "summary",
     title: "12. Summary",
     paragraphs: [
-      "The customer finds a salon, books a slot, pays 20% online, and immediately receives a WhatsApp (confirmmessage) and email confirmation. They attend the salon, pay the balance there, and may later receive reschedule, cancellation, or review messages depending on how the appointment ends.",
+      "The customer finds a salon, books a slot, pays 30% online, and immediately receives a WhatsApp (confirmmessage) and email confirmation. They attend the salon, pay the balance there, and may later receive reschedule, cancellation, or review messages depending on how the appointment ends.",
     ],
   },
 ];

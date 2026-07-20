@@ -5,6 +5,7 @@ import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
+import { resolveRoundedReservationAmounts } from "@/lib/booking-pricing";
 import { TELEGRAM_TEMPLATE_DEFAULTS } from "@/lib/telegram-templates";
 import { resolveEffectiveTelegramCredentials } from "@/lib/telegram-env";
 
@@ -25,6 +26,7 @@ type BookingTelegramRow = {
   booking_date?: string | null;
   booking_time?: string | null;
   amount?: string | number | null;
+  total_reservation_fee?: string | number | null;
   payment_status?: string | null;
   services?: { name?: string | null } | null;
   salons?: BookingSalonJoin | null;
@@ -671,8 +673,10 @@ export async function sendTelegramReservationPaidNotification(
     const serviceName =
       overrides?.serviceName || (await resolveServiceName(booking.id, booking.services?.name));
     const totalAmount = parseFloat(String(booking.amount ?? 0));
-    const depositAmount = Math.round(totalAmount * 0.2);
-    const balanceAmount = Math.round(totalAmount * 0.8);
+    const { depositAmount, balanceAmount } = resolveRoundedReservationAmounts(
+      totalAmount,
+      booking.total_reservation_fee
+    );
 
     const customerMessage = parseTemplate(templateReservationPaid || D.reservationPaid, {
       customer_name: customerName,
@@ -756,8 +760,10 @@ export async function sendTelegramNotification(
     const serviceName =
       overrides?.serviceName || (await resolveServiceName(booking.id, booking.services?.name));
     const totalAmount = parseFloat(String(booking.amount ?? 0));
-    const depositAmount = Math.round(totalAmount * 0.2);
-    const balanceAmount = Math.round(totalAmount * 0.8);
+    const { depositAmount, balanceAmount } = resolveRoundedReservationAmounts(
+      totalAmount,
+      booking.total_reservation_fee
+    );
 
     let mapsLink = "";
     if (salonLocation && salonLocation.includes(",")) {

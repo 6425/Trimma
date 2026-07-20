@@ -11,6 +11,11 @@ import { sendWhatsAppNotification, sendWhatsAppCancellationNotification, sendWha
 import { sendBookingCancelledEmail, sendBookingRescheduledEmail } from "../../actions/email-settings";
 import { fetchAdminBookings } from "@/app/actions/admin-list-data";
 import { updateAdminBookingStatus, rescheduleAdminBooking } from "@/app/actions/admin-operations";
+import {
+  DEFAULT_BOOKING_PLATFORM_PERCENT,
+  DEFAULT_BOOKING_SALON_PERCENT,
+  RESERVATION_DEPOSIT_PERCENT,
+} from "@/lib/booking-pricing";
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState<any[]>([]);
@@ -136,7 +141,7 @@ export default function AdminBookings() {
   const totalGtv = bookings.reduce((sum, b) => sum + parseFloat(b.amount || 0), 0);
   const platformRevenue = bookings
     .filter(b => b.reservation_fee_paid)
-    .reduce((sum, b) => sum + parseFloat(b.amount || 0) * 0.10, 0); // 10% Platform share of the 23% Reservation Fee
+    .reduce((sum, b) => sum + parseFloat(b.amount || 0) * (DEFAULT_BOOKING_PLATFORM_PERCENT / 100), 0); // Platform share of reservation fee
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR", minimumFractionDigits: 0 }).format(price);
@@ -310,7 +315,7 @@ export default function AdminBookings() {
                     <td className="px-8 py-6">
                       <div className="text-sm font-black text-zinc-900">{formatPrice(b.amount)}</div>
                       <div className="text-[10px] text-zinc-500 font-bold mt-0.5">
-                        Fee: {formatPrice(b.amount * 0.23)} (10% Plat / 10% Salon / 3% PayHere)
+                        Fee: {formatPrice(b.amount * (RESERVATION_DEPOSIT_PERCENT / 100))} ({DEFAULT_BOOKING_PLATFORM_PERCENT}% Plat / {DEFAULT_BOOKING_SALON_PERCENT}% Salon)
                       </div>
                     </td>
                     
@@ -410,7 +415,7 @@ export default function AdminBookings() {
               %
             </div>
             <p className="text-sm font-bold text-zinc-900 mb-2">Commissions Contract</p>
-            <p className="text-xs text-zinc-500 leading-relaxed">The 10% platform share is automatically retained upon online reservation fee payment. Salon splits are settled natively offline.</p>
+            <p className="text-xs text-zinc-500 leading-relaxed">The {DEFAULT_BOOKING_PLATFORM_PERCENT}% platform share is automatically retained upon online reservation fee payment ({RESERVATION_DEPOSIT_PERCENT}% total: {DEFAULT_BOOKING_PLATFORM_PERCENT}% platform / {DEFAULT_BOOKING_SALON_PERCENT}% salon). Salon splits are settled natively offline.</p>
          </div>
       </div>
 

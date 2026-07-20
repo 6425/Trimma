@@ -21,7 +21,7 @@ export const GUIDE_META = {
     coverSubtitle: "Find. Book. Glow. — Sri Lanka's Premium Grooming Marketplace",
     coverTagline: "A complete step-by-step guide for new and potential customers",
     footer: "© Trimma — The Salon Engine · trimma.io · support@trimma.io",
-    depositNote: "20% reservation deposit online · 80% balance at the salon",
+    depositNote: "30% reservation deposit online · 70% balance at the salon",
     stepsLabel: "Steps",
     tipLabel: "Pro tip",
   },
@@ -34,7 +34,7 @@ export const GUIDE_META = {
     coverSubtitle: "සොයන්න. වෙන්කරන්න. දිදුලන්න. — ශ්‍රී ලංකාවේ Premium Grooming Marketplace",
     coverTagline: "නව සහ අනාගත පාරිභෝගිකයින් සඳහා සම්පූර්ණ පියවරෙන් පියවර මාර්ගෝපදේශය",
     footer: "© Trimma — The Salon Engine · trimma.io · support@trimma.io",
-    depositNote: "අන්තර්ජාලයෙන් 20% තැන්පතුව · සැලුනේ 80% ශේෂය",
+    depositNote: "අන්තර්ජාලයෙන් 30% තැන්පතුව · සැලුනේ 70% ශේෂය",
     stepsLabel: "පියවර",
     tipLabel: "උපදෙස්",
   },
@@ -47,7 +47,7 @@ export const GUIDE_META = {
     coverSubtitle: "கண்டறியுங்கள். முன்பதிவு செய்யுங்கள். பிரகாசியுங்கள். — இலங்கையின் Premium Grooming Marketplace",
     coverTagline: "புதிய மற்றும் வருங்கால வாடிக்கையாளர்களுக்கான முழுமையான படிப்படியான வழிகாட்டி",
     footer: "© Trimma — The Salon Engine · trimma.io · support@trimma.io",
-    depositNote: "ஆன்லைனில் 20% முன்பணம் · சலூனில் 80% மீதம்",
+    depositNote: "ஆன்லைனில் 30% முன்பணம் · சலூனில் 70% மீதம்",
     stepsLabel: "படிகள்",
     tipLabel: "உதவிக்குறிப்பு",
   },
@@ -96,12 +96,12 @@ export const GUIDE_STEPS = {
     },
     {
       title: "8. Booking — Summary & Policies (Step 5)",
-      body: "Review services, stylist, date/time, and the 20% deposit vs 80% salon balance. Acknowledge the non-refundable deposit and rescheduling policy, then tap Continue to Payment.",
+      body: "Review services, stylist, date/time, and the 30% deposit vs 70% salon balance. Acknowledge the non-refundable deposit and rescheduling policy, then tap Continue to Payment.",
       visual: "step-summary",
     },
     {
-      title: "9. Checkout — Pay 20% Deposit",
-      body: "On the secure Stripe checkout page, pay the reservation deposit (e.g. LKR 140 on a LKR 700 service). Your booking reference (TRM-…) is assigned after successful payment.",
+      title: "9. Checkout — Pay 30% Deposit",
+      body: "On the secure Stripe checkout page, pay the reservation deposit (e.g. LKR 210 on a LKR 700 service). Your booking reference (TRM-…) is assigned after successful payment.",
       visual: "checkout",
     },
     {
@@ -112,7 +112,7 @@ export const GUIDE_STEPS = {
     },
     {
       title: "11. Visit the Salon & Pay Balance",
-      body: "Attend your appointment and pay the remaining 80% directly at the salon after your service. Keep your booking reference for check-in.",
+      body: "Attend your appointment and pay the remaining 70% directly at the salon after your service. Keep your booking reference for check-in.",
       visual: "visit",
     },
     {
@@ -167,12 +167,12 @@ export const GUIDE_STEPS = {
     },
     {
       title: "8. වෙන්කරණය — සාරාංශය සහ ප්‍රතිපත්ති (පියවර 5)",
-      body: "සේවා, stylist, දිනය/වේලාව සහ 20% තැන්පතුව vs 80% සැලුන් ශේෂය සමාලෝචනය කරන්න. Non-refundable deposit සහ rescheduling ප්‍රතිපත්ති පිළිගෙන Continue to Payment ඔබන්න.",
+      body: "සේවා, stylist, දිනය/වේලාව සහ 30% තැන්පතුව vs 70% සැලුන් ශේෂය සමාලෝචනය කරන්න. Non-refundable deposit සහ rescheduling ප්‍රතිපත්ති පිළිගෙන Continue to Payment ඔබන්න.",
       visual: "step-summary",
     },
     {
-      title: "9. Checkout — 20% තැන්පතුව ගෙවන්න",
-      body: "ආරක්ෂිත Stripe checkout පිටුවේ reservation deposit ගෙවන්න (උදා: LKR 700 සේවාවක LKR 140). සාර්ථක ගෙවීමෙන් පසු booking reference (TRM-…) ලැබේ.",
+      title: "9. Checkout — 30% තැන්පතුව ගෙවන්න",
+      body: "ආරක්ෂිත Stripe checkout පිටුවේ reservation deposit ගෙවන්න (උදා: LKR 700 සේවාවක LKR 210). සාර්ථක ගෙවීමෙන් පසු booking reference (TRM-…) ලැබේ.",
       visual: "checkout",
     },
     {
@@ -183,7 +183,7 @@ export const GUIDE_STEPS = {
     },
     {
       title: "11. සැලුනට පැමිණ ශේෂය ගෙවන්න",
-      body: "ඔබගේ appointment එකට පැමිණ සේවාවෙන් පසු සැලුනේ 80% ශේෂය සෘජුවම ගෙවන්න. Check-in සඳහා booking reference තබා ගන්න.",
+      body: "ඔබගේ appointment එකට පැමිණ සේවාවෙන් පසු සැලුනේ 70% ශේෂය සෘජුවම ගෙවන්න. Check-in සඳහා booking reference තබා ගන්න.",
       visual: "visit",
     },
     {
@@ -238,12 +238,12 @@ export const GUIDE_STEPS = {
     },
     {
       title: "8. முன்பதிவு — சுருக்கம் & கொள்கைகள் (படி 5)",
-      body: "சேவைகள், stylist, தேதி/நேரம் மற்றும் 20% வைப்புத்தொகை vs 80% சலூன் மீதியை மதிப்பாய்வு செய்யுங்கள். Non-refundable deposit மற்றும் rescheduling கொள்கைகளை ஒப்புக்கொண்டு Continue to Payment அழுத்துங்கள்.",
+      body: "சேவைகள், stylist, தேதி/நேரம் மற்றும் 30% வைப்புத்தொகை vs 70% சலூன் மீதியை மதிப்பாய்வு செய்யுங்கள். Non-refundable deposit மற்றும் rescheduling கொள்கைகளை ஒப்புக்கொண்டு Continue to Payment அழுத்துங்கள்.",
       visual: "step-summary",
     },
     {
-      title: "9. Checkout — 20% வைப்புத்தொகை செலுத்துங்கள்",
-      body: "பாதுகாப்பான Stripe checkout பக்கத்தில் reservation deposit செலுத்துங்கள் (எ.கா. LKR 700 சேவைக்கு LKR 140). வெற்றிகரமான கட்டணத்திற்குப் பிறகு booking reference (TRM-…) கிடைக்கும்.",
+      title: "9. Checkout — 30% வைப்புத்தொகை செலுத்துங்கள்",
+      body: "பாதுகாப்பான Stripe checkout பக்கத்தில் reservation deposit செலுத்துங்கள் (எ.கா. LKR 700 சேவைக்கு LKR 210). வெற்றிகரமான கட்டணத்திற்குப் பிறகு booking reference (TRM-…) கிடைக்கும்.",
       visual: "checkout",
     },
     {
@@ -254,7 +254,7 @@ export const GUIDE_STEPS = {
     },
     {
       title: "11. சலூனுக்குச் சென்று மீதியைச் செலுத்துங்கள்",
-      body: "உங்கள் appointment-க்கு வந்து சேவைக்குப் பிறகு சலூனில் நேரடியாக 80% மீதியைச் செலுத்துங்கள். Check-in-க்கு booking reference வைத்திருங்கள்.",
+      body: "உங்கள் appointment-க்கு வந்து சேவைக்குப் பிறகு சலூனில் நேரடியாக 70% மீதியைச் செலுத்துங்கள். Check-in-க்கு booking reference வைத்திருங்கள்.",
       visual: "visit",
     },
     {
@@ -324,30 +324,30 @@ export function getVisualHtml(visualId) {
       <div class="mock sheet">
         <div class="sheet-head">Step 5 — Summary</div>
         <div class="line"><span>Classic Haircut</span><span>LKR 700</span></div>
-        <div class="line gold-box"><span>Deposit (20%)</span><b>LKR 140</b></div>
-        <div class="line"><span>Balance at salon (80%)</span><span>LKR 560</span></div>
+        <div class="line gold-box"><span>Deposit (30%)</span><b>LKR 210</b></div>
+        <div class="line"><span>Balance at salon (70%)</span><span>LKR 490</span></div>
         <div class="check">☑ Non-refundable deposit acknowledged</div>
       </div>`,
     checkout: `
       <div class="mock light">
         <div class="mock-bar">Secure Stripe Checkout</div>
         <div class="line"><span>Classic Haircut · Tue 13 · 11:00</span></div>
-        <div class="line gold-box"><span>Pay now (20%)</span><b>LKR 140</b></div>
-        <div class="pay-btn">💳 Pay LKR 140</div>
+        <div class="line gold-box"><span>Pay now (30%)</span><b>LKR 210</b></div>
+        <div class="pay-btn">💳 Pay LKR 210</div>
         <div class="ref">Ref: TRM-482916</div>
       </div>`,
     whatsapp: `
       <div class="mock wa">
         <div class="wa-head">Trimma Alerts</div>
-        <div class="bubble">Hi Nimal! 🎉 Your 20% payment for <b>Sampath Barber Saloon</b> is confirmed.<br/>📋 TRM-482916 · 📅 Tue 11:00 · ✅ LKR 140 paid · 💵 LKR 560 at salon</div>
+        <div class="bubble">Hi Nimal! 🎉 Your 30% payment for <b>Sampath Barber Saloon</b> is confirmed.<br/>📋 TRM-482916 · 📅 Tue 11:00 · ✅ LKR 210 paid · 💵 LKR 490 at salon</div>
       </div>`,
     visit: `
       <div class="mock dark center">
         <div class="big">✓</div>
         <b>Visit Complete</b>
         <div class="line"><span>Total</span><span>LKR 700</span></div>
-        <div class="line"><span>Deposit paid</span><span>- LKR 140</span></div>
-        <div class="line gold-box"><span>Paid at salon</span><b>LKR 560</b></div>
+        <div class="line"><span>Deposit paid</span><span>- LKR 210</span></div>
+        <div class="line gold-box"><span>Paid at salon</span><b>LKR 490</b></div>
       </div>`,
     account: `
       <div class="mock light">

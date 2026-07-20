@@ -328,7 +328,7 @@ const AGENT_FAQS = [
   },
   {
     q: "How do I earn booking commissions?",
-    a: "You earn a percentage of reservation fees from completed or confirmed bookings at salons you referred. Open Commissions to see weekly totals, per-booking cuts, and your all-time booking volume.",
+    a: "Customers pay a 30% reservation deposit online (10% Trimma platform + 20% salon). Your booking commission is typically 20% of the platform share (not of the full deposit). Open Commissions to see weekly totals, per-booking cuts, and your all-time booking volume.",
   },
   {
     q: "How do subscription conversion rewards work?",

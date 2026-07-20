@@ -122,19 +122,19 @@ export default function TermsPage() {
 
           <Section index={5} title="Payments, Fees &amp; Reservation Deposits">
             <p className="text-gray-600 leading-7">
-              Certain bookings may require a reservation deposit paid at the time
-              of booking, with the remaining balance payable at the salon.
-              Payments are handled by our third-party payment processors. Trimma
-              may charge platform or service fees, which will be shown before you
-              confirm.
+              Online bookings require a <strong className="text-zinc-800 font-semibold">30% reservation deposit</strong> paid
+              at checkout (of the service total), with the remaining <strong className="text-zinc-800 font-semibold">70%</strong> payable
+              at the salon after your service. Of that 30% deposit, Trimma retains a <strong className="text-zinc-800 font-semibold">10%</strong> platform
+              share and the salon receives a <strong className="text-zinc-800 font-semibold">20%</strong> upfront share (both as percentages of the
+              full service price). Payments are handled by our third-party payment processors. Exact amounts are shown before you confirm.
             </p>
           </Section>
 
           <Section index={6} title="Cancellations, Reschedules &amp; Refunds">
             <ul className="space-y-3">
               <Bullet>Cancellation and reschedule windows are set by each salon.</Bullet>
-              <Bullet>Reservation deposits may be non-refundable depending on the salon&apos;s policy.</Bullet>
-              <Bullet>Refund eligibility is determined by the salon and applicable law.</Bullet>
+              <Bullet>The 30% online reservation deposit is non-refundable under Trimma&apos;s standard booking policy.</Bullet>
+              <Bullet>No refunds for reservation deposits are processed through Trimma; contact the salon for appointment changes.</Bullet>
               <Bullet>Reschedule requests are subject to salon approval and availability.</Bullet>
             </ul>
           </Section>

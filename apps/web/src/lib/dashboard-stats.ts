@@ -1,3 +1,4 @@
+import { calculateBalanceDue } from "@/lib/booking-pricing";
 import {
   computeBookingStaffCommission,
   inferStaffAllocations,
@@ -58,7 +59,7 @@ export function getBookingBalance(booking: {
   const total = Number(booking.amount ?? 0);
   const paid = Number(booking.total_reservation_fee ?? 0);
   if (paid > 0 && total > paid) return total - paid;
-  if (total > 0) return Math.round(total * 0.8);
+  if (total > 0) return Math.round(calculateBalanceDue(total));
   return 0;
 }
 

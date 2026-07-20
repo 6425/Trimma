@@ -5,6 +5,7 @@ import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { preAssignSalonOwnerRole, assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
+import { resolveRoundedReservationAmounts } from "@/lib/booking-pricing";
 import { WHATSAPP_TEMPLATE_DEFAULTS } from "@/lib/whatsapp-templates";
 import {
   isLikelyWhatsAppDisplayPhone,
@@ -68,6 +69,7 @@ type BookingWhatsAppRow = {
   requested_booking_date?: string | null;
   requested_booking_time?: string | null;
   amount?: string | number | null;
+  total_reservation_fee?: string | number | null;
   payment_status?: string | null;
   created_at?: string | null;
   services?: { name?: string | null } | null;
@@ -903,8 +905,10 @@ export async function sendWhatsAppReservationPaidNotification(
       (await resolveServiceName(booking.id, booking.services?.name));
 
     const totalAmount = parseFloat(String(booking.amount ?? 0));
-    const depositAmount = Math.round(totalAmount * 0.2);
-    const balanceAmount = Math.round(totalAmount * 0.8);
+    const { depositAmount, balanceAmount } = resolveRoundedReservationAmounts(
+      totalAmount,
+      booking.total_reservation_fee
+    );
 
     const variables = {
       customer_name: customerName,
@@ -1076,8 +1080,10 @@ export async function sendWhatsAppNotification(
       (await resolveServiceName(booking.id, booking.services?.name));
     
     const totalAmount = parseFloat(String(booking.amount ?? 0));
-    const depositAmount = Math.round(totalAmount * 0.2);
-    const balanceAmount = Math.round(totalAmount * 0.8);
+    const { depositAmount, balanceAmount } = resolveRoundedReservationAmounts(
+      totalAmount,
+      booking.total_reservation_fee
+    );
 
     // 📍 GPS coordinate-based Google Maps Directions Link
     let mapsLink = "";

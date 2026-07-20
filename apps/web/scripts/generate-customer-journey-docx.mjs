@@ -144,7 +144,7 @@ function buildDocument() {
       shading: { type: ShadingType.CLEAR, fill: GOLD },
       children: [
         new TextRun({
-          text: "20% online reservation deposit · 80% balance at salon",
+          text: "30% online reservation deposit · 70% balance at salon",
           bold: true,
           size: 22,
           color: INK,

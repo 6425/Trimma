@@ -17,6 +17,7 @@ import {
   EMAIL_SUBJECT_DEFAULTS,
   type EmailTriggerId,
 } from "@/lib/email-templates";
+import { resolveRoundedReservationAmounts } from "@/lib/booking-pricing";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
 
 const SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
@@ -378,7 +379,7 @@ export async function sendBookingConfirmedEmail(bookingNo: string) {
     const supabase = getSupabaseAdmin();
     const { data: booking } = await supabase
       .from("bookings")
-      .select("customer_email, booking_date, booking_time, amount, salons(name, address, location, slug)")
+      .select("customer_email, booking_date, booking_time, amount, total_reservation_fee, salons(name, address, location, slug)")
       .eq("booking_no", bookingNo)
       .maybeSingle();
 
@@ -391,8 +392,10 @@ export async function sendBookingConfirmedEmail(bookingNo: string) {
     const salonAddress = salon?.address || salon?.location || "See Trimma for details";
     const mapsLink = salon?.slug ? `${APP_BASE_URL}/salons/${salon.slug}` : APP_BASE_URL;
     const totalAmount = parseFloat(String(booking.amount ?? 0));
-    const depositAmount = Math.round(totalAmount * 0.2);
-    const balanceAmount = Math.max(0, totalAmount - depositAmount);
+    const { depositAmount, balanceAmount } = resolveRoundedReservationAmounts(
+      totalAmount,
+      booking.total_reservation_fee
+    );
 
     const { data: customer } = await supabase
       .from("users")

@@ -13,7 +13,13 @@ import {
   resolvePromotionBookingServices,
 } from "@/lib/promotion-booking";
 import { mapSalonPromotionRows } from "@/lib/deals";
-import { calculateReservationFee, getReservationDepositPercentForSalon, resolveBookingAgentPercentage } from "@/lib/booking-pricing";
+import {
+  calculateReservationFee,
+  DEFAULT_BOOKING_PLATFORM_PERCENT,
+  DEFAULT_BOOKING_SALON_PERCENT,
+  getReservationDepositPercentForSalon,
+  resolveBookingAgentPercentage,
+} from "@/lib/booking-pricing";
 import { resolveStripeKeys } from "@/lib/stripe-env";
 import { buildBookingStripePayload, type BookingStripeCustomer } from "@/lib/booking-stripe-session";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
@@ -189,8 +195,8 @@ export async function fetchBookingCheckoutData(
     const staffMember: Record<string, unknown> | null = staffData;
 
     const rates = {
-      platform: ratesData?.platform_percentage || 10,
-      salon: ratesData?.salon_percentage || 10,
+      platform: ratesData?.platform_percentage || DEFAULT_BOOKING_PLATFORM_PERCENT,
+      salon: ratesData?.salon_percentage || DEFAULT_BOOKING_SALON_PERCENT,
       agent: resolveBookingAgentPercentage(ratesData?.agent_percentage),
     };
 

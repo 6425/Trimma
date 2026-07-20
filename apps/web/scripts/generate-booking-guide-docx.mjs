@@ -37,10 +37,10 @@ const VISUAL_CAPTIONS = {
   "step-stylist": "Booking Step 2 — choose stylist or Any Available.",
   "step-datetime": "Booking Step 3 — pick date and open time slot.",
   "step-details": "Booking Step 4 — phone lookup, name, email, and phone.",
-  "step-summary": "Booking Step 5 — summary, 20% deposit, policy checkboxes.",
-  checkout: "Stripe checkout — pay 20% reservation deposit online.",
+  "step-summary": "Booking Step 5 — summary, 30% deposit, policy checkboxes.",
+  checkout: "Stripe checkout — pay 30% reservation deposit online.",
   whatsapp: "WhatsApp confirmation — booking reference and balance due.",
-  visit: "Salon visit — pay remaining 80% balance after service.",
+  visit: "Salon visit — pay remaining 70% balance after service.",
   account: "Sign in with Google — customer dashboard access.",
   reviews: "Leave a review — star rating after your visit time passes.",
 };
