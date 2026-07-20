@@ -120,7 +120,8 @@ export class BookingsService {
     const { data, error } = (await client
       .from('bookings')
       .select('*')
-      .eq('salon_id', salonId)) as {
+      .eq('salon_id', salonId)
+      .order('created_at', { ascending: false })) as {
       data: unknown[];
       error: { message: string } | null;
     };
