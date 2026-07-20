@@ -494,14 +494,10 @@ export default function DashboardBookings() {
     () =>
       [...searchedBookings]
         .filter((b) => matchesBookingStatusTab(b, statusTab))
-        .sort((a, b) => {
-          const dateA = a.booking_date || "";
-          const dateB = b.booking_date || "";
-          if (dateA !== dateB) return dateA.localeCompare(dateB);
-          const timeA = (a.booking_time || "").slice(0, 8);
-          const timeB = (b.booking_time || "").slice(0, 8);
-          return timeA.localeCompare(timeB);
-        }),
+        .sort(
+          (a, b) =>
+            new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        ),
     [searchedBookings, statusTab]
   );
 

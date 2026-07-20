@@ -215,11 +215,10 @@ export async function getCustomerReviewableBookings(accessToken: string): Promis
     const { data: bookings, error } = await admin
       .from("bookings")
       .select(
-        "id, booking_no, salon_id, staff_id, status, booking_date, booking_time, salons(name, slug), salon_staff(name)"
+        "id, booking_no, salon_id, staff_id, status, booking_date, booking_time, created_at, salons(name, slug), salon_staff(name)"
       )
       .ilike("customer_email", email)
-      .order("booking_date", { ascending: false })
-      .order("booking_time", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(100);
 
     if (error || !bookings?.length) return [];

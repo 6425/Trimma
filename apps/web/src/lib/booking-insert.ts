@@ -1,6 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 import { SLOT_UNAVAILABLE_MESSAGE } from "@/lib/booking-availability";
 import { NO_QUALIFIED_STAFF_FOR_SERVICES_MSG } from "@/lib/staff-allocation";
+
+/** Invalidate booking list surfaces after a new booking is written. */
+export function revalidateBookingDashboards() {
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/bookings");
+  revalidatePath("/admin");
+  revalidatePath("/admin/bookings");
+  revalidatePath("/admin/finance");
+  revalidatePath("/customer");
+  revalidatePath("/customer/bookings");
+}
 
 export type BookingRecordInput = {
   booking_no: string;
@@ -57,6 +69,11 @@ export async function insertBookingRecord(
 
   const attempt = await supabase.from("bookings").insert(payload).select().single();
   if (!attempt.error && attempt.data) {
+    try {
+      revalidateBookingDashboards();
+    } catch {
+      // Non-blocking: insert succeeded even if cache revalidation is unavailable.
+    }
     return { data: attempt.data, error: null as null };
   }
 

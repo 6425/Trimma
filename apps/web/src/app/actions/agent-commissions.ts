@@ -113,14 +113,14 @@ export async function getAgentCommissionsData() {
             "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, field_agent_commission_amount, regional_head_commission_amount, agent_split_percent, salons(name)"
           )
           .ilike("field_agent_email", email)
-          .order("booking_date", { ascending: false })
+          .order("created_at", { ascending: false })
       : supabase
           .from("bookings")
           .select(
             "id, salon_id, booking_date, created_at, status, payment_status, reservation_fee_paid, amount, customer_email, agent_email, field_agent_email, platform_commission_amount, agent_commission_amount, agent_commission_percent, field_agent_commission_amount, regional_head_commission_amount, agent_split_percent, salons(name)"
           )
           .ilike("agent_email", email)
-          .order("booking_date", { ascending: false }),
+          .order("created_at", { ascending: false }),
     isFieldAgent
       ? supabase
           .from("commission_ledger")
@@ -210,7 +210,7 @@ export async function getAgentCommissionsData() {
   }
 
   bookings.sort(
-    (a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()
+    (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
   );
 
   const subscriptions: AgentCommissionSubscription[] = (ledgerRes.data || [])

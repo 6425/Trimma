@@ -76,7 +76,7 @@ export async function fetchCustomerDashboardPage() {
         .from("bookings")
         .select("*, salons(name, city)")
         .ilike("customer_email", ctx.email)
-        .order("booking_date", { ascending: true }),
+        .order("created_at", { ascending: false }),
     ]);
 
     if (bookingsRes.error) throw new Error(bookingsRes.error.message);

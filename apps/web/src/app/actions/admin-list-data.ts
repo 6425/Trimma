@@ -27,8 +27,7 @@ export async function fetchAdminBookings() {
     const { data, error } = await supabase
       .from("bookings")
       .select("*, salons ( id, name )")
-      .order("booking_date", { ascending: false })
-      .order("booking_time", { ascending: false });
+      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { bookings: data || [] };
   });
@@ -79,7 +78,7 @@ export async function fetchAdminFinancePage() {
         .select(
           "id, booking_no, booking_date, booking_time, amount, status, payment_status, reservation_fee_paid, customer_email, created_at, platform_commission_amount, salon_upfront_amount, agent_commission_amount, agent_commission_percent, agent_email, salon_id"
         )
-        .order("booking_date", { ascending: false }),
+        .order("created_at", { ascending: false }),
     ]);
     if (rolesRes.error) throw new Error(rolesRes.error.message);
     if (commissionRes.error) throw new Error(commissionRes.error.message);

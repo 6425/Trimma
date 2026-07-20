@@ -127,8 +127,8 @@ export async function loadAgentDashboardFromClient() {
       .order("created_at", { ascending: false }),
     supabase.from("agents").select("id, commission_rate").eq("user_email", email).maybeSingle(),
     isFieldAgent
-      ? supabase.from("bookings").select(bookingSelect).ilike("field_agent_email", email)
-      : supabase.from("bookings").select(bookingSelect).ilike("agent_email", email),
+      ? supabase.from("bookings").select(bookingSelect).ilike("field_agent_email", email).order("created_at", { ascending: false })
+      : supabase.from("bookings").select(bookingSelect).ilike("agent_email", email).order("created_at", { ascending: false }),
     isFieldAgent
       ? supabase.from("commission_ledger").select("*").ilike("field_agent_email", email)
       : supabase.from("commission_ledger").select("*").ilike("agent_email", email),
@@ -584,8 +584,8 @@ export async function fetchAgentCommissionsClient() {
       .eq("active", true),
     supabase.from("salons").select("id, name").eq("assign_to", email),
     isFieldAgent
-      ? supabase.from("bookings").select(bookingSelect).ilike("field_agent_email", email).order("booking_date", { ascending: false })
-      : supabase.from("bookings").select(bookingSelect).ilike("agent_email", email).order("booking_date", { ascending: false }),
+      ? supabase.from("bookings").select(bookingSelect).ilike("field_agent_email", email).order("created_at", { ascending: false })
+      : supabase.from("bookings").select(bookingSelect).ilike("agent_email", email).order("created_at", { ascending: false }),
     isFieldAgent
       ? supabase.from("commission_ledger").select("*").ilike("field_agent_email", email).order("created_at", { ascending: false })
       : supabase.from("commission_ledger").select("*").ilike("agent_email", email).order("created_at", { ascending: false }),
@@ -641,7 +641,7 @@ export async function fetchAgentCommissionsClient() {
   });
 
   bookings.sort(
-    (a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime()
+    (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
   );
 
   const subscriptions = (ledgerRes.data || [])
