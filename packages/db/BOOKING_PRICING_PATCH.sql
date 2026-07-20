@@ -3,9 +3,9 @@
 -- ==============================================================================
 -- Run in Supabase SQL Editor after app deploy (safe to re-run).
 --
--- Customer pays 20% reservation deposit; platform/salon/PayHere split that deposit
--- using commission_master (typically 10% + 10% + 3% of service total = 23% internal
--- allocation inside the 20% deposit — not charged to the customer on top).
+-- Customer pays 30% reservation deposit; platform/salon/PayHere split that deposit
+-- using commission_master (typically 10% + 20% of service total = 30% deposit;
+-- PayHere is an internal allocation inside the deposit — not charged on top).
 --
 -- Prerequisite for deals on salon pages (run first if not applied yet):
 --   packages/db/PROMOTION_PACKAGES_PATCH.sql
@@ -70,7 +70,7 @@ INSERT INTO public.commission_master (
   agent_percentage,
   payhere_percentage
 )
-SELECT 'booking', 10.0, 10.0, 20.0, 3.0
+SELECT 'booking', 10.0, 20.0, 20.0, 3.0
 WHERE NOT EXISTS (
   SELECT 1 FROM public.commission_master WHERE commission_type = 'booking'
 );

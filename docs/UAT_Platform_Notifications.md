@@ -17,9 +17,9 @@ This document outlines the test cases required to validate the 14 automated noti
 ## Section 1: Customer Booking Lifecycle (Reservation Flow)
 
 ### 1. Reservation Payment Received
-- **Scenario:** A customer pays the 20% reservation fee for a booking to lock the slot.
+- **Scenario:** A customer pays the 30% reservation fee for a booking to lock the slot.
 - **Steps:**
-  1. Log in as a customer and select a salon that requires a 20% reservation fee.
+  1. Log in as a customer and select a salon that requires a 30% reservation fee.
   2. Proceed to checkout and complete the payment using a test card.
   3. Verify the booking status changes to "Reserved".
 - **Expected Result:**

@@ -294,7 +294,7 @@ export function getSalonVerificationReadinessIssues(salon: SalonOnboardingSnapsh
 
 export function getOwnerOnboardingBannerMessage(salon: SalonOnboardingSnapshot): string {
   if (salon.is_verified && canCollectVerifiedReservationDeposit(salon)) {
-    return "Your salon is verified. Online reservation deposits (20%) are enabled for customer bookings.";
+    return "Your salon is verified. Online reservation deposits (30%) are enabled for customer bookings.";
   }
 
   if (salon.onboarding_status === "OWNER_ACTIVATED") {

@@ -29,7 +29,7 @@ export const EMAIL_SUBJECT_DEFAULTS = {
 export const EMAIL_BODY_DEFAULTS = {
   reservationPaid: `Hi {customer_name},
 
-Thank you — your 20% reservation payment was successful and your slot at {salon_name} is now locked.
+Thank you — your 30% reservation payment was successful and your slot at {salon_name} is now locked.
 
 Reference: {booking_no}
 Date: {booking_date}
@@ -231,7 +231,7 @@ export const EMAIL_TRIGGER_CATALOG = [
     title: "Reservation Payment Received",
     recipient: "Customer",
     whenFired:
-      "Immediately after the customer pays the 20% reservation fee and the slot is locked. Salon confirmation follows separately.",
+      "Immediately after the customer pays the 30% reservation fee and the slot is locked. Salon confirmation follows separately.",
     toggleKey: "reservationPaidEnabled" as const,
     subjectKey: "subjectReservationPaid" as const,
     bodyKey: "templateReservationPaid" as const,

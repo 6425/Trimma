@@ -3,7 +3,7 @@
 export const EMAIL_BODY_DEFAULTS_SINHALA = {
   reservationPaid: `{customer_name} ආයුබෝවන්,
 
-ඔබගේ 20% වෙන්කිරීම් ගෙවීම සාර්ථකයි — {salon_name} හි ඔබගේ වේලාව දැන් අගුළු දමා ඇත.
+ඔබගේ 30% වෙන්කිරීම් ගෙවීම සාර්ථකයි — {salon_name} හි ඔබගේ වේලාව දැන් අගුළු දමා ඇත.
 
 යොමු අංකය: {booking_no}
 දිනය: {booking_date}
@@ -125,7 +125,7 @@ Billing: {dashboard_link}`,
 export const EMAIL_BODY_DEFAULTS_TAMIL = {
   reservationPaid: `வணக்கம் {customer_name},
 
-உங்கள் 20% reservation கட்டணம் வெற்றிகரமாக செலுத்தப்பட்டது — {salon_name} இல் உங்கள் நேரம் lock செய்யப்பட்டுள்ளது.
+உங்கள் 30% reservation கட்டணம் வெற்றிகரமாக செலுத்தப்பட்டது — {salon_name} இல் உங்கள் நேரம் lock செய்யப்பட்டுள்ளது.
 
 Reference: {booking_no}
 தேதி: {booking_date}

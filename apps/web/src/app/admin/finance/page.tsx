@@ -26,6 +26,10 @@ import { withTimeout } from "@/lib/promise-timeout";
 import {
   calculateEffectivePlatformRate,
   calculatePlatformNetCommission,
+  DEFAULT_BOOKING_AGENT_PERCENT,
+  DEFAULT_BOOKING_PLATFORM_PERCENT,
+  DEFAULT_BOOKING_SALON_PERCENT,
+  RESERVATION_DEPOSIT_PERCENT,
   resolveBookingAgentPercentage,
 } from "@/lib/booking-pricing";
 
@@ -131,7 +135,11 @@ export default function FinanceDashboard() {
   const [offsetWeeks, setOffsetWeeks] = useState(0);
 
   const [isAdmin, setIsAdmin] = useState(false);
-  const [globalRates, setGlobalRates] = useState({ platform: 10, salon: 10, agent: 20 });
+  const [globalRates, setGlobalRates] = useState({
+    platform: DEFAULT_BOOKING_PLATFORM_PERCENT,
+    salon: DEFAULT_BOOKING_SALON_PERCENT,
+    agent: DEFAULT_BOOKING_AGENT_PERCENT,
+  });
   const [activeCommissionId, setActiveCommissionId] = useState<string | null>(null);
   const [savingRates, setSavingRates] = useState(false);
 
@@ -209,8 +217,10 @@ export default function FinanceDashboard() {
     try {
       setSavingRates(true);
 
-      if (globalRates.platform + globalRates.salon !== 20) {
-        toast.error("Platform + Salon must equal 20% for booking commission.");
+      if (globalRates.platform + globalRates.salon !== RESERVATION_DEPOSIT_PERCENT) {
+        toast.error(
+          `Platform + Salon must equal ${RESERVATION_DEPOSIT_PERCENT}% for booking commission.`
+        );
         return;
       }
 
@@ -616,7 +626,7 @@ export default function FinanceDashboard() {
                 <Sparkles className="w-5 h-5 text-brand" /> Booking Commission Rates
               </h2>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Marketplace reservation split (platform + salon = 20% of service total). Subscription rates are under
+                Marketplace reservation split (platform + salon = {RESERVATION_DEPOSIT_PERCENT}% of service total). Subscription rates are under
                 Agent Mgmt → Subscription Commission.
               </p>
             </div>
@@ -666,7 +676,7 @@ export default function FinanceDashboard() {
             </div>
           </div>
           <p className="text-xs font-semibold text-zinc-500">
-            Platform + Salon must equal <span className="font-bold text-zinc-900">20%</span>. Agent % applies to
+            Platform + Salon must equal <span className="font-bold text-zinc-900">{RESERVATION_DEPOSIT_PERCENT}%</span>. Agent % applies to
             booking referral payouts.
           </p>
         </div>

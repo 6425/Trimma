@@ -29,7 +29,7 @@ import {
 const BOOKING_STEPS = [
   "Browse salons on Trimma or search by service and location.",
   "Open a salon profile and tap Book — choose services, stylist, and an open time slot.",
-  "Enter your name, email, and phone, then pay the 20% reservation deposit online.",
+  "Enter your name, email, and phone, then pay the 30% reservation deposit online.",
   "Wait for the salon to confirm your appointment — we notify you by email and WhatsApp.",
   "Visit the salon, pay the remaining balance there, then leave a review from My Bookings.",
 ];
@@ -124,8 +124,8 @@ export function CustomerHelpContent() {
           <h2 className="text-lg font-bold text-zinc-900">Deposit and payment</h2>
         </div>
         <p className="text-sm text-zinc-600 leading-relaxed">
-          Trimma collects a <strong className="text-zinc-900">20% reservation deposit</strong> online
-          when you book. The remaining <strong className="text-zinc-900">80%</strong> is paid at the
+          Trimma collects a <strong className="text-zinc-900">30% reservation deposit</strong> online
+          when you book. The remaining <strong className="text-zinc-900">70%</strong> is paid at the
           salon after your service. Your booking reference (for example TRM-482916) is shown after
           checkout and in your confirmation messages.
         </p>

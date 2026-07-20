@@ -21,7 +21,7 @@ INSERT INTO public.commission_master (
   payhere_percentage,
   active
 )
-SELECT 'booking', 10.0, 10.0, 20.0, 3.0, true
+SELECT 'booking', 10.0, 20.0, 20.0, 3.0, true
 WHERE NOT EXISTS (
   SELECT 1 FROM public.commission_master WHERE commission_type = 'booking'
 );

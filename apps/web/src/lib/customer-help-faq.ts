@@ -10,7 +10,7 @@ export const CUSTOMER_HELP_FAQS: CustomerHelpFaq[] = [
   },
   {
     q: "How much do I pay online vs at the salon?",
-    a: "Trimma collects a 20% reservation deposit online to secure your slot. The remaining 80% is paid at the salon after your service.",
+    a: "Trimma collects a 30% reservation deposit online to secure your slot. The remaining 70% is paid at the salon after your service.",
   },
   {
     q: "What does pending vs confirmed mean?",

@@ -109,7 +109,7 @@ function IncomeTable({ rows, totals }: { rows: BookingIncomeRow[]; totals: Booki
           <th className={TH} title="Service, staff, date and time">Booking</th>
           <th className={`${TH} text-right`} title="Total service price">Service</th>
           <th className={`${TH} text-right`} title="Staff commission">Staff</th>
-          <th className={`${TH} text-right border-l border-slate-100`} title="Reservation fee paid (20%)">Res. Fee</th>
+          <th className={`${TH} text-right border-l border-slate-100`} title="Reservation fee paid (30%)">Res. Fee</th>
           <th className={`${TH} text-right text-emerald-600`} title="Balance payment due">Balance</th>
           <th className={`${TH} text-right text-emerald-600`} title="Salon reservation share">Salon</th>
           <th className={`${TH} text-right text-indigo-600 border-l border-indigo-100 bg-indigo-50/40`} title="Total salon income">Salon Inc.</th>

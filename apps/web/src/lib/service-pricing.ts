@@ -1,5 +1,5 @@
 /** Stripe ~$0.50 floor — keep catalog/booking service lines at or above this LKR amount. */
-export const MIN_SERVICE_PRICE_LKR = 800;
+export const MIN_SERVICE_PRICE_LKR = 700;
 
 /** Canonical user-facing copy for min service fee rejections. */
 export const MIN_SERVICE_FEE_MESSAGE = `Minimum service fee is LKR ${MIN_SERVICE_PRICE_LKR.toFixed(2)}`;

@@ -223,7 +223,7 @@ function formatPaymentStatusForWhatsApp(status: string): string {
   const normalized = status.trim().toLowerCase().replace(/_/g, " ");
   if (!normalized) return "Reservation paid";
   if (normalized === "reservation paid" || normalized === "reservation_paid") {
-    return "Reservation paid (20% deposit)";
+    return "Reservation paid (30% deposit)";
   }
   if (normalized === "paid" || normalized === "unpaid") {
     return normalized.charAt(0).toUpperCase() + normalized.slice(1);
@@ -850,7 +850,7 @@ export async function testWhatsAppConnection(testPhone: string) {
 }
 
 /**
- * Sent immediately after the customer pays the 20% reservation fee.
+ * Sent immediately after the customer pays the 30% reservation fee.
  */
 export async function sendWhatsAppReservationPaidNotification(
   bookingNo: string,

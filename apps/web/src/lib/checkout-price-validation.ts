@@ -1,6 +1,8 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   calculateReservationFee,
+  DEFAULT_BOOKING_PLATFORM_PERCENT,
+  DEFAULT_BOOKING_SALON_PERCENT,
   getReservationDepositPercentForSalon,
   resolveBookingAgentPercentage,
   type BookingCommissionRates,
@@ -56,8 +58,8 @@ async function loadBookingCommissionRates(
     .maybeSingle();
 
   return {
-    platform: Number(ratesData?.platform_percentage) || 10,
-    salon: Number(ratesData?.salon_percentage) || 10,
+    platform: Number(ratesData?.platform_percentage) || DEFAULT_BOOKING_PLATFORM_PERCENT,
+    salon: Number(ratesData?.salon_percentage) || DEFAULT_BOOKING_SALON_PERCENT,
     agent: resolveBookingAgentPercentage(ratesData?.agent_percentage),
   };
 }

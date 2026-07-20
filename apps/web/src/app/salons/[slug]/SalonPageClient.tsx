@@ -1597,7 +1597,7 @@ export default function SalonPage({
                       <span className="text-zinc-900">LKR {confirmedBookingDetails.price?.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-zinc-500 font-semibold">
-                      <span>Deposit Paid (20%)</span>
+                      <span>Deposit Paid (30%)</span>
                       <span className="text-zinc-900">LKR {(confirmedBookingDetails.price * 0.20).toLocaleString()}</span>
                     </div>
                     <div className="border-t border-slate-100 pt-2 flex justify-between font-bold text-zinc-900 text-sm">
