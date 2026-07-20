@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/config/supabase-admin';
 import { requirePlatformAdminFromCookies } from '@/lib/server-admin-auth';
+import { MIN_SERVICE_PRICE_LKR } from '@/lib/service-pricing';
 // Dummy services library based on category
 const DEFAULT_SERVICES: Record<string, any[]> = {
   "Barber Salon": [
@@ -11,7 +12,7 @@ const DEFAULT_SERVICES: Record<string, any[]> = {
   "Beauty Parlours": [
     { name: "Classic Facial", category: "Facial", price: 3500, duration_min: 60, description: "Deep cleansing facial." },
     { name: "Manicure & Pedicure", category: "Nails", price: 2500, duration_min: 45, description: "Complete hand and foot care." },
-    { name: "Eyebrow Threading", category: "Threading", price: 500, duration_min: 15, description: "Precision eyebrow shaping." }
+    { name: "Eyebrow Threading", category: "Threading", price: MIN_SERVICE_PRICE_LKR, duration_min: 15, description: "Precision eyebrow shaping." }
   ],
   "Spa & Wellness": [
     { name: "Swedish Massage", category: "Massage", price: 5000, duration_min: 60, description: "Relaxing full body massage." },
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
             salon_id: salonId,
             name: gs.name,
             category: category, 
-            price: gs.suggested_price || 1500,
+            price: Math.max(Number(gs.suggested_price) || 1500, MIN_SERVICE_PRICE_LKR),
             duration_min: gs.suggested_duration_minutes || 30,
             description: gs.description || "Premium salon service.",
             status: 'active'
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
         salon_id: salonId,
         name: s.name,
         category: s.category,
-        price: s.price,
+        price: Math.max(Number(s.price) || MIN_SERVICE_PRICE_LKR, MIN_SERVICE_PRICE_LKR),
         duration_min: s.duration_min,
         description: s.description,
         status: 'active'

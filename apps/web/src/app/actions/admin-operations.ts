@@ -26,6 +26,7 @@ import {
 import { parseFeatureFlags } from "@/lib/parse-feature-flags";
 import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
 import { deleteSalonRecordCascade } from "@/lib/admin-salon-delete-core";
+import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 const BRANDING_SETTINGS_ID = "00000000-0000-0000-0000-000000000002";
@@ -804,6 +805,11 @@ export async function importAdminSalonServices(
     const toInsert = selectedServices.filter(
       (svc) => svc.global_service_id && !existingGlobalIds.has(svc.global_service_id)
     );
+
+    for (const svc of toInsert) {
+      const priceError = getServicePriceBelowMinimumError(svc.price);
+      if (priceError) throw new Error(priceError);
+    }
 
     const totalAfterInsert = (existing || []).length + toInsert.length;
     if (totalAfterInsert > maxServices) {

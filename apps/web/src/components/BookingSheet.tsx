@@ -20,6 +20,7 @@ import { calculateCommissionSplit, calculateReservationFee, getReservationDeposi
 import { GlobalServiceIconPreview } from "./admin/GlobalServiceIconUpload";
 import { StaffPortrait } from "@/components/staff/StaffPortrait";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
+import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
 
 const bookingServiceIconMap = { LayoutGrid, Scissors };
 
@@ -293,6 +294,14 @@ export function BookingSheet({
 
   const handleConfirm = async () => {
     if (!salonId || !selectedTimeSlot) return;
+
+    for (const service of selectedServicesWithRates) {
+      const priceError = getServicePriceBelowMinimumError(service.price);
+      if (priceError) {
+        alert(priceError);
+        return;
+      }
+    }
 
     setIsProcessing(true);
     try {

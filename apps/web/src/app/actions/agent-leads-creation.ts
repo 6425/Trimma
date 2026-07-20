@@ -9,6 +9,7 @@ import {
   slugifySalonName,
 } from "@/lib/google-place-profile";
 import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
+import { MIN_SERVICE_PRICE_LKR } from "@/lib/service-pricing";
 
 export async function createLeadFromGooglePlaces(businessData: {
   place_id: string;
@@ -130,7 +131,7 @@ export async function createLeadFromGooglePlaces(businessData: {
         category_id: gs.category_id,
         name: gs.name,
         category: "General",
-        price: gs.suggested_price || 1500,
+        price: Math.max(Number(gs.suggested_price) || 1500, MIN_SERVICE_PRICE_LKR),
         duration_min: gs.suggested_duration_minutes || 30,
         description: gs.description,
         image_url: gs.icon_image_url || null,

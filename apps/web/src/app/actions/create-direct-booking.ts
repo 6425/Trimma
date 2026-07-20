@@ -10,6 +10,7 @@ import { createBookingPendingConfirmNotification } from "@/lib/salon-owner-notif
 import { notifyOwnerPaidBookingRequest } from "@/lib/owner-booking-notifications";
 import { sendWhatsAppNotification } from "@/app/actions/whatsapp";
 import { getDiscountedServicePrice, isServiceDiscountActive } from "@/lib/service-discount";
+import { assertMinServicePrice } from "@/lib/service-pricing";
 import { fetchBookingCommissionRates } from "@/app/actions/booking-public-settings";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import { computeAgentCommissionSnapshot } from "@/lib/booking-commission-snapshot";
@@ -171,6 +172,10 @@ export async function createDirectBooking(
 
         return { id: s.id, name: s.name || "Service", price, duration };
       });
+    }
+
+    for (const service of processedServices) {
+      assertMinServicePrice(service.price);
     }
 
     const basePrice = processedServices.reduce((sum, s) => sum + s.price, 0);

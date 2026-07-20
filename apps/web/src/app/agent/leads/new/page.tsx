@@ -16,6 +16,10 @@ import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-l
 import { tryAgentData, fetchAgentGlobalsClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
+import {
+  getServicePriceBelowMinimumError,
+  MIN_SERVICE_PRICE_LKR,
+} from "@/lib/service-pricing";
 
 export default function AgentNewLeadPage() {
   const router = useRouter();
@@ -66,6 +70,11 @@ export default function AgentNewLeadPage() {
 
   const prepareServicesAndStaff = async () => {
     const selectedSvcIds = Object.keys(selectedServices).filter(id => selectedServices[id].enabled);
+
+    for (const id of selectedSvcIds) {
+      const priceError = getServicePriceBelowMinimumError(parseFloat(selectedServices[id].price) || 0);
+      if (priceError) throw new Error(priceError);
+    }
     
     let svcsToAdd: any[] = [];
     if (selectedSvcIds.length > 0) {
@@ -357,9 +366,10 @@ export default function AgentNewLeadPage() {
                     {config.enabled && (
                       <div className="flex gap-3 pl-6 mt-2">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-bold text-zinc-400 uppercase">Price (LKR)</label>
+                          <label className="text-[9px] font-bold text-zinc-400 uppercase">Price (LKR) — min {MIN_SERVICE_PRICE_LKR.toFixed(2)}</label>
                           <Input 
-                            type="number" 
+                            type="number"
+                            min={MIN_SERVICE_PRICE_LKR}
                             value={config.price} 
                             onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
                             className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"
