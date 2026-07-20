@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type AdminDbResult<T> = { success: true; data: T } | { success: false; error: string };
 
 const ADMIN_USER_ROLE_PATCH = "packages/db/ADMIN_USER_ROLE_PATCH.sql";
+const SALON_REJECTION_REASON_PATCH = "packages/db/ADD_SALON_REJECTION_REASON.sql";
 
 export function isMissingDbSchemaError(message: string): boolean {
   const lower = message.toLowerCase();
@@ -16,9 +17,18 @@ export function isMissingDbSchemaError(message: string): boolean {
   );
 }
 
+/** True when PostgREST/Postgres reports salons.rejection_reason is missing. */
+export function isMissingRejectionReasonColumnError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("rejection_reason") && isMissingDbSchemaError(message);
+}
+
 export function mapAdminDbError(message: string, hint?: string): string {
   console.error("[mapAdminDbError] Raw DB Error:", message);
   const lower = message.toLowerCase();
+  if (isMissingRejectionReasonColumnError(message)) {
+    return `salons.rejection_reason column is missing. Run ${SALON_REJECTION_REASON_PATCH} in Supabase SQL Editor.`;
+  }
   if (
     lower.includes("agent_tier") ||
     lower.includes("reports_to_agent_id") ||
@@ -29,14 +39,14 @@ export function mapAdminDbError(message: string, hint?: string): string {
   if (lower.includes("user_roles") && (lower.includes("does not exist") || lower.includes("relation"))) {
     return `user_roles table is missing. Run ${ADMIN_USER_ROLE_PATCH} in Supabase SQL Editor.`;
   }
-  if (isMissingDbSchemaError(message)) {
-    return hint || `Database schema is out of date. Run ${ADMIN_USER_ROLE_PATCH} in Supabase SQL Editor.`;
-  }
   if (lower.includes("duplicate key") || lower.includes("salons_slug_key")) {
     return "A record with this slug already exists. Choose a different name or slug.";
   }
   if (lower.includes("could not find") && lower.includes("column")) {
-    return "Save included an invalid salon field. Refresh the page and try again.";
+    return hint || "Save included an invalid salon field. Refresh the page and try again.";
+  }
+  if (isMissingDbSchemaError(message)) {
+    return hint || `Database schema is out of date. Check the raw server log, or run ${SALON_REJECTION_REASON_PATCH} if rejecting a salon.`;
   }
   if (lower.includes("foreign key") || lower.includes("violates")) {
     return "Could not save salon owner details. The platform will create the owner account automatically on retry.";

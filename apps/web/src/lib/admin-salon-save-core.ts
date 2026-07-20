@@ -1,10 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { mapAdminDbError } from "@/lib/with-admin-db";
+import { isMissingRejectionReasonColumnError, mapAdminDbError } from "@/lib/with-admin-db";
 import { sanitizeAdminSalonPayload } from "@/lib/admin-salon-update";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 import { normalizeEmail } from "@/lib/normalize-email";
+
+/** When rejection_reason column is absent, keep reject working via admin_notes. */
+function payloadWithoutRejectionReasonColumn(
+  sanitized: Record<string, unknown>
+): Record<string, unknown> {
+  const { rejection_reason, ...rest } = sanitized;
+  if (typeof rejection_reason !== "string" || !rejection_reason.trim()) {
+    return rest;
+  }
+  const note = `Rejection reason: ${rejection_reason.trim()}`;
+  const existingNotes = typeof rest.admin_notes === "string" ? rest.admin_notes.trim() : "";
+  return {
+    ...rest,
+    admin_notes: existingNotes ? `${existingNotes}\n${note}` : note,
+  };
+}
 
 export type AdminSalonSaveResult =
   | { success: true }
@@ -63,7 +79,24 @@ export async function saveAdminSalonRecord(
 
     const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);
     if (error) {
-      return { success: false, error: mapAdminDbError(error.message) };
+      if (
+        "rejection_reason" in sanitized &&
+        isMissingRejectionReasonColumnError(error.message)
+      ) {
+        const fallback = payloadWithoutRejectionReasonColumn(sanitized);
+        const { error: retryError } = await supabase
+          .from("salons")
+          .update(fallback)
+          .eq("id", salonId);
+        if (retryError) {
+          return { success: false, error: mapAdminDbError(retryError.message) };
+        }
+        console.warn(
+          "[saveAdminSalonRecord] salons.rejection_reason missing; stored reason in admin_notes. Run packages/db/ADD_SALON_REJECTION_REASON.sql."
+        );
+      } else {
+        return { success: false, error: mapAdminDbError(error.message) };
+      }
     }
 
     const nextAssignTo = normalizeEmail(
