@@ -43,6 +43,10 @@ import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/sal
 import { buildStaffWorkingHoursPayload, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
+import {
+  getServicePriceBelowMinimumError,
+  MIN_SERVICE_PRICE_LKR,
+} from "@/lib/service-pricing";
 
 
 const SALON_DEFAULT_CURRENCY = "LKR";
@@ -357,6 +361,19 @@ function AgentLeads() {
 
 
 
+  const assertSelectedServicePrices = () => {
+    for (const id of Object.keys(selectedServices)) {
+      const config = selectedServices[id];
+      if (!config?.enabled) continue;
+      const priceError = getServicePriceBelowMinimumError(parseFloat(config.price) || 0);
+      if (priceError) {
+        toast.error(priceError);
+        return false;
+      }
+    }
+    return true;
+  };
+
   const prepareServicesAndStaff = async (salonId: string) => {
     const existingSvcRes = await tryAgentData(
       () => fetchAgentLeadEditorData(salonId),
@@ -369,6 +386,11 @@ function AgentLeads() {
     
     const existingSvcIds = existingSvc.map(s => s.global_service_id).filter(Boolean);
     const selectedSvcIds = Object.keys(selectedServices).filter(id => selectedServices[id].enabled);
+
+    for (const id of selectedSvcIds) {
+      const priceError = getServicePriceBelowMinimumError(parseFloat(selectedServices[id].price) || 0);
+      if (priceError) throw new Error(priceError);
+    }
     
     const svcsToAddIds = selectedSvcIds.filter(id => !existingSvcIds.includes(id));
     const svcsToRemoveIds = existingSvc.filter(s => !selectedSvcIds.includes(s.global_service_id!)).map(s => s.id);
@@ -461,6 +483,7 @@ function AgentLeads() {
 
   const handleSave = async () => {
     if (!selectedLead) return;
+    if (!assertSelectedServicePrices()) return;
     try {
       setUpdating(true);
       
@@ -540,6 +563,7 @@ function AgentLeads() {
       toast.error("Owner Gmail is required to send for review. They need it to claim the salon.");
       return;
     }
+    if (!assertSelectedServicePrices()) return;
     try {
       setUpdating(true);
       
@@ -1287,9 +1311,10 @@ function AgentLeads() {
                               {config.enabled && (
                                 <div className="flex gap-3 pl-6 mt-2">
                                   <div className="space-y-1">
-                                    <label className="text-[9px] font-bold text-zinc-400 uppercase">Price</label>
+                                    <label className="text-[9px] font-bold text-zinc-400 uppercase">Price (LKR) — min {MIN_SERVICE_PRICE_LKR.toFixed(2)}</label>
                                     <input 
-                                      type="number" 
+                                      type="number"
+                                      min={MIN_SERVICE_PRICE_LKR}
                                       value={config.price} 
                                       onChange={e => setSelectedServices(prev => ({ ...prev, [s.id]: { ...config, price: e.target.value } }))}
                                       className="h-8 w-24 px-2 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:border-emerald-500"

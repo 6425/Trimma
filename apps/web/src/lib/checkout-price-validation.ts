@@ -7,6 +7,7 @@ import {
 } from "@/lib/booking-pricing";
 import { isActivePromotionPackage, mapSalonPromotionRows } from "@/lib/deals";
 import { getCheckoutAmount, type SubscriptionPlanPricing } from "@/lib/subscription-pricing";
+import { assertMinServicePrice } from "@/lib/service-pricing";
 
 /** Allow minor rounding differences (LKR cents). */
 export const CHECKOUT_PRICE_TOLERANCE = 0.02;
@@ -118,6 +119,7 @@ export async function validateBookingCheckoutPrices(input: {
     if (serviceTotal <= 0) {
       throw new Error("Invalid promotion price.");
     }
+    assertMinServicePrice(serviceTotal);
 
     const primaryServiceId = input.draft.serviceIds?.[0] || null;
     if (primaryServiceId) {
@@ -179,6 +181,10 @@ export async function validateBookingCheckoutPrices(input: {
       price: roundMoney(parseFloat(String(row.price || 0))),
       duration_min: row.duration_min,
     }));
+
+    for (const service of services) {
+      assertMinServicePrice(service.price);
+    }
 
     serviceTotal = roundMoney(
       services.reduce((sum, service) => sum + service.price, 0)

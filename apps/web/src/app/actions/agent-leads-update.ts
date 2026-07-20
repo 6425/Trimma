@@ -7,6 +7,15 @@ import { assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
 import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
+import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
+
+function assertServicesMeetMinPrice(svcsToAdd: Array<{ price?: unknown }> | null | undefined) {
+  if (!svcsToAdd?.length) return;
+  for (const svc of svcsToAdd) {
+    const priceError = getServicePriceBelowMinimumError(svc.price);
+    if (priceError) throw new Error(priceError);
+  }
+}
 
 export async function saveAgentLeadData(
   salonId: string,
@@ -85,6 +94,7 @@ export async function saveAgentLeadData(
     // 2. Sync Services
     if (servicesData) {
       if (servicesData.svcsToAdd.length > 0) {
+        assertServicesMeetMinPrice(servicesData.svcsToAdd);
         await supabaseAdmin.from("services").insert(servicesData.svcsToAdd);
       }
       if (servicesData.svcsToRemoveIds.length > 0) {
@@ -196,6 +206,7 @@ export async function createAgentLeadData(
 
     // 2. Sync Services
     if (servicesData && servicesData.svcsToAdd.length > 0) {
+      assertServicesMeetMinPrice(servicesData.svcsToAdd);
       const svcsToAdd = servicesData.svcsToAdd.map(s => ({ ...s, salon_id: salonId }));
       await supabaseAdmin.from("services").insert(svcsToAdd);
     }
@@ -321,6 +332,7 @@ export async function convertManualLeadToSalon(
 
     // 3. Sync Services
     if (servicesData && servicesData.svcsToAdd.length > 0) {
+      assertServicesMeetMinPrice(servicesData.svcsToAdd);
       const svcsToAdd = servicesData.svcsToAdd.map(s => ({ ...s, salon_id: salonId }));
       await supabaseAdmin.from("services").insert(svcsToAdd);
     }

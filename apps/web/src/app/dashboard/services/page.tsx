@@ -30,10 +30,12 @@ import {
 } from "../../../components/admin/GlobalServiceIconUpload";
 import { uploadSalonServiceImage } from "@/app/actions/style-images";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
+import {
+  MIN_SERVICE_FEE_MESSAGE,
+  MIN_SERVICE_PRICE_LKR,
+} from "@/lib/service-pricing";
 
 const serviceIconMap = { LayoutGrid, Scissors };
-
-const MIN_SERVICE_PRICE_LKR = 700;
 
 export default function DashboardServices() {
   const router = useRouter();
@@ -268,9 +270,7 @@ export default function DashboardServices() {
       return (parseFloat(info.price) || 0) < MIN_SERVICE_PRICE_LKR;
     });
     if (belowMinServices.length > 0) {
-      return toast.error(
-        `${belowMinServices.length} selected service(s) have a price below LKR ${MIN_SERVICE_PRICE_LKR.toLocaleString()}. Update them before importing.`
-      );
+      return toast.error(MIN_SERVICE_FEE_MESSAGE);
     }
 
     try {
@@ -354,7 +354,7 @@ export default function DashboardServices() {
 
     const parsedPrice = parseFloat(customForm.price) || 0;
     if (parsedPrice < MIN_SERVICE_PRICE_LKR) {
-      toast.error(`Minimum service price is LKR ${MIN_SERVICE_PRICE_LKR.toLocaleString()}.`);
+      toast.error(MIN_SERVICE_FEE_MESSAGE);
       return;
     }
 
@@ -423,7 +423,7 @@ export default function DashboardServices() {
 
     const parsedEditPrice = parseFloat(editForm.price) || 0;
     if (parsedEditPrice < MIN_SERVICE_PRICE_LKR) {
-      toast.error(`Minimum service price is LKR ${MIN_SERVICE_PRICE_LKR.toLocaleString()}.`);
+      toast.error(MIN_SERVICE_FEE_MESSAGE);
       return;
     }
 
@@ -806,10 +806,11 @@ export default function DashboardServices() {
                       <div className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-150">
                         <div className="w-32">
                           <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
-                            Price (LKR)
+                            Price (LKR) — min {MIN_SERVICE_PRICE_LKR.toFixed(2)}
                           </label>
                           <Input
                             type="number"
+                            min={MIN_SERVICE_PRICE_LKR}
                             value={selectedServices[s.id]?.price || ""}
                             onChange={(e) => handleValueChange(s.id, "price", e.target.value)}
                             className="h-9 font-bold text-zinc-800 border-zinc-200 rounded-xl"
@@ -890,7 +891,7 @@ export default function DashboardServices() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR) — min {MIN_SERVICE_PRICE_LKR}</label>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR) — min {MIN_SERVICE_PRICE_LKR.toFixed(2)}</label>
                   <Input 
                     type="number"
                     required
@@ -1035,7 +1036,7 @@ export default function DashboardServices() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR) — min {MIN_SERVICE_PRICE_LKR}</label>
+            <label className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block">Price (LKR) — min {MIN_SERVICE_PRICE_LKR.toFixed(2)}</label>
             <Input
               type="number"
               required
