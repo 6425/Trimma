@@ -32,7 +32,7 @@ export const SECTIONS = [
     paragraphs: [
       "Salon onboarding moves a business from discovery (Google Places, web lead, or self-serve signup) through agent verification, owner profile completion, booking enablement, and final admin verification before the salon is fully live on Trimma.",
       "There are three main paths: (A) Agent-led — admin discovers or receives a lead, agent completes the field editor, invites the owner, owner fills the dashboard, agent enables booking; (B) Owner self-serve — owner signs in with Google at /onboarding and claims a salon; (C) Web waiting-list — partner applies via form into salon_leads until an agent converts them.",
-      "Customer bookings require booking_enabled plus valid salon phone and owner email. The Trimma Verified badge and 50% deposit collection require additional business and bank documentation plus admin is_verified.",
+      "Customer bookings require booking_enabled plus valid salon phone and owner email. The Trimma Verified badge and 30% deposit collection require additional business and bank documentation plus admin is_verified.",
     ],
   },
   {
@@ -186,7 +186,7 @@ export const SECTIONS = [
         ["Book button active", "isSalonPubliclyBookable()", "Shows message if booking disabled"],
         ["Marketplace / deals listing", "status verified/active or is_verified", "Partial filter on deals page"],
         ["Trimma Verified badge", "is_verified: true", "Admin only"],
-        ["50% reservation deposits", "Business + bank complete + is_verified", "canCollectVerifiedReservationDeposit()"],
+        ["30% reservation deposits", "Business + bank complete + is_verified", "canCollectVerifiedReservationDeposit()"],
       ],
     },
   },

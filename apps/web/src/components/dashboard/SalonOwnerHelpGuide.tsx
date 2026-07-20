@@ -485,7 +485,7 @@ const FAQS = [
   },
   {
     q: "What is the difference between booking approval and the Verified badge?",
-    a: "Booking approval lets customers book your salon on Trimma after agent and admin review. The Verified badge and 50% online reservation deposits require completed business information and bank verification documents under Salon Profile → Business Info and Bank Info tabs.",
+    a: "Booking approval lets customers book your salon on Trimma after agent and admin review. The Verified badge and 30% online reservation deposits require completed business information and bank verification documents under Salon Profile → Business Info and Bank Info tabs.",
   },
   {
     q: "Why do some time slots show as already booked?",
@@ -652,7 +652,7 @@ export function SalonOwnerHelpGuide() {
                   },
                   {
                     title: "Optional: Verified badge & reservation deposits",
-                    body: "After you are live, complete Business Info and Bank Info (with required documents) on Salon Profile to earn the Trimma Verified badge and enable 50% online reservation deposits on customer bookings.",
+                    body: "After you are live, complete Business Info and Bank Info (with required documents) on Salon Profile to earn the Trimma Verified badge and enable 30% online reservation deposits on customer bookings.",
                   },
                 ].map((step, index) => (
                   <li key={step.title} className="flex gap-4">
@@ -969,7 +969,7 @@ export function SalonOwnerHelpGuide() {
               "Quick-add services and staff from profile",
               "Marketplace live preview panel and Store QR Flyer",
               "Tab: Business Info — legal/registration details for Verified badge",
-              "Tab: Bank Info — payout account and verification documents for 50% reservation deposits",
+              "Tab: Bank Info — payout account and verification documents for 30% reservation deposits",
             ]}
             tips={[
               "Submit for Booking Approval only after name, address, map pin, hero image, and contact are saved.",

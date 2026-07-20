@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
 
 export type SaveGlobalServiceInput = {
   id?: string;
@@ -95,6 +96,13 @@ export async function saveGlobalService(input: SaveGlobalServiceInput) {
   try {
     if (!input.name?.trim() || !input.category_id) {
       return { success: false as const, error: "Please fill in required fields." };
+    }
+
+    if (input.suggested_price != null && String(input.suggested_price).trim() !== "") {
+      const priceError = getServicePriceBelowMinimumError(input.suggested_price);
+      if (priceError) {
+        return { success: false as const, error: priceError };
+      }
     }
 
     const auth = await requirePlatformAdminFromCookies();

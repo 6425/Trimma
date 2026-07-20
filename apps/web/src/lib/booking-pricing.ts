@@ -40,6 +40,22 @@ export function calculateBalanceDue(
   return serviceTotal - calculateReservationFee(serviceTotal, depositPercent);
 }
 
+/** Rounded deposit / balance for notifications when stored fee is unavailable. */
+export function resolveRoundedReservationAmounts(
+  serviceTotal: number,
+  storedReservationFee?: number | string | null,
+  depositPercent: number = RESERVATION_DEPOSIT_PERCENT
+): { depositAmount: number; balanceAmount: number } {
+  const total = Number(serviceTotal) || 0;
+  const stored = Number(storedReservationFee);
+  const depositAmount =
+    Number.isFinite(stored) && stored > 0
+      ? Math.round(stored)
+      : Math.round(calculateReservationFee(total, depositPercent));
+  const balanceAmount = Math.max(0, Math.round(total) - depositAmount);
+  return { depositAmount, balanceAmount };
+}
+
 export function calculateCommissionSplit(
   serviceTotal: number,
   rates: BookingCommissionRates,

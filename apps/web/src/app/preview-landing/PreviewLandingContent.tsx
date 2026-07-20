@@ -209,7 +209,7 @@ const faqs = [
   },
   {
     q: "How do payments work?",
-    a: "Customers can pay a reservation deposit online securely, or pay in full at the salon. You control the policy per service.",
+    a: "Customers pay a 30% reservation deposit online securely (10% Trimma + 20% salon upfront). The remaining 70% is paid at the salon after the service.",
   },
 ];
 
