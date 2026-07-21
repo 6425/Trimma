@@ -351,5 +351,5 @@ export const WHATSAPP_CHECKOUT_META_CONFIG = {
   metaTemplateKey: "metaTemplateConfirmed" as const,
   defaultTemplateName: "confirmmessage",
   metaParameterHint:
-    "confirmmessage: {{1}} name, {{2}} salon, {{3}} service, {{4}} date, {{5}} time.",
+    "confirmmessage: {{1}} name, {{2}} salon, {{3}} ref, {{4}} date, {{5}} time, {{6}} service, {{7}} total, {{8}} deposit, {{9}} balance, {{10}} address, {{11}} directions, {{12}} bookings link.",
 } as const;
