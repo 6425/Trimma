@@ -67,7 +67,7 @@ export function SalonCard(props: SalonCardInternalProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent pointer-events-none" />
 
         {!isVerified && (
-          <Badge className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-10 bg-[#ffde5a] hover:bg-[#ffe680] text-black border-none font-black text-[9px] sm:text-xs uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 shadow-md">
+          <Badge className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-10 bg-[#ffde5a] hover:bg-[#ffe680] text-black border-none font-normal text-[8px] sm:text-[10px] uppercase tracking-wide px-1.5 py-0.5 sm:px-2 sm:py-1 shadow-md">
             Not Verified
           </Badge>
         )}
