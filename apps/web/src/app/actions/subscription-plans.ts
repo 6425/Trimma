@@ -1,7 +1,10 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/config/supabase-server";
-import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
+import {
+  DEFAULT_SUBSCRIPTION_PLANS,
+  normalizePublicSubscriptionPlans,
+} from "@/lib/subscription-pricing";
 
 export type PublicSubscriptionPlan = {
   id: string;
@@ -36,21 +39,28 @@ export async function getPublicSubscriptionPlans() {
       return {
         success: false as const,
         error: error.message,
-        plans: DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[],
+        plans: normalizePublicSubscriptionPlans(
+          DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]
+        ),
       };
     }
 
-    const plans =
+    const rawPlans =
       data && data.length > 0
         ? (data as PublicSubscriptionPlan[])
         : (DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]);
+
+    // Safety net: rename Free / zero-price entry tier → Beginner @ 2250 even if DB is stale.
+    const plans = normalizePublicSubscriptionPlans(rawPlans);
 
     return { success: true as const, error: null, plans };
   } catch (err) {
     return {
       success: false as const,
       error: err instanceof Error ? err.message : "Could not load subscription plans.",
-      plans: DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[],
+      plans: normalizePublicSubscriptionPlans(
+        DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]
+      ),
     };
   }
 }
