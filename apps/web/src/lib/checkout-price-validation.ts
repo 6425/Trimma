@@ -232,10 +232,12 @@ export async function validateSubscriptionCheckoutPrice(input: {
   billingCycle: "monthly" | "annual";
   chargeAmount: number;
 }): Promise<{ plan: SubscriptionPlanPricing & { id: string; name: string }; chargeAmount: number }> {
-  const planName = input.planName?.trim();
-  if (!planName) {
+  const rawPlanName = input.planName?.trim();
+  if (!rawPlanName) {
     throw new Error("Subscription plan is required.");
   }
+  // Legacy Free slug → Beginner (paid entry tier).
+  const planName = rawPlanName.toLowerCase() === "free" ? "Beginner" : rawPlanName;
 
   const supabase = createSupabaseAdminClient();
   const { data: planRow, error } = await supabase

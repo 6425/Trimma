@@ -72,7 +72,7 @@ export async function provisionSelfServeSalonOwner(
   const { data: freePlan } = await supabase
     .from("subscription_plans")
     .select("id")
-    .eq("name", "Free")
+    .eq("id", "f0000000-0000-0000-0000-000000000001")
     .limit(1)
     .maybeSingle();
 

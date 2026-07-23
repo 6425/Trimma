@@ -46,17 +46,17 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createSupabaseAdminClient();
 
-    // 0. Fetch Free Subscription Plan limits
-    const { data: freePlan } = await supabaseAdmin
+    // 0. Fetch entry-tier (Beginner) subscription plan limits
+    const { data: entryPlan } = await supabaseAdmin
       .from('subscription_plans')
       .select('id, max_services, max_staff')
-      .eq('name', 'Free')
+      .eq('id', 'f0000000-0000-0000-0000-000000000001')
       .limit(1)
-      .single();
-      
-    const freePlanId = freePlan?.id || 'f0000000-0000-0000-0000-000000000001';
-    const maxServices = freePlan?.max_services || 6;
-    const maxStaff = freePlan?.max_staff || 2;
+      .maybeSingle();
+
+    const freePlanId = entryPlan?.id || 'f0000000-0000-0000-0000-000000000001';
+    const maxServices = entryPlan?.max_services || 6;
+    const maxStaff = entryPlan?.max_staff || 2;
 
     // Standardize Working Hours
     const defaultWorkingHours = Array.from({ length: 7 }, (_, i) => ({

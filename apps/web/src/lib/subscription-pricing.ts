@@ -95,16 +95,20 @@ export function formatPromotionPackageLimit(value: number | string | null | unde
   return String(n);
 }
 
+/** Canonical entry-level plan id (legacy Free → Beginner). */
+export const DEFAULT_ENTRY_PLAN_ID = "f0000000-0000-0000-0000-000000000001";
+export const DEFAULT_ENTRY_PLAN_NAME = "Beginner";
+
 /** Canonical defaults when Supabase is offline or rows are missing. */
 export const DEFAULT_SUBSCRIPTION_PLANS = [
   {
-    id: "f0000000-0000-0000-0000-000000000001",
-    name: "Free",
-    list_monthly_price: 0,
-    intro_monthly_price: 0,
-    monthly_price: 0,
-    annual_price: 0,
-    discount_percentage: 0,
+    id: DEFAULT_ENTRY_PLAN_ID,
+    name: DEFAULT_ENTRY_PLAN_NAME,
+    list_monthly_price: 3000,
+    intro_monthly_price: 2250,
+    monthly_price: 2250,
+    annual_price: 21600,
+    discount_percentage: 25,
     max_staff: 2,
     max_services: 6,
     max_images: 3,
@@ -179,6 +183,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     intro_monthly_price: 7500,
     monthly_price: 7500,
     annual_price: 60000,
+    discount_percentage: 25,
     max_staff: 30,
     max_services: 9999,
     max_images: 30,

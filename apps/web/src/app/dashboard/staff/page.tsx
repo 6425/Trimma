@@ -43,7 +43,7 @@ export default function DashboardStaff() {
   
   // Subscription Plan Limits
   const [maxStaffLimit, setMaxStaffLimit] = useState(2);
-  const [subscriptionName, setSubscriptionName] = useState("Free");
+  const [subscriptionName, setSubscriptionName] = useState("Beginner");
 
   // Modal Open States
   const [staffModalMode, setStaffModalMode] = useState<"add" | "edit" | null>(null);
@@ -156,7 +156,7 @@ export default function DashboardStaff() {
 
       const planData = staffResult.subscriptionPlan as any;
       if (planData) {
-        setSubscriptionName(planData.name || "Free");
+        setSubscriptionName(planData.name || "Beginner");
         setMaxStaffLimit(planData.max_staff || 2);
       }
 

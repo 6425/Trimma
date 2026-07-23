@@ -57,7 +57,7 @@ ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS max_promotion_packages I
 
 UPDATE subscription_plans SET max_promotion_packages = 2,
   feature_flags = COALESCE(feature_flags, '{}'::jsonb) || '{"allowed_promotion_types_limit": 2}'::jsonb
-WHERE name = 'Free';
+WHERE name IN ('Beginner', 'Free');
 
 UPDATE subscription_plans SET max_promotion_packages = 4,
   feature_flags = COALESCE(feature_flags, '{}'::jsonb) || '{"allowed_promotion_types_limit": 4}'::jsonb

@@ -9,26 +9,29 @@
 --   monthly_price       = kept in sync with intro_monthly_price (legacy apps)
 --   annual_price        = annual monthly rate × 12
 --
---   Free:    0 / 0 / 0
---   Starter: 5000 list → 3750 intro → 3000×12 = 36,000 annual
---   Pro:     10000 list → 7500 intro → 5000×12 = 60,000 annual
---   Elite:   10000 list → 7500 intro → 5000×12 = 60,000 annual
+--   Beginner: 3000 list → 2250 intro → 1800×12 = 21,600 annual (25% intro)
+--   Starter:  5000 list → 3750 intro → 3000×12 = 36,000 annual
+--   Pro:      10000 list → 7500 intro → 5000×12 = 60,000 annual
+--   Elite:    10000 list → 7500 intro → 5000×12 = 60,000 annual
 -- ==============================================================================
 
 BEGIN;
 
 ALTER TABLE public.subscription_plans ADD COLUMN IF NOT EXISTS list_monthly_price NUMERIC DEFAULT 0;
 ALTER TABLE public.subscription_plans ADD COLUMN IF NOT EXISTS intro_monthly_price NUMERIC DEFAULT 0;
+ALTER TABLE public.subscription_plans ADD COLUMN IF NOT EXISTS discount_percentage NUMERIC DEFAULT 0;
 
--- Free
+-- Beginner (formerly Free)
 UPDATE public.subscription_plans
 SET
-  list_monthly_price = 0,
-  intro_monthly_price = 0,
-  monthly_price = 0,
-  annual_price = 0
+  name = 'Beginner',
+  list_monthly_price = 3000,
+  intro_monthly_price = 2250,
+  monthly_price = 2250,
+  annual_price = 21600,
+  discount_percentage = 25
 WHERE id = 'f0000000-0000-0000-0000-000000000001'::uuid
-   OR lower(name) = 'free';
+   OR lower(name) IN ('free', 'beginner');
 
 -- Starter
 UPDATE public.subscription_plans
@@ -76,8 +79,8 @@ INSERT INTO public.subscription_plans (
 ) VALUES
 (
   'f0000000-0000-0000-0000-000000000001',
-  'Free',
-  0, 0, 0, 0,
+  'Beginner',
+  3000, 2250, 2250, 21600,
   2, 6, 3, 0,
   '{"allowed_categories_limit": 2, "features": ["Staff Management", "FB/WA Integration", "Free Gmail Integration", "Free Google Business Page", "Performance Insights", "Salon Dashboard with QR"]}'::jsonb
 ),
