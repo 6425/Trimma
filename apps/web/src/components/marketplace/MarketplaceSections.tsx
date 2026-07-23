@@ -76,11 +76,9 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent" />
                 
                 {!isVerified && (
-                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
-                    <Badge className="bg-rose-500/90 hover:bg-rose-500 text-white border-rose-400 font-black text-xs uppercase tracking-widest px-4 py-1.5 shadow-xl">
-                      Not Verified
-                    </Badge>
-                  </div>
+                  <Badge className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-10 bg-[#ffde5a] hover:bg-[#ffe680] text-black border-none font-black text-[9px] sm:text-xs uppercase tracking-widest px-2 py-1 sm:px-3 sm:py-1.5 shadow-md">
+                    Not Verified
+                  </Badge>
                 )}
                 
                 <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 sm:gap-2 z-20 flex-wrap max-w-[calc(100%-0.5rem)]">
