@@ -202,3 +202,45 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
     },
   },
 ];
+
+/**
+ * Stale production rows may still be named Free (or Beginner/entry id at LKR 0).
+ * Pricing UI should show Beginner @ 2250 / 25% even before SQL is applied.
+ */
+export function needsEntryPlanDisplayOverride(
+  plan: SubscriptionPlanPricing & { id?: string | null; name?: string | null }
+): boolean {
+  const name = (plan.name || "").trim().toLowerCase();
+  if (name === "free") return true;
+
+  const zeroPrices = getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
+  if (!zeroPrices) return false;
+
+  const id = plan.id || "";
+  return id === DEFAULT_ENTRY_PLAN_ID || name === "beginner" || name === "";
+}
+
+/** Overlay canonical Beginner pricing onto a stale Free / zero-price entry row. */
+export function normalizePublicSubscriptionPlan<
+  T extends SubscriptionPlanPricing & { id?: string | null; name?: string | null },
+>(plan: T): T {
+  if (!needsEntryPlanDisplayOverride(plan)) return plan;
+
+  const beginner = DEFAULT_SUBSCRIPTION_PLANS[0];
+  return {
+    ...plan,
+    id: plan.id || beginner.id,
+    name: DEFAULT_ENTRY_PLAN_NAME,
+    list_monthly_price: beginner.list_monthly_price,
+    intro_monthly_price: beginner.intro_monthly_price,
+    monthly_price: beginner.monthly_price,
+    annual_price: beginner.annual_price,
+    discount_percentage: beginner.discount_percentage,
+  };
+}
+
+export function normalizePublicSubscriptionPlans<
+  T extends SubscriptionPlanPricing & { id?: string | null; name?: string | null },
+>(plans: T[]): T[] {
+  return plans.map((plan) => normalizePublicSubscriptionPlan(plan));
+}

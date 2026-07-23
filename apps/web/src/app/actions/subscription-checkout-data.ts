@@ -3,7 +3,10 @@
 import { cookies } from "next/headers";
 import { generatePayhereHash } from "@/app/actions/payhere";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
+import {
+  DEFAULT_SUBSCRIPTION_PLANS,
+  normalizePublicSubscriptionPlan,
+} from "@/lib/subscription-pricing";
 
 const SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -12,11 +15,18 @@ const DEFAULT_PLANS: Record<string, (typeof DEFAULT_SUBSCRIPTION_PLANS)[number]>
 );
 
 function resolvePlan(planParam: string, row: Record<string, unknown> | null) {
-  if (row) return row;
   const key = planParam.toLowerCase();
   // Legacy ?plan=free links resolve to Beginner (paid entry tier).
   const aliasKey = key === "free" ? "beginner" : key;
-  return (DEFAULT_PLANS[aliasKey] || DEFAULT_PLANS.pro || DEFAULT_PLANS.starter) as Record<string, unknown>;
+  if (row) {
+    return normalizePublicSubscriptionPlan(
+      row as (typeof DEFAULT_SUBSCRIPTION_PLANS)[number]
+    ) as Record<string, unknown>;
+  }
+  return (DEFAULT_PLANS[aliasKey] || DEFAULT_PLANS.pro || DEFAULT_PLANS.starter) as Record<
+    string,
+    unknown
+  >;
 }
 
 async function readCustomerPrefill() {
@@ -69,9 +79,21 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
     if (paymentRes.error) throw new Error(paymentRes.error.message);
     if (planRes.error) throw new Error(planRes.error.message);
 
+    let planRow = planRes.data as Record<string, unknown> | null;
+    // Stale DB may still name the entry tier Free.
+    if (!planRow && normalizedPlan === "beginner") {
+      const freeRes = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .ilike("name", "Free")
+        .maybeSingle();
+      if (freeRes.error) throw new Error(freeRes.error.message);
+      planRow = freeRes.data as Record<string, unknown> | null;
+    }
+
     return {
       success: true as const,
-      planDetails: resolvePlan(normalizedPlan, planRes.data as Record<string, unknown> | null),
+      planDetails: resolvePlan(normalizedPlan, planRow),
       stripeEnabled: paymentRes.data?.stripe_enabled !== false,
       stripeEnvironment:
         paymentRes.data?.stripe_environment === "live" ? "live" : "sandbox",

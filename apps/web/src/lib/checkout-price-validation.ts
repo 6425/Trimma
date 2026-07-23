@@ -8,7 +8,7 @@ import {
   type BookingCommissionRates,
 } from "@/lib/booking-pricing";
 import { isActivePromotionPackage, mapSalonPromotionRows } from "@/lib/deals";
-import { getCheckoutAmount, type SubscriptionPlanPricing } from "@/lib/subscription-pricing";
+import { getCheckoutAmount, normalizePublicSubscriptionPlan, type SubscriptionPlanPricing } from "@/lib/subscription-pricing";
 import { assertMinServicePrice } from "@/lib/service-pricing";
 
 /** Allow minor rounding differences (LKR cents). */
@@ -240,7 +240,7 @@ export async function validateSubscriptionCheckoutPrice(input: {
   const planName = rawPlanName.toLowerCase() === "free" ? "Beginner" : rawPlanName;
 
   const supabase = createSupabaseAdminClient();
-  const { data: planRow, error } = await supabase
+  let { data: planRow, error } = await supabase
     .from("subscription_plans")
     .select(
       "id, name, monthly_price, list_monthly_price, intro_monthly_price, annual_price, discount_percentage"
@@ -249,9 +249,25 @@ export async function validateSubscriptionCheckoutPrice(input: {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
+
+  // Stale DB may still use name Free for the entry tier.
+  if (!planRow?.id && planName.toLowerCase() === "beginner") {
+    const freeRes = await supabase
+      .from("subscription_plans")
+      .select(
+        "id, name, monthly_price, list_monthly_price, intro_monthly_price, annual_price, discount_percentage"
+      )
+      .ilike("name", "Free")
+      .maybeSingle();
+    if (freeRes.error) throw new Error(freeRes.error.message);
+    planRow = freeRes.data;
+  }
+
   if (!planRow?.id) throw new Error("Subscription plan not found.");
 
-  const plan = planRow as SubscriptionPlanPricing & { id: string; name: string };
+  const plan = normalizePublicSubscriptionPlan(
+    planRow as SubscriptionPlanPricing & { id: string; name: string }
+  );
   const expectedAmount = roundMoney(getCheckoutAmount(plan, input.billingCycle));
 
   if (expectedAmount <= 0) {
