@@ -8,13 +8,15 @@ import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 const SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 
 const DEFAULT_PLANS: Record<string, (typeof DEFAULT_SUBSCRIPTION_PLANS)[number]> = Object.fromEntries(
-  DEFAULT_SUBSCRIPTION_PLANS.filter((p) => p.name !== "Free").map((p) => [p.name.toLowerCase(), p])
+  DEFAULT_SUBSCRIPTION_PLANS.map((p) => [p.name.toLowerCase(), p])
 );
 
 function resolvePlan(planParam: string, row: Record<string, unknown> | null) {
   if (row) return row;
   const key = planParam.toLowerCase();
-  return (DEFAULT_PLANS[key] || DEFAULT_PLANS.pro || DEFAULT_PLANS.starter) as Record<string, unknown>;
+  // Legacy ?plan=free links resolve to Beginner (paid entry tier).
+  const aliasKey = key === "free" ? "beginner" : key;
+  return (DEFAULT_PLANS[aliasKey] || DEFAULT_PLANS.pro || DEFAULT_PLANS.starter) as Record<string, unknown>;
 }
 
 async function readCustomerPrefill() {
@@ -48,7 +50,9 @@ async function readCustomerPrefill() {
 }
 
 export async function fetchSubscriptionCheckoutPage(planParam: string) {
-  const normalizedPlan = (planParam || "pro").toLowerCase();
+  const rawPlan = (planParam || "pro").toLowerCase();
+  // Legacy Free slug → Beginner (paid entry tier).
+  const normalizedPlan = rawPlan === "free" ? "beginner" : rawPlan;
 
   try {
     const supabase = createSupabaseAdminClient();

@@ -764,7 +764,7 @@ export async function fetchAdminSalonServicePickerData(salonId: string) {
       maxServices: Number(plan?.max_services) || 6,
       allowedCategories,
       allowedCategoryLimit: getAllowedCategoriesLimit(flags, plan?.name as string | undefined),
-      planName: plan?.name || "Free",
+      planName: plan?.name || "Beginner",
       services,
       existingGlobalServiceIds: (existingServicesRes.data || [])
         .map((row) => row.global_service_id)
@@ -894,10 +894,20 @@ export async function publishAdminLead(lead: {
     const { data: freePlan } = await supabase
       .from("subscription_plans")
       .select("id")
-      .eq("name", "Free")
+      .eq("id", "f0000000-0000-0000-0000-000000000001")
       .maybeSingle();
 
     let freePlanId = freePlan?.id;
+    if (!freePlanId) {
+      const { data: beginnerPlan } = await supabase
+        .from("subscription_plans")
+        .select("id")
+        .in("name", ["Beginner", "Free"])
+        .order("monthly_price", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      freePlanId = beginnerPlan?.id;
+    }
     if (!freePlanId) {
       const { data: anyPlan } = await supabase.from("subscription_plans").select("id").limit(1).maybeSingle();
       freePlanId = anyPlan?.id;

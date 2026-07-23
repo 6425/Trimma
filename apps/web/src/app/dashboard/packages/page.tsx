@@ -206,7 +206,7 @@ export default function PackagesPage() {
 
       if (projectedActive > maxPackagesAllowed) {
         toast.error(
-          `Package limit reached! Your ${subscriptionPlan?.name || "Free"} plan allows up to ${maxPackagesAllowed} active promotion packages.`
+          `Package limit reached! Your ${subscriptionPlan?.name || "Beginner"} plan allows up to ${maxPackagesAllowed} active promotion packages.`
         );
         return;
       }
@@ -434,7 +434,7 @@ export default function PackagesPage() {
         <div>
           <h4 className="text-xs font-bold text-zinc-800">Subscription Package Limit</h4>
           <p className="text-[10px] text-zinc-500 mt-1">
-            Your {subscriptionPlan?.name || "Free"} plan allows up to {maxPackagesAllowed} active promotion
+            Your {subscriptionPlan?.name || "Beginner"} plan allows up to {maxPackagesAllowed} active promotion
             packages. Upgrade on billing to publish more promotional deals.
           </p>
         </div>

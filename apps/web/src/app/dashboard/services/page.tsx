@@ -191,7 +191,7 @@ export default function DashboardServices() {
       const selectedIds = Object.keys(selectedServices).filter(x => selectedServices[x].checked);
       
       if (currentServiceCount + selectedIds.length + 1 > maxServicesAllowed) {
-        toast.error(`Service slots filled! Your current ${subscriptionPlan?.name || "Free"} plan only allows up to ${maxServicesAllowed} active services in your catalog. Please upgrade to unlock more slots!`);
+        toast.error(`Service slots filled! Your current ${subscriptionPlan?.name || "Beginner"} plan only allows up to ${maxServicesAllowed} active services in your catalog. Please upgrade to unlock more slots!`);
         return;
       }
 
@@ -206,7 +206,7 @@ export default function DashboardServices() {
       projectedCategories.add(targetService.categoryName);
 
       if (projectedCategories.size > allowedCategoriesLimit) {
-        toast.error(`Category limit reached! Your current ${subscriptionPlan?.name || "Free"} plan only allows active services under up to ${allowedCategoriesLimit} unique categories. Upgrade your plan to activate more categories!`);
+        toast.error(`Category limit reached! Your current ${subscriptionPlan?.name || "Beginner"} plan only allows active services under up to ${allowedCategoriesLimit} unique categories. Upgrade your plan to activate more categories!`);
         return;
       }
     }
@@ -247,7 +247,7 @@ export default function DashboardServices() {
     
     if (projectedServiceCount > maxServicesAllowed) {
       return toast.error(
-        `Threshold exceeded! Your ${subscriptionPlan?.name || "Free"} plan only allows a maximum of ${maxServicesAllowed} services. You currently have ${currentServiceCount} published (Projected total with selection: ${projectedServiceCount}). Upgrade to publish more!`
+        `Threshold exceeded! Your ${subscriptionPlan?.name || "Beginner"} plan only allows a maximum of ${maxServicesAllowed} services. You currently have ${currentServiceCount} published (Projected total with selection: ${projectedServiceCount}). Upgrade to publish more!`
       );
     }
 
@@ -261,7 +261,7 @@ export default function DashboardServices() {
 
     if (projectedCategories.size > allowedCategoriesLimit) {
       return toast.error(
-        `Threshold exceeded! Your ${subscriptionPlan?.name || "Free"} plan only allows services under ${allowedCategoriesLimit} unique categories (Projected categories with selection: ${projectedCategories.size}). Upgrade to activate more categories!`
+        `Threshold exceeded! Your ${subscriptionPlan?.name || "Beginner"} plan only allows services under ${allowedCategoriesLimit} unique categories (Projected categories with selection: ${projectedCategories.size}). Upgrade to activate more categories!`
       );
     }
 
@@ -361,7 +361,7 @@ export default function DashboardServices() {
     const maxServicesAllowed = subscriptionPlan?.max_services || 6;
     if (catalogServices.length >= maxServicesAllowed) {
       toast.error(
-        `Your ${subscriptionPlan?.name || "Free"} plan allows up to ${maxServicesAllowed} services. Upgrade to add more.`
+        `Your ${subscriptionPlan?.name || "Beginner"} plan allows up to ${maxServicesAllowed} services. Upgrade to add more.`
       );
       return;
     }

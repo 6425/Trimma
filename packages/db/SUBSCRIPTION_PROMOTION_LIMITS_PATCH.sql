@@ -7,10 +7,10 @@
 --   subscription_plans.feature_flags (jsonb) — already exists
 --
 -- Sets active promotion package limits per tier:
---   Free    = 2
---   Starter = 4
---   Pro     = 6
---   Elite   = 12
+--   Beginner = 2
+--   Starter  = 4
+--   Pro      = 6
+--   Elite    = 12
 --
 -- NOTE: You do NOT need to re-run PROMOTION_PACKAGES_PATCH.sql if these
 -- tables already exist in your project:
@@ -23,14 +23,14 @@ BEGIN;
 ALTER TABLE public.subscription_plans
   ADD COLUMN IF NOT EXISTS max_promotion_packages INT4;
 
--- Free
+-- Beginner (formerly Free)
 UPDATE public.subscription_plans
 SET
   max_promotion_packages = 2,
   feature_flags = COALESCE(feature_flags, '{}'::jsonb)
     || jsonb_build_object('allowed_promotion_types_limit', 2)
 WHERE id = 'f0000000-0000-0000-0000-000000000001'::uuid
-   OR lower(trim(name)) = 'free';
+   OR lower(trim(name)) IN ('beginner', 'free');
 
 -- Starter
 UPDATE public.subscription_plans

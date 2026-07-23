@@ -37,7 +37,7 @@ export function CategoryMultiSelect({
   value,
   onChange,
   maxCategories = 2,
-  planName = "Free",
+  planName = "Beginner",
   theme = "dark",
   showUpgradeLink = true,
   className = "",

@@ -293,7 +293,7 @@ export default function BillingPage() {
                     variant="outline"
                     className="w-full rounded-xl font-bold text-xs h-10 text-zinc-400"
                   >
-                    {isFree ? "Free Tier" : "Included in Current Plan"}
+                    {isFree ? "No charge" : "Included in Current Plan"}
                   </Button>
                 )}
               </div>

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseFeatureFlags, type SubscriptionFeatureFlags } from "@/lib/parse-feature-flags";
+import { DEFAULT_ENTRY_PLAN_ID, DEFAULT_ENTRY_PLAN_NAME } from "@/lib/subscription-pricing";
 
 export type SalonSubscriptionPlan = Record<string, unknown> & {
   id?: string;
@@ -41,14 +42,25 @@ export async function ensureSalonSubscriptionPlan(
     }
   }
 
-  const { data: freePlan, error: freePlanError } = await supabase
+  const { data: entryPlanById, error: entryPlanByIdError } = await supabase
     .from("subscription_plans")
     .select("*")
-    .eq("name", "Free")
+    .eq("id", DEFAULT_ENTRY_PLAN_ID)
     .maybeSingle();
-  if (freePlanError) throw new Error(freePlanError.message);
+  if (entryPlanByIdError) throw new Error(entryPlanByIdError.message);
 
-  let plan = freePlan as SalonSubscriptionPlan | null;
+  let plan = entryPlanById as SalonSubscriptionPlan | null;
+  if (!plan?.id) {
+    const { data: entryPlanByName, error: entryPlanByNameError } = await supabase
+      .from("subscription_plans")
+      .select("*")
+      .in("name", [DEFAULT_ENTRY_PLAN_NAME, "Free"])
+      .order("monthly_price", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (entryPlanByNameError) throw new Error(entryPlanByNameError.message);
+    plan = entryPlanByName as SalonSubscriptionPlan | null;
+  }
   if (!plan?.id) {
     const { data: fallbackPlan, error: fallbackError } = await supabase
       .from("subscription_plans")

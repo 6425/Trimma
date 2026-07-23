@@ -834,7 +834,7 @@ export function SalonOwnerHelpGuide() {
               "Schedules drive which slots appear online for each stylist",
             ]}
             tips={[
-              "Free plan allows 2 staff; Starter 5, Pro 10, Elite up to 30.",
+              "Beginner plan allows 2 staff; Starter 5, Pro 10, Elite up to 30.",
               "Deactivate instead of delete to preserve booking history.",
             ]}
           />

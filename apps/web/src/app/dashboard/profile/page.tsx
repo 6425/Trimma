@@ -135,8 +135,8 @@ export default function SalonProfilePage() {
   const [featuredImages, setFeaturedImages] = useState<string[]>([]);
   
   // Subscription limit states
-  const [subscriptionName, setSubscriptionName] = useState("Free");
-  const [maxImagesLimit, setMaxImagesLimit] = useState(3); // Default Free Plan Limit
+  const [subscriptionName, setSubscriptionName] = useState("Beginner");
+  const [maxImagesLimit, setMaxImagesLimit] = useState(3); // Default Beginner plan limit
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [allowedCategoriesCount, setAllowedCategoriesCount] = useState(2);
   const [allowedStaffCount, setAllowedStaffCount] = useState(2);
@@ -231,11 +231,11 @@ export default function SalonProfilePage() {
       // 2. Fetch Subscription Plan Details & Limits
       const planData = result.subscriptionPlan as any;
       if (planData) {
-        setSubscriptionName(planData.name || "Free");
+        setSubscriptionName(planData.name || "Beginner");
         setMaxImagesLimit(planData.max_images !== undefined && planData.max_images !== null ? planData.max_images : 3);
         setAllowedStaffCount(planData.max_staff !== undefined && planData.max_staff !== null ? planData.max_staff : 2);
       } else {
-        setSubscriptionName("Free");
+        setSubscriptionName("Beginner");
         setMaxImagesLimit(3);
         setAllowedStaffCount(2);
       }

@@ -1318,7 +1318,7 @@ export default function Leads() {
             ? {
                 allowedCategories: servicePickerData.allowedCategories || [],
                 maxServices: servicePickerData.maxServices || 6,
-                planName: servicePickerData.planName || "Free",
+                planName: servicePickerData.planName || "Beginner",
                 globalServices: servicePickerData.services || [],
                 existingGlobalServiceIds: servicePickerData.existingGlobalServiceIds || [],
                 selectedCategory: servicePickerCategory,

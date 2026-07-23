@@ -196,8 +196,8 @@ function SubscriptionCheckoutForm() {
   if (chargeAmount <= 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f9fafb] p-6 text-center">
-        <p className="text-lg font-semibold text-zinc-900 mb-2">This plan is free</p>
-        <p className="text-sm text-zinc-500 mb-6">No payment is required for the Free tier.</p>
+        <p className="text-lg font-semibold text-zinc-900 mb-2">No payment required</p>
+        <p className="text-sm text-zinc-500 mb-6">This plan has a zero checkout amount.</p>
         <Link href="/dashboard/billing" className="text-sm font-bold text-zinc-900 underline">
           Back to billing
         </Link>
