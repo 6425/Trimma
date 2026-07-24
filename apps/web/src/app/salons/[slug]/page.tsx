@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { fetchPublishedSalonReviewsForPage } from "@/app/actions/reviews";
 import { getCachedPublicSalonPage } from "@/lib/cached-public-salon-page";
 import { buildSalonPageMetadata } from "@/lib/salon-catalog-share-meta";
@@ -44,8 +45,11 @@ export default async function SalonServerPage({
 
   if (!result || result.success === false) {
     console.error("[salon page]", slug, result && "error" in result ? result.error : "fetch failed");
-    // Fall back to client-side fetch instead of a hard 404 when SSR fails transiently.
-    return <SalonPage highlightServiceId={serviceId} highlightPromoId={promoId} />;
+    return (
+      <Suspense fallback={null}>
+        <SalonPage highlightServiceId={serviceId} highlightPromoId={promoId} />
+      </Suspense>
+    );
   }
 
   const salonId = String(result.salon.id || "");
@@ -54,18 +58,20 @@ export default async function SalonServerPage({
     : null;
 
   return (
-    <SalonPage
-      initialData={{
-        salon: result.salon,
-        services: result.services,
-        staff: result.staff,
-        amenities: result.amenities,
-        promotionPackages: result.promotionPackages,
-      }}
-      initialReviews={reviewsPayload?.reviews}
-      initialReviewSummary={reviewsPayload?.summary}
-      highlightServiceId={serviceId}
-      highlightPromoId={promoId}
-    />
+    <Suspense fallback={null}>
+      <SalonPage
+        initialData={{
+          salon: result.salon,
+          services: result.services,
+          staff: result.staff,
+          amenities: result.amenities,
+          promotionPackages: result.promotionPackages,
+        }}
+        initialReviews={reviewsPayload?.reviews}
+        initialReviewSummary={reviewsPayload?.summary}
+        highlightServiceId={serviceId}
+        highlightPromoId={promoId}
+      />
+    </Suspense>
   );
 }
