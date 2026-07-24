@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
@@ -61,6 +61,11 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const [locationsOpen, setLocationsOpen] = useState(false);
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const prefetchCategory = (slug: string) => {
+    router.prefetch(`/category/${slug}`);
+  };
 
   const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
@@ -188,6 +193,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                           <Link
                             key={cat.id}
                             href={`/category/${cat.slug}`}
+                            prefetch
+                            onMouseEnter={() => prefetchCategory(cat.slug)}
+                            onFocus={() => prefetchCategory(cat.slug)}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
                           >
                             <Icon className="w-4 h-4 text-zinc-500 shrink-0" />
@@ -348,6 +356,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                   <Link
                     key={cat.id}
                     href={`/category/${cat.slug}`}
+                    prefetch
+                    onMouseEnter={() => prefetchCategory(cat.slug)}
+                    onFocus={() => prefetchCategory(cat.slug)}
                     className={navCategoryPillClass(active)}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
@@ -391,6 +402,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                     <Link
                       key={cat.id}
                       href={`/category/${cat.slug}`}
+                      prefetch
+                      onMouseEnter={() => prefetchCategory(cat.slug)}
+                      onFocus={() => prefetchCategory(cat.slug)}
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-normal text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
                     >
