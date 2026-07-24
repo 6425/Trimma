@@ -1,7 +1,7 @@
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "./PricingContent";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function PricingPage() {
   const result = await getPublicSubscriptionPlans();

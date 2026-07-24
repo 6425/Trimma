@@ -1,5 +1,7 @@
 import { toDateInputValue } from "@/lib/promotion-package-dates";
 import { isDummySalonRecord, filterPublicSalons } from "@/lib/salon-list-filters";
+import { createServerSupabaseClient } from "@/config/supabase-server";
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 function formatLocalDateInput(now = new Date()): string {
@@ -238,3 +240,13 @@ export async function fetchPublicDeals(supabase: SupabaseClient): Promise<SalonD
 
   return normalizeDealRows(packages, salonsById);
 }
+
+/** Cached public deals for server pages (home / deals) — shares a 60s cache key. */
+export const fetchCachedPublicDeals = unstable_cache(
+  async () => {
+    const supabase = createServerSupabaseClient();
+    return fetchPublicDeals(supabase);
+  },
+  ["public-deals"],
+  { revalidate: 60 }
+);

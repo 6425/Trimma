@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
@@ -193,6 +194,7 @@ export async function savePlatformStyle(input: SavePlatformStyleInput) {
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/styles");
   return { success: true as const, style: result.data };
 }
 
@@ -203,5 +205,6 @@ export async function deletePlatformStyle(id: string) {
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/styles");
   return { success: true as const };
 }

@@ -10,6 +10,7 @@ import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
 
 export interface SalonCardInternalProps {
   key?: string;
+  priority?: boolean;
   salon: {
     id: string;
     slug?: string;
@@ -38,7 +39,7 @@ function toOriginalSupabaseUrl(url: string): string | null {
 }
 
 export function SalonCard(props: SalonCardInternalProps) {
-  const { salon } = props;
+  const { salon, priority = false } = props;
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = isSalonVerified(salon.isVerified);
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
@@ -51,6 +52,7 @@ export function SalonCard(props: SalonCardInternalProps) {
           src={imageSrc}
           alt={salon.name}
           fill
+          priority={priority}
           sizes="(max-width: 1024px) 50vw, (max-width: 1200px) 33vw, 25vw"
           className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
           onError={() => {

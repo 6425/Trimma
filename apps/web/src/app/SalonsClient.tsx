@@ -2,6 +2,7 @@
 "use client";
 
 import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
@@ -15,8 +16,13 @@ import {
   defaultSalonFilters,
   type SalonFilters,
 } from "../components/marketplace/SalonFiltersPanel";
-import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSection";
 import type { SalonDealRow } from "@/lib/deals";
+
+const DealsDiscountSection = dynamic(
+  () =>
+    import("../components/landing-v2/DealsDiscountSection").then((m) => m.DealsDiscountSection),
+  { loading: () => null }
+);
 
 const LANDING_HERO_IMAGE = "/assets/beauty-salon-hero.webp";
 
@@ -480,8 +486,8 @@ export default function SalonsClient({
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3 lg:hidden">
-                  {filteredSalons.map((salon) => (
-                    <SalonCard key={salon.id} salon={mapToCardProps(salon)} />
+                  {filteredSalons.map((salon, index) => (
+                    <SalonCard key={salon.id} salon={mapToCardProps(salon)} priority={index < 4} />
                   ))}
                 </div>
                 <div className="hidden lg:flex lg:flex-col lg:space-y-4">

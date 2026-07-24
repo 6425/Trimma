@@ -4,7 +4,7 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
-import { fetchPublicDeals } from "@/lib/deals";
+import { fetchCachedPublicDeals } from "@/lib/deals";
 import SalonsClient from "./SalonsClient";
 
 export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
@@ -36,7 +36,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
         return { salons: [], hasMore: false };
       }
     })(),
-    fetchPublicDeals(supabase).catch(() => []),
+    fetchCachedPublicDeals().catch(() => []),
   ]);
 
   const initialSalons = listingResult.salons;
