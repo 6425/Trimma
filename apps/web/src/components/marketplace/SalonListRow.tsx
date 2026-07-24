@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -45,33 +46,48 @@ function toOriginalSupabaseUrl(url: string): string | null {
 }
 
 export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
+  const router = useRouter();
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = isSalonVerified(salon.isVerified);
   const locationLabel = salon.location || salon.city;
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
   const [imageSrc, setImageSrc] = useState(originalImage);
 
+  const prefetchSalon = () => {
+    router.prefetch(linkTarget);
+  };
+
+  useEffect(() => {
+    if (priority) router.prefetch(linkTarget);
+  }, [priority, linkTarget, router]);
+
   return (
-    <article className="trimma-marketplace-card group flex flex-col md:flex-row gap-0 md:gap-4 bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 transition-all">
+    <article
+      className="trimma-marketplace-card group flex flex-col md:flex-row gap-0 md:gap-4 bg-white border border-slate-200/80 rounded-2xl overflow-hidden hover:border-brand/40 hover:shadow-lg hover:shadow-brand/5 transition-all"
+      onMouseEnter={prefetchSalon}
+      onFocus={prefetchSalon}
+    >
       <div className="relative w-full md:w-[280px] lg:w-[300px] shrink-0 aspect-[4/3] overflow-hidden bg-slate-100">
-        <Image
-          src={imageSrc}
-          alt={salon.name}
-          fill
-          priority={priority}
-          sizes="(max-width: 768px) 100vw, 300px"
-          className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
-          onError={() => {
-            const original = toOriginalSupabaseUrl(imageSrc);
-            if (original && imageSrc.includes("/render/image/")) {
-              setImageSrc(original);
-              return;
-            }
-            if (imageSrc !== FALLBACK_SALON_IMAGE) {
-              setImageSrc(FALLBACK_SALON_IMAGE);
-            }
-          }}
-        />
+        <Link href={linkTarget} prefetch aria-label={salon.name} className="absolute inset-0 z-0" onFocus={prefetchSalon}>
+          <Image
+            src={imageSrc}
+            alt={salon.name}
+            fill
+            priority={priority}
+            sizes="(max-width: 768px) 100vw, 300px"
+            className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+            onError={() => {
+              const original = toOriginalSupabaseUrl(imageSrc);
+              if (original && imageSrc.includes("/render/image/")) {
+                setImageSrc(original);
+                return;
+              }
+              if (imageSrc !== FALLBACK_SALON_IMAGE) {
+                setImageSrc(FALLBACK_SALON_IMAGE);
+              }
+            }}
+          />
+        </Link>
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/30 to-transparent pointer-events-none" />
         <SalonFavoriteButton
           salonId={salon.id}
@@ -88,7 +104,9 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
       <div className="flex-1 p-4 md:py-5 md:pr-2 flex flex-col min-w-0">
         <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
           <h2 className="text-lg md:text-xl font-bold text-[#1A1C29] group-hover:text-brand transition-colors leading-snug">
-            <Link href={linkTarget}>{salon.name}</Link>
+            <Link href={linkTarget} prefetch onFocus={prefetchSalon}>
+              {salon.name}
+            </Link>
           </h2>
           {isVerified && <VerifiedSalonBadge />}
         </div>
@@ -166,6 +184,8 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
         <div className="flex flex-col gap-2 w-full md:w-auto">
           <Link
             href={linkTarget}
+            prefetch
+            onFocus={prefetchSalon}
             className={cn(
               buttonVariants({ variant: "outline", size: "default" }),
               "h-10 rounded-xl border-slate-200 text-zinc-700 font-bold text-xs hover:border-brand/40 hover:text-brand"
@@ -176,6 +196,8 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
           {isVerified ? (
             <Link
               href={`${linkTarget}?action=book`}
+              prefetch
+              onFocus={prefetchSalon}
               className={cn(
                 buttonVariants({ variant: "default", size: "default" }),
                 "h-10 rounded-xl bg-primary-gradient hover:opacity-95 text-white font-bold text-xs border-none shadow-md shadow-brand/20"
