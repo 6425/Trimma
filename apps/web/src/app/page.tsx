@@ -41,9 +41,11 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
 
   const initialSalons = listingResult.salons;
   const initialHasMore = listingResult.hasMore;
+  const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
 
   return (
     <SalonsClient
+      key={searchKey}
       categories={categories}
       initialSearch={{
         q: sp.q ?? "",
@@ -53,6 +55,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
       initialSalons={initialSalons}
       initialHasMore={initialHasMore}
       initialDeals={deals}
+      ssrSeeded
     />
   );
 }

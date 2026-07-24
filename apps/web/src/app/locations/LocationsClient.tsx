@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import * as Icons from "lucide-react";
 import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star } from "lucide-react";
@@ -47,14 +47,13 @@ export default function LocationsClient({
     <div className="min-h-screen bg-slate-50 font-sans relative overflow-hidden">
       {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
       <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
-        <img
+        <Image
           src="/assets/locations-hero.webp"
           alt=""
-          width={1920}
-          height={500}
-          decoding="async"
-          fetchPriority="high"
-          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+          fill
+          priority
+          sizes="100vw"
+          className="home-hero-bg-image object-cover pointer-events-none"
         />
         <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
         <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
@@ -205,10 +204,12 @@ export default function LocationsClient({
               className="w-[290px] md:w-[calc((100%-64px)/3)] shrink-0 snap-start bg-white rounded-3xl overflow-hidden border border-slate-200 hover:border-zinc-300 shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 group flex flex-col justify-between"
             >
               <div className="relative h-56 overflow-hidden bg-slate-100 shrink-0">
-                <img 
-                  src={province.image} 
-                  alt={province.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" 
+                <Image
+                  src={province.image}
+                  alt={province.name}
+                  fill
+                  sizes="(max-width: 768px) 290px, 33vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/85 via-zinc-950/20 to-transparent flex flex-col justify-end p-6 text-white">
                   <div className="flex items-center gap-2 mb-1.5">

@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Search, MapPin, Star, ShieldCheck, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User, Map as MapIcon } from "lucide-react";
 
@@ -139,14 +139,13 @@ export default function CategoryClient({
       {/* 1. HERO SECTION */}
       {useSplitHero ? (
         <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
-          <img
+          <Image
             src={heroImage}
             alt=""
-            width={1920}
-            height={500}
-            decoding="async"
-            fetchPriority="high"
-            className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+            fill
+            priority
+            sizes="100vw"
+            className="home-hero-bg-image object-cover pointer-events-none"
           />
           <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
           <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
@@ -221,10 +220,13 @@ export default function CategoryClient({
       ) : (
         <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
           <div className="absolute inset-0 z-0">
-            <img
+            <Image
               src={heroImage}
               alt="Category Hero"
-              className="page-hero-image"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 page-hero-overlay" />
           </div>

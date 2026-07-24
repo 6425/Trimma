@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -69,12 +69,7 @@ const BookingSheet = dynamic(
 
 const SalonLocationMap = dynamic(
   () => import("../../../components/SalonLocationMap").then((m) => m.SalonLocationMap),
-  { ssr: false, loading: () => <div className="h-48 rounded-2xl bg-slate-100 animate-pulse" /> }
-);
-
-const SalonReviewsSection = dynamic(
-  () => import("../../../components/reviews/SalonReviewsSection").then((m) => m.SalonReviewsSection),
-  { ssr: false, loading: () => <div className="h-40 rounded-2xl bg-slate-100 animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-48 rounded-2xl bg-slate-100" /> }
 );
 
 const iconMap: Record<string, any> = {
@@ -1302,11 +1297,10 @@ export default function SalonPage({
                </div>
             </section>
 
-            {/* Verified reviews (replaces duplicate main-column map) */}
+            {/* Verified reviews */}
             {reviewsLoading ? (
-              <div className="flex items-center justify-center py-12 text-zinc-400">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                <span className="text-sm font-medium">Loading reviews...</span>
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-zinc-500">
+                Reviews will appear here shortly.
               </div>
             ) : (
               <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
@@ -1670,10 +1664,12 @@ export default function SalonPage({
             </button>
           ) : null}
 
-          <img
+          <Image
             src={galleryImages[galleryLightboxIndex]}
             alt={`${salon.name} photo ${galleryLightboxIndex + 1}`}
-            className="max-h-[85vh] max-w-full w-auto object-contain rounded-lg"
+            width={1600}
+            height={1200}
+            className="max-h-[85vh] max-w-full w-auto h-auto object-contain rounded-lg"
             onClick={(event) => event.stopPropagation()}
           />
 

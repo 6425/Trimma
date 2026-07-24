@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -32,10 +31,13 @@ export default function CategoriesClient({
     <div className="min-h-screen bg-slate-50 font-sans pb-24">
       <section className="page-hero-shell py-14 md:py-20">
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=2836&auto=format&fit=crop"
             alt="Salon service categories"
-            className="page-hero-image"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
           />
           <div className="absolute inset-0 page-hero-overlay" />
         </div>

@@ -58,9 +58,8 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
           src={imageSrc}
           alt={salon.name}
           fill
-          sizes="(max-width: 768px) 100vw, 300px"
           priority={priority}
-          loading={priority ? "eager" : "lazy"}
+          sizes="(max-width: 768px) 100vw, 300px"
           className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
           onError={() => {
             const original = toOriginalSupabaseUrl(imageSrc);

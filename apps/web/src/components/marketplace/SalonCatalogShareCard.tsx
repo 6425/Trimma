@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Clock, Gift, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CatalogShareMeta } from "@/lib/salon-catalog-share-meta";
@@ -25,8 +26,7 @@ export function SalonCatalogShareCard({
       <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         {meta.imageUrl ? (
           <div className="relative aspect-[1.91/1] bg-slate-100">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={meta.imageUrl} alt={meta.title} className="w-full h-full object-cover" />
+            <Image src={meta.imageUrl} alt={meta.title} fill sizes="512px" className="object-cover" />
           </div>
         ) : null}
 
