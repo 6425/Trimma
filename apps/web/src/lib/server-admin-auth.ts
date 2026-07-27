@@ -5,18 +5,27 @@ import { withTimeout } from "@/lib/promise-timeout";
 
 export async function getAdminAccessTokenFromCookies(): Promise<string | null> {
   const cookieStore = await cookies();
+
+  const fullRaw = cookieStore.get("sb-access-token")?.value;
+  if (fullRaw) {
+    try {
+      const decoded = decodeURIComponent(fullRaw);
+      if (decoded.split(".").length === 3) return decoded;
+    } catch {
+      if (fullRaw.split(".").length === 3) return fullRaw;
+    }
+  }
+
   let chunkedToken = "";
   for (let i = 0; i < 5; i++) {
     const chunk = cookieStore.get(`sb-access-token.${i}`)?.value;
     if (chunk) chunkedToken += chunk;
   }
-
-  const raw = chunkedToken || cookieStore.get("sb-access-token")?.value;
-  if (!raw) return null;
+  if (!chunkedToken) return null;
   try {
-    return decodeURIComponent(raw);
+    return decodeURIComponent(chunkedToken);
   } catch {
-    return raw;
+    return chunkedToken;
   }
 }
 

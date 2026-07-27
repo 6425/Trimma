@@ -24,6 +24,7 @@ import {
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { saveAgentLeadData, convertManualLeadToSalon, fetchAgentGlobals } from "../../actions/agent-leads-update";
 import { rejectSalonOwnerSubmission } from "../../actions/agent-approval";
+import { postInviteOwner } from "@/lib/invite-owner-client";
 import {
   fetchAgentAssignedLeads,
   fetchAgentManualLeads,
@@ -625,19 +626,12 @@ function AgentLeads() {
       
       if (!success) throw new Error(error || "Failed to send to owner");
 
-      const apiRes = await fetch("/api/invite-owner", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          salonId: targetSalonId,
-          ownerEmail: formData.owner_gmail,
-          actorEmail: agentEmail,
-        }),
+      const invite = await postInviteOwner({
+        salonId: targetSalonId,
+        ownerEmail: formData.owner_gmail,
       });
-      
-      if (!apiRes.ok) {
-        const err = await apiRes.json();
-        throw new Error(err.error || "Failed to send email invite");
+      if (!invite.success) {
+        throw new Error(invite.error || "Failed to send email invite");
       }
 
       toast.success("Sent to Salon Owner and Invites Delivered!");
@@ -663,19 +657,13 @@ function AgentLeads() {
     try {
       setUpdating(true);
 
-      const res = await fetch("/api/invite-owner", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          salonId: selectedLead.id,
-          ownerEmail: formData.owner_gmail,
-          actorEmail: agentEmail,
-        }),
+      const invite = await postInviteOwner({
+        salonId: selectedLead.id,
+        ownerEmail: formData.owner_gmail,
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to resend invite");
+      if (!invite.success) {
+        throw new Error(invite.error || "Failed to resend invite");
       }
 
       toast.success("Invitation resent to owner!");

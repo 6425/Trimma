@@ -10,6 +10,16 @@ export const ACCESS_TOKEN_CHUNK_COUNT = 5;
 export function getAccessTokenFromCookieHeader(cookieHeader: string): string | null {
   if (!cookieHeader) return null;
 
+  const fullMatch = cookieHeader.match(new RegExp(`(?:^|;\\s*)${ACCESS_TOKEN_COOKIE}=([^;]+)`));
+  if (fullMatch?.[1]) {
+    try {
+      const decoded = decodeURIComponent(fullMatch[1]);
+      if (decoded.split(".").length === 3) return decoded;
+    } catch {
+      if (fullMatch[1].split(".").length === 3) return fullMatch[1];
+    }
+  }
+
   let chunkedToken = "";
   for (let i = 0; i < ACCESS_TOKEN_CHUNK_COUNT; i++) {
     const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${ACCESS_TOKEN_COOKIE}\\.${i}=([^;]+)`));
@@ -24,14 +34,7 @@ export function getAccessTokenFromCookieHeader(cookieHeader: string): string | n
     }
   }
 
-  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${ACCESS_TOKEN_COOKIE}=([^;]+)`));
-  if (!match?.[1]) return null;
-
-  try {
-    return decodeURIComponent(match[1]);
-  } catch {
-    return match[1];
-  }
+  return null;
 }
 
 export function getAccessTokenFromRequest(request: NextRequest | Request): string | null {
@@ -43,18 +46,26 @@ export function getAccessTokenFromRequest(request: NextRequest | Request): strin
 export async function getAccessTokenFromCookieStore(
   getCookie: (name: string) => { value: string } | undefined
 ): Promise<string | null> {
+  const fullRaw = getCookie(ACCESS_TOKEN_COOKIE)?.value;
+  if (fullRaw) {
+    try {
+      const decoded = decodeURIComponent(fullRaw);
+      if (decoded.split(".").length === 3) return decoded;
+    } catch {
+      if (fullRaw.split(".").length === 3) return fullRaw;
+    }
+  }
+
   let chunkedToken = "";
   for (let i = 0; i < ACCESS_TOKEN_CHUNK_COUNT; i++) {
     const chunk = getCookie(`${ACCESS_TOKEN_COOKIE}.${i}`)?.value;
     if (chunk) chunkedToken += chunk;
   }
-
-  const raw = chunkedToken || getCookie(ACCESS_TOKEN_COOKIE)?.value;
-  if (!raw) return null;
+  if (!chunkedToken) return null;
 
   try {
-    return decodeURIComponent(raw);
+    return decodeURIComponent(chunkedToken);
   } catch {
-    return raw;
+    return chunkedToken;
   }
 }
