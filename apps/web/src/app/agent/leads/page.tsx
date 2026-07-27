@@ -630,7 +630,7 @@ function AgentLeads() {
         salonId: targetSalonId,
         ownerEmail: formData.owner_gmail,
       });
-      if (!invite.success) {
+      if (invite.success === false) {
         throw new Error(invite.error || "Failed to send email invite");
       }
 
@@ -662,7 +662,7 @@ function AgentLeads() {
         ownerEmail: formData.owner_gmail,
       });
 
-      if (!invite.success) {
+      if (invite.success === false) {
         throw new Error(invite.error || "Failed to resend invite");
       }
 
