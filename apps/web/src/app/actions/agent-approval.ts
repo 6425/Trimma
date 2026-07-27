@@ -43,7 +43,7 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
       .single();
 
     // Older DBs may lack rejection_reason; still reject and keep the note in admin_notes.
-    if (updateError && isMissingRejectionReasonColumnError(updateError.message)) {
+    if (updateError && isMissingRejectionReasonColumnError(updateError)) {
       ({ error: updateError, data: salon } = await supabase
         .from("salons")
         .update({
@@ -54,6 +54,19 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
         .eq("id", salonId)
         .select("owner_id, owner_email, owner_gmail, phone, name, assign_to, source_type")
         .single());
+
+      // If admin_notes is also unavailable, reject with status fields only.
+      if (updateError) {
+        ({ error: updateError, data: salon } = await supabase
+          .from("salons")
+          .update({
+            onboarding_status: resubmitStatus,
+            booking_enabled: false,
+          })
+          .eq("id", salonId)
+          .select("owner_id, owner_email, owner_gmail, phone, name, assign_to, source_type")
+          .single());
+      }
     }
 
     if (updateError) throw updateError;

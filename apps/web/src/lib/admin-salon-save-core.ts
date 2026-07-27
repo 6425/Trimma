@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isMissingRejectionReasonColumnError, mapAdminDbError } from "@/lib/with-admin-db";
+import {
+  dbErrorText,
+  isMissingDbSchemaError,
+  isMissingRejectionReasonColumnError,
+  mapAdminDbError,
+} from "@/lib/with-admin-db";
 import { sanitizeAdminSalonPayload } from "@/lib/admin-salon-update";
 import { ensureSalonOwnerAccess } from "@/lib/ensure-salon-owner-access";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
@@ -20,6 +25,29 @@ function payloadWithoutRejectionReasonColumn(
     ...rest,
     admin_notes: existingNotes ? `${existingNotes}\n${note}` : note,
   };
+}
+
+/** Last-resort reject: only status fields (no rejection_reason / admin_notes). */
+function minimalRejectPayload(sanitized: Record<string, unknown>): Record<string, unknown> {
+  const minimal: Record<string, unknown> = {};
+  for (const key of ["status", "onboarding_status", "is_verified", "booking_enabled"] as const) {
+    if (key in sanitized) minimal[key] = sanitized[key];
+  }
+  return minimal;
+}
+
+function shouldRetryRejectWithoutRejectionReason(
+  sanitized: Record<string, unknown>,
+  error: { message?: string; code?: string; details?: string | null; hint?: string | null }
+): boolean {
+  if (!("rejection_reason" in sanitized)) return false;
+  if (isMissingRejectionReasonColumnError(error)) return true;
+  // Reject payloads: any column/schema-cache miss — retry without rejection_reason.
+  const isReject =
+    sanitized.status === "rejected" ||
+    sanitized.onboarding_status === "REJECTED" ||
+    typeof sanitized.rejection_reason === "string";
+  return isReject && isMissingDbSchemaError(dbErrorText(error));
 }
 
 export type AdminSalonSaveResult =
@@ -79,23 +107,39 @@ export async function saveAdminSalonRecord(
 
     const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);
     if (error) {
-      if (
-        "rejection_reason" in sanitized &&
-        isMissingRejectionReasonColumnError(error.message)
-      ) {
+      if (shouldRetryRejectWithoutRejectionReason(sanitized, error)) {
         const fallback = payloadWithoutRejectionReasonColumn(sanitized);
         const { error: retryError } = await supabase
           .from("salons")
           .update(fallback)
           .eq("id", salonId);
         if (retryError) {
-          return { success: false, error: mapAdminDbError(retryError.message) };
+          const minimal = minimalRejectPayload(sanitized);
+          if (Object.keys(minimal).length > 0) {
+            const { error: minimalError } = await supabase
+              .from("salons")
+              .update(minimal)
+              .eq("id", salonId);
+            if (!minimalError) {
+              console.warn(
+                "[saveAdminSalonRecord] reject saved without rejection_reason/admin_notes. Run packages/db/ADD_SALON_REJECTION_REASON.sql."
+              );
+            } else {
+              return {
+                success: false,
+                error: mapAdminDbError(dbErrorText(minimalError) || dbErrorText(retryError)),
+              };
+            }
+          } else {
+            return { success: false, error: mapAdminDbError(dbErrorText(retryError)) };
+          }
+        } else {
+          console.warn(
+            "[saveAdminSalonRecord] salons.rejection_reason missing; stored reason in admin_notes. Run packages/db/ADD_SALON_REJECTION_REASON.sql."
+          );
         }
-        console.warn(
-          "[saveAdminSalonRecord] salons.rejection_reason missing; stored reason in admin_notes. Run packages/db/ADD_SALON_REJECTION_REASON.sql."
-        );
       } else {
-        return { success: false, error: mapAdminDbError(error.message) };
+        return { success: false, error: mapAdminDbError(dbErrorText(error)) };
       }
     }
 
