@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert, Pencil, Trash2 } from "lucide-react";
+import { Store, Search, MapPin, Loader2, ShieldCheck, CheckCircle, XCircle, Eye, Save, Target, X, BadgeAlert, Pencil, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ import {
 } from "@/app/actions/salon-onboarding-notifications";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
+import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
 
 export default function Salons() {
   const navigate = useRouter();
@@ -433,6 +434,20 @@ export default function Salons() {
     return matchesSearch; // for "all"
   });
 
+  const handleExportDirectory = () => {
+    if (filteredSalons.length === 0) {
+      toast.error("No salons to export for the current search/filter.");
+      return;
+    }
+
+    exportDiscoveryLeadsToExcel({
+      rows: filteredSalons.map((salon) => mapSalonToDiscoveryExport(salon)),
+      sheetTitle: `Salon Directory — ${filterMode}`,
+      fileName: `trimma-salon-directory-${filterMode}.xlsx`,
+    });
+    toast.success(`Exported ${filteredSalons.length} salons to Excel.`);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
@@ -442,7 +457,13 @@ export default function Salons() {
           <p className="text-zinc-500 text-sm mt-1">Manage partner establishments, approvals, and verifications.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-zinc-200 rounded-xl font-bold h-11">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportDirectory}
+            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50 rounded-xl font-bold h-11"
+          >
+            <Download className="w-4 h-4 mr-2" />
             Export Directory
           </Button>
         </div>
