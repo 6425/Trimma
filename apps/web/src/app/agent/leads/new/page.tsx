@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CategoryMultiSelect } from "@/components/ui/CategoryMultiSelect";
 import { getAgentEmailFast } from "@/lib/client-auth";
 import { createAgentLeadData, fetchAgentGlobals } from "../../../actions/agent-leads-update";
+import { postInviteOwner } from "@/lib/invite-owner-client";
 import { tryAgentData, fetchAgentGlobalsClient, getAgentEmailFromClient } from "@/lib/agent-client-data";
 import { AddProfessionalForm, StaffPayload } from "../../../../components/forms/AddProfessionalForm";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
@@ -176,19 +177,13 @@ export default function AgentNewLeadPage() {
       }
 
       if (submitAction === "REVIEW") {
-        const res = await fetch("/api/invite-owner", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            salonId,
-            ownerEmail: form.owner_gmail,
-            actorEmail: agentEmail,
-          }),
+        const invite = await postInviteOwner({
+          salonId: salonId!,
+          ownerEmail: form.owner_gmail,
         });
-        
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Failed to send email invite");
+
+        if (!invite.success) {
+          throw new Error(invite.error || "Failed to send email invite");
         }
 
         toast.success("Lead created, Salon Owner sent review invites!");

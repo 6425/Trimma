@@ -6,13 +6,13 @@ import { assignSalonOwnerRoleByAdminClient } from "@/app/actions/admin-operation
 import { isEmailSendFailure } from "@/lib/email/result";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
-import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import { requireAgentFromRequest } from "@/lib/server-agent-auth";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { canAgentAccessSalonAssignee } from "@/lib/agent-hierarchy";
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireAgentFromCookies();
+    const auth = await requireAgentFromRequest(request);
     if ("error" in auth) {
       return NextResponse.json({ error: auth.error }, { status: 401 });
     }
