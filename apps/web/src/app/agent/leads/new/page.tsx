@@ -182,7 +182,7 @@ export default function AgentNewLeadPage() {
           ownerEmail: form.owner_gmail,
         });
 
-        if (!invite.success) {
+        if (invite.success === false) {
           throw new Error(invite.error || "Failed to send email invite");
         }
 
