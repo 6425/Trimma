@@ -17,7 +17,7 @@ import {
   saveSubscriptionCommissionMaster,
 } from "@/app/actions/commission-master";
 import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
-import { getStripeConnectionStatus } from "@/lib/stripe-env";
+import { getStripeConnectionStatus, resolveActiveStripeEnvironment } from "@/lib/stripe-env";
 import { loadStripeDbSettingsForAdmin } from "@/lib/stripe-settings";
 import {
   ensureSalonSubscriptionPlan,
@@ -195,24 +195,34 @@ export async function saveGlobalPaymentSettings(input: Record<string, unknown>) 
 
 
 export async function fetchStripeConnectionStatus() {
-  const db = await loadStripeDbSettingsForAdmin();
-  return { success: true as const, connection: getStripeConnectionStatus(db), settings: db };
+  const [db, activeEnvironment] = await Promise.all([
+    loadStripeDbSettingsForAdmin(),
+    resolveActiveStripeEnvironment(),
+  ]);
+  return {
+    success: true as const,
+    connection: getStripeConnectionStatus(db),
+    settings: db,
+    activeEnvironment,
+  };
 }
 
 export async function saveStripePaymentSettings(input: {
   stripe_enabled: boolean;
-  stripe_environment: "sandbox" | "live";
+  stripe_environment?: "sandbox" | "live";
   stripe_publishable_key_sandbox?: string;
   stripe_publishable_key_live?: string;
   stripe_secret_key_sandbox?: string;
   stripe_secret_key_live?: string;
 }) {
+  const activeEnvironment =
+    input.stripe_environment || (await resolveActiveStripeEnvironment());
   const result = await withAdminDb(async (supabase) => {
     const { error } = await supabase.from("global_payment_settings").upsert({
       id: PAYMENT_SETTINGS_ID,
       updated_at: new Date().toISOString(),
       stripe_enabled: input.stripe_enabled,
-      stripe_environment: input.stripe_environment,
+      stripe_environment: activeEnvironment,
       stripe_publishable_key_sandbox: input.stripe_publishable_key_sandbox ?? "",
       stripe_publishable_key_live: input.stripe_publishable_key_live ?? "",
       stripe_secret_key_sandbox: input.stripe_secret_key_sandbox ?? "",

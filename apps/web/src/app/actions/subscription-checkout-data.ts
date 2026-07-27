@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { resolveActiveStripeEnvironment } from "@/lib/stripe-env";
 import { generatePayhereHash } from "@/app/actions/payhere";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
@@ -95,8 +96,7 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
       success: true as const,
       planDetails: resolvePlan(normalizedPlan, planRow),
       stripeEnabled: paymentRes.data?.stripe_enabled !== false,
-      stripeEnvironment:
-        paymentRes.data?.stripe_environment === "live" ? "live" : "sandbox",
+      stripeEnvironment: await resolveActiveStripeEnvironment(),
       customerPrefill,
     };
   } catch (err) {
@@ -105,7 +105,7 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
       success: true as const,
       planDetails: resolvePlan(normalizedPlan, null),
       stripeEnabled: true,
-      stripeEnvironment: "sandbox",
+      stripeEnvironment: await resolveActiveStripeEnvironment(),
       customerPrefill: null,
     };
   }

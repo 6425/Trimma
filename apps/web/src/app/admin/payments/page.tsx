@@ -57,7 +57,6 @@ export default function AdminPayments() {
 
   const applySettingsFromDb = (data: Record<string, unknown> | null | undefined) => {
     if (!data) return;
-    setStripeEnvironment(data.stripe_environment === "live" ? "live" : "sandbox");
     setStripeEnabled(data.stripe_enabled !== false);
     setStripePublishableKeySandbox(String(data.stripe_publishable_key_sandbox || ""));
     setStripePublishableKeyLive(String(data.stripe_publishable_key_live || ""));
@@ -86,6 +85,7 @@ export default function AdminPayments() {
 
       if (connectionResult.success) {
         setConnection(connectionResult.connection);
+        setStripeEnvironment(connectionResult.activeEnvironment);
       }
     } catch (err: any) {
       console.warn("Failed to load payment settings:", err.message || err);
@@ -129,7 +129,6 @@ export default function AdminPayments() {
 
       const result = await saveStripePaymentSettings({
         stripe_enabled: stripeEnabled,
-        stripe_environment: stripeEnvironment,
         stripe_publishable_key_sandbox: stripePublishableKeySandbox,
         stripe_publishable_key_live: stripePublishableKeyLive,
         stripe_secret_key_sandbox: stripeSecretKeySandbox,
@@ -140,6 +139,7 @@ export default function AdminPayments() {
       const connectionResult = await fetchStripeConnectionStatus();
       if (connectionResult.success) {
         setConnection(connectionResult.connection);
+        setStripeEnvironment(connectionResult.activeEnvironment);
         applySettingsFromDb(connectionResult.settings as Record<string, unknown>);
       }
 
@@ -176,7 +176,7 @@ export default function AdminPayments() {
         <div>
           <h1 className="text-2xl font-bold text-[#1A1C29] tracking-tight">Stripe Payments</h1>
           <p className="text-zinc-500 text-sm mt-1">
-            Edit and save Stripe API keys below. Checkout uses Vercel env vars when set; otherwise saved database keys.
+            Save sandbox and live Stripe keys. Checkout picks sandbox on beta/local and live on trimma.io.
           </p>
         </div>
         <Badge
@@ -288,46 +288,40 @@ export default function AdminPayments() {
                 <span>Stripe Environment</span>
               </div>
               <p className="text-xs text-zinc-500 font-medium">
-                Choose sandbox or live mode. Keys can be saved here or set via Vercel environment variables (env takes priority).
+                Mode is automatic from the domain — not a manual toggle.
               </p>
 
-              <div className="grid grid-cols-2 gap-3 p-1 bg-zinc-50 rounded-2xl border border-zinc-100">
-                <button
-                  type="button"
-                  onClick={() => setStripeEnvironment("sandbox")}
-                  className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
-                    stripeEnvironment === "sandbox"
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-600"
-                  }`}
-                >
-                  Sandbox Mode
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStripeEnvironment("live")}
-                  className={`py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
-                    stripeEnvironment === "live"
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-600"
-                  }`}
-                >
-                  Live Production
-                </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+                  <p className="font-bold text-amber-900 uppercase tracking-wider text-[10px] mb-1">
+                    Sandbox
+                  </p>
+                  <p className="text-amber-800 font-medium">
+                    beta.trimma.io, localhost, and other non-production hosts
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+                  <p className="font-bold text-emerald-900 uppercase tracking-wider text-[10px] mb-1">
+                    Live
+                  </p>
+                  <p className="text-emerald-800 font-medium">
+                    trimma.io / www.trimma.io only
+                  </p>
+                </div>
               </div>
 
               {stripeEnvironment === "sandbox" ? (
                 <div className="bg-amber-50/50 border border-amber-100/50 rounded-2xl p-4 flex gap-3 text-amber-800 text-xs font-medium">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
                   <div>
-                    <span className="font-bold">Test mode.</span> Use Stripe test cards only. Set sandbox keys in Vercel / local <code className="text-[10px] bg-amber-100/80 px-1 rounded">.env</code>.
+                    <span className="font-bold">This host is in test mode.</span> Checkout here uses sandbox keys and Stripe test cards.
                   </div>
                 </div>
               ) : (
                 <div className="bg-rose-50/50 border border-rose-100/50 rounded-2xl p-4 flex gap-3 text-rose-800 text-xs font-medium">
                   <Lock className="w-5 h-5 text-rose-600 shrink-0" />
                   <div>
-                    <span className="font-bold">Live mode.</span> Real charges will be processed. Ensure live keys are configured before saving.
+                    <span className="font-bold">This host is in live mode.</span> Real charges will be processed with live keys.
                   </div>
                 </div>
               )}
