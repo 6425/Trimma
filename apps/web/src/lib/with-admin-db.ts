@@ -11,19 +11,53 @@ export function isMissingDbSchemaError(message: string): boolean {
   const lower = message.toLowerCase();
   return (
     lower.includes("does not exist") ||
-    lower.includes("relation") ||
+    lower.includes("undefined_column") ||
+    lower.includes("pgrst204") ||
+    // Postgres: column "x" of relation "y" does not exist (also matched above)
+    (lower.includes("of relation") && lower.includes("column")) ||
     (lower.includes("schema cache") && lower.includes("column")) ||
-    (lower.includes("could not find") && lower.includes("column"))
+    (lower.includes("could not find") && lower.includes("column")) ||
+    (lower.includes("column") &&
+      (lower.includes("missing") || lower.includes("unknown") || lower.includes("not found")))
   );
 }
 
+/** Flatten PostgREST / Error fields for schema-column matching. */
+export function dbErrorText(error: {
+  message?: string;
+  code?: string;
+  details?: string | null;
+  hint?: string | null;
+} | string): string {
+  if (typeof error === "string") return error;
+  return [error.message, error.code, error.details, error.hint].filter(Boolean).join(" ");
+}
+
 /** True when PostgREST/Postgres reports salons.rejection_reason is missing. */
-export function isMissingRejectionReasonColumnError(message: string): boolean {
-  const lower = message.toLowerCase();
-  return lower.includes("rejection_reason") && isMissingDbSchemaError(message);
+export function isMissingRejectionReasonColumnError(
+  error: { message?: string; code?: string; details?: string | null; hint?: string | null } | string
+): boolean {
+  const blob = dbErrorText(error).toLowerCase();
+  if (!blob.includes("rejection_reason")) return false;
+  return (
+    isMissingDbSchemaError(blob) ||
+    blob.includes("pgrst204") ||
+    blob.includes("42703")
+  );
 }
 
 export function mapAdminDbError(message: string, hint?: string): string {
+  // Avoid remapping already-friendly errors (updateAdminSalon maps more than once).
+  if (
+    message.includes(SALON_REJECTION_REASON_PATCH) ||
+    message.includes(ADMIN_USER_ROLE_PATCH) ||
+    message.startsWith("Database schema is out of date") ||
+    message.startsWith("Save included an invalid salon field") ||
+    message.startsWith("A record with this slug already exists")
+  ) {
+    return message;
+  }
+
   console.error("[mapAdminDbError] Raw DB Error:", message);
   const lower = message.toLowerCase();
   if (isMissingRejectionReasonColumnError(message)) {
