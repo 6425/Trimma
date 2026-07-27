@@ -28,7 +28,8 @@ export async function saveAgentLeadData(
   agentEmail: string,
   newStatus: string | null,
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null,
-  actionType: "DRAFT" | "REVIEW" = "DRAFT"
+  actionType: "DRAFT" | "REVIEW" = "DRAFT",
+  staffToRemoveIds: string[] | null = null
 ) {
   const auth = await requireAgentFromCookies();
   if ("error" in auth) return { success: false as const, error: auth.error };
@@ -106,32 +107,61 @@ export async function saveAgentLeadData(
       assignMissingServices: true,
     });
 
-    // 3. Add Staff (skip duplicates by name + email)
+    // 3. Sync Staff (update existing, insert new, remove deleted)
+    if (staffToRemoveIds && staffToRemoveIds.length > 0) {
+      await supabaseAdmin.from("salon_staff").delete().in("id", staffToRemoveIds).eq("salon_id", salonId);
+    }
+
     if (staffToAdd && staffToAdd.length > 0) {
-      const { data: existingStaff } = await supabaseAdmin
-        .from("salon_staff")
-        .select("id, name, email")
-        .eq("salon_id", salonId);
+      const toUpdate = staffToAdd.filter((row) => row?.id);
+      const toInsert = staffToAdd.filter((row) => !row?.id);
 
-      const existingKeys = new Set(
-        (existingStaff || []).map(
-          (row) =>
-            `${String(row.name || "").trim().toLowerCase()}|${String(row.email || "").trim().toLowerCase()}`
-        )
-      );
+      for (const row of toUpdate) {
+        const { id, avatarBlob: _blob, schedule: _schedule, services: _services, general_buffer_time: _buf, skill_level: _skill, ...rest } = row;
+        const { error: staffUpdateError } = await supabaseAdmin
+          .from("salon_staff")
+          .update({
+            name: rest.name,
+            email: rest.email || null,
+            role: rest.role,
+            commission_rate: rest.commission_rate,
+            status: rest.status || "active",
+            avatar_url: rest.avatar_url || null,
+            working_hours: rest.working_hours || null,
+          })
+          .eq("id", id)
+          .eq("salon_id", salonId);
+        if (staffUpdateError) throw staffUpdateError;
+      }
 
-      const uniqueStaff = staffToAdd.filter((row) => {
-        const key = `${String(row.name || "").trim().toLowerCase()}|${String(row.email || "").trim().toLowerCase()}`;
-        return !existingKeys.has(key);
-      });
+      if (toInsert.length > 0) {
+        const { data: existingStaff } = await supabaseAdmin
+          .from("salon_staff")
+          .select("id, name, email")
+          .eq("salon_id", salonId);
 
-      if (uniqueStaff.length > 0) {
-        await supabaseAdmin.from("salon_staff").insert(uniqueStaff);
+        const existingKeys = new Set(
+          (existingStaff || []).map(
+            (row) =>
+              `${String(row.name || "").trim().toLowerCase()}|${String(row.email || "").trim().toLowerCase()}`
+          )
+        );
+
+        const uniqueStaff = toInsert
+          .map(({ avatarBlob: _b, schedule: _s, services: _sv, general_buffer_time: _g, skill_level: _sk, ...row }) => row)
+          .filter((row) => {
+            const key = `${String(row.name || "").trim().toLowerCase()}|${String(row.email || "").trim().toLowerCase()}`;
+            return !existingKeys.has(key);
+          });
+
+        if (uniqueStaff.length > 0) {
+          await supabaseAdmin.from("salon_staff").insert(uniqueStaff);
+        }
       }
 
       await syncStaffServiceAssignmentsForSalon(supabaseAdmin, salonId, {
-      assignMissingServices: true,
-    });
+        assignMissingServices: true,
+      });
     }
 
     // 4. Sync Amenities

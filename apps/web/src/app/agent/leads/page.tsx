@@ -4,8 +4,9 @@
 import React, { useState, useEffect, Suspense, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2, UploadCloud, Map, Tag, Users, Plus, Trash2, Download } from "lucide-react";
+import { Search, Phone, MapPin, Loader2, Target, Globe, Star, X, CheckCircle2, Mail, ClipboardList, Send, Building2, UploadCloud, Map, Tag, Users, Plus, Trash2, Download, Pencil } from "lucide-react";
 import { AddProfessionalForm, StaffPayload } from "../../../components/forms/AddProfessionalForm";
+import { StaffPortrait } from "@/components/staff/StaffPortrait";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
@@ -41,7 +42,7 @@ import {
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
-import { buildStaffWorkingHoursPayload, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
+import { buildStaffWorkingHoursPayload, parseStaffWorkingHours, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
 import {
@@ -215,7 +216,9 @@ function AgentLeads() {
   const [globalServices, setGlobalServices] = useState<any[]>([]);
   const [globalStaffRoles, setGlobalStaffRoles] = useState<any[]>([]);
   const [selectedServices, setSelectedServices] = useState<{[key: string]: { enabled: boolean, price: string, duration: string, category: string }}>({});
-  const [staffToAdd, setStaffToAdd] = useState<StaffPayload[]>([]);
+  const [staffToAdd, setStaffToAdd] = useState<(StaffPayload & { id?: string; avatar_url?: string | null; working_hours?: unknown })[]>([]);
+  const [loadedStaffIds, setLoadedStaffIds] = useState<string[]>([]);
+  const [editingStaffIndex, setEditingStaffIndex] = useState<number | null>(null);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [globalAmenities, setGlobalAmenities] = useState<any[]>([]);
@@ -284,6 +287,8 @@ function AgentLeads() {
     });
     setSelectedCategories((lead.category || "").split(",").map((s: string) => s.trim()).filter(Boolean));
     setStaffToAdd([]);
+    setLoadedStaffIds([]);
+    setEditingStaffIndex(null);
     setIsModalOpen(true);
 
     if (isManual) {
@@ -325,6 +330,25 @@ function AgentLeads() {
         }
       });
       setSalonAmenities(amMap);
+
+      const hydratedStaff = (editorRes.staff || []).map((member: any) => {
+        const workingHours = parseStaffWorkingHours(member.working_hours) || member.working_hours;
+        return {
+          id: member.id,
+          name: member.name || "",
+          email: member.email || "",
+          role: member.role || "",
+          skill_level: "",
+          commission_rate: Number(member.commission_rate) || 0,
+          general_buffer_time: workingHours?.general_buffer_time ?? 0,
+          schedule: workingHours?.schedule || undefined,
+          services: undefined,
+          avatar_url: member.avatar_url || null,
+          working_hours: workingHours,
+        };
+      });
+      setStaffToAdd(hydratedStaff);
+      setLoadedStaffIds(hydratedStaff.map((s) => s.id).filter(Boolean) as string[]);
     } catch (err) {
       console.error(err);
     }
@@ -414,17 +438,26 @@ function AgentLeads() {
     }
 
     let finalStaffToAdd: any[] = [];
-    const salonServiceRows: SalonServiceAssignmentRow[] = existingSvc.map((s) => ({
-      id: s.id,
-      salonServiceId: s.id,
-      global_service_id: s.global_service_id,
-      name: s.name,
-      duration_min: s.duration_min,
-    }));
+    const salonServiceRows: SalonServiceAssignmentRow[] = [
+      ...existingSvc.map((s) => ({
+        id: s.id,
+        salonServiceId: s.id,
+        global_service_id: s.global_service_id,
+        name: s.name,
+        duration_min: s.duration_min,
+      })),
+      ...svcsToAdd.map((s, idx) => ({
+        id: `pending-${idx}`,
+        salonServiceId: `pending-${idx}`,
+        global_service_id: s.global_service_id,
+        name: s.name,
+        duration_min: s.duration_min,
+      })),
+    ];
 
     if (staffToAdd.length > 0) {
       for (const st of staffToAdd) {
-        let finalAvatarUrl = null;
+        let finalAvatarUrl = st.avatar_url || null;
         if (st.avatarBlob) {
           const fileName = `${salonId}-${Date.now()}.jpg`;
           const { error: uploadError } = await supabase.storage.from("staff-avatars").upload(fileName, st.avatarBlob, {
@@ -438,6 +471,7 @@ function AgentLeads() {
         }
         
         finalStaffToAdd.push({
+          ...(st.id ? { id: st.id } : {}),
           salon_id: salonId,
           name: st.name,
           email: st.email || null,
@@ -454,10 +488,14 @@ function AgentLeads() {
         });
       }
     }
+
+    const currentStaffIds = finalStaffToAdd.map((s) => s.id).filter(Boolean) as string[];
+    const staffToRemoveIds = loadedStaffIds.filter((id) => !currentStaffIds.includes(id));
     
     return {
       servicesData: { svcsToAdd, svcsToRemoveIds },
-      staffToAdd: finalStaffToAdd
+      staffToAdd: finalStaffToAdd,
+      staffToRemoveIds,
     };
   };
 
@@ -513,7 +551,7 @@ function AgentLeads() {
         agent_notes: formData.agent_notes || null
       };
 
-      const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
+      const { servicesData, staffToAdd: finalStaffToAdd, staffToRemoveIds } = await prepareServicesAndStaff(selectedLead.id);
       
       let success = false, error = null;
       if (isManualLead) {
@@ -537,7 +575,8 @@ function AgentLeads() {
           agentEmail,
           null,
           salonAmenities,
-          "DRAFT"
+          "DRAFT",
+          staffToRemoveIds
         );
         success = res.success;
         error = res.error;
@@ -593,7 +632,7 @@ function AgentLeads() {
         agent_notes: formData.agent_notes || null
       };
 
-      const { servicesData, staffToAdd: finalStaffToAdd } = await prepareServicesAndStaff(selectedLead.id);
+      const { servicesData, staffToAdd: finalStaffToAdd, staffToRemoveIds } = await prepareServicesAndStaff(selectedLead.id);
       
       let success = false, error = null, targetSalonId = selectedLead.id;
       if (isManualLead) {
@@ -618,7 +657,8 @@ function AgentLeads() {
           agentEmail,
           null,
           salonAmenities,
-          "REVIEW"
+          "REVIEW",
+          staffToRemoveIds
         );
         success = res.success;
         error = res.error;
@@ -1086,12 +1126,12 @@ function AgentLeads() {
             <div className="flex-1 overflow-y-auto py-5 space-y-6 pr-1 text-xs">
 
               <div className="space-y-4 rounded-2xl border border-zinc-100 bg-zinc-50/60 p-4">
-                <h4 className="font-extrabold uppercase tracking-widest text-blue-600 text-[10px] border-b border-blue-100 pb-2 flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5" /> 1. Salon & Owner Details
+                <h4 className="font-extrabold uppercase tracking-wide text-zinc-900 text-sm border-b border-zinc-200 pb-2 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-blue-600" /> 1. Salon & Owner Details
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Salon Name</label>
+                    <label className="font-bold text-zinc-700 uppercase text-[10px] tracking-wide">Salon Name</label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -1205,12 +1245,12 @@ function AgentLeads() {
               </div>
 
               <div className="space-y-3">
-                <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
-                  <Target className="w-3.5 h-3.5" /> 2. Agent Field Data
+                <h4 className="font-extrabold uppercase tracking-wide text-zinc-900 text-sm border-b border-zinc-200 pb-2 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-emerald-600" /> 2. Agent Field Data
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1 md:col-span-2">
-                    <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Agent Field Notes</label>
+                    <label className="font-bold text-zinc-700 uppercase text-[10px] tracking-wide">Agent Field Notes</label>
                     <textarea
                       value={formData.agent_notes}
                       onChange={(e) => setFormData({...formData, agent_notes: e.target.value})}
@@ -1256,12 +1296,12 @@ function AgentLeads() {
                   </div>
                   
                   <div className="space-y-3 md:col-span-2 pt-2">
-                    <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5" /> 3. Included Services
+                    <h4 className="font-extrabold uppercase tracking-wide text-zinc-900 text-sm border-b border-zinc-200 pb-2 flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-emerald-600" /> 3. Included Services
                     </h4>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] text-zinc-500 font-medium">Select up to 6 services based on your category.</p>
-                      <span className="text-[10px] font-bold text-zinc-400">
+                      <p className="text-[11px] text-zinc-600 font-medium">Select up to 6 services based on your category.</p>
+                      <span className="text-[11px] font-bold text-zinc-500">
                         {Object.values(selectedServices).filter(s => s.enabled).length} / 6 SELECTED
                       </span>
                     </div>
@@ -1327,28 +1367,61 @@ function AgentLeads() {
                   </div>
                   
                   <div className="space-y-3 md:col-span-2 pt-2">
-                    <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5" /> 4. Add Staff
+                    <h4 className="font-extrabold uppercase tracking-wide text-zinc-900 text-sm border-b border-zinc-200 pb-2 flex items-center gap-2">
+                      <Users className="w-4 h-4 text-emerald-600" /> 4. Professionals
                     </h4>
-                    {staffToAdd.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <p className="text-[11px] text-zinc-600 font-medium">Add or edit staff members for this salon (up to 2).</p>
+                      <span className="text-[11px] font-bold text-zinc-500">
+                        {staffToAdd.length} / 2 ADDED
+                      </span>
+                    </div>
+                    {staffToAdd.length > 0 ? (
                       <div className="grid grid-cols-1 gap-2 mb-3">
                         {staffToAdd.map((st, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700 font-bold text-xs uppercase">
-                                {st.name.substring(0,2)}
+                          <div key={st.id || idx} className="flex items-center justify-between p-3 bg-white border border-zinc-200 rounded-xl shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStaffIndex(idx);
+                                setIsStaffModalOpen(true);
+                              }}
+                              className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
+                            >
+                              <StaffPortrait name={st.name} avatarUrl={st.avatar_url} widthClass="w-8" />
+                              <div className="min-w-0">
+                                <h5 className="text-xs font-bold text-zinc-900 truncate">{st.name}</h5>
+                                <p className="text-[11px] text-zinc-500 font-medium truncate">{st.role || "Staff"}</p>
                               </div>
-                              <div>
-                                <h5 className="text-xs font-bold text-indigo-900">{st.name}</h5>
-                                <p className="text-[10px] text-indigo-600 font-medium">{st.role}</p>
-                              </div>
-                            </div>
-                            <button onClick={() => setStaffToAdd(prev => prev.filter((_, i) => i !== idx))} className="text-indigo-400 hover:text-red-500 p-1">
-                              <Trash2 className="w-4 h-4" />
                             </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingStaffIndex(idx);
+                                  setIsStaffModalOpen(true);
+                                }}
+                                className="text-zinc-400 hover:text-emerald-600 p-1"
+                                aria-label={`Edit ${st.name}`}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setStaffToAdd((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-zinc-400 hover:text-red-500 p-1"
+                                aria-label={`Remove ${st.name}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
+                    ) : (
+                      <p className="text-[11px] text-zinc-500 font-medium bg-zinc-50 border border-dashed border-zinc-200 rounded-xl p-3">
+                        No professionals yet. Add staff so owners can assign bookings.
+                      </p>
                     )}
                     <Button 
                       type="button" 
@@ -1358,9 +1431,10 @@ function AgentLeads() {
                           toast.error("You can only add up to 2 staff members. Owners can upgrade later to add more.");
                           return;
                         }
+                        setEditingStaffIndex(null);
                         setIsStaffModalOpen(true);
                       }}
-                      className="w-full border-dashed border-2 border-zinc-200 text-zinc-500 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-12"
+                      className="w-full border-dashed border-2 border-zinc-200 text-zinc-600 font-bold hover:bg-zinc-50 hover:border-zinc-300 h-12"
                     >
                       <Plus className="w-4 h-4 mr-2" /> Add Professional
                     </Button>
@@ -1369,12 +1443,12 @@ function AgentLeads() {
                 
                 {/* 5. Amenities Section */}
                 <div className="space-y-3 pt-4 border-t border-zinc-100">
-                  <h4 className="font-extrabold uppercase tracking-widest text-emerald-600 text-[10px] border-b border-emerald-100 pb-1 flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[8px]">5</span> 
+                  <h4 className="font-extrabold uppercase tracking-wide text-zinc-900 text-sm border-b border-zinc-200 pb-2 flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">5</span> 
                     Amenities & Facilities
                   </h4>
                   <div className="bg-zinc-50/50 border border-slate-100 rounded-2xl p-4">
-                    <p className="text-[10px] text-zinc-500 mb-4 font-medium">Select the amenities and facilities available at this salon.</p>
+                    <p className="text-[11px] text-zinc-600 mb-4 font-medium">Select the amenities and facilities available at this salon.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                       {globalAmenities.map((amenity) => {
                         const isChecked = salonAmenities[amenity.id]?.has_amenity || false;
@@ -1547,10 +1621,31 @@ function AgentLeads() {
       {isStaffModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto py-10">
           <AddProfessionalForm
-            onCancel={() => setIsStaffModalOpen(false)}
-            onSubmit={(staffData) => {
-              setStaffToAdd(prev => [...prev, staffData]);
+            onCancel={() => {
               setIsStaffModalOpen(false);
+              setEditingStaffIndex(null);
+            }}
+            onSubmit={(staffData) => {
+              if (editingStaffIndex !== null) {
+                setStaffToAdd((prev) =>
+                  prev.map((row, idx) =>
+                    idx === editingStaffIndex
+                      ? {
+                          ...row,
+                          ...staffData,
+                          id: row.id,
+                          avatar_url: staffData.avatar_url || row.avatar_url || null,
+                        }
+                      : row
+                  )
+                );
+                toast.success(`${staffData.name} updated. Save to publish changes.`);
+              } else {
+                setStaffToAdd((prev) => [...prev, staffData]);
+                toast.success(`${staffData.name} added. Save to publish changes.`);
+              }
+              setIsStaffModalOpen(false);
+              setEditingStaffIndex(null);
             }}
             globalRoles={globalStaffRoles}
             salonServices={Object.keys(selectedServices).filter(id => selectedServices[id].enabled).map(id => {
@@ -1561,6 +1656,18 @@ function AgentLeads() {
                 duration_min: selectedServices[id].duration
               };
             })}
+            initialStaff={
+              editingStaffIndex !== null
+                ? {
+                    ...staffToAdd[editingStaffIndex],
+                    working_hours:
+                      parseStaffWorkingHours(staffToAdd[editingStaffIndex]?.working_hours) ||
+                      staffToAdd[editingStaffIndex]?.working_hours,
+                  }
+                : null
+            }
+            title={editingStaffIndex !== null ? "Edit Professional" : "Add Professional"}
+            submitLabel={editingStaffIndex !== null ? "Save Changes" : "Add Professional"}
           />
         </div>
       )}

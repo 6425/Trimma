@@ -120,7 +120,7 @@ export async function fetchAgentLeadEditorData(salonId: string) {
       return { success: false as const, error: "You do not have access to this lead." };
     }
 
-    const [servicesRes, amenitiesRes] = await Promise.all([
+    const [servicesRes, amenitiesRes, staffRes] = await Promise.all([
       supabase
         .from("services")
         .select("id, name, global_service_id, price, duration_min, category")
@@ -129,6 +129,11 @@ export async function fetchAgentLeadEditorData(salonId: string) {
         .from("salon_amenities")
         .select("amenity_id, value, global_amenities(type)")
         .eq("salon_id", salonId),
+      supabase
+        .from("salon_staff")
+        .select("id, name, email, role, commission_rate, avatar_url, working_hours, status")
+        .eq("salon_id", salonId)
+        .order("created_at", { ascending: true }),
     ]);
 
     if (servicesRes.error) {
@@ -137,11 +142,15 @@ export async function fetchAgentLeadEditorData(salonId: string) {
     if (amenitiesRes.error) {
       return { success: false as const, error: amenitiesRes.error.message };
     }
+    if (staffRes.error) {
+      return { success: false as const, error: staffRes.error.message };
+    }
 
     return {
       success: true as const,
       services: servicesRes.data || [],
       amenities: amenitiesRes.data || [],
+      staff: staffRes.data || [],
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load lead data.";
