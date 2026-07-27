@@ -111,6 +111,14 @@ export function sanitizeAdminSalonPayload(payload: Record<string, unknown>): Rec
     }
   }
 
+  // salons.status CHECK only allows active | inactive | pending
+  if (sanitized.status === "rejected") {
+    sanitized.status = "inactive";
+    if (!("onboarding_status" in sanitized)) {
+      sanitized.onboarding_status = "REJECTED";
+    }
+  }
+
   return sanitized;
 }
 
@@ -128,7 +136,9 @@ export function buildAdminSalonFormPayload(input: {
   rating?: string;
   logo_url?: string;
   cover_url?: string;
+  hero_url?: string;
   status?: string;
+  onboarding_status?: string;
   working_hours?: string;
   is_verified?: boolean;
   assign_to?: string;
@@ -139,6 +149,10 @@ export function buildAdminSalonFormPayload(input: {
     const parsed = parseFloat(trimmed);
     return Number.isFinite(parsed) ? parsed : null;
   };
+
+  const status = input.status === "rejected" ? "inactive" : input.status || "active";
+  const cover =
+    (input.cover_url || "").trim() || (input.hero_url || "").trim() || null;
 
   return {
     name: input.name?.trim() || "",
@@ -153,8 +167,13 @@ export function buildAdminSalonFormPayload(input: {
     longitude: parseOptionalFloat(input.longitude),
     rating: parseOptionalFloat(input.rating),
     logo_url: input.logo_url?.trim() || null,
-    cover_url: input.cover_url?.trim() || null,
-    status: input.status || "active",
+    cover_url: cover,
+    status,
+    ...(input.onboarding_status
+      ? { onboarding_status: input.onboarding_status.trim() }
+      : status === "inactive" && input.status === "rejected"
+        ? { onboarding_status: "REJECTED" }
+        : {}),
     working_hours: (input.working_hours || "").trim() || null,
     is_verified: Boolean(input.is_verified),
     assign_to: input.assign_to?.trim() || null,

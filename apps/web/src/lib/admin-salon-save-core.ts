@@ -103,21 +103,37 @@ export async function saveAdminSalonRecord(
       (typeof sanitized.name === "string" && sanitized.name) || existing?.name || "Salon Owner";
 
     if (ownerEmail && shouldProvisionOwnerOnSave(sanitized)) {
-      const { error: userError } = await supabase.from("users").upsert(
-        {
-          email: ownerEmail,
-          global_role: "salon_owner",
-          full_name: ownerName,
-          ...(ownerPhone ? { phone: ownerPhone } : {}),
-        },
-        { onConflict: "email" }
-      );
-      if (userError) {
-        return { success: false, error: mapAdminDbError(userError.message) };
-      }
+      const prevOwnerEmail = normalizeEmail(existing?.owner_email || existing?.owner_gmail || "");
+      const nextOwnerEmail = normalizeEmail(ownerEmail);
+      const ownerEmailChanging = Boolean(nextOwnerEmail) && nextOwnerEmail !== prevOwnerEmail;
 
-      await syncUserRolesForGlobalRole(supabase, ownerEmail, "salon_owner");
-      await ensureSalonOwnerAccess(supabase, ownerEmail);
+      try {
+        const { error: userError } = await supabase.from("users").upsert(
+          {
+            email: ownerEmail,
+            global_role: "salon_owner",
+            full_name: ownerName,
+            ...(ownerPhone ? { phone: ownerPhone } : {}),
+          },
+          { onConflict: "email" }
+        );
+        if (userError) {
+          throw new Error(userError.message);
+        }
+
+        await syncUserRolesForGlobalRole(supabase, ownerEmail, "salon_owner");
+        await ensureSalonOwnerAccess(supabase, ownerEmail);
+      } catch (ownerErr) {
+        const message = ownerErr instanceof Error ? ownerErr.message : String(ownerErr);
+        // Changing owner email must hard-fail; status/profile saves should still proceed.
+        if (ownerEmailChanging) {
+          return { success: false, error: mapAdminDbError(message) };
+        }
+        console.warn(
+          "[saveAdminSalonRecord] owner provision skipped after non-fatal error; continuing salon update:",
+          message
+        );
+      }
     }
 
     const { error } = await supabase.from("salons").update(sanitized).eq("id", salonId);
