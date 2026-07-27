@@ -108,7 +108,7 @@ export default function Salons() {
       logo_url: salon.logo_url || "",
       hero_url: salon.hero_url || salon.cover_url || "",
       place_id: salon.place_id || "",
-      status: salon.status || "active",
+      status: salon.status === "rejected" ? "inactive" : salon.status || "active",
       working_hours:
         typeof salon.working_hours === "string"
           ? salon.working_hours
@@ -185,22 +185,39 @@ export default function Salons() {
       setIsSavingEdit(true);
       toast.loading("Saving salon details...");
 
-      const result = await patchAdminSalonViaApi(selectedSalon.id, editForm);
+      // DB CHECK: salons.status IN (active, inactive, pending) — never "rejected"
+      const nextStatus =
+        editForm.status === "rejected" ? "inactive" : editForm.status || "active";
+      const clearingReject =
+        (nextStatus === "active" || nextStatus === "pending") &&
+        selectedSalon.onboarding_status === "REJECTED";
+
+      const result = await patchAdminSalonViaApi(selectedSalon.id, {
+        ...editForm,
+        status: nextStatus,
+        ...(clearingReject
+          ? { onboarding_status: nextStatus === "active" ? "OWNER_ACTIVATED" : "DISCOVERED" }
+          : {}),
+      });
       if (result.success === false) {
         throw new Error(result.error);
       }
 
       toast.dismiss();
       toast.success("Salon onboarding details updated!");
-      
+
       setSelectedSalon({
         ...selectedSalon,
         ...editForm,
+        status: nextStatus,
+        ...(clearingReject
+          ? { onboarding_status: nextStatus === "active" ? "OWNER_ACTIVATED" : "DISCOVERED" }
+          : {}),
         owner_email: editForm.email || selectedSalon.owner_email,
         owner_gmail: editForm.email || selectedSalon.owner_gmail,
         phone: editForm.phone,
       });
-      fetchSalons(); 
+      fetchSalons();
       setViewModalOpen(false);
     } catch (error: unknown) {
       toast.dismiss();
@@ -362,8 +379,9 @@ export default function Salons() {
       setIsProcessing(true);
       toast.loading("Rejecting salon...");
       const result = await updateAdminSalon(salonToReject.id, {
+        // salons.status CHECK only allows active | inactive | pending (not "rejected")
         onboarding_status: "REJECTED",
-        status: "rejected",
+        status: "inactive",
         is_verified: false,
         rejection_reason: rejectionReason,
       });
@@ -382,8 +400,14 @@ export default function Salons() {
       setSalonToReject(null);
       fetchSalons(); 
       if (selectedSalon && selectedSalon.id === salonToReject.id) {
-         setSelectedSalon({ ...selectedSalon, status: 'rejected', is_verified: false, rejection_reason: rejectionReason });
-         setEditForm({ ...editForm, status: 'rejected', is_verified: false });
+         setSelectedSalon({
+           ...selectedSalon,
+           status: "inactive",
+           onboarding_status: "REJECTED",
+           is_verified: false,
+           rejection_reason: rejectionReason,
+         });
+         setEditForm({ ...editForm, status: "inactive", is_verified: false });
       }
     } catch (error: any) {
       toast.dismiss();
@@ -554,7 +578,7 @@ export default function Salons() {
                         {(salon.status === 'pending' || salon.status === 'pending_approval' || !salon.status) && salon.onboarding_status !== 'PENDING_ADMIN_VERIFICATION' && salon.onboarding_status !== 'AGENT_APPROVED' && (
                           <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 shadow-none font-bold">Pending Lead</Badge>
                         )}
-                        {salon.status === 'rejected' && (
+                        {(salon.onboarding_status === "REJECTED" || salon.status === "rejected") && (
                           <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 shadow-none font-bold">Rejected</Badge>
                         )}
                       </div>
@@ -662,7 +686,9 @@ export default function Salons() {
                     {selectedSalon.status === 'active' && !selectedSalon.is_verified && <Badge className="bg-blue-100 text-blue-700 shadow-none">Setup In Progress</Badge>}
                     {(selectedSalon.onboarding_status === 'PENDING_ADMIN_VERIFICATION' || selectedSalon.onboarding_status === 'AGENT_APPROVED') && !selectedSalon.is_verified && <Badge className="bg-indigo-100 text-indigo-700 shadow-none animate-pulse">Awaiting Verification Review</Badge>}
                     {(selectedSalon.status === 'pending' || selectedSalon.status === 'pending_approval' || !selectedSalon.status) && selectedSalon.onboarding_status !== 'PENDING_ADMIN_VERIFICATION' && selectedSalon.onboarding_status !== 'AGENT_APPROVED' && <Badge className="bg-amber-100 text-amber-700 shadow-none">Pending Approval</Badge>}
-                    {selectedSalon.status === 'rejected' && <Badge className="bg-rose-100 text-rose-700 shadow-none">Rejected</Badge>}
+                    {(selectedSalon.onboarding_status === "REJECTED" || selectedSalon.status === "rejected") && (
+                      <Badge className="bg-rose-100 text-rose-700 shadow-none">Rejected</Badge>
+                    )}
                   </div>
                </div>
                
@@ -736,14 +762,19 @@ export default function Salons() {
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">System Status</label>
                     <select
-                      value={editForm.status}
-                      onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                      value={
+                        editForm.status === "rejected" ? "inactive" : editForm.status || "active"
+                      }
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                       className="w-full h-10 px-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
                     >
                       <option value="active">ACTIVE</option>
                       <option value="pending">PENDING APPROVAL</option>
-                      <option value="rejected">REJECTED</option>
+                      <option value="inactive">INACTIVE</option>
                     </select>
+                    <p className="text-[10px] text-zinc-400 font-medium">
+                      Use Reject action for rejections. Status: active, pending, or inactive only.
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <label className="font-bold text-zinc-500 uppercase text-[9px] tracking-wide">Assigned Agent</label>

@@ -79,7 +79,9 @@ export async function verifyAdminSalon(salonId: string) {
 
 export async function rejectAdminSalon(salonId: string, rejectionReason: string) {
   return updateAdminSalon(salonId, {
-    status: "rejected",
+    // salons.status CHECK only allows active | inactive | pending
+    status: "inactive",
+    onboarding_status: "REJECTED",
     is_verified: false,
     rejection_reason: rejectionReason,
   });

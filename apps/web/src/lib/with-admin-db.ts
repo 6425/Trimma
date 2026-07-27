@@ -86,6 +86,9 @@ export function mapAdminDbError(message: string, hint?: string): string {
     return "Could not save salon owner details. The platform will create the owner account automatically on retry.";
   }
   if (lower.includes("violates check constraint") || lower.includes("check constraint")) {
+    if (lower.includes("status")) {
+      return "Invalid salon status. Allowed values are active, inactive, or pending (use onboarding_status REJECTED for rejects).";
+    }
     return "Save rejected by a database rule (invalid status or field value). Refresh and try again.";
   }
   if (lower.includes("violates")) {
