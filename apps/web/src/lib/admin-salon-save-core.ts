@@ -36,6 +36,25 @@ function minimalRejectPayload(sanitized: Record<string, unknown>): Record<string
   return minimal;
 }
 
+function isSalonRejectPayload(sanitized: Record<string, unknown>): boolean {
+  return (
+    sanitized.status === "rejected" ||
+    sanitized.onboarding_status === "REJECTED" ||
+    "rejection_reason" in sanitized
+  );
+}
+
+/** Reject status updates must not require owner user upsert / role sync. */
+function shouldProvisionOwnerOnSave(sanitized: Record<string, unknown>): boolean {
+  if (!isSalonRejectPayload(sanitized)) return true;
+  return (
+    "owner_email" in sanitized ||
+    "owner_gmail" in sanitized ||
+    "phone" in sanitized ||
+    "name" in sanitized
+  );
+}
+
 function shouldRetryRejectWithoutRejectionReason(
   sanitized: Record<string, unknown>,
   error: { message?: string; code?: string; details?: string | null; hint?: string | null }
@@ -43,11 +62,7 @@ function shouldRetryRejectWithoutRejectionReason(
   if (!("rejection_reason" in sanitized)) return false;
   if (isMissingRejectionReasonColumnError(error)) return true;
   // Reject payloads: any column/schema-cache miss — retry without rejection_reason.
-  const isReject =
-    sanitized.status === "rejected" ||
-    sanitized.onboarding_status === "REJECTED" ||
-    typeof sanitized.rejection_reason === "string";
-  return isReject && isMissingDbSchemaError(dbErrorText(error));
+  return isSalonRejectPayload(sanitized) && isMissingDbSchemaError(dbErrorText(error));
 }
 
 export type AdminSalonSaveResult =
@@ -87,7 +102,7 @@ export async function saveAdminSalonRecord(
     const ownerName =
       (typeof sanitized.name === "string" && sanitized.name) || existing?.name || "Salon Owner";
 
-    if (ownerEmail) {
+    if (ownerEmail && shouldProvisionOwnerOnSave(sanitized)) {
       const { error: userError } = await supabase.from("users").upsert(
         {
           email: ownerEmail,

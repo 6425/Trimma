@@ -82,8 +82,14 @@ export function mapAdminDbError(message: string, hint?: string): string {
   if (isMissingDbSchemaError(message)) {
     return hint || `Database schema is out of date. Check the raw server log, or run ${SALON_REJECTION_REASON_PATCH} if rejecting a salon.`;
   }
-  if (lower.includes("foreign key") || lower.includes("violates")) {
+  if (lower.includes("foreign key") || lower.includes("violates foreign key")) {
     return "Could not save salon owner details. The platform will create the owner account automatically on retry.";
+  }
+  if (lower.includes("violates check constraint") || lower.includes("check constraint")) {
+    return "Save rejected by a database rule (invalid status or field value). Refresh and try again.";
+  }
+  if (lower.includes("violates")) {
+    return "Could not save salon details due to a database constraint. Refresh and try again.";
   }
   if (lower.includes("row-level security") || lower.includes("permission denied")) {
     return "Save blocked by database permissions. Ensure your account has admin role.";
