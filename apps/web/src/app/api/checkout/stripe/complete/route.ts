@@ -11,6 +11,7 @@ import {
   assertValidStripePaymentIntentId,
   verifyStripePaymentIntent,
 } from "@/lib/stripe-payment-verify";
+import { posthogLog } from "@/lib/posthog-logger";
 
 function enrichBookingPayloadFromPayment(
   payload: CompleteBookingCheckoutInput,
@@ -78,6 +79,13 @@ export async function POST(request: Request) {
         completedBookingNo: result.bookingNo,
       });
 
+      posthogLog.info("Stripe booking checkout completed", {
+        route: "/api/checkout/stripe/complete",
+        checkout_type: "booking",
+        booking_no: result.bookingNo,
+        environment,
+      });
+
       return NextResponse.json({
         checkoutType: "booking",
         bookingNo: result.bookingNo,
@@ -117,6 +125,14 @@ export async function POST(request: Request) {
         planName: result.planName,
       });
 
+      posthogLog.info("Stripe subscription checkout completed", {
+        route: "/api/checkout/stripe/complete",
+        checkout_type: "subscription",
+        order_id: result.orderId,
+        plan_name: result.planName,
+        environment,
+      });
+
       return NextResponse.json({
         checkoutType: "subscription",
         orderId: result.orderId,
@@ -127,6 +143,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown checkout type." }, { status: 400 });
   } catch (error) {
     console.error("[stripe/complete]", error);
+    posthogLog.error(
+      error instanceof Error ? error.message : "Failed to complete Stripe checkout",
+      {
+        route: "/api/checkout/stripe/complete",
+        error_name: error instanceof Error ? error.name : "UnknownError",
+      }
+    );
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to complete Stripe checkout." },
       { status: 500 }
