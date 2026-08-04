@@ -68,6 +68,8 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   };
 
   const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
+  const isPricingActive = pathname === "/pricing" || pathname?.startsWith("/pricing/");
+  const isAboutActive = pathname === "/about" || pathname?.startsWith("/about/");
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isLocationsActive = pathname === "/locations" || pathname?.startsWith("/locations/");
   const isDealsActive = pathname === "/deals";
@@ -168,6 +170,12 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             <div className="hidden lg:flex items-center gap-1">
               <Link href="/features" className={navDesktopClass(isFeaturesActive)}>
                 Features
+              </Link>
+              <Link href="/pricing" className={navDesktopClass(isPricingActive)}>
+                Pricing
+              </Link>
+              <Link href="/about" className={navDesktopClass(isAboutActive)}>
+                About
               </Link>
               <div
                 className="relative"
@@ -381,6 +389,22 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             >
               <Sparkles className="w-4 h-4 shrink-0" />
               Features
+            </Link>
+            <Link
+              href="/pricing"
+              onClick={() => setMobileMenuOpen(false)}
+              className={navMobileClass(isPricingActive)}
+            >
+              <CreditCard className="w-4 h-4 shrink-0" />
+              Pricing
+            </Link>
+            <Link
+              href="/about"
+              onClick={() => setMobileMenuOpen(false)}
+              className={navMobileClass(isAboutActive)}
+            >
+              <Building2 className="w-4 h-4 shrink-0" />
+              About
             </Link>
             <button
               type="button"

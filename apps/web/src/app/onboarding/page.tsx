@@ -1,15 +1,9 @@
-import { Metadata } from "next";
 import { Sparkles } from "lucide-react";
 import { getPublicSubscriptionPlans } from "../actions/subscription-plans";
 import { PricingContent } from "../pricing/PricingContent";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
 import { OnboardingHeroCta } from "./OnboardingHeroCta";
-
-export const metadata: Metadata = {
-  title: "List Your Salon | Trimma",
-  description: "Join Sri Lanka's next-generation salon discovery and booking platform.",
-};
 
 export default async function OnboardingPage() {
   const result = await getPublicSubscriptionPlans();

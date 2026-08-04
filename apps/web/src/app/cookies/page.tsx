@@ -1,11 +1,4 @@
-import type { Metadata } from "next";
 import { Sparkles } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Cookie Policy | Trimma",
-  description:
-    "Learn how Trimma uses essential, analytics, functional, and marketing cookies on the salon booking platform.",
-};
 
 const EFFECTIVE_DATE = "May 29, 2026";
 

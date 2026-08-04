@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { normalizeEmail } from "@/lib/normalize-email";
+import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 
 /** Child tables removed before the salon row (order matters for FK chains). */
 const SALON_DEPENDENT_TABLES = [
@@ -59,6 +61,51 @@ async function deleteRescheduleRequestsForSalon(supabase: SupabaseClient, salonI
   throw new Error(`reschedule_requests: ${error.message}`);
 }
 
+function collectOwnerEmails(salon: {
+  owner_email?: string | null;
+  owner_gmail?: string | null;
+}): string[] {
+  const emails = [salon.owner_email, salon.owner_gmail]
+    .map((value) => normalizeEmail(value))
+    .filter(Boolean);
+  return [...new Set(emails)];
+}
+
+/** If the owner has no remaining salons, revert platform role to customer. */
+async function downgradeOrphanedSalonOwners(
+  supabase: SupabaseClient,
+  ownerEmails: string[]
+) {
+  for (const email of ownerEmails) {
+    const { data: remainingSalons, error: salonError } = await supabase
+      .from("salons")
+      .select("id")
+      .or(`owner_email.ilike.${email},owner_gmail.ilike.${email}`)
+      .limit(1);
+
+    if (salonError) {
+      if (!isMissingTableError(salonError.message)) {
+        throw new Error(salonError.message);
+      }
+      continue;
+    }
+
+    if ((remainingSalons || []).length > 0) continue;
+
+    const { error: userError } = await supabase
+      .from("users")
+      .update({ global_role: "customer" })
+      .eq("email", email)
+      .eq("global_role", "salon_owner");
+
+    if (userError && !isMissingTableError(userError.message)) {
+      throw new Error(userError.message);
+    }
+
+    await syncUserRolesForGlobalRole(supabase, email, "customer");
+  }
+}
+
 export async function deleteSalonRecordCascade(
   supabase: SupabaseClient,
   salonId: string
@@ -68,11 +115,13 @@ export async function deleteSalonRecordCascade(
 
   const { data: salon, error: fetchError } = await supabase
     .from("salons")
-    .select("id,name")
+    .select("id,name,owner_email,owner_gmail")
     .eq("id", trimmedId)
     .maybeSingle();
   if (fetchError) throw new Error(fetchError.message);
   if (!salon) throw new Error("Salon not found.");
+
+  const ownerEmails = collectOwnerEmails(salon);
 
   await deleteRescheduleRequestsForSalon(supabase, trimmedId);
 
@@ -82,6 +131,8 @@ export async function deleteSalonRecordCascade(
 
   const { error: salonDeleteError } = await supabase.from("salons").delete().eq("id", trimmedId);
   if (salonDeleteError) throw new Error(salonDeleteError.message);
+
+  await downgradeOrphanedSalonOwners(supabase, ownerEmails);
 
   return { name: salon.name || "Salon" };
 }

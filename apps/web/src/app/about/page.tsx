@@ -19,12 +19,6 @@ import {
   TRIMMA_REGISTERED_OFFICE,
 } from "@/lib/trimma-company";
 
-export const metadata = {
-  title: "About Trimma | The Salon Engine",
-  description:
-    "Learn about Trimma — the beauty and wellness appointment booking and business management platform built for salons across Sri Lanka and beyond.",
-};
-
 const VALUES = [
   {
     icon: Zap,
