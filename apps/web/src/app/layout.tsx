@@ -2,6 +2,7 @@ import '../index.css';
 import SiteChromeLoader from '../components/SiteChromeLoader';
 import { CookieConsentBanner } from '@/components/legal/CookieConsentBanner';
 import { PostHogConsentSync } from '@/components/analytics/PostHogConsentSync';
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from 'sonner';
 import { outfit, inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
@@ -96,6 +97,7 @@ export default function RootLayout({
               },
             }}
           />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
