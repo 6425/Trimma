@@ -1,8 +1,7 @@
 import { getPublicPlatformStyles } from "../actions/platform-styles";
 import { StylesGallery } from "./StylesGallery";
 
-// Always fetch fresh styles so newly published looks appear without a redeploy.
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function PublicStylesPage() {
   const result = await getPublicPlatformStyles();

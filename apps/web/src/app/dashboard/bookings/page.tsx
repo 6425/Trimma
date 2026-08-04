@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search, Calendar, Loader2, AlertCircle, Eye, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -208,7 +208,22 @@ function isReservationDepositPaid(booking: {
   );
 }
 
-export default function DashboardBookings() {
+export default function DashboardBookingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+          <Loader2 className="w-10 h-10 text-brand animate-spin" />
+          <p className="text-zinc-500 font-bold text-sm">Loading bookings...</p>
+        </div>
+      }
+    >
+      <DashboardBookings />
+    </Suspense>
+  );
+}
+
+function DashboardBookings() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [bookings, setBookings] = useState<any[]>([]);

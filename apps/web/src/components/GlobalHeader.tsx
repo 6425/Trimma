@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
@@ -62,6 +62,11 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const [locationsOpen, setLocationsOpen] = useState(false);
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const prefetchCategory = (slug: string) => {
+    router.prefetch(`/category/${slug}`);
+  };
 
   const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
   const isPricingActive = pathname === "/pricing" || pathname?.startsWith("/pricing/");
@@ -197,6 +202,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                           <Link
                             key={cat.id}
                             href={`/category/${cat.slug}`}
+                            prefetch
+                            onMouseEnter={() => prefetchCategory(cat.slug)}
+                            onFocus={() => prefetchCategory(cat.slug)}
                             onClick={() => {
                               trackEvent(AnalyticsEvent.CategoryFilterChanged, {
                                 source: "header_dropdown",
@@ -364,6 +372,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                   <Link
                     key={cat.id}
                     href={`/category/${cat.slug}`}
+                    prefetch
+                    onMouseEnter={() => prefetchCategory(cat.slug)}
+                    onFocus={() => prefetchCategory(cat.slug)}
                     onClick={() => {
                       trackEvent(AnalyticsEvent.CategoryFilterChanged, {
                         source: "header_category_row",
@@ -431,6 +442,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                     <Link
                       key={cat.id}
                       href={`/category/${cat.slug}`}
+                      prefetch
+                      onMouseEnter={() => prefetchCategory(cat.slug)}
+                      onFocus={() => prefetchCategory(cat.slug)}
                       onClick={() => {
                         trackEvent(AnalyticsEvent.CategoryFilterChanged, {
                           source: "header_mobile",

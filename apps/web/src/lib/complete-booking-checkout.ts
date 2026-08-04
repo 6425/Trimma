@@ -17,6 +17,7 @@ import { calculateCommissionSplit, resolveBookingAgentPercentage } from "@/lib/b
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import { computeAgentCommissionSnapshot } from "@/lib/booking-commission-snapshot";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { sanitizeText } from "@/lib/sanitize-input";
 import { validateBookingCheckoutPrices } from "@/lib/checkout-price-validation";
 import type { CardType } from "@/lib/card-payment";
 
@@ -123,6 +124,9 @@ async function upsertCheckoutCustomer(
   customerName: string,
   phone: string
 ) {
+  const safeName = sanitizeText(customerName);
+  const safePhone = sanitizeText(phone);
+
   const { data: existingUser } = await supabase
     .from("users")
     .select("email")
@@ -132,8 +136,8 @@ async function upsertCheckoutCustomer(
   if (!existingUser) {
     const { error } = await supabase.from("users").insert({
       email: customerEmail,
-      full_name: customerName,
-      phone,
+      full_name: safeName,
+      phone: safePhone,
       global_role: "customer",
     });
     if (error) throw new Error(error.message);
@@ -142,7 +146,7 @@ async function upsertCheckoutCustomer(
 
   const { error } = await supabase
     .from("users")
-    .update({ full_name: customerName, phone })
+    .update({ full_name: safeName, phone: safePhone })
     .eq("email", customerEmail);
   if (error) throw new Error(error.message);
 }

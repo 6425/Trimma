@@ -5,7 +5,7 @@
 
 export const BRAND = {
   gold: "#ffde5a",
-  goldDark: "#E6E43A",
+  goldDark: "#e6c851",
   black: "#0B0B0B",
   ink: "#1A1C29",
   muted: "#64748b",
@@ -399,7 +399,7 @@ export function buildGuideHtml(lang) {
     body { font-family: ${meta.fontFamily}; color: #18181b; background: #fff; font-size: 11pt; line-height: 1.55; }
     .cover {
       min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
-      background: linear-gradient(135deg, ${BRAND.gold} 0%, #FFFE99 45%, #fff8dc 100%);
+      background: linear-gradient(135deg, ${BRAND.gold} 0%, #ffeb94 45%, #fff8dc 100%);
       padding: 48px; text-align: center; page-break-after: always;
     }
     .logo { font-size: 28pt; font-weight: 900; letter-spacing: -1px; color: ${BRAND.black}; margin-bottom: 8px; }

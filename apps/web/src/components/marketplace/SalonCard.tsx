@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SalonFavoriteButton } from "./SalonFavoriteButton";
@@ -10,6 +11,7 @@ import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
 
 export interface SalonCardInternalProps {
   key?: string;
+  priority?: boolean;
   salon: {
     id: string;
     slug?: string;
@@ -38,32 +40,48 @@ function toOriginalSupabaseUrl(url: string): string | null {
 }
 
 export function SalonCard(props: SalonCardInternalProps) {
-  const { salon } = props;
+  const { salon, priority = false } = props;
+  const router = useRouter();
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = isSalonVerified(salon.isVerified);
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
   const [imageSrc, setImageSrc] = useState(originalImage);
 
+  const prefetchSalon = () => {
+    router.prefetch(linkTarget);
+  };
+
+  useEffect(() => {
+    if (priority) router.prefetch(linkTarget);
+  }, [priority, linkTarget, router]);
+
   return (
-    <div className="trimma-marketplace-card bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative h-full">
+    <div
+      className="trimma-marketplace-card bg-white rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition-all group flex flex-col relative h-full"
+      onMouseEnter={prefetchSalon}
+      onFocus={prefetchSalon}
+    >
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
-        <Image
-          src={imageSrc}
-          alt={salon.name}
-          fill
-          sizes="(max-width: 1024px) 50vw, (max-width: 1200px) 33vw, 25vw"
-          className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
-          onError={() => {
-            const original = toOriginalSupabaseUrl(imageSrc);
-            if (original && imageSrc.includes("/render/image/")) {
-              setImageSrc(original);
-              return;
-            }
-            if (imageSrc !== FALLBACK_SALON_IMAGE) {
-              setImageSrc(FALLBACK_SALON_IMAGE);
-            }
-          }}
-        />
+        <Link href={linkTarget} prefetch aria-label={salon.name} className="absolute inset-0 z-0" onFocus={prefetchSalon}>
+          <Image
+            src={imageSrc}
+            alt={salon.name}
+            fill
+            priority={priority}
+            sizes="(max-width: 1024px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+            onError={() => {
+              const original = toOriginalSupabaseUrl(imageSrc);
+              if (original && imageSrc.includes("/render/image/")) {
+                setImageSrc(original);
+                return;
+              }
+              if (imageSrc !== FALLBACK_SALON_IMAGE) {
+                setImageSrc(FALLBACK_SALON_IMAGE);
+              }
+            }}
+          />
+        </Link>
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent pointer-events-none" />
 
         {!isVerified && (
@@ -89,7 +107,9 @@ export function SalonCard(props: SalonCardInternalProps) {
       <div className="p-2.5 sm:p-[var(--trimma-card-padding)] flex flex-col flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1 sm:mb-2 gap-1">
           <h3 className="font-bold text-sm sm:text-xl text-zinc-900 line-clamp-2 sm:line-clamp-1 group-hover:text-brand-pink transition-colors leading-snug">
-            <Link href={linkTarget}>{salon.name}</Link>
+            <Link href={linkTarget} prefetch onFocus={prefetchSalon}>
+              {salon.name}
+            </Link>
           </h3>
           {isVerified && (
             <VerifiedSalonBadge size="xs" className="sm:hidden shrink-0 scale-90 origin-top-right" />
@@ -137,6 +157,8 @@ export function SalonCard(props: SalonCardInternalProps) {
             <div className="flex gap-2 w-full sm:w-auto">
               <Link
                 href={linkTarget}
+                prefetch
+                onFocus={prefetchSalon}
                 className="hidden sm:inline-flex items-center justify-center rounded-xl font-bold border border-slate-200 text-zinc-700 h-10 px-4 transition-colors hover:bg-slate-50"
               >
                 View
@@ -144,6 +166,8 @@ export function SalonCard(props: SalonCardInternalProps) {
               {isVerified ? (
                 <Link
                   href={`${linkTarget}?action=book`}
+                  prefetch
+                  onFocus={prefetchSalon}
                   className="inline-flex flex-1 sm:flex-none items-center justify-center rounded-xl px-3 sm:px-6 min-h-11 sm:min-h-10 bg-primary-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-md transition-colors border-none"
                 >
                   Book

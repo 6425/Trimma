@@ -1,7 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
@@ -15,9 +16,14 @@ import {
   defaultSalonFilters,
   type SalonFilters,
 } from "../components/marketplace/SalonFiltersPanel";
-import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSection";
 import type { SalonDealRow } from "@/lib/deals";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
+
+const DealsDiscountSection = dynamic(
+  () =>
+    import("../components/landing-v2/DealsDiscountSection").then((m) => m.DealsDiscountSection),
+  { loading: () => null }
+);
 
 const LANDING_HERO_IMAGE = "/assets/beauty-salon-hero.webp";
 
@@ -60,6 +66,8 @@ interface Props {
   initialSalons?: Salon[];
   initialHasMore?: boolean;
   initialDeals?: SalonDealRow[];
+  /** True when the server already ran the default listing query for initialSearch. */
+  ssrSeeded?: boolean;
 }
 
 type SortOption = "recommended" | "rating" | "price_low" | "price_high";
@@ -88,9 +96,14 @@ export default function SalonsClient({
   initialSalons = [],
   initialHasMore = true,
   initialDeals = [],
+  ssrSeeded = false,
 }: Props) {
   const router = useRouter();
-  const skipInitialFetchRef = useRef(initialSalons.length > 0);
+  // Skip the first client fetch when the server already seeded results.
+  const skipClientFetchRef = useRef(ssrSeeded);
+  const seededSearchKeyRef = useRef(
+    `${initialSearch.q}|${initialSearch.l}|${initialSearch.category}`
+  );
 
   const [searchQuery, setSearchQuery] = useState(initialSearch.q);
   const [selectedLocation, setSelectedLocation] = useState(initialSearch.l);
@@ -103,7 +116,8 @@ export default function SalonsClient({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [searchResults, setSearchResults] = useState<Salon[]>(initialSalons);
-  const [isLoading, setIsLoading] = useState(initialSalons.length === 0);
+  // Only show the spinner when we have no SSR seed to paint.
+  const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
   const LIMIT = 12;
@@ -195,14 +209,35 @@ export default function SalonsClient({
   );
 
   useEffect(() => {
-    if (skipInitialFetchRef.current && page === 0) {
-      skipInitialFetchRef.current = false;
+    const searchKey = `${searchQuery}|${selectedLocation}|${urlCategory}`;
+    const matchesSeed =
+      skipClientFetchRef.current &&
+      page === 0 &&
+      sortBy === "recommended" &&
+      filters.minRating === 0 &&
+      !filters.verifiedOnly &&
+      searchKey === seededSearchKeyRef.current;
+
+    if (matchesSeed) {
+      skipClientFetchRef.current = false;
+      setIsLoading(false);
       return;
     }
+
+    skipClientFetchRef.current = false;
     void Promise.resolve().then(() => {
       fetchResults(page === 0);
     });
-  }, [fetchResults, page]);
+  }, [
+    fetchResults,
+    page,
+    searchQuery,
+    selectedLocation,
+    urlCategory,
+    sortBy,
+    filters.minRating,
+    filters.verifiedOnly,
+  ]);
 
   const handleSearch = () => {
     trackEvent(AnalyticsEvent.SalonSearch, {
@@ -305,14 +340,17 @@ export default function SalonsClient({
   };
 
   const syncFromUrl = useCallback((next: InitialSearch) => {
-    setSearchQuery(next.q);
-    setSelectedLocation(next.l);
-    setUrlCategory(next.category);
-    setFilters((prev) => ({
-      ...prev,
-      selectedCategories: next.category ? [next.category] : [],
-    }));
-    setPage(0);
+    setSearchQuery((prev) => (prev === next.q ? prev : next.q));
+    setSelectedLocation((prev) => (prev === next.l ? prev : next.l));
+    setUrlCategory((prev) => (prev === next.category ? prev : next.category));
+    setFilters((prev) => {
+      const nextCats = next.category ? [next.category] : [];
+      const same =
+        prev.selectedCategories.length === nextCats.length &&
+        prev.selectedCategories.every((c, i) => c === nextCats[i]);
+      if (same) return prev;
+      return { ...prev, selectedCategories: nextCats };
+    });
   }, []);
 
   return (
@@ -323,14 +361,13 @@ export default function SalonsClient({
 
       {/* HERO — full background image, copy on left 50% */}
       <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
-        <img
+        <Image
           src={LANDING_HERO_IMAGE}
           alt=""
-          width={1920}
-          height={500}
-          decoding="async"
-          fetchPriority="high"
-          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+          fill
+          priority
+          sizes="100vw"
+          className="home-hero-bg-image object-cover pointer-events-none"
         />
         <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
         <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
@@ -544,8 +581,8 @@ export default function SalonsClient({
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3 lg:hidden">
-                  {filteredSalons.map((salon) => (
-                    <SalonCard key={salon.id} salon={mapToCardProps(salon)} />
+                  {filteredSalons.map((salon, index) => (
+                    <SalonCard key={salon.id} salon={mapToCardProps(salon)} priority={index < 4} />
                   ))}
                 </div>
                 <div className="hidden lg:flex lg:flex-col lg:space-y-4">

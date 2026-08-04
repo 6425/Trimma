@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import * as Icons from "lucide-react";
@@ -152,7 +152,7 @@ export default function CityDetailPage() {
       {/* 1. CITY HERO SECTION */}
       <section className="page-hero-shell py-14 md:py-20">
         <div className="absolute inset-0 z-0">
-           <img src={data.image} alt={data.name} className="page-hero-image border-none focus:outline-none" />
+           <Image src={data.image} alt={data.name} fill priority sizes="100vw" className="object-cover border-none focus:outline-none" />
            <div className="absolute inset-0 page-hero-overlay"></div>
         </div>
         

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Search, Filter, Phone, MapPin, Loader2, ScanSearch, Zap, Target, Star, X, Trash2, Compass, Hash, CheckCircle2, AlertCircle, Send, Shield, Store, Sparkles, Save, RefreshCw, UploadCloud, Scissors, User, Pencil, Check, Image as ImageIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,7 +102,22 @@ const SRI_LANKA_GEOGRAPHY: any = {
 
 
 
-export default function Leads() {
+export default function LeadsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+          <Loader2 className="w-10 h-10 text-brand animate-spin" />
+          <p className="text-zinc-500 font-bold text-sm">Loading leads...</p>
+        </div>
+      }
+    >
+      <Leads />
+    </Suspense>
+  );
+}
+
+function Leads() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();

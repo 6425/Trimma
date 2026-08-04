@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { sanitizeText } from "@/lib/sanitize-input";
 import { resolveOnboardingAgentEmail } from "@/lib/salon-onboarding-paths";
 
 export { resolveOnboardingAgentEmail } from "@/lib/salon-onboarding-paths";
@@ -78,19 +79,19 @@ export async function insertOnboardingSalonLead(
 
   let payload: Record<string, unknown> = {
     place_id: placeId,
-    name: formData.businessName.trim(),
-    owner_name: formData.ownerName.trim(),
+    name: sanitizeText(formData.businessName.trim()),
+    owner_name: sanitizeText(formData.ownerName.trim()),
     owner_email: applicantEmail,
-    phone: formData.whatsapp.trim(),
-    whatsapp_number: formData.whatsapp.trim(),
-    province: formData.province.trim(),
-    district: formData.district.trim(),
-    city: (formData.city || formData.address).trim(),
-    address: formData.address.trim(),
+    phone: sanitizeText(formData.whatsapp.trim()),
+    whatsapp_number: sanitizeText(formData.whatsapp.trim()),
+    province: sanitizeText(formData.province.trim()),
+    district: sanitizeText(formData.district.trim()),
+    city: sanitizeText((formData.city || formData.address).trim()),
+    address: sanitizeText(formData.address.trim()),
     latitude: formData.latitude,
     longitude: formData.longitude,
-    summary: formData.notes?.trim() || null,
-    notes: formData.notes?.trim() || null,
+    summary: sanitizeText(formData.notes?.trim() || "") || null,
+    notes: sanitizeText(formData.notes?.trim() || "") || null,
     assign_to: assignedAgent,
     status: isWaitingList ? "new" : "assigned",
     lead_status: isWaitingList ? "NEW" : "ASSIGNED_TO_AGENT",

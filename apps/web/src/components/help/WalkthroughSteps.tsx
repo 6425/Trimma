@@ -28,7 +28,7 @@ const LandingMockup = () => (
           <Search className="w-3 h-3 text-zinc-400" />
           <div className="text-[10px] text-zinc-500">What are you looking for?</div>
         </div>
-        <div className="bg-[#E6E43A] text-black font-bold text-[10px] py-1.5 rounded-md text-center mt-1">
+        <div className="bg-[#e6c851] text-black font-bold text-[10px] py-1.5 rounded-md text-center mt-1">
           Search
         </div>
       </div>
