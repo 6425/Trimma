@@ -17,6 +17,7 @@ import {
 } from "../components/marketplace/SalonFiltersPanel";
 import { DealsDiscountSection } from "../components/landing-v2/DealsDiscountSection";
 import type { SalonDealRow } from "@/lib/deals";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 const LANDING_HERO_IMAGE = "/assets/beauty-salon-hero.webp";
 
@@ -106,6 +107,48 @@ export default function SalonsClient({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
   const LIMIT = 12;
+  const trackedSearchKeyRef = useRef<string | null>(null);
+  const trackedPageViewRef = useRef(false);
+
+  const trackSearchResults = useCallback(
+    (source: "page_load" | "search_submit" | "url_sync" | "filter", resultCount?: number) => {
+      const key = [
+        source,
+        searchQuery.trim(),
+        selectedLocation.trim(),
+        urlCategory.trim(),
+        filters.selectedCategories.join(","),
+        String(resultCount ?? ""),
+      ].join("|");
+      if (trackedSearchKeyRef.current === key) return;
+      trackedSearchKeyRef.current = key;
+
+      trackEvent(AnalyticsEvent.SalonSearch, {
+        source,
+        query: searchQuery.trim() || null,
+        location: selectedLocation.trim() || null,
+        category: urlCategory.trim() || filters.selectedCategories[0] || null,
+        categories: filters.selectedCategories.join(",") || null,
+        result_count: typeof resultCount === "number" ? resultCount : null,
+        sort: sortBy,
+      });
+    },
+    [searchQuery, selectedLocation, urlCategory, filters.selectedCategories, sortBy]
+  );
+
+  useEffect(() => {
+    if (trackedPageViewRef.current) return;
+    trackedPageViewRef.current = true;
+    trackEvent(AnalyticsEvent.SearchPageViewed, {
+      query: initialSearch.q || null,
+      location: initialSearch.l || null,
+      category: initialSearch.category || null,
+      initial_result_count: initialSalons.length,
+    });
+    if (initialSearch.q || initialSearch.l || initialSearch.category) {
+      trackSearchResults("page_load", initialSalons.length);
+    }
+  }, [initialSearch, initialSalons.length, trackSearchResults]);
 
   const fetchResults = useCallback(
     async (reset: boolean = false) => {
@@ -128,7 +171,11 @@ export default function SalonsClient({
         const data = await res.json();
 
         if (reset) {
-          setSearchResults(data.salons || []);
+          const salons = data.salons || [];
+          setSearchResults(salons);
+          if (searchQuery || selectedLocation || urlCategory) {
+            trackSearchResults("url_sync", salons.length);
+          }
         } else {
           setSearchResults((prev) => {
             const newSalons = data.salons || [];
@@ -144,7 +191,7 @@ export default function SalonsClient({
         setIsLoading(false);
       }
     },
-    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly]
+    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly, trackSearchResults]
   );
 
   useEffect(() => {
@@ -158,6 +205,13 @@ export default function SalonsClient({
   }, [fetchResults, page]);
 
   const handleSearch = () => {
+    trackEvent(AnalyticsEvent.SalonSearch, {
+      source: "search_submit",
+      query: searchQuery.trim() || null,
+      location: selectedLocation.trim() || null,
+      category: urlCategory.trim() || null,
+      sort: sortBy,
+    });
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (selectedLocation) params.set("l", selectedLocation);
@@ -381,8 +435,18 @@ export default function SalonsClient({
                 filters={filters}
                 categories={categories}
                 onChange={(next) => {
+                  const prevCategories = filters.selectedCategories.join(",");
+                  const nextCategories = next.selectedCategories.join(",");
                   setFilters(next);
                   setPage(0);
+                  if (prevCategories !== nextCategories) {
+                    trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                      source: "home_filters",
+                      previous: prevCategories || null,
+                      categories: nextCategories || null,
+                      category: next.selectedCategories[0] || null,
+                    });
+                  }
                 }}
                 onClear={clearFilters}
               />
@@ -544,7 +608,20 @@ export default function SalonsClient({
               <SalonFiltersPanel
                 filters={filters}
                 categories={categories}
-                onChange={setFilters}
+                onChange={(next) => {
+                  const prevCategories = filters.selectedCategories.join(",");
+                  const nextCategories = next.selectedCategories.join(",");
+                  setFilters(next);
+                  setPage(0);
+                  if (prevCategories !== nextCategories) {
+                    trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                      source: "home_filters_mobile",
+                      previous: prevCategories || null,
+                      categories: nextCategories || null,
+                      category: next.selectedCategories[0] || null,
+                    });
+                  }
+                }}
                 onClear={clearFilters}
                 compact
                 onApply={() => {

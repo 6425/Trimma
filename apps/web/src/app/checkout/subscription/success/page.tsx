@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 function SubscriptionSuccessContent() {
   const router = useRouter();
@@ -12,6 +13,7 @@ function SubscriptionSuccessContent() {
     searchParams.get("payment_intent") || searchParams.get("session_id");
   const [loading, setLoading] = useState(Boolean(sessionId));
   const [error, setError] = useState<string | null>(null);
+  const trackedSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -27,6 +29,14 @@ function SubscriptionSuccessContent() {
         const result = await response.json();
         if (!response.ok) {
           throw new Error(result.error || "Failed to finalize subscription.");
+        }
+
+        if (sessionId && trackedSessionRef.current !== sessionId) {
+          trackedSessionRef.current = sessionId;
+          trackEvent(AnalyticsEvent.SubscriptionCompleted, {
+            order_id: result.orderId || null,
+            plan_name: result.planName || null,
+          });
         }
 
         router.replace(

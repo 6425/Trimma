@@ -38,6 +38,8 @@
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "next": "^15.0.0",
+    "posthog-js": "^1.410.9",
+    "posthog-node": "^5.47.9",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",

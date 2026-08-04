@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Search, MapPin, Star, Filter, ShieldCheck, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User, Map as MapIcon } from "lucide-react";
@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/config/supabase";
 import { SalonCard } from "../../../components/marketplace/SalonCard";
 import { FindBookGlowCta } from "../../../components/marketplace/FindBookGlowCta";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
   "barber-salon": "/assets/category-barber-salon-hero.webp",
@@ -54,6 +55,8 @@ export default function CategoryPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [loadedFetchKey, setLoadedFetchKey] = useState("");
+  const trackedCategorySlugRef = useRef<string | null>(null);
+  const trackedSearchKeyRef = useRef<string | null>(null);
 
   const categoryLabel =
     categories.find((c) => c.slug === slug)?.name ||
@@ -85,6 +88,16 @@ export default function CategoryPage() {
 
   useEffect(() => {
     if (!slugStr) return;
+    if (trackedCategorySlugRef.current === slugStr) return;
+    trackedCategorySlugRef.current = slugStr;
+    trackEvent(AnalyticsEvent.CategoryViewed, {
+      category_slug: slugStr,
+      category_name: categoryLabel,
+    });
+  }, [slugStr, categoryLabel]);
+
+  useEffect(() => {
+    if (!slugStr) return;
 
     let cancelled = false;
     const key = fetchKey;
@@ -103,8 +116,24 @@ export default function CategoryPage() {
         if (cancelled) return;
         if (!res.ok) throw new Error(payload.error || "Failed to load salons");
 
-        setSalons(payload.salons || []);
+        const nextSalons = payload.salons || [];
+        setSalons(nextSalons);
         setLoadedFetchKey(key);
+
+        if (appliedSearch || appliedLocation) {
+          const searchKey = `${slugStr}|${appliedSearch}|${appliedLocation}|${nextSalons.length}`;
+          if (trackedSearchKeyRef.current !== searchKey) {
+            trackedSearchKeyRef.current = searchKey;
+            trackEvent(AnalyticsEvent.SalonSearch, {
+              source: "category_page",
+              category_slug: slugStr,
+              category_name: categoryLabel,
+              query: appliedSearch || null,
+              location: appliedLocation || null,
+              result_count: nextSalons.length,
+            });
+          }
+        }
       } catch (err: unknown) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : String(err);
@@ -120,6 +149,13 @@ export default function CategoryPage() {
   }, [slugStr, categoryLabel, appliedSearch, appliedLocation, fetchKey]);
 
   const handleSearch = () => {
+    trackEvent(AnalyticsEvent.SalonSearch, {
+      source: "category_search_submit",
+      category_slug: slugStr,
+      category_name: categoryLabel,
+      query: searchQuery.trim() || null,
+      location: selectedLocation.trim() || null,
+    });
     setAppliedSearch(searchQuery.trim());
     setAppliedLocation(selectedLocation.trim());
   };
@@ -310,6 +346,14 @@ export default function CategoryPage() {
                <Link
                  key={i}
                  href={`/category/${category.slug}`}
+                 onClick={() => {
+                   trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                     source: "category_page_bar",
+                     previous: slugStr || null,
+                     category: category.slug,
+                     category_name: category.name,
+                   });
+                 }}
                  className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
                >
                  <div className="mb-1">{renderIcon(category.icon)}</div>

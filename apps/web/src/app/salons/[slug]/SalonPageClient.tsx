@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -49,6 +49,7 @@ import {
   SALON_PAGE_SQUARE_IMAGE_CLASS,
   SALON_PAGE_STAFF_IMAGE_CLASS,
 } from "@/lib/salon-page-images";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffde5a] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffde5a] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
@@ -159,6 +160,19 @@ export default function SalonPage({
     email: "",
     phone: ""
   });
+  const trackedSalonSlugRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!salon || !slug) return;
+    if (trackedSalonSlugRef.current === slug) return;
+    trackedSalonSlugRef.current = slug;
+    trackEvent(AnalyticsEvent.SalonViewed, {
+      salon_slug: slug,
+      salon_id: typeof salon.id === "string" ? salon.id : String(salon.id || ""),
+      salon_name: typeof salon.name === "string" ? salon.name : null,
+      city: typeof salon.city === "string" ? salon.city : null,
+    });
+  }, [salon, slug]);
 
   // Pre-fill logged-in customer info automatically
   useEffect(() => {

@@ -9,6 +9,7 @@ import type { PublicCategory } from "@/lib/public-categories";
 import Logo from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { SALON_OWNER_ONBOARDING_FLAG_KEY } from "@/lib/salon-owner-oauth-intent";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 const IconMap: Record<string, any> = {
   Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
@@ -196,6 +197,13 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                           <Link
                             key={cat.id}
                             href={`/category/${cat.slug}`}
+                            onClick={() => {
+                              trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                                source: "header_dropdown",
+                                category: cat.slug,
+                                category_name: cat.name,
+                              });
+                            }}
                             className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
                           >
                             <Icon className="w-4 h-4 text-zinc-500 shrink-0" />
@@ -356,6 +364,14 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                   <Link
                     key={cat.id}
                     href={`/category/${cat.slug}`}
+                    onClick={() => {
+                      trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                        source: "header_category_row",
+                        category: cat.slug,
+                        category_name: cat.name,
+                        previous_path: pathname,
+                      });
+                    }}
                     className={navCategoryPillClass(active)}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
@@ -415,7 +431,14 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                     <Link
                       key={cat.id}
                       href={`/category/${cat.slug}`}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                          source: "header_mobile",
+                          category: cat.slug,
+                          category_name: cat.name,
+                        });
+                        setMobileMenuOpen(false);
+                      }}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-normal text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
                     >
                       <Icon className="w-3.5 h-3.5 shrink-0" />

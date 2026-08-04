@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Search, MapPin, Calendar, Scissors, Sparkles, Flower2, Hand, Droplets, Smile, Star } from "lucide-react";
 import { getLandingCategories, type LandingCategory } from "@/app/actions/landing-data";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 // Helper to map category slugs to Lucide icons
 const getCategoryIcon = (slug: string) => {
@@ -48,6 +49,12 @@ export function SearchHeroWidget() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    trackEvent(AnalyticsEvent.SalonSearch, {
+      source: "landing_hero",
+      query: query.trim() || null,
+      location: location.trim() || null,
+      date: date || null,
+    });
     router.push(`/?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`);
   };
 
@@ -153,7 +160,14 @@ export function SearchHeroWidget() {
               return (
                 <Link 
                   href={`/?q=${encodeURIComponent(cat.name)}`} 
-                  key={cat.id} 
+                  key={cat.id}
+                  onClick={() => {
+                    trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                      source: "landing_hero_chip",
+                      category: cat.slug,
+                      category_name: cat.name,
+                    });
+                  }}
                   className="group flex flex-col items-center gap-2 cursor-pointer transition-all duration-300"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center border-2 border-transparent group-hover:border-[#ffde5a] group-hover:bg-zinc-50 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
