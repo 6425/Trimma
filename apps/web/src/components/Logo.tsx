@@ -54,7 +54,8 @@ export default function Logo({
   const [defaultTagline, setDefaultTagline] = useState(DEFAULT_TAGLINE);
   // Per-deployment: live Vercel project sets NEXT_PUBLIC_APP_URL to www.trimma.io (no badge),
   // beta project sets it to beta.trimma.io (shows badge).
-  const showBetaBadge = shouldShowBetaBadge(null);
+  //const showBetaBadge = shouldShowBetaBadge(null);
+  const showBetaBadge = window.location.hostname.includes("beta");
 
   useEffect(() => {
     const handleUpdate = (updatedTagline: string) => {
