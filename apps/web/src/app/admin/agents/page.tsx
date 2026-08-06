@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Users, Search, Percent, Trash2, Phone, Loader2, Edit, CheckCircle2, UserCheck, MapPin, TrendingUp, Plus, Award, DollarSign, ClipboardList, Check, X, Lock, AlertTriangle, History, Landmark, CreditCard, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ const getDeepestSelectedTerritories = (
   return result;
 };
 
-export default function AdminAgents() {
+function AdminAgents() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     'dashboard' | 'directory' | 'territories' | 'commissions' | 'ledger' | 'logs'
@@ -1657,5 +1657,20 @@ export default function AdminAgents() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminAgentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+          <Loader2 className="w-10 h-10 text-brand animate-spin" />
+          <p className="text-zinc-500 font-bold text-sm">Loading agents...</p>
+        </div>
+      }
+    >
+      <AdminAgents />
+    </Suspense>
   );
 }

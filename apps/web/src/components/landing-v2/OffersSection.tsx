@@ -42,7 +42,7 @@ export function OffersSection() {
             <div className="flex-1 z-10">
               <h3 className="text-xl font-bold text-zinc-900 mb-2">Deals & Discounts</h3>
               <p className="text-zinc-600 mb-6 max-w-sm">Browse all active promotions, savings opportunities, and featured salon offers available through Trimma.</p>
-              <span className="inline-block bg-[#ffde5a] hover:bg-[#E6E43A] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
+              <span className="inline-block bg-[#ffde5a] hover:bg-[#e6c851] text-black font-bold px-4 py-2 rounded-md text-sm transition-colors">
                 Explore Deals
               </span>
             </div>

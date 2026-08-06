@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Gift, LayoutGrid, MapPin, Search, Sparkles, Tag } from "lucide-react";
 import {
@@ -70,14 +71,13 @@ export default function DealsClient({ deals, categories, locations }: Props) {
     <div className="bg-white text-zinc-900 min-h-screen">
       {/* Hero */}
       <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
-        <img
+        <Image
           src="/assets/deals-hero.webp"
           alt=""
-          width={1920}
-          height={500}
-          decoding="async"
-          fetchPriority="high"
-          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
+          fill
+          priority
+          sizes="100vw"
+          className="home-hero-bg-image object-cover pointer-events-none"
         />
         <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
         <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />

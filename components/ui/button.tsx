@@ -46,7 +46,7 @@ const buttonVariants = cva(
 
         // ── Outline: Transparent, yellow border + text ──
         outline:
-          "bg-transparent text-[#ffde5a] border-[#ffde5a]/50 hover:bg-[#ffde5a]/10 hover:border-[#ffde5a] hover:text-[#E6E43A]",
+          "bg-transparent text-[#ffde5a] border-[#ffde5a]/50 hover:bg-[#ffde5a]/10 hover:border-[#ffde5a] hover:text-[#e6c851]",
 
         // ── Ghost: explicit readable gray on light dashboards ──
         ghost:

@@ -1,9 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
+import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
 import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -49,6 +50,7 @@ import {
   SALON_PAGE_SQUARE_IMAGE_CLASS,
   SALON_PAGE_STAFF_IMAGE_CLASS,
 } from "@/lib/salon-page-images";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 const SALON_ACTION_BTN =
   "bg-black !text-white hover:bg-zinc-800 hover:!text-[#ffde5a] border-black [&_svg]:!text-white hover:[&_svg]:!text-[#ffde5a] disabled:bg-zinc-800 disabled:!text-white disabled:opacity-60";
@@ -68,12 +70,7 @@ const BookingSheet = dynamic(
 
 const SalonLocationMap = dynamic(
   () => import("../../../components/SalonLocationMap").then((m) => m.SalonLocationMap),
-  { ssr: false, loading: () => <div className="h-48 rounded-2xl bg-slate-100 animate-pulse" /> }
-);
-
-const SalonReviewsSection = dynamic(
-  () => import("../../../components/reviews/SalonReviewsSection").then((m) => m.SalonReviewsSection),
-  { ssr: false, loading: () => <div className="h-40 rounded-2xl bg-slate-100 animate-pulse" /> }
+  { ssr: false, loading: () => <div className="h-48 rounded-2xl bg-slate-100" /> }
 );
 
 const iconMap: Record<string, any> = {
@@ -111,10 +108,14 @@ type SalonPageInitialData = {
 
 export default function SalonPage({
   initialData,
+  initialReviews,
+  initialReviewSummary,
   highlightServiceId,
   highlightPromoId,
 }: {
   initialData?: SalonPageInitialData;
+  initialReviews?: PublicSalonReview[];
+  initialReviewSummary?: SalonReviewSummary;
   highlightServiceId?: string;
   highlightPromoId?: string;
 }) {
@@ -124,6 +125,7 @@ export default function SalonPage({
   const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
   const sharedServiceId = highlightServiceId || searchParams.get("service") || undefined;
   const sharedPromoId = highlightPromoId || searchParams.get("promo") || undefined;
+  const hasInitialReviews = initialReviews !== undefined;
   
   // LIVE DATA STATES — seed from server-pre-fetched data when available (instant render)
   const [salon, setSalon] = useState<any>(initialData?.salon ?? null);
@@ -132,10 +134,12 @@ export default function SalonPage({
   const [selectedPromotionPackage, setSelectedPromotionPackage] = useState<SalonPromotionPackage | null>(null);
   const [staff, setStaff] = useState<any[]>(initialData?.staff ?? []);
   const [amenities, setAmenities] = useState<any[]>(initialData?.amenities ?? []);
-  const [salonReviews, setSalonReviews] = useState<PublicSalonReview[]>([]);
-  const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(buildReviewSummary([]));
+  const [salonReviews, setSalonReviews] = useState<PublicSalonReview[]>(initialReviews ?? []);
+  const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(
+    initialReviewSummary ?? buildReviewSummary([])
+  );
   const [loading, setLoading] = useState(initialData == null);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(!hasInitialReviews);
   
   // UI STATES
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -159,6 +163,19 @@ export default function SalonPage({
     email: "",
     phone: ""
   });
+  const trackedSalonSlugRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!salon || !slug) return;
+    if (trackedSalonSlugRef.current === slug) return;
+    trackedSalonSlugRef.current = slug;
+    trackEvent(AnalyticsEvent.SalonViewed, {
+      salon_slug: slug,
+      salon_id: typeof salon.id === "string" ? salon.id : String(salon.id || ""),
+      salon_name: typeof salon.name === "string" ? salon.name : null,
+      city: typeof salon.city === "string" ? salon.city : null,
+    });
+  }, [salon, slug]);
 
   // Pre-fill logged-in customer info automatically
   useEffect(() => {
@@ -245,9 +262,9 @@ export default function SalonPage({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  // Reviews use server actions (extra round-trip) — load after the page is visible
+  // Reviews — skip client fetch when SSR already provided them
   useEffect(() => {
-    if (!salon?.id) return;
+    if (!salon?.id || hasInitialReviews) return;
     let cancelled = false;
     void (async () => {
       setReviewsLoading(true);
@@ -269,7 +286,7 @@ export default function SalonPage({
     return () => {
       cancelled = true;
     };
-  }, [salon?.id]);
+  }, [salon?.id, hasInitialReviews]);
 
   useEffect(() => {
     if (loading || !salon) return;
@@ -800,24 +817,29 @@ export default function SalonPage({
                     <button
                       type="button"
                       onClick={() => setGalleryLightboxIndex(0)}
-                      className="col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                      className="relative col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
                     >
-                      <img
+                      <Image
                         src={galleryImages[0]}
                         alt={`${salon.name} hero`}
-                        className="w-full h-full object-cover"
+                        fill
+                        priority
+                        sizes="(max-width: 1280px) 66vw, 720px"
+                        className="object-cover"
                       />
                     </button>
                     {galleryImages[1] ? (
                       <button
                         type="button"
                         onClick={() => setGalleryLightboxIndex(1)}
-                        className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                        className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
                       >
-                        <img
+                        <Image
                           src={galleryImages[1]}
                           alt={`${salon.name} gallery 2`}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="(max-width: 1280px) 33vw, 360px"
+                          className="object-cover"
                         />
                       </button>
                     ) : (
@@ -827,12 +849,14 @@ export default function SalonPage({
                       <button
                         type="button"
                         onClick={() => setGalleryLightboxIndex(2)}
-                        className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                        className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
                       >
-                        <img
+                        <Image
                           src={galleryImages[2]}
                           alt={`${salon.name} gallery 3`}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="(max-width: 1280px) 33vw, 360px"
+                          className="object-cover"
                         />
                       </button>
                     ) : (
@@ -856,10 +880,12 @@ export default function SalonPage({
                             }
                             className={`relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 cursor-pointer ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
                           >
-                            <img
+                            <Image
                               src={imgUrl}
                               alt={`${salon.name} gallery ${mosaicIndex + 1}`}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="(max-width: 1280px) 33vw, 240px"
+                              className="object-cover"
                             />
                             {isLast ? (
                               <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
@@ -1285,11 +1311,10 @@ export default function SalonPage({
                </div>
             </section>
 
-            {/* Verified reviews (replaces duplicate main-column map) */}
+            {/* Verified reviews */}
             {reviewsLoading ? (
-              <div className="flex items-center justify-center py-12 text-zinc-400">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                <span className="text-sm font-medium">Loading reviews...</span>
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-zinc-500">
+                Reviews will appear here shortly.
               </div>
             ) : (
               <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
@@ -1653,10 +1678,12 @@ export default function SalonPage({
             </button>
           ) : null}
 
-          <img
+          <Image
             src={galleryImages[galleryLightboxIndex]}
             alt={`${salon.name} photo ${galleryLightboxIndex + 1}`}
-            className="max-h-[85vh] max-w-full w-auto object-contain rounded-lg"
+            width={1600}
+            height={1200}
+            className="max-h-[85vh] max-w-full w-auto h-auto object-contain rounded-lg"
             onClick={(event) => event.stopPropagation()}
           />
 

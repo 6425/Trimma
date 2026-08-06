@@ -22,6 +22,7 @@ import { buildBookingStripePayload } from "@/lib/booking-stripe-session";
 import { preloadStripe } from "@/lib/stripe-js-client";
 import { ArrowLeft, CalendarRange, Clock, Loader2, Scissors, User } from "lucide-react";
 import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 type LoadedBookingCheckout = {
   draft: BookingCheckoutDraft;
@@ -129,6 +130,13 @@ function BookingCheckoutForm() {
           reservationDepositPercent: result.reservationDepositPercent,
           serviceTotal: result.serviceTotal,
           rates: result.rates,
+        });
+        trackEvent(AnalyticsEvent.BookingCheckoutStarted, {
+          salon_id: String(result.salon?.id || draft.salonId || ""),
+          salon_slug: result.salon?.slug ? String(result.salon.slug) : null,
+          service_count: Array.isArray(result.services) ? result.services.length : 0,
+          reservation_fee: Number(result.reservationFee) || 0,
+          service_total: Number(result.serviceTotal) || 0,
         });
 
         setCustomerDetails((prev) => ({
@@ -274,7 +282,7 @@ function BookingCheckoutForm() {
       <CheckoutStyles />
 
       <div className="min-h-screen flex flex-col lg:flex-row font-sans text-gray-800 antialiased bg-white">
-        <div className="order-2 lg:order-1 w-full lg:w-1/2 bg-[#ffde5a] flex flex-col items-center justify-start lg:justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#E6E43A] text-zinc-950">
+        <div className="order-2 lg:order-1 w-full lg:w-1/2 bg-[#ffde5a] flex flex-col items-center justify-start lg:justify-center p-6 lg:p-16 border-b lg:border-b-0 lg:border-r border-[#e6c851] text-zinc-950">
           <div className="w-full max-w-md">
             <Link
               href={backHref}

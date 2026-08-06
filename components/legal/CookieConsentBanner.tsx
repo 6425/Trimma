@@ -173,7 +173,7 @@ export function CookieConsentBanner() {
               <button
                 type="button"
                 onClick={() => persist(preferences)}
-                className="h-11 rounded-xl bg-[#ffde5a] px-4 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#E6E43A]"
+                className="h-11 rounded-xl bg-[#ffde5a] px-4 text-sm font-bold text-zinc-900 transition-colors hover:bg-[#e6c851]"
               >
                 Save preferences
               </button>

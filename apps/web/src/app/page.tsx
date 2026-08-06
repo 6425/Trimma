@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from "@/config/supabase-server";
 import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
-import { fetchPublicDeals } from "@/lib/deals";
+import { fetchCachedPublicDeals } from "@/lib/deals";
 import SalonsClient from "./SalonsClient";
 
 export const metadata = buildPublicPageMetadata({
@@ -44,14 +44,16 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
         return { salons: [], hasMore: false };
       }
     })(),
-    fetchPublicDeals(supabase).catch(() => []),
+    fetchCachedPublicDeals().catch(() => []),
   ]);
 
   const initialSalons = listingResult.salons;
   const initialHasMore = listingResult.hasMore;
+  const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
 
   return (
     <SalonsClient
+      key={searchKey}
       categories={categories}
       initialSearch={{
         q: sp.q ?? "",
@@ -61,6 +63,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
       initialSalons={initialSalons}
       initialHasMore={initialHasMore}
       initialDeals={deals}
+      ssrSeeded
     />
   );
 }

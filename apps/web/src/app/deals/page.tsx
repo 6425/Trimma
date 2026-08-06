@@ -1,27 +1,25 @@
-import { createServerSupabaseClient } from "@/config/supabase-server";
 import DealsClient from "./DealsClient";
 import {
-  fetchPublicDeals,
+  fetchCachedPublicDeals,
   getDealLocationKey,
   type CategoryOption,
 } from "@/lib/deals";
+import { fetchPublicCategories } from "@/lib/public-categories";
 
 export const revalidate = 60;
 
 async function loadDealsPageData() {
   try {
-    const supabase = createServerSupabaseClient();
-
-    const [deals, categoriesRes] = await Promise.all([
-      fetchPublicDeals(supabase),
-      supabase.from("categories").select("id, name, slug").order("name"),
+    const [deals, categories] = await Promise.all([
+      fetchCachedPublicDeals(),
+      fetchPublicCategories(),
     ]);
 
-    if (categoriesRes.error) {
-      console.error("Failed to load deal categories:", categoriesRes.error.message);
-    }
-
-    const categories: CategoryOption[] = categoriesRes.error ? [] : categoriesRes.data || [];
+    const categoryOptions: CategoryOption[] = categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+    }));
 
     const locationSet = new Set<string>();
     for (const deal of deals) {
@@ -30,7 +28,7 @@ async function loadDealsPageData() {
     }
     const locations = [...locationSet].sort((a, b) => a.localeCompare(b));
 
-    return { deals, categories, locations };
+    return { deals, categories: categoryOptions, locations };
   } catch (error) {
     console.error("Deals page failed:", error);
     return { deals: [], categories: [], locations: [] };

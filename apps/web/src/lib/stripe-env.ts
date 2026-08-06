@@ -1,3 +1,5 @@
+export type StripeEnvironment = "sandbox" | "live";
+
 export type StripeEnvKeySet = {
   publishableKey: string | null;
   secretKey: string | null;
@@ -8,7 +10,50 @@ function readEnv(name: string): string | null {
   return value || null;
 }
 
-export function getStripeEnvKeys(environment: "sandbox" | "live"): StripeEnvKeySet {
+function normalizeHost(hostname: string): string {
+  return hostname.toLowerCase().replace(/^www\./, "").split(":")[0] || "";
+}
+
+function hostFromAppUrl(url: string): string | null {
+  try {
+    return normalizeHost(new URL(url).hostname);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Stripe mode by host:
+ * - trimma.io / www.trimma.io → live
+ * - beta.*, localhost, and everything else → sandbox
+ */
+export function resolveStripeEnvironmentFromHost(
+  hostname?: string | null
+): StripeEnvironment {
+  if (!hostname) return "sandbox";
+  const host = normalizeHost(hostname);
+  if (host === "trimma.io") return "live";
+  return "sandbox";
+}
+
+/** Active Stripe mode for this request/deployment (local → sandbox). */
+export async function resolveActiveStripeEnvironment(): Promise<StripeEnvironment> {
+  try {
+    const { headers } = await import("next/headers");
+    const headerStore = await headers();
+    const host = headerStore.get("x-forwarded-host") || headerStore.get("host");
+    if (host) return resolveStripeEnvironmentFromHost(host);
+  } catch {
+    // Outside a request context (scripts, etc.)
+  }
+
+  const appHost = hostFromAppUrl(process.env.NEXT_PUBLIC_APP_URL || "");
+  if (appHost) return resolveStripeEnvironmentFromHost(appHost);
+
+  return "sandbox";
+}
+
+export function getStripeEnvKeys(environment: StripeEnvironment): StripeEnvKeySet {
   if (environment === "live") {
     return {
       publishableKey:
@@ -74,7 +119,7 @@ export type StripeResolvedKeys = StripeEnvKeySet & {
 };
 
 export function resolveStripeKeys(
-  environment: "sandbox" | "live",
+  environment: StripeEnvironment,
   db?: StripeDbKeyRow | null
 ): StripeResolvedKeys {
   const envKeys = getStripeEnvKeys(environment);

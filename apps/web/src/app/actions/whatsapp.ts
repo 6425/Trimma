@@ -1105,7 +1105,8 @@ export async function sendWhatsAppNotification(
       deposit_paid: depositAmount.toLocaleString(),
       balance_to_pay: balanceAmount.toLocaleString(),
       salon_address: salonAddress,
-      maps_link: mapsLink
+      maps_link: mapsLink,
+      bookings_link: `${APP_BASE_URL}/customer/bookings`,
     };
 
     const customerMessage = parseTemplate(templateConfirmed || D.confirmed, variables);

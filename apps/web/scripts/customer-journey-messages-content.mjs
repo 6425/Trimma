@@ -115,7 +115,7 @@ export const SECTIONS = [
           ],
         },
         bullets: [
-          "One WhatsApp at checkout — uses Meta template confirmmessage (5 variables: name, salon, service, date, time).",
+          "One WhatsApp at checkout — uses Meta template confirmmessage (12 variables: name, salon, ref, date, time, service, total, deposit, balance, address, directions, bookings link).",
           "One email at checkout — richer detail including deposit, balance, and directions.",
           "Admin trigger #1 Reservation Payment Received exists in settings but is not sent on current checkout (legacy).",
           "If WhatsApp fails, the success page offers Resend WhatsApp receipt.",

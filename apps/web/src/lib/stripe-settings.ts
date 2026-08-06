@@ -1,9 +1,15 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { getStripeEnvKeys, resolveStripeKeys, type StripeDbKeyRow } from "@/lib/stripe-env";
+import {
+  getStripeEnvKeys,
+  resolveActiveStripeEnvironment,
+  resolveStripeKeys,
+  type StripeDbKeyRow,
+  type StripeEnvironment,
+} from "@/lib/stripe-env";
 
 export type StripeGatewaySettings = {
   enabled: boolean;
-  environment: "sandbox" | "live";
+  environment: StripeEnvironment;
   publishableKey: string | null;
   secretKey: string | null;
 };
@@ -44,8 +50,10 @@ async function loadStripeDbSettings(): Promise<StripeSettingsRow | null> {
 }
 
 export async function loadStripeGatewaySettings(): Promise<StripeGatewaySettings> {
-  const db = await loadStripeDbSettings();
-  const environment = db?.stripe_environment === "live" ? "live" : "sandbox";
+  const [db, environment] = await Promise.all([
+    loadStripeDbSettings(),
+    resolveActiveStripeEnvironment(),
+  ]);
   const keys = resolveStripeKeys(environment, db);
 
   return {

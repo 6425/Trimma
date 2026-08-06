@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { fetchPublicSalonPage } from "@/app/actions/public-salon-page";
+import { Suspense } from "react";
+import { fetchPublishedSalonReviewsForPage } from "@/app/actions/reviews";
+import { getCachedPublicSalonPage } from "@/lib/cached-public-salon-page";
 import { buildSalonPageMetadata } from "@/lib/salon-catalog-share-meta";
 import SalonPage from "./SalonPageClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -15,11 +17,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const { service: serviceId, promo: promoId } = await searchParams;
 
-  if (!serviceId && !promoId) {
-    return { title: "Salon | Trimma" };
-  }
-
-  const result = await fetchPublicSalonPage(slug).catch(() => null);
+  const result = await getCachedPublicSalonPage(slug);
   if (!result || result.success === false) {
     return { title: "Salon | Trimma" };
   }
@@ -43,25 +41,37 @@ export default async function SalonServerPage({
   const { slug } = await params;
   const { service: serviceId, promo: promoId } = await searchParams;
 
-  const result = await fetchPublicSalonPage(slug).catch(() => null);
+  const result = await getCachedPublicSalonPage(slug);
 
   if (!result || result.success === false) {
     console.error("[salon page]", slug, result && "error" in result ? result.error : "fetch failed");
-    // Fall back to client-side fetch instead of a hard 404 when SSR fails transiently.
-    return <SalonPage highlightServiceId={serviceId} highlightPromoId={promoId} />;
+    return (
+      <Suspense fallback={null}>
+        <SalonPage highlightServiceId={serviceId} highlightPromoId={promoId} />
+      </Suspense>
+    );
   }
 
+  const salonId = String(result.salon.id || "");
+  const reviewsPayload = salonId
+    ? await fetchPublishedSalonReviewsForPage(salonId).catch(() => null)
+    : null;
+
   return (
-    <SalonPage
-      initialData={{
-        salon: result.salon,
-        services: result.services,
-        staff: result.staff,
-        amenities: result.amenities,
-        promotionPackages: result.promotionPackages,
-      }}
-      highlightServiceId={serviceId}
-      highlightPromoId={promoId}
-    />
+    <Suspense fallback={null}>
+      <SalonPage
+        initialData={{
+          salon: result.salon,
+          services: result.services,
+          staff: result.staff,
+          amenities: result.amenities,
+          promotionPackages: result.promotionPackages,
+        }}
+        initialReviews={reviewsPayload?.reviews}
+        initialReviewSummary={reviewsPayload?.summary}
+        highlightServiceId={serviceId}
+        highlightPromoId={promoId}
+      />
+    </Suspense>
   );
 }

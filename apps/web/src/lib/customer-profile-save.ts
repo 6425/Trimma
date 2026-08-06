@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sanitizeText } from "@/lib/sanitize-input";
 import type { CustomerContext } from "@/lib/server-customer-auth";
 
 export type CustomerProfileData = {
@@ -72,9 +73,9 @@ export async function saveCustomerProfileRecord(
   ctx: CustomerContext,
   input: CustomerProfileSaveInput
 ): Promise<CustomerProfileSaveResult> {
-  const firstName = input.firstName.trim();
-  const lastName = input.lastName.trim();
-  const phone = input.phone.trim();
+  const firstName = sanitizeText(input.firstName.trim());
+  const lastName = sanitizeText(input.lastName.trim());
+  const phone = sanitizeText(input.phone.trim());
   const fullName = `${firstName} ${lastName}`.trim();
 
   if (!firstName) {

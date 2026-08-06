@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, MessageCircle, Home, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ConnectTelegramCard } from "@/components/notifications/ConnectTelegramCard";
 import { clearBookingCheckoutDraft } from "@/lib/booking-checkout";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 
 function BookingSuccessContent() {
   const searchParams = useSearchParams();
@@ -23,6 +24,7 @@ function BookingSuccessContent() {
   const [resendingWhatsApp, setResendingWhatsApp] = useState(false);
   const [loading, setLoading] = useState(Boolean(sessionId && !bookingNoParam));
   const [error, setError] = useState<string | null>(null);
+  const trackedBookingNoRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!sessionId || bookingNoParam) return;
@@ -55,6 +57,14 @@ function BookingSuccessContent() {
 
   useEffect(() => {
     if (!bookingNo) return;
+    if (trackedBookingNoRef.current !== bookingNo) {
+      trackedBookingNoRef.current = bookingNo;
+      trackEvent(AnalyticsEvent.BookingCompleted, {
+        booking_no: bookingNo,
+        whatsapp_sent: whatsappSent,
+        notifications_pending: notificationsPending,
+      });
+    }
     toast.success(`Booking ${bookingNo} confirmed!`, {
       duration: 6000,
       position: "top-center",

@@ -1,5 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
+"use client";
+
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import * as Icons from "lucide-react";
 import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Store, Sparkles } from "lucide-react";
@@ -85,7 +87,7 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
       {/* 1. DISTRICT HERO SECTION */}
       <section className="page-hero-shell py-14 md:py-20">
         <div className="absolute inset-0 z-0">
-           <img src={data.image} alt={data.name} className="page-hero-image" />
+           <Image src={data.image} alt={data.name} fill priority sizes="100vw" className="object-cover" />
            <div className="absolute inset-0 page-hero-overlay"></div>
         </div>
         

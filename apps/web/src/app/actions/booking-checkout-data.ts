@@ -20,7 +20,10 @@ import {
   getReservationDepositPercentForSalon,
   resolveBookingAgentPercentage,
 } from "@/lib/booking-pricing";
-import { resolveStripeKeys } from "@/lib/stripe-env";
+import {
+  resolveActiveStripeEnvironment,
+  resolveStripeKeys,
+} from "@/lib/stripe-env";
 import { buildBookingStripePayload, type BookingStripeCustomer } from "@/lib/booking-stripe-session";
 import { createStripePaymentIntent } from "@/lib/stripe-checkout";
 
@@ -206,8 +209,7 @@ export async function fetchBookingCheckoutData(
     const depositPercent = getReservationDepositPercentForSalon(salon || undefined);
     const reservationFee = calculateReservationFee(serviceTotal, depositPercent);
 
-    const stripeEnvironment =
-      paymentSettings?.stripe_environment === "live" ? "live" : "sandbox";
+    const stripeEnvironment = await resolveActiveStripeEnvironment();
     const stripeEnabled = paymentSettings?.stripe_enabled !== false;
     const stripeKeys = resolveStripeKeys(stripeEnvironment, paymentSettings || undefined);
     const totalDuration =

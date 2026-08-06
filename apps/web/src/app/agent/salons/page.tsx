@@ -147,7 +147,7 @@ export default function AgentSalons() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#ffde5a] hover:bg-[#E6E43A] text-black font-bold w-full sm:w-auto justify-center" })}>
+          <Link href={path("/leads/new")} className={buttonVariants({ className: "rounded-xl bg-[#ffde5a] hover:bg-[#e6c851] text-black font-bold w-full sm:w-auto justify-center" })}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add Salon
           </Link>
