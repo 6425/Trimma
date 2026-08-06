@@ -13,7 +13,8 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { getAccessTokenFromCookie } from "@/lib/client-auth-cookie";
+import { supabase } from "@/config/supabase";
+import { getTrimmaAccessToken } from "@/lib/client-auth";
 import { toast } from "sonner";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { listRegionalHeadAgentsForAdmin } from "@/app/actions/admin-operations";
@@ -63,16 +64,18 @@ function AdminUserCreateInner() {
 
     setIsLoading(true);
     try {
-      const accessToken = getAccessTokenFromCookie();
-      if (!accessToken) {
-        throw new Error("You must be signed in as a platform admin.");
-      }
+      // HttpOnly session cookies are not visible to document.cookie — use session fallback.
+      const accessToken =
+        (await getTrimmaAccessToken()) ||
+        (await supabase.auth.getSession()).data.session?.access_token ||
+        null;
 
       const response = await fetch("/api/admin/provision-user", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
         body: JSON.stringify({
           email: formData.email,

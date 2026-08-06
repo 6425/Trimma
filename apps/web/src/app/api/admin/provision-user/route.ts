@@ -1,13 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { assertPlatformAdmin } from "@/lib/platform-admin";
+import { getAdminAccessTokenFromCookies } from "@/lib/server-admin-auth";
 
-const PLATFORM_ADMIN_ROLES = new Set(["admin", "superadmin"]);
 const AGENT_TABLE_ROLES = new Set(["agent", "admin", "superadmin", "regional_head"]);
 
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
     if (!serviceRoleKey) {
@@ -21,15 +21,24 @@ export async function POST(request: Request) {
     }
 
     const authHeader = request.headers.get("authorization");
-    const accessToken = authHeader?.startsWith("Bearer ")
+    const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
       : null;
+    // Prefer Bearer; fall back to HttpOnly session cookies (JS cannot read those).
+    const accessToken = bearerToken || (await getAdminAccessTokenFromCookies());
 
     if (!accessToken) {
       return NextResponse.json(
         { error: "You must be signed in as a platform admin." },
         { status: 401 }
       );
+    }
+
+    try {
+      await assertPlatformAdmin(accessToken);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Admin access required.";
+      return NextResponse.json({ error: message }, { status: 403 });
     }
 
     const body = await request.json();
@@ -58,45 +67,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabaseAuth = createClient(supabaseUrl, anonKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-
-    const {
-      data: { user: caller },
-      error: callerError,
-    } = await supabaseAuth.auth.getUser(accessToken);
-
-    if (callerError || !caller?.email) {
-      return NextResponse.json(
-        { error: "Invalid or expired session. Please sign in again." },
-        { status: 401 }
-      );
-    }
-
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-
-    const { data: adminProfile, error: adminLookupError } = await supabaseAdmin
-      .from("users")
-      .select("global_role")
-      .eq("email", caller.email)
-      .maybeSingle();
-
-    if (adminLookupError) {
-      return NextResponse.json(
-        { error: "Failed to verify admin permissions: " + adminLookupError.message },
-        { status: 500 }
-      );
-    }
-
-    if (!PLATFORM_ADMIN_ROLES.has(adminProfile?.global_role ?? "")) {
-      return NextResponse.json(
-        { error: "Only platform admins can provision new users." },
-        { status: 403 }
-      );
-    }
 
     const { data: createdUser, error: createError } =
       await supabaseAdmin.auth.admin.createUser({
