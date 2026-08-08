@@ -4,7 +4,7 @@ import { SIGNED_SESSION_COOKIE } from "@/lib/auth/cookies";
 import { applySessionCookies } from "@/lib/auth/session-cookies";
 import { verifySignedSessionCookie } from "@/lib/auth/signed-role";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
-import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
+import { resolveSessionRoleForUser } from "@/lib/auth/resolve-session-role";
 
 /** Read the signed HttpOnly trimma-session (used by client gates after password login). */
 export async function GET(request: NextRequest) {
@@ -44,14 +44,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired session." }, { status: 401 });
     }
 
-    let role: TrimmaUserRole | null = await resolveTrimmaUserRoleServer(
+    const role = await resolveSessionRoleForUser(
       verified.userId,
-      verified.email
+      verified.email,
+      verified.userMetadata
     );
-
-    if (!role) {
-      role = "customer";
-    }
 
     const response = NextResponse.json({
       success: true,

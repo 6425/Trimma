@@ -7,6 +7,7 @@ import { supabase } from "@/config/supabase";
 import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
+import { pickHighestRole } from "@/lib/trimma-role-core";
 import { completeOAuthLogin, claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
 import {
   clearSalonOwnerOAuthIntent,
@@ -119,9 +120,12 @@ function OAuthCallbackRunner({
             return;
           }
 
+          const effectiveRole =
+            pickHighestRole(result.role, sessionResult.role) ?? sessionResult.role;
+
           redirectAfterAuth(
             resolveAuthenticatedDestination({
-              role: sessionResult.role,
+              role: effectiveRole,
               nextPath,
               onboardingStatus: result.onboardingStatus,
               salonOwnerIntent,

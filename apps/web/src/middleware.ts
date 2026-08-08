@@ -79,6 +79,12 @@ function canAccessRegionalHeadPortal(role: MiddlewareUserRole | null): boolean {
   return role === 'regional_head' || role === 'admin';
 }
 
+function redirectToSessionRefresh(req: NextRequest, pathname: string): NextResponse {
+  const refreshUrl = new URL("/api/auth/refresh-session", req.url);
+  refreshUrl.searchParams.set("from", pathname);
+  return withRouteHeaders(pathname, NextResponse.redirect(refreshUrl));
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -156,14 +162,14 @@ export async function middleware(req: NextRequest) {
 
   if (pathname.startsWith('/regional-head')) {
     if (!canAccessRegionalHeadPortal(userRole)) {
-      return withRouteHeaders(pathname, NextResponse.redirect(new URL('/unauthorized', req.url)));
+      return redirectToSessionRefresh(req, pathname);
     }
     return withRouteHeaders(pathname, NextResponse.next());
   }
 
   if (pathname.startsWith('/agent')) {
     if (!canAccessAgentPortal(userRole)) {
-      return withRouteHeaders(pathname, NextResponse.redirect(new URL('/unauthorized', req.url)));
+      return redirectToSessionRefresh(req, pathname);
     }
     return withRouteHeaders(pathname, NextResponse.next());
   }
@@ -180,7 +186,7 @@ export async function middleware(req: NextRequest) {
       loginUrl.searchParams.set('redirectTo', pathname);
       return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
     }
-    return withRouteHeaders(pathname, NextResponse.redirect(new URL('/unauthorized', req.url)));
+    return redirectToSessionRefresh(req, pathname);
   }
 
   return withRouteHeaders(pathname, NextResponse.next());

@@ -56,6 +56,11 @@ export function sanitizeNextPath(path: string | null | undefined): string | null
   return path;
 }
 
+/** Default landing page for a resolved Trimma role. */
+export function resolveRoleHomePath(role: TrimmaUserRole | null | undefined): string {
+  return resolvePostAuthRedirect(role ?? null, null);
+}
+
 export function resolvePostAuthRedirect(
   role: TrimmaUserRole | null,
   nextPath: string | null

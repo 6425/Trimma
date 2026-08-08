@@ -14,6 +14,7 @@ import {
   redirectAfterAuth,
   resolveTrimmaUserRole,
 } from "@/lib/trimma-role";
+import { pickHighestRole } from "@/lib/trimma-role-core";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { completeOAuthLogin } from "@/app/actions/login-session";
 import { persistSalonOwnerOAuthIntent, persistSalonOwnerInviteSalon } from "@/lib/salon-owner-oauth-intent";
@@ -109,9 +110,12 @@ function LoginForm() {
             return;
           }
 
+          const effectiveRole =
+            pickHighestRole(result.role, sessionResult.role) ?? sessionResult.role;
+
           redirectAfterAuth(
             resolveAuthenticatedDestination({
-              role: sessionResult.role,
+              role: effectiveRole,
               nextPath: redirectTo,
               onboardingStatus: result.onboardingStatus,
               salonOwnerIntent,
@@ -157,8 +161,10 @@ function LoginForm() {
         return;
       }
 
+      const effectiveRole = pickHighestRole(role, sessionResult.role) ?? sessionResult.role;
+
       redirectAfterAuth(
-        resolveAuthenticatedDestination({ role: sessionResult.role, nextPath: redirectTo, salonOwnerIntent })
+        resolveAuthenticatedDestination({ role: effectiveRole, nextPath: redirectTo, salonOwnerIntent })
       );
     },
     [redirectTo, salonOwnerIntent, invitedSalonId]

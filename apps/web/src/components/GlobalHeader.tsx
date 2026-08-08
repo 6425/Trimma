@@ -99,26 +99,28 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   }, []);
 
   const fetchUserRole = async (userId: string, email?: string | null) => {
-    const cookieRole = (() => {
-      if (typeof document === "undefined") return null;
-      const match = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
-      if (!match) return null;
-      try {
-        return decodeURIComponent(match);
-      } catch {
-        return match;
+    try {
+      const sessionRes = await fetch("/api/auth/session", { credentials: "include", cache: "no-store" });
+      if (sessionRes.ok) {
+        const payload = (await sessionRes.json()) as { role?: string };
+        if (payload.role) {
+          setUserRole(payload.role);
+          return;
+        }
       }
-    })();
-
-    if (cookieRole) {
-      setUserRole(cookieRole);
+    } catch {
+      // Fall back to client DB reads below.
     }
 
-    const { data: roleRow } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
-    if (roleRow?.role) {
-      setUserRole(roleRow.role);
+    const { data: roleRows } = await supabase.from('user_roles').select('role').eq('user_id', userId);
+    const tableRoles = (roleRows || []).map((row) => row.role);
+    const priority = ['admin', 'regional_head', 'salon_owner', 'agent', 'customer'];
+    const fromTable = priority.find((role) => tableRoles.includes(role));
+    if (fromTable) {
+      setUserRole(fromTable);
       return;
     }
+
     if (email) {
       const { data: profile } = await supabase.from('users').select('global_role').eq('email', email).maybeSingle();
       if (profile?.global_role) setUserRole(profile.global_role);

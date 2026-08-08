@@ -9,6 +9,7 @@ import { supabase } from "@/config/supabase";
 import { claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
+import { pickHighestRole } from "@/lib/trimma-role-core";
 
 export const SALON_OWNER_LOGIN_REDIRECT = "/dashboard/profile";
 
@@ -54,10 +55,13 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
     return { ok: false, error: sessionResult.error };
   }
 
+  const effectiveRole =
+    pickHighestRole(claimResult.role, sessionResult.role) ?? sessionResult.role;
+
   clearSalonOwnerOAuthIntent();
   redirectAfterAuth(
     resolveAuthenticatedDestination({
-      role: sessionResult.role,
+      role: effectiveRole,
       nextPath: SALON_OWNER_LOGIN_REDIRECT,
       salonOwnerIntent: true,
     })
