@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   Plus,
   Search,
@@ -219,7 +220,7 @@ export default function InventoryCategoryManagement() {
   );
 
   return (
-    <div className="relative mx-auto flex max-w-[1600px] flex-col gap-4 lg:h-[calc(100dvh-7.5rem)] lg:min-h-0">
+    <div className="relative mx-auto flex max-w-[1600px] animate-in fade-in flex-col gap-4 duration-500 lg:h-[calc(100dvh-7.5rem)] lg:min-h-0">
       {isCropping && !!upImg && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/90 p-4 backdrop-blur-sm">
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-3xl bg-white p-6 shadow-2xl">
@@ -255,6 +256,9 @@ export default function InventoryCategoryManagement() {
 
       <div className="flex shrink-0 flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
+          <Link href="/admin/inventory" className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-800">
+            ← Inventory Mgmt
+          </Link>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Inventory Categories</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
             Global taxonomy for retail, backbar, and disposable products.

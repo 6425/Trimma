@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Plus,
   Search,
@@ -187,6 +188,9 @@ export default function GlobalInventoryProductsPage() {
     <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6 pb-12 duration-500">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
+          <Link href="/admin/inventory" className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-800">
+            ← Inventory Mgmt
+          </Link>
           <h1 className="text-3xl font-bold tracking-tight text-[#1A1C29]">Global Inventory Products</h1>
           <p className="font-medium text-zinc-500">
             Master product catalog salons import into their inventory.

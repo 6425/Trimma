@@ -43,6 +43,8 @@ import {
   type SalonInventoryTransaction,
 } from "@/app/actions/salon-inventory";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
+import { trimmaFilterTabClass } from "@/lib/customer-dashboard-ui";
+import { cn } from "@/lib/utils";
 
 type TrackFilter = "all" | "retail" | "backbar" | "disposable";
 
@@ -305,18 +307,29 @@ export default function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="trimma-customer-dashboard flex min-h-[40vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
   }
 
+  const trackTabs: { id: TrackFilter; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "retail", label: "Retail" },
+    { id: "backbar", label: "Backbar" },
+    { id: "disposable", label: "Disposable" },
+  ];
+
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4">
+    <div className="trimma-customer-dashboard trimma-light-context mx-auto max-w-6xl animate-in fade-in space-y-6 duration-500">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-800">
+            <Package className="h-3.5 w-3.5" />
+            Stock management
+          </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Inventory</h1>
-          <p className="text-sm text-zinc-500">Track stock, restock products, and log wastage.</p>
+          <p className="text-sm text-zinc-500">Track stock, import from Trimma catalog, restock, and log wastage.</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Button
@@ -331,7 +344,8 @@ export default function InventoryPage() {
           </Button>
           <Button
             type="button"
-            className="h-11 min-h-11 w-full rounded-xl bg-brand font-bold text-black hover:bg-brand-hover sm:w-auto"
+            variant="default"
+            className="h-11 min-h-11 w-full rounded-xl font-bold sm:w-auto"
             onClick={openAddModal}
             disabled={inventoryTableMissing}
           >
@@ -353,7 +367,7 @@ export default function InventoryPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-zinc-100 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-100">
               <Boxes className="h-5 w-5 text-zinc-600" />
@@ -364,9 +378,9 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-rose-100 bg-rose-50/50 p-5 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100">
               <AlertTriangle className="h-5 w-5 text-rose-600" />
             </div>
             <div>
@@ -375,7 +389,7 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-zinc-100 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/20">
               <Package className="h-5 w-5 text-zinc-800" />
@@ -388,42 +402,44 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <Input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by name, SKU, or barcode…"
-            className="h-11 pl-9"
-          />
+      <div className="overflow-hidden rounded-3xl border border-zinc-100 bg-white p-2 shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-zinc-50 p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative max-w-md flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, SKU, or barcode…"
+              className="h-12 rounded-2xl border-none bg-zinc-50 pl-11 font-medium"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {trackTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={cn(trimmaFilterTabClass(trackFilter === tab.id), "border border-zinc-200 bg-white")}
+                onClick={() => setTrackFilter(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={cn(
+                trimmaFilterTabClass(showLowStockOnly),
+                "border border-zinc-200 bg-white inline-flex items-center gap-1.5"
+              )}
+              onClick={() => setShowLowStockOnly((v) => !v)}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Low stock
+            </button>
+          </div>
         </div>
-        <Select value={trackFilter} onValueChange={(v) => setTrackFilter(v as TrackFilter)}>
-          <SelectTrigger className="h-11 w-full sm:w-[180px]">
-            <SelectValue placeholder="Track" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All tracks</SelectItem>
-            <SelectItem value="retail">Retail</SelectItem>
-            <SelectItem value="backbar">Backbar</SelectItem>
-            <SelectItem value="disposable">Disposable</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          type="button"
-          variant={showLowStockOnly ? "default" : "outline"}
-          className="h-11 min-h-11 w-full sm:w-auto"
-          onClick={() => setShowLowStockOnly((v) => !v)}
-        >
-          <AlertTriangle className="mr-2 h-4 w-4" />
-          Low stock only
-        </Button>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="border-b border-zinc-100 bg-zinc-50 text-left text-xs font-bold uppercase tracking-wide text-zinc-500">
+            <thead className="border-b border-zinc-50 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500">
               <tr>
                 <th className="px-4 py-3">Product</th>
                 <th className="px-4 py-3">Track</th>
@@ -530,7 +546,7 @@ export default function InventoryPage() {
       </div>
 
       {recentTransactions.length > 0 && (
-        <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-500">Recent movements</h2>
           <ul className="space-y-2">
             {recentTransactions.map((tx) => (

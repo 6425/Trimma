@@ -138,6 +138,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         { name: 'Promotion Types', href: '/admin/promotion-types' },
         { name: 'Promotion Packages', href: '/admin/promotion-packages' },
         { name: 'Amenities', href: '/admin/amenities' },
+        { name: 'Inventory Categories', href: '/admin/inventory/categories' },
+        { name: 'Global Inventory Products', href: '/admin/inventory/products' },
       ]
     },
     {
@@ -145,6 +147,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       href: "/admin/inventory",
       icon: <Package className="w-4 h-4" />,
       children: [
+        { name: "Overview", href: "/admin/inventory" },
         { name: "Categories", href: "/admin/inventory/categories" },
         { name: "Global Products", href: "/admin/inventory/products" },
       ],
