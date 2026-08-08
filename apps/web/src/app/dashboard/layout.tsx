@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, CalendarDays } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, CalendarDays, Package } from "lucide-react";
 import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { readRoleFromCookie } from "@/lib/client-auth-cookie";
@@ -90,6 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: "Staff", href: "/dashboard/staff", icon: <UserPlus className="w-4 h-4" /> },
     { name: "Services", href: "/dashboard/services", icon: <Scissors className="w-4 h-4" /> },
     { name: "Packages", href: "/dashboard/packages", icon: <Tag className="w-4 h-4" /> },
+    { name: "Inventory", href: "/dashboard/inventory", icon: <Package className="w-4 h-4" /> },
     { name: "CRM", href: "/dashboard/crm", icon: <MessageSquare className="w-4 h-4" /> },
     { name: "Marketing", href: "/dashboard/marketing", icon: <Sparkles className="w-4 h-4" /> },
     { name: "Social Media", href: "/dashboard/social", icon: <Share2 className="w-4 h-4" />, frozen: true },
