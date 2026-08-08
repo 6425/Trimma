@@ -64,13 +64,18 @@ export async function syncUserRolesForGlobalRole(
     throw new Error(deleteError.message);
   }
 
-  const { error: upsertError } = await supabase
-    .from("user_roles")
-    .upsert({ user_id: resolvedAuthUserId, role }, { onConflict: "user_id,role" });
+  const { error: insertError } = await supabase.from("user_roles").insert({
+    user_id: resolvedAuthUserId,
+    role,
+  });
 
-  if (upsertError) {
-    const lower = upsertError.message.toLowerCase();
+  if (insertError) {
+    const lower = insertError.message.toLowerCase();
     if (lower.includes("does not exist") || lower.includes("relation")) {
+      return;
+    }
+    // Legacy schema may allow duplicate (user_id, role) without a unique index — treat as synced.
+    if (lower.includes("duplicate key") || lower.includes("unique constraint")) {
       return;
     }
     if (lower.includes("user_roles_role_check") || lower.includes("violates check constraint")) {
@@ -78,6 +83,6 @@ export async function syncUserRolesForGlobalRole(
         "user_roles does not allow this role yet. Run packages/db/ADMIN_USER_ROLE_PATCH.sql in Supabase SQL Editor."
       );
     }
-    throw new Error(upsertError.message);
+    throw new Error(insertError.message);
   }
 }

@@ -16,6 +16,7 @@ import {
   redirectAfterAuth,
   resolveTrimmaUserRole,
 } from "@/lib/trimma-role";
+import { pickHighestRole } from "@/lib/trimma-role-core";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { resolveLoginRole } from "@/app/actions/login-session";
 import type { Session } from "@supabase/supabase-js";
@@ -92,8 +93,10 @@ function AgentLoginForm() {
         return;
       }
 
+      const effectiveRole = pickHighestRole(role, sessionResult.role) ?? sessionResult.role;
+
       redirectAfterAuth(
-        resolveAuthenticatedDestination({ role: sessionResult.role, nextPath: redirectTo })
+        resolveAuthenticatedDestination({ role: effectiveRole, nextPath: redirectTo })
       );
     },
     [redirectTo]
