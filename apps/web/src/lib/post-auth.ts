@@ -22,7 +22,7 @@ export function resolveAuthenticatedDestination({
     if (role === "agent" || role === "regional_head") {
       return resolvePostAuthRedirect(role, sanitizeNextPath(nextPath));
     }
-    if (role === "salon_owner" || role === "admin") {
+    if (role === "salon_owner") {
       return resolvePostAuthRedirect(role, sanitizeNextPath(nextPath) || "/dashboard/profile");
     }
     // Owner claim still in progress — avoid sending customers to /dashboard (middleware blocks).
