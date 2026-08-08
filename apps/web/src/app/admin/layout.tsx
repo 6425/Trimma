@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, Package } from "lucide-react";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -139,6 +139,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         { name: 'Promotion Packages', href: '/admin/promotion-packages' },
         { name: 'Amenities', href: '/admin/amenities' },
       ]
+    },
+    {
+      name: "Inventory Mgmt",
+      href: "/admin/inventory",
+      icon: <Package className="w-4 h-4" />,
+      children: [
+        { name: "Categories", href: "/admin/inventory/categories" },
+        { name: "Global Products", href: "/admin/inventory/products" },
+      ],
     },
     { name: "Style Mgmt", href: "/admin/styles", icon: <Sparkles className="w-4 h-4" /> },
     { 
