@@ -418,7 +418,7 @@ export default function InventoryPage() {
               <button
                 key={tab.id}
                 type="button"
-                className={cn(trimmaFilterTabClass(trackFilter === tab.id), "border border-zinc-200 bg-white")}
+                className={cn(trimmaFilterTabClass(trackFilter === tab.id))}
                 onClick={() => setTrackFilter(tab.id)}
               >
                 {tab.label}
@@ -428,7 +428,7 @@ export default function InventoryPage() {
               type="button"
               className={cn(
                 trimmaFilterTabClass(showLowStockOnly),
-                "border border-zinc-200 bg-white inline-flex items-center gap-1.5"
+                "inline-flex items-center gap-1.5"
               )}
               onClick={() => setShowLowStockOnly((v) => !v)}
             >

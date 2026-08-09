@@ -1722,7 +1722,7 @@
 
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
   [class*="bg-white"], .bg-white
-):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#ffde5a\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
+):not(.trimma-filter-tab):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]):not([class*="text-\[#ffde5a\]"]):not([class*="text-brand"]):not([class*="text-red"]):not([class*="text-emerald"]) {
   color: #18181b !important;
   background-color: #ffffff !important;
   border-color: #e4e4e7 !important;
@@ -1730,7 +1730,7 @@
 
 :is(.trimma-dark-context, .trimma-portal-body) .trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
   [class*="bg-white"], .bg-white
-):is(:hover, :focus-visible):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]) {
+):not(.trimma-filter-tab):is(:hover, :focus-visible):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not([class*="hover:bg-black"]) {
   color: #18181b !important;
   background-color: #f4f4f5 !important;
 }
@@ -2435,4 +2435,22 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats 
   [class*="bg-[#ffde5a]"], [class*="bg-brand"], .bg-primary
 ):is(:hover, :focus-visible, :active) :is(svg, span) {
   color: #000000 !important;
+}
+
+/* Filter tabs — active black pill must beat generic bg-white button resets */
+:is(.trimma-portal-body, .trimma-light-context) button.trimma-filter-tab.is-active {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+:is(.trimma-portal-body, .trimma-light-context) button.trimma-filter-tab.is-active:is(:hover, :focus-visible) {
+  background-color: #000000 !important;
+  color: #ffde5a !important;
+}
+
+:is(.trimma-portal-body, .trimma-light-context) button.trimma-filter-tab:not(.is-active) {
+  background-color: #ffffff !important;
+  border-color: #e4e4e7 !important;
+  color: #52525b !important;
 }
