@@ -1533,8 +1533,8 @@
   [data-slot="dropdown-menu-checkbox-item"]:is(:hover, :focus, :focus-visible, [data-highlighted]),
   [data-slot="dropdown-menu-radio-item"]:is(:hover, :focus, :focus-visible, [data-highlighted]),
   [data-slot="dropdown-menu-sub-trigger"]:is(:hover, :focus, :focus-visible, [data-highlighted], [data-popup-open]) {
-    background-color: var(--accent);
-    color: var(--accent-foreground);
+    background-color: #f4f4f5;
+    color: #18181b;
   }
 
   [data-slot="select-value"] {
@@ -1686,6 +1686,7 @@
   --background: #ffffff;
   --foreground: #18181b;
   --card-foreground: #18181b;
+  --popover: #ffffff;
   --popover-foreground: #18181b;
   --muted-foreground: #52525b;
   --accent: #e4e4e7;
@@ -2378,4 +2379,60 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats 
 .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats .home-hero-stats-dot,
 html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats .home-hero-stats-dot {
   background-color: rgb(113 113 122) !important;
+}
+
+/*
+ * Portaled surfaces (select, dropdown, dialog) render on document.body and
+ * inherit :root dark tokens — force readable light-surface contrast.
+ */
+.trimma-portal-popover,
+[data-slot="select-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"] {
+  --popover-foreground: #18181b;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --muted-foreground: #71717a;
+  color: #18181b;
+}
+
+[data-slot="dialog-content"].trimma-portal-popover:not([class*="bg-black"]):not([class*="bg-zinc-9"]):not([class*="bg-[#0B0B0B]"]):not([class*="bg-[#151515]"]) {
+  --popover-foreground: #18181b;
+  color: #18181b;
+}
+
+/* Light-surface button hover — never white-on-white or black-on-black */
+.trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
+  :hover, :focus-visible, :active
+):is(
+  [class*="hover:bg-white"], [class*="hover:bg-zinc-50"], [class*="hover:bg-zinc-100"],
+  [class*="hover:bg-slate-50"], [class*="hover:bg-slate-100"], [class*="hover:bg-gray-50"]
+):not(
+  [class*="bg-black"], [class*="bg-zinc-9"], [class*="text-[#ffde5a]"], [class*="text-brand"]
+) {
+  color: #18181b !important;
+}
+
+.trimma-light-context :is(button, a, [role="button"], [data-slot="button"]):is(
+  :hover, :focus-visible, :active
+):is(
+  [class*="hover:bg-black"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"]
+):not([class*="bg-[#ffde5a]"]):not([class*="bg-brand"]) {
+  color: #ffffff !important;
+}
+
+/* Yellow primary buttons — black label on default and hover */
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  [class*="bg-[#ffde5a]"], [class*="bg-brand"], .bg-primary
+):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#ffde5a]/1"]):not([class*="bg-[#ffde5a]/2"]),
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  [class*="bg-[#ffde5a]"], [class*="bg-brand"], .bg-primary
+):is(:hover, :focus-visible, :active):not([class*="bg-black"]):not([class*="bg-zinc-9"]) {
+  color: #000000 !important;
+}
+
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  [class*="bg-[#ffde5a]"], [class*="bg-brand"], .bg-primary
+):is(:hover, :focus-visible, :active) :is(svg, span) {
+  color: #000000 !important;
 }

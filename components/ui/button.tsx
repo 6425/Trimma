@@ -46,11 +46,11 @@ const buttonVariants = cva(
 
         // ── Outline: Transparent, yellow border + text ──
         outline:
-          "bg-transparent text-[#ffde5a] border-[#ffde5a]/50 hover:bg-[#ffde5a]/10 hover:border-[#ffde5a] hover:text-[#e6c851]",
+          "bg-transparent text-[#ffde5a] border-[#ffde5a]/50 hover:bg-[#ffde5a]/15 hover:border-[#ffde5a] hover:!text-black",
 
         // ── Ghost: explicit readable gray on light dashboards ──
         ghost:
-          "bg-transparent text-zinc-600 border-transparent hover:bg-zinc-100 hover:text-zinc-900",
+          "bg-transparent text-zinc-600 border-transparent hover:bg-zinc-100 hover:!text-zinc-900",
 
         // ── Destructive: Red danger actions ──
         destructive:

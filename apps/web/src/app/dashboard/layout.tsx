@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Logo variant="dark" iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
             </Link>
             <button
-              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-white hover:text-white hover:bg-white/10 transition-colors"
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-black hover:text-white hover:bg-black transition-colors"
               onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
