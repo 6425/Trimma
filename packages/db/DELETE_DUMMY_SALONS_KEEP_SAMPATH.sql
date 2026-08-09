@@ -3,7 +3,7 @@
 -- ==============================================================================
 -- Run the ENTIRE script below in Supabase SQL Editor (select all, then Run).
 -- Keeps any row in public.salons whose name contains "Sampath Barber Saloon"
--- (matches "Sampath Barber Saloon (A/C)" and similar).
+-- (matches "Sampath Barber Saloon (A/C)" and similar), and Trimma Demo Salon.
 -- ==============================================================================
 
 -- ─── PREVIEW (safe to run anytime) ───────────────────────────────────────────
@@ -11,11 +11,15 @@
 SELECT 'KEEP' AS action, id, name, slug, owner_email, owner_gmail, status, onboarding_status
 FROM public.salons
 WHERE name ILIKE '%Sampath Barber Saloon%'
+   OR slug = 'trimma-demo-salon'
+   OR name ILIKE 'Trimma Demo Salon%'
 ORDER BY name;
 
 SELECT 'DELETE' AS action, id, name, slug, owner_email, status, onboarding_status, created_at
 FROM public.salons
 WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+  AND slug IS DISTINCT FROM 'trimma-demo-salon'
+  AND name NOT ILIKE 'Trimma Demo Salon%'
 ORDER BY created_at;
 
 -- ─── DESTRUCTIVE CLEANUP (run everything from BEGIN through COMMIT together) ─
@@ -41,6 +45,8 @@ BEGIN
     DELETE FROM public.payments
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -48,6 +54,8 @@ BEGIN
     DELETE FROM public.bookings
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -55,6 +63,8 @@ BEGIN
     DELETE FROM public.reviews
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -62,6 +72,8 @@ BEGIN
     DELETE FROM public.staff_reviews
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -69,6 +81,8 @@ BEGIN
     DELETE FROM public.onboarding_logs
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -76,6 +90,8 @@ BEGIN
     DELETE FROM public.customer_ai_memory
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -83,6 +99,8 @@ BEGIN
     DELETE FROM public.salon_analytics
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -90,6 +108,8 @@ BEGIN
     DELETE FROM public.customer_favorite_salons
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -97,6 +117,8 @@ BEGIN
     DELETE FROM public.salon_amenities
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -104,6 +126,8 @@ BEGIN
     DELETE FROM public.salon_promotion_packages
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -111,6 +135,8 @@ BEGIN
     DELETE FROM public.salon_operating_hours
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 
@@ -118,18 +144,23 @@ BEGIN
     DELETE FROM public.resources
     WHERE salon_id IN (
       SELECT id FROM public.salons WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%'
     );
   END IF;
 END $$;
 
 DELETE FROM public.salons
-WHERE name NOT ILIKE '%Sampath Barber Saloon%';
+WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND slug IS DISTINCT FROM 'trimma-demo-salon'
+      AND name NOT ILIKE 'Trimma Demo Salon%';
 
 DO $$
 BEGIN
   IF to_regclass('public.salon_leads') IS NOT NULL THEN
     DELETE FROM public.salon_leads
-    WHERE name NOT ILIKE '%Sampath Barber Saloon%';
+    WHERE name NOT ILIKE '%Sampath Barber Saloon%'
+      AND name NOT ILIKE 'Trimma Demo Salon%';
   END IF;
 END $$;
 
