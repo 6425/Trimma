@@ -25,6 +25,8 @@ export type DashboardModalProps = {
   size?: DashboardModalSize;
   panelClassName?: string;
   bodyClassName?: string;
+  /** Backdrop behind the panel. Defaults to a dark scrim for salon dashboard modals. */
+  overlayClassName?: string;
 };
 
 /**
@@ -42,6 +44,7 @@ export function DashboardModal({
   size = "lg",
   panelClassName = "",
   bodyClassName = "",
+  overlayClassName = "bg-black/60 backdrop-blur-sm",
 }: DashboardModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -72,7 +75,7 @@ export function DashboardModal({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className={`absolute inset-0 ${overlayClassName}`}
         aria-label="Close dialog"
         onClick={onClose}
       />

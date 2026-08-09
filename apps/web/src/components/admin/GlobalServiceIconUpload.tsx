@@ -36,6 +36,8 @@ type GlobalServiceIconUploadProps = {
   size?: "sm" | "md";
   uploadAction?: (formData: FormData) => Promise<ServiceImageUploadResult>;
   uploadContextLabel?: string;
+  /** Use a light frosted backdrop instead of the default dark crop overlay. */
+  lightBackdrop?: boolean;
 };
 
 export function GlobalServiceIconUpload({
@@ -45,6 +47,7 @@ export function GlobalServiceIconUpload({
   size = "md",
   uploadAction,
   uploadContextLabel = "global service catalog",
+  lightBackdrop = false,
 }: GlobalServiceIconUploadProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const cropPreviewRevokeRef = useRef<(() => void) | null>(null);
@@ -174,8 +177,12 @@ export function GlobalServiceIconUpload({
   return (
     <>
       {isCropping && upImg && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-900/90 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col">
+        <div
+          className={`fixed inset-0 z-[250] flex items-end sm:items-center justify-center p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] ${
+            lightBackdrop ? "bg-white/75 backdrop-blur-sm" : "bg-zinc-900/90 backdrop-blur-sm"
+          }`}
+        >
+          <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xl max-w-lg w-full max-h-[min(92dvh,calc(100dvh-1.5rem))] flex flex-col min-h-0">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-zinc-900">
                 Crop service image ({SERVICE_IMAGE_DIMENSION_LABEL})

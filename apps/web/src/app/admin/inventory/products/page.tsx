@@ -17,14 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { DashboardModal } from "../../../../components/dashboard/DashboardModal";
 import {
   Select,
   SelectContent,
@@ -309,115 +302,111 @@ export default function GlobalInventoryProductsPage() {
         </div>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-[2rem] border-none p-0 shadow-2xl sm:max-w-[640px]">
-          <div className="border-b border-zinc-100 p-6">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">
-                {form.id ? "Edit Global Product" : "New Global Product"}
-              </DialogTitle>
-              <DialogDescription className="text-zinc-500">
-                Salons can import this template into their inventory catalog.
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-
-          <div className="space-y-4 p-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Product name *</label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 rounded-xl" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Category</label>
-                <Select value={form.category_id || undefined} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                  <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Brand</label>
-                <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-11 rounded-xl" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Unit</label>
-                <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
-                  <SelectTrigger className="h-11 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pcs">Pieces (pcs)</SelectItem>
-                    <SelectItem value="ml">Millilitres (ml)</SelectItem>
-                    <SelectItem value="g">Grams (g)</SelectItem>
-                    <SelectItem value="sheet">Sheets</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Slug</label>
-                <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="h-11 rounded-xl font-mono text-sm" placeholder="auto-generated" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Suggested cost (LKR)</label>
-                <Input type="number" min="0" step="0.01" value={form.suggested_cost_price} onChange={(e) => setForm({ ...form, suggested_cost_price: e.target.value })} className="h-11 rounded-xl" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Suggested retail (LKR)</label>
-                <Input type="number" min="0" step="0.01" value={form.suggested_retail_price} onChange={(e) => setForm({ ...form, suggested_retail_price: e.target.value })} className="h-11 rounded-xl" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Description</label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="rounded-xl" />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Product image ({SERVICE_IMAGE_DIMENSION_LABEL})</label>
-              <GlobalServiceIconUpload
-                value={form.icon_image_url}
-                onChange={(url) => setForm({ ...form, icon_image_url: url })}
-                onClear={() => setForm({ ...form, icon_image_url: "" })}
-                uploadContextLabel="global inventory catalog"
-              />
-            </div>
-
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                className="h-4 w-4"
-              />
-              <span className="text-sm font-medium text-zinc-800">Active in catalog (visible for salon import)</span>
-            </label>
-          </div>
-
-          <DialogFooter className="gap-2 border-t border-zinc-100 p-6 sm:justify-end">
-            <Button type="button" variant="outline" className="h-11 min-h-11" onClick={() => setIsDialogOpen(false)}>
+      <DashboardModal
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        title={form.id ? "Edit Global Product" : "New Global Product"}
+        description="Salons can import this template into their inventory catalog."
+        size="lg"
+        overlayClassName="bg-white/70 backdrop-blur-[2px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" className="h-11 min-h-11 w-full sm:w-auto" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" variant="default" className="h-11 min-h-11 font-bold" disabled={isSaving} onClick={() => void handleSave()}>
+            <Button type="button" variant="default" className="h-11 min-h-11 w-full font-bold sm:w-auto" disabled={isSaving} onClick={() => void handleSave()}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Product"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Product name *</label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 rounded-xl" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Category</label>
+              <Select value={form.category_id || undefined} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Brand</label>
+              <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-11 rounded-xl" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Unit</label>
+              <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                  <SelectItem value="ml">Millilitres (ml)</SelectItem>
+                  <SelectItem value="g">Grams (g)</SelectItem>
+                  <SelectItem value="sheet">Sheets</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Slug</label>
+              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="h-11 rounded-xl font-mono text-sm" placeholder="auto-generated" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Suggested cost (LKR)</label>
+              <Input type="number" min="0" step="0.01" value={form.suggested_cost_price} onChange={(e) => setForm({ ...form, suggested_cost_price: e.target.value })} className="h-11 rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Suggested retail (LKR)</label>
+              <Input type="number" min="0" step="0.01" value={form.suggested_retail_price} onChange={(e) => setForm({ ...form, suggested_retail_price: e.target.value })} className="h-11 rounded-xl" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Description</label>
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="rounded-xl" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Product image ({SERVICE_IMAGE_DIMENSION_LABEL})</label>
+            <GlobalServiceIconUpload
+              value={form.icon_image_url}
+              onChange={(url) => setForm({ ...form, icon_image_url: url })}
+              onClear={() => setForm({ ...form, icon_image_url: "" })}
+              uploadContextLabel="global inventory catalog"
+              lightBackdrop
+            />
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+            <input
+              type="checkbox"
+              checked={form.is_active}
+              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              className="h-4 w-4"
+            />
+            <span className="text-sm font-medium text-zinc-800">Active in catalog (visible for salon import)</span>
+          </label>
+        </div>
+      </DashboardModal>
     </div>
   );
 }
