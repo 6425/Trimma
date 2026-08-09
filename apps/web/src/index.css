@@ -2454,3 +2454,72 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats 
   border-color: #e4e4e7 !important;
   color: #52525b !important;
 }
+
+/*
+ * Portaled dashboard/admin modals — always light surface + dark text (html.dark safe).
+ * Modals render on document.body outside .trimma-light-context shells.
+ */
+.trimma-dashboard-modal-host,
+.trimma-dashboard-modal,
+.trimma-dashboard-modal.trimma-light-context {
+  --background: #ffffff;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --input: rgba(0, 0, 0, 0.12);
+  --border: rgba(0, 0, 0, 0.08);
+  color: #18181b;
+}
+
+.trimma-dashboard-modal,
+html.dark .trimma-dashboard-modal,
+html.dark .trimma-dashboard-modal.trimma-light-context,
+html.dark .trimma-dashboard-modal :is(.bg-white, .bg-zinc-50, .bg-zinc-100) {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+}
+
+.trimma-dashboard-modal :is(h1, h2, h3, h4, h5, h6, p, span, label, div) {
+  color: inherit;
+}
+
+.trimma-dashboard-modal :is(.text-zinc-900, .text-zinc-800, .text-zinc-700, .text-[#1A1C29]) {
+  color: #18181b !important;
+}
+
+.trimma-dashboard-modal :is(.text-zinc-600, .text-zinc-500, .text-zinc-400) {
+  color: #71717a !important;
+}
+
+.trimma-dashboard-modal [data-slot="input"],
+.trimma-dashboard-modal [data-slot="textarea"],
+.trimma-dashboard-modal [data-slot="select-trigger"],
+html.dark .trimma-dashboard-modal [data-slot="input"],
+html.dark .trimma-dashboard-modal [data-slot="textarea"],
+html.dark .trimma-dashboard-modal [data-slot="select-trigger"] {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.trimma-dashboard-modal [data-slot="input"]::placeholder,
+.trimma-dashboard-modal [data-slot="textarea"]::placeholder,
+html.dark .trimma-dashboard-modal [data-slot="input"]::placeholder,
+html.dark .trimma-dashboard-modal [data-slot="textarea"]::placeholder {
+  color: #a1a1aa !important;
+}
+
+.trimma-dashboard-modal [data-slot="select-value"],
+.trimma-dashboard-modal [data-slot="select-trigger"] [data-placeholder] {
+  color: #18181b !important;
+}
+
+.trimma-dashboard-modal [data-slot="select-trigger"] svg {
+  color: #71717a !important;
+}

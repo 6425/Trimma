@@ -44,7 +44,7 @@ export function DashboardModal({
   size = "lg",
   panelClassName = "",
   bodyClassName = "",
-  overlayClassName = "bg-black/60 backdrop-blur-sm",
+  overlayClassName = "bg-white/70 backdrop-blur-[2px]",
 }: DashboardModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -68,7 +68,7 @@ export function DashboardModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-3 sm:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-6"
+      className="trimma-light-context trimma-dashboard-modal-host fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-3 sm:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dashboard-modal-title"
@@ -81,7 +81,7 @@ export function DashboardModal({
       />
 
       <div
-        className={`relative z-10 flex w-full ${SIZE_CLASS[size]} flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[min(92dvh,calc(100dvh-1.5rem))] min-h-0 ${panelClassName}`}
+        className={`trimma-light-context trimma-dashboard-modal trimma-portal-popover relative z-10 flex w-full ${SIZE_CLASS[size]} flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white text-zinc-900 shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[min(92dvh,calc(100dvh-1.5rem))] min-h-0 ${panelClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="sticky top-0 z-20 shrink-0 border-b border-zinc-100 bg-white/95 backdrop-blur-md px-5 py-4 sm:px-6 sm:py-5">

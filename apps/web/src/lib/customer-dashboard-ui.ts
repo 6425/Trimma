@@ -15,6 +15,16 @@ export function trimmaFilterTabClass(active: boolean) {
   );
 }
 
+/** Light-surface form controls for dashboard/admin modals (always dark text on white). */
+export const trimmaFormInputClass =
+  "h-11 rounded-xl border-zinc-200 bg-white text-zinc-900 placeholder:text-zinc-400 shadow-none";
+
+export const trimmaFormTextareaClass =
+  "rounded-xl border-zinc-200 bg-white text-zinc-900 placeholder:text-zinc-400 shadow-none min-h-[5.5rem]";
+
+export const trimmaFormSelectTriggerClass =
+  "h-11 rounded-xl border-zinc-200 bg-white text-zinc-900 shadow-none";
+
 /** @deprecated Use trimmaDarkBtnClass — kept for existing imports */
 export const customerBtnClass = trimmaDarkBtnClass;
 

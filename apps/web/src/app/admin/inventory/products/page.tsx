@@ -33,6 +33,11 @@ import {
 } from "@/app/actions/global-inventory-products";
 import { withTimeout } from "@/lib/promise-timeout";
 import {
+  trimmaFormInputClass,
+  trimmaFormSelectTriggerClass,
+  trimmaFormTextareaClass,
+} from "@/lib/customer-dashboard-ui";
+import {
   GlobalServiceIconPreview,
   GlobalServiceIconUpload,
   SERVICE_IMAGE_DIMENSION_LABEL,
@@ -308,7 +313,6 @@ export default function GlobalInventoryProductsPage() {
         title={form.id ? "Edit Global Product" : "New Global Product"}
         description="Salons can import this template into their inventory catalog."
         size="lg"
-        overlayClassName="bg-white/70 backdrop-blur-[2px]"
         footer={
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" className="h-11 min-h-11 w-full sm:w-auto" onClick={() => setIsDialogOpen(false)}>
@@ -323,28 +327,47 @@ export default function GlobalInventoryProductsPage() {
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Product name *</label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11 rounded-xl" />
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={trimmaFormInputClass} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Category</label>
-              <Select value={form.category_id || undefined} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                <SelectTrigger className="h-11 rounded-xl">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inventory category</label>
+              {categories.length === 0 ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  No categories yet.{" "}
+                  <Link href="/admin/inventory/categories" className="font-bold underline">
+                    Create inventory categories
+                  </Link>{" "}
+                  first, then assign products here.
+                </div>
+              ) : (
+                <Select value={form.category_id || undefined} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                  <SelectTrigger className={trimmaFormSelectTriggerClass}>
+                    <SelectValue placeholder="Select inventory category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {categories.length > 0 && (
+                <p className="text-xs text-zinc-500">
+                  Categories from{" "}
+                  <Link href="/admin/inventory/categories" className="font-semibold text-zinc-700 underline">
+                    Inventory Categories
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Brand</label>
-              <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="h-11 rounded-xl" />
+              <Input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className={trimmaFormInputClass} />
             </div>
           </div>
 
@@ -352,7 +375,7 @@ export default function GlobalInventoryProductsPage() {
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Unit</label>
               <Select value={form.unit} onValueChange={(v) => setForm({ ...form, unit: v })}>
-                <SelectTrigger className="h-11 rounded-xl">
+                <SelectTrigger className={trimmaFormSelectTriggerClass}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -365,24 +388,24 @@ export default function GlobalInventoryProductsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Slug</label>
-              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="h-11 rounded-xl font-mono text-sm" placeholder="auto-generated" />
+              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className={`${trimmaFormInputClass} font-mono text-sm`} placeholder="auto-generated" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Suggested cost (LKR)</label>
-              <Input type="number" min="0" step="0.01" value={form.suggested_cost_price} onChange={(e) => setForm({ ...form, suggested_cost_price: e.target.value })} className="h-11 rounded-xl" />
+              <Input type="number" min="0" step="0.01" value={form.suggested_cost_price} onChange={(e) => setForm({ ...form, suggested_cost_price: e.target.value })} className={trimmaFormInputClass} />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Suggested retail (LKR)</label>
-              <Input type="number" min="0" step="0.01" value={form.suggested_retail_price} onChange={(e) => setForm({ ...form, suggested_retail_price: e.target.value })} className="h-11 rounded-xl" />
+              <Input type="number" min="0" step="0.01" value={form.suggested_retail_price} onChange={(e) => setForm({ ...form, suggested_retail_price: e.target.value })} className={trimmaFormInputClass} />
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Description</label>
-            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="rounded-xl" />
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className={trimmaFormTextareaClass} />
           </div>
 
           <div className="space-y-2">
