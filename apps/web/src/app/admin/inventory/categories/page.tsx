@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import {
   deleteInventoryCategory,
   fetchInventoryCategoriesCatalog,
+  importServiceCategoriesToInventory,
   saveInventoryCategory,
 } from "@/app/actions/inventory-categories";
 import { withTimeout } from "@/lib/promise-timeout";
@@ -93,6 +94,7 @@ export default function InventoryCategoryManagement() {
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isCropping, setIsCropping] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const fetchCategories = async () => {
     try {
@@ -191,6 +193,28 @@ export default function InventoryCategoryManagement() {
     }
   };
 
+  const handleImportFromServiceCategories = async () => {
+    try {
+      setIsImporting(true);
+      const result = await withTimeout(
+        importServiceCategoriesToInventory(),
+        20000,
+        "Import timed out."
+      );
+      if (result.success === false) throw new Error(result.error);
+      if (result.imported === 0) {
+        toast.info("No new categories to import — inventory already has matching slugs, or service categories list is empty.");
+      } else {
+        toast.success(`Imported ${result.imported} categor${result.imported === 1 ? "y" : "ies"} from Service Categories.`);
+      }
+      void fetchCategories();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this inventory category? Linked products may lose their category.")) return;
     try {
@@ -261,21 +285,42 @@ export default function InventoryCategoryManagement() {
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Inventory Categories</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Global taxonomy for retail, backbar, and disposable products.
+            Stock/product taxonomy only — separate from{" "}
+            <Link href="/admin/categories" className="font-semibold text-zinc-700 underline">
+              Service Categories
+            </Link>
+            .
           </p>
         </div>
         {!editId && (
-          <Button
-            type="button"
-            onClick={() => {
-              setEditId(null);
-              setFormData({ name: "", slug: "", icon: "", image_url: "", description: "" });
-            }}
-            className="h-10 shrink-0 rounded-xl bg-brand px-5 font-bold text-zinc-900 hover:bg-brand-hover"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Category
-          </Button>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isImporting}
+              onClick={() => void handleImportFromServiceCategories()}
+              className="h-10 rounded-xl font-bold"
+            >
+              {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Import from Service Categories
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setEditId(null);
+                setFormData({ name: "", slug: "", icon: "", image_url: "", description: "" });
+              }}
+              className="h-10 shrink-0 rounded-xl bg-brand px-5 font-bold text-zinc-900 hover:bg-brand-hover"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Category
+            </Button>
+          </div>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+        Your <strong>Service Categories</strong> (Admin → Service Mgmt → Service Categories) are unchanged and still power services, styles, and marketplace listings.
+        Inventory uses this separate list — use <strong>Import from Service Categories</strong> to copy names over, or add inventory-only categories here.
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,380px)]">

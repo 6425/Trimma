@@ -335,11 +335,18 @@ export default function GlobalInventoryProductsPage() {
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inventory category</label>
               {categories.length === 0 ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  No categories yet.{" "}
+                  No inventory categories yet. Create them under{" "}
                   <Link href="/admin/inventory/categories" className="font-bold underline">
-                    Create inventory categories
-                  </Link>{" "}
-                  first, then assign products here.
+                    Inventory Categories
+                  </Link>
+                  , or use <strong>Import from Service Categories</strong> there to copy your existing service category names.
+                  <span className="mt-1 block text-xs text-amber-800">
+                    Service Categories ({""}
+                    <Link href="/admin/categories" className="underline">
+                      /admin/categories
+                    </Link>
+                    ) are a separate list and do not appear here automatically.
+                  </span>
                 </div>
               ) : (
                 <Select value={form.category_id || undefined} onValueChange={(v) => setForm({ ...form, category_id: v })}>

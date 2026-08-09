@@ -116,3 +116,39 @@ export async function deleteInventoryCategory(id: string) {
   if (!isAdminDbSuccess(result)) return adminDbFailure(result, INVENTORY_DB_HINT);
   return { success: true as const };
 }
+
+/** Copy service catalog categories into inventory_categories (non-destructive; skips existing slugs). */
+export async function importServiceCategoriesToInventory() {
+  const result = await withAdminDb(async (supabase) => {
+    const [serviceRes, inventoryRes] = await Promise.all([
+      supabase.from("categories").select("name, slug, description, icon, image_url").order("name"),
+      supabase.from("inventory_categories").select("slug"),
+    ]);
+
+    if (serviceRes.error) throw new Error(serviceRes.error.message);
+    if (inventoryRes.error) throw new Error(inventoryRes.error.message);
+
+    const existingSlugs = new Set((inventoryRes.data || []).map((row) => row.slug));
+    const toInsert = (serviceRes.data || [])
+      .filter((row) => row.slug && !existingSlugs.has(row.slug))
+      .map((row) => ({
+        name: row.name,
+        slug: row.slug,
+        description: row.description ?? null,
+        icon: (row as { icon?: string | null }).icon ?? null,
+        image_url: (row as { image_url?: string | null }).image_url ?? null,
+      }));
+
+    if (!toInsert.length) {
+      return { imported: 0, skipped: (serviceRes.data || []).length };
+    }
+
+    const { error } = await supabase.from("inventory_categories").insert(toInsert);
+    if (error) throw new Error(error.message);
+
+    return { imported: toInsert.length, skipped: (serviceRes.data || []).length - toInsert.length };
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result, INVENTORY_DB_HINT);
+  return { success: true as const, imported: result.data.imported, skipped: result.data.skipped };
+}
