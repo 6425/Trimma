@@ -37,6 +37,7 @@ import {
   fetchSalonInventoryPage,
   insertSalonInventoryItems,
   recordSalonInventoryTransaction,
+  setSalonInventoryOnHand,
   updateSalonInventoryItem,
   type GlobalInventoryProduct,
   type SalonInventoryItem,
@@ -47,6 +48,7 @@ import { trimmaFilterTabClass } from "@/lib/customer-dashboard-ui";
 import { cn } from "@/lib/utils";
 
 type TrackFilter = "all" | "retail" | "backbar" | "disposable";
+type StockMode = "restock" | "wastage" | "set";
 
 const emptyItemForm = {
   name: "",
@@ -85,7 +87,7 @@ export default function InventoryPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showStockModal, setShowStockModal] = useState(false);
-  const [stockMode, setStockMode] = useState<"restock" | "wastage">("restock");
+  const [stockMode, setStockMode] = useState<StockMode>("restock");
   const [activeItem, setActiveItem] = useState<SalonInventoryItem | null>(null);
   const [itemForm, setItemForm] = useState(emptyItemForm);
   const [stockQty, setStockQty] = useState("");
@@ -93,6 +95,8 @@ export default function InventoryPage() {
   const [wastageReason, setWastageReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [selectedImports, setSelectedImports] = useState<Record<string, boolean>>({});
+  const [importQuantities, setImportQuantities] = useState<Record<string, string>>({});
+  const [defaultImportQty, setDefaultImportQty] = useState("");
 
   const loadInventory = useCallback(async () => {
     try {
@@ -108,10 +112,13 @@ export default function InventoryPage() {
       setInventoryTableMissing(Boolean(result.inventoryTableMissing));
 
       const initialImports: Record<string, boolean> = {};
+      const initialImportQty: Record<string, string> = {};
       (result.globalProducts || []).forEach((p) => {
         initialImports[p.id] = false;
+        initialImportQty[p.id] = "";
       });
       setSelectedImports(initialImports);
+      setImportQuantities(initialImportQty);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to load inventory.";
       setLoadError(message);
@@ -170,10 +177,10 @@ export default function InventoryPage() {
     setShowEditModal(true);
   };
 
-  const openStockModal = (item: SalonInventoryItem, mode: "restock" | "wastage") => {
+  const openStockModal = (item: SalonInventoryItem, mode: StockMode = "set") => {
     setActiveItem(item);
     setStockMode(mode);
-    setStockQty("");
+    setStockQty(mode === "set" ? String(Number(item.quantity_on_hand) || 0) : "");
     setStockNotes("");
     setWastageReason("");
     setShowStockModal(true);
@@ -220,27 +227,44 @@ export default function InventoryPage() {
   const handleStockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeItem) return;
-    const qty = parseFloat(stockQty);
-    if (!Number.isFinite(qty) || qty <= 0) {
-      toast.error("Enter a valid quantity.");
-      return;
-    }
 
     try {
       setSaving(true);
-      const result = await recordSalonInventoryTransaction({
-        itemId: activeItem.id,
-        transactionType: stockMode,
-        quantity: qty,
-        notes: stockNotes.trim() || null,
-        shrinkageReason: stockMode === "wastage" ? wastageReason.trim() || null : null,
-      });
-      if (result.success === false) throw new Error(result.error);
-      toast.success(stockMode === "restock" ? "Stock added." : "Wastage recorded.");
+
+      if (stockMode === "set") {
+        const targetQty = parseFloat(stockQty);
+        if (!Number.isFinite(targetQty) || targetQty < 0) {
+          toast.error("Enter a valid on-hand quantity (0 or more).");
+          return;
+        }
+        const result = await setSalonInventoryOnHand({
+          itemId: activeItem.id,
+          quantityOnHand: targetQty,
+          notes: stockNotes.trim() || null,
+        });
+        if (result.success === false) throw new Error(result.error);
+        toast.success(result.unchanged ? "On-hand quantity unchanged." : "On-hand quantity updated.");
+      } else {
+        const qty = parseFloat(stockQty);
+        if (!Number.isFinite(qty) || qty <= 0) {
+          toast.error("Enter a valid quantity.");
+          return;
+        }
+        const result = await recordSalonInventoryTransaction({
+          itemId: activeItem.id,
+          transactionType: stockMode,
+          quantity: qty,
+          notes: stockNotes.trim() || null,
+          shrinkageReason: stockMode === "wastage" ? wastageReason.trim() || null : null,
+        });
+        if (result.success === false) throw new Error(result.error);
+        toast.success(stockMode === "restock" ? "Stock added." : "Wastage recorded.");
+      }
+
       setShowStockModal(false);
       await loadInventory();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Could not save transaction.");
+      toast.error(error instanceof Error ? error.message : "Could not save stock update.");
     } finally {
       setSaving(false);
     }
@@ -268,17 +292,24 @@ export default function InventoryPage() {
     const existingGlobalIds = new Set(
       items.map((i) => i.global_product_id).filter(Boolean) as string[]
     );
+    const defaultQty = defaultImportQty.trim() ? parseFloat(defaultImportQty) : NaN;
     const payloads = toImport
       .filter((p) => !existingGlobalIds.has(p.id))
-      .map((p) => ({
-        name: p.name,
-        unit: p.unit || "pcs",
-        inventory_track: "retail" as const,
-        cost_price: p.suggested_cost_price,
-        retail_price: p.suggested_retail_price,
-        global_product_id: p.id,
-        category_id: p.category_id,
-      }));
+      .map((p) => {
+        const perItemQty = importQuantities[p.id]?.trim()
+          ? parseFloat(importQuantities[p.id])
+          : defaultQty;
+        return {
+          name: p.name,
+          unit: p.unit || "pcs",
+          inventory_track: "retail" as const,
+          cost_price: p.suggested_cost_price,
+          retail_price: p.suggested_retail_price,
+          global_product_id: p.id,
+          category_id: p.category_id,
+          initial_quantity: Number.isFinite(perItemQty) && perItemQty > 0 ? perItemQty : undefined,
+        };
+      });
 
     if (!payloads.length) {
       toast.error("Selected products are already in your inventory.");
@@ -329,7 +360,9 @@ export default function InventoryPage() {
             Stock management
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Inventory</h1>
-          <p className="text-sm text-zinc-500">Track stock, import from Trimma catalog, restock, and log wastage.</p>
+          <p className="text-sm text-zinc-500">
+            Update on-hand counts, import from the Trimma catalog, and track restocks and wastage.
+          </p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Button
@@ -477,9 +510,17 @@ export default function InventoryPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={low ? "font-bold text-rose-600" : "font-medium text-zinc-800"}>
+                        <button
+                          type="button"
+                          className={cn(
+                            "rounded-lg px-2 py-1 text-left transition-colors hover:bg-zinc-100",
+                            low ? "font-bold text-rose-600" : "font-medium text-zinc-800"
+                          )}
+                          title="Update on-hand quantity"
+                          onClick={() => openStockModal(item, "set")}
+                        >
                           {formatInventoryQty(Number(item.quantity_on_hand), item.unit)}
-                        </span>
+                        </button>
                         {low && (
                           <div className="mt-0.5 text-[10px] font-bold uppercase text-rose-500">Low stock</div>
                         )}
@@ -493,13 +534,21 @@ export default function InventoryPage() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex flex-wrap justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="default"
+                            className="h-9 min-h-9 rounded-lg px-3 text-xs font-bold"
+                            onClick={() => openStockModal(item, "set")}
+                          >
+                            Update stock
+                          </Button>
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9"
-                            title="Restock"
+                            title="Add stock"
                             onClick={() => openStockModal(item, "restock")}
                           >
                             <ArrowDownCircle className="h-4 w-4 text-emerald-600" />
@@ -519,7 +568,7 @@ export default function InventoryPage() {
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9"
-                            title="Edit"
+                            title="Edit product details"
                             onClick={() => openEditModal(item)}
                           >
                             <Edit2 className="h-4 w-4" />
@@ -579,11 +628,21 @@ export default function InventoryPage() {
       <ItemFormModal
         open={showEditModal}
         title="Edit item"
-        description="Update product details. Use Restock or Wastage actions to change quantity."
+        description="Update product details. Use Update stock to change the on-hand quantity."
         form={itemForm}
         setForm={setItemForm}
         saving={saving}
         showInitialQty={false}
+        onHandQty={activeItem ? Number(activeItem.quantity_on_hand) : null}
+        onHandUnit={activeItem?.unit}
+        onUpdateStock={
+          activeItem
+            ? () => {
+                setShowEditModal(false);
+                openStockModal(activeItem, "set");
+              }
+            : undefined
+        }
         onClose={() => setShowEditModal(false)}
         onSubmit={() => void handleSaveItem(true)}
       />
@@ -591,7 +650,7 @@ export default function InventoryPage() {
       <DashboardModal
         open={showStockModal}
         onClose={() => setShowStockModal(false)}
-        title={stockMode === "restock" ? "Restock" : "Log wastage"}
+        title="Update on-hand stock"
         description={activeItem ? activeItem.name : undefined}
         size="md"
         footer={
@@ -606,23 +665,71 @@ export default function InventoryPage() {
               className="h-11 min-h-11 font-bold"
               disabled={saving}
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save stock"}
             </Button>
           </div>
         }
       >
+        {activeItem && (
+          <div className="mb-4 rounded-2xl border border-zinc-100 bg-zinc-50 px-4 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Current on hand</p>
+            <p className="text-2xl font-extrabold text-zinc-900">
+              {formatInventoryQty(Number(activeItem.quantity_on_hand), activeItem.unit)}
+            </p>
+          </div>
+        )}
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          {(
+            [
+              { id: "set" as const, label: "Set count" },
+              { id: "restock" as const, label: "Add stock" },
+              { id: "wastage" as const, label: "Remove / wastage" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={cn(trimmaFilterTabClass(stockMode === tab.id))}
+              onClick={() => {
+                setStockMode(tab.id);
+                if (tab.id === "set" && activeItem) {
+                  setStockQty(String(Number(activeItem.quantity_on_hand) || 0));
+                } else {
+                  setStockQty("");
+                }
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <form id="inventory-stock-form" onSubmit={handleStockSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Quantity</label>
+            <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">
+              {stockMode === "set"
+                ? "New on-hand quantity"
+                : stockMode === "restock"
+                  ? "Quantity to add"
+                  : "Quantity to remove"}
+            </label>
             <Input
               type="number"
-              min="0"
+              min={stockMode === "set" ? "0" : "0"}
               step="any"
               value={stockQty}
               onChange={(e) => setStockQty(e.target.value)}
               className="h-11"
               required
             />
+            {stockMode === "set" ? (
+              <p className="mt-1 text-xs text-zinc-500">Enter the exact count you have on the shelf now.</p>
+            ) : stockMode === "restock" ? (
+              <p className="mt-1 text-xs text-zinc-500">Adds to your current on-hand total.</p>
+            ) : (
+              <p className="mt-1 text-xs text-zinc-500">Subtracts from your current on-hand total.</p>
+            )}
           </div>
           {stockMode === "wastage" && (
             <div>
@@ -651,7 +758,7 @@ export default function InventoryPage() {
         open={showImportModal}
         onClose={() => setShowImportModal(false)}
         title="Import from Trimma catalog"
-        description="Add platform products to your salon inventory. You can set stock levels after import."
+        description="Add platform products to your salon inventory. Set starting on-hand quantities before import."
         size="lg"
         footer={
           <div className="flex justify-end gap-2">
@@ -673,7 +780,22 @@ export default function InventoryPage() {
         {globalProducts.length === 0 ? (
           <p className="text-sm text-zinc-500">No global catalog products yet. Add items manually or ask Trimma admin to seed the catalog.</p>
         ) : (
-          <ul className="max-h-[50vh] space-y-2 overflow-y-auto">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+              <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">
+                Default starting quantity (optional)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                step="any"
+                value={defaultImportQty}
+                onChange={(e) => setDefaultImportQty(e.target.value)}
+                className="h-11 max-w-xs bg-white"
+                placeholder="Applied to selected rows without their own qty"
+              />
+            </div>
+            <ul className="max-h-[50vh] space-y-2 overflow-y-auto">
             {globalProducts.map((product) => (
               <li
                 key={product.id}
@@ -696,9 +818,24 @@ export default function InventoryPage() {
                       : ""}
                   </p>
                 </div>
+                <div className="w-28 shrink-0">
+                  <label className="mb-1 block text-[10px] font-bold uppercase text-zinc-500">On hand</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={importQuantities[product.id] || ""}
+                    onChange={(e) =>
+                      setImportQuantities((prev) => ({ ...prev, [product.id]: e.target.value }))
+                    }
+                    className="h-10"
+                    placeholder="0"
+                  />
+                </div>
               </li>
             ))}
-          </ul>
+            </ul>
+          </div>
         )}
       </DashboardModal>
     </div>
@@ -715,6 +852,9 @@ function ItemFormModal({
   setForm,
   saving,
   showInitialQty,
+  onHandQty,
+  onHandUnit,
+  onUpdateStock,
   onClose,
   onSubmit,
 }: {
@@ -725,6 +865,9 @@ function ItemFormModal({
   setForm: React.Dispatch<React.SetStateAction<ItemFormState>>;
   saving: boolean;
   showInitialQty: boolean;
+  onHandQty?: number | null;
+  onHandUnit?: string | null;
+  onUpdateStock?: () => void;
   onClose: () => void;
   onSubmit: () => void;
 }) {
@@ -746,6 +889,19 @@ function ItemFormModal({
         </div>
       }
     >
+      {onHandQty != null && onUpdateStock ? (
+        <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-amber-100 bg-amber-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-800">On hand</p>
+            <p className="text-xl font-extrabold text-zinc-900">
+              {formatInventoryQty(onHandQty, onHandUnit || "pcs")}
+            </p>
+          </div>
+          <Button type="button" variant="dark" className="h-11 min-h-11 w-full font-bold sm:w-auto" onClick={onUpdateStock}>
+            Update stock
+          </Button>
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Name</label>
@@ -830,7 +986,7 @@ function ItemFormModal({
         </div>
         {showInitialQty ? (
           <div>
-            <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Initial quantity</label>
+            <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Starting on-hand quantity</label>
             <Input
               type="number"
               min="0"
@@ -838,7 +994,9 @@ function ItemFormModal({
               value={form.initial_quantity}
               onChange={(e) => setForm((f) => ({ ...f, initial_quantity: e.target.value }))}
               className="h-11"
+              placeholder="0"
             />
+            <p className="mt-1 text-xs text-zinc-500">How many you have in stock right now.</p>
           </div>
         ) : null}
       </div>

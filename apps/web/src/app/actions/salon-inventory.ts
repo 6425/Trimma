@@ -317,3 +317,53 @@ export async function recordSalonInventoryTransaction(input: {
   if (!isSalonDbSuccess(result)) return salonDbFailure(result, INVENTORY_DB_HINT);
   return { success: true as const };
 }
+
+/** Set on-hand quantity to an exact count (records an adjustment transaction for the delta). */
+export async function setSalonInventoryOnHand(input: {
+  itemId: string;
+  quantityOnHand: number;
+  notes?: string | null;
+}) {
+  const targetQty = Number(input.quantityOnHand);
+  if (!Number.isFinite(targetQty) || targetQty < 0) {
+    return { success: false as const, error: "Enter a valid on-hand quantity (0 or more)." };
+  }
+
+  const result = await withSalonDb(async (supabase, ctx) => {
+    const { data: item, error: fetchError } = await supabase
+      .from("salon_inventory_items")
+      .select("id, quantity_on_hand")
+      .eq("id", input.itemId)
+      .eq("salon_id", ctx.salonId)
+      .maybeSingle();
+    if (fetchError) throw new Error(fetchError.message);
+    if (!item) throw new Error("Inventory item not found for your salon.");
+
+    const currentQty = Number(item.quantity_on_hand) || 0;
+    const delta = targetQty - currentQty;
+    if (delta === 0) {
+      return { unchanged: true as const };
+    }
+
+    await ensureDefaultLocations(supabase, ctx.salonId);
+
+    const { error } = await supabase.from("salon_inventory_transactions").insert({
+      salon_id: ctx.salonId,
+      inventory_item_id: input.itemId,
+      transaction_type: "adjustment",
+      quantity: delta,
+      notes: input.notes?.trim() || `Count set to ${targetQty}`,
+      actor_email: ctx.email,
+    });
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/dashboard/inventory");
+    return { unchanged: false as const };
+  });
+
+  if (!isSalonDbSuccess(result)) return salonDbFailure(result, INVENTORY_DB_HINT);
+  if (result.data.unchanged) {
+    return { success: true as const, unchanged: true as const };
+  }
+  return { success: true as const, unchanged: false as const };
+}
