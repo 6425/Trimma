@@ -115,7 +115,7 @@ export default function InventoryCategoryManagement() {
   };
 
   useEffect(() => {
-    void fetchCategories();
+    void Promise.resolve().then(() => fetchCategories());
   }, []);
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {

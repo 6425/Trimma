@@ -43,7 +43,7 @@ import {
   GlobalServiceIconPreview,
   GlobalServiceIconUpload,
   SERVICE_IMAGE_DIMENSION_LABEL,
-} from "@/components/admin/GlobalServiceIconUpload";
+} from "../../../../components/admin/GlobalServiceIconUpload";
 
 const iconMap = { Package, LayoutGrid, Tag };
 
@@ -102,7 +102,7 @@ export default function GlobalInventoryProductsPage() {
   };
 
   useEffect(() => {
-    void fetchData();
+    void Promise.resolve().then(() => fetchData());
   }, []);
 
   const openDialog = (product: any = null) => {

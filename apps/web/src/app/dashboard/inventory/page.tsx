@@ -122,7 +122,7 @@ export default function InventoryPage() {
   }, []);
 
   useEffect(() => {
-    void loadInventory();
+    void Promise.resolve().then(() => loadInventory());
   }, [loadInventory]);
 
   const filteredItems = useMemo(() => {
