@@ -44,9 +44,9 @@ const buttonVariants = cva(
         secondary:
           "bg-zinc-100 text-zinc-900 border-zinc-200 hover:bg-zinc-200 hover:text-zinc-950",
 
-        // ── Outline: Transparent, yellow border + text ──
+        // ── Outline: readable on light dashboards; yellow on dark panels via CSS ──
         outline:
-          "bg-transparent text-[#ffde5a] border-[#ffde5a]/50 hover:bg-[#ffde5a]/15 hover:border-[#ffde5a] hover:!text-black",
+          "bg-transparent text-zinc-800 border-zinc-300 hover:bg-zinc-100 hover:!text-zinc-900 hover:border-zinc-400",
 
         // ── Ghost: explicit readable gray on light dashboards ──
         ghost:

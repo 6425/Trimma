@@ -132,28 +132,29 @@
     --trimma-yellow-hover: #ffe680;
     --trimma-yellow-soft: #FFFE99;
     --trimma-yellow-deep: #E6E43A;
-    --background: #0B0B0B;
-    --foreground: #FFFFFF;
-    --card: #151515;
-    --card-foreground: #FFFFFF;
-    --popover: #151515;
-    --popover-foreground: #FFFFFF;
+    /* Default app shell is light — dark tokens live under .dark only */
+    --background: #ffffff;
+    --foreground: #0B0B0B;
+    --card: #ffffff;
+    --card-foreground: #0B0B0B;
+    --popover: #ffffff;
+    --popover-foreground: #0B0B0B;
     
     /* Primary brand color for buttons, selections, etc. */
     --primary: #ffde5a;
     --primary-foreground: #000000;
     
     /* Secondary brand color */
-    --secondary: #ffe680;
-    --secondary-foreground: #000000;
+    --secondary: #f4f4f5;
+    --secondary-foreground: #18181b;
     
-    --muted: #151515;
-    --muted-foreground: #B3B3B3;
-    --accent: #1F1F1F;
-    --accent-foreground: #FFFFFF;
+    --muted: #f4f4f5;
+    --muted-foreground: #71717a;
+    --accent: #e4e4e7;
+    --accent-foreground: #18181b;
     --destructive: #EF4444;
-    --border: rgba(255, 255, 255, 0.08);
-    --input: rgba(255, 255, 255, 0.08);
+    --border: rgba(0, 0, 0, 0.08);
+    --input: rgba(0, 0, 0, 0.06);
     --ring: #ffde5a;
     --chart-1: #ffde5a;
     --chart-2: #ffe680;
@@ -188,13 +189,13 @@
     --trimma-field-gap: var(--space-sm);
     --trimma-error-gap: var(--space-xs);
     
-    --sidebar: #151515;
-    --sidebar-foreground: #FFFFFF;
+    --sidebar: #ffde5a;
+    --sidebar-foreground: #000000;
     --sidebar-primary: #ffde5a;
     --sidebar-primary-foreground: #000000;
-    --sidebar-accent: #151515;
-    --sidebar-accent-foreground: #ffde5a;
-    --sidebar-border: rgba(255, 255, 255, 0.08);
+    --sidebar-accent: #f4f4f5;
+    --sidebar-accent-foreground: #18181b;
+    --sidebar-border: rgba(0, 0, 0, 0.08);
     --sidebar-ring: #ffde5a;
 
     /* Completely Banish Pink & Rose via CSS Variables Override */
@@ -2522,4 +2523,118 @@ html.dark .trimma-dashboard-modal [data-slot="textarea"]::placeholder {
 
 .trimma-dashboard-modal [data-slot="select-trigger"] svg {
   color: #71717a !important;
+}
+
+/*
+ * ==========================================================================
+ * TRIMMA GLOBAL BUTTON CONTRAST — permanent contract (do not remove)
+ * Light fill → dark text (default + hover). Dark fill → light text (yellow hover).
+ * ==========================================================================
+ */
+
+/* Light-filled buttons — always dark label */
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-white, .bg-zinc-50, .bg-zinc-100, .bg-zinc-200,
+  .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100,
+  .bg-neutral-50, .bg-neutral-100, .bg-stone-50, .bg-stone-100,
+  .bg-brand, .bg-\[\#ffde5a\], .bg-brand-hover, .bg-primary, .bg-secondary
+):not([class*="bg-brand/1"]):not([class*="bg-brand/2"]):not([class*="bg-[#ffde5a]/1"]):not([class*="bg-[#ffde5a]/2"]),
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-white, .bg-zinc-50, .bg-zinc-100, .bg-brand, .bg-\[\#ffde5a\], .bg-primary
+):is(:hover, :focus-visible, :active):not([class*="hover:bg-black"]):not([class*="hover:bg-zinc-9"]) {
+  color: #000000 !important;
+}
+
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-white, .bg-zinc-50, .bg-zinc-100, .bg-brand, .bg-\[\#ffde5a\], .bg-primary
+) :is(svg, span, [class*="lucide"]) {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+/* Dark-filled buttons — light label; yellow on hover (fill stays dark) */
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
+  .bg-slate-800, .bg-slate-900, .bg-slate-950,
+  .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\], .bg-\[\#1a1a1a\]
+):not(.bg-brand):not([class*="bg-[#ffde5a]"]),
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#1A1C29\]
+):is(:hover, :focus-visible, :active):not(:disabled):not(.bg-brand):not([class*="bg-[#ffde5a]"]) {
+  color: #ffffff !important;
+}
+
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#1A1C29\]
+):is(:hover, :focus-visible, :active):not(:disabled):not(.hero-btn-primary):not(.trimma-sidebar-nav-item):not(.trimma-filter-tab.is-active) {
+  color: #ffde5a !important;
+}
+
+:is(button, a, [role="button"], [data-slot="button"]):is(
+  .bg-black, .bg-zinc-900, .bg-zinc-950
+):is(:hover, :focus-visible, :active) :is(svg, span) {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+/* Hover to light wash — force dark text (fixes white-on-white) */
+:is(button, a, [role="button"], [data-slot="button"]):is(:hover, :focus-visible, :active):is(
+  [class*="hover:bg-white"], [class*="hover:bg-zinc-50"], [class*="hover:bg-zinc-100"], [class*="hover:bg-zinc-200"],
+  [class*="hover:bg-slate-50"], [class*="hover:bg-slate-100"], [class*="hover:bg-gray-50"], [class*="hover:bg-gray-100"],
+  [class*="hover:bg-accent"], [class*="hover:bg-muted"], [class*="hover:bg-secondary"]
+):not([class*="hover:bg-black"]):not([class*="hover:bg-zinc-8"]):not([class*="hover:bg-zinc-9"]):not(
+  [class*="bg-black"], [class*="bg-zinc-9"], [class*="bg-[#0B0B0B]"], [class*="bg-[#1A1C29]"]
+) {
+  color: #18181b !important;
+}
+
+/* Hover to dark fill — force light text (fixes black-on-black) */
+:is(button, a, [role="button"], [data-slot="button"]):is(:hover, :focus-visible, :active):is(
+  [class*="hover:bg-black"], [class*="hover:bg-zinc-8"], [class*="hover:bg-zinc-9"],
+  [class*="hover:bg-slate-8"], [class*="hover:bg-slate-9"], [class*="hover:bg-[#0B0B0B]"],
+  [class*="hover:bg-[#151515]"], [class*="hover:bg-[#1A1C29]"]
+):not([class*="bg-white"]):not([class*="bg-zinc-50"]):not([class*="bg-brand"]):not([class*="bg-[#ffde5a]"]) {
+  color: #ffffff !important;
+}
+
+/* Light surfaces must not use white button labels unless fill is dark */
+:is(.bg-white, .bg-zinc-50, .bg-slate-50, .trimma-light-context)
+  :is(button, a, [role="button"], [data-slot="button"]):is(
+    .text-white, [class*="text-white"]
+  ):not([class*="bg-black"]):not([class*="bg-zinc-9"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-amber-6"]):not([class*="bg-blue"]) {
+  color: #18181b !important;
+}
+
+/* Dark surfaces must not use black button labels unless fill is light/yellow */
+:is(
+  .trimma-dark-surface, .trimma-dark-context,
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\]
+) :is(button, a, [role="button"], [data-slot="button"]):is(
+  .text-black, .text-zinc-900, [class*="text-zinc-9"], [class*="text-black"]
+):not([class*="bg-white"]):not([class*="bg-brand"]):not([class*="bg-[#ffde5a]"]) {
+  color: #ffffff !important;
+}
+
+/* Outline buttons on dark panels — yellow contract */
+:is(
+  .trimma-dark-surface, .trimma-dark-context,
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\]
+) :is(button, a, [role="button"], [data-slot="button"])[class*="border-zinc-300"]:not([class*="bg-brand"]):not([class*="bg-[#ffde5a]"]) {
+  color: #ffde5a !important;
+  border-color: rgba(255, 222, 90, 0.5) !important;
+}
+
+:is(
+  .trimma-dark-surface, .trimma-dark-context,
+  .bg-black, .bg-zinc-900, .bg-zinc-950, .bg-\[\#0B0B0B\], .bg-\[\#151515\], .bg-\[\#1A1C29\]
+) :is(button, a, [role="button"], [data-slot="button"])[class*="border-zinc-300"]:not([class*="bg-brand"]):is(:hover, :focus-visible, :active) {
+  background-color: rgba(255, 222, 90, 0.15) !important;
+  border-color: #ffde5a !important;
+  color: #ffe680 !important;
+}
+
+/* shadcn ghost/outline accent hovers inherit readable pairs from remapped tokens */
+:is(button, a, [role="button"], [data-slot="button"]).hover\:bg-accent:hover,
+:is(button, a, [role="button"], [data-slot="button"])[class*="hover:bg-accent"]:hover {
+  color: var(--accent-foreground) !important;
 }

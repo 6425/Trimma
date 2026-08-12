@@ -1,9 +1,11 @@
 ---
-description: Trimma global button contrast — yellow vs dark fills
+description: Trimma global button contrast — yellow vs dark fills (PERMANENT)
 alwaysApply: true
 ---
 
-# Trimma button contrast (global)
+# Trimma button contrast (global — never regress)
+
+**Rule:** Light background → **dark text on all states**. Dark background → **light text on all states** (dark buttons → yellow text on hover).
 
 Use `@/components/ui/button` variants — never one-off button colors.
 
@@ -17,15 +19,19 @@ Use `@/components/ui/button` variants — never one-off button colors.
 ## Implementation
 
 - **Yellow CTAs**: `<Button variant="default">` or `buttonVariants({ variant: "default" })` on links.
-- **Dark CTAs**: `<Button variant="dark">` or `trimmaDarkBtnClass` from `@/lib/customer-dashboard-ui` (re-exports global `dark` variant).
+- **Dark CTAs**: `<Button variant="dark">` or `trimmaDarkBtnClass` from `@/lib/customer-dashboard-ui`.
 - **Filter tabs**: `trimmaFilterTabClass(active)` + `.trimma-filter-tab` CSS — do not invent new tab styles.
-- Global safeguards live in `apps/web/src/index.css` (dark hover → yellow text; solid yellow → black text).
+- **Semantic tokens**: `:root` is **light** (`--foreground` dark). Dark tokens only under `.dark` or `.trimma-dark-context`.
+- **Global safeguards**: `apps/web/src/index.css` block `TRIMMA GLOBAL BUTTON CONTRAST — permanent contract (do not remove)` at file end.
 
 ## Do not
 
 - Add `trimma-customer-btn` or page-specific button color classes.
 - Put white text on solid yellow buttons or dark text on solid black buttons.
-- Override hover to white text on dark buttons.
+- Override hover to white text on dark buttons (except filter-tab active state).
+- Set `:root --foreground` to white (causes white-on-white on light pages).
+- Use `hover:text-white` on buttons that hover to `bg-white` / `bg-zinc-50`.
+- Use `hover:text-black` / `text-zinc-900` on buttons that hover to `bg-black` / `bg-zinc-900`.
 
 ## Mobile
 
