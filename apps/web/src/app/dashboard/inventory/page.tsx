@@ -458,6 +458,14 @@ export default function InventoryPage() {
         </div>
       )}
 
+      {!inventoryTableMissing && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+          <strong>Update on-hand stock:</strong> type a quantity in the <strong>On hand (edit qty)</strong> column and
+          press Enter or tap the save button — or open <strong>Add item</strong> / <strong>Edit</strong> and use the
+          highlighted <strong>On-hand quantity</strong> field at the top of the form.
+        </div>
+      )}
+
       {loadError && !inventoryTableMissing && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{loadError}</div>
       )}
