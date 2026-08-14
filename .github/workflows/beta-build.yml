@@ -1,0 +1,28 @@
+name: Beta branch build
+
+on:
+  push:
+    branches: [beta]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app (same as Vercel)
+        run: npx turbo run build --filter=@trimma/web...
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+          NEXT_PUBLIC_APP_URL: https://beta.trimma.io
+          TRIMMA_SESSION_SECRET: ci-placeholder-session-secret-min-32-chars
