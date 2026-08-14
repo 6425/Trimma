@@ -70,3 +70,69 @@ export const LISTING_PUBLISH_SALON_UPDATES = {
   booking_enabled: false,
   status: "active",
 } as const;
+
+/** Statuses already in booking onboarding — do not downgrade on re-capture. */
+const BOOKING_PIPELINE_LOCK_STATUSES = new Set([
+  "OWNER_INVITED",
+  "ASSIGNED_TO_AGENT",
+  "OWNER_ACTIVATED",
+  "PENDING_ADMIN_VERIFICATION",
+  "VERIFIED",
+  "REJECTED",
+]);
+
+/** Force listing-generation fields after Google capture merge. */
+export function applyListingPipelineCaptureFields(
+  merged: Record<string, unknown>,
+  existing?: Record<string, unknown> | null
+): void {
+  const existingStatus = String(existing?.onboarding_status || "");
+  merged.source_type = "LISTING_GENERATION";
+
+  if (existingStatus === LISTING_ONBOARDING_STATUS.PUBLISHED) {
+    merged.onboarding_status = LISTING_ONBOARDING_STATUS.PUBLISHED;
+  } else if (BOOKING_PIPELINE_LOCK_STATUSES.has(existingStatus)) {
+    merged.onboarding_status = existing?.onboarding_status;
+  } else {
+    Object.assign(merged, LISTING_CAPTURE_SALON_DEFAULTS);
+  }
+
+  const existingExt =
+    merged.business_info_extended &&
+    typeof merged.business_info_extended === "object" &&
+    !Array.isArray(merged.business_info_extended)
+      ? (merged.business_info_extended as Record<string, unknown>)
+      : {};
+
+  merged.business_info_extended = {
+    ...existingExt,
+    listing_captured_at: new Date().toISOString(),
+  };
+}
+
+export function readListingCapturedAt(row: {
+  created_at?: string | null;
+  updated_at?: string | null;
+  business_info_extended?: unknown;
+}): string | null {
+  const ext =
+    row.business_info_extended &&
+    typeof row.business_info_extended === "object" &&
+    !Array.isArray(row.business_info_extended)
+      ? (row.business_info_extended as Record<string, unknown>)
+      : null;
+  const capturedAt = ext?.listing_captured_at;
+  if (typeof capturedAt === "string" && capturedAt.trim()) return capturedAt;
+  return row.created_at || row.updated_at || null;
+}
+
+export function formatListingCapturedDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-LK", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}

@@ -9,6 +9,7 @@ import {
   LISTING_ONBOARDING_STATUS,
   LISTING_PUBLISH_SALON_UPDATES,
   isListingPipelineSalon,
+  readListingCapturedAt,
 } from "@/lib/salon-listing-pipeline";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { notifyAgentOfSalonAssignment } from "@/app/actions/salon-onboarding-notifications";
@@ -31,6 +32,7 @@ export type ListingQueueRow = {
   source_type: string | null;
   created_at: string;
   updated_at: string;
+  captured_at: string | null;
 };
 
 export async function fetchListingGenerationQueue() {
@@ -41,17 +43,21 @@ export async function fetchListingGenerationQueue() {
     const { data, error } = await supabase
       .from("salons")
       .select(
-        "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at"
+        "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at, business_info_extended"
       )
-      .eq("source_type", "LISTING_GENERATION")
       .in("onboarding_status", [
         LISTING_ONBOARDING_STATUS.CAPTURED,
         LISTING_ONBOARDING_STATUS.PUBLISHED,
       ])
-      .order("updated_at", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (error) throw new Error(error.message);
-    return (data || []) as ListingQueueRow[];
+    return ((data || []) as Array<ListingQueueRow & { business_info_extended?: unknown }>).map(
+      (row) => ({
+        ...row,
+        captured_at: readListingCapturedAt(row),
+      })
+    );
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);

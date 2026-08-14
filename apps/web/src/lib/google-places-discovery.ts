@@ -19,7 +19,7 @@ import {
   type SalonDuplicateRow,
 } from "@/lib/salon-discovery-dedup";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
-import { LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
+import { applyListingPipelineCaptureFields, LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
 import {
   syncGoogleImagesForPlaceIds,
   type GoogleImageSyncStats,
@@ -134,9 +134,13 @@ export async function upsertDiscoveredGooglePlaces(
       (incoming as Record<string, unknown>).assign_to = assignTo;
     }
 
-    const merged = prepareSalonDiscoveryUpsertRow(
-      mergeGoogleProfileIntoSalonRow(existing, incoming)
-    );
+    let merged = mergeGoogleProfileIntoSalonRow(existing, incoming, {
+      listingPipeline: options?.listingPipeline,
+    });
+    if (options?.listingPipeline) {
+      applyListingPipelineCaptureFields(merged, existing);
+    }
+    merged = prepareSalonDiscoveryUpsertRow(merged);
 
     if (existing?.id) {
       rowsToUpdate.push({ ...merged, id: existing.id });

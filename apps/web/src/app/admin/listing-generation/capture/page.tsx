@@ -67,6 +67,16 @@ export default function ListingDataCapturePage() {
       if (!response.ok) throw new Error(data.error || "Capture failed");
 
       toast.success(data.message || "Listing data captured.", { id: "listing_capture" });
+      if (typeof data.count === "number" && data.count > 0) {
+        toast.message(`${data.count} listing(s) captured. Open the queue to review and publish.`, {
+          action: {
+            label: "Open queue",
+            onClick: () => {
+              window.location.href = "/admin/listing-generation/queue";
+            },
+          },
+        });
+      }
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Capture failed", { id: "listing_capture" });
     } finally {

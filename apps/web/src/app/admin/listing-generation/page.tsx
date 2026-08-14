@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Globe, ScanSearch, ListChecks, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function ListingGenerationHubPage() {
   return (
@@ -23,9 +23,12 @@ export default function ListingGenerationHubPage() {
             Pull Google Places data into listing records with status <code className="text-xs">LISTING_CAPTURED</code>.
             Not visible on the customer site until published.
           </p>
-          <Button asChild variant="default" className="mt-4 h-11 min-h-11 font-bold">
-            <Link href="/admin/listing-generation/capture">Open data capture</Link>
-          </Button>
+          <Link
+            href="/admin/listing-generation/capture"
+            className={buttonVariants({ variant: "default", className: "mt-4 h-11 min-h-11 font-bold" })}
+          >
+            Open data capture
+          </Link>
         </div>
 
         <div className="rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
@@ -35,9 +38,12 @@ export default function ListingGenerationHubPage() {
             Review captured salons, publish to the customer directory by category + location, or start booking onboarding
             when an owner is ready.
           </p>
-          <Button asChild variant="default" className="mt-4 h-11 min-h-11 font-bold">
-            <Link href="/admin/listing-generation/queue">Open listing queue</Link>
-          </Button>
+          <Link
+            href="/admin/listing-generation/queue"
+            className={buttonVariants({ variant: "default", className: "mt-4 h-11 min-h-11 font-bold" })}
+          >
+            Open listing queue
+          </Link>
         </div>
 
         <div className="rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
@@ -48,18 +54,22 @@ export default function ListingGenerationHubPage() {
             Bookable salons appear on <code className="text-xs">/bookings?l=…&category=…</code> once booking onboarding completes.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="h-11 min-h-11 font-bold">
-              <Link href="/" target="_blank">
-                Browse listings
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="h-11 min-h-11 font-bold">
-              <Link href="/bookings" target="_blank">
-                Book salons
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <Link
+              href="/"
+              target="_blank"
+              className={buttonVariants({ variant: "outline", className: "h-11 min-h-11 font-bold" })}
+            >
+              Browse listings
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+            <Link
+              href="/bookings"
+              target="_blank"
+              className={buttonVariants({ variant: "outline", className: "h-11 min-h-11 font-bold" })}
+            >
+              Book salons
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
           </div>
         </div>
       </div>

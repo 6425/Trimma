@@ -276,7 +276,8 @@ export function mapGooglePlaceToSalonRecord(
 
 export function mergeGoogleProfileIntoSalonRow(
   existing: Record<string, unknown> | null | undefined,
-  incoming: Record<string, unknown>
+  incoming: Record<string, unknown>,
+  options?: { listingPipeline?: boolean }
 ): Record<string, unknown> {
   if (!existing) return incoming;
 
@@ -292,7 +293,11 @@ export function mergeGoogleProfileIntoSalonRow(
   else if (incoming.description) merged.description = incoming.description;
 
   const existingStatus = String(existing.onboarding_status || "");
-  if (existingStatus && existingStatus !== "DISCOVERED") {
+  if (
+    !options?.listingPipeline &&
+    existingStatus &&
+    existingStatus !== "DISCOVERED"
+  ) {
     merged.onboarding_status = existing.onboarding_status;
     merged.activation_status = existing.activation_status ?? incoming.activation_status;
   }

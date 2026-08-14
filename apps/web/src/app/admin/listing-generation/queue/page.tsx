@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, ExternalLink, Rocket, PauseCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
@@ -14,7 +14,7 @@ import {
   unpublishListingSalon,
   type ListingQueueRow,
 } from "@/app/actions/listing-generation";
-import { LISTING_ONBOARDING_STATUS, listingPipelineLabel } from "@/lib/salon-listing-pipeline";
+import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 
 export default function ListingQueuePage() {
@@ -95,6 +95,7 @@ export default function ListingQueuePage() {
               <th className="px-4 py-3">Business</th>
               <th className="px-4 py-3">Category</th>
               <th className="px-4 py-3">Location</th>
+              <th className="px-4 py-3">Captured</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -102,13 +103,13 @@ export default function ListingQueuePage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-16 text-center">
+                <td colSpan={6} className="px-4 py-16 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-16 text-center text-zinc-500">
+                <td colSpan={6} className="px-4 py-16 text-center text-zinc-500">
                   No listing pipeline rows yet. Run{" "}
                   <Link href="/admin/listing-generation/capture" className="font-bold underline">
                     Data Capture
@@ -138,6 +139,9 @@ export default function ListingQueuePage() {
                     </td>
                     <td className="px-4 py-3">{row.category || "Uncategorized"}</td>
                     <td className="px-4 py-3">{location}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-zinc-600">
+                      {formatListingCapturedDate(row.captured_at)}
+                    </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className={isPublished ? "border-emerald-200 text-emerald-700" : ""}>
                         {listingPipelineLabel(row.onboarding_status)}
@@ -147,12 +151,14 @@ export default function ListingQueuePage() {
                       <div className="flex flex-wrap justify-end gap-1.5">
                         {isPublished ? (
                           <>
-                            <Button asChild variant="outline" size="sm" className="h-9">
-                              <Link href={`/salons/${row.slug}`} target="_blank">
-                                <ExternalLink className="mr-1 h-3.5 w-3.5" />
-                                View
-                              </Link>
-                            </Button>
+                            <Link
+                              href={`/salons/${row.slug}`}
+                              target="_blank"
+                              className={buttonVariants({ variant: "outline", size: "sm", className: "h-9" })}
+                            >
+                              <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                              View
+                            </Link>
                             <Button
                               type="button"
                               variant="outline"
