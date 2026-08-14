@@ -3,6 +3,7 @@ import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonPubliclyBookable } from "@/lib/salon-bookability";
 import { isSalonPubliclyListable } from "@/lib/salon-public-listing";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
+import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 
 export type PublicSalonSearchParams = {
@@ -16,6 +17,8 @@ export type PublicSalonSearchParams = {
   bookableOnly?: boolean;
   /** When true, only browse/discovery listings (Lead Mgmt / unbookable public listings). */
   browseOnly?: boolean;
+  /** When true, only admin Lead Management / listing-generation sources. */
+  leadListingsOnly?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -31,6 +34,7 @@ export async function fetchPublicSalons(
     verifiedOnly = false,
     bookableOnly = false,
     browseOnly = false,
+    leadListingsOnly = false,
     limit = 12,
     offset = 0,
   }: PublicSalonSearchParams
@@ -42,7 +46,7 @@ export async function fetchPublicSalons(
       city, district, province, category, logo_url, cover_url, hero_url, featured_images,
       is_featured, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
-      phone, owner_email, owner_gmail,
+      phone, owner_email, owner_gmail, website, map_url,
       services ( id, name, price, category )
     `);
 
@@ -74,7 +78,7 @@ export async function fetchPublicSalons(
 
   const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
   const categoryFilterActive = normalizedCategory.length > 0;
-  const postFilterActive = categoryFilterActive || bookableOnly || browseOnly;
+  const postFilterActive = categoryFilterActive || bookableOnly || browseOnly || leadListingsOnly;
   const fetchLimit = postFilterActive ? Math.max(limit * 8, 100) : limit;
   const fetchOffset = postFilterActive ? 0 : offset;
 
@@ -88,6 +92,12 @@ export async function fetchPublicSalons(
     rows = rows.filter(isSalonPubliclyBookable);
   } else if (browseOnly) {
     rows = rows.filter((row) => !isSalonPubliclyBookable(row));
+  }
+  if (leadListingsOnly) {
+    rows = rows.filter((row) => {
+      const source = String(row.source_type || "");
+      return source === "GOOGLE_PLACES" || source === "LISTING_GENERATION";
+    });
   }
   if (categoryFilterActive) {
     rows = rows.filter((row) => {
@@ -109,5 +119,83 @@ export async function fetchPublicSalons(
     hasMore: postFilterActive
       ? rows.length > offset + limit
       : salons.length === limit,
+  };
+}
+
+export async function fetchBusinessListingCards(
+  supabase: SupabaseClient,
+  params: Omit<PublicSalonSearchParams, "bookableOnly">
+): Promise<{ listings: BusinessListingCardData[]; hasMore: boolean }> {
+  let query = supabase
+    .from("salons")
+    .select(`
+      id, name, slug, rating, review_count,
+      city, district, province, category, logo_url, cover_url, hero_url, featured_images,
+      is_featured, is_verified, working_hours, status, public_visibility,
+      booking_enabled, source_type, onboarding_status,
+      phone, owner_email, owner_gmail, website, map_url, business_info_extended,
+      services ( id, name, price, category )
+    `);
+
+  const {
+    q = "",
+    location = "",
+    category = "",
+    sort = "recommended",
+    minRating = 0,
+    verifiedOnly = false,
+    limit = 24,
+    offset = 0,
+  } = params;
+
+  if (q) {
+    query = query.or(
+      `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
+    );
+  }
+  if (location) {
+    const locationFilter = buildSalonLocationOrFilter(location);
+    if (locationFilter) query = query.or(locationFilter);
+  }
+  if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
+  if (verifiedOnly) query = query.eq("is_verified", true);
+
+  if (sort === "rating") query = query.order("rating", { ascending: false });
+  else if (sort === "name") query = query.order("name", { ascending: true });
+  else query = query.order("is_featured", { ascending: false }).order("rating", { ascending: false });
+
+  const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
+  const categoryFilterActive = normalizedCategory.length > 0;
+  const fetchLimit = Math.max(limit * 8, 100);
+  query = query.range(0, fetchLimit - 1);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  let rows = filterPublicSalons(data || [])
+    .filter(isSalonPubliclyListable)
+    .filter((row) => !isSalonPubliclyBookable(row))
+    .filter((row) => {
+      const source = String(row.source_type || "");
+      return source === "GOOGLE_PLACES" || source === "LISTING_GENERATION";
+    });
+
+  if (categoryFilterActive) {
+    rows = rows.filter((row) => {
+      const salonCategory = String(row.category || "").toLowerCase();
+      if (salonCategory.includes(normalizedCategory)) return true;
+      const services = Array.isArray(row.services) ? row.services : [];
+      return services.some((service) =>
+        String(service?.category || "").toLowerCase().includes(normalizedCategory)
+      );
+    });
+  }
+
+  const pagedRows = rows.slice(offset, offset + limit);
+  const listings = pagedRows.map((row, idx) => mapSalonRowToBusinessListing(row, idx + offset));
+
+  return {
+    listings,
+    hasMore: rows.length > offset + limit,
   };
 }

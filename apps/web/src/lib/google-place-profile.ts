@@ -136,6 +136,8 @@ export function buildGoogleBusinessExtended(details: GooglePlaceProfile): Record
   return {
     google_place_id: details.place_id || null,
     google_types: details.types || [],
+    google_website: details.website?.trim() || null,
+    google_maps_url: details.url?.trim() || null,
     google_business_status: details.business_status || null,
     google_open_now: details.opening_hours?.open_now ?? null,
     google_weekday_hours: details.opening_hours?.weekday_text || [],

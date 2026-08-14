@@ -1,20 +1,16 @@
-// Server Component — no "use client" directive
-// Data is fetched on the server and HTML is sent to the browser pre-populated.
-
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
-import { fetchPublicSalons } from "@/lib/public-salon-search";
-import { fetchPublicCategories } from "@/lib/public-categories";
-import SalonsClient from "./SalonsClient";
+import { fetchBusinessListingCards } from "@/lib/public-salon-search";
+import ListingsClient from "./ListingsClient";
 
 export const metadata = buildPublicPageMetadata({
-  title: "Trimma OS - Business Listings",
+  title: "Business Listings — Trimma OS",
   description:
-    "Discover salons and spas across Sri Lanka. Claim your business listing with Google sign-in and join Trimma.",
+    "Browse salons and spas discovered across Sri Lanka. Claim your business with Google sign-in.",
   path: "/",
 });
 
-export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
+export const revalidate = 60;
 
 type PageProps = {
   searchParams: Promise<{
@@ -24,46 +20,41 @@ type PageProps = {
   }>;
 };
 
-export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
+export default async function BusinessListingsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const supabase = createServerSupabaseClient();
 
-  const [categories, listingResult] = await Promise.all([
-    fetchPublicCategories(),
-    (async () => {
-      try {
-        return await fetchPublicSalons(supabase, {
-          q: sp.q ?? "",
-          location: sp.l ?? "",
-          category: sp.category ?? "",
-          browseOnly: true,
-          limit: 12,
-          offset: 0,
-        });
-      } catch {
-        return { salons: [], hasMore: false };
-      }
-    })(),
-  ]);
+  let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
+  let initialHasMore = false;
 
-  const initialSalons = listingResult.salons;
-  const initialHasMore = listingResult.hasMore;
+  try {
+    const result = await fetchBusinessListingCards(supabase, {
+      q: sp.q ?? "",
+      location: sp.l ?? "",
+      category: sp.category ?? "",
+      limit: 24,
+      offset: 0,
+    });
+    initialListings = result.listings;
+    initialHasMore = result.hasMore;
+  } catch {
+    initialListings = [];
+    initialHasMore = false;
+  }
+
   const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
 
   return (
-    <SalonsClient
+    <ListingsClient
       key={searchKey}
-      categories={categories}
       initialSearch={{
         q: sp.q ?? "",
         l: sp.l ?? "",
         category: sp.category ?? "",
       }}
-      initialSalons={initialSalons}
+      initialListings={initialListings}
       initialHasMore={initialHasMore}
-      initialDeals={[]}
       ssrSeeded
-      variant="directory"
     />
   );
 }

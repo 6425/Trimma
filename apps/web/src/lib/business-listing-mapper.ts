@@ -1,0 +1,80 @@
+import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
+import { isSalonClaimable } from "@/lib/salon-public-listing";
+import { readSalonSocialLinks } from "@/lib/salon-public-social";
+import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+
+export type BusinessListingCardData = {
+  id: string;
+  slug: string;
+  name: string;
+  image: string;
+  phone: string | null;
+  rating: number;
+  reviews: number;
+  location: string;
+  category: string;
+  website: string | null;
+  mapUrl: string | null;
+  facebookUrl: string | null;
+  instagramUrl: string | null;
+  isClaimable: boolean;
+};
+
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=600&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop",
+];
+
+function readExtendedString(row: Record<string, unknown>, key: string): string | null {
+  const ext = row.business_info_extended;
+  if (!ext || typeof ext !== "object" || Array.isArray(ext)) return null;
+  const value = (ext as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeExternalUrl(value: string | null | undefined): string | null {
+  if (!value?.trim()) return null;
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx = 0): BusinessListingCardData {
+  const city = String(row.city || "").trim();
+  const district = String(row.district || "").trim();
+  const location = city && district ? `${city}, ${district}` : city || district || "Sri Lanka";
+  const { rating, reviews } = mapVerifiedSalonListingStats(row);
+  const social = readSalonSocialLinks(row);
+  const phone = String(row.phone || "").trim() || null;
+  const website =
+    normalizeExternalUrl(String(row.website || "")) ||
+    normalizeExternalUrl(readExtendedString(row, "google_website"));
+  const mapUrl =
+    normalizeExternalUrl(String(row.map_url || "")) ||
+    normalizeExternalUrl(readExtendedString(row, "google_maps_url"));
+  const instagramUrl =
+    normalizeExternalUrl(readExtendedString(row, "instagram_url")) ||
+    normalizeExternalUrl(readExtendedString(row, "google_instagram_url"));
+
+  return {
+    id: String(row.id),
+    slug: String(row.slug || row.id),
+    name: String(row.name || "Unnamed business"),
+    image: optimizeListingImageUrl(
+      getSalonListingImage(row, FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length]),
+      640
+    ),
+    phone,
+    rating,
+    reviews,
+    location,
+    category: String(row.category || "Beauty salon"),
+    website,
+    mapUrl,
+    facebookUrl: social.facebookUrl,
+    instagramUrl,
+    isClaimable: isSalonClaimable(row),
+  };
+}
