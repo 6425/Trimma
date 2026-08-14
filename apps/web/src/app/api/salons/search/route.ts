@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -34,7 +36,7 @@ export async function GET(request: Request) {
       { salons, hasMore },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          "Cache-Control": "private, no-store, max-age=0",
         },
       }
     );

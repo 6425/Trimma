@@ -6,10 +6,53 @@ import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 
+function normalizeCategoryText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function buildCategoryNeedles(category: string, categoryName?: string): string[] {
+  const needles = new Set<string>();
+  const slugText = category.replace(/-/g, " ").trim();
+  if (slugText) needles.add(normalizeCategoryText(slugText));
+  if (categoryName?.trim()) needles.add(normalizeCategoryText(categoryName));
+  return [...needles].filter(Boolean);
+}
+
+function textMatchesCategoryNeedle(haystack: string, needle: string): boolean {
+  if (!needle) return false;
+  return haystack.includes(needle) || needle.includes(haystack);
+}
+
+function salonMatchesCategory(
+  row: Record<string, unknown>,
+  category: string,
+  categoryName?: string
+): boolean {
+  const needles = buildCategoryNeedles(category, categoryName);
+  if (!needles.length) return true;
+
+  const salonCategory = normalizeCategoryText(String(row.category || ""));
+  if (needles.some((needle) => textMatchesCategoryNeedle(salonCategory, needle))) {
+    return true;
+  }
+
+  const services = Array.isArray(row.services) ? row.services : [];
+  return services.some((service) => {
+    const serviceCategory = normalizeCategoryText(String(service?.category || ""));
+    return needles.some((needle) => textMatchesCategoryNeedle(serviceCategory, needle));
+  });
+}
+
 export type PublicSalonSearchParams = {
   q?: string;
   location?: string;
   category?: string;
+  categoryName?: string;
   sort?: string;
   minRating?: number;
   verifiedOnly?: boolean;
@@ -29,6 +72,7 @@ export async function fetchPublicSalons(
     q = "",
     location = "",
     category = "",
+    categoryName = "",
     sort = "recommended",
     minRating = 0,
     verifiedOnly = false,
@@ -100,15 +144,7 @@ export async function fetchPublicSalons(
     });
   }
   if (categoryFilterActive) {
-    rows = rows.filter((row) => {
-      const salonCategory = String(row.category || "").toLowerCase();
-      if (salonCategory.includes(normalizedCategory)) return true;
-
-      const services = Array.isArray(row.services) ? row.services : [];
-      return services.some((service) =>
-        String(service?.category || "").toLowerCase().includes(normalizedCategory)
-      );
-    });
+    rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
 
   const pagedRows = postFilterActive ? rows.slice(offset, offset + limit) : rows;
@@ -141,6 +177,7 @@ export async function fetchBusinessListingCards(
     q = "",
     location = "",
     category = "",
+    categoryName = "",
     sort = "recommended",
     minRating = 0,
     verifiedOnly = false,
@@ -181,14 +218,7 @@ export async function fetchBusinessListingCards(
     });
 
   if (categoryFilterActive) {
-    rows = rows.filter((row) => {
-      const salonCategory = String(row.category || "").toLowerCase();
-      if (salonCategory.includes(normalizedCategory)) return true;
-      const services = Array.isArray(row.services) ? row.services : [];
-      return services.some((service) =>
-        String(service?.category || "").toLowerCase().includes(normalizedCategory)
-      );
-    });
+    rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
 
   const pagedRows = rows.slice(offset, offset + limit);

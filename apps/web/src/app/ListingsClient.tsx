@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Search, MapPin, Loader2, Building2, Sparkles, Star, Scissors, Heart, Smile, User, ShieldCheck, Clock } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,16 +39,41 @@ type Props = {
   ssrSeeded?: boolean;
 };
 
-function SearchParamsSync({ onChange }: { onChange: (next: InitialSearch) => void }) {
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    onChange({
-      q: searchParams.get("q") || "",
-      l: searchParams.get("l") || "",
-      category: searchParams.get("category") || "",
-    });
-  }, [searchParams, onChange]);
-  return null;
+type ListingFilters = {
+  q: string;
+  location: string;
+  category: string;
+};
+
+function readFiltersFromLocation(): ListingFilters {
+  if (typeof window === "undefined") {
+    return { q: "", location: "", category: "" };
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    q: params.get("q") || "",
+    location: params.get("l") || "",
+    category: params.get("category") || "",
+  };
+}
+
+function buildListingSearchParams(
+  filters: ListingFilters,
+  categories: PublicCategory[],
+  page: number
+): URLSearchParams {
+  const params = new URLSearchParams({
+    q: filters.q,
+    location: filters.location,
+    category: filters.category,
+    limit: String(PAGE_SIZE),
+    offset: String(page * PAGE_SIZE),
+  });
+  const activeCategory = categories.find((category) => category.slug === filters.category);
+  if (activeCategory?.name) {
+    params.set("categoryName", activeCategory.name);
+  }
+  return params;
 }
 
 export default function ListingsClient({
@@ -71,20 +95,17 @@ export default function ListingsClient({
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
+  const categoriesRef = useRef(categories);
+  categoriesRef.current = categories;
 
-  const fetchListings = useCallback(
-    async (reset: boolean) => {
+  const loadListings = useCallback(
+    async (filters: ListingFilters, nextPage: number, reset: boolean) => {
       setIsLoading(true);
       try {
-        const offset = reset ? 0 : page * PAGE_SIZE;
-        const params = new URLSearchParams({
-          q: searchQuery,
-          location: selectedLocation,
-          category: urlCategory,
-          limit: String(PAGE_SIZE),
-          offset: String(offset),
+        const params = buildListingSearchParams(filters, categoriesRef.current, nextPage);
+        const res = await fetch(`/api/business-listings/search?${params.toString()}`, {
+          cache: "no-store",
         });
-        const res = await fetch(`/api/business-listings/search?${params.toString()}`);
         if (!res.ok) throw new Error("Search failed");
         const data = await res.json();
         const rows = (data.listings || []) as BusinessListingCardData[];
@@ -99,11 +120,37 @@ export default function ListingsClient({
         setHasMore(Boolean(data.hasMore));
       } catch (error) {
         console.error(error);
+        if (reset) setListings([]);
+        setHasMore(false);
       } finally {
         setIsLoading(false);
       }
     },
-    [page, searchQuery, selectedLocation, urlCategory]
+    []
+  );
+
+  const applyFilters = useCallback(
+    (filters: ListingFilters, options?: { syncUrl?: boolean }) => {
+      const canonicalLocation = resolveLocationSearchValue(filters.location);
+      const nextFilters = { ...filters, location: canonicalLocation };
+
+      setSearchQuery(nextFilters.q);
+      setSelectedLocation(nextFilters.location);
+      setUrlCategory(nextFilters.category);
+      setPage(0);
+
+      if (options?.syncUrl !== false) {
+        const params = new URLSearchParams();
+        if (nextFilters.q) params.set("q", nextFilters.q);
+        if (nextFilters.location) params.set("l", nextFilters.location);
+        if (nextFilters.category) params.set("category", nextFilters.category);
+        const qs = params.toString();
+        window.history.replaceState(window.history.state, "", qs ? `/?${qs}` : "/");
+      }
+
+      void loadListings(nextFilters, 0, true);
+    },
+    [loadListings]
   );
 
   useEffect(() => {
@@ -114,33 +161,40 @@ export default function ListingsClient({
       setIsLoading(false);
       return;
     }
-    skipFetchRef.current = false;
-    void fetchListings(page === 0);
-  }, [fetchListings, page, searchQuery, selectedLocation, urlCategory]);
 
-  const syncListingUrl = (params: URLSearchParams) => {
-    const qs = params.toString();
-    const nextUrl = qs ? `/?${qs}` : "/";
-    window.history.replaceState(window.history.state, "", nextUrl);
-  };
+    if (page === 0) return;
+
+    skipFetchRef.current = false;
+    void loadListings(
+      { q: searchQuery, location: selectedLocation, category: urlCategory },
+      page,
+      false
+    );
+  }, [loadListings, page, searchQuery, selectedLocation, urlCategory]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      applyFilters(readFiltersFromLocation(), { syncUrl: false });
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [applyFilters]);
 
   const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (selectedLocation) params.set("l", selectedLocation);
-    if (urlCategory) params.set("category", urlCategory);
-    setPage(0);
-    syncListingUrl(params);
+    applyFilters({
+      q: searchQuery.trim(),
+      location: selectedLocation,
+      category: urlCategory,
+    });
   };
 
   const handleCategorySelect = (slug: string) => {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (selectedLocation) params.set("l", selectedLocation);
-    if (slug) params.set("category", slug);
-    setPage(0);
-    setUrlCategory(slug);
-    syncListingUrl(params);
+    applyFilters({
+      q: searchQuery.trim(),
+      location: selectedLocation,
+      category: slug,
+    });
     trackEvent(AnalyticsEvent.CategoryFilterChanged, {
       source: "homepage_category_bar",
       previous: urlCategory || null,
@@ -161,25 +215,11 @@ export default function ListingsClient({
         : "border-slate-100 bg-slate-50 text-zinc-600 hover:border-brand-pink/30",
     ].join(" ");
 
-  const syncFromUrl = useCallback((next: InitialSearch) => {
-    setPage(0);
-    setSearchQuery((prev) => (prev === next.q ? prev : next.q));
-    setSelectedLocation((prev) => {
-      const canonical = resolveLocationSearchValue(next.l);
-      return prev === canonical ? prev : canonical;
-    });
-    setUrlCategory((prev) => (prev === next.category ? prev : next.category));
-  }, []);
-
   const locationLabel = resolveLocationDisplayLabel(selectedLocation);
   const activeCategory = categories.find((category) => category.slug === urlCategory);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <Suspense fallback={null}>
-        <SearchParamsSync onChange={syncFromUrl} />
-      </Suspense>
-
       <section className="page-hero-shell home-hero home-hero-split home-hero-split--business-listings relative min-h-[500px]">
         <img
           src={HERO_IMAGE}
@@ -227,10 +267,7 @@ export default function ListingsClient({
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setPage(0);
-                    }}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                     placeholder="Salon name or category"
                     className="h-12 w-full bg-transparent text-sm font-semibold text-zinc-900 placeholder:text-zinc-400 outline-none min-w-0"
@@ -240,10 +277,7 @@ export default function ListingsClient({
                   <MapPin className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
                   <select
                     value={selectedLocation}
-                    onChange={(e) => {
-                      setSelectedLocation(e.target.value);
-                      setPage(0);
-                    }}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
                     className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"
                   >
                     <option value="">Any location</option>

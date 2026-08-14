@@ -30,20 +30,20 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
 
   try {
     const supabase = createServerSupabaseClient();
-    const [result, fetchedCategories] = await Promise.all([
-      fetchBusinessListingCards(supabase, {
-        q: sp.q ?? "",
-        location: sp.l ?? "",
-        category: sp.category ?? "",
-        limit: 24,
-        offset: 0,
-      }).catch(() => ({ listings: [], hasMore: false })),
-      fetchPublicCategories().catch(() => []),
-    ]);
+    categories = await fetchPublicCategories().catch(() => []);
+    const activeCategory = categories.find((category) => category.slug === (sp.category ?? ""));
+
+    const result = await fetchBusinessListingCards(supabase, {
+      q: sp.q ?? "",
+      location: sp.l ?? "",
+      category: sp.category ?? "",
+      categoryName: activeCategory?.name ?? "",
+      limit: 24,
+      offset: 0,
+    }).catch(() => ({ listings: [], hasMore: false }));
 
     initialListings = result.listings;
     initialHasMore = result.hasMore;
-    categories = fetchedCategories;
   } catch (error) {
     console.error("BusinessListingsPage:", error);
   }

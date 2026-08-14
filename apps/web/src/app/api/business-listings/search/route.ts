@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchBusinessListingCards } from "@/lib/public-salon-search";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q") || "";
     const location = searchParams.get("location") || "";
     const category = searchParams.get("category") || "";
+    const categoryName = searchParams.get("categoryName") || "";
     const sort = searchParams.get("sort") || "recommended";
     const minRating = parseFloat(searchParams.get("minRating") || "0");
     const limit = parseInt(searchParams.get("limit") || "24", 10);
@@ -18,6 +21,7 @@ export async function GET(request: Request) {
       q,
       location,
       category,
+      categoryName,
       sort,
       minRating,
       limit,
@@ -28,7 +32,7 @@ export async function GET(request: Request) {
       { listings, hasMore },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          "Cache-Control": "private, no-store, max-age=0",
         },
       }
     );
