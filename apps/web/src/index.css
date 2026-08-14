@@ -2279,14 +2279,18 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   object-fit: cover;
   object-position: center;
 }
-/* Split-composition banners (empty/beige left, photo right) — same art direction as category heroes */
+/* Split-composition banners (beige left, photo right) — keep the left panel visible */
 .home-hero-split.home-hero-split--business-listings .home-hero-bg-image {
-  object-position: 72% center;
+  object-position: left center;
 }
-@media (max-width: 1023px) {
-  .home-hero-split.home-hero-split--business-listings .home-hero-bg-image {
-    object-position: 82% center;
-  }
+.home-hero-split.home-hero-split--business-listings .home-hero-left-overlay {
+  background: linear-gradient(
+    to right,
+    rgb(255 255 255 / 0.96) 0%,
+    rgb(255 255 255 / 0.88) 28%,
+    rgb(255 255 255 / 0.45) 48%,
+    rgb(255 255 255 / 0) 58%
+  );
 }
 .home-hero-split .home-hero-left-overlay {
   background: linear-gradient(
