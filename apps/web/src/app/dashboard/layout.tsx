@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, CalendarDays, Package } from "lucide-react";
+import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, CalendarDays, Package, Globe } from "lucide-react";
 import { CUSTOMER_DASHBOARD_HREF, CUSTOMER_DASHBOARD_LABEL } from "@/lib/customer-dashboard-nav";
 import { signOutTrimmaSession } from "../../config/supabase";
 import { readRoleFromCookie } from "@/lib/client-auth-cookie";
@@ -121,6 +121,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     },
     { name: "Global Staff Categories", href: "/admin/staff-roles", icon: <UserPlus className="w-4 h-4" /> },
     { name: "Salon Mgmt", href: "/admin/salons", icon: <Store className="w-4 h-4" /> },
+    {
+      name: "Salon Listing Generation",
+      href: "/admin/listing-generation",
+      icon: <Globe className="w-4 h-4" />,
+      children: [
+        { name: "Overview", href: "/admin/listing-generation" },
+        { name: "Data Capture", href: "/admin/listing-generation/capture" },
+        { name: "Listing Queue", href: "/admin/listing-generation/queue" },
+      ],
+    },
     { name: "Booking Mgmt", href: "/admin/bookings", icon: <Calendar className="w-4 h-4" /> },
     { name: "Review Moderation", href: "/admin/reviews", icon: <Star className="w-4 h-4" /> },
     { 

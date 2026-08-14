@@ -651,6 +651,15 @@ export default function AdminDashboard() {
             >
               View onboarding pipeline <ExternalLink className="w-3 h-3 ml-2" />
             </Link>
+            <Link
+              href="/admin/listing-generation"
+              className={buttonVariants({
+                variant: "ghost",
+                className: "w-full mt-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 text-xs font-bold rounded-xl relative z-10",
+              })}
+            >
+              Salon listing generation <ExternalLink className="w-3 h-3 ml-2" />
+            </Link>
           </div>
         </div>
       </div>

@@ -118,6 +118,16 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       icon: <Store className="w-4 h-4" />,
       children: [{ name: "All Salons", href: "/admin/salons" }],
     },
+    {
+      name: "Salon Listing Generation",
+      href: "/admin/listing-generation",
+      icon: <Globe className="w-4 h-4" />,
+      children: [
+        { name: "Overview", href: "/admin/listing-generation" },
+        { name: "Data Capture", href: "/admin/listing-generation/capture" },
+        { name: "Listing Queue", href: "/admin/listing-generation/queue" },
+      ],
+    },
     { name: "Booking Mgmt", href: "/admin/bookings", icon: <Calendar className="w-4 h-4" /> },
     { name: "Review Moderation", href: "/admin/reviews", icon: <Star className="w-4 h-4" /> },
     { 
@@ -168,16 +178,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       children: [
         { name: "Interactive Lead Sheet", href: "/admin/leads" },
         { name: "Salon Requests", href: "/admin/leads?tab=salon-requests" },
-      ],
-    },
-    {
-      name: "Salon Listing Generation",
-      href: "/admin/listing-generation",
-      icon: <Globe className="w-4 h-4" />,
-      children: [
-        { name: "Overview", href: "/admin/listing-generation" },
-        { name: "Data Capture", href: "/admin/listing-generation/capture" },
-        { name: "Listing Queue", href: "/admin/listing-generation/queue" },
       ],
     },
     {
