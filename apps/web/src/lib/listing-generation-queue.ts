@@ -67,7 +67,10 @@ export async function loadListingGenerationQueueRows(
     LISTING_ONBOARDING_STATUS.PUBLISHED,
   ];
 
-  let result = await supabase
+  let data: Array<Record<string, unknown>> | null = null;
+  let error: { message: string } | null = null;
+
+  const primary = await supabase
     .from("salons")
     .select(QUEUE_SELECT_WITH_EXT)
     .in("onboarding_status", statuses)
@@ -75,18 +78,23 @@ export async function loadListingGenerationQueueRows(
     .limit(500);
 
   if (
-    result.error &&
-    isMissingDbSchemaError(result.error.message) &&
-    result.error.message.toLowerCase().includes("business_info_extended")
+    primary.error &&
+    isMissingDbSchemaError(primary.error.message) &&
+    primary.error.message.toLowerCase().includes("business_info_extended")
   ) {
-    result = await supabase
+    const fallback = await supabase
       .from("salons")
       .select(QUEUE_SELECT_BASE)
       .in("onboarding_status", statuses)
       .order("created_at", { ascending: false })
       .limit(500);
+    data = (fallback.data || []) as Array<Record<string, unknown>>;
+    error = fallback.error;
+  } else {
+    data = (primary.data || []) as Array<Record<string, unknown>>;
+    error = primary.error;
   }
 
-  if (result.error) throw new Error(result.error.message);
-  return mapQueueRows((result.data || []) as Array<Record<string, unknown>>);
+  if (error) throw new Error(error.message);
+  return mapQueueRows(data);
 }

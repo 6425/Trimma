@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, MapPin, Loader2, Building2, Sparkles, Star, Scissors, Heart, Smile, User, ShieldCheck, Clock } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -83,9 +83,6 @@ export default function ListingsClient({
   initialHasMore = true,
   ssrSeeded = false,
 }: Props) {
-  const skipFetchRef = useRef(ssrSeeded);
-  const seededKeyRef = useRef(`${initialSearch.q}|${initialSearch.l}|${initialSearch.category}`);
-
   const [searchQuery, setSearchQuery] = useState(initialSearch.q);
   const [selectedLocation, setSelectedLocation] = useState(() =>
     resolveLocationSearchValue(initialSearch.l)
@@ -95,14 +92,17 @@ export default function ListingsClient({
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
-  const categoriesRef = useRef(categories);
-  categoriesRef.current = categories;
 
   const loadListings = useCallback(
-    async (filters: ListingFilters, nextPage: number, reset: boolean) => {
+    async (
+      filters: ListingFilters,
+      nextPage: number,
+      reset: boolean,
+      categoryList: PublicCategory[]
+    ) => {
       setIsLoading(true);
       try {
-        const params = buildListingSearchParams(filters, categoriesRef.current, nextPage);
+        const params = buildListingSearchParams(filters, categoryList, nextPage);
         const res = await fetch(`/api/business-listings/search?${params.toString()}`, {
           cache: "no-store",
         });
@@ -148,29 +148,10 @@ export default function ListingsClient({
         window.history.replaceState(window.history.state, "", qs ? `/?${qs}` : "/");
       }
 
-      void loadListings(nextFilters, 0, true);
+      void loadListings(nextFilters, 0, true, categories);
     },
-    [loadListings]
+    [categories, loadListings]
   );
-
-  useEffect(() => {
-    const key = `${searchQuery}|${selectedLocation}|${urlCategory}`;
-    const matchesSeed = skipFetchRef.current && page === 0 && key === seededKeyRef.current;
-    if (matchesSeed) {
-      skipFetchRef.current = false;
-      setIsLoading(false);
-      return;
-    }
-
-    if (page === 0) return;
-
-    skipFetchRef.current = false;
-    void loadListings(
-      { q: searchQuery, location: selectedLocation, category: urlCategory },
-      page,
-      false
-    );
-  }, [loadListings, page, searchQuery, selectedLocation, urlCategory]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -416,7 +397,16 @@ export default function ListingsClient({
                   size="lg"
                   className="rounded-xl px-8 font-bold"
                   disabled={isLoading}
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => {
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    void loadListings(
+                      { q: searchQuery, location: selectedLocation, category: urlCategory },
+                      nextPage,
+                      false,
+                      categories
+                    );
+                  }}
                 >
                   {isLoading ? (
                     <>
