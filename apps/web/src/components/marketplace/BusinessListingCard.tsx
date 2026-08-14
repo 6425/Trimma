@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Star, Phone, MapPin, Globe, Facebook, Instagram } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
+import { buildSalonPublicPath } from "@/lib/salon-public-path";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
 const FALLBACK_IMAGE =
@@ -17,7 +18,7 @@ type Props = {
 
 export function BusinessListingCard({ listing, priority = false }: Props) {
   const claimUrl = buildSalonClaimLoginUrl(listing.id);
-  const profileUrl = `/salons/${listing.slug}`;
+  const profileUrl = buildSalonPublicPath(listing);
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">

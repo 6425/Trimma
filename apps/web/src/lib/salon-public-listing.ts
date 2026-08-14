@@ -49,6 +49,9 @@ export function isSalonPubliclyListable(salon: {
   const visibility = normalizePublicVisibility(salon.public_visibility);
   if (visibility === "public" || visibility === "preview") return true;
 
+  const onboardingStatus = String(salon.onboarding_status || "");
+  if (onboardingStatus === "LISTING_PUBLISHED") return true;
+
   if (salon.is_verified && status === "active") return true;
   if (salon.booking_enabled && status === "active") return true;
 

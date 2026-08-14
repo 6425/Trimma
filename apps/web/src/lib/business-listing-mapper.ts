@@ -41,6 +41,7 @@ function normalizeExternalUrl(value: string | null | undefined): string | null {
   if (!value?.trim()) return null;
   const trimmed = value.trim();
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
   return `https://${trimmed}`;
 }
 

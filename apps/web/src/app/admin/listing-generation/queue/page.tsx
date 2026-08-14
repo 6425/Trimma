@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 import type { ListingQueueRow } from "@/lib/listing-generation-queue";
+import { buildSalonPublicPath } from "@/lib/salon-public-path";
 
 async function postListingAction(
   path: string,
@@ -176,7 +177,7 @@ export default function ListingQueuePage() {
                         {isPublished ? (
                           <>
                             <Link
-                              href={`/salons/${row.slug}`}
+                              href={buildSalonPublicPath(row)}
                               target="_blank"
                               className={buttonVariants({ variant: "outline", size: "sm", className: "h-9" })}
                             >
