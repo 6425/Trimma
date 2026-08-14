@@ -48,11 +48,8 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
     console.error("BusinessListingsPage:", error);
   }
 
-  const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
-
   return (
     <ListingsClient
-      key={searchKey}
       categories={categories}
       initialSearch={{
         q: sp.q ?? "",

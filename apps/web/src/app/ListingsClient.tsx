@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Search, MapPin, Loader2, Building2, Sparkles, Star, Scissors, Heart, Smile, User, ShieldCheck, Clock } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +59,6 @@ export default function ListingsClient({
   initialHasMore = true,
   ssrSeeded = false,
 }: Props) {
-  const router = useRouter();
   const skipFetchRef = useRef(ssrSeeded);
   const seededKeyRef = useRef(`${initialSearch.q}|${initialSearch.l}|${initialSearch.category}`);
 
@@ -119,13 +118,19 @@ export default function ListingsClient({
     void fetchListings(page === 0);
   }, [fetchListings, page, searchQuery, selectedLocation, urlCategory]);
 
+  const syncListingUrl = (params: URLSearchParams) => {
+    const qs = params.toString();
+    const nextUrl = qs ? `/?${qs}` : "/";
+    window.history.replaceState(window.history.state, "", nextUrl);
+  };
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (selectedLocation) params.set("l", selectedLocation);
     if (urlCategory) params.set("category", urlCategory);
     setPage(0);
-    router.push(`/?${params.toString()}`);
+    syncListingUrl(params);
   };
 
   const handleCategorySelect = (slug: string) => {
@@ -135,7 +140,7 @@ export default function ListingsClient({
     if (slug) params.set("category", slug);
     setPage(0);
     setUrlCategory(slug);
-    router.push(params.toString() ? `/?${params.toString()}` : "/");
+    syncListingUrl(params);
     trackEvent(AnalyticsEvent.CategoryFilterChanged, {
       source: "homepage_category_bar",
       previous: urlCategory || null,
@@ -157,6 +162,7 @@ export default function ListingsClient({
     ].join(" ");
 
   const syncFromUrl = useCallback((next: InitialSearch) => {
+    setPage(0);
     setSearchQuery((prev) => (prev === next.q ? prev : next.q));
     setSelectedLocation((prev) => {
       const canonical = resolveLocationSearchValue(next.l);
