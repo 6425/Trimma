@@ -9,8 +9,19 @@ import {
   stripOptionalDiscoveryColumns,
   type GoogleSalonUpsertContext,
 } from "@/lib/google-place-profile";
+import {
+  dedupeGooglePlacesByPlaceId,
+  loadSalonDuplicateCandidates,
+  indexSalonsForDiscoveryDedup,
+  resolveExistingSalonMatch,
+  removeDuplicateSalonRows,
+  type DiscoveryDedupStats,
+  type SalonDuplicateRow,
+} from "@/lib/salon-discovery-dedup";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
+
+export type { DiscoveryDedupStats };
 
 export const BEAUTY_DISCOVERY_CATEGORIES = [
   "hair salon",
@@ -73,20 +84,22 @@ export async function upsertDiscoveredGooglePlaces(
   enrichedPlaces: Array<{ place: GoogleTextSearchResult; profile: Awaited<ReturnType<typeof fetchGooglePlaceProfile>> }>,
   context: GoogleDiscoverySearchContext,
   options?: { assignTerritoryAgent?: boolean; listingPipeline?: boolean }
-): Promise<{ count: number; warning?: string; placeIds: string[] }> {
-  const placeIds = enrichedPlaces
+): Promise<{ count: number; warning?: string; placeIds: string[]; stats: DiscoveryDedupStats }> {
+  const dedupedPlaces = dedupeGooglePlacesByPlaceId(enrichedPlaces);
+  const stats: DiscoveryDedupStats = {
+    created: 0,
+    updated: 0,
+    merged: 0,
+    removed: 0,
+    skipped: enrichedPlaces.length - dedupedPlaces.length,
+  };
+
+  const placeIds = dedupedPlaces
     .map((entry) => entry.place.place_id)
     .filter((id): id is string => Boolean(id));
 
-  const existingQuery = placeIds.length
-    ? await supabase.from("salons").select("*").in("place_id", placeIds)
-    : { data: [] as Record<string, unknown>[], error: null };
-
-  if (existingQuery.error) throw existingQuery.error;
-
-  const existingByPlaceId = new Map(
-    (existingQuery.data || []).map((row) => [String(row.place_id), row as Record<string, unknown>])
-  );
+  const candidateRows = await loadSalonDuplicateCandidates(supabase, context, placeIds);
+  const indexes = indexSalonsForDiscoveryDedup(candidateRows);
 
   let assignTo: string | null = null;
   if (options?.assignTerritoryAgent !== false && !options?.listingPipeline) {
@@ -97,46 +110,80 @@ export async function upsertDiscoveredGooglePlaces(
     });
   }
 
-  const salonsToUpsert = enrichedPlaces
-    .filter((entry) => entry.place.place_id)
-    .map((entry) => {
-      const placeId = entry.place.place_id!;
-      const incoming = entry.profile
-        ? mapGooglePlaceToSalonRecord(placeId, entry.profile, context)
-        : mapGoogleTextSearchPlaceToSalonRecord(placeId, entry.place, context);
+  const rowsToInsert: Record<string, unknown>[] = [];
+  const rowsToUpdate: Record<string, unknown>[] = [];
 
-      if (options?.listingPipeline) {
-        Object.assign(incoming, LISTING_CAPTURE_SALON_DEFAULTS);
-      } else if (assignTo && !existingByPlaceId.get(placeId)?.assign_to) {
-        (incoming as Record<string, unknown>).assign_to = assignTo;
-      }
+  for (const entry of dedupedPlaces.filter((item) => item.place.place_id)) {
+    const placeId = entry.place.place_id!;
+    const incoming = entry.profile
+      ? mapGooglePlaceToSalonRecord(placeId, entry.profile, context)
+      : mapGoogleTextSearchPlaceToSalonRecord(placeId, entry.place, context);
 
-      const existing = existingByPlaceId.get(placeId) || null;
-      return prepareSalonDiscoveryUpsertRow(mergeGoogleProfileIntoSalonRow(existing, incoming));
-    });
+    if (options?.listingPipeline) {
+      Object.assign(incoming, LISTING_CAPTURE_SALON_DEFAULTS);
+    }
 
-  if (!salonsToUpsert.length) {
-    return { count: 0, placeIds: [] };
+    const existing = resolveExistingSalonMatch(incoming as SalonDuplicateRow, indexes);
+
+    if (!options?.listingPipeline && assignTo && !existing?.assign_to) {
+      (incoming as Record<string, unknown>).assign_to = assignTo;
+    }
+
+    const merged = prepareSalonDiscoveryUpsertRow(
+      mergeGoogleProfileIntoSalonRow(existing, incoming)
+    );
+
+    if (existing?.id) {
+      rowsToUpdate.push({ ...merged, id: existing.id });
+      stats.updated += 1;
+      if (existing.place_id !== placeId) stats.merged += 1;
+    } else {
+      rowsToInsert.push(merged);
+      stats.created += 1;
+    }
+  }
+
+  if (!rowsToInsert.length && !rowsToUpdate.length) {
+    return { count: 0, placeIds: [], stats };
   }
 
   let upsertWarning: string | undefined;
-  let upsertResult = await supabase.from("salons").upsert(salonsToUpsert, { onConflict: "place_id" });
 
-  if (upsertResult.error && isMissingDiscoveryColumnError(upsertResult.error)) {
-    upsertWarning =
-      "Saved basic salon data only. Run DISCOVERY_SALON_COLUMNS_PATCH.sql for review_count and business_info_extended.";
-    upsertResult = await supabase.from("salons").upsert(
-      salonsToUpsert.map(stripOptionalDiscoveryColumns),
-      { onConflict: "place_id" }
-    );
+  if (rowsToUpdate.length) {
+    let updateResult = await supabase.from("salons").upsert(rowsToUpdate, { onConflict: "id" });
+    if (updateResult.error && isMissingDiscoveryColumnError(updateResult.error)) {
+      upsertWarning =
+        "Saved basic salon data only. Run DISCOVERY_SALON_COLUMNS_PATCH.sql for review_count and business_info_extended.";
+      updateResult = await supabase.from("salons").upsert(
+        rowsToUpdate.map(stripOptionalDiscoveryColumns),
+        { onConflict: "id" }
+      );
+    }
+    if (updateResult.error) throw updateResult.error;
   }
 
-  if (upsertResult.error) throw upsertResult.error;
+  if (rowsToInsert.length) {
+    let insertResult = await supabase.from("salons").upsert(rowsToInsert, { onConflict: "place_id" });
+    if (insertResult.error && isMissingDiscoveryColumnError(insertResult.error)) {
+      upsertWarning =
+        upsertWarning ||
+        "Saved basic salon data only. Run DISCOVERY_SALON_COLUMNS_PATCH.sql for review_count and business_info_extended.";
+      insertResult = await supabase.from("salons").upsert(
+        rowsToInsert.map(stripOptionalDiscoveryColumns),
+        { onConflict: "place_id" }
+      );
+    }
+    if (insertResult.error) throw insertResult.error;
+  }
+
+  const refreshedCandidates = await loadSalonDuplicateCandidates(supabase, context, placeIds);
+  stats.removed = await removeDuplicateSalonRows(supabase, refreshedCandidates);
 
   return {
-    count: salonsToUpsert.length,
+    count: rowsToInsert.length + rowsToUpdate.length,
     warning: upsertWarning,
     placeIds,
+    stats,
   };
 }
 
@@ -150,7 +197,7 @@ export async function discoverGooglePlacesInContext(
     enrichProfiles?: boolean;
     listingPipeline?: boolean;
   }
-): Promise<{ count: number; warning?: string; message: string }> {
+): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats }> {
   const query = buildBeautyDiscoveryQuery(context);
   const targetLimit = Math.min(Math.max(options?.limit ?? 15, 1), 60);
 
@@ -196,12 +243,17 @@ export async function discoverGooglePlacesInContext(
   });
 
   const label = [context.city, context.district, context.province].filter(Boolean).join(", ");
-  const baseMessage = `Discovered and published ${result.count} listing(s) for ${label || "Sri Lanka"}.`;
+  const dedupSummary =
+    result.stats.removed > 0 || result.stats.merged > 0 || result.stats.skipped > 0
+      ? ` (${result.stats.created} new, ${result.stats.updated} updated, ${result.stats.merged} merged, ${result.stats.removed} duplicates removed${result.stats.skipped ? `, ${result.stats.skipped} skipped in batch` : ""})`
+      : "";
+  const baseMessage = `Discovered and published ${result.count} listing(s) for ${label || "Sri Lanka"}.${dedupSummary}`;
 
   return {
     count: result.count,
     warning: result.warning,
     message: result.warning ? `${baseMessage} ${result.warning}` : baseMessage,
+    stats: result.stats,
   };
 }
 

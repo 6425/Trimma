@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       count: result.count,
       message: result.message,
       warning: result.warning,
+      stats: result.stats,
     });
   } catch (error: unknown) {
     console.error("Discover API route failure:", error);
