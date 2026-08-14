@@ -1,5 +1,5 @@
 -- One-time backfill: move Google discovery rows into the listing-generation queue.
--- Safe to re-run. Run in Supabase SQL editor on beta/production if captures ran before LISTING_CAPTURED existed.
+-- Safe to re-run. salons has created_at but NOT updated_at — do not set updated_at here.
 
 UPDATE public.salons
 SET
@@ -7,8 +7,7 @@ SET
   onboarding_status = 'LISTING_CAPTURED',
   public_visibility = 'hidden',
   booking_enabled = false,
-  activation_status = 'INACTIVE',
-  updated_at = NOW()
+  activation_status = 'INACTIVE'
 WHERE source_type = 'GOOGLE_PLACES'
   AND COALESCE(onboarding_status, 'DISCOVERED') IN ('DISCOVERED', 'LISTING_CAPTURED')
   AND COALESCE(onboarding_status, '') NOT IN (
@@ -21,9 +20,16 @@ WHERE source_type = 'GOOGLE_PLACES'
     'LISTING_PUBLISHED'
   );
 
+-- Optional (only if business_info_extended column exists — see DISCOVERY_SALON_COLUMNS_PATCH.sql):
+-- UPDATE public.salons
+-- SET business_info_extended = COALESCE(business_info_extended, '{}'::jsonb)
+--   || jsonb_build_object('listing_captured_at', to_char(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'))
+-- WHERE onboarding_status = 'LISTING_CAPTURED'
+--   AND source_type = 'LISTING_GENERATION';
+
 -- Preview rows that should appear in Admin → Listing queue after backfill:
--- SELECT id, name, city, onboarding_status, source_type, updated_at
+-- SELECT id, name, city, onboarding_status, source_type, created_at
 -- FROM public.salons
 -- WHERE onboarding_status IN ('LISTING_CAPTURED', 'LISTING_PUBLISHED')
--- ORDER BY updated_at DESC
+-- ORDER BY created_at DESC
 -- LIMIT 50;

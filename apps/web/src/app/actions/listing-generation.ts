@@ -48,7 +48,6 @@ export async function publishListingSalon(salonId: string) {
       .from("salons")
       .update({
         ...LISTING_PUBLISH_SALON_UPDATES,
-        updated_at: new Date().toISOString(),
       })
       .eq("id", salonId);
 
@@ -77,7 +76,6 @@ export async function unpublishListingSalon(salonId: string) {
       .update({
         onboarding_status: LISTING_ONBOARDING_STATUS.CAPTURED,
         public_visibility: "hidden",
-        updated_at: new Date().toISOString(),
       })
       .eq("id", salonId)
       .eq("source_type", "LISTING_GENERATION");
@@ -123,7 +121,6 @@ export async function startBookingOnboardingFromListing(input: {
     const updates: Record<string, unknown> = {
       onboarding_status: BOOKING_ONBOARDING_ENTRY_STATUS,
       owner_invited_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
 
     if (input.ownerEmail?.trim()) {

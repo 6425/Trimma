@@ -116,7 +116,6 @@ export function applyListingPipelineCaptureFields(
 
 export function readListingCapturedAt(row: {
   created_at?: string | null;
-  updated_at?: string | null;
   onboarding_status?: string | null;
   source_type?: string | null;
   business_info_extended?: unknown;
@@ -130,15 +129,7 @@ export function readListingCapturedAt(row: {
   const capturedAt = ext?.listing_captured_at;
   if (typeof capturedAt === "string" && capturedAt.trim()) return capturedAt;
 
-  const inListingPipeline =
-    row.source_type === "LISTING_GENERATION" ||
-    LISTING_PIPELINE_STATUSES.has(String(row.onboarding_status || ""));
-
-  if (inListingPipeline) {
-    return row.updated_at || row.created_at || null;
-  }
-
-  return row.created_at || row.updated_at || null;
+  return row.created_at || null;
 }
 
 /** Ensure captured Google rows are visible in the listing queue after upsert. */
@@ -148,7 +139,6 @@ export async function finalizeListingPipelineCapture(
 ): Promise<number> {
   if (!placeIds.length) return 0;
 
-  const capturedAt = new Date().toISOString();
   const { data: rows, error: fetchError } = await supabase
     .from("salons")
     .select("id, onboarding_status")
@@ -174,7 +164,6 @@ export async function finalizeListingPipelineCapture(
       .from("salons")
       .update({
         ...LISTING_CAPTURE_SALON_DEFAULTS,
-        updated_at: capturedAt,
       })
       .in("id", toCapture);
     if (error) throw new Error(error.message);
@@ -185,7 +174,6 @@ export async function finalizeListingPipelineCapture(
       .from("salons")
       .update({
         source_type: "LISTING_GENERATION",
-        updated_at: capturedAt,
       })
       .in("id", toRefresh);
     if (error) throw new Error(error.message);

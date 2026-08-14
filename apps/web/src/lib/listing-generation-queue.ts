@@ -21,15 +21,14 @@ export type ListingQueueRow = {
   public_visibility: string | null;
   source_type: string | null;
   created_at: string;
-  updated_at: string;
   captured_at: string | null;
 };
 
 const QUEUE_SELECT_FULL =
-  "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at, business_info_extended";
+  "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, business_info_extended";
 
 const QUEUE_SELECT_BASE =
-  "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at";
+  "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at";
 
 function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
   return data.map((row) => ({
@@ -48,10 +47,8 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     public_visibility: (row.public_visibility as string | null) ?? null,
     source_type: (row.source_type as string | null) ?? null,
     created_at: String(row.created_at || ""),
-    updated_at: String(row.updated_at || ""),
     captured_at: readListingCapturedAt({
       created_at: row.created_at as string | null,
-      updated_at: row.updated_at as string | null,
       onboarding_status: row.onboarding_status as string | null,
       source_type: row.source_type as string | null,
       business_info_extended: row.business_info_extended,
@@ -72,7 +69,7 @@ async function queryQueueRows(
     .from("salons")
     .select(select)
     .in("onboarding_status", statuses)
-    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(500);
 
   if (error) throw error;
