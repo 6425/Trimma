@@ -1,68 +1,16 @@
-import { createServerSupabaseClient } from "@/config/supabase-server";
-import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
-import { fetchPublicSalons } from "@/lib/public-salon-search";
-import { fetchPublicCategories } from "@/lib/public-categories";
-import { fetchCachedPublicDeals } from "@/lib/deals";
-import SalonsClient from "../SalonsClient";
-
-export const metadata = buildPublicPageMetadata({
-  title: "Book Salons — Trimma OS",
-  description:
-    "Book verified salons across Sri Lanka — compare ratings, prices, services, and live availability.",
-  path: "/booking",
-});
-
-export const revalidate = 60;
+import { redirect } from "next/navigation";
 
 type PageProps = {
-  searchParams: Promise<{
-    q?: string;
-    l?: string;
-    category?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function BookingDirectoryPage({ searchParams }: PageProps) {
+export default async function LegacyBookingRedirect({ searchParams }: PageProps) {
   const sp = await searchParams;
-  const supabase = createServerSupabaseClient();
-
-  const [categories, listingResult, deals] = await Promise.all([
-    fetchPublicCategories(),
-    (async () => {
-      try {
-        return await fetchPublicSalons(supabase, {
-          q: sp.q ?? "",
-          location: sp.l ?? "",
-          category: sp.category ?? "",
-          bookableOnly: true,
-          limit: 12,
-          offset: 0,
-        });
-      } catch {
-        return { salons: [], hasMore: false };
-      }
-    })(),
-    fetchCachedPublicDeals().catch(() => []),
-  ]);
-
-  const initialSalons = listingResult.salons;
-  const initialHasMore = listingResult.hasMore;
-  const searchKey = `booking|${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
-
-  return (
-    <SalonsClient
-      key={searchKey}
-      variant="booking"
-      categories={categories}
-      initialSearch={{
-        q: sp.q ?? "",
-        l: sp.l ?? "",
-        category: sp.category ?? "",
-      }}
-      initialSalons={initialSalons}
-      initialHasMore={initialHasMore}
-      initialDeals={deals}
-      ssrSeeded
-    />
-  );
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === "string") params.set(key, value);
+    else if (Array.isArray(value)) value.forEach((entry) => params.append(key, entry));
+  }
+  const suffix = params.toString();
+  redirect(suffix ? `/bookings?${suffix}` : "/bookings");
 }

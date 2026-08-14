@@ -1,20 +1,18 @@
-// Server Component — no "use client" directive
-// Data is fetched on the server and HTML is sent to the browser pre-populated.
-
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
-import SalonsClient from "./SalonsClient";
+import { fetchCachedPublicDeals } from "@/lib/deals";
+import SalonsClient from "../SalonsClient";
 
 export const metadata = buildPublicPageMetadata({
-  title: "Trimma OS - Business Listings",
+  title: "Book Salons — Trimma OS",
   description:
-    "Discover salons and spas across Sri Lanka. Claim your business listing with Google sign-in and join Trimma.",
-  path: "/",
+    "Book verified salons across Sri Lanka — compare ratings, prices, services, and live availability.",
+  path: "/bookings",
 });
 
-export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
+export const revalidate = 60;
 
 type PageProps = {
   searchParams: Promise<{
@@ -24,11 +22,11 @@ type PageProps = {
   }>;
 };
 
-export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
+export default async function BookingsDirectoryPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const supabase = createServerSupabaseClient();
 
-  const [categories, listingResult] = await Promise.all([
+  const [categories, listingResult, deals] = await Promise.all([
     fetchPublicCategories(),
     (async () => {
       try {
@@ -36,7 +34,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
           q: sp.q ?? "",
           location: sp.l ?? "",
           category: sp.category ?? "",
-          browseOnly: true,
+          bookableOnly: true,
           limit: 12,
           offset: 0,
         });
@@ -44,15 +42,17 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
         return { salons: [], hasMore: false };
       }
     })(),
+    fetchCachedPublicDeals().catch(() => []),
   ]);
 
   const initialSalons = listingResult.salons;
   const initialHasMore = listingResult.hasMore;
-  const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
+  const searchKey = `bookings|${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
 
   return (
     <SalonsClient
       key={searchKey}
+      variant="booking"
       categories={categories}
       initialSearch={{
         q: sp.q ?? "",
@@ -61,9 +61,8 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
       }}
       initialSalons={initialSalons}
       initialHasMore={initialHasMore}
-      initialDeals={[]}
+      initialDeals={deals}
       ssrSeeded
-      variant="directory"
     />
   );
 }

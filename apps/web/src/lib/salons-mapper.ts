@@ -1,5 +1,6 @@
 import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
 import { computeSalonListingAvailability } from "@/lib/salon-operating-hours";
+import { isSalonClaimable } from "@/lib/salon-public-listing";
 
 export function mapVerifiedSalonListingStats(salon: {
   rating?: number | string | null;
@@ -95,5 +96,6 @@ export function mapSalonRowToUI(s: any, idx: number) {
     status: availability.status,
     popularService,
     isVerified: s.is_verified === true,
+    isClaimable: isSalonClaimable(s),
   };
 }

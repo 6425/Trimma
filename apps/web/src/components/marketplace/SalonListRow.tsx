@@ -10,6 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SalonFavoriteButton } from "./SalonFavoriteButton";
 import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
+import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 
 export type SalonListRowData = {
   id: string;
@@ -27,6 +28,7 @@ export type SalonListRowData = {
   popularService?: string;
   featured?: boolean;
   isVerified?: boolean;
+  isClaimable?: boolean;
 };
 
 type SalonListRowProps = {
@@ -49,6 +51,8 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
   const router = useRouter();
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = isSalonVerified(salon.isVerified);
+  const showClaimCta = Boolean(salon.isClaimable && !isVerified);
+  const claimUrl = buildSalonClaimLoginUrl(salon.id);
   const locationLabel = salon.location || salon.city;
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
   const [imageSrc, setImageSrc] = useState(originalImage);
@@ -204,6 +208,17 @@ export function SalonListRow({ salon, priority = false }: SalonListRowProps) {
               )}
             >
               Book now
+            </Link>
+          ) : showClaimCta ? (
+            <Link
+              href={claimUrl}
+              prefetch={false}
+              className={cn(
+                buttonVariants({ variant: "default", size: "default" }),
+                "h-10 rounded-xl bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold text-xs border-none shadow-md"
+              )}
+            >
+              Claim this business
             </Link>
           ) : (
             <Button disabled className="h-10 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs">

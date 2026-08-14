@@ -14,6 +14,8 @@ export type PublicSalonSearchParams = {
   verifiedOnly?: boolean;
   /** When true, only salons with online booking enabled and valid owner contact details. */
   bookableOnly?: boolean;
+  /** When true, only browse/discovery listings (Lead Mgmt / unbookable public listings). */
+  browseOnly?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -28,6 +30,7 @@ export async function fetchPublicSalons(
     minRating = 0,
     verifiedOnly = false,
     bookableOnly = false,
+    browseOnly = false,
     limit = 12,
     offset = 0,
   }: PublicSalonSearchParams
@@ -71,7 +74,7 @@ export async function fetchPublicSalons(
 
   const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
   const categoryFilterActive = normalizedCategory.length > 0;
-  const postFilterActive = categoryFilterActive || bookableOnly;
+  const postFilterActive = categoryFilterActive || bookableOnly || browseOnly;
   const fetchLimit = postFilterActive ? Math.max(limit * 8, 100) : limit;
   const fetchOffset = postFilterActive ? 0 : offset;
 
@@ -83,6 +86,8 @@ export async function fetchPublicSalons(
   let rows = filterPublicSalons(data || []).filter(isSalonPubliclyListable);
   if (bookableOnly) {
     rows = rows.filter(isSalonPubliclyBookable);
+  } else if (browseOnly) {
+    rows = rows.filter((row) => !isSalonPubliclyBookable(row));
   }
   if (categoryFilterActive) {
     rows = rows.filter((row) => {

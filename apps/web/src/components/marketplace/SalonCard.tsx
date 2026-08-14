@@ -8,6 +8,7 @@ import { Star, MapPin, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SalonFavoriteButton } from "./SalonFavoriteButton";
 import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
+import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 
 export interface SalonCardInternalProps {
   key?: string;
@@ -25,6 +26,7 @@ export interface SalonCardInternalProps {
     nextAvailable: string;
     priceFrom: number;
     isVerified?: boolean;
+    isClaimable?: boolean;
   };
 }
 
@@ -44,6 +46,8 @@ export function SalonCard(props: SalonCardInternalProps) {
   const router = useRouter();
   const linkTarget = `/salons/${salon.slug || salon.id}`;
   const isVerified = isSalonVerified(salon.isVerified);
+  const showClaimCta = Boolean(salon.isClaimable && !isVerified);
+  const claimUrl = buildSalonClaimLoginUrl(salon.id);
   const originalImage = salon.image || FALLBACK_SALON_IMAGE;
   const [imageSrc, setImageSrc] = useState(originalImage);
 
@@ -171,6 +175,14 @@ export function SalonCard(props: SalonCardInternalProps) {
                   className="inline-flex flex-1 sm:flex-none items-center justify-center rounded-xl px-3 sm:px-6 min-h-11 sm:min-h-10 bg-primary-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-md transition-colors border-none"
                 >
                   Book
+                </Link>
+              ) : showClaimCta ? (
+                <Link
+                  href={claimUrl}
+                  prefetch={false}
+                  className="inline-flex flex-1 sm:flex-none items-center justify-center rounded-xl px-3 sm:px-6 min-h-11 sm:min-h-10 bg-[#ffde5a] hover:bg-[#ffe680] text-black text-xs sm:text-sm font-bold shadow-md transition-colors border-none"
+                >
+                  Claim this business
                 </Link>
               ) : (
                 <div className="inline-flex flex-1 sm:flex-none items-center justify-center rounded-xl px-3 sm:px-6 min-h-11 sm:min-h-10 bg-slate-100 text-slate-400 text-xs sm:text-sm font-bold border-none cursor-not-allowed">

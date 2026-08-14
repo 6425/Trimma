@@ -74,7 +74,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isLocationsActive = pathname === "/locations" || pathname?.startsWith("/locations/");
   const isDealsActive = pathname === "/deals";
-  const isBookingActive = pathname === "/booking" || pathname?.startsWith("/booking/");
+  const isBookingActive = pathname === "/bookings" || pathname?.startsWith("/bookings/");
   const isStylesActive = pathname === "/styles";
   const isContactActive = pathname === "/contact";
 
@@ -299,7 +299,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               <Link href="/styles" className={navDesktopClass(isStylesActive)}>
                 Styles
               </Link>
-              <Link href="/booking" className={navDesktopClass(isBookingActive)}>
+              <Link href="/bookings" className={navDesktopClass(isBookingActive)}>
                 Book
               </Link>
               <Link href="/deals" className={navDesktopClass(isDealsActive)}>
@@ -538,7 +538,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               Styles
             </Link>
             <Link
-              href="/booking"
+              href="/bookings"
               onClick={() => setMobileMenuOpen(false)}
               className={navMobileClass(isBookingActive)}
             >

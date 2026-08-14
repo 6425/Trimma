@@ -45,7 +45,7 @@ export default function ListingGenerationHubPage() {
           <h2 className="text-lg font-bold text-[#1A1C29]">3. Customer pages</h2>
           <p className="mt-2 text-sm text-zinc-600">
             Published listings appear on <code className="text-xs">/?l=…&category=…</code> (browse).
-            Bookable salons appear on <code className="text-xs">/booking?l=…&category=…</code> once booking onboarding completes.
+            Bookable salons appear on <code className="text-xs">/bookings?l=…&category=…</code> once booking onboarding completes.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild variant="outline" className="h-11 min-h-11 font-bold">
@@ -55,7 +55,7 @@ export default function ListingGenerationHubPage() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-11 min-h-11 font-bold">
-              <Link href="/booking" target="_blank">
+              <Link href="/bookings" target="_blank">
                 Book salons
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

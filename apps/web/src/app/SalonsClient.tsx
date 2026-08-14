@@ -46,6 +46,7 @@ interface Salon {
   status?: "Open Now" | "Closed";
   popularService: string;
   isVerified?: boolean;
+  isClaimable?: boolean;
 }
 
 interface Category {
@@ -104,7 +105,7 @@ export default function SalonsClient({
   variant = "directory",
 }: Props) {
   const isBooking = variant === "booking";
-  const basePath = isBooking ? "/booking" : "/";
+  const basePath = isBooking ? "/bookings" : "/";
   const router = useRouter();
   // Skip the first client fetch when the server already seeded results.
   const skipClientFetchRef = useRef(ssrSeeded);
@@ -187,6 +188,7 @@ export default function SalonsClient({
         if (filters.minRating > 0) params.set("minRating", String(filters.minRating));
         if (filters.verifiedOnly) params.set("verified", "true");
         if (isBooking) params.set("bookable", "true");
+        else params.set("browse", "true");
 
         const res = await fetch(`/api/salons/search?${params.toString()}`);
         if (!res.ok) throw new Error("Search failed");
@@ -317,6 +319,7 @@ export default function SalonsClient({
     popularService: s.popularService,
     featured: s.featured,
     isVerified: s.isVerified,
+    isClaimable: s.isClaimable,
   });
 
   const mapToCardProps = (s: Salon) => {
@@ -334,6 +337,7 @@ export default function SalonsClient({
       nextAvailable: row.nextAvailable,
       priceFrom: row.priceFrom,
       isVerified: row.isVerified,
+      isClaimable: row.isClaimable,
     };
   };
 
@@ -385,12 +389,12 @@ export default function SalonsClient({
             <div className="home-hero-top">
               <Badge variant="hero">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
-                {isBooking ? "Book Instantly" : "Discover Premium Grooming"}
+                {isBooking ? "Book Instantly" : "Business Listings"}
               </Badge>
 
               <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
                 <span className="home-hero-title-line">
-                  {isBooking ? "Book Verified Salons & Spas" : "Best Salons & Spas"}
+                  {isBooking ? "Book Verified Salons & Spas" : "Discover Salons & Spas"}
                 </span>
                 <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                   in Sri Lanka
@@ -400,7 +404,7 @@ export default function SalonsClient({
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
                 {isBooking
                   ? "Browse approved salons with live online booking — compare ratings, prices, services, and availability."
-                  : "Discover salons, spas, and barbers across Sri Lanka — compare ratings, prices, and services before you book."}
+                  : "Browse salons discovered across Sri Lanka. Own a business listed here? Claim it with Google sign-in and activate your Trimma profile."}
               </p>
             </div>
 
@@ -461,14 +465,14 @@ export default function SalonsClient({
             <span className="text-zinc-600">›</span>
             {isBooking && (
               <>
-                <Link href="/booking" className="hover:text-brand transition-colors">
+                <Link href="/bookings" className="hover:text-brand transition-colors">
                   Book
                 </Link>
                 <span className="text-zinc-600">›</span>
               </>
             )}
             <span className="font-semibold text-white">
-              {isBooking ? "Bookable salons" : "Salons"} in {locationLabel}
+              {isBooking ? "Bookable salons" : "Business listings"} in {locationLabel}
             </span>
           </nav>
           <p className="text-zinc-400 text-xs md:text-sm">
@@ -477,7 +481,7 @@ export default function SalonsClient({
             ) : (
               <>
                 <span className="text-brand font-bold">{filteredSalons.length}</span>{" "}
-                {isBooking ? "bookable salon" : "salon"}
+                {isBooking ? "bookable salon" : "listing"}
                 {filteredSalons.length === 1 ? "" : "s"} found
               </>
             )}
@@ -595,12 +599,16 @@ export default function SalonsClient({
                 <p className="text-lg font-black text-[#1A1C29]">No salons match your filters</p>
                 <p className="text-sm text-zinc-500 mt-1 max-w-md">
                   {isBooking
-                    ? "No bookable salons match your search yet. Try another location or browse all listings on the home page."
-                    : "Try adjusting your search, location, or filters to see more results."}
+                    ? "No bookable salons match your search yet. Browse business listings on the home page or try another location."
+                    : "Try adjusting your search, location, or filters. Ready to book? Visit the bookings page for verified salons."}
                 </p>
-                {isBooking && (
+                {isBooking ? (
                   <Button asChild variant="default" className="mt-4 rounded-xl font-bold">
-                    <Link href="/">Browse all listings</Link>
+                    <Link href="/">Browse business listings</Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="default" className="mt-4 rounded-xl font-bold">
+                    <Link href="/bookings">Book verified salons</Link>
                   </Button>
                 )}
                 <Button variant="outline" className="mt-4 rounded-xl border-brand/30 text-brand font-bold hover:bg-brand/5" onClick={clearFilters}>
@@ -648,7 +656,7 @@ export default function SalonsClient({
         </div>
       </div>
 
-      <DealsDiscountSection initialDeals={initialDeals} />
+      {isBooking ? <DealsDiscountSection initialDeals={initialDeals} /> : null}
 
       {/* Mobile filters drawer */}
       {mobileFiltersOpen && (
