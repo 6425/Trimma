@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Loader2, Building2, Sparkles } from "lucide-react";
@@ -127,20 +126,21 @@ export default function ListingsClient({
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
-        <Image
+      <section className="page-hero-shell home-hero home-hero-split home-hero-split--business-listings relative min-h-[500px]">
+        <img
           src={HERO_IMAGE}
           alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="home-hero-bg-image object-cover pointer-events-none"
+          width={1920}
+          height={500}
+          decoding="async"
+          fetchPriority="high"
+          className="home-hero-bg-image absolute inset-0 h-full w-full object-cover pointer-events-none"
         />
         <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
         <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
         <div className="container relative z-10 mx-auto max-w-7xl">
-          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between">
             <div className="home-hero-top">
               <Badge variant="hero">
                 <Building2 className="mr-1.5 h-3.5 w-3.5" />
@@ -171,6 +171,7 @@ export default function ListingsClient({
                 <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                   <Search className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
                   <input
+                    type="text"
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
