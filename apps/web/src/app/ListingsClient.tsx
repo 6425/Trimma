@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
+import { resolveLocationDisplayLabel, resolveLocationSearchValue, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 const HERO_IMAGE = "/assets/business-listings-hero.png";
 const PAGE_SIZE = 24;
@@ -48,7 +49,9 @@ export default function ListingsClient({
   const seededKeyRef = useRef(`${initialSearch.q}|${initialSearch.l}|${initialSearch.category}`);
 
   const [searchQuery, setSearchQuery] = useState(initialSearch.q);
-  const [selectedLocation, setSelectedLocation] = useState(initialSearch.l);
+  const [selectedLocation, setSelectedLocation] = useState(() =>
+    resolveLocationSearchValue(initialSearch.l)
+  );
   const [urlCategory, setUrlCategory] = useState(initialSearch.category);
   const [listings, setListings] = useState(initialListings);
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
@@ -112,13 +115,14 @@ export default function ListingsClient({
 
   const syncFromUrl = useCallback((next: InitialSearch) => {
     setSearchQuery((prev) => (prev === next.q ? prev : next.q));
-    setSelectedLocation((prev) => (prev === next.l ? prev : next.l));
+    setSelectedLocation((prev) => {
+      const canonical = resolveLocationSearchValue(next.l);
+      return prev === canonical ? prev : canonical;
+    });
     setUrlCategory((prev) => (prev === next.category ? prev : next.category));
   }, []);
 
-  const locationLabel = selectedLocation
-    ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1)
-    : "Sri Lanka";
+  const locationLabel = resolveLocationDisplayLabel(selectedLocation);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -148,7 +152,7 @@ export default function ListingsClient({
               </Badge>
 
               <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
-                <span className="home-hero-title-line">Business listings across</span>
+                <span className="home-hero-title-line">Beauty Business Across</span>
                 <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                   Sri Lanka
                 </span>
@@ -164,7 +168,7 @@ export default function ListingsClient({
               <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
                 <span className="hero-badge hero-eyebrow px-3 py-1">{listings.length} Businesses Listed</span>
                 <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
-                <span className="uppercase tracking-wider">Locations: Colombo, Gampaha, Kandy</span>
+                <span className="uppercase tracking-wider">All provinces · districts · cities</span>
               </div>
 
               <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
@@ -193,11 +197,36 @@ export default function ListingsClient({
                     className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"
                   >
                     <option value="">Any location</option>
-                    <option value="colombo">Colombo</option>
-                    <option value="gampaha">Gampaha</option>
-                    <option value="kandy">Kandy</option>
-                    <option value="galle">Galle</option>
-                    <option value="anuradhapura">Anuradhapura</option>
+                    <optgroup label="Provinces">
+                      {SRI_LANKA_PROVINCES.map((province) => (
+                        <option key={`province-${province.slug}`} value={province.name}>
+                          {province.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                    {SRI_LANKA_PROVINCES.map((province) => (
+                      <optgroup key={`districts-${province.slug}`} label={`${province.shortName} — Districts`}>
+                        {province.districts.map((district) => (
+                          <option key={`district-${province.slug}-${district.slug}`} value={district.name}>
+                            {district.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                    {SRI_LANKA_PROVINCES.map((province) => (
+                      <optgroup key={`cities-${province.slug}`} label={`${province.shortName} — Cities`}>
+                        {province.districts.flatMap((district) =>
+                          district.cities.map((city) => (
+                            <option
+                              key={`city-${province.slug}-${district.slug}-${city}`}
+                              value={city}
+                            >
+                              {city} ({district.name})
+                            </option>
+                          ))
+                        )}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
                 <Button

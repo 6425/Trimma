@@ -173,6 +173,37 @@ export function buildLocationSearchHref(location: string): string {
   return `/?l=${encodeURIComponent(location)}`;
 }
 
+export function resolveLocationDisplayLabel(location: string): string {
+  const trimmed = location.trim();
+  if (!trimmed) return "Sri Lanka";
+
+  const province = resolveProvinceForLocationQuery(trimmed);
+  if (province) return province.name;
+
+  const lower = trimmed.toLowerCase();
+  for (const entry of SRI_LANKA_PROVINCES) {
+    for (const district of entry.districts) {
+      if (district.slug === slugifyLocation(trimmed) || district.name.toLowerCase() === lower) {
+        return district.name;
+      }
+      for (const city of district.cities) {
+        if (slugifyLocation(city) === slugifyLocation(trimmed) || city.toLowerCase() === lower) {
+          return city;
+        }
+      }
+    }
+  }
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+/** Canonical province / district / city name for search params and selects. */
+export function resolveLocationSearchValue(location: string): string {
+  const trimmed = location.trim();
+  if (!trimmed) return "";
+  return resolveLocationDisplayLabel(trimmed);
+}
+
 /** Resolve a free-text location query to a known province (name, short name, or slug). */
 export function resolveProvinceForLocationQuery(location: string): SriLankaProvince | undefined {
   const trimmed = location.trim();
