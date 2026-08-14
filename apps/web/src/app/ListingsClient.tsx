@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, MapPin, Loader2, Building2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BusinessListingCard } from "@/components/marketplace/BusinessListingCard";
+import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
 const HERO_IMAGE = "/assets/beauty-salon-hero.webp";

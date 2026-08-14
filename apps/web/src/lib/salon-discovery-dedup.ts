@@ -200,29 +200,35 @@ export async function loadSalonDuplicateCandidates(
 
   if (placeIds.length) {
     queries.push(
-      supabase
-        .from("salons")
-        .select("*")
-        .in("place_id", placeIds)
-        .then(({ data, error }) => ({ data: (data || []) as SalonDuplicateRow[], error }))
+      Promise.resolve(
+        supabase
+          .from("salons")
+          .select("*")
+          .in("place_id", placeIds)
+          .then(({ data, error }) => ({ data: (data || []) as SalonDuplicateRow[], error }))
+      )
     );
   }
 
   if (context.district) {
     queries.push(
-      supabase
-        .from("salons")
-        .select("*")
-        .eq("district", context.district)
-        .then(({ data, error }) => ({ data: (data || []) as SalonDuplicateRow[], error }))
+      Promise.resolve(
+        supabase
+          .from("salons")
+          .select("*")
+          .eq("district", context.district)
+          .then(({ data, error }) => ({ data: (data || []) as SalonDuplicateRow[], error }))
+      )
     );
   } else if (context.city) {
     queries.push(
-      supabase
-        .from("salons")
-        .select("*")
-        .ilike("city", context.city)
-        .then(({ data, error }) => ({ data: (data || []) as SalonDuplicateRow[], error }))
+      Promise.resolve(
+        supabase
+          .from("salons")
+          .select("*")
+          .ilike("city", context.city)
+          .then(({ data, error }) => ({ data: (data || []) as SalonDuplicateRow[], error }))
+      )
     );
   }
 

@@ -25,7 +25,6 @@ export default function ListingQueuePage() {
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
       const [queueResult, requestRows] = await Promise.all([
         fetchListingGenerationQueue(),
         fetchAdminSalonRequests(),
@@ -44,9 +43,11 @@ export default function ListingQueuePage() {
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- initial queue fetch on mount */
   useEffect(() => {
     void load();
   }, [load]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const runAction = async (salonId: string, action: () => Promise<{ success: boolean; error?: string }>) => {
     try {

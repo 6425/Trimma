@@ -100,7 +100,7 @@ export default function CityDetailPage() {
 
         // Transform DB records into UI formats
         const formatted = filterPublicSalons(dbSalons || [])
-          .filter(isSalonPubliclyListable)
+          .filter((s) => isSalonPubliclyListable(s as Record<string, unknown>))
           .map((s: any, idx: number) => {
           const mapped = mapSalonRowToUI(s, idx);
           return {
