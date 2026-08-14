@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { unpublishListingSalonRecord } from "@/lib/listing-generation-mutations";
+
+export const dynamic = "force-dynamic";
+
+function routeError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "Failed to unpublish listing.";
+}
+
+export async function POST(req: Request) {
+  try {
+    const adminAuth = await requirePlatformAdminFromCookies();
+    if ("error" in adminAuth) {
+      return NextResponse.json({ error: adminAuth.error }, { status: 401 });
+    }
+
+    const body = (await req.json().catch(() => ({}))) as { salonId?: string };
+    const salonId = String(body.salonId || "").trim();
+    if (!salonId) {
+      return NextResponse.json({ error: "salonId is required." }, { status: 400 });
+    }
+
+    const supabase = createSupabaseAdminClient();
+    await unpublishListingSalonRecord(supabase, salonId);
+
+    revalidatePath("/admin/listing-generation/queue");
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    console.error("[admin/listing-generation/unpublish]", error);
+    return NextResponse.json({ error: routeError(error) }, { status: 500 });
+  }
+}

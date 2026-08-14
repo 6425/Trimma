@@ -6,16 +6,26 @@ import { Loader2, ExternalLink, Rocket, PauseCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-  connectSalonRequestToListing,
-  publishListingSalon,
-  startBookingOnboardingFromListing,
-  unpublishListingSalon,
-  type ListingQueueRow,
-} from "@/app/actions/listing-generation";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
-import { formatServerActionError } from "@/lib/salon-profile-save";
+import type { ListingQueueRow } from "@/lib/listing-generation-queue";
+
+async function postListingAction(
+  path: string,
+  body: Record<string, unknown>
+): Promise<{ success: boolean; error?: string }> {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(body),
+  });
+  const data = (await response.json().catch(() => ({}))) as { error?: string };
+  if (!response.ok) {
+    return { success: false, error: data.error || `Request failed (${response.status}).` };
+  }
+  return { success: true };
+}
 
 export default function ListingQueuePage() {
   const [rows, setRows] = useState<ListingQueueRow[]>([]);
@@ -70,7 +80,7 @@ export default function ListingQueuePage() {
       if (result.success === false) throw new Error(result.error);
       await load();
     } catch (error: unknown) {
-      toast.error(formatServerActionError(error));
+      toast.error(error instanceof Error ? error.message : "Action failed.");
     } finally {
       setBusyId(null);
     }
@@ -180,7 +190,11 @@ export default function ListingQueuePage() {
                               className="h-9"
                               disabled={busyId === row.id}
                               onClick={() =>
-                                void runAction(row.id, () => unpublishListingSalon(row.id))
+                                void runAction(row.id, () =>
+                                  postListingAction("/api/admin/listing-generation/unpublish", {
+                                    salonId: row.id,
+                                  })
+                                )
                               }
                             >
                               {busyId === row.id ? (
@@ -200,7 +214,13 @@ export default function ListingQueuePage() {
                             size="sm"
                             className="h-9 font-bold"
                             disabled={busyId === row.id}
-                            onClick={() => void runAction(row.id, () => publishListingSalon(row.id))}
+                            onClick={() =>
+                              void runAction(row.id, () =>
+                                postListingAction("/api/admin/listing-generation/publish", {
+                                  salonId: row.id,
+                                })
+                              )
+                            }
                           >
                             {busyId === row.id ? (
                               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -222,12 +242,13 @@ export default function ListingQueuePage() {
                           onClick={() =>
                             void runAction(row.id, () =>
                               pendingRequest
-                                ? connectSalonRequestToListing({
-                                    salonRequestId: pendingRequest.id,
+                                ? postListingAction("/api/admin/listing-generation/start-booking", {
                                     salonId: row.id,
+                                    salonRequestId: pendingRequest.id,
                                     assignAgent: true,
+                                    linkRequest: true,
                                   })
-                                : startBookingOnboardingFromListing({
+                                : postListingAction("/api/admin/listing-generation/start-booking", {
                                     salonId: row.id,
                                     assignAgent: true,
                                   })
