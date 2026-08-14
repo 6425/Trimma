@@ -297,6 +297,18 @@ ALTER TABLE public.salon_inventory_items
   ADD COLUMN IF NOT EXISTS preferred_supplier_sku TEXT;
 
 ALTER TABLE public.salon_inventory_items
+  ADD COLUMN IF NOT EXISTS brand TEXT;
+
+-- Backfill category + brand from linked global catalog products
+UPDATE public.salon_inventory_items si
+SET
+  category_id = COALESCE(si.category_id, gp.category_id),
+  brand = COALESCE(NULLIF(btrim(si.brand), ''), gp.brand)
+FROM public.global_inventory_products gp
+WHERE si.global_product_id = gp.id
+  AND (si.category_id IS NULL OR si.brand IS NULL OR btrim(si.brand) = '');
+
+ALTER TABLE public.salon_inventory_items
   DROP CONSTRAINT IF EXISTS salon_inventory_items_inventory_track_check;
 
 ALTER TABLE public.salon_inventory_items

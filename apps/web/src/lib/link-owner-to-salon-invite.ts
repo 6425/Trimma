@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ensureSalonSubscriptionPlan } from "@/lib/salon-subscription-plan";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
+import { isDraftOwnerEmail } from "@/lib/salon-public-listing";
 
 const PRE_INVITE_STATUSES = new Set(["DISCOVERED", "ASSIGNED_TO_AGENT", "AGENT_VERIFIED"]);
 
@@ -35,8 +36,10 @@ export async function linkOwnerEmailToSalonInvite(
     throw new Error("Salon invitation link is invalid or expired.");
   }
 
-  const boundOwner =
+  const boundOwnerRaw =
     normalizeEmail(salon.owner_gmail) || normalizeEmail(salon.owner_email);
+  const boundOwner =
+    boundOwnerRaw && !isDraftOwnerEmail(boundOwnerRaw) ? boundOwnerRaw : null;
 
   if (boundOwner && boundOwner !== normalized) {
     throw new Error(

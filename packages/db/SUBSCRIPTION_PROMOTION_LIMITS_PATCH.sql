@@ -68,7 +68,6 @@ SELECT
   max_staff,
   max_services,
   max_images,
-  max_branches,
   max_promotion_packages,
   feature_flags->>'allowed_promotion_types_limit' AS allowed_promotion_types_limit
 FROM public.subscription_plans

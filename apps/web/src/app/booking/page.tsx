@@ -1,21 +1,18 @@
-// Server Component — no "use client" directive
-// Data is fetched on the server and HTML is sent to the browser pre-populated.
-
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
 import { fetchCachedPublicDeals } from "@/lib/deals";
-import SalonsClient from "./SalonsClient";
+import SalonsClient from "../SalonsClient";
 
 export const metadata = buildPublicPageMetadata({
-  title: "Trimma OS - Find. Book. Glow.",
+  title: "Book Salons — Trimma OS",
   description:
-    "Discover salons, spas, and barbers across Sri Lanka — browse listings by location and category.",
-  path: "/",
+    "Book verified salons across Sri Lanka — compare ratings, prices, services, and live availability.",
+  path: "/booking",
 });
 
-export const revalidate = 60; // Re-fetch from Supabase at most once every 60 seconds (ISR)
+export const revalidate = 60;
 
 type PageProps = {
   searchParams: Promise<{
@@ -25,7 +22,7 @@ type PageProps = {
   }>;
 };
 
-export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
+export default async function BookingDirectoryPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const supabase = createServerSupabaseClient();
 
@@ -37,6 +34,7 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
           q: sp.q ?? "",
           location: sp.l ?? "",
           category: sp.category ?? "",
+          bookableOnly: true,
           limit: 12,
           offset: 0,
         });
@@ -49,11 +47,12 @@ export default async function SalonsDirectoryPage({ searchParams }: PageProps) {
 
   const initialSalons = listingResult.salons;
   const initialHasMore = listingResult.hasMore;
-  const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
+  const searchKey = `booking|${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
 
   return (
     <SalonsClient
       key={searchKey}
+      variant="booking"
       categories={categories}
       initialSearch={{
         q: sp.q ?? "",

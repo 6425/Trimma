@@ -53,7 +53,6 @@ INSERT INTO public.subscription_plans (
   max_staff,
   max_services,
   max_images,
-  max_branches,
   feature_flags
 ) VALUES (
   'f0000000-0000-0000-0000-000000000001',
@@ -66,7 +65,6 @@ INSERT INTO public.subscription_plans (
   2,
   6,
   3,
-  0,
   '{"allowed_categories_limit": 2, "allowed_promotion_types_limit": 2, "features": ["Staff Management", "FB/WA Integration", "Free Gmail Integration", "Free Google Business Page", "Performance Insights", "Salon Dashboard with QR"]}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET

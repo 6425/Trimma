@@ -1,3 +1,5 @@
+import { isSalonClaimable } from "@/lib/salon-public-listing";
+
 function normalizePhoneDigits(phone: string | null | undefined): string {
   return (phone || "").replace(/\D/g, "");
 }
@@ -50,10 +52,28 @@ export function getSalonBookabilityMessage(salon: {
   owner_email?: string | null;
   owner_gmail?: string | null;
   booking_disabled_message?: string | null;
+  is_verified?: boolean | null;
+  onboarding_status?: string | null;
 }): { title: string; body: string } | null {
   if (isSalonPubliclyBookable(salon)) return null;
 
   if (!salon.booking_enabled) {
+    if (
+      isSalonClaimable({
+        owner_email: salon.owner_email,
+        owner_gmail: salon.owner_gmail,
+        is_verified: salon.is_verified,
+        onboarding_status: salon.onboarding_status,
+      })
+    ) {
+      return {
+        title: "Online booking not activated",
+        body:
+          salon.booking_disabled_message ||
+          "This business is listed on Trimma for discovery across Sri Lanka. The owner can claim this profile, complete verification, and enable online appointment booking.",
+      };
+    }
+
     return {
       title: "Verification in Progress",
       body:

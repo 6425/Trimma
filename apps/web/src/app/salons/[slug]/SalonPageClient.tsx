@@ -35,6 +35,13 @@ import {
   isSalonPubliclyBookable,
   resolvePublicSalonOwnerEmail,
 } from "@/lib/salon-bookability";
+import {
+  isSalonClaimable,
+  readGooglePlaceReviews,
+  resolvePublicSalonRatingDisplay,
+} from "@/lib/salon-public-listing";
+import { ClaimBusinessBanner } from "../../../components/marketplace/ClaimBusinessBanner";
+import { GooglePlacesReviewsSection } from "../../../components/reviews/GooglePlacesReviewsSection";
 import { getSalonReviewSummary, getSalonReviews, type PublicSalonReview } from "@/app/actions/reviews";
 import { fetchPublicSalonPage, type PublicSalonService, type PublicSalonStaff, type PublicSalonAmenityDisplay } from "@/app/actions/public-salon-page";
 import { withTimeout } from "@/lib/promise-timeout";
@@ -574,8 +581,17 @@ export default function SalonPage({
     typeof salon.logo_url === "string" && salon.logo_url.trim() ? salon.logo_url.trim() : null;
   const salonInitials = getSalonInitials(typeof salon.name === "string" ? salon.name : null);
   const salonAbout = resolveSalonAbout(salon);
-  const displayRating = reviewSummary.averageRating;
-  const displayReviewCount = reviewSummary.totalReviews;
+  const displayRatingInfo = resolvePublicSalonRatingDisplay(
+    salon,
+    reviewSummary.totalReviews,
+    reviewSummary.averageRating
+  );
+  const displayRating = displayRatingInfo.averageRating;
+  const displayReviewCount = displayRatingInfo.totalReviews;
+  const googlePlaceReviews = readGooglePlaceReviews(salon.business_info_extended);
+  const showClaimBanner = isSalonClaimable(salon);
+  const showGoogleReviews =
+    displayRatingInfo.source === "google" || (salonReviews.length === 0 && googlePlaceReviews.length > 0);
   const fullAddress = getSalonFullAddress(salon);
   const galleryImages = [
     ...new Set(
@@ -694,7 +710,12 @@ export default function SalonPage({
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans trimma-salon-page">
-      
+      {showClaimBanner ? (
+        <div className="max-w-6xl mx-auto px-4 pt-5">
+          <ClaimBusinessBanner salonId={String(salon.id)} salonName={salon.name || "this business"} />
+        </div>
+      ) : null}
+
       {/* 1. BOOKING-STYLE SALON HERO */}
       <div className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
@@ -1316,6 +1337,12 @@ export default function SalonPage({
               <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-zinc-500">
                 Reviews will appear here shortly.
               </div>
+            ) : showGoogleReviews ? (
+              <GooglePlacesReviewsSection
+                reviews={googlePlaceReviews}
+                averageRating={displayRating}
+                totalReviews={displayReviewCount}
+              />
             ) : (
               <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
             )}

@@ -74,35 +74,34 @@ INSERT INTO public.subscription_plans (
   max_staff,
   max_services,
   max_images,
-  max_branches,
   feature_flags
 ) VALUES
 (
   'f0000000-0000-0000-0000-000000000001',
   'Beginner',
   3000, 2250, 2250, 21600,
-  2, 6, 3, 0,
+  2, 6, 3,
   '{"allowed_categories_limit": 2, "features": ["Staff Management", "FB/WA Integration", "Free Gmail Integration", "Free Google Business Page", "Performance Insights", "Salon Dashboard with QR"]}'::jsonb
 ),
 (
   'f0000000-0000-0000-0000-000000000002',
   'Starter',
   5000, 3750, 3750, 36000,
-  5, 12, 6, 2,
+  5, 12, 6,
   '{"allowed_categories_limit": 5, "features": ["Staff Management", "FB/WA Integration", "Free Gmail Integration", "Free Google Business Page", "Performance Insights", "Salon Dashboard with QR", "Advanced SEO Optimization"]}'::jsonb
 ),
 (
   'f0000000-0000-0000-0000-000000000003',
   'Pro',
   10000, 7500, 7500, 60000,
-  10, 20, 12, 3,
+  10, 20, 12,
   '{"allowed_categories_limit": 999, "features": ["Staff Management", "FB/WA Integration", "Free Gmail Integration", "Free Google Business Page", "Performance Insights", "Salon Dashboard with QR", "Advanced SEO Optimization", "Dedicated Priority Support", "Multi-location Syncing"]}'::jsonb
 ),
 (
   'f0000000-0000-0000-0000-000000000004',
   'Elite',
   10000, 7500, 7500, 60000,
-  30, 9999, 30, 15,
+  30, 9999, 30,
   '{"allowed_categories_limit": 999, "features": ["Staff Management", "FB/WA Integration", "Free Gmail Integration", "Free Google Business Page", "Performance Insights", "Salon Dashboard with QR", "Advanced SEO Optimization", "Dedicated Priority Support", "Multi-location Syncing", "White-label Client Apps", "24/7 Phone Concierge"]}'::jsonb
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -114,7 +113,6 @@ ON CONFLICT (id) DO UPDATE SET
   max_staff = EXCLUDED.max_staff,
   max_services = EXCLUDED.max_services,
   max_images = EXCLUDED.max_images,
-  max_branches = EXCLUDED.max_branches,
   feature_flags = EXCLUDED.feature_flags;
 
 COMMIT;

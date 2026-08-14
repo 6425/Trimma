@@ -11,7 +11,7 @@ import {
 import { fetchStaffReviewStatsByStaffIds } from "@/lib/staff-review-stats";
 
 const SALON_COLUMNS =
-  "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, business_info_extended, description, summary";
+  "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, business_info_extended, description, summary, onboarding_status, source_type";
 
 export type PublicSalonService = {
   id: string;

@@ -35,9 +35,9 @@ BEGIN
 END $$;
 
 -- 2. ENSURE BASE MONETIZATION PLANS EXIST
-INSERT INTO public.subscription_plans (id, name, monthly_price, annual_price, max_staff, max_services, max_images, max_branches)
+INSERT INTO public.subscription_plans (id, name, monthly_price, annual_price, max_staff, max_services, max_images)
 VALUES 
-  ('f0000000-0000-0000-0000-000000000001'::uuid, 'Premium Partner Plan', 9500, 95000, 15, 50, 10, 3)
+  ('f0000000-0000-0000-0000-000000000001'::uuid, 'Premium Partner Plan', 9500, 95000, 15, 50, 10)
 ON CONFLICT (id) DO NOTHING;
 
 -- 3. ENSURE REPRESENTATIVE BUSINESS OWNER ACCOUNTS EXIST IN USERS TABLE

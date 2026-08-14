@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail } from "lucide-react";
+import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail, Calendar } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
 import type { PublicCategory } from "@/lib/public-categories";
@@ -74,6 +74,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isLocationsActive = pathname === "/locations" || pathname?.startsWith("/locations/");
   const isDealsActive = pathname === "/deals";
+  const isBookingActive = pathname === "/booking" || pathname?.startsWith("/booking/");
   const isStylesActive = pathname === "/styles";
   const isContactActive = pathname === "/contact";
 
@@ -297,6 +298,9 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
 
               <Link href="/styles" className={navDesktopClass(isStylesActive)}>
                 Styles
+              </Link>
+              <Link href="/booking" className={navDesktopClass(isBookingActive)}>
+                Book
               </Link>
               <Link href="/deals" className={navDesktopClass(isDealsActive)}>
                 Deals
@@ -534,9 +538,17 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               Styles
             </Link>
             <Link
+              href="/booking"
+              onClick={() => setMobileMenuOpen(false)}
+              className={navMobileClass(isBookingActive)}
+            >
+              <Calendar className="w-4 h-4 shrink-0" />
+              Book
+            </Link>
+            <Link
               href="/deals"
               onClick={() => setMobileMenuOpen(false)}
-              className={navMobileClass(false)}
+              className={navMobileClass(isDealsActive)}
             >
               <Gift className="w-4 h-4 shrink-0" />
               Deals

@@ -40,6 +40,7 @@ import {
   setSalonInventoryOnHand,
   updateSalonInventoryItem,
   type GlobalInventoryProduct,
+  type InventoryCategory,
   type SalonInventoryItem,
   type SalonInventoryTransaction,
 } from "@/app/actions/salon-inventory";
@@ -63,7 +64,10 @@ const emptyItemForm = {
   notes: "",
   global_product_id: "",
   category_id: "",
+  brand: "",
 };
+
+const BRAND_OTHER_VALUE = "__brand_other__";
 
 function trackBadgeClass(track: string): string {
   if (track === "backbar") return "bg-violet-50 text-violet-700 border-violet-200";
@@ -76,6 +80,7 @@ export default function InventoryPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [inventoryTableMissing, setInventoryTableMissing] = useState(false);
   const [items, setItems] = useState<SalonInventoryItem[]>([]);
+  const [categories, setCategories] = useState<InventoryCategory[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<SalonInventoryTransaction[]>([]);
   const [globalProducts, setGlobalProducts] = useState<GlobalInventoryProduct[]>([]);
   const [lowStockCount, setLowStockCount] = useState(0);
@@ -109,6 +114,7 @@ export default function InventoryPage() {
 
       const nextItems = result.items || [];
       setItems(nextItems);
+      setCategories(result.categories || []);
       setRecentTransactions(result.recentTransactions || []);
       setGlobalProducts(result.globalProducts || []);
       setLowStockCount(result.lowStockCount ?? 0);
@@ -141,19 +147,65 @@ export default function InventoryPage() {
     void Promise.resolve().then(() => loadInventory());
   }, [loadInventory]);
 
+  const globalProductById = useMemo(() => {
+    const map = new Map<string, GlobalInventoryProduct>();
+    globalProducts.forEach((p) => map.set(p.id, p));
+    return map;
+  }, [globalProducts]);
+
+  const categoryById = useMemo(() => {
+    const map = new Map<string, InventoryCategory>();
+    categories.forEach((c) => map.set(c.id, c));
+    return map;
+  }, [categories]);
+
+  const brandOptions = useMemo(() => {
+    const brands = new Set<string>();
+    globalProducts.forEach((p) => {
+      const b = p.brand?.trim();
+      if (b) brands.add(b);
+    });
+    items.forEach((item) => {
+      const b = item.brand?.trim();
+      if (b) brands.add(b);
+    });
+    return Array.from(brands).sort((a, b) => a.localeCompare(b));
+  }, [globalProducts, items]);
+
+  const resolveItemCategoryId = (item: SalonInventoryItem): string | null => {
+    if (item.category_id) return item.category_id;
+    if (item.global_product_id) {
+      return globalProductById.get(item.global_product_id)?.category_id ?? null;
+    }
+    return null;
+  };
+
+  const resolveItemBrand = (item: SalonInventoryItem): string | null => {
+    const direct = item.brand?.trim();
+    if (direct) return direct;
+    if (item.global_product_id) {
+      return globalProductById.get(item.global_product_id)?.brand?.trim() ?? null;
+    }
+    return null;
+  };
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (trackFilter !== "all" && item.inventory_track !== trackFilter) return false;
       if (showLowStockOnly && !isInventoryItemLowStock(item)) return false;
       const q = searchTerm.trim().toLowerCase();
       if (!q) return true;
+      const categoryName = categoryById.get(resolveItemCategoryId(item) || "")?.name || "";
+      const brand = resolveItemBrand(item) || "";
       return (
         item.name.toLowerCase().includes(q) ||
         (item.sku || "").toLowerCase().includes(q) ||
-        (item.manufacturer_barcode || "").toLowerCase().includes(q)
+        (item.manufacturer_barcode || "").toLowerCase().includes(q) ||
+        categoryName.toLowerCase().includes(q) ||
+        brand.toLowerCase().includes(q)
       );
     });
-  }, [items, searchTerm, trackFilter, showLowStockOnly]);
+  }, [items, searchTerm, trackFilter, showLowStockOnly, categoryById, globalProductById]);
 
   const totalRetailValue = useMemo(() => {
     return items.reduce((sum, item) => {
@@ -181,7 +233,8 @@ export default function InventoryPage() {
       on_hand_quantity: String(Number(item.quantity_on_hand) || 0),
       notes: "",
       global_product_id: item.global_product_id || "",
-      category_id: item.category_id || "",
+      category_id: resolveItemCategoryId(item) || "",
+      brand: resolveItemBrand(item) || "",
     });
     setShowEditModal(true);
   };
@@ -200,6 +253,10 @@ export default function InventoryPage() {
       toast.error("Product name is required.");
       return;
     }
+    if (!itemForm.category_id.trim()) {
+      toast.error("Category is required.");
+      return;
+    }
 
     const payload = {
       name: itemForm.name.trim(),
@@ -211,7 +268,8 @@ export default function InventoryPage() {
       reorder_level: itemForm.reorder_level ? parseFloat(itemForm.reorder_level) : null,
       manufacturer_barcode: itemForm.manufacturer_barcode.trim() || null,
       global_product_id: itemForm.global_product_id || null,
-      category_id: itemForm.category_id || null,
+      category_id: itemForm.category_id.trim(),
+      brand: itemForm.brand.trim() || null,
       initial_quantity:
         !isEdit && itemForm.on_hand_quantity.trim()
           ? parseFloat(itemForm.on_hand_quantity)
@@ -370,6 +428,7 @@ export default function InventoryPage() {
           retail_price: p.suggested_retail_price,
           global_product_id: p.id,
           category_id: p.category_id,
+          brand: p.brand,
           initial_quantity: Number.isFinite(perItemQty) && perItemQty > 0 ? perItemQty : undefined,
         };
       });
@@ -513,7 +572,7 @@ export default function InventoryPage() {
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, SKU, or barcode…"
+              placeholder="Search by name, SKU, category, or brand…"
               className="h-12 rounded-2xl border-none bg-zinc-50 pl-11 font-medium"
             />
           </div>
@@ -546,6 +605,8 @@ export default function InventoryPage() {
             <thead className="border-b border-zinc-50 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500">
               <tr>
                 <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Brand</th>
                 <th className="px-4 py-3">Track</th>
                 <th className="px-4 py-3">On hand (edit qty)</th>
                 <th className="px-4 py-3">Reorder at</th>
@@ -556,7 +617,7 @@ export default function InventoryPage() {
             <tbody>
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-zinc-500">
+                  <td colSpan={8} className="px-4 py-10 text-center text-zinc-500">
                     {items.length === 0
                       ? "No inventory items yet. Add a product or import from the Trimma catalog."
                       : "No items match your filters."}
@@ -566,6 +627,9 @@ export default function InventoryPage() {
                 filteredItems.map((item) => {
                   const low = isInventoryItemLowStock(item);
                   const reorderAt = item.reorder_point ?? item.reorder_level;
+                  const categoryId = resolveItemCategoryId(item);
+                  const categoryName = categoryId ? categoryById.get(categoryId)?.name : null;
+                  const brandName = resolveItemBrand(item);
                   return (
                     <tr key={item.id} className="border-b border-zinc-50 hover:bg-zinc-50/80">
                       <td className="px-4 py-3">
@@ -575,6 +639,12 @@ export default function InventoryPage() {
                           {item.manufacturer_barcode ? ` · ${item.manufacturer_barcode}` : ""}
                         </div>
                       </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="rounded-lg border-zinc-200 bg-white px-2.5 py-1 text-[10px] font-bold uppercase">
+                          {categoryName || "Uncategorized"}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-zinc-700">{brandName || "—"}</td>
                       <td className="px-4 py-3">
                         <Badge variant="outline" className={trackBadgeClass(item.inventory_track)}>
                           {INVENTORY_TRACK_LABELS[item.inventory_track] || item.inventory_track}
@@ -692,19 +762,40 @@ export default function InventoryPage() {
       {recentTransactions.length > 0 && (
         <div className="rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
           <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-500">Recent movements</h2>
-          <ul className="space-y-2">
-            {recentTransactions.map((tx) => (
-              <li key={tx.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2 text-sm">
-                <span className="font-medium text-zinc-800">{itemNameById.get(tx.inventory_item_id) || "Item"}</span>
-                <span className="capitalize text-zinc-500">{tx.transaction_type}</span>
-                <span className={Number(tx.quantity) < 0 ? "font-semibold text-rose-600" : "font-semibold text-emerald-700"}>
-                  {Number(tx.quantity) > 0 ? "+" : ""}
-                  {tx.quantity}
-                </span>
-                <span className="text-xs text-zinc-400">{new Date(tx.created_at).toLocaleString()}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="border-b border-zinc-100 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+                <tr>
+                  <th className="pb-2 pr-4 font-bold">Product</th>
+                  <th className="w-28 pb-2 pr-4 font-bold">Type</th>
+                  <th className="w-20 pb-2 pr-4 text-right font-bold">Qty</th>
+                  <th className="w-44 pb-2 text-right font-bold">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentTransactions.map((tx) => (
+                  <tr key={tx.id} className="border-b border-zinc-50 last:border-0">
+                    <td className="py-2.5 pr-4 font-medium text-zinc-800">
+                      {itemNameById.get(tx.inventory_item_id) || "Item"}
+                    </td>
+                    <td className="py-2.5 pr-4 capitalize text-zinc-500">{tx.transaction_type}</td>
+                    <td
+                      className={cn(
+                        "py-2.5 pr-4 text-right font-semibold tabular-nums",
+                        Number(tx.quantity) < 0 ? "text-rose-600" : "text-emerald-700"
+                      )}
+                    >
+                      {Number(tx.quantity) > 0 ? "+" : ""}
+                      {tx.quantity}
+                    </td>
+                    <td className="py-2.5 text-right text-xs tabular-nums text-zinc-400">
+                      {new Date(tx.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -714,6 +805,8 @@ export default function InventoryPage() {
         description="Create a custom product and set the starting on-hand quantity."
         form={itemForm}
         setForm={setItemForm}
+        categories={categories}
+        brandOptions={brandOptions}
         saving={saving}
         showOnHandField
         onHandLabel="Starting on-hand quantity"
@@ -727,6 +820,8 @@ export default function InventoryPage() {
         description="Update product details and on-hand quantity in one place."
         form={itemForm}
         setForm={setItemForm}
+        categories={categories}
+        brandOptions={brandOptions}
         saving={saving}
         showOnHandField
         onHandLabel="On-hand quantity"
@@ -937,6 +1032,8 @@ function ItemFormModal({
   description,
   form,
   setForm,
+  categories,
+  brandOptions,
   saving,
   showOnHandField,
   onHandLabel,
@@ -948,12 +1045,21 @@ function ItemFormModal({
   description: string;
   form: ItemFormState;
   setForm: React.Dispatch<React.SetStateAction<ItemFormState>>;
+  categories: InventoryCategory[];
+  brandOptions: string[];
   saving: boolean;
   showOnHandField: boolean;
   onHandLabel: string;
   onClose: () => void;
   onSubmit: () => void;
 }) {
+  const brandSelectValue =
+    form.brand && brandOptions.includes(form.brand)
+      ? form.brand
+      : form.brand
+        ? BRAND_OTHER_VALUE
+        : "";
+
   return (
     <DashboardModal
       open={open}
@@ -991,6 +1097,64 @@ function ItemFormModal({
             </p>
           </div>
         ) : null}
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Category *</label>
+          {categories.length === 0 ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              No inventory categories yet. Ask Trimma admin to set up the global catalog, or import products from
+              catalog.
+            </div>
+          ) : (
+            <Select
+              value={form.category_id || undefined}
+              onValueChange={(v) => setForm((f) => ({ ...f, category_id: v }))}
+            >
+              <SelectTrigger className="h-11">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Brand</label>
+          <Select
+            value={brandSelectValue || undefined}
+            onValueChange={(v) => {
+              if (v === BRAND_OTHER_VALUE) {
+                setForm((f) => ({ ...f, brand: f.brand && !brandOptions.includes(f.brand) ? f.brand : "" }));
+                return;
+              }
+              setForm((f) => ({ ...f, brand: v }));
+            }}
+          >
+            <SelectTrigger className="h-11">
+              <SelectValue placeholder="Select brand (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {brandOptions.map((brand) => (
+                <SelectItem key={brand} value={brand}>
+                  {brand}
+                </SelectItem>
+              ))}
+              <SelectItem value={BRAND_OTHER_VALUE}>Other (type below)</SelectItem>
+            </SelectContent>
+          </Select>
+          {brandSelectValue === BRAND_OTHER_VALUE ? (
+            <Input
+              value={form.brand}
+              onChange={(e) => setForm((f) => ({ ...f, brand: e.target.value }))}
+              className="mt-2 h-11"
+              placeholder="Enter brand name"
+            />
+          ) : null}
+        </div>
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-bold uppercase text-zinc-500">Name</label>
           <Input

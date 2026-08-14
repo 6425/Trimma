@@ -25,6 +25,7 @@ export type SalonRequestRow = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   assign_to: string | null;
+  salon_id?: string | null;
   origin: SalonRequestOrigin;
 };
 

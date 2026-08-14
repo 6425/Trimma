@@ -1,5 +1,7 @@
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
 import { pickGooglePlacePhone } from "@/lib/google-place-details";
+import { GOOGLE_DISCOVERY_SALON_DEFAULTS } from "@/lib/salon-public-listing";
+import { LISTING_PIPELINE_STATUSES } from "@/lib/salon-listing-pipeline";
 
 export type GooglePlaceProfile = {
   place_id?: string;
@@ -46,6 +48,7 @@ const GOOGLE_PROFILE_FIELDS = [
   "business_status",
   "plus_code",
   "utc_offset",
+  "reviews",
 ].join(",");
 
 const GOOGLE_TYPE_CATEGORY_MAP: Record<string, string> = {
@@ -139,6 +142,12 @@ export function buildGoogleBusinessExtended(details: GooglePlaceProfile): Record
     google_hours_text: hoursText,
     google_plus_code: details.plus_code?.global_code || null,
     google_utc_offset: details.utc_offset ?? null,
+    google_reviews: (details.reviews || []).slice(0, 5).map((review) => ({
+      author_name: review.author_name || "Google user",
+      rating: review.rating ?? null,
+      text: review.text || "",
+      relative_time_description: review.relative_time_description || "",
+    })),
     google_last_synced_at: new Date().toISOString(),
     postal_code: addressParts.postalCode,
   };
@@ -212,9 +221,7 @@ export function mapGoogleTextSearchPlaceToSalonRecord(
     category,
     latitude: place.geometry?.location?.lat ?? null,
     longitude: place.geometry?.location?.lng ?? null,
-    source_type: "GOOGLE_PLACES",
-    onboarding_status: "DISCOVERED",
-    activation_status: "INACTIVE",
+    ...GOOGLE_DISCOVERY_SALON_DEFAULTS,
     business_info_extended: {
       google_place_id: placeId,
       google_types: place.types || [],
@@ -260,9 +267,7 @@ export function mapGooglePlaceToSalonRecord(
     price_level: formatGooglePriceLevel(details.price_level),
     summary,
     description: summary,
-    source_type: "GOOGLE_PLACES",
-    onboarding_status: "DISCOVERED",
-    activation_status: "INACTIVE",
+    ...GOOGLE_DISCOVERY_SALON_DEFAULTS,
     business_info_extended: googleExt,
   };
 }
@@ -290,8 +295,33 @@ export function mergeGoogleProfileIntoSalonRow(
     merged.activation_status = existing.activation_status ?? incoming.activation_status;
   }
 
+  if (existing.source_type === "LISTING_GENERATION") {
+    merged.source_type = "LISTING_GENERATION";
+    if (LISTING_PIPELINE_STATUSES.has(existingStatus)) {
+      merged.onboarding_status = existing.onboarding_status;
+      merged.public_visibility = existing.public_visibility ?? merged.public_visibility;
+    }
+  }
+
   if (existing.assign_to) merged.assign_to = existing.assign_to;
   if (existing.phone && !incoming.phone) merged.phone = existing.phone;
+
+  const existingVisibility = existing.public_visibility;
+  const incomingVisibility = incoming.public_visibility;
+  if (
+    existingVisibility &&
+    String(existingVisibility) !== "hidden" &&
+    existingVisibility !== false &&
+    (!incomingVisibility || incomingVisibility === "hidden")
+  ) {
+    merged.public_visibility = existingVisibility;
+  }
+
+  if (existing.booking_enabled === true) merged.booking_enabled = true;
+  if (existing.is_verified === true) {
+    merged.is_verified = true;
+    merged.public_visibility = existing.public_visibility ?? incoming.public_visibility;
+  }
 
   const existingExt =
     existing.business_info_extended &&

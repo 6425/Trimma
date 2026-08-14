@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const sort = searchParams.get("sort") || "recommended";
     const minRating = parseFloat(searchParams.get("minRating") || "0");
     const verifiedOnly = searchParams.get("verified") === "true";
+    const bookableOnly = searchParams.get("bookable") === "true";
     const limit = parseInt(searchParams.get("limit") || "12", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
@@ -22,6 +23,7 @@ export async function GET(request: Request) {
       sort,
       minRating,
       verifiedOnly,
+      bookableOnly,
       limit,
       offset,
     });

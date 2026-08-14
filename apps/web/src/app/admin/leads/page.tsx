@@ -180,6 +180,7 @@ function Leads() {
   );
   const [fetchLimit, setFetchLimit] = useState(15);
   const [discovering, setDiscovering] = useState(false);
+  const [discoveringSriLanka, setDiscoveringSriLanka] = useState(false);
 
   // Full Editor Form State (covers all fields in salons for Drafts)
   const [formData, setFormData] = useState<any>({
@@ -537,6 +538,42 @@ function Leads() {
       toast.error("Google Discovery failed: " + error.message, { id: "google_discovery" });
     } finally {
       setDiscovering(false);
+    }
+  };
+
+  const handleDiscoverSriLanka = async () => {
+    if (
+      !window.confirm(
+        "Run Google Places discovery for all Sri Lanka cities and beauty categories? This can take a long time and uses many Google API credits."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDiscoveringSriLanka(true);
+      toast.loading("Running nationwide Sri Lanka discovery…", { id: "google_discovery_lk" });
+
+      const response = await fetch("/api/discover-sri-lanka", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limitPerCity: Math.min(fetchLimit, 12) }),
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.error || "Nationwide discovery failed");
+      }
+
+      toast.success(resData.message || "Sri Lanka discovery complete", { id: "google_discovery_lk" });
+      await fetchLeads(fetchLimit);
+    } catch (error: unknown) {
+      toast.error(
+        "Sri Lanka discovery failed: " + (error instanceof Error ? error.message : "Unknown error"),
+        { id: "google_discovery_lk" }
+      );
+    } finally {
+      setDiscoveringSriLanka(false);
     }
   };
 
@@ -1253,6 +1290,28 @@ function Leads() {
               </>
             ) : (
               <span>Start Fetching & Upsert</span>
+            )}
+          </Button>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 border-t border-amber-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs font-medium text-amber-950/80">
+            Product-led growth: publish unverified Google listings across Sri Lanka, assign territory agents automatically, and let owners claim profiles from the public salon page.
+          </p>
+          <Button
+            type="button"
+            onClick={() => void handleDiscoverSriLanka()}
+            disabled={discovering || discoveringSriLanka}
+            variant="default"
+            className="h-11 min-h-11 w-full shrink-0 rounded-xl font-bold sm:w-auto"
+          >
+            {discoveringSriLanka ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Discovering Sri Lanka…
+              </>
+            ) : (
+              "Discover all Sri Lanka"
             )}
           </Button>
         </div>

@@ -60,6 +60,8 @@ type InitialSearch = {
   category: string;
 };
 
+export type SalonsClientVariant = "directory" | "booking";
+
 interface Props {
   categories: Category[];
   initialSearch: InitialSearch;
@@ -68,6 +70,8 @@ interface Props {
   initialDeals?: SalonDealRow[];
   /** True when the server already ran the default listing query for initialSearch. */
   ssrSeeded?: boolean;
+  /** directory = browse all published listings; booking = bookable salons only */
+  variant?: SalonsClientVariant;
 }
 
 type SortOption = "recommended" | "rating" | "price_low" | "price_high";
@@ -97,7 +101,10 @@ export default function SalonsClient({
   initialHasMore = true,
   initialDeals = [],
   ssrSeeded = false,
+  variant = "directory",
 }: Props) {
+  const isBooking = variant === "booking";
+  const basePath = isBooking ? "/booking" : "/";
   const router = useRouter();
   // Skip the first client fetch when the server already seeded results.
   const skipClientFetchRef = useRef(ssrSeeded);
@@ -179,6 +186,7 @@ export default function SalonsClient({
         });
         if (filters.minRating > 0) params.set("minRating", String(filters.minRating));
         if (filters.verifiedOnly) params.set("verified", "true");
+        if (isBooking) params.set("bookable", "true");
 
         const res = await fetch(`/api/salons/search?${params.toString()}`);
         if (!res.ok) throw new Error("Search failed");
@@ -205,7 +213,7 @@ export default function SalonsClient({
         setIsLoading(false);
       }
     },
-    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly, trackSearchResults]
+    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly, isBooking, trackSearchResults]
   );
 
   useEffect(() => {
@@ -252,7 +260,7 @@ export default function SalonsClient({
     if (selectedLocation) params.set("l", selectedLocation);
     if (urlCategory) params.set("category", urlCategory);
     setPage(0);
-    router.push(`/?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   const applyClientFilters = useCallback(
@@ -377,19 +385,22 @@ export default function SalonsClient({
             <div className="home-hero-top">
               <Badge variant="hero">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5 animate-pulse inline" />
-                Discover Premium Grooming
+                {isBooking ? "Book Instantly" : "Discover Premium Grooming"}
               </Badge>
 
               <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
-                <span className="home-hero-title-line">Best Salons &amp; Spas</span>
+                <span className="home-hero-title-line">
+                  {isBooking ? "Book Verified Salons & Spas" : "Best Salons & Spas"}
+                </span>
                 <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
                   in Sri Lanka
                 </span>
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Book trusted salons, spas, and barbers instantly — compare ratings, prices, and
-                availability across the island.
+                {isBooking
+                  ? "Browse approved salons with live online booking — compare ratings, prices, services, and availability."
+                  : "Discover salons, spas, and barbers across Sri Lanka — compare ratings, prices, and services before you book."}
               </p>
             </div>
 
@@ -448,14 +459,25 @@ export default function SalonsClient({
               Home
             </Link>
             <span className="text-zinc-600">›</span>
-            <span className="font-semibold text-white">Salons in {locationLabel}</span>
+            {isBooking && (
+              <>
+                <Link href="/booking" className="hover:text-brand transition-colors">
+                  Book
+                </Link>
+                <span className="text-zinc-600">›</span>
+              </>
+            )}
+            <span className="font-semibold text-white">
+              {isBooking ? "Bookable salons" : "Salons"} in {locationLabel}
+            </span>
           </nav>
           <p className="text-zinc-400 text-xs md:text-sm">
             {isLoading && page === 0 ? (
-              "Searching salons..."
+              isBooking ? "Loading bookable salons..." : "Searching salons..."
             ) : (
               <>
-                <span className="text-brand font-bold">{filteredSalons.length}</span> salon
+                <span className="text-brand font-bold">{filteredSalons.length}</span>{" "}
+                {isBooking ? "bookable salon" : "salon"}
                 {filteredSalons.length === 1 ? "" : "s"} found
               </>
             )}
@@ -572,8 +594,15 @@ export default function SalonsClient({
                 <Star className="w-12 h-12 text-zinc-300 mb-4" />
                 <p className="text-lg font-black text-[#1A1C29]">No salons match your filters</p>
                 <p className="text-sm text-zinc-500 mt-1 max-w-md">
-                  Try adjusting your search, location, or filters to see more results.
+                  {isBooking
+                    ? "No bookable salons match your search yet. Try another location or browse all listings on the home page."
+                    : "Try adjusting your search, location, or filters to see more results."}
                 </p>
+                {isBooking && (
+                  <Button asChild variant="default" className="mt-4 rounded-xl font-bold">
+                    <Link href="/">Browse all listings</Link>
+                  </Button>
+                )}
                 <Button variant="outline" className="mt-4 rounded-xl border-brand/30 text-brand font-bold hover:bg-brand/5" onClick={clearFilters}>
                   Clear filters
                 </Button>

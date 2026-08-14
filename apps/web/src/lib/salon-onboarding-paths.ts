@@ -11,6 +11,8 @@ export const SALON_ONBOARDING_PATH = {
   REGIONAL_HEAD_LEAD: "regional_head_lead",
   /** Field agent discovers or creates a salon from territory tools. */
   AGENT_INITIATED: "agent_initiated",
+  /** Admin listing generation — marketplace SEO, no agent pipeline until booking request. */
+  LISTING_GENERATION: "listing_generation",
 } as const;
 
 export type SalonOnboardingPath =
@@ -23,6 +25,8 @@ export const SALON_SOURCE_TYPE = {
   MANUAL: "MANUAL",
   AGENT_MANUAL: "agent_manual",
   CSV_IMPORT: "CSV_IMPORT",
+  /** Admin Salon Listing Generation → Data Capture (not agent CRM). */
+  LISTING_GENERATION: "LISTING_GENERATION",
 } as const;
 
 export const DEFAULT_SELF_SERVE_DISTRICT = "Colombo";
@@ -39,6 +43,7 @@ const PATH_LABELS: Record<SalonOnboardingPath, string> = {
   [SALON_ONBOARDING_PATH.ADMIN_DISCOVERY]: "Admin discovery",
   [SALON_ONBOARDING_PATH.REGIONAL_HEAD_LEAD]: "Regional head lead",
   [SALON_ONBOARDING_PATH.AGENT_INITIATED]: "Agent initiated",
+  [SALON_ONBOARDING_PATH.LISTING_GENERATION]: "Listing generation",
 };
 
 async function userEmailExists(
@@ -121,6 +126,8 @@ export function onboardingPathFromSourceType(
     case SALON_SOURCE_TYPE.MANUAL:
     case SALON_SOURCE_TYPE.CSV_IMPORT:
       return SALON_ONBOARDING_PATH.ADMIN_DISCOVERY;
+    case SALON_SOURCE_TYPE.LISTING_GENERATION:
+      return SALON_ONBOARDING_PATH.LISTING_GENERATION;
     default:
       return SALON_ONBOARDING_PATH.AGENT_INITIATED;
   }

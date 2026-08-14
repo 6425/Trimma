@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
+import { isSalonPubliclyBookable } from "@/lib/salon-bookability";
+import { isSalonPubliclyListable } from "@/lib/salon-public-listing";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 
@@ -10,6 +12,8 @@ export type PublicSalonSearchParams = {
   sort?: string;
   minRating?: number;
   verifiedOnly?: boolean;
+  /** When true, only salons with online booking enabled and valid owner contact details. */
+  bookableOnly?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -23,6 +27,7 @@ export async function fetchPublicSalons(
     sort = "recommended",
     minRating = 0,
     verifiedOnly = false,
+    bookableOnly = false,
     limit = 12,
     offset = 0,
   }: PublicSalonSearchParams
@@ -32,7 +37,9 @@ export async function fetchPublicSalons(
     .select(`
       id, name, slug, rating, review_count,
       city, district, province, category, logo_url, cover_url, hero_url,
-      is_featured, is_verified, working_hours,
+      is_featured, is_verified, working_hours, status, public_visibility,
+      booking_enabled, source_type, onboarding_status,
+      phone, owner_email, owner_gmail,
       services ( id, name, price, category )
     `);
 
@@ -64,15 +71,19 @@ export async function fetchPublicSalons(
 
   const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
   const categoryFilterActive = normalizedCategory.length > 0;
-  const fetchLimit = categoryFilterActive ? Math.max(limit * 8, 100) : limit;
-  const fetchOffset = categoryFilterActive ? 0 : offset;
+  const postFilterActive = categoryFilterActive || bookableOnly;
+  const fetchLimit = postFilterActive ? Math.max(limit * 8, 100) : limit;
+  const fetchOffset = postFilterActive ? 0 : offset;
 
   query = query.range(fetchOffset, fetchOffset + fetchLimit - 1);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  let rows = filterPublicSalons(data || []);
+  let rows = filterPublicSalons(data || []).filter(isSalonPubliclyListable);
+  if (bookableOnly) {
+    rows = rows.filter(isSalonPubliclyBookable);
+  }
   if (categoryFilterActive) {
     rows = rows.filter((row) => {
       const salonCategory = String(row.category || "").toLowerCase();
@@ -85,12 +96,12 @@ export async function fetchPublicSalons(
     });
   }
 
-  const pagedRows = categoryFilterActive ? rows.slice(offset, offset + limit) : rows;
+  const pagedRows = postFilterActive ? rows.slice(offset, offset + limit) : rows;
   const salons = pagedRows.map((row, idx) => mapSalonRowToUI(row, idx + offset));
 
   return {
     salons,
-    hasMore: categoryFilterActive
+    hasMore: postFilterActive
       ? rows.length > offset + limit
       : salons.length === limit,
   };

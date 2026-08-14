@@ -15,6 +15,7 @@ export type SalonInventoryItem = {
   salon_id: string;
   global_product_id: string | null;
   category_id: string | null;
+  brand: string | null;
   name: string;
   sku: string | null;
   unit: string;
@@ -161,6 +162,7 @@ type InventoryItemPayload = {
   status?: string;
   global_product_id?: string | null;
   category_id?: string | null;
+  brand?: string | null;
   manufacturer_barcode?: string | null;
   initial_quantity?: number;
   notes?: string | null;
@@ -169,7 +171,7 @@ type InventoryItemPayload = {
 function buildInventoryItemRow(payload: InventoryItemPayload, salonId: string) {
   const { initial_quantity: _initialQty, notes: _notes, ...rest } = payload;
   return {
-    ...sanitizeTextFields(rest, ["name", "sku", "manufacturer_barcode"]),
+    ...sanitizeTextFields(rest, ["name", "sku", "brand", "manufacturer_barcode"]),
     salon_id: salonId,
     unit: rest.unit || "pcs",
     inventory_track: rest.inventory_track || "retail",
@@ -188,6 +190,7 @@ export async function insertSalonInventoryItems(payloads: InventoryItemPayload[]
 
     for (const payload of payloads) {
       if (!payload.name?.trim()) throw new Error("Product name is required.");
+      if (!payload.category_id?.trim()) throw new Error("Category is required.");
 
       const row = buildInventoryItemRow(payload, ctx.salonId);
       const { data: inserted, error } = await supabase
@@ -222,6 +225,9 @@ export async function updateSalonInventoryItem(itemId: string, payload: Inventor
   if (!payload.name?.trim()) {
     return { success: false as const, error: "Product name is required." };
   }
+  if (!payload.category_id?.trim()) {
+    return { success: false as const, error: "Category is required." };
+  }
 
   const result = await withSalonDb(async (supabase, ctx) => {
     await assertSalonInventoryItem(supabase, ctx, itemId);
@@ -240,9 +246,10 @@ export async function updateSalonInventoryItem(itemId: string, payload: Inventor
         status: rest.status || "active",
         global_product_id: rest.global_product_id ?? null,
         category_id: rest.category_id ?? null,
+        brand: rest.brand?.trim() || null,
         manufacturer_barcode: rest.manufacturer_barcode ?? null,
       },
-      ["name", "sku", "manufacturer_barcode"]
+      ["name", "sku", "brand", "manufacturer_barcode"]
     );
 
     const { error } = await supabase

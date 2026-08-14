@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
+import { isSalonPubliclyListable } from "@/lib/salon-public-listing";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import {
   getDistrictBySlugs,
@@ -98,7 +99,9 @@ export default function CityDetailPage() {
         if (error) throw error;
 
         // Transform DB records into UI formats
-        const formatted = filterPublicSalons(dbSalons || []).map((s: any, idx: number) => {
+        const formatted = filterPublicSalons(dbSalons || [])
+          .filter(isSalonPubliclyListable)
+          .map((s: any, idx: number) => {
           const mapped = mapSalonRowToUI(s, idx);
           return {
             ...mapped,
