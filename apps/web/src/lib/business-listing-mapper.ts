@@ -11,6 +11,9 @@ export type BusinessListingCardData = {
   phone: string | null;
   rating: number;
   reviews: number;
+  city: string;
+  district: string;
+  province: string;
   location: string;
   category: string;
   website: string | null;
@@ -41,10 +44,16 @@ function normalizeExternalUrl(value: string | null | undefined): string | null {
   return `https://${trimmed}`;
 }
 
+function formatBusinessListingLocation(city: string, district: string, province: string): string {
+  const parts = [city, district, province].filter(Boolean);
+  return parts.length ? parts.join(", ") : "Sri Lanka";
+}
+
 export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx = 0): BusinessListingCardData {
   const city = String(row.city || "").trim();
   const district = String(row.district || "").trim();
-  const location = city && district ? `${city}, ${district}` : city || district || "Sri Lanka";
+  const province = String(row.province || "").trim();
+  const location = formatBusinessListingLocation(city, district, province);
   const { rating, reviews } = mapVerifiedSalonListingStats(row);
   const social = readSalonSocialLinks(row);
   const phone = String(row.phone || "").trim() || null;
@@ -69,6 +78,9 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
     phone,
     rating,
     reviews,
+    city,
+    district,
+    province,
     location,
     category: String(row.category || "Beauty salon"),
     website,

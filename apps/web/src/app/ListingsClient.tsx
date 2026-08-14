@@ -3,12 +3,25 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, MapPin, Loader2, Building2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, MapPin, Loader2, Building2, Sparkles, Star, Scissors, Heart, Smile, User, ShieldCheck, Clock } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
+import type { PublicCategory } from "@/lib/public-categories";
+import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 import { resolveLocationDisplayLabel, resolveLocationSearchValue, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+
+const CATEGORY_ICON_MAP: Record<string, typeof Scissors> = {
+  Scissors,
+  Sparkles,
+  Heart,
+  Smile,
+  User,
+  Star,
+  Clock,
+  ShieldCheck,
+};
 
 const HERO_IMAGE = "/assets/business-listings-hero.png";
 const PAGE_SIZE = 24;
@@ -20,6 +33,7 @@ type InitialSearch = {
 };
 
 type Props = {
+  categories?: PublicCategory[];
   initialSearch: InitialSearch;
   initialListings?: BusinessListingCardData[];
   initialHasMore?: boolean;
@@ -39,6 +53,7 @@ function SearchParamsSync({ onChange }: { onChange: (next: InitialSearch) => voi
 }
 
 export default function ListingsClient({
+  categories = [],
   initialSearch,
   initialListings = [],
   initialHasMore = true,
@@ -113,6 +128,34 @@ export default function ListingsClient({
     router.push(`/?${params.toString()}`);
   };
 
+  const handleCategorySelect = (slug: string) => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    if (selectedLocation) params.set("l", selectedLocation);
+    if (slug) params.set("category", slug);
+    setPage(0);
+    setUrlCategory(slug);
+    router.push(params.toString() ? `/?${params.toString()}` : "/");
+    trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+      source: "homepage_category_bar",
+      previous: urlCategory || null,
+      category: slug || null,
+    });
+  };
+
+  const renderCategoryIcon = (iconName: string | null | undefined) => {
+    const IconComponent = CATEGORY_ICON_MAP[iconName || ""] || Sparkles;
+    return <IconComponent className="h-5 w-5 text-brand-pink" />;
+  };
+
+  const categoryPillClass = (active: boolean) =>
+    [
+      "snap-start shrink-0 flex min-h-11 flex-col items-center justify-center rounded-xl border px-2 py-1.5 transition-all w-[84px] cursor-pointer",
+      active
+        ? "border-brand-pink bg-brand-pink/5 text-brand-pink shadow-sm"
+        : "border-slate-100 bg-slate-50 text-zinc-600 hover:border-brand-pink/30",
+    ].join(" ");
+
   const syncFromUrl = useCallback((next: InitialSearch) => {
     setSearchQuery((prev) => (prev === next.q ? prev : next.q));
     setSelectedLocation((prev) => {
@@ -123,6 +166,7 @@ export default function ListingsClient({
   }, []);
 
   const locationLabel = resolveLocationDisplayLabel(selectedLocation);
+  const activeCategory = categories.find((category) => category.slug === urlCategory);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -243,21 +287,63 @@ export default function ListingsClient({
         </div>
       </section>
 
+      {categories.length > 0 && (
+        <section className="border-b border-slate-200 bg-white py-6">
+          <div className="container mx-auto max-w-7xl px-4">
+            <div
+              className="hide-scrollbar flex snap-x justify-start gap-4 overflow-x-auto pb-2 md:justify-center"
+              aria-label="Browse by category"
+            >
+              <button
+                type="button"
+                onClick={() => handleCategorySelect("")}
+                className={categoryPillClass(!urlCategory)}
+              >
+                <div className="mb-1 text-brand-pink">
+                  <Star className="h-5 w-5 fill-brand-pink" />
+                </div>
+                <span className="text-center text-[10px] font-bold">All</span>
+              </button>
+
+              {categories.map((category) => {
+                const active = urlCategory === category.slug;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => handleCategorySelect(category.slug)}
+                    className={categoryPillClass(active)}
+                  >
+                    <div className="mb-1">{renderCategoryIcon(category.icon)}</div>
+                    <span className="text-center text-[10px] font-bold leading-tight">{category.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       <div className="border-b border-slate-200 bg-white">
         <div className="container mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm">
           <p className="font-semibold text-zinc-800">
-            {locationLabel} · Lead Management listings
+            {locationLabel}
+            {activeCategory ? ` · ${activeCategory.name}` : " · Lead Management listings"}
           </p>
           <div className="flex items-center gap-3">
             <p className="text-zinc-500">
               <span className="font-bold text-zinc-900">{listings.length}</span> businesses
             </p>
-            <Button asChild variant="outline" className="h-10 rounded-xl font-bold">
-              <Link href="/bookings">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Book verified salons
-              </Link>
-            </Button>
+            <Link
+              href="/bookings"
+              className={buttonVariants({
+                variant: "outline",
+                className: "h-10 min-h-10 rounded-xl font-bold",
+              })}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              Book verified salons
+            </Link>
           </div>
         </div>
       </div>

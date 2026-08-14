@@ -6,7 +6,12 @@ export default async function SiteChromeLoader({
 }: {
   children: React.ReactNode;
 }) {
-  const navCategories = await fetchPublicCategories();
+  let navCategories: Awaited<ReturnType<typeof fetchPublicCategories>> = [];
+  try {
+    navCategories = await fetchPublicCategories();
+  } catch (error) {
+    console.error("SiteChromeLoader categories:", error);
+  }
 
   return <SiteChrome navCategories={navCategories}>{children}</SiteChrome>;
 }

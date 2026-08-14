@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Phone, MapPin, Globe, Facebook, Instagram } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
@@ -43,9 +43,12 @@ export function BusinessListingCard({ listing, priority = false }: Props) {
               {listing.name}
             </Link>
           </h2>
-          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-zinc-500">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="line-clamp-1">{listing.location}</span>
+          <p className="mt-1 flex items-start gap-1 text-xs font-medium text-zinc-500">
+            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="line-clamp-2">
+              {[listing.city, listing.district, listing.province].filter(Boolean).join(" · ") ||
+                listing.location}
+            </span>
           </p>
         </div>
 
@@ -131,13 +134,25 @@ export function BusinessListingCard({ listing, priority = false }: Props) {
 
         <div className="mt-auto pt-2">
           {listing.isClaimable ? (
-            <Button asChild variant="default" className="h-11 min-h-11 w-full rounded-xl font-bold">
-              <Link href={claimUrl}>Claim This Business</Link>
-            </Button>
+            <Link
+              href={claimUrl}
+              className={buttonVariants({
+                variant: "default",
+                className: "h-11 min-h-11 w-full rounded-xl font-bold",
+              })}
+            >
+              Claim This Business
+            </Link>
           ) : (
-            <Button asChild variant="outline" className="h-11 min-h-11 w-full rounded-xl font-bold">
-              <Link href={profileUrl}>View profile</Link>
-            </Button>
+            <Link
+              href={profileUrl}
+              className={buttonVariants({
+                variant: "outline",
+                className: "h-11 min-h-11 w-full rounded-xl font-bold",
+              })}
+            >
+              View profile
+            </Link>
           )}
         </div>
       </div>

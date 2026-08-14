@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
+import { fetchPublicCategories } from "@/lib/public-categories";
 import { fetchBusinessListingCards } from "@/lib/public-salon-search";
 import ListingsClient from "./ListingsClient";
 
@@ -22,24 +23,29 @@ type PageProps = {
 
 export default async function BusinessListingsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
-  const supabase = createServerSupabaseClient();
 
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
   let initialHasMore = false;
+  let categories: Awaited<ReturnType<typeof fetchPublicCategories>> = [];
 
   try {
-    const result = await fetchBusinessListingCards(supabase, {
-      q: sp.q ?? "",
-      location: sp.l ?? "",
-      category: sp.category ?? "",
-      limit: 24,
-      offset: 0,
-    });
+    const supabase = createServerSupabaseClient();
+    const [result, fetchedCategories] = await Promise.all([
+      fetchBusinessListingCards(supabase, {
+        q: sp.q ?? "",
+        location: sp.l ?? "",
+        category: sp.category ?? "",
+        limit: 24,
+        offset: 0,
+      }).catch(() => ({ listings: [], hasMore: false })),
+      fetchPublicCategories().catch(() => []),
+    ]);
+
     initialListings = result.listings;
     initialHasMore = result.hasMore;
-  } catch {
-    initialListings = [];
-    initialHasMore = false;
+    categories = fetchedCategories;
+  } catch (error) {
+    console.error("BusinessListingsPage:", error);
   }
 
   const searchKey = `${sp.q ?? ""}|${sp.l ?? ""}|${sp.category ?? ""}`;
@@ -47,6 +53,7 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
   return (
     <ListingsClient
       key={searchKey}
+      categories={categories}
       initialSearch={{
         q: sp.q ?? "",
         l: sp.l ?? "",

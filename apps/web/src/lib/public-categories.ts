@@ -9,18 +9,23 @@ export type PublicCategory = {
 };
 
 async function loadPublicCategories(): Promise<PublicCategory[]> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("categories")
-    .select("id, name, slug, icon")
-    .order("name");
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, icon")
+      .order("name");
 
-  if (error) {
-    console.error("fetchPublicCategories:", error.message);
+    if (error) {
+      console.error("fetchPublicCategories:", error.message);
+      return [];
+    }
+
+    return (data ?? []) as PublicCategory[];
+  } catch (error) {
+    console.error("fetchPublicCategories:", error);
     return [];
   }
-
-  return (data ?? []) as PublicCategory[];
 }
 
 /** Categories for marketplace nav and filters — always read from the DB, never hardcoded. */
