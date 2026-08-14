@@ -11,7 +11,8 @@ export const metadata = buildPublicPageMetadata({
   path: "/",
 });
 
-export const revalidate = 60;
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   searchParams: Promise<{

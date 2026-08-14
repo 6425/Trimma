@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   connectSalonRequestToListing,
-  fetchListingGenerationQueue,
   publishListingSalon,
   startBookingOnboardingFromListing,
   unpublishListingSalon,
@@ -16,6 +15,7 @@ import {
 } from "@/app/actions/listing-generation";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
+import { formatServerActionError } from "@/lib/salon-profile-save";
 
 export default function ListingQueuePage() {
   const [rows, setRows] = useState<ListingQueueRow[]>([]);
@@ -25,19 +25,33 @@ export default function ListingQueuePage() {
 
   const load = useCallback(async () => {
     try {
-      const [queueResult, requestRows] = await Promise.all([
-        fetchListingGenerationQueue(),
-        fetchAdminSalonRequests(),
+      setLoading(true);
+
+      const [queueRes, requestResult] = await Promise.all([
+        fetch("/api/admin/listing-generation/queue", { cache: "no-store" }),
+        fetchAdminSalonRequests().catch(() => ({ success: false as const, error: "Salon requests unavailable." })),
       ]);
-      if (queueResult.success === false) throw new Error(queueResult.error);
-      setRows(queueResult.rows);
-      setRequests(
-        (requestRows.success === false ? [] : requestRows.requests).filter(
-          (r) => (r.status === "new" || r.status === "reviewing") && !r.salon_id
-        )
-      );
+
+      const queuePayload = (await queueRes.json()) as { rows?: ListingQueueRow[]; error?: string };
+      if (!queueRes.ok) {
+        throw new Error(queuePayload.error || `Listing queue failed (${queueRes.status}).`);
+      }
+
+      setRows(queuePayload.rows || []);
+
+      if (requestResult.success === false) {
+        setRequests([]);
+      } else {
+        setRequests(
+          requestResult.requests.filter(
+            (r) => (r.status === "new" || r.status === "reviewing") && !r.salon_id
+          )
+        );
+      }
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Failed to load listing queue.");
+      const message = error instanceof Error ? error.message : "Failed to load listing queue.";
+      toast.error(message);
+      setRows([]);
     } finally {
       setLoading(false);
     }
@@ -56,7 +70,7 @@ export default function ListingQueuePage() {
       if (result.success === false) throw new Error(result.error);
       await load();
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Action failed.");
+      toast.error(formatServerActionError(error));
     } finally {
       setBusyId(null);
     }

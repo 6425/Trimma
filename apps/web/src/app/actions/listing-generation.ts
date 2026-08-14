@@ -9,56 +9,19 @@ import {
   LISTING_ONBOARDING_STATUS,
   LISTING_PUBLISH_SALON_UPDATES,
   isListingPipelineSalon,
-  readListingCapturedAt,
 } from "@/lib/salon-listing-pipeline";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { notifyAgentOfSalonAssignment } from "@/app/actions/salon-onboarding-notifications";
 import { insertOnboardingLog } from "@/app/actions/admin-operations";
+import {
+  loadListingGenerationQueueRows,
+  type ListingQueueRow,
+} from "@/lib/listing-generation-queue";
 
-export type ListingQueueRow = {
-  id: string;
-  name: string;
-  slug: string;
-  category: string | null;
-  province: string | null;
-  district: string | null;
-  city: string | null;
-  address: string | null;
-  place_id: string | null;
-  rating: number | null;
-  review_count: number | null;
-  onboarding_status: string | null;
-  public_visibility: string | null;
-  source_type: string | null;
-  created_at: string;
-  updated_at: string;
-  captured_at: string | null;
-};
+export type { ListingQueueRow };
 
 export async function fetchListingGenerationQueue() {
-  const auth = await requirePlatformAdminFromCookies();
-  if ("error" in auth) return { success: false as const, error: auth.error };
-
-  const result = await withAdminDb(async (supabase) => {
-    const { data, error } = await supabase
-      .from("salons")
-      .select(
-        "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at, business_info_extended"
-      )
-      .in("onboarding_status", [
-        LISTING_ONBOARDING_STATUS.CAPTURED,
-        LISTING_ONBOARDING_STATUS.PUBLISHED,
-      ])
-      .order("created_at", { ascending: false });
-
-    if (error) throw new Error(error.message);
-    return ((data || []) as Array<ListingQueueRow & { business_info_extended?: unknown }>).map(
-      (row) => ({
-        ...row,
-        captured_at: readListingCapturedAt(row),
-      })
-    );
-  });
+  const result = await withAdminDb(async (supabase) => loadListingGenerationQueueRows(supabase));
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const, rows: result.data };
