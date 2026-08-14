@@ -18,12 +18,22 @@ function salonImageTimestamp(url: string): number {
 }
 
 export function getSalonListingImage(
-  salon: { cover_url?: string | null; hero_url?: string | null },
+  salon: {
+    cover_url?: string | null;
+    hero_url?: string | null;
+    featured_images?: unknown;
+  },
   fallback: string
 ): string {
+  const featured = Array.isArray(salon.featured_images)
+    ? salon.featured_images.filter(
+        (item): item is string => typeof item === "string" && item.trim().length > 0
+      )
+    : [];
   const cover = (salon.cover_url || "").trim();
   const hero = (salon.hero_url || "").trim();
 
+  if (!cover && !hero && featured[0]) return featured[0];
   if (!cover && !hero) return fallback;
   if (!cover) return hero;
   if (!hero) return cover;

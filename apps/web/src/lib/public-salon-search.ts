@@ -36,7 +36,7 @@ export async function fetchPublicSalons(
     .from("salons")
     .select(`
       id, name, slug, rating, review_count,
-      city, district, province, category, logo_url, cover_url, hero_url,
+      city, district, province, category, logo_url, cover_url, hero_url, featured_images,
       is_featured, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail,

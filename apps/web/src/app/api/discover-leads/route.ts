@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { discoverGooglePlacesInContext } from "@/lib/google-places-discovery";
-import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 
 function getRouteErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -31,30 +30,13 @@ export async function POST(req: Request) {
       supabase,
       apiKey,
       { province, district, city, category },
-      { limit: limit ? Number(limit) : 15, assignTerritoryAgent: true, enrichProfiles: true }
-    );
-
-    if (syncImages && result.count > 0) {
-      const { data: savedRows } = await supabase
-        .from("salons")
-        .select("id, name, address, city, district, place_id")
-        .eq("district", district || "")
-        .eq("source_type", "GOOGLE_PLACES")
-        .order("updated_at", { ascending: false })
-        .limit(5);
-
-      for (const row of savedRows || []) {
-        try {
-          const images = await syncSalonImagesFromGooglePlace(supabase, row);
-          await supabase
-            .from("salons")
-            .update({ cover_url: images.cover_url, hero_url: images.hero_url })
-            .eq("id", row.id);
-        } catch (imageErr) {
-          console.warn("[discover-leads] image sync skipped:", imageErr);
-        }
+      {
+        limit: limit ? Number(limit) : 15,
+        assignTerritoryAgent: true,
+        enrichProfiles: true,
+        syncImages: syncImages !== false,
       }
-    }
+    );
 
     return NextResponse.json({
       success: true,
@@ -62,6 +44,7 @@ export async function POST(req: Request) {
       message: result.message,
       warning: result.warning,
       stats: result.stats,
+      imageStats: result.imageStats,
     });
   } catch (error: unknown) {
     console.error("Discover API route failure:", error);

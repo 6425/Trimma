@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/** Public listing gallery cap for Google-sourced discovery photos. */
+export const GOOGLE_PLACE_LISTING_IMAGE_LIMIT = 9;
+
 export function getGoogleMapsApiKey(): string | null {
   return process.env.GOOGLE_API || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null;
 }
@@ -17,16 +20,28 @@ export async function findGooglePlaceId(query: string, apiKey: string): Promise<
 }
 
 export async function fetchPlacePhotoReference(placeId: string, apiKey: string): Promise<string | null> {
+  const refs = await fetchPlacePhotoReferences(placeId, apiKey, 1);
+  return refs[0] || null;
+}
+
+export async function fetchPlacePhotoReferences(
+  placeId: string,
+  apiKey: string,
+  limit = GOOGLE_PLACE_LISTING_IMAGE_LIMIT
+): Promise<string[]> {
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=photos&key=${apiKey}`;
   const res = await fetch(url);
   const data = await res.json();
 
   const photos = data.result?.photos;
   if (!Array.isArray(photos) || photos.length === 0) {
-    return null;
+    return [];
   }
 
-  return photos[0].photo_reference as string;
+  return photos
+    .slice(0, Math.max(1, Math.min(limit, GOOGLE_PLACE_LISTING_IMAGE_LIMIT)))
+    .map((photo: { photo_reference?: string }) => photo.photo_reference)
+    .filter((ref: string | undefined): ref is string => Boolean(ref));
 }
 
 export async function downloadGooglePlacePhoto(
@@ -47,10 +62,11 @@ export async function downloadGooglePlacePhoto(
 export async function uploadSalonImageBuffer(
   supabase: SupabaseClient,
   salonId: string,
-  field: "cover" | "hero" | "logo",
+  field: string,
   buffer: Buffer
 ): Promise<string> {
-  const fileName = `${salonId}/${field}_${Date.now()}.jpg`;
+  const safeField = field.replace(/[^a-z0-9_-]+/gi, "_");
+  const fileName = `${salonId}/${safeField}_${Date.now()}.jpg`;
   const { error } = await supabase.storage.from("salon-images").upload(fileName, buffer, {
     cacheControl: "3600",
     upsert: true,
@@ -74,14 +90,35 @@ type SalonImageSource = {
   place_id?: string | null;
 };
 
+export type SalonGoogleImageSyncResult = {
+  cover_url: string;
+  hero_url: string;
+  featured_images: string[];
+  place_id: string;
+  photo_count: number;
+};
+
+export type GoogleImageSyncStats = {
+  synced: number;
+  failed: number;
+  skipped: number;
+  photos: number;
+};
+
 export async function syncSalonImagesFromGooglePlace(
   supabase: SupabaseClient,
-  salon: SalonImageSource
-): Promise<{ cover_url: string; hero_url: string; place_id: string }> {
-  const apiKey = getGoogleMapsApiKey();
+  salon: SalonImageSource,
+  options?: { maxPhotos?: number; apiKey?: string | null }
+): Promise<SalonGoogleImageSyncResult | null> {
+  const apiKey = options?.apiKey || getGoogleMapsApiKey();
   if (!apiKey) {
     throw new Error("Google API key is not configured (GOOGLE_API).");
   }
+
+  const maxPhotos = Math.min(
+    Math.max(options?.maxPhotos ?? GOOGLE_PLACE_LISTING_IMAGE_LIMIT, 1),
+    GOOGLE_PLACE_LISTING_IMAGE_LIMIT
+  );
 
   let placeId = salon.place_id?.trim() || null;
   if (!placeId) {
@@ -92,21 +129,125 @@ export async function syncSalonImagesFromGooglePlace(
   }
 
   if (!placeId) {
-    throw new Error(`Could not find a Google Place match for "${salon.name}".`);
+    return null;
   }
 
-  const photoReference = await fetchPlacePhotoReference(placeId, apiKey);
-  if (!photoReference) {
-    throw new Error(`Google Place found for "${salon.name}" but no photos are available.`);
+  const photoReferences = await fetchPlacePhotoReferences(placeId, apiKey, maxPhotos);
+  if (!photoReferences.length) {
+    return null;
   }
 
-  const buffer = await downloadGooglePlacePhoto(photoReference, apiKey);
-  const coverUrl = await uploadSalonImageBuffer(supabase, salon.id, "cover", buffer);
-  const heroUrl = await uploadSalonImageBuffer(supabase, salon.id, "hero", buffer);
+  const uploadedUrls: string[] = [];
+  for (let index = 0; index < photoReferences.length; index += 1) {
+    const buffer = await downloadGooglePlacePhoto(photoReferences[index], apiKey);
+    const publicUrl = await uploadSalonImageBuffer(
+      supabase,
+      salon.id,
+      index === 0 ? "hero" : `featured_${index}`,
+      buffer
+    );
+    uploadedUrls.push(publicUrl);
+  }
 
+  const heroUrl = uploadedUrls[0];
   return {
-    cover_url: coverUrl,
+    cover_url: heroUrl,
     hero_url: heroUrl,
+    featured_images: uploadedUrls,
     place_id: placeId,
+    photo_count: uploadedUrls.length,
   };
+}
+
+export async function applySalonGoogleImageSync(
+  supabase: SupabaseClient,
+  salonId: string,
+  images: SalonGoogleImageSyncResult,
+  existingPlaceId?: string | null
+): Promise<void> {
+  const { error } = await supabase
+    .from("salons")
+    .update({
+      cover_url: images.cover_url,
+      hero_url: images.hero_url,
+      featured_images: images.featured_images,
+      place_id: existingPlaceId?.trim() || images.place_id,
+    })
+    .eq("id", salonId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function syncGoogleImagesForSalonIds(
+  supabase: SupabaseClient,
+  salonIds: string[],
+  options?: { maxPhotos?: number; apiKey?: string | null; delayMs?: number }
+): Promise<GoogleImageSyncStats> {
+  const stats: GoogleImageSyncStats = { synced: 0, failed: 0, skipped: 0, photos: 0 };
+  if (!salonIds.length) return stats;
+
+  const apiKey = options?.apiKey || getGoogleMapsApiKey();
+  if (!apiKey) {
+    throw new Error("Google API key is not configured (GOOGLE_API).");
+  }
+
+  const { data: salons, error } = await supabase
+    .from("salons")
+    .select("id, name, address, city, district, place_id")
+    .in("id", salonIds);
+
+  if (error) throw error;
+
+  for (const salon of salons || []) {
+    try {
+      const images = await syncSalonImagesFromGooglePlace(supabase, salon, {
+        maxPhotos: options?.maxPhotos,
+        apiKey,
+      });
+
+      if (!images) {
+        stats.skipped += 1;
+        continue;
+      }
+
+      await applySalonGoogleImageSync(supabase, salon.id, images, salon.place_id);
+      stats.synced += 1;
+      stats.photos += images.photo_count;
+    } catch (imageErr) {
+      console.warn("[syncGoogleImagesForSalonIds] skipped:", salon.id, imageErr);
+      stats.failed += 1;
+    }
+
+    if (options?.delayMs && options.delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, options.delayMs));
+    }
+  }
+
+  return stats;
+}
+
+export async function syncGoogleImagesForPlaceIds(
+  supabase: SupabaseClient,
+  placeIds: string[],
+  options?: { maxPhotos?: number; apiKey?: string | null; delayMs?: number }
+): Promise<GoogleImageSyncStats> {
+  const uniquePlaceIds = [...new Set(placeIds.map((id) => id.trim()).filter(Boolean))];
+  if (!uniquePlaceIds.length) {
+    return { synced: 0, failed: 0, skipped: 0, photos: 0 };
+  }
+
+  const { data: salons, error } = await supabase
+    .from("salons")
+    .select("id")
+    .in("place_id", uniquePlaceIds);
+
+  if (error) throw error;
+
+  return syncGoogleImagesForSalonIds(
+    supabase,
+    (salons || []).map((row) => String(row.id)),
+    options
+  );
 }

@@ -8,7 +8,7 @@ import {
   mapGooglePlaceToSalonRecord,
   mergeGoogleProfileIntoSalonRow,
 } from "@/lib/google-place-profile";
-import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
+import { syncSalonImagesFromGooglePlace, applySalonGoogleImageSync } from "@/lib/google-place-images";
 
 const DISCOVERY_EXPORT_COLUMNS =
   "id, name, slug, category, address, city, district, province, phone, website, owner_email, owner_gmail, map_url, place_id, rating, review_count, price_level, latitude, longitude, working_hours, summary, description, onboarding_status, assign_to, source_type, status, created_at, business_info_extended";
@@ -130,10 +130,9 @@ export async function refreshSalonFromGoogleBusiness(salonId: string) {
       district: String(merged.district || ""),
       place_id: salon.place_id,
     });
-    await supabase
-      .from("salons")
-      .update({ cover_url: images.cover_url, hero_url: images.hero_url })
-      .eq("id", salonId);
+    if (images) {
+      await applySalonGoogleImageSync(supabase, salonId, images, salon.place_id);
+    }
   } catch (imageErr) {
     console.warn("[refreshSalonFromGoogleBusiness] image sync skipped:", imageErr);
   }

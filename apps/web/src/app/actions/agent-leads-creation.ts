@@ -8,7 +8,7 @@ import {
   mergeGoogleProfileIntoSalonRow,
   slugifySalonName,
 } from "@/lib/google-place-profile";
-import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
+import { syncSalonImagesFromGooglePlace, applySalonGoogleImageSync } from "@/lib/google-place-images";
 import { MIN_SERVICE_PRICE_LKR } from "@/lib/service-pricing";
 
 export async function createLeadFromGooglePlaces(businessData: {
@@ -103,14 +103,9 @@ export async function createLeadFromGooglePlaces(businessData: {
         place_id: businessData.place_id,
       });
 
-      await supabaseAdmin
-        .from("salons")
-        .update({
-          cover_url: images.cover_url,
-          hero_url: images.hero_url,
-          place_id: images.place_id,
-        })
-        .eq("id", salonId);
+      if (images) {
+        await applySalonGoogleImageSync(supabaseAdmin, salonId, images, businessData.place_id);
+      }
     } catch (imageErr) {
       console.warn("Google Places image sync skipped for new lead:", imageErr);
     }

@@ -2,7 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
-import { syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
+import { syncSalonImagesFromGooglePlace, applySalonGoogleImageSync } from "@/lib/google-place-images";
 
 export async function refreshSalonGooglePlaceImages(salonId: string) {
   const auth = await requirePlatformAdminFromCookies();
@@ -25,22 +25,17 @@ export async function refreshSalonGooglePlaceImages(salonId: string) {
     }
 
     const images = await syncSalonImagesFromGooglePlace(supabase, salon);
+    if (!images) {
+      return { success: false as const, error: "Google Place found but no photos are available." };
+    }
 
-    const { error: updateError } = await supabase
-      .from("salons")
-      .update({
-        cover_url: images.cover_url,
-        hero_url: images.hero_url,
-        place_id: salon.place_id || images.place_id,
-      })
-      .eq("id", salonId);
-
-    if (updateError) throw new Error(updateError.message);
+    await applySalonGoogleImageSync(supabase, salonId, images, salon.place_id);
 
     return {
       success: true as const,
       cover_url: images.cover_url,
       hero_url: images.hero_url,
+      featured_images: images.featured_images,
       place_id: images.place_id,
     };
   } catch (err: unknown) {

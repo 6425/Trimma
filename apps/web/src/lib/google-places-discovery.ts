@@ -20,8 +20,13 @@ import {
 } from "@/lib/salon-discovery-dedup";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
+import {
+  syncGoogleImagesForPlaceIds,
+  type GoogleImageSyncStats,
+} from "@/lib/google-place-images";
 
 export type { DiscoveryDedupStats };
+export type { GoogleImageSyncStats };
 
 export const BEAUTY_DISCOVERY_CATEGORIES = [
   "hair salon",
@@ -196,8 +201,9 @@ export async function discoverGooglePlacesInContext(
     assignTerritoryAgent?: boolean;
     enrichProfiles?: boolean;
     listingPipeline?: boolean;
+    syncImages?: boolean;
   }
-): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats }> {
+): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats }> {
   const query = buildBeautyDiscoveryQuery(context);
   const targetLimit = Math.min(Math.max(options?.limit ?? 15, 1), 60);
 
@@ -242,18 +248,31 @@ export async function discoverGooglePlacesInContext(
     listingPipeline: options?.listingPipeline,
   });
 
+  const shouldSyncImages = options?.syncImages !== false;
+  let imageStats: GoogleImageSyncStats | undefined;
+  if (shouldSyncImages && result.placeIds.length > 0) {
+    imageStats = await syncGoogleImagesForPlaceIds(supabase, result.placeIds, {
+      apiKey,
+      delayMs: 150,
+    });
+  }
+
   const label = [context.city, context.district, context.province].filter(Boolean).join(", ");
   const dedupSummary =
     result.stats.removed > 0 || result.stats.merged > 0 || result.stats.skipped > 0
       ? ` (${result.stats.created} new, ${result.stats.updated} updated, ${result.stats.merged} merged, ${result.stats.removed} duplicates removed${result.stats.skipped ? `, ${result.stats.skipped} skipped in batch` : ""})`
       : "";
-  const baseMessage = `Discovered and published ${result.count} listing(s) for ${label || "Sri Lanka"}.${dedupSummary}`;
+  const imageSummary = imageStats
+    ? ` Images synced for ${imageStats.synced} salon(s) (${imageStats.photos} Google photos${imageStats.skipped ? `, ${imageStats.skipped} without photos` : ""}${imageStats.failed ? `, ${imageStats.failed} failed` : ""}).`
+    : "";
+  const baseMessage = `Discovered and published ${result.count} listing(s) for ${label || "Sri Lanka"}.${dedupSummary}${imageSummary}`;
 
   return {
     count: result.count,
     warning: result.warning,
     message: result.warning ? `${baseMessage} ${result.warning}` : baseMessage,
     stats: result.stats,
+    imageStats,
   };
 }
 
