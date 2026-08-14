@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
-const HERO_IMAGE = "/assets/beauty-salon-hero.webp";
+const HERO_IMAGE = "/assets/business-listings-hero.png";
 const PAGE_SIZE = 24;
 
 type InitialSearch = {
@@ -122,62 +122,93 @@ export default function ListingsClient({
     : "Sri Lanka";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       <Suspense fallback={null}>
         <SearchParamsSync onChange={syncFromUrl} />
       </Suspense>
 
-      <section className="relative min-h-[360px] border-b border-slate-200 bg-zinc-950">
-        <Image src={HERO_IMAGE} alt="" fill priority className="object-cover opacity-35" sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-zinc-950/40" />
-        <div className="container relative z-10 mx-auto max-w-7xl px-4 py-12 md:py-16">
-          <Badge variant="hero" className="mb-4">
-            <Building2 className="mr-1.5 h-3.5 w-3.5" />
-            Admin Lead Listings
-          </Badge>
-          <h1 className="max-w-3xl text-3xl font-black tracking-tight text-white md:text-5xl">
-            Business listings across <span className="text-[#ffde5a] underline decoration-[#ffde5a] decoration-4 underline-offset-4">Sri Lanka</span>
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm font-medium leading-relaxed text-zinc-300 md:text-base">
-            Salons and spas discovered by Trimma admin through Lead Management. Own a business here?
-            Claim it with Google sign-in — same verified flow used for Google Business profile claims.
-          </p>
+      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <Image
+          src={HERO_IMAGE}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="home-hero-bg-image object-cover pointer-events-none"
+        />
+        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
+        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
 
-          <div className="mt-8 grid max-w-4xl grid-cols-1 gap-2 rounded-2xl border border-white/10 bg-white p-2 shadow-xl md:grid-cols-[1fr_1fr_auto]">
-            <div className="flex items-center gap-2 rounded-xl bg-zinc-50 px-3">
-              <Search className="h-5 w-5 shrink-0 text-brand-pink" />
-              <input
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setPage(0);
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Salon name or category"
-                className="h-12 w-full bg-transparent text-sm font-semibold text-zinc-900 outline-none"
-              />
+        <div className="container relative z-10 mx-auto max-w-7xl">
+          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
+            <div className="home-hero-top">
+              <Badge variant="hero">
+                <Building2 className="mr-1.5 h-3.5 w-3.5" />
+                Admin Lead Listings
+              </Badge>
+
+              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
+                <span className="home-hero-title-line">Business listings across</span>
+                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
+                  Sri Lanka
+                </span>
+              </h1>
+
+              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                Salons and spas discovered by Trimma admin through Lead Management. Own a business here?
+                Claim it with Google sign-in — same verified flow used for Google Business profile claims.
+              </p>
             </div>
-            <div className="flex items-center gap-2 rounded-xl bg-zinc-50 px-3">
-              <MapPin className="h-5 w-5 shrink-0 text-brand-pink" />
-              <select
-                value={selectedLocation}
-                onChange={(e) => {
-                  setSelectedLocation(e.target.value);
-                  setPage(0);
-                }}
-                className="h-12 w-full bg-transparent text-sm font-bold text-zinc-900 outline-none"
-              >
-                <option value="">Any location</option>
-                <option value="colombo">Colombo</option>
-                <option value="gampaha">Gampaha</option>
-                <option value="kandy">Kandy</option>
-                <option value="galle">Galle</option>
-                <option value="anuradhapura">Anuradhapura</option>
-              </select>
+
+            <div className="home-hero-middle">
+              <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
+                <span className="hero-badge hero-eyebrow px-3 py-1">{listings.length} Businesses Listed</span>
+                <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
+                <span className="uppercase tracking-wider">Locations: Colombo, Gampaha, Kandy</span>
+              </div>
+
+              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
+                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                  <Search className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setPage(0);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    placeholder="Salon name or category"
+                    className="h-12 w-full bg-transparent text-sm font-semibold text-zinc-900 placeholder:text-zinc-400 outline-none min-w-0"
+                  />
+                </div>
+                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+                  <MapPin className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => {
+                      setSelectedLocation(e.target.value);
+                      setPage(0);
+                    }}
+                    className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"
+                  >
+                    <option value="">Any location</option>
+                    <option value="colombo">Colombo</option>
+                    <option value="gampaha">Gampaha</option>
+                    <option value="kandy">Kandy</option>
+                    <option value="galle">Galle</option>
+                    <option value="anuradhapura">Anuradhapura</option>
+                  </select>
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  size="lg"
+                  variant="hero"
+                  className="hero-btn-compact h-12 min-h-12 w-full shrink-0 rounded-xl border-none px-8 font-bold shadow-md sm:w-auto"
+                >
+                  Search
+                </Button>
+              </div>
             </div>
-            <Button onClick={handleSearch} variant="default" className="h-12 min-h-12 rounded-xl px-8 font-bold">
-              Search
-            </Button>
           </div>
         </div>
       </section>

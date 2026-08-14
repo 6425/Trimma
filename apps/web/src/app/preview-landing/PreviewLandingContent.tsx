@@ -53,8 +53,6 @@ import {
   formatLkr,
 } from "@/lib/subscription-pricing";
 
-const PREVIEW_LANDING_HERO = "/assets/preview-landing-hero.png";
-
 const trustStats = [
   { icon: Store, value: "200+", label: "Salons" },
   { icon: CalendarDays, value: "50,000+", label: "Appointments" },
@@ -282,67 +280,60 @@ export function PreviewLandingContent() {
 
   return (
     <div className="bg-white text-zinc-900 font-sans overflow-x-hidden">
-      {/* ============ HERO — split layout (matches category / onboarding pages) ============ */}
-      <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
-        <img
-          src={PREVIEW_LANDING_HERO}
-          alt=""
-          width={1920}
-          height={500}
-          decoding="async"
-          fetchPriority="high"
-          className="home-hero-bg-image absolute inset-0 w-full h-full object-cover pointer-events-none"
-        />
-        <div className="home-hero-left-overlay absolute inset-0 hidden lg:block pointer-events-none" aria-hidden="true" />
-        <div className="home-hero-mobile-overlay lg:hidden absolute inset-0 pointer-events-none" aria-hidden="true" />
-
-        <div className="container relative z-10 mx-auto max-w-7xl">
-          <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between p-[3%]">
-            <div className="home-hero-top">
-              <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                The all-in-one salon platform for Sri Lanka
-              </div>
-
-              <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
-                <span className="home-hero-title-line">Grow Your Salon.</span>
-                <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
-                  Not Your Stress.
-                </span>
-              </h1>
-
-              <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Get more bookings, reduce no-shows, manage your team, increase repeat customers, and grow
-                your revenue — all from one platform.
-              </p>
+      {/* ============ HERO ============ */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-zinc-50 to-white">
+        {/* soft ambient backdrop */}
+        <div className="pointer-events-none absolute inset-0 -z-0">
+          <div className="absolute -top-24 -right-24 w-[36rem] h-[36rem] rounded-full bg-[#ffde5a]/20 blur-3xl" />
+          <div className="absolute top-40 -left-32 w-[30rem] h-[30rem] rounded-full bg-indigo-200/30 blur-3xl" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-12 items-center relative z-10">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white ring-1 ring-zinc-200 px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-900" />
+              The all-in-one salon platform for Sri Lanka
+            </span>
+            <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.05] text-zinc-900">
+              Grow Your Salon.
+              <br />
+              Not Your Stress.
+            </h1>
+            <p className="mt-6 text-lg text-zinc-600 max-w-xl leading-relaxed">
+              Get more bookings, reduce no-shows, manage your team, increase
+              repeat customers, and grow your revenue — all from one platform.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <Link href="/onboarding" className="w-full sm:w-auto">
+                <Button variant="default" size="xl" className="w-full sm:w-auto rounded-xl">
+                  Start Free <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="/features" className="w-full sm:w-auto">
+                <Button variant="dark" size="xl" className="w-full sm:w-auto rounded-xl">
+                  <PlayCircle className="w-4 h-4" /> Watch Demo
+                </Button>
+              </Link>
             </div>
-
-            <div className="home-hero-middle">
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-lg">
-                <Link href="/onboarding" className="w-full sm:w-auto">
-                  <Button variant="default" size="lg" className="h-12 min-h-12 w-full sm:w-auto rounded-xl px-8 font-bold">
-                    Start Free <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-                <Link href="/features" className="w-full sm:w-auto">
-                  <Button variant="dark" size="lg" className="h-12 min-h-12 w-full sm:w-auto rounded-xl px-8 font-bold">
-                    <PlayCircle className="w-4 h-4" /> Watch Demo
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center gap-3 text-xs font-bold">
-                <StarRow />
-                <span className="font-semibold text-zinc-700">Trusted by salons across Sri Lanka</span>
-              </div>
+            <div className="mt-8 flex items-center gap-3">
+              <StarRow />
+              <span className="text-sm font-semibold text-zinc-500">
+                Trusted by salons across Sri Lanka
+              </span>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Trust stats bar */}
-      <div className="bg-slate-50 border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+          <div className="relative">
+            <div className="pointer-events-none absolute -inset-6 rounded-[2rem] bg-gradient-to-tr from-[#ffde5a]/30 via-transparent to-indigo-300/20 blur-2xl" />
+            <img
+              src="/assets/dashboard_mockup.jpg"
+              alt="Trimma salon dashboard on laptop, tablet and phone"
+              className="relative w-full rounded-2xl shadow-2xl ring-1 ring-black/5"
+            />
+          </div>
+        </div>
+
+        {/* Trust stats bar */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-14 relative z-10">
           <div className="bg-white rounded-2xl shadow-lg ring-1 ring-zinc-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-zinc-100">
             {trustStats.map((s) => (
               <div key={s.label} className="flex items-center gap-3 px-5 py-4 justify-center sm:justify-start">
@@ -355,7 +346,7 @@ export function PreviewLandingContent() {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ============ SOUND FAMILIAR ============ */}
       <section className="py-16 lg:py-20 bg-white">
