@@ -25,15 +25,13 @@ export type ListingQueueRow = {
   captured_at: string | null;
 };
 
-const QUEUE_SELECT_WITH_EXT =
+const QUEUE_SELECT_FULL =
   "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at, business_info_extended";
 
 const QUEUE_SELECT_BASE =
   "id, name, slug, category, province, district, city, address, place_id, rating, review_count, onboarding_status, public_visibility, source_type, created_at, updated_at";
 
-function mapQueueRows(
-  data: Array<Record<string, unknown>>
-): ListingQueueRow[] {
+function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
   return data.map((row) => ({
     id: String(row.id),
     name: String(row.name || ""),
@@ -54,47 +52,50 @@ function mapQueueRows(
     captured_at: readListingCapturedAt({
       created_at: row.created_at as string | null,
       updated_at: row.updated_at as string | null,
+      onboarding_status: row.onboarding_status as string | null,
+      source_type: row.source_type as string | null,
       business_info_extended: row.business_info_extended,
     }),
   }));
 }
 
-export async function loadListingGenerationQueueRows(
-  supabase: SupabaseClient
-): Promise<ListingQueueRow[]> {
+async function queryQueueRows(
+  supabase: SupabaseClient,
+  select: string
+): Promise<Array<Record<string, unknown>>> {
   const statuses = [
     LISTING_ONBOARDING_STATUS.CAPTURED,
     LISTING_ONBOARDING_STATUS.PUBLISHED,
   ];
 
-  let data: Array<Record<string, unknown>> | null = null;
-  let error: { message: string } | null = null;
-
-  const primary = await supabase
+  const { data, error } = await supabase
     .from("salons")
-    .select(QUEUE_SELECT_WITH_EXT)
+    .select(select)
     .in("onboarding_status", statuses)
-    .order("created_at", { ascending: false })
+    .order("updated_at", { ascending: false })
     .limit(500);
 
-  if (
-    primary.error &&
-    isMissingDbSchemaError(primary.error.message) &&
-    primary.error.message.toLowerCase().includes("business_info_extended")
-  ) {
-    const fallback = await supabase
-      .from("salons")
-      .select(QUEUE_SELECT_BASE)
-      .in("onboarding_status", statuses)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    data = (fallback.data || []) as Array<Record<string, unknown>>;
-    error = fallback.error;
-  } else {
-    data = (primary.data || []) as Array<Record<string, unknown>>;
-    error = primary.error;
-  }
+  if (error) throw error;
+  return (data ?? []) as unknown as Array<Record<string, unknown>>;
+}
 
-  if (error) throw new Error(error.message);
-  return mapQueueRows(data);
+export async function loadListingGenerationQueueRows(
+  supabase: SupabaseClient
+): Promise<ListingQueueRow[]> {
+  try {
+    const rows = await queryQueueRows(supabase, QUEUE_SELECT_FULL);
+    return mapQueueRows(rows);
+  } catch (primaryError) {
+    const message =
+      typeof primaryError === "object" && primaryError && "message" in primaryError
+        ? String((primaryError as { message: unknown }).message)
+        : String(primaryError);
+
+    if (!isMissingDbSchemaError(message)) {
+      throw new Error(message);
+    }
+
+    const rows = await queryQueueRows(supabase, QUEUE_SELECT_BASE);
+    return mapQueueRows(rows);
+  }
 }

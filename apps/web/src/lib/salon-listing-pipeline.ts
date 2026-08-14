@@ -81,6 +81,10 @@ const BOOKING_PIPELINE_LOCK_STATUSES = new Set([
   "REJECTED",
 ]);
 
+export function isBookingPipelineLockedStatus(status: string | null | undefined): boolean {
+  return BOOKING_PIPELINE_LOCK_STATUSES.has(String(status || ""));
+}
+
 /** Force listing-generation fields after Google capture merge. */
 export function applyListingPipelineCaptureFields(
   merged: Record<string, unknown>,
@@ -113,6 +117,8 @@ export function applyListingPipelineCaptureFields(
 export function readListingCapturedAt(row: {
   created_at?: string | null;
   updated_at?: string | null;
+  onboarding_status?: string | null;
+  source_type?: string | null;
   business_info_extended?: unknown;
 }): string | null {
   const ext =
@@ -123,7 +129,69 @@ export function readListingCapturedAt(row: {
       : null;
   const capturedAt = ext?.listing_captured_at;
   if (typeof capturedAt === "string" && capturedAt.trim()) return capturedAt;
+
+  const inListingPipeline =
+    row.source_type === "LISTING_GENERATION" ||
+    LISTING_PIPELINE_STATUSES.has(String(row.onboarding_status || ""));
+
+  if (inListingPipeline) {
+    return row.updated_at || row.created_at || null;
+  }
+
   return row.created_at || row.updated_at || null;
+}
+
+/** Ensure captured Google rows are visible in the listing queue after upsert. */
+export async function finalizeListingPipelineCapture(
+  supabase: import("@supabase/supabase-js").SupabaseClient,
+  placeIds: string[]
+): Promise<number> {
+  if (!placeIds.length) return 0;
+
+  const capturedAt = new Date().toISOString();
+  const { data: rows, error: fetchError } = await supabase
+    .from("salons")
+    .select("id, onboarding_status")
+    .in("place_id", placeIds);
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const toCapture: string[] = [];
+  const toRefresh: string[] = [];
+
+  for (const row of rows || []) {
+    const status = String(row.onboarding_status || "");
+    if (isBookingPipelineLockedStatus(status)) continue;
+    if (status === LISTING_ONBOARDING_STATUS.PUBLISHED) {
+      toRefresh.push(String(row.id));
+      continue;
+    }
+    toCapture.push(String(row.id));
+  }
+
+  if (toCapture.length) {
+    const { error } = await supabase
+      .from("salons")
+      .update({
+        ...LISTING_CAPTURE_SALON_DEFAULTS,
+        updated_at: capturedAt,
+      })
+      .in("id", toCapture);
+    if (error) throw new Error(error.message);
+  }
+
+  if (toRefresh.length) {
+    const { error } = await supabase
+      .from("salons")
+      .update({
+        source_type: "LISTING_GENERATION",
+        updated_at: capturedAt,
+      })
+      .in("id", toRefresh);
+    if (error) throw new Error(error.message);
+  }
+
+  return toCapture.length + toRefresh.length;
 }
 
 export function formatListingCapturedDate(iso: string | null | undefined): string {

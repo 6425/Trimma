@@ -5,6 +5,9 @@ import { discoverGooglePlacesInContext } from "@/lib/google-places-discovery";
 
 function getRouteErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
   return "Listing data capture failed";
 }
 
@@ -33,6 +36,7 @@ export async function POST(req: Request) {
         assignTerritoryAgent: false,
         enrichProfiles: true,
         listingPipeline: true,
+        syncImages: false,
       }
     );
 
@@ -41,6 +45,7 @@ export async function POST(req: Request) {
       count: result.count,
       message: result.message,
       warning: result.warning,
+      stats: result.stats,
       pipeline: "listing_generation",
     });
   } catch (error: unknown) {

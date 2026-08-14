@@ -316,6 +316,7 @@ export function mergeGoogleProfileIntoSalonRow(
   const existingVisibility = existing.public_visibility;
   const incomingVisibility = incoming.public_visibility;
   if (
+    !options?.listingPipeline &&
     existingVisibility &&
     String(existingVisibility) !== "hidden" &&
     existingVisibility !== false &&
@@ -324,7 +325,7 @@ export function mergeGoogleProfileIntoSalonRow(
     merged.public_visibility = existingVisibility;
   }
 
-  if (existing.booking_enabled === true) merged.booking_enabled = true;
+  if (!options?.listingPipeline && existing.booking_enabled === true) merged.booking_enabled = true;
   if (existing.is_verified === true) {
     merged.is_verified = true;
     merged.public_visibility = existing.public_visibility ?? incoming.public_visibility;

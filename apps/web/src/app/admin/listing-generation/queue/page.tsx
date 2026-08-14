@@ -28,7 +28,7 @@ export default function ListingQueuePage() {
       setLoading(true);
 
       const [queueRes, requestResult] = await Promise.all([
-        fetch("/api/admin/listing-generation/queue", { cache: "no-store" }),
+        fetch("/api/admin/listing-generation/queue", { cache: "no-store", credentials: "same-origin" }),
         fetchAdminSalonRequests().catch(() => ({ success: false as const, error: "Salon requests unavailable." })),
       ]);
 

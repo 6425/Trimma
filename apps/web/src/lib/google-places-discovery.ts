@@ -19,7 +19,7 @@ import {
   type SalonDuplicateRow,
 } from "@/lib/salon-discovery-dedup";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
-import { applyListingPipelineCaptureFields, LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
+import { applyListingPipelineCaptureFields, finalizeListingPipelineCapture, LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
 import {
   syncGoogleImagesForPlaceIds,
   type GoogleImageSyncStats,
@@ -168,7 +168,7 @@ export async function upsertDiscoveredGooglePlaces(
         { onConflict: "id" }
       );
     }
-    if (updateResult.error) throw updateResult.error;
+    if (updateResult.error) throwSalonUpsertError(updateResult.error);
   }
 
   if (rowsToInsert.length) {
@@ -182,7 +182,11 @@ export async function upsertDiscoveredGooglePlaces(
         { onConflict: "place_id" }
       );
     }
-    if (insertResult.error) throw insertResult.error;
+    if (insertResult.error) throwSalonUpsertError(insertResult.error);
+  }
+
+  if (options?.listingPipeline && placeIds.length) {
+    await finalizeListingPipelineCapture(supabase, placeIds);
   }
 
   const refreshedCandidates = await loadSalonDuplicateCandidates(supabase, context, placeIds);
@@ -252,13 +256,17 @@ export async function discoverGooglePlacesInContext(
     listingPipeline: options?.listingPipeline,
   });
 
-  const shouldSyncImages = options?.syncImages !== false;
+  const shouldSyncImages = options?.syncImages !== false && !options?.listingPipeline;
   let imageStats: GoogleImageSyncStats | undefined;
   if (shouldSyncImages && result.placeIds.length > 0) {
-    imageStats = await syncGoogleImagesForPlaceIds(supabase, result.placeIds, {
-      apiKey,
-      delayMs: 150,
-    });
+    try {
+      imageStats = await syncGoogleImagesForPlaceIds(supabase, result.placeIds, {
+        apiKey,
+        delayMs: 150,
+      });
+    } catch (imageError) {
+      console.error("[discoverGooglePlacesInContext] image sync failed:", imageError);
+    }
   }
 
   const label = [context.city, context.district, context.province].filter(Boolean).join(", ");
@@ -269,7 +277,8 @@ export async function discoverGooglePlacesInContext(
   const imageSummary = imageStats
     ? ` Images synced for ${imageStats.synced} salon(s) (${imageStats.photos} Google photos${imageStats.skipped ? `, ${imageStats.skipped} without photos` : ""}${imageStats.failed ? `, ${imageStats.failed} failed` : ""}).`
     : "";
-  const baseMessage = `Discovered and published ${result.count} listing(s) for ${label || "Sri Lanka"}.${dedupSummary}${imageSummary}`;
+  const actionLabel = options?.listingPipeline ? "Captured" : "Discovered and published";
+  const baseMessage = `${actionLabel} ${result.count} listing(s) for ${label || "Sri Lanka"}.${dedupSummary}${imageSummary}`;
 
   return {
     count: result.count,
@@ -282,4 +291,14 @@ export async function discoverGooglePlacesInContext(
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function throwSalonUpsertError(error: unknown): never {
+  const message =
+    typeof error === "object" && error && "message" in error
+      ? String((error as { message: unknown }).message)
+      : error instanceof Error
+        ? error.message
+        : "Failed to save salon data";
+  throw new Error(message);
 }

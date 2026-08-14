@@ -54,6 +54,7 @@ export default function ListingDataCapturePage() {
       const response = await fetch("/api/listing-generation/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({
           province: selectedProvince,
           district: selectedDistrict,
@@ -63,8 +64,12 @@ export default function ListingDataCapturePage() {
         }),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Capture failed");
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        count?: number;
+      };
+      if (!response.ok) throw new Error(data.error || `Capture failed (${response.status})`);
 
       toast.success(data.message || "Listing data captured.", { id: "listing_capture" });
       if (typeof data.count === "number" && data.count > 0) {
