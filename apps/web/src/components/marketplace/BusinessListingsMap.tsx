@@ -77,6 +77,11 @@ function RouteOverlay({
   const map = useMap();
   const rendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
 
+  const originLat = origin?.lat ?? null;
+  const originLng = origin?.lng ?? null;
+  const destLat = destination?.lat ?? null;
+  const destLng = destination?.lng ?? null;
+
   useEffect(() => {
     if (!map) return;
     if (!rendererRef.current) {
@@ -93,7 +98,7 @@ function RouteOverlay({
     }
 
     const renderer = rendererRef.current;
-    if (!origin || !destination) {
+    if (originLat == null || originLng == null || destLat == null || destLng == null) {
       renderer.set("directions", null);
       return;
     }
@@ -102,8 +107,8 @@ function RouteOverlay({
     let cancelled = false;
     service.route(
       {
-        origin,
-        destination,
+        origin: { lat: originLat, lng: originLng },
+        destination: { lat: destLat, lng: destLng },
         travelMode: google.maps.TravelMode.DRIVING,
       },
       (result, status) => {
@@ -115,7 +120,7 @@ function RouteOverlay({
     return () => {
       cancelled = true;
     };
-  }, [map, origin?.lat, origin?.lng, destination?.lat, destination?.lng]);
+  }, [map, originLat, originLng, destLat, destLng]);
 
   return null;
 }
@@ -171,7 +176,7 @@ export function BusinessListingsMap({ listings, searchLocation = "" }: Props) {
   );
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [searchOrigin, setSearchOrigin] = useState<DeviceCoords | null>(null);
+  const [geocodedOrigin, setGeocodedOrigin] = useState<{ query: string; coords: DeviceCoords } | null>(null);
 
   const defaultSelectedId = mappableListings[0]?.id || listings[0]?.id || null;
   const effectiveSelectedId =
@@ -182,12 +187,11 @@ export function BusinessListingsMap({ listings, searchLocation = "" }: Props) {
   const selectedPoint = points.find((point) => point.id === selectedListing?.id) || null;
 
   const searchQuery = searchLocation.trim();
+  const searchOrigin =
+    searchQuery && geocodedOrigin?.query === searchQuery ? geocodedOrigin.coords : null;
 
   useEffect(() => {
-    if (!searchQuery) {
-      setSearchOrigin(null);
-      return;
-    }
+    if (!searchQuery) return;
 
     const controller = new AbortController();
     void (async () => {
@@ -197,12 +201,17 @@ export function BusinessListingsMap({ listings, searchLocation = "" }: Props) {
         });
         const payload = (await response.json()) as { lat?: number; lng?: number };
         if (!response.ok || payload.lat == null || payload.lng == null) return;
-        setSearchOrigin((current) => {
-          const next = { lat: payload.lat as number, lng: payload.lng as number };
-          if (current && Math.abs(current.lat - next.lat) < 0.00001 && Math.abs(current.lng - next.lng) < 0.00001) {
+        const next = { lat: payload.lat, lng: payload.lng };
+        setGeocodedOrigin((current) => {
+          if (
+            current?.query === searchQuery &&
+            current.coords &&
+            Math.abs(current.coords.lat - next.lat) < 0.00001 &&
+            Math.abs(current.coords.lng - next.lng) < 0.00001
+          ) {
             return current;
           }
-          return next;
+          return { query: searchQuery, coords: next };
         });
       } catch {
         /* keep previous origin */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TravelEstimate } from "@/lib/google-travel";
 import type { SalonMapInput } from "@/lib/salon-map";
 import { getSalonFullAddress } from "@/lib/salon-map";
@@ -42,15 +42,17 @@ export function useDeviceTravel(
   const [error, setError] = useState<string | null>(null);
 
   const origin = originOverride || deviceOrigin;
+  const originLat = origin?.lat ?? null;
+  const originLng = origin?.lng ?? null;
 
-  const destinationKey = useMemo(() => {
-    if (!salon) return "";
-    return [
-      salon.place_id || "",
-      salon.latitude ?? "",
-      salon.longitude ?? "",
-      getSalonFullAddress(salon),
-    ].join("|");
+  const destination = useMemo(() => {
+    if (!salon) return null;
+    return {
+      latitude: salon.latitude ?? null,
+      longitude: salon.longitude ?? null,
+      placeId: salon.place_id ?? null,
+      address: getSalonFullAddress(salon),
+    };
   }, [
     salon?.place_id,
     salon?.latitude,
@@ -117,21 +119,10 @@ export function useDeviceTravel(
     return () => window.removeEventListener("trimma-device-location-updated", onStored);
   }, [applyCoords]);
 
-  const salonRef = useRef(salon);
-  salonRef.current = salon;
-
   useEffect(() => {
-    const currentSalon = salonRef.current;
-    if (!origin || !destinationKey || !currentSalon) return;
+    if (originLat == null || originLng == null || !destination) return;
 
     const controller = new AbortController();
-    const destination = {
-      latitude: currentSalon.latitude ?? null,
-      longitude: currentSalon.longitude ?? null,
-      placeId: currentSalon.place_id ?? null,
-      address: getSalonFullAddress(currentSalon),
-    };
-
     void (async () => {
       setLoadingTravel(true);
       setError(null);
@@ -141,8 +132,8 @@ export function useDeviceTravel(
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            originLat: origin.lat,
-            originLng: origin.lng,
+            originLat,
+            originLng,
             ...destination,
           }),
         });
@@ -161,13 +152,13 @@ export function useDeviceTravel(
     })();
 
     return () => controller.abort();
-  }, [origin?.lat, origin?.lng, destinationKey]);
+  }, [originLat, originLng, destination]);
 
   return {
     status: originOverride ? ("granted" as LocationStatus) : status,
     origin,
-    estimate: origin && destinationKey ? estimate : null,
-    loadingTravel: Boolean(origin && destinationKey && loadingTravel),
+    estimate: origin && destination ? estimate : null,
+    loadingTravel: Boolean(origin && destination && loadingTravel),
     error,
     requestLocation,
   };
