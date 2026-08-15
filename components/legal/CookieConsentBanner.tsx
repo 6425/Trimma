@@ -3,12 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  ALL_COOKIE_CONSENT,
-  DEFAULT_COOKIE_CONSENT,
-  hasCookieConsentChoice,
-  readCookieConsent,
   requestDeviceLocation,
   saveCookieConsent,
+  readCookieConsent,
   type CookieConsentPreferences,
 } from "@/lib/cookie-consent";
 
@@ -37,18 +34,18 @@ const preferenceOptions = [
 ];
 
 export function CookieConsentBanner() {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [showPreferences, setShowPreferences] = useState(false);
-  const [preferences, setPreferences] = useState<Omit<CookieConsentPreferences, "updatedAt">>({
-    ...DEFAULT_COOKIE_CONSENT,
+  const [preferences, setPreferences] = useState<Omit<CookieConsentPreferences, "updatedAt" | "version">>({
+    essential: true,
+    analytics: false,
+    functional: false,
+    marketing: false,
+    location: true,
   });
 
   useEffect(() => {
-    setVisible(!hasCookieConsentChoice());
-  }, []);
-
-  useEffect(() => {
-    const syncFromStorage = () => {
+    const applyStoredPreferences = () => {
       const stored = readCookieConsent();
       if (stored) {
         setPreferences({
@@ -58,16 +55,16 @@ export function CookieConsentBanner() {
           marketing: stored.marketing,
           location: stored.location,
         });
-        setVisible(false);
         return;
       }
-
       setVisible(true);
     };
 
-    syncFromStorage();
-    window.addEventListener("trimma-cookie-consent-updated", syncFromStorage);
-    return () => window.removeEventListener("trimma-cookie-consent-updated", syncFromStorage);
+    applyStoredPreferences();
+    setVisible(true);
+
+    window.addEventListener("trimma-cookie-consent-updated", applyStoredPreferences);
+    return () => window.removeEventListener("trimma-cookie-consent-updated", applyStoredPreferences);
   }, []);
 
   if (!visible) return null;
@@ -82,7 +79,7 @@ export function CookieConsentBanner() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[100] p-4 sm:p-6 pointer-events-none">
+    <div className="fixed inset-x-0 bottom-0 z-[400] p-4 sm:p-6 pointer-events-none">
       <div
         role="dialog"
         aria-labelledby="cookie-consent-title"
