@@ -3,10 +3,7 @@ export const SUPABASE_ID_PAGE_SIZE = 100;
 
 /**
  * Load every matching row using id-cursor pages.
- *
- * Offset/range pagination cannot pass PostgREST max_rows: range(500, 599)
- * returns empty when max_rows is 500, so listed counts freeze at 500.
- * Filtering `id > lastId` is not an offset, so it is not blocked.
+ * Stop if a page adds no new ids (PostgREST repeating the first 500).
  */
 export async function fetchAllByIdCursor<T extends { id?: unknown }>(
   run: (afterId: string | null, pageSize: number) => Promise<T[] | null>
@@ -19,13 +16,16 @@ export async function fetchAllByIdCursor<T extends { id?: unknown }>(
     const page = (await run(afterId, SUPABASE_ID_PAGE_SIZE)) ?? [];
     if (page.length === 0) break;
 
+    let added = 0;
     for (const row of page) {
       const id = row.id == null ? "" : String(row.id);
       if (!id || seen.has(id)) continue;
       seen.add(id);
       rows.push(row);
+      added += 1;
     }
 
+    if (added === 0) break;
     if (page.length < SUPABASE_ID_PAGE_SIZE) break;
     const lastId = page[page.length - 1]?.id;
     afterId = lastId == null ? null : String(lastId);

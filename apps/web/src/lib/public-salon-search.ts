@@ -148,11 +148,9 @@ export async function fetchPublicSalons(
 
   const data = postFilterActive
     ? await fetchAllByIdCursor(async (afterId, pageSize) => {
-        let query = applyFilters(supabase.from("salons"), false)
-          .order("id", { ascending: true })
-          .limit(pageSize);
+        let query = applyFilters(supabase.from("salons"), false);
         if (afterId) query = query.gt("id", afterId);
-        const { data: page, error } = await query;
+        const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
         if (error) throw new Error(error.message);
         return page || [];
       })
@@ -257,6 +255,29 @@ function sortBusinessListingRows(
   return copy;
 }
 
+async function loadPublishedMarketplaceListings(
+  supabase: SupabaseClient
+): Promise<Array<Record<string, unknown>> | null> {
+  const rpc = await supabase.rpc("published_marketplace_listings");
+  if (rpc.error || rpc.data == null) return null;
+  const raw = typeof rpc.data === "string" ? JSON.parse(rpc.data) : rpc.data;
+  return Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : null;
+}
+
+function rowMatchesTextQuery(row: Record<string, unknown>, q: string): boolean {
+  if (!q.trim()) return true;
+  const needle = q.trim().toLowerCase();
+  return [row.name, row.category, row.city, row.district, row.province, row.address]
+    .some((value) => String(value || "").toLowerCase().includes(needle));
+}
+
+function rowMatchesLocationQuery(row: Record<string, unknown>, location: string): boolean {
+  if (!location.trim()) return true;
+  const needle = location.trim().toLowerCase();
+  return [row.city, row.district, row.province, row.address]
+    .some((value) => String(value || "").toLowerCase().includes(needle));
+}
+
 export async function fetchBusinessListingCards(
   supabase: SupabaseClient,
   params: Omit<PublicSalonSearchParams, "bookableOnly">
@@ -274,33 +295,44 @@ export async function fetchBusinessListingCards(
     offset = 0,
   } = params;
 
-  const data = await fetchAllByIdCursor(async (afterId, pageSize) => {
-    let query = supabase.from("salons").select(BUSINESS_LISTING_SELECT);
+  let data = publishedOnly ? await loadPublishedMarketplaceListings(supabase) : null;
 
-    if (publishedOnly) {
-      query = query.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
-    }
-    query = query.in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
+  if (!data) {
+    data = await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase.from("salons").select(BUSINESS_LISTING_SELECT);
 
-    if (q) {
-      query = query.or(
-        `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
+      if (publishedOnly) {
+        query = query.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+      }
+      query = query.in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
+
+      if (q) {
+        query = query.or(
+          `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
+        );
+      }
+      if (location) {
+        const locationFilter = buildSalonLocationOrFilter(location);
+        if (locationFilter) query = query.or(locationFilter);
+      }
+      if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
+      if (verifiedOnly) query = query.eq("is_verified", true);
+
+      if (afterId) query = query.gt("id", afterId);
+      const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+      if (error) throw new Error(error.message);
+      return (page ?? []) as Array<Record<string, unknown>>;
+    });
+  } else {
+    if (q) data = data.filter((row) => rowMatchesTextQuery(row, q));
+    if (location) data = data.filter((row) => rowMatchesLocationQuery(row, location));
+    if (minRating > 0) {
+      data = data.filter(
+        (row) => Number(row.review_count || 0) > 0 && Number(row.rating || 0) >= minRating
       );
     }
-    if (location) {
-      const locationFilter = buildSalonLocationOrFilter(location);
-      if (locationFilter) query = query.or(locationFilter);
-    }
-    if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
-    if (verifiedOnly) query = query.eq("is_verified", true);
-
-    query = query.order("id", { ascending: true }).limit(pageSize);
-    if (afterId) query = query.gt("id", afterId);
-
-    const { data: page, error } = await query;
-    if (error) throw new Error(error.message);
-    return (page ?? []) as Array<Record<string, unknown>>;
-  });
+    if (verifiedOnly) data = data.filter((row) => Boolean(row.is_verified));
+  }
 
   const rows = sortBusinessListingRows(
     filterBusinessListingRows(data, { category, categoryName, publishedOnly }),
@@ -320,21 +352,20 @@ export async function countPublishedListingsByCategory(
   supabase: SupabaseClient,
   categories: Array<{ name: string; slug: string }>
 ): Promise<Record<string, number>> {
-  const data = await fetchAllByIdCursor(async (afterId, pageSize) => {
-    let query = supabase
-      .from("salons")
-      .select("id, name, slug, category, status, public_visibility, is_verified, booking_enabled, source_type, onboarding_status, business_info_extended")
-      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED)
-      .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"])
-      .order("id", { ascending: true })
-      .limit(pageSize);
-
-    if (afterId) query = query.gt("id", afterId);
-
-    const { data: page, error } = await query;
-    if (error) throw new Error(error.message);
-    return (page ?? []) as Array<Record<string, unknown>>;
-  });
+  const rpcRows = await loadPublishedMarketplaceListings(supabase);
+  const data =
+    rpcRows ??
+    (await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase
+        .from("salons")
+        .select("id, name, slug, category, status, public_visibility, is_verified, booking_enabled, source_type, onboarding_status, business_info_extended")
+        .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED)
+        .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
+      if (afterId) query = query.gt("id", afterId);
+      const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+      if (error) throw new Error(error.message);
+      return (page ?? []) as Array<Record<string, unknown>>;
+    }));
 
   const rows = filterBusinessListingRows(data, { publishedOnly: true });
   const counts: Record<string, number> = {};

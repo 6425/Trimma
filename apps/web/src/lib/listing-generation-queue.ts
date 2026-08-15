@@ -5,6 +5,7 @@ import {
 } from "@/lib/salon-listing-pipeline";
 import { isMissingDbSchemaError } from "@/lib/with-admin-db";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
+import { getSupabaseServerEnv } from "@/lib/supabase-server-env";
 
 export type ListingQueueRow = {
   id: string;
@@ -23,6 +24,12 @@ export type ListingQueueRow = {
   source_type: string | null;
   created_at: string;
   captured_at: string | null;
+};
+
+export type ListingQueuePayload = {
+  rows: ListingQueueRow[];
+  pendingCount: number;
+  listedCount: number;
 };
 
 const QUEUE_SELECT_FULL =
@@ -65,6 +72,71 @@ function sortQueueRowsNewestFirst(rows: ListingQueueRow[]): ListingQueueRow[] {
   });
 }
 
+function parseQueueRpcPayload(raw: unknown): ListingQueuePayload | null {
+  const payload =
+    typeof raw === "string"
+      ? (JSON.parse(raw) as Record<string, unknown>)
+      : raw && typeof raw === "object"
+        ? (raw as Record<string, unknown>)
+        : null;
+  if (!payload) return null;
+
+  const list = Array.isArray(payload.rows) ? payload.rows : [];
+  const rows = sortQueueRowsNewestFirst(mapQueueRows(list as Array<Record<string, unknown>>));
+  const pendingCount = Number(payload.pendingCount);
+  const listedCount = Number(payload.listedCount);
+  if (!Number.isFinite(pendingCount) || !Number.isFinite(listedCount)) return null;
+
+  return { rows, pendingCount, listedCount };
+}
+
+async function restLoadQueueRows(select: string): Promise<Array<Record<string, unknown>>> {
+  const { url, serviceRoleKey } = getSupabaseServerEnv();
+  const rows: Array<Record<string, unknown>> = [];
+  const seen = new Set<string>();
+  let afterId: string | null = null;
+
+  for (let i = 0; i < 5000; i++) {
+    const qs = [
+      `select=${encodeURIComponent(select)}`,
+      "onboarding_status=in.(LISTING_CAPTURED,LISTING_PUBLISHED)",
+      "order=id.asc",
+      "limit=100",
+    ];
+    if (afterId) qs.push(`id=gt.${afterId}`);
+
+    const response = await fetch(`${url}/rest/v1/salons?${qs.join("&")}`, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      throw new Error((await response.text()) || `Queue fetch failed (${response.status})`);
+    }
+
+    const page = (await response.json()) as Array<Record<string, unknown>>;
+    if (!page.length) break;
+
+    let added = 0;
+    for (const row of page) {
+      const id = String(row.id || "");
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      rows.push(row);
+      added += 1;
+    }
+
+    if (added === 0 || page.length < 100) break;
+    afterId = String(page[page.length - 1]?.id || "");
+    if (!afterId) break;
+  }
+
+  return rows;
+}
+
 async function queryQueueRows(
   supabase: SupabaseClient,
   select: string
@@ -75,71 +147,67 @@ async function queryQueueRows(
   ];
 
   return fetchAllByIdCursor(async (afterId, pageSize) => {
-    let query = supabase
-      .from("salons")
-      .select(select)
-      .in("onboarding_status", statuses)
-      .order("id", { ascending: true })
-      .limit(pageSize);
-
+    let query = supabase.from("salons").select(select).in("onboarding_status", statuses);
     if (afterId) query = query.gt("id", afterId);
-
-    const { data, error } = await query;
+    const { data, error } = await query.order("id", { ascending: true }).limit(pageSize);
     if (error) throw error;
     return (data ?? []) as unknown as Array<Record<string, unknown>>;
   });
 }
 
-async function countSalonsByOnboardingStatus(
-  supabase: SupabaseClient,
-  status: string
-): Promise<number> {
-  const rows = await fetchAllByIdCursor(async (afterId, pageSize) => {
-    let query = supabase
-      .from("salons")
-      .select("id")
-      .eq("onboarding_status", status)
-      .order("id", { ascending: true })
-      .limit(pageSize);
+async function loadQueueRowsFallback(supabase: SupabaseClient): Promise<ListingQueueRow[]> {
+  try {
+    const rows = await restLoadQueueRows(QUEUE_SELECT_FULL);
+    return sortQueueRowsNewestFirst(mapQueueRows(rows));
+  } catch {
+    try {
+      const rows = await queryQueueRows(supabase, QUEUE_SELECT_FULL);
+      return sortQueueRowsNewestFirst(mapQueueRows(rows));
+    } catch (primaryError) {
+      const message =
+        typeof primaryError === "object" && primaryError && "message" in primaryError
+          ? String((primaryError as { message: unknown }).message)
+          : String(primaryError);
 
-    if (afterId) query = query.gt("id", afterId);
+      if (!isMissingDbSchemaError(message)) {
+        throw new Error(message);
+      }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data ?? [];
-  });
+      const rows = await queryQueueRows(supabase, QUEUE_SELECT_BASE);
+      return sortQueueRowsNewestFirst(mapQueueRows(rows));
+    }
+  }
+}
 
-  return rows.length;
+export async function loadListingGenerationQueue(
+  supabase: SupabaseClient
+): Promise<ListingQueuePayload> {
+  const rpc = await supabase.rpc("listing_generation_queue_payload");
+  if (!rpc.error && rpc.data != null) {
+    const parsed = parseQueueRpcPayload(rpc.data);
+    if (parsed) return parsed;
+  }
+
+  const rows = await loadQueueRowsFallback(supabase);
+  return {
+    rows,
+    pendingCount: rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED)
+      .length,
+    listedCount: rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED)
+      .length,
+  };
 }
 
 export async function countListingGenerationQueue(
   supabase: SupabaseClient
 ): Promise<{ pendingCount: number; listedCount: number }> {
-  const [pendingCount, listedCount] = await Promise.all([
-    countSalonsByOnboardingStatus(supabase, LISTING_ONBOARDING_STATUS.CAPTURED),
-    countSalonsByOnboardingStatus(supabase, LISTING_ONBOARDING_STATUS.PUBLISHED),
-  ]);
-
-  return { pendingCount, listedCount };
+  const payload = await loadListingGenerationQueue(supabase);
+  return { pendingCount: payload.pendingCount, listedCount: payload.listedCount };
 }
 
 export async function loadListingGenerationQueueRows(
   supabase: SupabaseClient
 ): Promise<ListingQueueRow[]> {
-  try {
-    const rows = await queryQueueRows(supabase, QUEUE_SELECT_FULL);
-    return sortQueueRowsNewestFirst(mapQueueRows(rows));
-  } catch (primaryError) {
-    const message =
-      typeof primaryError === "object" && primaryError && "message" in primaryError
-        ? String((primaryError as { message: unknown }).message)
-        : String(primaryError);
-
-    if (!isMissingDbSchemaError(message)) {
-      throw new Error(message);
-    }
-
-    const rows = await queryQueueRows(supabase, QUEUE_SELECT_BASE);
-    return sortQueueRowsNewestFirst(mapQueueRows(rows));
-  }
+  const payload = await loadListingGenerationQueue(supabase);
+  return payload.rows;
 }
