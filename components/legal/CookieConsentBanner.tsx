@@ -7,6 +7,7 @@ import {
   DEFAULT_COOKIE_CONSENT,
   hasCookieConsentChoice,
   readCookieConsent,
+  requestDeviceLocation,
   saveCookieConsent,
   type CookieConsentPreferences,
 } from "@/lib/cookie-consent";
@@ -15,12 +16,18 @@ const preferenceOptions = [
   {
     key: "analytics" as const,
     label: "Performance & analytics",
-    description: "Help us measure and improve platform performance.",
+    description: "Help us measure and improve how Trimma works.",
   },
   {
     key: "functional" as const,
     label: "Functional",
-    description: "Remember preferences such as language, location, and saved salons.",
+    description: "Remember preferences such as language and saved salons or styles.",
+  },
+  {
+    key: "location" as const,
+    label: "Device location",
+    description:
+      "Allow Trimma to request your device GPS so map results can show accurate distance, travel time, and the easiest route to a business. This is optional, used only for directions, and your browser will still ask you to confirm access.",
   },
   {
     key: "marketing" as const,
@@ -49,6 +56,7 @@ export function CookieConsentBanner() {
           analytics: stored.analytics,
           functional: stored.functional,
           marketing: stored.marketing,
+          location: stored.location,
         });
         setVisible(false);
         return;
@@ -64,8 +72,11 @@ export function CookieConsentBanner() {
 
   if (!visible) return null;
 
-  const persist = (next: Omit<CookieConsentPreferences, "updatedAt">) => {
+  const persist = (next: Omit<CookieConsentPreferences, "updatedAt" | "version">) => {
     saveCookieConsent(next);
+    if (next.location) {
+      requestDeviceLocation();
+    }
     setVisible(false);
     setShowPreferences(false);
   };
@@ -85,13 +96,20 @@ export function CookieConsentBanner() {
               Cookie preferences
             </p>
             <h2 id="cookie-consent-title" className="text-lg font-extrabold text-zinc-900 dark:text-white">
-              We use cookies to improve your Trimma experience
+              Cookies, privacy, and optional location
             </h2>
             <p id="cookie-consent-description" className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-              Essential cookies are required for sign-in, security, and booking. You can choose
-              whether to allow performance, functional, and marketing cookies. Read our{" "}
+              We use cookies and similar technologies to operate Trimma, keep your session secure, and
+              remember your preferences. To show accurate search and map information — including
+              distance and the fastest way to reach a business — we can use your device location if you
+              enable GPS. Location access is optional, is not used for advertising, and your browser
+              will ask you to confirm it. Essential cookies are always on. Read our{" "}
               <Link href="/cookies" className="font-semibold text-zinc-900 underline decoration-[#ffde5a] decoration-2 underline-offset-4 dark:text-white">
                 Cookie Policy
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy-policy" className="font-semibold text-zinc-900 underline decoration-[#ffde5a] decoration-2 underline-offset-4 dark:text-white">
+                Privacy Policy
               </Link>
               .
             </p>
@@ -108,14 +126,30 @@ export function CookieConsentBanner() {
               </button>
               <button
                 type="button"
-                onClick={() => persist({ ...DEFAULT_COOKIE_CONSENT })}
+                onClick={() =>
+                  persist({
+                    essential: true,
+                    analytics: false,
+                    functional: false,
+                    marketing: false,
+                    location: false,
+                  })
+                }
                 className="h-11 rounded-xl border border-zinc-200 px-4 text-sm font-semibold text-zinc-900 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-900"
               >
                 Essential only
               </button>
               <button
                 type="button"
-                onClick={() => persist({ ...ALL_COOKIE_CONSENT })}
+                onClick={() =>
+                  persist({
+                    essential: true,
+                    analytics: true,
+                    functional: true,
+                    marketing: true,
+                    location: true,
+                  })
+                }
                 className="h-11 rounded-xl bg-zinc-900 px-4 text-sm font-bold text-white transition-colors hover:bg-zinc-800"
               >
                 Accept all

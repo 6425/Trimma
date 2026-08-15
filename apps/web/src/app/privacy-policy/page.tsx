@@ -7,7 +7,7 @@ const collectItems = [
   { label: "Salon business data", text: "Salon profile, services, staff, pricing, schedules, and media you upload." },
   { label: "Booking data", text: "Appointments, selected services, stylists, dates, and times." },
   { label: "Payment data", text: "Reservation and payment details processed through our payment partners." },
-  { label: "Device & location", text: "Device type, browser, IP-derived location, and usage analytics." },
+  { label: "Device & location", text: "Device type, browser, IP-derived region, and — only if you opt in — precise GPS used to calculate distance and travel time to a business. Precise location is optional and not used for advertising." },
   { label: "Reviews & communication", text: "Ratings, reviews, and messages you send through Trimma." },
   { label: "Social connections", text: "Profile data shared when you sign in with a social provider." },
 ];
@@ -16,7 +16,7 @@ const useItems = [
   "Provide and operate the Trimma platform and marketplace.",
   "Create, manage, and confirm bookings and appointments.",
   "Send booking, reservation, and account notifications.",
-  "Measure and improve platform performance and reliability.",
+  "Provide map directions, distance, and travel time when you choose to share your device location.",
   "Protect against fraud and keep the platform secure.",
   "Respond to your questions and provide customer support.",
 ];

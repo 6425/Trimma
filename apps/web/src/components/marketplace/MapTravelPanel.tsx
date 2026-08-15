@@ -43,7 +43,7 @@ export function MapTravelPanel({
           onClick={onRequestLocation}
         >
           <Navigation2 className="mr-1.5 h-3.5 w-3.5" />
-          Use my location
+          Enable location for accurate distance
         </Button>
         {error && <p className="mt-1 text-[11px] font-medium text-zinc-500">{error}</p>}
       </div>

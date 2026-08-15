@@ -13,7 +13,11 @@ const cookieTypes = [
   },
   {
     label: "Functional cookies",
-    text: "Remember your preferences such as language, location, and saved salons or styles.",
+    text: "Remember your preferences such as language and saved salons or styles.",
+  },
+  {
+    label: "Device location",
+    text: "Optional. If you enable this, Trimma may request your device GPS (with a separate browser permission) to show accurate distance, travel time, and the easiest route to businesses on the map. Location is used only for directions and search accuracy, not for advertising.",
   },
   {
     label: "Marketing cookies",
@@ -125,7 +129,10 @@ export default function CookiePolicyPage() {
               </li>
               <li className="flex gap-3 text-gray-600 leading-7">
                 <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ffde5a]" />
-                <span>Analyze usage to improve platform performance.</span>
+                <span>
+                  If you opt in, use device location to show accurate distance and the fastest
+                  route to a business on the map.
+                </span>
               </li>
             </ul>
           </Section>
