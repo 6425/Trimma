@@ -1,3 +1,5 @@
+export type TravelMode = "driving" | "walking" | "transit";
+
 export type SalonMapInput = {
   name?: string | null;
   address?: string | null;
@@ -28,28 +30,63 @@ export function getSalonFullAddress(salon: SalonMapInput & { location?: string |
   return salon.name?.trim() || "Salon location";
 }
 
-export function getSalonDirectionsUrl(salon: SalonMapInput): string | null {
+export function getSalonDirectionsUrl(
+  salon: SalonMapInput,
+  origin?: { lat: number; lng: number } | null,
+  travelMode: TravelMode = "driving"
+): string | null {
   const lat = parseCoord(salon.latitude);
   const lng = parseCoord(salon.longitude);
+  const originParam =
+    origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng)
+      ? `&origin=${origin.lat},${origin.lng}`
+      : "";
+  const modeParam = `&travelmode=${travelMode}`;
+
+  if (lat !== null && lng !== null) {
+    return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${lat},${lng}${modeParam}`;
+  }
+
+  if (salon.place_id?.trim()) {
+    return `https://www.google.com/maps/dir/?api=1${originParam}&destination=place_id:${encodeURIComponent(salon.place_id.trim())}${modeParam}`;
+  }
+
+  const address = getSalonFullAddress(salon);
+  if (address) {
+    return `https://www.google.com/maps/dir/?api=1${originParam}&destination=${encodeURIComponent(address)}${modeParam}`;
+  }
 
   if (salon.map_url?.trim()) {
     return salon.map_url.trim();
   }
 
-  if (lat !== null && lng !== null) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  }
-
-  if (salon.place_id?.trim()) {
-    return `https://www.google.com/maps/dir/?api=1&destination=place_id:${encodeURIComponent(salon.place_id.trim())}`;
-  }
-
-  const address = getSalonFullAddress(salon);
-  if (address) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-  }
-
   return null;
+}
+
+function destinationQuery(salon: SalonMapInput): string | null {
+  const lat = parseCoord(salon.latitude);
+  const lng = parseCoord(salon.longitude);
+  if (salon.place_id?.trim()) return `place_id:${salon.place_id.trim()}`;
+  if (lat !== null && lng !== null) return `${lat},${lng}`;
+  const address = getSalonFullAddress(salon);
+  return address || null;
+}
+
+/** Directions embed from the visitor's location to the salon (API key preferred). */
+export function getSalonDirectionsEmbedUrl(
+  salon: SalonMapInput,
+  origin: { lat: number; lng: number },
+  travelMode: TravelMode = "driving"
+): string | null {
+  const destination = destinationQuery(salon);
+  if (!destination) return null;
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (apiKey) {
+    return `https://www.google.com/maps/embed/v1/directions?key=${apiKey}&origin=${origin.lat},${origin.lng}&destination=${encodeURIComponent(destination)}&mode=${travelMode}`;
+  }
+
+  return `https://www.google.com/maps?saddr=${origin.lat},${origin.lng}&daddr=${encodeURIComponent(destination)}&mode=${travelMode}&output=embed`;
 }
 
 /** Embed URL for an iframe (no API key required). */

@@ -3,12 +3,15 @@
 import { ExternalLink, MapPin, Navigation2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  getSalonDirectionsEmbedUrl,
   getSalonDirectionsUrl,
   getSalonFullAddress,
   getSalonMapEmbedUrl,
   salonHasMapData,
   type SalonMapInput,
 } from "@/lib/salon-map";
+import { useDeviceTravel } from "@/hooks/use-device-travel";
+import { MapTravelPanel } from "@/components/marketplace/MapTravelPanel";
 
 type SalonLocationMapProps = {
   salon: SalonMapInput;
@@ -17,6 +20,16 @@ type SalonLocationMapProps = {
 };
 
 export function SalonLocationMap({ salon, compact = false, className = "" }: SalonLocationMapProps) {
+  const travel = useDeviceTravel(salonHasMapData(salon) ? salon : null);
+  const fastestMode = travel.estimate?.fastest.mode || "driving";
+  const placeEmbedUrl = getSalonMapEmbedUrl(salon);
+  const routeEmbedUrl = travel.origin
+    ? getSalonDirectionsEmbedUrl(salon, travel.origin, fastestMode)
+    : null;
+  const embedUrl = routeEmbedUrl || placeEmbedUrl;
+  const directionsUrl = getSalonDirectionsUrl(salon, travel.origin, fastestMode);
+  const fullAddress = getSalonFullAddress(salon);
+
   if (!salonHasMapData(salon)) {
     return (
       <div
@@ -29,10 +42,6 @@ export function SalonLocationMap({ salon, compact = false, className = "" }: Sal
     );
   }
 
-  const embedUrl = getSalonMapEmbedUrl(salon);
-  const directionsUrl = getSalonDirectionsUrl(salon);
-  const fullAddress = getSalonFullAddress(salon);
-
   return (
     <div className={`space-y-3 ${className}`}>
       <div className="flex items-start justify-between gap-3">
@@ -43,6 +52,14 @@ export function SalonLocationMap({ salon, compact = false, className = "" }: Sal
               {fullAddress}
             </p>
           )}
+          <MapTravelPanel
+            compact
+            status={travel.status}
+            estimate={travel.estimate}
+            loadingTravel={travel.loadingTravel}
+            error={travel.error}
+            onRequestLocation={travel.requestLocation}
+          />
         </div>
         {directionsUrl && (
           <Button
@@ -61,6 +78,7 @@ export function SalonLocationMap({ salon, compact = false, className = "" }: Sal
       {embedUrl ? (
         <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-inner aspect-[4/3]">
           <iframe
+            key={embedUrl}
             title={`Map showing ${salon.name || "salon"} location`}
             src={embedUrl}
             className="absolute inset-0 h-full w-full border-0"
@@ -84,7 +102,7 @@ export function SalonLocationMap({ salon, compact = false, className = "" }: Sal
           className="inline-flex items-center gap-1.5 text-[11px] font-bold text-zinc-600 hover:text-zinc-900 transition-colors"
         >
           <ExternalLink className="w-3.5 h-3.5" />
-          Open in Google Maps
+          Open fastest route in Google Maps
         </a>
       )}
     </div>

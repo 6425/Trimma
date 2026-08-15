@@ -9,7 +9,9 @@ import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { getListingMapEmbedUrl, listingHasMapDisplay } from "@/lib/business-listing-mapper";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
-import { getSalonDirectionsUrl } from "@/lib/salon-map";
+import { getSalonDirectionsEmbedUrl, getSalonDirectionsUrl, type SalonMapInput } from "@/lib/salon-map";
+import { useDeviceTravel } from "@/hooks/use-device-travel";
+import { MapTravelPanel } from "@/components/marketplace/MapTravelPanel";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
@@ -34,18 +36,32 @@ export function BusinessListingsMap({ listings }: Props) {
 
   const selectedListing =
     listings.find((item) => item.id === effectiveSelectedId) || mappableListings[0] || listings[0] || null;
-  const embedUrl = selectedListing ? getListingMapEmbedUrl(selectedListing) : null;
-  const directionsUrl = selectedListing ? getSalonDirectionsUrl({
-    name: selectedListing.name,
-    address: selectedListing.address,
-    city: selectedListing.city,
-    district: selectedListing.district,
-    province: selectedListing.province,
-    place_id: selectedListing.placeId,
-    latitude: selectedListing.latitude,
-    longitude: selectedListing.longitude,
-    map_url: selectedListing.mapUrl,
-  }) : null;
+
+  const selectedSalon: SalonMapInput | null = selectedListing
+    ? {
+        name: selectedListing.name,
+        address: selectedListing.address,
+        city: selectedListing.city,
+        district: selectedListing.district,
+        province: selectedListing.province,
+        place_id: selectedListing.placeId,
+        latitude: selectedListing.latitude,
+        longitude: selectedListing.longitude,
+        map_url: selectedListing.mapUrl,
+      }
+    : null;
+
+  const travel = useDeviceTravel(selectedSalon);
+  const fastestMode = travel.estimate?.fastest.mode || "driving";
+  const placeEmbedUrl = selectedListing ? getListingMapEmbedUrl(selectedListing) : null;
+  const routeEmbedUrl =
+    selectedSalon && travel.origin
+      ? getSalonDirectionsEmbedUrl(selectedSalon, travel.origin, fastestMode)
+      : null;
+  const embedUrl = routeEmbedUrl || placeEmbedUrl;
+  const directionsUrl = selectedSalon
+    ? getSalonDirectionsUrl(selectedSalon, travel.origin, fastestMode)
+    : null;
 
   if (!listings.length) {
     return null;
@@ -57,7 +73,7 @@ export function BusinessListingsMap({ listings }: Props) {
         <div className="max-h-[320px] overflow-y-auto border-b border-slate-200 lg:max-h-[680px] lg:border-b-0 lg:border-r">
           <div className="sticky top-0 z-10 border-b border-slate-100 bg-white px-4 py-3">
             <p className="text-sm font-bold text-zinc-900">{listings.length} businesses</p>
-            <p className="text-xs text-zinc-500">Select a listing to show it on Google Maps</p>
+            <p className="text-xs text-zinc-500">Select a listing, then use your location for distance and the fastest route</p>
           </div>
           <ul className="divide-y divide-slate-100">
             {listings.map((listing) => {
@@ -133,6 +149,13 @@ export function BusinessListingsMap({ listings }: Props) {
             <div className="border-b border-slate-200 bg-white px-4 py-3">
               <p className="text-base font-bold text-zinc-900">{selectedListing.name}</p>
               <p className="mt-0.5 text-xs text-zinc-600">{selectedListing.location}</p>
+              <MapTravelPanel
+                status={travel.status}
+                estimate={travel.estimate}
+                loadingTravel={travel.loadingTravel}
+                error={travel.error}
+                onRequestLocation={travel.requestLocation}
+              />
               {directionsUrl && (
                 <a
                   href={directionsUrl}
@@ -141,7 +164,7 @@ export function BusinessListingsMap({ listings }: Props) {
                   className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 hover:text-zinc-900"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Open in Google Maps
+                  Open fastest route in Google Maps
                 </a>
               )}
             </div>
