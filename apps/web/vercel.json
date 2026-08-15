@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && TRIMMA_LISTING_UNCAP=db-rpc-sync npx turbo run build --filter=@trimma/web... --force --no-cache",
+  "buildCommand": "cd ../.. && TRIMMA_LISTING_UNCAP=rpc-page-v2 npx turbo run build --filter=@trimma/web... --force --no-cache",
   "installCommand": "npm install --prefix=../..",
   "git": {
     "deploymentEnabled": true

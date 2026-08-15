@@ -7,6 +7,7 @@ import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/li
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
+import { postSupabaseRpc } from "@/lib/supabase-rpc";
 
 function normalizeCategoryText(value: string): string {
   return value
@@ -256,12 +257,15 @@ function sortBusinessListingRows(
 }
 
 async function loadPublishedMarketplaceListings(
-  supabase: SupabaseClient
+  _supabase: SupabaseClient
 ): Promise<Array<Record<string, unknown>> | null> {
-  const rpc = await supabase.rpc("published_marketplace_listings");
-  if (rpc.error || rpc.data == null) return null;
-  const raw = typeof rpc.data === "string" ? JSON.parse(rpc.data) : rpc.data;
-  return Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : null;
+  try {
+    const raw = await postSupabaseRpc("published_marketplace_listings");
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? (parsed as Array<Record<string, unknown>>) : null;
+  } catch {
+    return null;
+  }
 }
 
 function rowMatchesTextQuery(row: Record<string, unknown>, q: string): boolean {
