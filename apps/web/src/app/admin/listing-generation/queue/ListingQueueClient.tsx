@@ -147,7 +147,9 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
         <Link href="/admin/listing-generation" className="text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-800">
           ← Salon Listing Generation
         </Link>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#1A1C29]">Listing queue</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#1A1C29]">
+          Listing queue · {listedCount} listed
+        </h1>
         <p className="mt-2 max-w-3xl text-sm text-zinc-600">
           Publish captured salons to the customer marketplace by category and location. When an owner is ready for
           bookings (via claim or salon request), start booking onboarding — both paths use the same verification flow.
