@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getLandingCategories, type LandingCategory } from "@/app/actions/landing-data";
+import { getCategoryPageHref } from "@/lib/public-categories";
 
 export function BrowseByService() {
   const [categories, setCategories] = useState<LandingCategory[]>([]);
@@ -60,7 +61,7 @@ export function BrowseByService() {
             {categories.map((svc, i) => (
               <Link 
                 key={i}
-                href={`/category/${svc.slug}`}
+                href={getCategoryPageHref(svc.slug)}
                 className="snap-start shrink-0 group flex flex-col w-[160px] sm:w-[200px]"
               >
                 <div className="relative aspect-square rounded-lg overflow-hidden mb-2 shadow-sm border border-zinc-100">

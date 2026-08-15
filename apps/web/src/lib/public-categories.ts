@@ -14,6 +14,7 @@ export const CATEGORY_SLUG_ALIASES: Record<string, string> = {
   "spa-and-wellness": "spa-wellness",
   "bridal-and-beauty": "bridal-beauty",
   "beauty-salon": "beauty-parlours",
+  "kids-and-family": "kids-family",
 };
 
 export function canonicalizeCategorySlug(slug: string): string {
@@ -47,7 +48,20 @@ export function dedupePublicCategories(categories: PublicCategory[]): PublicCate
   return result.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Context-aware category link — one nav, no duplicate bars per page. */
+/** Marketplace category page — always a dedicated hero + matching listings. */
+export function getCategoryPageHref(slug: string): string {
+  return `/category/${encodeURIComponent(canonicalizeCategorySlug(slug))}`;
+}
+
+export function findPublicCategory(
+  categories: PublicCategory[],
+  slug: string
+): PublicCategory | undefined {
+  const canonical = canonicalizeCategorySlug(slug);
+  return categories.find((category) => canonicalizeCategorySlug(category.slug) === canonical);
+}
+
+/** Context-aware category link — bookings stay on /bookings; everywhere else opens the category page. */
 export function buildCategoryHref(pathname: string | null, slug: string): string {
   if (!slug) {
     if (pathname?.startsWith("/bookings")) return "/bookings";
@@ -58,10 +72,7 @@ export function buildCategoryHref(pathname: string | null, slug: string): string
   if (pathname?.startsWith("/bookings")) {
     return `/bookings?category=${encodeURIComponent(canonical)}`;
   }
-  if (pathname === "/") {
-    return `/?category=${encodeURIComponent(canonical)}`;
-  }
-  return `/category/${encodeURIComponent(canonical)}`;
+  return getCategoryPageHref(canonical);
 }
 
 export function resolveActiveCategorySlug(

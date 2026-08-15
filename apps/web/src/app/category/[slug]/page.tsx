@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchBusinessListingCards } from "@/lib/public-salon-search";
-import { fetchPublicCategories, canonicalizeCategorySlug } from "@/lib/public-categories";
+import { fetchPublicCategories, canonicalizeCategorySlug, findPublicCategory } from "@/lib/public-categories";
 import CategoryClient from "./CategoryClient";
 import { redirect } from "next/navigation";
 
@@ -8,28 +8,39 @@ export const revalidate = 60;
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ q?: string; l?: string }>;
 };
 
-export default async function CategoryPage({ params }: PageProps) {
+export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const sp = await searchParams;
   const canonicalSlug = canonicalizeCategorySlug(slug);
   if (canonicalSlug !== slug) {
-    redirect(`/category/${canonicalSlug}`);
+    const paramsOut = new URLSearchParams();
+    if (sp.q?.trim()) paramsOut.set("q", sp.q.trim());
+    if (sp.l?.trim()) paramsOut.set("l", sp.l.trim());
+    const qs = paramsOut.toString();
+    redirect(qs ? `/category/${canonicalSlug}?${qs}` : `/category/${canonicalSlug}`);
   }
 
   const supabase = createServerSupabaseClient();
   const categories = await fetchPublicCategories();
-  const category = categories.find((c) => c.slug === canonicalSlug);
+  const category = findPublicCategory(categories, canonicalSlug);
   const categoryLabel =
     category?.name ||
     slug
       .replace(/-/g, " ")
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
+  const initialQuery = sp.q?.trim() || "";
+  const initialLocation = sp.l?.trim() || "";
+
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
   let initialHasMore = false;
   try {
     const result = await fetchBusinessListingCards(supabase, {
+      q: initialQuery,
+      location: initialLocation,
       category: canonicalSlug,
       categoryName: categoryLabel,
       publishedOnly: true,
@@ -44,12 +55,14 @@ export default async function CategoryPage({ params }: PageProps) {
 
   return (
     <CategoryClient
-      key={canonicalSlug}
+      key={`${canonicalSlug}|${initialQuery}|${initialLocation}`}
       slug={canonicalSlug}
       categories={categories}
       initialListings={initialListings}
       initialHasMore={initialHasMore}
       categoryLabel={categoryLabel}
+      initialQuery={initialQuery}
+      initialLocation={initialLocation}
     />
   );
 }

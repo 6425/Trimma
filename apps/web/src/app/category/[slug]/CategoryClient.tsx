@@ -22,7 +22,11 @@ import { BusinessListingsMap } from "../../../components/marketplace/BusinessLis
 import { ListingBrowseToolbar } from "../../../components/marketplace/ListingBrowseToolbar";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { FindBookGlowCta } from "../../../components/marketplace/FindBookGlowCta";
-import type { PublicCategory } from "@/lib/public-categories";
+import {
+  canonicalizeCategorySlug,
+  findPublicCategory,
+  type PublicCategory,
+} from "@/lib/public-categories";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 import { SriLankaLocationSelect } from "../../../components/locations/SriLankaLocationSelect";
 
@@ -52,7 +56,14 @@ type CategoryClientProps = {
   initialListings: BusinessListingCardData[];
   initialHasMore?: boolean;
   categoryLabel: string;
+  initialQuery?: string;
+  initialLocation?: string;
 };
+
+function categoryHeroImage(slug: string): string | undefined {
+  const canonical = canonicalizeCategorySlug(slug);
+  return CATEGORY_HERO_IMAGES[canonical] || CATEGORY_HERO_IMAGES[slug];
+}
 
 export default function CategoryClient({
   slug: slugStr,
@@ -60,22 +71,24 @@ export default function CategoryClient({
   initialListings,
   initialHasMore = false,
   categoryLabel: initialCategoryLabel,
+  initialQuery = "",
+  initialLocation = "",
 }: CategoryClientProps) {
   const [listings, setListings] = useState<BusinessListingCardData[]>(initialListings);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [appliedSearch, setAppliedSearch] = useState("");
-  const [appliedLocation, setAppliedLocation] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedLocation, setSelectedLocation] = useState(initialLocation);
+  const [appliedSearch, setAppliedSearch] = useState(initialQuery);
+  const [appliedLocation, setAppliedLocation] = useState(initialLocation);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const skipInitialFetchRef = useRef(true);
   const trackedCategorySlugRef = useRef<string | null>(null);
   const trackedSearchKeyRef = useRef<string | null>(null);
 
   const categoryLabel =
-    categories.find((c) => c.slug === slugStr)?.name || initialCategoryLabel;
+    findPublicCategory(categories, slugStr)?.name || initialCategoryLabel;
 
   const fetchKey = `${slugStr}|${categoryLabel}|${appliedSearch}|${appliedLocation}`;
   const [loadedFetchKey, setLoadedFetchKey] = useState(
@@ -181,7 +194,7 @@ export default function CategoryClient({
     setAppliedLocation(selectedLocation.trim());
   };
 
-  const splitHeroImage = CATEGORY_HERO_IMAGES[slugStr];
+  const splitHeroImage = categoryHeroImage(slugStr);
   const heroImage = splitHeroImage || DEFAULT_HERO_IMAGE;
   const useSplitHero = Boolean(splitHeroImage);
   const categoryName = categoryLabel;
@@ -192,8 +205,9 @@ export default function CategoryClient({
       
       {/* 1. HERO SECTION */}
       {useSplitHero ? (
-        <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
+        <section key={slugStr} className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
           <Image
+            key={heroImage}
             src={heroImage}
             alt=""
             fill
@@ -268,9 +282,10 @@ export default function CategoryClient({
           </div>
         </section>
       ) : (
-        <section className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
+        <section key={`${slugStr}-fallback`} className="page-hero-shell py-14 md:py-20 flex items-center justify-center">
           <div className="absolute inset-0 z-0">
             <Image
+              key={heroImage}
               src={heroImage}
               alt="Category Hero"
               fill

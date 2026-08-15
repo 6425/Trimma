@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Search, MapPin, Calendar, Scissors, Sparkles, Flower2, Hand, Droplets, Smile, Star } from "lucide-react";
 import { getLandingCategories, type LandingCategory } from "@/app/actions/landing-data";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
+import { getCategoryPageHref } from "@/lib/public-categories";
 
 // Helper to map category slugs to Lucide icons
 const getCategoryIcon = (slug: string) => {
@@ -159,7 +160,7 @@ export function SearchHeroWidget() {
               const Icon = getCategoryIcon(cat.slug);
               return (
                 <Link 
-                  href={`/?q=${encodeURIComponent(cat.name)}`} 
+                  href={getCategoryPageHref(cat.slug)} 
                   key={cat.id}
                   onClick={() => {
                     trackEvent(AnalyticsEvent.CategoryFilterChanged, {

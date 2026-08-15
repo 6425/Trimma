@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { LayoutGrid, Search, Sparkles, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getCategoryPageHref } from "@/lib/public-categories";
 
 export type CategoryRow = {
   id: string;
@@ -87,7 +88,7 @@ export default function CategoriesClient({
             {filtered.map((category) => (
               <Link
                 key={category.id}
-                href={`/category/${category.slug}`}
+                href={getCategoryPageHref(category.slug)}
                 className="group flex flex-col bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md hover:border-brand-pink/20 transition-all"
               >
                 <div className="relative aspect-[4/3] overflow-hidden">

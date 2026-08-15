@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { StyleSaveButton } from "../../components/styles/StyleSaveButton";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 import type { PublicPlatformStyle } from "../actions/platform-styles";
+import { getCategoryPageHref } from "@/lib/public-categories";
 
 type StylesGalleryProps = {
   initialStyles: PublicPlatformStyle[];
@@ -155,7 +156,7 @@ export function StylesGallery({ initialStyles, initialError }: StylesGalleryProp
                     </p>
                   </div>
                   <Link
-                    href={`/category/${category.slug}`}
+                    href={getCategoryPageHref(category.slug)}
                     className="text-xs font-bold text-[#ffde5a] hover:underline shrink-0"
                   >
                     Find salons →

@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { canonicalizeCategorySlug } from "@/lib/public-categories";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
@@ -55,13 +56,16 @@ export async function getLandingCategories(): Promise<LandingCategory[]> {
       }
     });
 
-    const enriched: LandingCategory[] = (catRes.data || []).map((c: any) => ({
-      id: c.id,
-      name: c.name,
-      slug: c.slug,
-      img: c.image_url || CATEGORY_IMAGES[c.slug] || DEFAULT_IMG,
-      count: counts[c.name] || 0,
-    }));
+    const enriched: LandingCategory[] = (catRes.data || []).map((c: any) => {
+      const slug = canonicalizeCategorySlug(String(c.slug || ""));
+      return {
+        id: c.id,
+        name: c.name,
+        slug,
+        img: c.image_url || CATEGORY_IMAGES[slug] || CATEGORY_IMAGES[c.slug] || DEFAULT_IMG,
+        count: counts[c.name] || 0,
+      };
+    });
 
     // Sort by count descending
     enriched.sort((a, b) => b.count - a.count);
