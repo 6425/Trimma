@@ -1,15 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Loader2, ExternalLink, Rocket, PauseCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { trimmaFilterTabClass } from "@/lib/customer-dashboard-ui";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 import type { ListingQueueRow } from "@/lib/listing-generation-queue";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
+
+type QueueTab = "pending" | "listed";
 
 async function postListingAction(
   path: string,
@@ -29,10 +34,24 @@ async function postListingAction(
 }
 
 export default function ListingQueuePage() {
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<ListingQueueRow[]>([]);
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<QueueTab>(() =>
+    searchParams.get("tab") === "listed" ? "listed" : "pending"
+  );
+
+  const pendingRows = useMemo(
+    () => rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED),
+    [rows]
+  );
+  const listedRows = useMemo(
+    () => rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED),
+    [rows]
+  );
+  const visibleRows = activeTab === "listed" ? listedRows : pendingRows;
 
   const load = useCallback(async () => {
     try {
@@ -67,6 +86,10 @@ export default function ListingQueuePage() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    setActiveTab(searchParams.get("tab") === "listed" ? "listed" : "pending");
+  }, [searchParams]);
 
   /* eslint-disable react-hooks/set-state-in-effect -- initial queue fetch on mount */
   useEffect(() => {
@@ -113,6 +136,30 @@ export default function ListingQueuePage() {
         </div>
       )}
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="trimma-filter-tabs flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={cn(trimmaFilterTabClass(activeTab === "pending"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
+            onClick={() => setActiveTab("pending")}
+          >
+            Pending
+            <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{pendingRows.length}</span>
+          </button>
+          <button
+            type="button"
+            className={cn(trimmaFilterTabClass(activeTab === "listed"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
+            onClick={() => setActiveTab("listed")}
+          >
+            Listed
+            <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{listedRows.length}</span>
+          </button>
+        </div>
+        <p className="text-xs font-medium text-zinc-500">
+          Captured listings stay in <strong>Pending</strong> until you publish them to the marketplace.
+        </p>
+      </div>
+
       <div className="overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="border-b border-zinc-100 bg-zinc-50 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500">
@@ -132,18 +179,24 @@ export default function ListingQueuePage() {
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
                 </td>
               </tr>
-            ) : rows.length === 0 ? (
+            ) : visibleRows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-16 text-center text-zinc-500">
-                  No listing pipeline rows yet. Run{" "}
-                  <Link href="/admin/listing-generation/capture" className="font-bold underline">
-                    Data Capture
-                  </Link>
-                  .
+                  {activeTab === "pending" ? (
+                    <>
+                      No pending listings. Run{" "}
+                      <Link href="/admin/listing-generation/capture" className="font-bold underline">
+                        Data Capture
+                      </Link>{" "}
+                      to add salons to the Pending queue.
+                    </>
+                  ) : (
+                    <>No listed salons yet. Publish rows from the Pending tab.</>
+                  )}
                 </td>
               </tr>
             ) : (
-              rows.map((row) => {
+              visibleRows.map((row) => {
                 const isPublished = row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED;
                 const location = [row.city, row.district].filter(Boolean).join(", ") || row.province || "—";
                 const pendingRequest = requests.find(

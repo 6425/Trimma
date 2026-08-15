@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { discoverGooglePlacesInContext } from "@/lib/google-places-discovery";
+import { fetchPublicCategories } from "@/lib/public-categories";
+import { applyListingCategoryMappingForPlaceIds } from "@/lib/listing-generation-categories";
 
 function getRouteErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -39,6 +41,16 @@ export async function POST(req: Request) {
         syncImages: false,
       }
     );
+
+    const publicCategories = await fetchPublicCategories();
+    if (result.placeIds?.length && publicCategories.length) {
+      await applyListingCategoryMappingForPlaceIds(
+        supabase,
+        result.placeIds,
+        String(category || ""),
+        publicCategories
+      );
+    }
 
     return NextResponse.json({
       success: true,

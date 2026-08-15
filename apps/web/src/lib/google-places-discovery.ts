@@ -211,7 +211,7 @@ export async function discoverGooglePlacesInContext(
     listingPipeline?: boolean;
     syncImages?: boolean;
   }
-): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats }> {
+): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats; placeIds?: string[] }> {
   const query = buildBeautyDiscoveryQuery(context);
   const targetLimit = Math.min(Math.max(options?.limit ?? 15, 1), 60);
 
@@ -286,6 +286,7 @@ export async function discoverGooglePlacesInContext(
     message: result.warning ? `${baseMessage} ${result.warning}` : baseMessage,
     stats: result.stats,
     imageStats,
+    placeIds: result.placeIds,
   };
 }
 
