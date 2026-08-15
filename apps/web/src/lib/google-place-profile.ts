@@ -187,6 +187,8 @@ export type GoogleSalonUpsertContext = {
   district?: string | null;
   city?: string | null;
   category?: string | null;
+  /** Optional override for Google Places text search (listing capture). */
+  searchQuery?: string | null;
 };
 
 export type GoogleTextSearchPlace = {

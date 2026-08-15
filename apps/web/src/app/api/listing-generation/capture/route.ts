@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { discoverGooglePlacesInContext } from "@/lib/google-places-discovery";
-import { fetchPublicCategories } from "@/lib/public-categories";
-import { applyListingCategoryMappingForPlaceIds } from "@/lib/listing-generation-categories";
+import {
+  applyListingCategoryMappingForPlaceIds,
+  buildListingCaptureGoogleQuery,
+  loadListingCaptureCatalog,
+} from "@/lib/listing-generation-categories";
 
 function getRouteErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -26,13 +29,34 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Google API key is not configured" }, { status: 500 });
     }
 
-    const { province, district, city, category, limit } = await req.json();
+    const { province, district, city, category, categoryId, limit } = await req.json();
     const supabase = createSupabaseAdminClient();
+    const catalog = await loadListingCaptureCatalog(supabase);
+    const selectedCategory =
+      catalog.categories.find((item) => item.id === categoryId) ||
+      catalog.categories.find((item) => item.name === category) ||
+      null;
+    const categoryName = selectedCategory?.name || String(category || "").trim();
+
+    if (!categoryName) {
+      return NextResponse.json({ error: "Select a Trimma category." }, { status: 400 });
+    }
+
+    const globalServices = selectedCategory
+      ? catalog.servicesByCategoryId[selectedCategory.id] || []
+      : [];
+    const searchQuery = buildListingCaptureGoogleQuery({
+      categoryName,
+      city: String(city || ""),
+      district: String(district || ""),
+      province: String(province || ""),
+      globalServices,
+    });
 
     const result = await discoverGooglePlacesInContext(
       supabase,
       apiKey,
-      { province, district, city, category },
+      { province, district, city, category: categoryName, searchQuery },
       {
         limit: limit ? Number(limit) : 15,
         assignTerritoryAgent: false,
@@ -42,13 +66,12 @@ export async function POST(req: Request) {
       }
     );
 
-    const publicCategories = await fetchPublicCategories();
-    if (result.placeIds?.length && publicCategories.length) {
+    if (result.placeIds?.length) {
       await applyListingCategoryMappingForPlaceIds(
         supabase,
         result.placeIds,
-        String(category || ""),
-        publicCategories
+        categoryName,
+        catalog.categories
       );
     }
 
@@ -59,6 +82,7 @@ export async function POST(req: Request) {
       warning: result.warning,
       stats: result.stats,
       pipeline: "listing_generation",
+      searchQuery,
     });
   } catch (error: unknown) {
     console.error("[listing-generation/capture]", error);

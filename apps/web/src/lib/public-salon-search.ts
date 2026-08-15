@@ -29,6 +29,25 @@ function textMatchesCategoryNeedle(haystack: string, needle: string): boolean {
   return haystack.includes(needle) || needle.includes(haystack);
 }
 
+function readTrimmaCategoryTags(row: Record<string, unknown>): string[] {
+  const tags = new Set<string>();
+  const primary = String(row.category || "").trim();
+  if (primary) tags.add(primary);
+
+  const ext = row.business_info_extended;
+  if (ext && typeof ext === "object" && !Array.isArray(ext)) {
+    const arr = (ext as Record<string, unknown>).trimma_categories;
+    if (Array.isArray(arr)) {
+      for (const item of arr) {
+        const name = String(item || "").trim();
+        if (name) tags.add(name);
+      }
+    }
+  }
+
+  return [...tags];
+}
+
 function salonMatchesCategory(
   row: Record<string, unknown>,
   category: string,
@@ -37,8 +56,10 @@ function salonMatchesCategory(
   const needles = buildCategoryNeedles(category, categoryName);
   if (!needles.length) return true;
 
-  const salonCategory = normalizeCategoryText(String(row.category || ""));
-  if (needles.some((needle) => textMatchesCategoryNeedle(salonCategory, needle))) {
+  const tagNeedles = readTrimmaCategoryTags(row).map(normalizeCategoryText);
+  if (
+    tagNeedles.some((tag) => needles.some((needle) => textMatchesCategoryNeedle(tag, needle)))
+  ) {
     return true;
   }
 

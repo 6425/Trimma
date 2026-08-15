@@ -8,21 +8,31 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import type { PublicCategory } from "@/lib/public-categories";
+import type { GlobalServiceSummary } from "@/lib/listing-generation-categories";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 type Props = {
   categories: PublicCategory[];
+  servicesByCategoryId: Record<string, GlobalServiceSummary[]>;
 };
 
-export function ListingCaptureForm({ categories }: Props) {
+export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) {
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(
-    () => categories[0]?.name || "Beauty Parlours"
-  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState(() => categories[0]?.id || "");
   const [fetchLimit, setFetchLimit] = useState(15);
   const [capturing, setCapturing] = useState(false);
+
+  const selectedCategory = useMemo(
+    () => categories.find((category) => category.id === selectedCategoryId) || categories[0] || null,
+    [categories, selectedCategoryId]
+  );
+
+  const relatedServices = useMemo(() => {
+    if (!selectedCategory?.id) return [];
+    return servicesByCategoryId[selectedCategory.id] || [];
+  }, [selectedCategory, servicesByCategoryId]);
 
   const districts = useMemo(() => {
     if (!selectedProvince) return [];
@@ -39,7 +49,7 @@ export function ListingCaptureForm({ categories }: Props) {
       toast.error("Select province, district, and city.");
       return;
     }
-    if (!selectedCategory) {
+    if (!selectedCategory?.name) {
       toast.error("Select a category.");
       return;
     }
@@ -56,7 +66,8 @@ export function ListingCaptureForm({ categories }: Props) {
           province: selectedProvince,
           district: selectedDistrict,
           city: selectedCity,
-          category: selectedCategory,
+          category: selectedCategory.name,
+          categoryId: selectedCategory.id,
           limit: fetchLimit,
         }),
       });
@@ -97,9 +108,9 @@ export function ListingCaptureForm({ categories }: Props) {
         </Link>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#1A1C29]">Data Capture</h1>
         <p className="mt-2 max-w-3xl text-sm text-zinc-600">
-          Import Google Places beauty businesses into the listing pipeline as{" "}
-          <strong>LISTING_CAPTURED</strong>. Records appear in the <strong>Pending</strong> queue until you publish
-          them. Does not enter the agent Lead Mgmt pipeline.
+          Import Google Places businesses for a Trimma global category. Captured rows land in the{" "}
+          <strong>Pending</strong> queue with Trimma category tags (a salon can appear under multiple categories
+          after publish).
         </p>
       </div>
 
@@ -173,20 +184,24 @@ export function ListingCaptureForm({ categories }: Props) {
             </select>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 md:col-span-1">
             <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-zinc-500">
-              <Filter className="h-3.5 w-3.5" /> Category
+              <Filter className="h-3.5 w-3.5" /> Trimma category
             </label>
             <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
               className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs font-medium text-zinc-800"
             >
-              {categories.map((category) => (
-                <option key={category.id} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
+              {categories.length === 0 ? (
+                <option value="">No categories configured</option>
+              ) : (
+                categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -207,13 +222,33 @@ export function ListingCaptureForm({ categories }: Props) {
           <Button
             type="button"
             variant="dark"
-            disabled={capturing || !selectedCity}
+            disabled={capturing || !selectedCity || !selectedCategory?.name}
             onClick={() => void handleCapture()}
             className="h-11 min-h-11 w-full rounded-xl text-xs font-bold"
           >
             {capturing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Capture listings"}
           </Button>
         </div>
+
+        {selectedCategory && (
+          <p className="mt-4 text-xs text-zinc-600">
+            Google search targets <strong>{selectedCategory.name}</strong>
+            {relatedServices.length > 0 && (
+              <>
+                {" "}
+                using global services:{" "}
+                <span className="font-semibold text-zinc-800">
+                  {relatedServices
+                    .slice(0, 4)
+                    .map((service) => service.name)
+                    .join(", ")}
+                  {relatedServices.length > 4 ? "…" : ""}
+                </span>
+              </>
+            )}
+            . Matching salons are tagged for Trimma category pages after publish.
+          </p>
+        )}
       </Card>
 
       <p className="text-sm text-zinc-500">

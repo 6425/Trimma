@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { createServerSupabaseClient } from "@/config/supabase-server";
+import { ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS } from "@/lib/admin-lead-categories";
 
 export type PublicCategory = {
   id: string;
@@ -77,6 +78,19 @@ export function resolveActiveCategorySlug(
   return null;
 }
 
+function buildFallbackPublicCategories(): PublicCategory[] {
+  return ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS.map((name, index) => ({
+    id: `fallback-${index}`,
+    name,
+    slug: name
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, ""),
+    icon: null,
+  }));
+}
+
 async function loadPublicCategories(): Promise<PublicCategory[]> {
   try {
     const supabase = createServerSupabaseClient();
@@ -87,13 +101,14 @@ async function loadPublicCategories(): Promise<PublicCategory[]> {
 
     if (error) {
       console.error("fetchPublicCategories:", error.message);
-      return [];
+      return dedupePublicCategories(buildFallbackPublicCategories());
     }
 
-    return dedupePublicCategories((data ?? []) as PublicCategory[]);
+    const categories = dedupePublicCategories((data ?? []) as PublicCategory[]);
+    return categories.length ? categories : dedupePublicCategories(buildFallbackPublicCategories());
   } catch (error) {
     console.error("fetchPublicCategories:", error);
-    return [];
+    return dedupePublicCategories(buildFallbackPublicCategories());
   }
 }
 

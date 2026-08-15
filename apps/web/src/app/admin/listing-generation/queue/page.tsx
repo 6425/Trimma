@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, ExternalLink, Rocket, PauseCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +34,23 @@ async function postListingAction(
 }
 
 export default function ListingQueuePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+          <Loader2 className="w-10 h-10 text-brand animate-spin" />
+          <p className="text-zinc-500 font-bold text-sm">Loading listing queue…</p>
+        </div>
+      }
+    >
+      <ListingQueueContent />
+    </Suspense>
+  );
+}
+
+function ListingQueueContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [rows, setRows] = useState<ListingQueueRow[]>([]);
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +157,10 @@ export default function ListingQueuePage() {
           <button
             type="button"
             className={cn(trimmaFilterTabClass(activeTab === "pending"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
-            onClick={() => setActiveTab("pending")}
+            onClick={() => {
+              setActiveTab("pending");
+              router.replace("/admin/listing-generation/queue?tab=pending");
+            }}
           >
             Pending
             <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{pendingRows.length}</span>
@@ -149,7 +168,10 @@ export default function ListingQueuePage() {
           <button
             type="button"
             className={cn(trimmaFilterTabClass(activeTab === "listed"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
-            onClick={() => setActiveTab("listed")}
+            onClick={() => {
+              setActiveTab("listed");
+              router.replace("/admin/listing-generation/queue?tab=listed");
+            }}
           >
             Listed
             <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{listedRows.length}</span>

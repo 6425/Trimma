@@ -77,6 +77,9 @@ export async function searchGooglePlacesText(
 }
 
 export function buildBeautyDiscoveryQuery(context: GoogleDiscoverySearchContext): string {
+  if (context.searchQuery?.trim()) {
+    return context.searchQuery.trim();
+  }
   const category = context.category || "beauty salon";
   const city = context.city || "";
   const district = context.district || "";
