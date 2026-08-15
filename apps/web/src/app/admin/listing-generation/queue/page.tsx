@@ -55,9 +55,7 @@ function ListingQueueContent() {
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<QueueTab>(() =>
-    searchParams.get("tab") === "listed" ? "listed" : "pending"
-  );
+  const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
 
   const pendingRows = useMemo(
     () => rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED),
@@ -69,9 +67,10 @@ function ListingQueueContent() {
   );
   const visibleRows = activeTab === "listed" ? listedRows : pendingRows;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options?: { showLoading?: boolean }) => {
+    const showLoading = options?.showLoading !== false;
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
 
       const [queueRes, requestResult] = await Promise.all([
         fetch("/api/admin/listing-generation/queue", { cache: "no-store", credentials: "same-origin" }),
@@ -103,13 +102,9 @@ function ListingQueueContent() {
     }
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- mount fetch populates admin queue table */
   useEffect(() => {
-    setActiveTab(searchParams.get("tab") === "listed" ? "listed" : "pending");
-  }, [searchParams]);
-
-  /* eslint-disable react-hooks/set-state-in-effect -- initial queue fetch on mount */
-  useEffect(() => {
-    void load();
+    void load({ showLoading: false });
   }, [load]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -158,7 +153,6 @@ function ListingQueueContent() {
             type="button"
             className={cn(trimmaFilterTabClass(activeTab === "pending"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
             onClick={() => {
-              setActiveTab("pending");
               router.replace("/admin/listing-generation/queue?tab=pending");
             }}
           >
@@ -169,7 +163,6 @@ function ListingQueueContent() {
             type="button"
             className={cn(trimmaFilterTabClass(activeTab === "listed"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
             onClick={() => {
-              setActiveTab("listed");
               router.replace("/admin/listing-generation/queue?tab=listed");
             }}
           >

@@ -94,7 +94,9 @@ export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from("salons")
-      .select("id, name, slug, rating, review_count, cover_url, hero_url")
+      .select(
+        "id, name, slug, rating, review_count, cover_url, hero_url, is_verified, onboarding_status, status"
+      )
       .order("is_featured", { ascending: false })
       .order("rating", { ascending: false })
       .order("review_count", { ascending: false })

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MapPin, ExternalLink } from "lucide-react";
@@ -22,20 +22,18 @@ export function BusinessListingsMap({ listings }: Props) {
   const mappableListings = useMemo(() => listings.filter(listingHasMapDisplay), [listings]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!listings.length) {
-      setSelectedId(null);
-      return;
-    }
-    setSelectedId((current) => {
-      if (current && listings.some((item) => item.id === current)) return current;
-      const firstMappable = mappableListings[0]?.id;
-      return firstMappable || listings[0]?.id || null;
-    });
+  const defaultSelectedId = useMemo(() => {
+    if (!listings.length) return null;
+    return mappableListings[0]?.id || listings[0]?.id || null;
   }, [listings, mappableListings]);
 
+  const effectiveSelectedId = useMemo(() => {
+    if (selectedId && listings.some((item) => item.id === selectedId)) return selectedId;
+    return defaultSelectedId;
+  }, [selectedId, listings, defaultSelectedId]);
+
   const selectedListing =
-    listings.find((item) => item.id === selectedId) || mappableListings[0] || listings[0] || null;
+    listings.find((item) => item.id === effectiveSelectedId) || mappableListings[0] || listings[0] || null;
   const embedUrl = selectedListing ? getListingMapEmbedUrl(selectedListing) : null;
   const directionsUrl = selectedListing ? getSalonDirectionsUrl({
     name: selectedListing.name,
