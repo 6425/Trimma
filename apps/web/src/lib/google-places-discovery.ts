@@ -216,7 +216,8 @@ export async function discoverGooglePlacesInContext(
   }
 ): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats; placeIds?: string[] }> {
   const query = buildBeautyDiscoveryQuery(context);
-  const targetLimit = Math.min(Math.max(options?.limit ?? 15, 1), 60);
+  const targetLimit =
+    !options?.limit || options.limit <= 0 ? Number.POSITIVE_INFINITY : Math.max(options.limit, 1);
 
   const firstPage = await searchGooglePlacesText(query, apiKey);
   if (firstPage.status !== "OK" && firstPage.status !== "ZERO_RESULTS") {
@@ -236,7 +237,8 @@ export async function discoverGooglePlacesInContext(
     nextToken = nextPage.nextPageToken;
   }
 
-  const topPlaces = collected.slice(0, targetLimit);
+  const topPlaces =
+    Number.isFinite(targetLimit) ? collected.slice(0, targetLimit) : collected;
   if (!topPlaces.length) {
     return {
       count: 0,

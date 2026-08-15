@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       apiKey,
       { province, district, city, category: categoryName, searchQuery },
       {
-        limit: limit ? Number(limit) : 15,
+        limit: limit == null || limit === "" ? 0 : Number(limit),
         assignTerritoryAgent: false,
         enrichProfiles: true,
         listingPipeline: true,

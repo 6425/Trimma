@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
-import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { dedupePublicCategories } from "@/lib/public-categories";
+import { countPublishedListingsByCategory } from "@/lib/public-salon-search";
 import CategoriesClient, { type CategoryRow } from "./CategoriesClient";
 
 export const revalidate = 60;
@@ -30,17 +30,10 @@ const DEFAULT_IMG =
 export default async function CategoriesPage() {
   const supabase = createServerSupabaseClient();
 
-  const [{ data: catData }, { data: salonData }] = await Promise.all([
-    supabase.from("categories").select("id, name, slug, icon, image_url").order("name"),
-    supabase.from("salons").select("category, name"),
-  ]);
-
-  const counts: Record<string, number> = {};
-  filterPublicSalons(salonData || []).forEach((salon) => {
-    if (salon.category) {
-      counts[salon.category] = (counts[salon.category] || 0) + 1;
-    }
-  });
+  const { data: catData } = await supabase
+    .from("categories")
+    .select("id, name, slug, icon, image_url")
+    .order("name");
 
   const categories: CategoryRow[] = dedupePublicCategories(catData || []).map((c) => ({
     id: c.id,
@@ -52,8 +45,17 @@ export default async function CategoriesPage() {
       (catData || []).find((row) => row.id === c.id)?.image_url ||
       CATEGORY_IMAGES[c.slug] ||
       DEFAULT_IMG,
-    count: counts[c.name] || 0,
+    count: 0,
   }));
+
+  const publishedCounts = await countPublishedListingsByCategory(
+    supabase,
+    categories.map((c) => ({ name: c.name, slug: c.slug }))
+  );
+
+  for (const category of categories) {
+    category.count = publishedCounts[category.slug] || 0;
+  }
 
   return <CategoriesClient initialCategories={categories} />;
 }

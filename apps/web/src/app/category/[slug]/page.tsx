@@ -37,6 +37,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
   let initialHasMore = false;
+  let initialTotalCount = 0;
   try {
     const result = await fetchBusinessListingCards(supabase, {
       q: initialQuery,
@@ -44,11 +45,12 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       category: canonicalSlug,
       categoryName: categoryLabel,
       publishedOnly: true,
-      limit: 48,
+      limit: 0,
       offset: 0,
     });
     initialListings = result.listings;
     initialHasMore = result.hasMore;
+    initialTotalCount = result.totalCount;
   } catch {
     initialListings = [];
   }
@@ -60,6 +62,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       categories={categories}
       initialListings={initialListings}
       initialHasMore={initialHasMore}
+      initialTotalCount={initialTotalCount}
       categoryLabel={categoryLabel}
       initialQuery={initialQuery}
       initialLocation={initialLocation}

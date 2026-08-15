@@ -21,7 +21,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState(() => categories[0]?.id || "");
-  const [fetchLimit, setFetchLimit] = useState(15);
+  const [fetchLimit, setFetchLimit] = useState(0);
   const [capturing, setCapturing] = useState(false);
 
   const selectedCategory = useMemo(
@@ -207,14 +207,13 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
 
           <div className="space-y-1.5">
             <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-zinc-500">
-              <Hash className="h-3.5 w-3.5" /> Limit
+              <Hash className="h-3.5 w-3.5" /> Limit (0 = all)
             </label>
             <Input
               type="number"
-              min={1}
-              max={60}
+              min={0}
               value={fetchLimit}
-              onChange={(e) => setFetchLimit(Math.max(1, parseInt(e.target.value, 10) || 15))}
+              onChange={(e) => setFetchLimit(Math.max(0, parseInt(e.target.value, 10) || 0))}
               className="h-11 rounded-xl border-zinc-200 bg-zinc-50 text-xs"
             />
           </div>

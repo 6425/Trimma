@@ -4,6 +4,7 @@ import {
   readListingCapturedAt,
 } from "@/lib/salon-listing-pipeline";
 import { isMissingDbSchemaError } from "@/lib/with-admin-db";
+import { fetchAllQueryPages } from "@/lib/supabase-fetch-all";
 
 export type ListingQueueRow = {
   id: string;
@@ -65,15 +66,17 @@ async function queryQueueRows(
     LISTING_ONBOARDING_STATUS.PUBLISHED,
   ];
 
-  const { data, error } = await supabase
-    .from("salons")
-    .select(select)
-    .in("onboarding_status", statuses)
-    .order("created_at", { ascending: false })
-    .limit(500);
+  return fetchAllQueryPages(async (from, to) => {
+    const { data, error } = await supabase
+      .from("salons")
+      .select(select)
+      .in("onboarding_status", statuses)
+      .order("created_at", { ascending: false })
+      .range(from, to);
 
-  if (error) throw error;
-  return (data ?? []) as unknown as Array<Record<string, unknown>>;
+    if (error) throw error;
+    return (data ?? []) as unknown as Array<Record<string, unknown>>;
+  });
 }
 
 export async function loadListingGenerationQueueRows(

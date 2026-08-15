@@ -37,6 +37,7 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
 
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
   let initialHasMore = false;
+  let initialTotalCount = 0;
   let categories: Awaited<ReturnType<typeof fetchPublicCategories>> = [];
 
   try {
@@ -49,10 +50,11 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
       publishedOnly: true,
       limit: 24,
       offset: 0,
-    }).catch(() => ({ listings: [], hasMore: false }));
+    }).catch(() => ({ listings: [], hasMore: false, totalCount: 0 }));
 
     initialListings = result.listings;
     initialHasMore = result.hasMore;
+    initialTotalCount = result.totalCount;
   } catch (error) {
     console.error("BusinessListingsPage:", error);
   }
@@ -67,6 +69,7 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
       }}
       initialListings={initialListings}
       initialHasMore={initialHasMore}
+      initialTotalCount={initialTotalCount}
       ssrSeeded
     />
   );

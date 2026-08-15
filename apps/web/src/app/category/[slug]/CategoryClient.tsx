@@ -49,13 +49,12 @@ const CATEGORY_HERO_IMAGES: Record<string, string> = {
 const DEFAULT_HERO_IMAGE =
   "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
 
-const PAGE_SIZE = 48;
-
 type CategoryClientProps = {
   slug: string;
   categories: PublicCategory[];
   initialListings: BusinessListingCardData[];
   initialHasMore?: boolean;
+  initialTotalCount?: number;
   categoryLabel: string;
   initialQuery?: string;
   initialLocation?: string;
@@ -70,15 +69,13 @@ export default function CategoryClient({
   slug: slugStr,
   categories,
   initialListings,
-  initialHasMore = false,
+  initialTotalCount = 0,
   categoryLabel: initialCategoryLabel,
   initialQuery = "",
   initialLocation = "",
 }: CategoryClientProps) {
   const [listings, setListings] = useState<BusinessListingCardData[]>(initialListings);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [page, setPage] = useState(0);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
   const [appliedSearch, setAppliedSearch] = useState(initialQuery);
@@ -108,10 +105,10 @@ export default function CategoryClient({
     });
   }, [slugStr, categoryLabel, initialListings.length]);
 
-  const loadListings = async (nextPage: number, reset: boolean) => {
+  const loadListings = async () => {
     const params = new URLSearchParams({
-      limit: String(PAGE_SIZE),
-      offset: String(nextPage * PAGE_SIZE),
+      limit: "0",
+      offset: "0",
       category: slugStr,
       categoryName: categoryLabel,
       publishedOnly: "true",
@@ -124,14 +121,10 @@ export default function CategoryClient({
     if (!res.ok) throw new Error(payload.error || "Failed to load listings");
 
     const nextListings = (payload.listings || []) as BusinessListingCardData[];
-    if (reset) setListings(nextListings);
-    else {
-      setListings((prev) => {
-        const ids = new Set(prev.map((item) => item.id));
-        return [...prev, ...nextListings.filter((item) => !ids.has(item.id))];
-      });
+    if (typeof payload.totalCount === "number") {
+      setTotalCount(payload.totalCount);
     }
-    setHasMore(Boolean(payload.hasMore));
+    setListings(nextListings);
     return nextListings;
   };
 
@@ -149,8 +142,7 @@ export default function CategoryClient({
 
     void (async () => {
       try {
-        setPage(0);
-        const nextListings = await loadListings(0, true);
+        const nextListings = await loadListings();
         if (cancelled) return;
         setLoadedFetchKey(key);
 
@@ -173,7 +165,7 @@ export default function CategoryClient({
         const message = err instanceof Error ? err.message : String(err);
         console.error("Failed to load category page listings:", message);
         setListings([]);
-        setHasMore(false);
+        setTotalCount(0);
         setLoadedFetchKey(key);
       }
     })();
@@ -249,7 +241,9 @@ export default function CategoryClient({
 
               <div className="home-hero-middle">
                 <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
-                  <span className="hero-badge hero-eyebrow px-3 py-1">{filteredListings.length} Listings Available</span>
+                  <span className="hero-badge hero-eyebrow px-3 py-1">
+                    {totalCount.toLocaleString()} {totalCount === 1 ? "Business Listed" : "Businesses Listed"}
+                  </span>
                   <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
                   <span className="uppercase tracking-wider">Island-wide coverage — all 9 provinces</span>
                 </div>
@@ -328,7 +322,9 @@ export default function CategoryClient({
             </div>
 
             <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
-              <span className="hero-badge hero-eyebrow px-3 py-1">{filteredListings.length} Listings Available</span>
+              <span className="hero-badge hero-eyebrow px-3 py-1">
+                {totalCount.toLocaleString()} {totalCount === 1 ? "Business Listed" : "Businesses Listed"}
+              </span>
               <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
               <span className="uppercase tracking-wider">Island-wide coverage — all 9 provinces</span>
             </div>
@@ -368,8 +364,8 @@ export default function CategoryClient({
       <ListingBrowseToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        count={filteredListings.length}
-        countLabel={`${categoryName} listings`}
+        count={totalCount}
+        countLabel={totalCount === 1 ? `${categoryName} business` : `${categoryName} businesses`}
       />
 
       <div className="border-b border-slate-200 bg-white">
@@ -408,35 +404,6 @@ export default function CategoryClient({
                 <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
               ))}
             </div>
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="rounded-xl px-8 font-bold"
-                  disabled={loadingMore}
-                  onClick={() => {
-                    const nextPage = page + 1;
-                    setPage(nextPage);
-                    setLoadingMore(true);
-                    void loadListings(nextPage, false)
-                      .catch((error: unknown) => {
-                        console.error(error);
-                      })
-                      .finally(() => setLoadingMore(false));
-                  }}
-                >
-                  {loadingMore ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading…
-                    </>
-                  ) : (
-                    "Load more listings"
-                  )}
-                </Button>
-              </div>
-            )}
           </>
         )}
 

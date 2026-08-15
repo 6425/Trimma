@@ -14,11 +14,12 @@ export async function GET(request: Request) {
     const sort = searchParams.get("sort") || "recommended";
     const minRating = parseFloat(searchParams.get("minRating") || "0");
     const publishedOnly = searchParams.get("publishedOnly") === "true";
-    const limit = parseInt(searchParams.get("limit") || "24", 10);
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam === "all" || limitParam === "0" ? 0 : parseInt(limitParam || "24", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     const supabase = createServerSupabaseClient();
-    const { listings, hasMore } = await fetchBusinessListingCards(supabase, {
+    const { listings, hasMore, totalCount } = await fetchBusinessListingCards(supabase, {
       q,
       location,
       category,
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(
-      { listings, hasMore },
+      { listings, hasMore, totalCount },
       {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",

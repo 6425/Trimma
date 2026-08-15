@@ -26,6 +26,7 @@ type Props = {
   initialSearch: InitialSearch;
   initialListings?: BusinessListingCardData[];
   initialHasMore?: boolean;
+  initialTotalCount?: number;
   ssrSeeded?: boolean;
 };
 
@@ -72,6 +73,7 @@ export default function ListingsClient({
   initialSearch,
   initialListings = [],
   initialHasMore = true,
+  initialTotalCount = 0,
   ssrSeeded = false,
 }: Props) {
   const [searchQuery, setSearchQuery] = useState(initialSearch.q);
@@ -80,6 +82,7 @@ export default function ListingsClient({
   );
   const [urlCategory, setUrlCategory] = useState(initialSearch.category);
   const [listings, setListings] = useState(initialListings);
+  const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
@@ -101,6 +104,9 @@ export default function ListingsClient({
         if (!res.ok) throw new Error("Search failed");
         const data = await res.json();
         const rows = (data.listings || []) as BusinessListingCardData[];
+        if (typeof data.totalCount === "number") {
+          setTotalCount(data.totalCount);
+        }
 
         if (reset) setListings(rows);
         else {
@@ -112,7 +118,10 @@ export default function ListingsClient({
         setHasMore(Boolean(data.hasMore));
       } catch (error) {
         console.error(error);
-        if (reset) setListings([]);
+        if (reset) {
+          setListings([]);
+          setTotalCount(0);
+        }
         setHasMore(false);
       } finally {
         setIsLoading(false);
@@ -216,7 +225,9 @@ export default function ListingsClient({
               </div>
 
               <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
-                <span className="hero-badge hero-eyebrow px-3 py-1">{listings.length} Businesses Listed</span>
+                <span className="hero-badge hero-eyebrow px-3 py-1">
+                  {totalCount.toLocaleString()} {totalCount === 1 ? "Business Listed" : "Businesses Listed"}
+                </span>
                 <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
                 <span className="uppercase tracking-wider">All provinces · districts · cities</span>
               </div>
@@ -259,7 +270,8 @@ export default function ListingsClient({
       <ListingBrowseToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        count={listings.length}
+        count={totalCount}
+        countLabel={totalCount === 1 ? "business listed" : "businesses listed"}
         trailing={
           <Link
             href="/bookings"

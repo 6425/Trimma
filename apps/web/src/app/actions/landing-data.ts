@@ -5,6 +5,7 @@ import { canonicalizeCategorySlug } from "@/lib/public-categories";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+import { countPublishedListingsByCategory } from "@/lib/public-salon-search";
 
 export type LandingCategory = {
   id: string;
@@ -40,30 +41,29 @@ export async function getLandingCategories(): Promise<LandingCategory[]> {
     const supabase = createSupabaseAdminClient();
 
     // Run both queries in parallel on the server
-    const [catRes, salonRes] = await Promise.all([
-      supabase.from("categories").select("id, name, slug, image_url"),
-      supabase.from("salons").select("category, name"),
-    ]);
-
+    const catRes = await supabase.from("categories").select("id, name, slug, image_url");
     if (catRes.error) throw catRes.error;
 
-    // Count salons per category
-    const counts: Record<string, number> = {};
-    const publicSalons = filterPublicSalons(salonRes.data || []);
-    publicSalons.forEach((salon: any) => {
-      if (salon.category) {
-        counts[salon.category] = (counts[salon.category] || 0) + 1;
-      }
-    });
+    const categoryRows = (catRes.data || []).map((c: { id: string; name: string; slug: string; image_url?: string | null }) => ({
+      id: c.id,
+      name: c.name,
+      slug: canonicalizeCategorySlug(String(c.slug || "")),
+      img: c.image_url,
+    }));
 
-    const enriched: LandingCategory[] = (catRes.data || []).map((c: any) => {
-      const slug = canonicalizeCategorySlug(String(c.slug || ""));
+    const counts = await countPublishedListingsByCategory(
+      supabase,
+      categoryRows.map((c) => ({ name: c.name, slug: c.slug }))
+    );
+
+    const enriched: LandingCategory[] = categoryRows.map((c) => {
+      const slug = c.slug;
       return {
         id: c.id,
         name: c.name,
         slug,
-        img: c.image_url || CATEGORY_IMAGES[slug] || CATEGORY_IMAGES[c.slug] || DEFAULT_IMG,
-        count: counts[c.name] || 0,
+        img: c.img || CATEGORY_IMAGES[slug] || DEFAULT_IMG,
+        count: counts[slug] || 0,
       };
     });
 
