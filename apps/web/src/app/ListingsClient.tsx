@@ -13,7 +13,6 @@ import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/s
 import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
 
 const HERO_IMAGE = "/assets/business-listings-hero.png";
-const PAGE_SIZE = 24;
 
 type InitialSearch = {
   q: string;
@@ -57,8 +56,8 @@ function buildListingSearchParams(
     q: filters.q,
     location: filters.location,
     category: filters.category,
-    limit: String(PAGE_SIZE),
-    offset: String(page * PAGE_SIZE),
+    limit: "0",
+    offset: "0",
   });
   const activeCategory = categories.find((category) => category.slug === filters.category);
   if (activeCategory?.name) {
@@ -296,7 +295,7 @@ export default function ListingsClient({
       </div>
 
       <main className="container mx-auto max-w-7xl flex-1 px-4 py-8">
-        {isLoading && page === 0 ? (
+        {isLoading && listings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="mb-4 h-10 w-10 animate-spin text-brand" />
             <p className="text-sm font-bold text-zinc-500">Loading business listings…</p>
@@ -317,36 +316,6 @@ export default function ListingsClient({
                 {listings.map((listing, index) => (
                   <BusinessListingCard key={listing.id} listing={listing} priority={index < 8} />
                 ))}
-              </div>
-            )}
-
-            {viewMode === "grid" && hasMore && (
-              <div className="mt-10 flex justify-center">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="rounded-xl px-8 font-bold"
-                  disabled={isLoading}
-                  onClick={() => {
-                    const nextPage = page + 1;
-                    setPage(nextPage);
-                    void loadListings(
-                      { q: searchQuery, location: selectedLocation, category: urlCategory },
-                      nextPage,
-                      false,
-                      categories
-                    );
-                  }}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading…
-                    </>
-                  ) : (
-                    "Load more listings"
-                  )}
-                </Button>
               </div>
             )}
           </>

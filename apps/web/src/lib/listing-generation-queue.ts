@@ -79,6 +79,29 @@ async function queryQueueRows(
   });
 }
 
+export async function countListingGenerationQueue(
+  supabase: SupabaseClient
+): Promise<{ pendingCount: number; listedCount: number }> {
+  const [pending, listed] = await Promise.all([
+    supabase
+      .from("salons")
+      .select("id", { count: "exact", head: true })
+      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.CAPTURED),
+    supabase
+      .from("salons")
+      .select("id", { count: "exact", head: true })
+      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED),
+  ]);
+
+  if (pending.error) throw pending.error;
+  if (listed.error) throw listed.error;
+
+  return {
+    pendingCount: pending.count ?? 0,
+    listedCount: listed.count ?? 0,
+  };
+}
+
 export async function loadListingGenerationQueueRows(
   supabase: SupabaseClient
 ): Promise<ListingQueueRow[]> {

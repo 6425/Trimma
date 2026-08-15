@@ -48,7 +48,7 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
       q: sp.q ?? "",
       location: sp.l ?? "",
       publishedOnly: true,
-      limit: 24,
+      limit: 0,
       offset: 0,
     }).catch(() => ({ listings: [], hasMore: false, totalCount: 0 }));
 

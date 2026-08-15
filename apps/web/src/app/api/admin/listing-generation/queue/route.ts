@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
-import { loadListingGenerationQueueRows } from "@/lib/listing-generation-queue";
+import { loadListingGenerationQueueRows, countListingGenerationQueue } from "@/lib/listing-generation-queue";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +13,13 @@ export async function GET() {
     }
 
     const supabase = createSupabaseAdminClient();
-    const rows = await loadListingGenerationQueueRows(supabase);
+    const [rows, counts] = await Promise.all([
+      loadListingGenerationQueueRows(supabase),
+      countListingGenerationQueue(supabase),
+    ]);
 
     return NextResponse.json(
-      { rows },
+      { rows, pendingCount: counts.pendingCount, listedCount: counts.listedCount },
       {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",

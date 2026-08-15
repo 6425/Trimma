@@ -52,6 +52,8 @@ function ListingQueueContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [rows, setRows] = useState<ListingQueueRow[]>([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [listedCount, setListedCount] = useState(0);
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -77,12 +79,28 @@ function ListingQueueContent() {
         fetchAdminSalonRequests().catch(() => ({ success: false as const, error: "Salon requests unavailable." })),
       ]);
 
-      const queuePayload = (await queueRes.json()) as { rows?: ListingQueueRow[]; error?: string };
+      const queuePayload = (await queueRes.json()) as {
+        rows?: ListingQueueRow[];
+        pendingCount?: number;
+        listedCount?: number;
+        error?: string;
+      };
       if (!queueRes.ok) {
         throw new Error(queuePayload.error || `Listing queue failed (${queueRes.status}).`);
       }
 
-      setRows(queuePayload.rows || []);
+      const nextRows = queuePayload.rows || [];
+      setRows(nextRows);
+      setPendingCount(
+        typeof queuePayload.pendingCount === "number"
+          ? queuePayload.pendingCount
+          : nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED).length
+      );
+      setListedCount(
+        typeof queuePayload.listedCount === "number"
+          ? queuePayload.listedCount
+          : nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED).length
+      );
 
       if (requestResult.success === false) {
         setRequests([]);
@@ -97,6 +115,8 @@ function ListingQueueContent() {
       const message = error instanceof Error ? error.message : "Failed to load listing queue.";
       toast.error(message);
       setRows([]);
+      setPendingCount(0);
+      setListedCount(0);
     } finally {
       setLoading(false);
     }
@@ -157,7 +177,7 @@ function ListingQueueContent() {
             }}
           >
             Pending
-            <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{pendingRows.length}</span>
+            <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{pendingCount}</span>
           </button>
           <button
             type="button"
@@ -167,7 +187,7 @@ function ListingQueueContent() {
             }}
           >
             Listed
-            <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{listedRows.length}</span>
+            <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{listedCount}</span>
           </button>
         </div>
         <p className="text-xs font-medium text-zinc-500">
