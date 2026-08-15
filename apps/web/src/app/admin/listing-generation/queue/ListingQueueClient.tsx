@@ -374,7 +374,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                           variant="dark"
                           size="sm"
                           className="h-9 font-bold"
-                          disabled={busyId === row.id}
+                          disabled={busyId !== null}
                           onClick={() =>
                             void runAction(row.id, () =>
                               pendingRequest
