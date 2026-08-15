@@ -1,6 +1,6 @@
 import '../index.css';
 import SiteChromeLoader from '../components/SiteChromeLoader';
-import { CookieConsentBanner } from '@/components/legal/CookieConsentBanner';
+import { CookieConsentBanner } from '../components/legal/CookieConsentBanner';
 import { PostHogConsentSync } from '@/components/analytics/PostHogConsentSync';
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from 'sonner';

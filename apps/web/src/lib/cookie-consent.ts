@@ -1,5 +1,5 @@
 export const COOKIE_CONSENT_STORAGE_KEY = "trimma-cookie-consent";
-export const COOKIE_CONSENT_VERSION = 2;
+export const COOKIE_CONSENT_VERSION = 3;
 export const DEVICE_LOCATION_STORAGE_KEY = "trimma-device-location";
 
 export type CookieConsentPreferences = {
