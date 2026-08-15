@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TravelEstimate } from "@/lib/google-travel";
 import type { SalonMapInput } from "@/lib/salon-map";
 import { getSalonFullAddress } from "@/lib/salon-map";
@@ -23,25 +23,47 @@ function readInitialOrigin(): DeviceCoords | null {
   return stored ? { lat: stored.lat, lng: stored.lng } : null;
 }
 
-export function useDeviceTravel(salon: SalonMapInput | null) {
-  const [origin, setOrigin] = useState<DeviceCoords | null>(readInitialOrigin);
-  const [status, setStatus] = useState<LocationStatus>(() => (readInitialOrigin() ? "granted" : "idle"));
+function sameCoords(a: DeviceCoords | null, b: DeviceCoords | null): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return Math.abs(a.lat - b.lat) < 0.00001 && Math.abs(a.lng - b.lng) < 0.00001;
+}
+
+export function useDeviceTravel(
+  salon: SalonMapInput | null,
+  originOverride: DeviceCoords | null = null
+) {
+  const [deviceOrigin, setDeviceOrigin] = useState<DeviceCoords | null>(readInitialOrigin);
+  const [status, setStatus] = useState<LocationStatus>(() =>
+    originOverride || readInitialOrigin() ? "granted" : "idle"
+  );
   const [estimate, setEstimate] = useState<TravelEstimate | null>(null);
   const [loadingTravel, setLoadingTravel] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const destination = useMemo(() => {
-    if (!salon) return null;
-    return {
-      latitude: salon.latitude ?? null,
-      longitude: salon.longitude ?? null,
-      placeId: salon.place_id ?? null,
-      address: getSalonFullAddress(salon),
-    };
-  }, [salon]);
+  const origin = originOverride || deviceOrigin;
+
+  const destinationKey = useMemo(() => {
+    if (!salon) return "";
+    return [
+      salon.place_id || "",
+      salon.latitude ?? "",
+      salon.longitude ?? "",
+      getSalonFullAddress(salon),
+    ].join("|");
+  }, [
+    salon?.place_id,
+    salon?.latitude,
+    salon?.longitude,
+    salon?.address,
+    salon?.city,
+    salon?.district,
+    salon?.province,
+    salon?.name,
+  ]);
 
   const applyCoords = useCallback((coords: DeviceCoords) => {
-    setOrigin(coords);
+    setDeviceOrigin((current) => (sameCoords(current, coords) ? current : coords));
     setStatus("granted");
     setError(null);
   }, []);
@@ -74,7 +96,8 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
   }, [applyCoords]);
 
   useEffect(() => {
-    if (origin) return;
+    if (originOverride) return;
+    if (deviceOrigin) return;
     if (!hasLocationConsent()) return;
     requestDeviceLocation({
       onGranted: (coords) => applyCoords({ lat: coords.lat, lng: coords.lng }),
@@ -83,7 +106,7 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
         setError(message);
       },
     });
-  }, [applyCoords, origin]);
+  }, [applyCoords, deviceOrigin, originOverride]);
 
   useEffect(() => {
     const onStored = (event: Event) => {
@@ -94,10 +117,20 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
     return () => window.removeEventListener("trimma-device-location-updated", onStored);
   }, [applyCoords]);
 
+  const salonRef = useRef(salon);
+  salonRef.current = salon;
+
   useEffect(() => {
-    if (!origin || !destination) return;
+    const currentSalon = salonRef.current;
+    if (!origin || !destinationKey || !currentSalon) return;
 
     const controller = new AbortController();
+    const destination = {
+      latitude: currentSalon.latitude ?? null,
+      longitude: currentSalon.longitude ?? null,
+      placeId: currentSalon.place_id ?? null,
+      address: getSalonFullAddress(currentSalon),
+    };
 
     void (async () => {
       setLoadingTravel(true);
@@ -128,13 +161,13 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
     })();
 
     return () => controller.abort();
-  }, [origin, destination]);
+  }, [origin?.lat, origin?.lng, destinationKey]);
 
   return {
-    status,
+    status: originOverride ? ("granted" as LocationStatus) : status,
     origin,
-    estimate: origin && destination ? estimate : null,
-    loadingTravel: Boolean(origin && destination && loadingTravel),
+    estimate: origin && destinationKey ? estimate : null,
+    loadingTravel: Boolean(origin && destinationKey && loadingTravel),
     error,
     requestLocation,
   };

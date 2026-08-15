@@ -310,7 +310,7 @@ export default function ListingsClient({
         ) : (
           <>
             {viewMode === "map" ? (
-              <BusinessListingsMap listings={listings} />
+              <BusinessListingsMap listings={listings} searchLocation={selectedLocation} />
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {listings.map((listing, index) => (

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SalonCard } from "./SalonCard";
 import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
+import { pickFeaturedListingsWithPhone } from "@/lib/listing-marketplace-rank";
 
 interface Salon {
   id: string;
@@ -22,6 +23,7 @@ interface Salon {
   priceFrom: number;
   featured?: boolean;
   isVerified?: boolean;
+  phone?: string | null;
 }
 
 interface MarketplaceSectionsProps {
@@ -31,13 +33,7 @@ interface MarketplaceSectionsProps {
 
 // 1. FEATURED SALONS SECTION
 export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectionsProps) {
-  // Filter featured salons, fallback to top-rated if none explicitly featured
-  let featured = salons.filter(s => s.featured);
-  if (featured.length === 0) {
-    featured = [...salons]
-      .sort((a, b) => b.rating - a.rating || b.reviews - a.reviews)
-      .slice(0, 4);
-  }
+  const featured = pickFeaturedListingsWithPhone(salons, 4);
 
   if (featured.length === 0) return null;
 
@@ -164,8 +160,9 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
 
 // 2. MOST POPULAR SALONS SECTION
 export function PopularSalonsSection({ salons, contextName }: MarketplaceSectionsProps) {
-  // Sort by reviews count descending to represent community popularity
+  const featuredIds = new Set(pickFeaturedListingsWithPhone(salons, 4).map((salon) => salon.id));
   const popular = [...salons]
+    .filter((salon) => !featuredIds.has(salon.id))
     .sort((a, b) => b.reviews - a.reviews || b.rating - a.rating)
     .slice(0, 8);
 

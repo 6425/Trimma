@@ -5,13 +5,10 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import * as Icons from "lucide-react";
-import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Heart, Store, Sparkles, Smile, User } from "lucide-react";
+import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Store, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/config/supabase";
-import { filterPublicSalons } from "@/lib/salon-list-filters";
-import { isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
-import { mapSalonRowToUI } from "@/lib/salons-mapper";
+import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import {
   getDistrictBySlugs,
   normalizeProvinceSlug,
@@ -26,16 +23,7 @@ import {
   WhyTrimmaSection,
 } from "../../../../../components/marketplace/MarketplaceSections";
 import { FindBookGlowCta } from "../../../../../components/marketplace/FindBookGlowCta";
-
-const IconMap: Record<string, any> = {
-  Scissors,
-  Sparkles,
-  Heart,
-  Smile,
-  User,
-  Star,
-  Clock,
-};
+import { BusinessListingsMap } from "../../../../../components/marketplace/BusinessListingsMap";
 
 export default function CityDetailPage() {
   const { province, district, city } = useParams();
@@ -75,46 +63,45 @@ export default function CityDetailPage() {
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [salons, setSalons] = useState<any[]>([]);
+  const [listings, setListings] = useState<BusinessListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const cityOptions = districtMeta.cities;
 
-  // Filter salons belonging to this city
-  const filteredSalons = salons.filter(s => {
-    const cityParam = String(city).toLowerCase().replace(/-/g, " ");
-    const salonCity = s.city?.toLowerCase() || "";
-    return salonCity.includes(cityParam) || cityParam.includes(salonCity);
-  });
+  const filteredSalons = listings.map((listing) => ({
+    id: listing.id,
+    slug: listing.slug,
+    name: listing.name,
+    image: listing.image,
+    status: "Open Now",
+    rating: listing.rating,
+    reviews: listing.reviews,
+    city: listing.city || listing.location,
+    categories: [listing.category].filter(Boolean),
+    nextAvailable: "Hours not listed",
+    priceFrom: 1500,
+    phone: listing.phone,
+  }));
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchLiveSalons() {
       try {
         setLoading(true);
-        const { data: dbSalons, error } = await supabase
-          .from("salons")
-          .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured, working_hours, services ( price, name, category )")
-        .limit(10);
-
-        if (error) throw error;
-
-        // Transform DB records into UI formats
-        const formatted = filterPublicSalons(dbSalons || [])
-          .filter((s) => isSalonPublicBrowseListing(s as Record<string, unknown>))
-          .map((s: any, idx: number) => {
-          const mapped = mapSalonRowToUI(s, idx);
-          return {
-            ...mapped,
-            city: s.city || "Colombo",
-            district: s.district || "Western Province",
-            categories: mapped.tags,
-          };
+        const params = new URLSearchParams({
+          location: String(cityName),
+          publishedOnly: "true",
+          limit: "0",
         });
-
-        setSalons(formatted);
+        const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store" });
+        const payload = (await res.json()) as { listings?: BusinessListingCardData[]; error?: string };
+        if (!res.ok) throw new Error(payload.error || "Failed to load city listings.");
+        if (!cancelled) setListings(payload.listings || []);
       } catch (err) {
         console.error("Failed to load live salons for city page:", err);
+        if (!cancelled) setListings([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -124,8 +111,11 @@ export default function CityDetailPage() {
 
     fetchLiveSalons();
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [city]);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [cityName]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 md:pb-0 relative">
@@ -162,7 +152,7 @@ export default function CityDetailPage() {
              <div className="flex flex-wrap items-center gap-3 text-xs font-bold mb-6">
                <div className="bg-black/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-black/10 flex items-center gap-2">
                  <Store className="w-4 h-4 text-zinc-900" />
-                 <span className="text-zinc-900">{data.salonCount} Salons Here</span>
+                 <span className="text-zinc-900">{listings.length} Salons Here</span>
                </div>
                <div className="bg-black/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-black/10 flex items-center gap-2">
                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
@@ -271,6 +261,8 @@ export default function CityDetailPage() {
             <p className="text-zinc-800 font-black text-lg">No active salons found in {data.name}</p>
             <p className="text-zinc-400 text-xs mt-1">Try resetting your location search or refreshing the results.</p>
           </div>
+        ) : mapView ? (
+          <BusinessListingsMap listings={listings} searchLocation={String(cityName)} />
         ) : (
           <>
             {/* Featured Salons Section */}

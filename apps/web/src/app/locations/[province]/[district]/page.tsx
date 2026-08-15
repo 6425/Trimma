@@ -3,14 +3,11 @@
 import { useMemo, useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { DistrictDetailTemplate, DistrictData } from "../../../../components/marketplace/DistrictDetailTemplate";
-import { supabase } from "@/config/supabase";
-import { filterPublicSalons } from "@/lib/salon-list-filters";
-import { mapSalonRowToUI } from "@/lib/salons-mapper";
+import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import {
   buildCityCards,
   getDistrictBySlugs,
   normalizeProvinceSlug,
-  salonMatchesDistrict,
   SRI_LANKA_PROVINCES,
 } from "@/lib/sri-lanka-locations";
 
@@ -22,7 +19,7 @@ export default function DistrictDetailPage() {
   const provinceMeta = match?.province || SRI_LANKA_PROVINCES[0];
   const districtMeta = match?.district || provinceMeta.districts[0];
 
-  const [salons, setSalons] = useState<any[]>([]);
+  const [listings, setListings] = useState<BusinessListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const districtData: DistrictData = useMemo(
@@ -32,7 +29,7 @@ export default function DistrictDetailPage() {
       province: provinceMeta.name,
       provinceSlug: provinceMeta.slug,
       description: `Discover salons, spas, and beauty studios in ${districtMeta.name} District, ${provinceMeta.name}.`,
-      salonCount: 0,
+      salonCount: listings.length,
       avgRating: 4.7,
       image: provinceMeta.image,
       popularCategories: ["Barber", "Hair", "Spa"],
@@ -46,44 +43,34 @@ export default function DistrictDetailPage() {
       },
       salons: [],
     }),
-    [districtMeta, provinceMeta]
+    [districtMeta, provinceMeta, listings.length]
   );
 
-  const filteredSalons = salons.filter((s) => salonMatchesDistrict(s, districtMeta.slug));
-
   useEffect(() => {
-    void Promise.resolve().then(() => {
-      async function fetchLiveSalons() {
+    let cancelled = false;
+    void (async () => {
       try {
-      setLoading(true);
-      const { data: dbSalons, error } = await supabase
-      .from("salons")
-      .select("id, slug, name, rating, review_count, city, district, category, logo_url, cover_url, hero_url, is_featured, working_hours, services ( price, name, category )")
-      .limit(50);
-      
-      if (error) throw error;
-      
-      const formatted = filterPublicSalons(dbSalons || []).map((s: any, idx: number) => {
-        const mapped = mapSalonRowToUI(s, idx);
-        return {
-          ...mapped,
-          city: s.city || districtMeta.name,
-          district: s.district || districtMeta.name,
-          categories: mapped.tags,
-        };
-      });
-      
-      setSalons(formatted);
+        setLoading(true);
+        const params = new URLSearchParams({
+          location: districtMeta.name,
+          publishedOnly: "true",
+          limit: "0",
+        });
+        const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store" });
+        const payload = (await res.json()) as { listings?: BusinessListingCardData[]; error?: string };
+        if (!res.ok) throw new Error(payload.error || "Failed to load district listings.");
+        if (!cancelled) setListings(payload.listings || []);
       } catch (err) {
-      console.error("Failed to load live salons for district page:", err);
+        console.error("Failed to load live salons for district page:", err);
+        if (!cancelled) setListings([]);
       } finally {
-      setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-      }
-      
-      fetchLiveSalons();
-    });
-  }, [districtMeta.name, districtMeta.slug, provinceMeta.name]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [districtMeta.name]);
 
-  return <DistrictDetailTemplate data={{ ...districtData, salons: filteredSalons }} loading={loading} />;
+  return <DistrictDetailTemplate data={districtData} listings={listings} loading={loading} />;
 }

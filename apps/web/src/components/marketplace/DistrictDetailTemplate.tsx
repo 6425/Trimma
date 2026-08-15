@@ -7,8 +7,8 @@ import * as Icons from "lucide-react";
 import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Store, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SalonCard } from "./SalonCard";
-import { supabase } from "@/config/supabase";
+import { BusinessListingsMap } from "./BusinessListingsMap";
+import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { ProvinceNavLinks } from "../locations/ProvinceNavLinks";
 import { slugifyLocation } from "@/lib/sri-lanka-locations";
 import { 
@@ -40,12 +40,30 @@ export interface DistrictData {
   salons: any[];
 }
 
+function listingToSectionSalon(listing: BusinessListingCardData) {
+  return {
+    id: listing.id,
+    slug: listing.slug,
+    name: listing.name,
+    image: listing.image,
+    status: "Open Now",
+    rating: listing.rating,
+    reviews: listing.reviews,
+    city: listing.city || listing.location,
+    categories: [listing.category].filter(Boolean),
+    nextAvailable: "Hours not listed",
+    priceFrom: 1500,
+    phone: listing.phone,
+  };
+}
+
 interface DistrictDetailTemplateProps {
   data: DistrictData;
   loading?: boolean;
+  listings?: BusinessListingCardData[];
 }
 
-export function DistrictDetailTemplate({ data, loading = false }: DistrictDetailTemplateProps) {
+export function DistrictDetailTemplate({ data, loading = false, listings = [] }: DistrictDetailTemplateProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -223,7 +241,9 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
         </section>
 
         {(() => {
-          const mappedSalons = (data.salons || []).map((s: any) => ({
+          const mappedSalons = listings.length
+            ? listings.map(listingToSectionSalon)
+            : (data.salons || []).map((s: any) => ({
             id: s.id,
             slug: s.slug || s.id,
             name: s.name,
@@ -237,7 +257,18 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
             nextAvailable: s.nextAvailable || s.nextSlot || "Hours not listed",
             priceFrom: s.priceFrom || 1500,
             featured: s.featured,
+            phone: s.phone || null,
           }));
+
+          if (mapView) {
+            return listings.length > 0 ? (
+              <BusinessListingsMap listings={listings} searchLocation={data.name} />
+            ) : (
+              <p className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-zinc-500">
+                No mapped listings in this district yet.
+              </p>
+            );
+          }
 
           return (
             <>
@@ -264,7 +295,12 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
         <Button className="rounded-full shadow-lg h-12 font-bold text-white bg-zinc-900 px-6">
           <Filter className="w-5 h-5 mr-2" /> Filters
         </Button>
-        <Button className="rounded-full shadow-lg h-12 font-bold text-white bg-zinc-900 px-6">
+        <Button
+          type="button"
+          variant="dark"
+          className="rounded-full shadow-lg h-12 font-bold px-6"
+          onClick={() => setMapView(true)}
+        >
           <Map className="w-5 h-5 mr-2" /> Map View
         </Button>
       </div>

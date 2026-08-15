@@ -396,7 +396,7 @@ export default function CategoryClient({
             <p className="text-zinc-400 text-xs mt-1">Only admin-published listings appear here. Try another location or category.</p>
           </div>
         ) : viewMode === "map" ? (
-          <BusinessListingsMap listings={filteredListings} />
+          <BusinessListingsMap listings={filteredListings} searchLocation={appliedLocation} />
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">

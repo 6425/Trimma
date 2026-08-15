@@ -8,6 +8,7 @@ import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listi
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import { postSupabaseRpc } from "@/lib/supabase-rpc";
+import { pinTopReviewedListingsWithPhone } from "@/lib/listing-marketplace-rank";
 
 function normalizeCategoryText(value: string): string {
   return value
@@ -241,19 +242,18 @@ function sortBusinessListingRows(
   rows: Array<Record<string, unknown>>,
   sort: string
 ): Array<Record<string, unknown>> {
-  const copy = [...rows];
-  copy.sort((a, b) => {
-    if (sort === "name") {
-      return String(a.name || "").localeCompare(String(b.name || ""));
-    }
-    if (sort === "rating") {
-      return Number(b.rating || 0) - Number(a.rating || 0);
-    }
-    const featured = Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured));
-    if (featured) return featured;
-    return Number(b.rating || 0) - Number(a.rating || 0);
-  });
-  return copy;
+  if (sort === "name") {
+    return [...rows].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+  }
+  if (sort === "rating") {
+    return [...rows].sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+  }
+  return pinTopReviewedListingsWithPhone(
+    rows.map((row) => ({
+      ...row,
+      reviews: Number(row.review_count || 0),
+    }))
+  );
 }
 
 async function loadPublishedMarketplaceListings(
