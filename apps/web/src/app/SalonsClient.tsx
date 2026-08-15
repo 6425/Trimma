@@ -18,6 +18,8 @@ import {
 } from "../components/marketplace/SalonFiltersPanel";
 import type { SalonDealRow } from "@/lib/deals";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
+import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
+import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/sri-lanka-locations";
 
 const DealsDiscountSection = dynamic(
   () =>
@@ -71,7 +73,7 @@ interface Props {
   initialDeals?: SalonDealRow[];
   /** True when the server already ran the default listing query for initialSearch. */
   ssrSeeded?: boolean;
-  /** directory = browse all published listings; booking = bookable salons only */
+  /** directory = browse published listings; booking = admin-approved verified salons */
   variant?: SalonsClientVariant;
 }
 
@@ -114,7 +116,9 @@ export default function SalonsClient({
   );
 
   const [searchQuery, setSearchQuery] = useState(initialSearch.q);
-  const [selectedLocation, setSelectedLocation] = useState(initialSearch.l);
+  const [selectedLocation, setSelectedLocation] = useState(() =>
+    resolveLocationSearchValue(initialSearch.l)
+  );
   const [urlCategory, setUrlCategory] = useState(initialSearch.category);
   const [sortBy, setSortBy] = useState<SortOption>("recommended");
   const [filters, setFilters] = useState<SalonFilters>(() => ({
@@ -187,7 +191,7 @@ export default function SalonsClient({
         });
         if (filters.minRating > 0) params.set("minRating", String(filters.minRating));
         if (filters.verifiedOnly) params.set("verified", "true");
-        if (isBooking) params.set("bookable", "true");
+        if (isBooking) params.set("approved", "true");
         else params.set("browse", "true");
 
         const res = await fetch(`/api/salons/search?${params.toString()}`);
@@ -341,9 +345,7 @@ export default function SalonsClient({
     };
   };
 
-  const locationLabel = selectedLocation
-    ? selectedLocation.charAt(0).toUpperCase() + selectedLocation.slice(1)
-    : "Sri Lanka";
+  const locationLabel = resolveLocationDisplayLabel(selectedLocation);
   const activeFilterCount = countActiveFilters(filters);
 
   const clearFilters = () => {
@@ -353,7 +355,10 @@ export default function SalonsClient({
 
   const syncFromUrl = useCallback((next: InitialSearch) => {
     setSearchQuery((prev) => (prev === next.q ? prev : next.q));
-    setSelectedLocation((prev) => (prev === next.l ? prev : next.l));
+    setSelectedLocation((prev) => {
+      const resolved = resolveLocationSearchValue(next.l);
+      return prev === resolved ? prev : resolved;
+    });
     setUrlCategory((prev) => (prev === next.category ? prev : next.category));
     setFilters((prev) => {
       const nextCats = next.category ? [next.category] : [];
@@ -426,20 +431,15 @@ export default function SalonsClient({
                 </div>
                 <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                   <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
-                  <select
+                  <SriLankaLocationSelect
                     value={selectedLocation}
-                    onChange={(e) => {
-                      setSelectedLocation(e.target.value);
+                    onChange={(value) => {
+                      setSelectedLocation(value);
                       setPage(0);
                     }}
+                    anyLabel="Any Location"
                     className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
-                  >
-                    <option value="">Any Location</option>
-                    <option value="colombo">Colombo</option>
-                    <option value="gampaha">Gampaha</option>
-                    <option value="kandy">Kandy</option>
-                    <option value="anuradhapura">Anuradhapura</option>
-                  </select>
+                  />
                 </div>
                 <Button
                   onClick={handleSearch}
@@ -477,11 +477,11 @@ export default function SalonsClient({
           </nav>
           <p className="text-zinc-400 text-xs md:text-sm">
             {isLoading && page === 0 ? (
-              isBooking ? "Loading bookable salons..." : "Searching salons..."
+              isBooking ? "Loading approved salons..." : "Searching listings..."
             ) : (
               <>
                 <span className="text-brand font-bold">{filteredSalons.length}</span>{" "}
-                {isBooking ? "bookable salon" : "listing"}
+                {isBooking ? "approved salon" : "listing"}
                 {filteredSalons.length === 1 ? "" : "s"} found
               </>
             )}
@@ -496,7 +496,6 @@ export default function SalonsClient({
             <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
               <SalonFiltersPanel
                 filters={filters}
-                categories={categories}
                 onChange={(next) => {
                   const prevCategories = filters.selectedCategories.join(",");
                   const nextCategories = next.selectedCategories.join(",");
@@ -599,7 +598,7 @@ export default function SalonsClient({
                 <p className="text-lg font-black text-[#1A1C29]">No salons match your filters</p>
                 <p className="text-sm text-zinc-500 mt-1 max-w-md">
                   {isBooking
-                    ? "No bookable salons match your search yet. Browse business listings on the home page or try another location."
+                    ? "No approved salons match your search yet. Browse business listings on the home page or try another location."
                     : "Try adjusting your search, location, or filters. Ready to book? Visit the bookings page for verified salons."}
                 </p>
                 {isBooking ? (
@@ -681,7 +680,6 @@ export default function SalonsClient({
             <div className="p-4">
               <SalonFiltersPanel
                 filters={filters}
-                categories={categories}
                 onChange={(next) => {
                   const prevCategories = filters.selectedCategories.join(",");
                   const nextCategories = next.selectedCategories.join(",");

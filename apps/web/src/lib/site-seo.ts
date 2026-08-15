@@ -10,7 +10,6 @@ export const KNOWN_CATEGORY_SLUGS = [
   "mens-grooming",
   "nail-studio",
   "skincare-clinics",
-  "spa-and-wellness",
   "spa-wellness",
   "tattoo-studio",
   "yoga-studio",

@@ -15,6 +15,10 @@ export type BusinessListingCardData = {
   district: string;
   province: string;
   location: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  placeId: string | null;
   category: string;
   website: string | null;
   mapUrl: string | null;
@@ -45,6 +49,24 @@ function normalizeExternalUrl(value: string | null | undefined): string | null {
   return `https://${trimmed}`;
 }
 
+function parseCoord(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = typeof value === "number" ? value : parseFloat(String(value));
+  return Number.isFinite(n) ? n : null;
+}
+
+function isBusinessListingClaimable(row: Record<string, unknown>): boolean {
+  if (row.is_verified) return false;
+  const status = String(row.onboarding_status || "");
+  if (["VERIFIED", "PENDING_ADMIN_VERIFICATION", "OWNER_ACTIVATED"].includes(status)) {
+    return false;
+  }
+  if (status === "LISTING_PUBLISHED" || status === "LISTING_CAPTURED") {
+    return true;
+  }
+  return isSalonClaimable(row);
+}
+
 function formatBusinessListingLocation(city: string, district: string, province: string): string {
   const parts = [city, district, province].filter(Boolean);
   return parts.length ? parts.join(", ") : "Sri Lanka";
@@ -67,6 +89,14 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
   const instagramUrl =
     normalizeExternalUrl(readExtendedString(row, "instagram_url")) ||
     normalizeExternalUrl(readExtendedString(row, "google_instagram_url"));
+  const address = String(row.address || readExtendedString(row, "google_address") || "").trim() || null;
+  const latitude =
+    parseCoord(row.latitude as number | string | null | undefined) ??
+    parseCoord(readExtendedString(row, "latitude"));
+  const longitude =
+    parseCoord(row.longitude as number | string | null | undefined) ??
+    parseCoord(readExtendedString(row, "longitude"));
+  const placeId = String(row.place_id || readExtendedString(row, "google_place_id") || "").trim() || null;
 
   return {
     id: String(row.id),
@@ -83,11 +113,15 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
     district,
     province,
     location,
+    address,
+    latitude,
+    longitude,
+    placeId,
     category: String(row.category || "Beauty salon"),
     website,
     mapUrl,
     facebookUrl: social.facebookUrl,
     instagramUrl,
-    isClaimable: isSalonClaimable(row),
+    isClaimable: isBusinessListingClaimable(row),
   };
 }

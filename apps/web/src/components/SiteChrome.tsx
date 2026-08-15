@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import GlobalHeader from "./GlobalHeader";
 import GlobalFooter from "./GlobalFooter";
 import { SalonFavoritesProvider } from "@/hooks/useSalonFavorites";
@@ -56,7 +57,9 @@ export default function SiteChrome({
   if (usesDashboardShell && showSiteNav) {
     return withProviders(
       <div className="trimma-portal-with-site-nav min-h-screen flex flex-col bg-white trimma-light-context w-full">
-        <GlobalHeader navCategories={navCategories} />
+        <Suspense fallback={null}>
+          <GlobalHeader navCategories={navCategories} />
+        </Suspense>
         <main className="flex-1 min-h-0 flex flex-col w-full min-w-0">{children}</main>
       </div>
     );
@@ -67,8 +70,10 @@ export default function SiteChrome({
   }
 
   return withProviders(
-    <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-white">
-      <GlobalHeader navCategories={navCategories} />
+      <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-white">
+      <Suspense fallback={null}>
+        <GlobalHeader navCategories={navCategories} />
+      </Suspense>
       <main className="flex-1">{children}</main>
       <GlobalFooter />
     </div>

@@ -4,6 +4,7 @@ import { PricingContent } from "../pricing/PricingContent";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
 import { OnboardingHeroCta } from "./OnboardingHeroCta";
+import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 export default async function OnboardingPage() {
   const result = await getPublicSubscriptionPlans();
@@ -101,20 +102,24 @@ export default async function OnboardingPage() {
       {/* Supported Service Areas Section */}
       <section className="py-24 px-4 bg-slate-50 border-y border-slate-200">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C29] mb-4">Currently Onboarding Salons In</h2>
-          <p className="text-zinc-500 mb-12">We are rolling out our managed onboarding process district by district.</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C29] mb-4">Onboarding Available Island-Wide</h2>
+          <p className="text-zinc-500 mb-12">
+            Trimma supports salon onboarding across all nine provinces of Sri Lanka — from Colombo to Jaffna.
+          </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            {["Colombo", "Gampaha", "Kandy", "Anuradhapura"].map((district) => (
-              <div key={district} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
-                <span className="font-bold text-lg text-zinc-900 mb-1">{district}</span>
-                <span className="text-xs font-semibold text-brand-pink px-2 py-1 bg-brand-pink/10 rounded-full">Supported</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10 text-left">
+            {SRI_LANKA_PROVINCES.map((province) => (
+              <div key={province.slug} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <span className="font-bold text-lg text-zinc-900 mb-2 block">{province.shortName}</span>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  {province.districts.map((district) => district.name).join(", ")}
+                </p>
               </div>
             ))}
           </div>
 
           <div className="bg-[#ffde5a]/10 border border-[#ffde5a]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto">
-            <strong>Notice:</strong> We are currently providing dedicated onboarding support in the above districts to ensure a high-quality experience. Additional districts will be added soon.
+            <strong>Notice:</strong> Regional onboarding agents verify every listing so customers see accurate services, pricing, and availability before bookings open.
           </div>
         </div>
       </section>

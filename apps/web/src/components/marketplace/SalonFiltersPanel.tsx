@@ -12,11 +12,8 @@ export type SalonFilters = {
   minDiscount: number;
 };
 
-type Category = { slug: string; name: string };
-
 type SalonFiltersPanelProps = {
   filters: SalonFilters;
-  categories: Category[];
   onChange: (next: SalonFilters) => void;
   onApply?: () => void;
   onClear: () => void;
@@ -46,20 +43,12 @@ const DISCOUNT_OPTIONS = [
 
 export function SalonFiltersPanel({
   filters,
-  categories,
   onChange,
   onApply,
   onClear,
   compact = false,
 }: SalonFiltersPanelProps) {
   const set = (patch: Partial<SalonFilters>) => onChange({ ...filters, ...patch });
-
-  const toggleCategory = (slug: string) => {
-    const selected = filters.selectedCategories.includes(slug)
-      ? filters.selectedCategories.filter((s) => s !== slug)
-      : [...filters.selectedCategories, slug];
-    set({ selectedCategories: selected });
-  };
 
   return (
     <div className={`space-y-6 ${compact ? "" : "sticky top-[calc(3.5rem+1px)]"}`}>
@@ -135,25 +124,6 @@ export function SalonFiltersPanel({
           ))}
         </div>
       </div>
-
-      {categories.length > 0 && (
-        <div className="space-y-3 pb-4 border-b border-slate-100">
-          <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Salon type</p>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1 scrollbar-none">
-            {categories.map((cat) => (
-              <label key={cat.slug} className="flex items-center gap-2.5 cursor-pointer text-sm text-zinc-700 hover:text-zinc-900">
-                <input
-                  type="checkbox"
-                  checked={filters.selectedCategories.includes(cat.slug)}
-                  onChange={() => toggleCategory(cat.slug)}
-                  className="accent-brand rounded"
-                />
-                {cat.name}
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="space-y-3">
         <p className="text-xs font-bold uppercase tracking-wider text-zinc-500">Availability & trust</p>

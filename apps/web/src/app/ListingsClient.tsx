@@ -2,25 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, MapPin, Loader2, Building2, Sparkles, Star, Scissors, Heart, Smile, User, ShieldCheck, Clock } from "lucide-react";
+import { Search, MapPin, Loader2, Building2, Sparkles } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
+import { BusinessListingsMap } from "../components/marketplace/BusinessListingsMap";
+import { ListingViewToggle } from "../components/marketplace/ListingViewToggle";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import type { PublicCategory } from "@/lib/public-categories";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
-import { resolveLocationDisplayLabel, resolveLocationSearchValue, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
-
-const CATEGORY_ICON_MAP: Record<string, typeof Scissors> = {
-  Scissors,
-  Sparkles,
-  Heart,
-  Smile,
-  User,
-  Star,
-  Clock,
-  ShieldCheck,
-};
+import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/sri-lanka-locations";
+import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
 
 const HERO_IMAGE = "/assets/business-listings-hero.png";
 const PAGE_SIZE = 24;
@@ -92,6 +84,7 @@ export default function ListingsClient({
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
 
   const loadListings = useCallback(
     async (
@@ -170,32 +163,6 @@ export default function ListingsClient({
     });
   };
 
-  const handleCategorySelect = (slug: string) => {
-    applyFilters({
-      q: searchQuery.trim(),
-      location: selectedLocation,
-      category: slug,
-    });
-    trackEvent(AnalyticsEvent.CategoryFilterChanged, {
-      source: "homepage_category_bar",
-      previous: urlCategory || null,
-      category: slug || null,
-    });
-  };
-
-  const renderCategoryIcon = (iconName: string | null | undefined) => {
-    const IconComponent = CATEGORY_ICON_MAP[iconName || ""] || Sparkles;
-    return <IconComponent className="h-5 w-5 text-brand-pink" />;
-  };
-
-  const categoryPillClass = (active: boolean) =>
-    [
-      "snap-start shrink-0 flex min-h-11 flex-col items-center justify-center rounded-xl border px-2 py-1.5 transition-all w-[84px] cursor-pointer",
-      active
-        ? "border-brand-pink bg-brand-pink/5 text-brand-pink shadow-sm"
-        : "border-slate-100 bg-slate-50 text-zinc-600 hover:border-brand-pink/30",
-    ].join(" ");
-
   const locationLabel = resolveLocationDisplayLabel(selectedLocation);
   const activeCategory = categories.find((category) => category.slug === urlCategory);
 
@@ -256,43 +223,12 @@ export default function ListingsClient({
                 </div>
                 <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                   <MapPin className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
-                  <select
+                  <SriLankaLocationSelect
                     value={selectedLocation}
-                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    onChange={setSelectedLocation}
+                    anyLabel="Any location"
                     className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"
-                  >
-                    <option value="">Any location</option>
-                    <optgroup label="Provinces">
-                      {SRI_LANKA_PROVINCES.map((province) => (
-                        <option key={`province-${province.slug}`} value={province.name}>
-                          {province.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                    {SRI_LANKA_PROVINCES.map((province) => (
-                      <optgroup key={`districts-${province.slug}`} label={`${province.shortName} — Districts`}>
-                        {province.districts.map((district) => (
-                          <option key={`district-${province.slug}-${district.slug}`} value={district.name}>
-                            {district.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                    {SRI_LANKA_PROVINCES.map((province) => (
-                      <optgroup key={`cities-${province.slug}`} label={`${province.shortName} — Cities`}>
-                        {province.districts.flatMap((district) =>
-                          district.cities.map((city) => (
-                            <option
-                              key={`city-${province.slug}-${district.slug}-${city}`}
-                              value={city}
-                            >
-                              {city} ({district.name})
-                            </option>
-                          ))
-                        )}
-                      </optgroup>
-                    ))}
-                  </select>
+                  />
                 </div>
                 <Button
                   onClick={handleSearch}
@@ -308,43 +244,6 @@ export default function ListingsClient({
         </div>
       </section>
 
-      {categories.length > 0 && (
-        <section className="border-b border-slate-200 bg-white py-6">
-          <div className="container mx-auto max-w-7xl px-4">
-            <div
-              className="hide-scrollbar flex snap-x justify-start gap-4 overflow-x-auto pb-2 md:justify-center"
-              aria-label="Browse by category"
-            >
-              <button
-                type="button"
-                onClick={() => handleCategorySelect("")}
-                className={categoryPillClass(!urlCategory)}
-              >
-                <div className="mb-1 text-brand-pink">
-                  <Star className="h-5 w-5 fill-brand-pink" />
-                </div>
-                <span className="text-center text-[10px] font-bold">All</span>
-              </button>
-
-              {categories.map((category) => {
-                const active = urlCategory === category.slug;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => handleCategorySelect(category.slug)}
-                    className={categoryPillClass(active)}
-                  >
-                    <div className="mb-1">{renderCategoryIcon(category.icon)}</div>
-                    <span className="text-center text-[10px] font-bold leading-tight">{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
-
       <div className="border-b border-slate-200 bg-white">
         <div className="container mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm">
           <p className="font-semibold text-zinc-800">
@@ -352,6 +251,7 @@ export default function ListingsClient({
             {activeCategory ? ` · ${activeCategory.name}` : " · Lead Management listings"}
           </p>
           <div className="flex items-center gap-3">
+            <ListingViewToggle viewMode={viewMode} onChange={setViewMode} />
             <p className="text-zinc-500">
               <span className="font-bold text-zinc-900">{listings.length}</span> businesses
             </p>
@@ -384,13 +284,17 @@ export default function ListingsClient({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {listings.map((listing, index) => (
-                <BusinessListingCard key={listing.id} listing={listing} priority={index < 8} />
-              ))}
-            </div>
+            {viewMode === "map" ? (
+              <BusinessListingsMap listings={listings} />
+            ) : (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {listings.map((listing, index) => (
+                  <BusinessListingCard key={listing.id} listing={listing} priority={index < 8} />
+                ))}
+              </div>
+            )}
 
-            {hasMore && (
+            {viewMode === "grid" && hasMore && (
               <div className="mt-10 flex justify-center">
                 <Button
                   variant="outline"

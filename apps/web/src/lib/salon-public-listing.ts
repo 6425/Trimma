@@ -1,4 +1,5 @@
 import { normalizeEmail } from "@/lib/normalize-email";
+import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
 
 export type PublicVisibility = "hidden" | "public" | "preview";
 
@@ -56,6 +57,19 @@ export function isSalonPubliclyListable(salon: {
   if (salon.booking_enabled && status === "active") return true;
 
   return false;
+}
+
+/** Browse/discovery listings only — excludes admin-approved salons (those live on /bookings). */
+export function isSalonPublicBrowseListing(salon: {
+  status?: string | null;
+  public_visibility?: unknown;
+  is_verified?: boolean | null;
+  booking_enabled?: boolean | null;
+  source_type?: string | null;
+  onboarding_status?: string | null;
+}): boolean {
+  if (isSalonApprovedForBookings(salon)) return false;
+  return isSalonPubliclyListable(salon);
 }
 
 export type GooglePlaceReviewSnippet = {

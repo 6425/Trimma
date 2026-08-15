@@ -32,7 +32,9 @@ export function BusinessListingCard({ listing, priority = false }: Props) {
           className="object-cover transition-transform duration-500 hover:scale-[1.03]"
         />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">Lead listing</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">
+            {listing.isClaimable ? "Unclaimed · Claim this business" : "Lead listing"}
+          </p>
           <p className="text-xs font-medium text-white/90 line-clamp-1">{listing.category}</p>
         </div>
       </Link>
@@ -142,7 +144,7 @@ export function BusinessListingCard({ listing, priority = false }: Props) {
                 className: "h-11 min-h-11 w-full rounded-xl font-bold",
               })}
             >
-              Claim This Business
+              Claim this business
             </Link>
           ) : (
             <Link

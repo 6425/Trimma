@@ -8,24 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { normalizeAdminLeadCategoryOptions } from "@/lib/admin-lead-categories";
+import { buildSriLankaGeographyRecord } from "@/lib/sri-lanka-locations";
 
-const SRI_LANKA_GEOGRAPHY: Record<string, Record<string, string[]>> = {
-  "Western Province": {
-    Colombo: ["Colombo", "Mount Lavinia", "Dehiwala", "Moratuwa", "Kotte"],
-    Gampaha: ["Gampaha", "Negombo", "Kelaniya", "Wattala"],
-    Kalutara: ["Kalutara", "Panadura", "Horana"],
-  },
-  "Central Province": {
-    Kandy: ["Kandy", "Peradeniya", "Gampola"],
-    Matale: ["Matale", "Dambulla"],
-    "Nuwara Eliya": ["Nuwara Eliya", "Hatton"],
-  },
-  "Southern Province": {
-    Galle: ["Galle", "Hikkaduwa", "Unawatuna"],
-    Matara: ["Matara", "Weligama"],
-    Hambantota: ["Hambantota", "Tangalle"],
-  },
-};
+const SRI_LANKA_GEOGRAPHY = buildSriLankaGeographyRecord();
 
 export default function ListingDataCapturePage() {
   const [selectedProvince, setSelectedProvince] = useState("");

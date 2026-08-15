@@ -1,31 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail, Calendar } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
 import type { PublicCategory } from "@/lib/public-categories";
+import { buildCategoryHref, resolveActiveCategorySlug } from "@/lib/public-categories";
 import Logo from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { SALON_OWNER_ONBOARDING_FLAG_KEY } from "@/lib/salon-owner-oauth-intent";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
+import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 const IconMap: Record<string, any> = {
   Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
 };
 
-const PROVINCES = [
-  { name: "Western Province", districts: ["Colombo", "Gampaha", "Kalutara"] },
-  { name: "Central Province", districts: ["Kandy", "Matale", "Nuwara Eliya"] },
-  { name: "Southern Province", districts: ["Galle", "Matara", "Hambantota"] },
-  { name: "Northern Province", districts: ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"] },
-  { name: "Eastern Province", districts: ["Trincomalee", "Batticaloa", "Ampara"] },
-  { name: "North Western Province", districts: ["Kurunegala", "Puttalam"] },
-  { name: "North Central Province", districts: ["Anuradhapura", "Polonnaruwa"] },
-  { name: "Uva Province", districts: ["Badulla", "Moneragala"] },
-  { name: "Sabaragamuwa Province", districts: ["Ratnapura", "Kegalle"] },
-];
+const PROVINCES = SRI_LANKA_PROVINCES.map((province) => ({
+  name: province.name,
+  districts: province.districts.map((district) => district.name),
+}));
 
 const navDesktopClass = (active: boolean) =>
   `text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
@@ -58,11 +53,15 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [mobileLocationsOpen, setMobileLocationsOpen] = useState(false);
   const [mobileActiveProvince, setMobileActiveProvince] = useState<string | null>(null);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [locationsOpen, setLocationsOpen] = useState(false);
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const activeCategorySlug = resolveActiveCategorySlug(
+    pathname,
+    searchParams.get("category")
+  );
 
   const prefetchCategory = (slug: string) => {
     router.prefetch(`/category/${slug}`);
@@ -71,7 +70,6 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
   const isPricingActive = pathname === "/pricing" || pathname?.startsWith("/pricing/");
   const isAboutActive = pathname === "/about" || pathname?.startsWith("/about/");
-  const isCategoryActive = pathname === "/categories" || pathname?.startsWith("/category/");
   const isLocationsActive = pathname === "/locations" || pathname?.startsWith("/locations/");
   const isDealsActive = pathname === "/deals";
   const isBookingActive = pathname === "/bookings" || pathname?.startsWith("/bookings/");
@@ -181,52 +179,6 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               <Link href="/about" className={navDesktopClass(isAboutActive)}>
                 About
               </Link>
-              <div
-                className="relative"
-                onMouseEnter={() => setCategoriesOpen(true)}
-                onMouseLeave={() => setCategoriesOpen(false)}
-              >
-                <button
-                  type="button"
-                  aria-haspopup="true"
-                  aria-expanded={categoriesOpen}
-                  className={`flex items-center gap-1.5 ${navDesktopClass(isCategoryActive)}`}
-                >
-                  Categories
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {categoriesOpen && navCategories.length > 0 && (
-                  <div className="absolute top-full left-0 pt-1 z-50">
-                    <div className="min-w-[240px] max-h-[400px] overflow-y-auto rounded-xl border border-zinc-200 bg-white py-2 shadow-lg">
-                      {navCategories.map((cat) => {
-                        const Icon = IconMap[cat.icon] || Tag;
-                        return (
-                          <Link
-                            key={cat.id}
-                            href={`/category/${cat.slug}`}
-                            prefetch
-                            onMouseEnter={() => prefetchCategory(cat.slug)}
-                            onFocus={() => prefetchCategory(cat.slug)}
-                            onClick={() => {
-                              trackEvent(AnalyticsEvent.CategoryFilterChanged, {
-                                source: "header_dropdown",
-                                category: cat.slug,
-                                category_name: cat.name,
-                              });
-                            }}
-                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
-                          >
-                            <Icon className="w-4 h-4 text-zinc-500 shrink-0" />
-                            {cat.name}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
               <div
                 className="relative"
                 onMouseEnter={() => setLocationsOpen(true)}
@@ -373,11 +325,12 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             >
               {navCategories.map((cat) => {
                 const Icon = IconMap[cat.icon] || Tag;
-                const active = pathname === `/category/${cat.slug}`;
+                const active = activeCategorySlug === cat.slug;
+                const href = buildCategoryHref(pathname, cat.slug);
                 return (
                   <Link
                     key={cat.id}
-                    href={`/category/${cat.slug}`}
+                    href={href}
                     prefetch
                     onMouseEnter={() => prefetchCategory(cat.slug)}
                     onFocus={() => prefetchCategory(cat.slug)}
@@ -447,7 +400,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                   return (
                     <Link
                       key={cat.id}
-                      href={`/category/${cat.slug}`}
+                      href={buildCategoryHref(pathname, cat.slug)}
                       prefetch
                       onMouseEnter={() => prefetchCategory(cat.slug)}
                       onFocus={() => prefetchCategory(cat.slug)}

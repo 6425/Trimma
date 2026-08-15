@@ -50,57 +50,9 @@ import {
   SALON_HERO_IMAGE_WIDTH,
 } from "@/lib/salon-hero-image";
 import { normalizeAdminLeadCategoryOptions } from "@/lib/admin-lead-categories";
+import { buildSriLankaGeographyRecord } from "@/lib/sri-lanka-locations";
 
-// Sri Lankan Hierarchical Geography Dictionary
-const SRI_LANKA_GEOGRAPHY: any = {
-  "Western Province": {
-    "Colombo": ["Colombo", "Mount Lavinia", "Dehiwala", "Moratuwa", "Kotte", "Battaramulla", "Nugegoda", "Kolonnawa"],
-    "Gampaha": ["Gampaha", "Negombo", "Kelaniya", "Wattala", "Kiribathgoda", "Ja-Ela", "Kadawatha"],
-    "Kalutara": ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama"]
-  },
-  "Central Province": {
-    "Kandy": ["Kandy", "Peradeniya", "Gampola", "Katugastota"],
-    "Matale": ["Matale", "Dambulla", "Sigiriya"],
-    "Nuwara Eliya": ["Nuwara Eliya", "Hatton", "Talawakele"]
-  },
-  "Southern Province": {
-    "Galle": ["Galle", "Hikkaduwa", "Ambalangoda", "Unawatuna"],
-    "Matara": ["Matara", "Weligama", "Mirissa"],
-    "Hambantota": ["Hambantota", "Tangalle", "Beliatta"]
-  },
-  "North Western Province": {
-    "Kurunegala": ["Kurunegala", "Kuliyapitiya"],
-    "Puttalam": ["Puttalam", "Chilaw", "Marawila"]
-  },
-  "Sabaragamuwa Province": {
-    "Ratnapura": ["Ratnapura", "Balangoda"],
-    "Kegalle": ["Kegalle", "Mawanella"]
-  },
-  "Eastern Province": {
-    "Trincomalee": ["Trincomalee"],
-    "Batticaloa": ["Batticaloa"],
-    "Ampara": ["Ampara"]
-  },
-  "North Central Province": {
-    "Anuradhapura": ["Anuradhapura"],
-    "Polonnaruwa": ["Polonnaruwa"]
-  },
-  "Uva Province": {
-    "Badulla": ["Badulla", "Bandarawela", "Ella"],
-    "Monaragala": ["Monaragala"]
-  },
-  "Northern Province": {
-    "Jaffna": ["Jaffna", "Chavakachcheri"],
-    "Vavuniya": ["Vavuniya"],
-    "Mannar": ["Mannar"],
-    "Mullaitivu": ["Mullaitivu"],
-    "Kilinochchi": ["Kilinochchi"]
-  }
-};
-
-
-
-
+const SRI_LANKA_GEOGRAPHY = buildSriLankaGeographyRecord();
 
 export default function LeadsPage() {
   return (

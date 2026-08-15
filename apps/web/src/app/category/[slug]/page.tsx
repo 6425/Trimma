@@ -1,7 +1,8 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
-import { fetchPublicSalons } from "@/lib/public-salon-search";
-import { fetchPublicCategories } from "@/lib/public-categories";
+import { fetchBusinessListingCards } from "@/lib/public-salon-search";
+import { fetchPublicCategories, canonicalizeCategorySlug } from "@/lib/public-categories";
 import CategoryClient from "./CategoryClient";
+import { redirect } from "next/navigation";
 
 export const revalidate = 60;
 
@@ -11,33 +12,40 @@ type PageProps = {
 
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
+  const canonicalSlug = canonicalizeCategorySlug(slug);
+  if (canonicalSlug !== slug) {
+    redirect(`/category/${canonicalSlug}`);
+  }
+
   const supabase = createServerSupabaseClient();
   const categories = await fetchPublicCategories();
-  const category = categories.find((c) => c.slug === slug);
+  const category = categories.find((c) => c.slug === canonicalSlug);
   const categoryLabel =
     category?.name ||
     slug
       .replace(/-/g, " ")
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
-  let initialSalons: Awaited<ReturnType<typeof fetchPublicSalons>>["salons"] = [];
+  let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
   try {
-    const listing = await fetchPublicSalons(supabase, {
-      category: categoryLabel,
+    const result = await fetchBusinessListingCards(supabase, {
+      category: canonicalSlug,
+      categoryName: categoryLabel,
+      publishedOnly: true,
       limit: 48,
       offset: 0,
     });
-    initialSalons = listing.salons;
+    initialListings = result.listings;
   } catch {
-    initialSalons = [];
+    initialListings = [];
   }
 
   return (
     <CategoryClient
-      key={slug}
-      slug={slug}
+      key={canonicalSlug}
+      slug={canonicalSlug}
       categories={categories}
-      initialSalons={initialSalons}
+      initialListings={initialListings}
       categoryLabel={categoryLabel}
     />
   );

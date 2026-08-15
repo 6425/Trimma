@@ -34,7 +34,7 @@ export default async function BookingsDirectoryPage({ searchParams }: PageProps)
           q: sp.q ?? "",
           location: sp.l ?? "",
           category: sp.category ?? "",
-          bookableOnly: true,
+          approvedOnly: true,
           limit: 12,
           offset: 0,
         });

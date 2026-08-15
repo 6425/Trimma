@@ -46,6 +46,18 @@ export function isSalonPubliclyBookable(salon: {
   );
 }
 
+/** Admin-approved salons that belong on /bookings (verified onboarding complete). */
+export function isSalonApprovedForBookings(salon: {
+  is_verified?: boolean | null;
+  onboarding_status?: string | null;
+  status?: string | null;
+}): boolean {
+  const status = String(salon.status || "").toLowerCase();
+  if (status === "inactive" || status === "rejected") return false;
+  if (salon.is_verified === true) return true;
+  return String(salon.onboarding_status || "") === "VERIFIED";
+}
+
 export function getSalonBookabilityMessage(salon: {
   booking_enabled?: boolean | null;
   phone?: string | null;

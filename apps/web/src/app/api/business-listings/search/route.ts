@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const categoryName = searchParams.get("categoryName") || "";
     const sort = searchParams.get("sort") || "recommended";
     const minRating = parseFloat(searchParams.get("minRating") || "0");
+    const publishedOnly = searchParams.get("publishedOnly") === "true";
     const limit = parseInt(searchParams.get("limit") || "24", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
@@ -24,6 +25,7 @@ export async function GET(request: Request) {
       categoryName,
       sort,
       minRating,
+      publishedOnly,
       limit,
       offset,
     });

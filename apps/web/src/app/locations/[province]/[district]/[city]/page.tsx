@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/config/supabase";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
-import { isSalonPubliclyListable } from "@/lib/salon-public-listing";
+import { isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import {
   getDistrictBySlugs,
@@ -75,7 +75,6 @@ export default function CityDetailPage() {
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
   const [salons, setSalons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const cityOptions = districtMeta.cities;
@@ -100,7 +99,7 @@ export default function CityDetailPage() {
 
         // Transform DB records into UI formats
         const formatted = filterPublicSalons(dbSalons || [])
-          .filter((s) => isSalonPubliclyListable(s as Record<string, unknown>))
+          .filter((s) => isSalonPublicBrowseListing(s as Record<string, unknown>))
           .map((s: any, idx: number) => {
           const mapped = mapSalonRowToUI(s, idx);
           return {
@@ -119,35 +118,14 @@ export default function CityDetailPage() {
       }
     }
 
-    async function fetchCategories() {
-      try {
-        const { data, error } = await supabase
-          .from("categories")
-          .select("*")
-          .order("name");
-        if (error) throw error;
-        if (data) {
-          setCategories(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    }
-
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 300);
     };
 
     fetchLiveSalons();
-    fetchCategories();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [city]);
-
-  const renderIcon = (iconName: string) => {
-    const IconComponent = IconMap[iconName] || Sparkles;
-    return <IconComponent className="w-5 h-5 text-brand-pink" />;
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 md:pb-0 relative">
@@ -245,34 +223,6 @@ export default function CityDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Categories Bar */}
-      <section className="py-6 bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex overflow-x-auto gap-4 pb-2 hide-scrollbar snap-x justify-start md:justify-center">
-             <Link
-                href="/"
-                className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-              >
-                <div className="mb-1 text-brand-pink">
-                  <Star className="w-5 h-5 fill-brand-pink" />
-                </div>
-                <span className="text-[10px] font-bold text-center">All</span>
-             </Link>
-             
-             {categories.map((category, i) => (
-               <Link
-                 key={i}
-                 href={`/category/${category.slug}`}
-                 className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-               >
-                 <div className="mb-1">{renderIcon(category.icon)}</div>
-                 <span className="text-[10px] font-bold text-center leading-tight">{category.name}</span>
-               </Link>
-             ))}
-          </div>
-        </div>
-      </section>
 
       {/* QUICK FILTER BAR (Sticky) */}
       <div className={`sticky top-16 z-30 bg-white border-b border-slate-200 transition-shadow duration-300 ${isScrolled ? 'shadow-md' : ''}`}>

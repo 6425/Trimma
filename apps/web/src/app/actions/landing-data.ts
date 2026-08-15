@@ -2,6 +2,7 @@
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
+import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 
 export type LandingCategory = {
@@ -102,6 +103,7 @@ export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
     if (error) throw error;
 
     return filterPublicSalons(data || [])
+      .filter((row) => isSalonApprovedForBookings(row))
       .filter((row) => row.slug?.trim())
       .slice(0, limit)
       .map((row) => {

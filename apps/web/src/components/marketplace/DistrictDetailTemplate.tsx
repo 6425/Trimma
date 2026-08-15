@@ -50,37 +50,15 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const { data, error } = await supabase
-          .from("categories")
-          .select("*")
-          .order("name");
-        if (error) throw error;
-        if (data) {
-          setCategories(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    }
-
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 300);
     };
 
-    fetchCategories();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const renderIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Sparkles;
-    return <IconComponent className="w-5 h-5 text-brand-pink" />;
-  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 md:pb-0 relative">
@@ -179,34 +157,6 @@ export function DistrictDetailTemplate({ data, loading = false }: DistrictDetail
           </div>
         </div>
       </div>
-
-      {/* Categories Bar */}
-      <section className="py-6 bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex overflow-x-auto gap-4 pb-2 hide-scrollbar snap-x justify-start md:justify-center">
-             <Link
-                href="/"
-                className="snap-start shrink-0 flex flex-col items-center justify-center p-3 rounded-2xl border transition-all w-24 cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-              >
-                <div className="mb-2 text-brand-pink">
-                  <Star className="w-5 h-5 fill-brand-pink" />
-                </div>
-                <span className="text-[10px] font-bold text-center">All</span>
-             </Link>
-             
-             {categories.map((category, i) => (
-               <Link
-                 key={i}
-                 href={`/category/${category.slug}`}
-                 className="snap-start shrink-0 flex flex-col items-center justify-center p-3 rounded-2xl border transition-all w-24 cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-               >
-                 <div className="mb-2">{renderIcon(category.icon)}</div>
-                 <span className="text-[10px] font-bold text-center leading-tight">{category.name}</span>
-               </Link>
-             ))}
-          </div>
-        </div>
-      </section>
 
       {/* 3. QUICK FILTER BAR (Sticky) */}
       <div className={`sticky top-16 z-30 bg-white border-b border-slate-200 transition-shadow duration-300 ${isScrolled ? 'shadow-md' : ''}`}>

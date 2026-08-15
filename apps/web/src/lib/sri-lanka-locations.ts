@@ -28,8 +28,8 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
       "Discover salons, spas, and barber shops across Colombo, Gampaha, and Kalutara — the beauty capital of Sri Lanka.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "colombo", name: "Colombo", cities: ["Colombo", "Mount Lavinia", "Dehiwala", "Moratuwa", "Kotte", "Battaramulla", "Nugegoda", "Kolonnawa"] },
-      { slug: "gampaha", name: "Gampaha", cities: ["Gampaha", "Negombo", "Kelaniya", "Wattala", "Kiribathgoda", "Ja-Ela", "Kadawatha"] },
+      { slug: "colombo", name: "Colombo", cities: ["Colombo", "Dehiwala", "Mount Lavinia", "Moratuwa", "Kotte", "Battaramulla", "Nugegoda", "Kolonnawa", "Maharagama", "Malabe", "Homagama"] },
+      { slug: "gampaha", name: "Gampaha", cities: ["Gampaha", "Negombo", "Kelaniya", "Wattala", "Kiribathgoda", "Ja-Ela", "Kadawatha", "Minuwangoda"] },
       { slug: "kalutara", name: "Kalutara", cities: ["Kalutara", "Panadura", "Horana", "Beruwala", "Aluthgama"] },
     ],
   },
@@ -42,7 +42,7 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
       "Explore premium grooming and wellness in the hill country — Kandy, Matale, and Nuwara Eliya.",
     image: "https://images.unsplash.com/photo-1546708973-b339540b5162?q=80&w=2836&auto=format&fit=crop",
     districts: [
-      { slug: "kandy", name: "Kandy", cities: ["Kandy", "Peradeniya", "Gampola", "Katugastota"] },
+      { slug: "kandy", name: "Kandy", cities: ["Kandy", "Peradeniya", "Gampola", "Katugastota", "Nawalapitiya"] },
       { slug: "matale", name: "Matale", cities: ["Matale", "Dambulla", "Sigiriya"] },
       { slug: "nuwara-eliya", name: "Nuwara Eliya", cities: ["Nuwara Eliya", "Hatton", "Talawakele"] },
     ],
@@ -56,9 +56,9 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
       "Coastal salons and wellness retreats across Galle, Matara, and Hambantota.",
     image: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=2836&auto=format&fit=crop",
     districts: [
-      { slug: "galle", name: "Galle", cities: ["Galle", "Hikkaduwa", "Ambalangoda", "Unawatuna"] },
-      { slug: "matara", name: "Matara", cities: ["Matara", "Weligama", "Mirissa"] },
-      { slug: "hambantota", name: "Hambantota", cities: ["Hambantota", "Tangalle", "Beliatta"] },
+      { slug: "galle", name: "Galle", cities: ["Galle", "Hikkaduwa", "Ambalangoda", "Unawatuna", "Karapitiya"] },
+      { slug: "matara", name: "Matara", cities: ["Matara", "Weligama", "Mirissa", "Dickwella"] },
+      { slug: "hambantota", name: "Hambantota", cities: ["Hambantota", "Tangalle", "Beliatta", "Tissamaharama"] },
     ],
   },
   {
@@ -69,7 +69,7 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
     description: "Find trusted salons and grooming studios across Jaffna, Kilinochchi, Mannar, Vavuniya, and Mullaitivu.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "jaffna", name: "Jaffna", cities: ["Jaffna", "Chavakachcheri"] },
+      { slug: "jaffna", name: "Jaffna", cities: ["Jaffna", "Chavakachcheri", "Nallur", "Point Pedro"] },
       { slug: "kilinochchi", name: "Kilinochchi", cities: ["Kilinochchi"] },
       { slug: "mannar", name: "Mannar", cities: ["Mannar"] },
       { slug: "vavuniya", name: "Vavuniya", cities: ["Vavuniya"] },
@@ -84,9 +84,9 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
     description: "Beauty and grooming services across Trincomalee, Batticaloa, and Ampara.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "trincomalee", name: "Trincomalee", cities: ["Trincomalee"] },
-      { slug: "batticaloa", name: "Batticaloa", cities: ["Batticaloa"] },
-      { slug: "ampara", name: "Ampara", cities: ["Ampara"] },
+      { slug: "trincomalee", name: "Trincomalee", cities: ["Trincomalee", "Kinniya"] },
+      { slug: "batticaloa", name: "Batticaloa", cities: ["Batticaloa", "Kattankudy", "Eravur"] },
+      { slug: "ampara", name: "Ampara", cities: ["Ampara", "Kalmunai", "Akkaraipattu"] },
     ],
   },
   {
@@ -97,8 +97,8 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
     description: "Salons and spas in Kurunegala and Puttalam districts.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "kurunegala", name: "Kurunegala", cities: ["Kurunegala", "Kuliyapitiya"] },
-      { slug: "puttalam", name: "Puttalam", cities: ["Puttalam", "Chilaw", "Marawila"] },
+      { slug: "kurunegala", name: "Kurunegala", cities: ["Kurunegala", "Kuliyapitiya", "Narammala", "Wariyapola"] },
+      { slug: "puttalam", name: "Puttalam", cities: ["Puttalam", "Chilaw", "Marawila", "Wennappuwa"] },
     ],
   },
   {
@@ -109,8 +109,8 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
     description: "Discover grooming and wellness in Anuradhapura and Polonnaruwa.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "anuradhapura", name: "Anuradhapura", cities: ["Anuradhapura"] },
-      { slug: "polonnaruwa", name: "Polonnaruwa", cities: ["Polonnaruwa"] },
+      { slug: "anuradhapura", name: "Anuradhapura", cities: ["Anuradhapura", "Kekirawa", "Medawachchiya"] },
+      { slug: "polonnaruwa", name: "Polonnaruwa", cities: ["Polonnaruwa", "Kaduruwela", "Hingurakgoda"] },
     ],
   },
   {
@@ -121,8 +121,8 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
     description: "Salons and wellness across Badulla and Monaragala.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "badulla", name: "Badulla", cities: ["Badulla", "Bandarawela", "Ella"] },
-      { slug: "monaragala", name: "Monaragala", cities: ["Monaragala"] },
+      { slug: "badulla", name: "Badulla", cities: ["Badulla", "Bandarawela", "Ella", "Haputale", "Mahiyanganaya"] },
+      { slug: "monaragala", name: "Monaragala", cities: ["Monaragala", "Wellawaya", "Kataragama"] },
     ],
   },
   {
@@ -133,11 +133,41 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
     description: "Beauty services in Ratnapura and Kegalle districts.",
     image: DEFAULT_IMAGE,
     districts: [
-      { slug: "ratnapura", name: "Ratnapura", cities: ["Ratnapura", "Balangoda"] },
-      { slug: "kegalle", name: "Kegalle", cities: ["Kegalle", "Mawanella"] },
+      { slug: "ratnapura", name: "Ratnapura", cities: ["Ratnapura", "Balangoda", "Embilipitiya", "Pelmadulla"] },
+      { slug: "kegalle", name: "Kegalle", cities: ["Kegalle", "Mawanella", "Warakapola"] },
     ],
   },
 ];
+
+/** Province → district → cities map for admin discovery dropdowns. */
+export function buildSriLankaGeographyRecord(): Record<string, Record<string, string[]>> {
+  const record: Record<string, Record<string, string[]>> = {};
+  for (const province of SRI_LANKA_PROVINCES) {
+    record[province.name] = {};
+    for (const district of province.districts) {
+      record[province.name][district.name] = [...district.cities];
+    }
+  }
+  return record;
+}
+
+export function getAllDistrictNamesFlat(): string[] {
+  return SRI_LANKA_PROVINCES.flatMap((province) => province.districts.map((district) => district.name));
+}
+
+export function getDistrictFilterOptions(): Array<{
+  value: string;
+  label: string;
+  provinceName: string;
+}> {
+  return SRI_LANKA_PROVINCES.flatMap((province) =>
+    province.districts.map((district) => ({
+      value: district.slug,
+      label: district.name,
+      provinceName: province.name,
+    }))
+  );
+}
 
 export function slugifyLocation(value: string): string {
   return value

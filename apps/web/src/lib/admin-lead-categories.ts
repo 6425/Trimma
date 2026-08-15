@@ -6,9 +6,10 @@ export const ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS = [
   "Nail Studio",
   "Spa & Wellness",
   "Men's Grooming",
-  "hair salon",
-  "beauty salon",
-  "barber shop",
+  "Skincare Clinics",
+  "Tattoo Studio",
+  "Yoga Studio",
+  "Kids & Family",
 ];
 
 export type AdminLeadCategoryOption = {
@@ -17,9 +18,9 @@ export type AdminLeadCategoryOption = {
 };
 
 export function normalizeAdminLeadCategoryOptions(names: string[] | null | undefined): AdminLeadCategoryOption[] {
-  const merged = [
-    ...new Set([...(names || []).filter(Boolean), ...ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS]),
-  ].sort((a, b) => a.localeCompare(b));
+  const merged = [...new Set([...(names || []).filter(Boolean), ...ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS])].sort(
+    (a, b) => a.localeCompare(b)
+  );
 
   return merged.map((name) => ({ value: name, label: name }));
 }

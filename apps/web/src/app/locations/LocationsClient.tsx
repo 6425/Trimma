@@ -8,7 +8,6 @@ import { Search, MapPin, ChevronRight, ChevronLeft, Sparkles, Navigation2, Star 
 import { buildLocationSearchHref, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { ProvinceNavLinks } from "../../components/locations/ProvinceNavLinks";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
-import type { PublicCategory } from "@/lib/public-categories";
 
 const provinces = SRI_LANKA_PROVINCES.map((province) => ({
   id: province.slug,
@@ -18,19 +17,10 @@ const provinces = SRI_LANKA_PROVINCES.map((province) => ({
   image: province.image,
 }));
 
-export default function LocationsClient({
-  categories,
-}: {
-  categories: PublicCategory[];
-}) {
+export default function LocationsClient() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-
-  const renderIcon = (iconName: string | null) => {
-    const IconComponent = (Icons as any)[iconName || ""] || Icons.Sparkles;
-    return <IconComponent className="w-5 h-5 text-brand-pink" />;
-  };
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -134,34 +124,6 @@ export default function LocationsClient({
           </div>
         </div>
       </div>
-
-      {/* Categories Bar */}
-      <section className="py-6 bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex overflow-x-auto gap-4 pb-2 hide-scrollbar snap-x justify-start md:justify-center">
-             <Link
-                href="/"
-                className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-              >
-                <div className="mb-1 text-brand-pink">
-                  <Star className="w-5 h-5 fill-brand-pink" />
-                </div>
-                <span className="text-[10px] font-bold text-center">All</span>
-             </Link>
-             
-             {categories.map((category, i) => (
-               <Link
-                 key={i}
-                 href={`/category/${category.slug}`}
-                 className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-               >
-                 <div className="mb-1">{renderIcon(category.icon)}</div>
-                 <span className="text-[10px] font-bold text-center leading-tight">{category.name}</span>
-               </Link>
-             ))}
-          </div>
-        </div>
-      </section>
 
       {/* 2. HORIZONTAL SCROLL PROVINCES HUB */}
       <section className="relative z-20 mt-16 md:mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

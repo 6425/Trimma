@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
-import { isSalonPubliclyBookable } from "@/lib/salon-bookability";
-import { isSalonPubliclyListable } from "@/lib/salon-public-listing";
+import { isSalonPubliclyBookable, isSalonApprovedForBookings } from "@/lib/salon-bookability";
+import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
+import { isListingPublished } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 
 function normalizeCategoryText(value: string): string {
@@ -58,10 +59,14 @@ export type PublicSalonSearchParams = {
   verifiedOnly?: boolean;
   /** When true, only salons with online booking enabled and valid owner contact details. */
   bookableOnly?: boolean;
+  /** When true, only admin-approved / verified salons (for /bookings directory). */
+  approvedOnly?: boolean;
   /** When true, only browse/discovery listings (Lead Mgmt / unbookable public listings). */
   browseOnly?: boolean;
   /** When true, only admin Lead Management / listing-generation sources. */
   leadListingsOnly?: boolean;
+  /** When true, only admin-published listing-generation rows (LISTING_PUBLISHED). */
+  publishedOnly?: boolean;
   limit?: number;
   offset?: number;
 };
@@ -78,6 +83,7 @@ export async function fetchPublicSalons(
     verifiedOnly = false,
     bookableOnly = false,
     browseOnly = false,
+    approvedOnly = false,
     leadListingsOnly = false,
     limit = 12,
     offset = 0,
@@ -122,7 +128,8 @@ export async function fetchPublicSalons(
 
   const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
   const categoryFilterActive = normalizedCategory.length > 0;
-  const postFilterActive = categoryFilterActive || bookableOnly || browseOnly || leadListingsOnly;
+  const postFilterActive =
+    categoryFilterActive || bookableOnly || browseOnly || approvedOnly || leadListingsOnly;
   const fetchLimit = postFilterActive ? Math.max(limit * 8, 100) : limit;
   const fetchOffset = postFilterActive ? 0 : offset;
 
@@ -131,11 +138,16 @@ export async function fetchPublicSalons(
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  let rows = filterPublicSalons(data || []).filter(isSalonPubliclyListable);
-  if (bookableOnly) {
-    rows = rows.filter(isSalonPubliclyBookable);
-  } else if (browseOnly) {
-    rows = rows.filter((row) => !isSalonPubliclyBookable(row));
+  let rows = filterPublicSalons(data || []);
+  if (approvedOnly) {
+    rows = rows.filter(isSalonApprovedForBookings);
+  } else {
+    rows = rows.filter(isSalonPubliclyListable);
+    if (bookableOnly) {
+      rows = rows.filter(isSalonPubliclyBookable);
+    } else if (browseOnly) {
+      rows = rows.filter((row) => isSalonPublicBrowseListing(row));
+    }
   }
   if (leadListingsOnly) {
     rows = rows.filter((row) => {
@@ -170,6 +182,7 @@ export async function fetchBusinessListingCards(
       is_featured, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail, website, map_url, business_info_extended,
+      address, latitude, longitude, place_id,
       services ( id, name, price, category )
     `);
 
@@ -181,6 +194,7 @@ export async function fetchBusinessListingCards(
     sort = "recommended",
     minRating = 0,
     verifiedOnly = false,
+    publishedOnly = false,
     limit = 24,
     offset = 0,
   } = params;
@@ -210,12 +224,16 @@ export async function fetchBusinessListingCards(
   if (error) throw new Error(error.message);
 
   let rows = filterPublicSalons(data || [])
-    .filter(isSalonPubliclyListable)
+    .filter(isSalonPublicBrowseListing)
     .filter((row) => !isSalonPubliclyBookable(row))
     .filter((row) => {
       const source = String(row.source_type || "");
       return source === "GOOGLE_PLACES" || source === "LISTING_GENERATION";
     });
+
+  if (publishedOnly) {
+    rows = rows.filter(isListingPublished);
+  }
 
   if (categoryFilterActive) {
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));

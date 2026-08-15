@@ -14,7 +14,7 @@ type LocationHierarchySelectProps = {
   onDistrictChange: (value: string) => void;
   onCityChange?: (value: string) => void;
   showCity?: boolean;
-  availableDistricts?: string[]; // e.g. ["colombo", "gampaha", "kandy", "anuradhapura"]
+  availableDistricts?: string[];
   provinceClassName?: string;
   districtClassName?: string;
   cityClassName?: string;

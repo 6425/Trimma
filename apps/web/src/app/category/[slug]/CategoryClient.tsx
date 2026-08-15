@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, MapPin, Star, ShieldCheck, Grid, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User, Map as MapIcon } from "lucide-react";
+import { Search, MapPin, Star, ShieldCheck, SlidersHorizontal, Clock, Scissors, Loader2, Sparkles, Heart, Smile, User } from "lucide-react";
 
 const IconMap: Record<string, any> = {
   Scissors,
@@ -17,10 +17,14 @@ const IconMap: Record<string, any> = {
 };
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SalonCard } from "../../../components/marketplace/SalonCard";
+import { BusinessListingCard } from "../../../components/marketplace/BusinessListingCard";
+import { BusinessListingsMap } from "../../../components/marketplace/BusinessListingsMap";
+import { ListingViewToggle } from "../../../components/marketplace/ListingViewToggle";
+import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { FindBookGlowCta } from "../../../components/marketplace/FindBookGlowCta";
 import type { PublicCategory } from "@/lib/public-categories";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
+import { SriLankaLocationSelect } from "../../../components/locations/SriLankaLocationSelect";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
   "barber-salon": "/assets/category-barber-salon-hero.webp",
@@ -43,17 +47,17 @@ const DEFAULT_HERO_IMAGE =
 type CategoryClientProps = {
   slug: string;
   categories: PublicCategory[];
-  initialSalons: any[];
+  initialListings: BusinessListingCardData[];
   categoryLabel: string;
 };
 
 export default function CategoryClient({
   slug: slugStr,
   categories,
-  initialSalons,
+  initialListings,
   categoryLabel: initialCategoryLabel,
 }: CategoryClientProps) {
-  const [salons, setSalons] = useState<any[]>(initialSalons);
+  const [listings, setListings] = useState<BusinessListingCardData[]>(initialListings);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
@@ -79,9 +83,9 @@ export default function CategoryClient({
     trackEvent(AnalyticsEvent.CategoryViewed, {
       category_slug: slugStr,
       category_name: categoryLabel,
-      initial_result_count: initialSalons.length,
+      initial_result_count: initialListings.length,
     });
-  }, [slugStr, categoryLabel, initialSalons.length]);
+  }, [slugStr, categoryLabel, initialListings.length]);
 
   useEffect(() => {
     if (!slugStr) return;
@@ -99,22 +103,24 @@ export default function CategoryClient({
       try {
         const params = new URLSearchParams({
           limit: "48",
-          category: categoryLabel,
+          category: slugStr,
+          categoryName: categoryLabel,
+          publishedOnly: "true",
         });
         if (appliedSearch) params.set("q", appliedSearch);
         if (appliedLocation) params.set("location", appliedLocation);
 
-        const res = await fetch(`/api/salons/search?${params.toString()}`);
+        const res = await fetch(`/api/business-listings/search?${params.toString()}`);
         const payload = await res.json();
         if (cancelled) return;
-        if (!res.ok) throw new Error(payload.error || "Failed to load salons");
+        if (!res.ok) throw new Error(payload.error || "Failed to load listings");
 
-        const nextSalons = payload.salons || [];
-        setSalons(nextSalons);
+        const nextListings = (payload.listings || []) as BusinessListingCardData[];
+        setListings(nextListings);
         setLoadedFetchKey(key);
 
         if (appliedSearch || appliedLocation) {
-          const searchKey = `${slugStr}|${appliedSearch}|${appliedLocation}|${nextSalons.length}`;
+          const searchKey = `${slugStr}|${appliedSearch}|${appliedLocation}|${nextListings.length}`;
           if (trackedSearchKeyRef.current !== searchKey) {
             trackedSearchKeyRef.current = searchKey;
             trackEvent(AnalyticsEvent.SalonSearch, {
@@ -123,15 +129,15 @@ export default function CategoryClient({
               category_name: categoryLabel,
               query: appliedSearch || null,
               location: appliedLocation || null,
-              result_count: nextSalons.length,
+              result_count: nextListings.length,
             });
           }
         }
       } catch (err: unknown) {
         if (cancelled) return;
         const message = err instanceof Error ? err.message : String(err);
-        console.error("Failed to load category page salons:", message);
-        setSalons([]);
+        console.error("Failed to load category page listings:", message);
+        setListings([]);
         setLoadedFetchKey(key);
       }
     })();
@@ -153,22 +159,11 @@ export default function CategoryClient({
     setAppliedLocation(selectedLocation.trim());
   };
 
-  const renderIcon = (iconName: string | null | undefined) => {
-    const IconComponent = IconMap[iconName || ""] || Sparkles;
-    return <IconComponent className="w-5 h-5 text-brand-pink" />;
-  };
-
-  const currentCategory = categories.find((c) => c.slug === slugStr);
   const splitHeroImage = CATEGORY_HERO_IMAGES[slugStr];
   const heroImage = splitHeroImage || DEFAULT_HERO_IMAGE;
   const useSplitHero = Boolean(splitHeroImage);
-  const categoryName =
-    currentCategory?.name ||
-    (slugStr
-      ? slugStr.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
-      : "Salons & Spas");
-
-  const filteredSalons = salons;
+  const categoryName = categoryLabel;
+  const filteredListings = listings;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -208,9 +203,9 @@ export default function CategoryClient({
 
               <div className="home-hero-middle">
                 <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
-                  <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
+                  <span className="hero-badge hero-eyebrow px-3 py-1">{filteredListings.length} Listings Available</span>
                   <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
-                  <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
+                  <span className="uppercase tracking-wider">Island-wide coverage — all 9 provinces</span>
                 </div>
 
                 <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
@@ -228,17 +223,13 @@ export default function CategoryClient({
 
                   <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
                     <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
-                    <select
+                    <SriLankaLocationSelect
                       value={selectedLocation}
-                      onChange={(e) => setSelectedLocation(e.target.value)}
+                      onChange={setSelectedLocation}
+                      anyLabel="Any Location"
                       className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
-                    >
-                      <option value="" className="text-zinc-900">Any Location</option>
-                      <option value="colombo" className="text-zinc-900">Colombo</option>
-                      <option value="gampaha" className="text-zinc-900">Gampaha</option>
-                      <option value="kandy" className="text-zinc-900">Kandy</option>
-                      <option value="anuradhapura" className="text-zinc-900">Anuradhapura</option>
-                    </select>
+                      optionClassName="text-zinc-900"
+                    />
                   </div>
 
                   <Button
@@ -283,9 +274,9 @@ export default function CategoryClient({
             </p>
 
             <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
-              <span className="hero-badge hero-eyebrow px-3 py-1">{filteredSalons.length} Salons Available</span>
+              <span className="hero-badge hero-eyebrow px-3 py-1">{filteredListings.length} Listings Available</span>
               <span className="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
-              <span className="uppercase tracking-wider">Locations: Colombo, Negombo, Kandy</span>
+              <span className="uppercase tracking-wider">Island-wide coverage — all 9 provinces</span>
             </div>
 
             <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 max-w-3xl mx-auto border border-slate-100">
@@ -302,17 +293,13 @@ export default function CategoryClient({
 
               <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl relative group">
                 <MapPin className="w-5 h-5 text-brand-pink mr-3" />
-                <select
+                <SriLankaLocationSelect
                   value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  onChange={setSelectedLocation}
+                  anyLabel="Any Location"
                   className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
-                >
-                  <option value="" className="text-zinc-900">Any Location</option>
-                  <option value="colombo" className="text-zinc-900">Colombo</option>
-                  <option value="gampaha" className="text-zinc-900">Gampaha</option>
-                  <option value="kandy" className="text-zinc-900">Kandy</option>
-                  <option value="anuradhapura" className="text-zinc-900">Anuradhapura</option>
-                </select>
+                  optionClassName="text-zinc-900"
+                />
               </div>
 
               <Button onClick={handleSearch} size="lg" variant="hero" className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md">
@@ -322,42 +309,6 @@ export default function CategoryClient({
           </div>
         </section>
       )}
-
-      {/* Categories Bar */}
-      <section className="py-6 bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex overflow-x-auto gap-4 pb-2 hide-scrollbar snap-x justify-start md:justify-center">
-             <Link
-                href="/"
-                className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-              >
-                <div className="mb-1 text-brand-pink">
-                  <Star className="w-5 h-5 fill-brand-pink" />
-                </div>
-                <span className="text-[10px] font-bold text-center">All</span>
-             </Link>
-             
-             {categories.map((category, i) => (
-               <Link
-                 key={i}
-                 href={`/category/${category.slug}`}
-                 onClick={() => {
-                   trackEvent(AnalyticsEvent.CategoryFilterChanged, {
-                     source: "category_page_bar",
-                     previous: slugStr || null,
-                     category: category.slug,
-                     category_name: category.name,
-                   });
-                 }}
-                 className="snap-start shrink-0 flex flex-col items-center justify-center py-1.5 px-2 rounded-xl border transition-all w-[84px] cursor-pointer hover:border-brand-pink/30 border-slate-100 text-zinc-600 bg-slate-50"
-               >
-                 <div className="mb-1">{renderIcon(category.icon)}</div>
-                 <span className="text-[10px] font-bold text-center leading-tight">{category.name}</span>
-               </Link>
-             ))}
-          </div>
-        </div>
-      </section>
 
       {/* 2 & 3. QUICK FILTER BAR */}
       <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
@@ -374,20 +325,7 @@ export default function CategoryClient({
                <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Highest Rated</Button>
             </div>
 
-            <div className="flex items-center bg-slate-100 p-1 rounded-lg">
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={() => setViewMode('map')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'map' ? 'bg-white shadow-sm text-zinc-900' : 'text-zinc-500 hover:text-zinc-900'}`}
-              >
-                <MapIcon className="w-4 h-4" />
-              </button>
-            </div>
+            <ListingViewToggle viewMode={viewMode} onChange={setViewMode} />
 
           </div>
         </div>
@@ -398,40 +336,23 @@ export default function CategoryClient({
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
             <Loader2 className="w-10 h-10 text-zinc-900 animate-spin mb-4" />
-            <p className="text-zinc-500 font-bold text-sm">Querying active luxury salons...</p>
+            <p className="text-zinc-500 font-bold text-sm">Loading published listings...</p>
           </div>
-        ) : filteredSalons.length === 0 ? (
+        ) : filteredListings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
             <Scissors className="w-12 h-12 text-zinc-300 mb-4" />
-            <p className="text-zinc-800 font-black text-lg">No active {categoryName} salons found</p>
-            <p className="text-zinc-400 text-xs mt-1">Try resetting your location search or refreshing the results.</p>
+            <p className="text-zinc-800 font-black text-lg">No published {categoryName} listings yet</p>
+            <p className="text-zinc-400 text-xs mt-1">Only admin-published listings appear here. Try another location or category.</p>
           </div>
-        ) : (() => {
-              const mappedSalons = filteredSalons.map(s => ({
-                id: s.id,
-                slug: s.slug,
-                name: s.name,
-                image: s.image,
-                logo: s.logo,
-                status: s.status || (s.openNow ? "Open Now" : "Closed"),
-                rating: s.rating,
-                reviews: s.reviews,
-                city: s.location.split(',')[0].trim(),
-                categories: s.tags,
-                nextAvailable: s.nextSlot,
-                priceFrom: s.startingPrice,
-                featured: s.featured,
-                isVerified: s.isVerified,
-              }));
-
-              return (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                  {mappedSalons.map((salon, index) => (
-                    <SalonCard key={salon.id} salon={salon as any} priority={index < 4} />
-                  ))}
-                </div>
-              );
-            })()}
+        ) : viewMode === "map" ? (
+          <BusinessListingsMap listings={filteredListings} />
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+            {filteredListings.map((listing, index) => (
+              <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
+            ))}
+          </div>
+        )}
 
       </div>
 

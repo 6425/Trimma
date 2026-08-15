@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
+import { dedupePublicCategories } from "@/lib/public-categories";
 import CategoriesClient, { type CategoryRow } from "./CategoriesClient";
 
 export const revalidate = 60;
@@ -41,13 +42,16 @@ export default async function CategoriesPage() {
     }
   });
 
-  const categories: CategoryRow[] = (catData || []).map((c) => ({
+  const categories: CategoryRow[] = dedupePublicCategories(catData || []).map((c) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,
     icon: c.icon ?? undefined,
-    image_url: c.image_url ?? undefined,
-    img: c.image_url || CATEGORY_IMAGES[c.slug] || DEFAULT_IMG,
+    image_url: (catData || []).find((row) => row.id === c.id)?.image_url ?? undefined,
+    img:
+      (catData || []).find((row) => row.id === c.id)?.image_url ||
+      CATEGORY_IMAGES[c.slug] ||
+      DEFAULT_IMG,
     count: counts[c.name] || 0,
   }));
 
