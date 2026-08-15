@@ -15,7 +15,7 @@ const IconMap: Record<string, any> = {
   Clock,
   ShieldCheck
 };
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../../../components/marketplace/BusinessListingCard";
 import { BusinessListingsMap } from "../../../components/marketplace/BusinessListingsMap";
@@ -28,6 +28,7 @@ import {
   type PublicCategory,
 } from "@/lib/public-categories";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
+import { getCategoryHeroCopy } from "@/lib/category-hero-copy";
 import { SriLankaLocationSelect } from "../../../components/locations/SriLankaLocationSelect";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
@@ -198,7 +199,13 @@ export default function CategoryClient({
   const heroImage = splitHeroImage || DEFAULT_HERO_IMAGE;
   const useSplitHero = Boolean(splitHeroImage);
   const categoryName = categoryLabel;
+  const heroCopy = getCategoryHeroCopy(slugStr, categoryName);
   const filteredListings = listings;
+  const claimCtaClass = buttonVariants({
+    variant: "hero",
+    size: "lg",
+    className: "hero-btn-primary hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 font-bold sm:w-auto",
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -226,15 +233,18 @@ export default function CategoryClient({
                 </Badge>
 
                 <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
-                  <span className="home-hero-title-line">Best {categoryName}</span>
-                  <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
-                    in Sri Lanka
-                  </span>
+                  <span className="home-hero-title-line">{heroCopy.headline}</span>
                 </h1>
 
                 <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
                   Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
                 </p>
+                <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
+                  {heroCopy.description}
+                </p>
+                <Link href="/onboarding" className={claimCtaClass}>
+                  Claim Your Business — It&apos;s Free
+                </Link>
               </div>
 
               <div className="home-hero-middle">
@@ -272,7 +282,7 @@ export default function CategoryClient({
                     onClick={handleSearch}
                     size="lg"
                     variant="hero"
-                    className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md w-full sm:w-auto shrink-0"
+                    className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:w-auto"
                   >
                     Search
                   </Button>
@@ -302,13 +312,20 @@ export default function CategoryClient({
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-black tracking-tight text-zinc-900 mb-4 leading-tight">
-              Best {categoryName} <br />
-              in <span className="text-[#1A1C29] underline decoration-black/20 decoration-4 underline-offset-4">Sri Lanka</span>
+              {heroCopy.headline}
             </h1>
 
-            <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
+            <p className="text-base md:text-lg text-zinc-700 mb-4 max-w-xl mx-auto font-medium">
               Discover top-rated establishments specialized in {categoryName}. Compare styling prices and verified reviews.
             </p>
+            <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
+              {heroCopy.description}
+            </p>
+            <div className="mb-6 flex justify-center">
+              <Link href="/onboarding" className={claimCtaClass}>
+                Claim Your Business — It&apos;s Free
+              </Link>
+            </div>
 
             <div className="flex items-center justify-center gap-4 text-xs font-bold text-zinc-600 mb-6">
               <span className="hero-badge hero-eyebrow px-3 py-1">{filteredListings.length} Listings Available</span>
@@ -339,7 +356,7 @@ export default function CategoryClient({
                 />
               </div>
 
-              <Button onClick={handleSearch} size="lg" variant="hero" className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md">
+              <Button onClick={handleSearch} size="lg" variant="hero" className="hero-btn-primary hero-btn-compact h-12 min-h-11 px-8 rounded-xl font-bold">
                 Search
               </Button>
             </div>
