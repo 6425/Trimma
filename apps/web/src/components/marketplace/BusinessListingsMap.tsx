@@ -11,7 +11,7 @@ import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
 import { getSalonDirectionsEmbedUrl, getSalonDirectionsUrl, type SalonMapInput } from "@/lib/salon-map";
 import { useDeviceTravel } from "@/hooks/use-device-travel";
-import { MapTravelPanel } from "@/components/marketplace/MapTravelPanel";
+import { MapTravelPanel } from "./MapTravelPanel";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";

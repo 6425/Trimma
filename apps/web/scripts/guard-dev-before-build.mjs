@@ -1,6 +1,10 @@
 import { execSync } from "child_process";
 import { platform } from "os";
 
+if (process.env.VERCEL) {
+  process.exit(0);
+}
+
 const WEB_DEV_PORT = 3000;
 
 function isPortListening(port) {

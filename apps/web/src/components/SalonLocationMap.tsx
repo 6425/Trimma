@@ -11,7 +11,7 @@ import {
   type SalonMapInput,
 } from "@/lib/salon-map";
 import { useDeviceTravel } from "@/hooks/use-device-travel";
-import { MapTravelPanel } from "@/components/marketplace/MapTravelPanel";
+import { MapTravelPanel } from "./marketplace/MapTravelPanel";
 
 type SalonLocationMapProps = {
   salon: SalonMapInput;
