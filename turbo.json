@@ -31,7 +31,10 @@
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
     "GEMINI_API_KEY",
-    "GOOGLE_API"
+    "GOOGLE_API",
+    "TRIMMA_SESSION_SECRET",
+    "STRIPE_SECRET_KEY_LIVE",
+    "POSTHOG_SERVICE_NAME"
   ],
   "tasks": {
     "build": {

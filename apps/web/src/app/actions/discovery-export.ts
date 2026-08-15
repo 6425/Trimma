@@ -51,6 +51,8 @@ export async function fetchDiscoveryExportSalons(input?: {
     return { success: false as const, error: error instanceof Error ? error.message : "Export failed." };
   }
 }
+
+export async function fetchAgentDiscoveryExportSalons(input?: {
   search?: string;
   salonIds?: string[];
 }) {
