@@ -199,9 +199,17 @@ export default function ListingsClient({
 
             <div className="home-hero-middle">
               <div className="flex flex-col items-start gap-3">
-                <Button asChild variant="default" size="lg" className="h-12 min-h-11 w-full rounded-xl px-8 font-bold sm:w-auto">
-                  <Link href="/onboarding">Claim Your Business — It&apos;s Free</Link>
-                </Button>
+                <Link
+                  href="/onboarding"
+                  className={buttonVariants({
+                    variant: "hero",
+                    size: "lg",
+                    className:
+                      "hero-btn-primary hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 font-bold sm:w-auto",
+                  })}
+                >
+                  Claim Your Business — It&apos;s Free
+                </Link>
                 <p className="max-w-lg text-sm font-medium leading-relaxed text-zinc-800">
                   Get discovered. Manage bookings. Grow your business with Trimma.
                 </p>
@@ -237,8 +245,8 @@ export default function ListingsClient({
                 <Button
                   onClick={handleSearch}
                   size="lg"
-                  variant="dark"
-                  className="h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:w-auto"
+                  variant="hero"
+                  className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:w-auto"
                 >
                   Search
                 </Button>

@@ -2633,3 +2633,12 @@ html.dark .trimma-dashboard-modal [data-slot="textarea"]::placeholder {
 :is(button, a, [role="button"], [data-slot="button"])[class*="hover:bg-accent"]:hover {
   color: var(--accent-foreground) !important;
 }
+
+/* Landing / category hero CTAs — black fill, yellow label. Beats leftover !text-black. */
+.home-hero-split :is(a, button, [data-slot="button"]).hero-btn-primary,
+.home-hero-split :is(a, button, [data-slot="button"]).hero-btn-primary:hover,
+.home-hero-split :is(a, button, [data-slot="button"]).hero-btn-primary:focus-visible {
+  background-color: #0a0a0a !important;
+  border-color: #0a0a0a !important;
+  color: #ffde5a !important;
+}
