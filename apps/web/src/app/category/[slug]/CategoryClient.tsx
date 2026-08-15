@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../../../components/marketplace/BusinessListingCard";
 import { BusinessListingsMap } from "../../../components/marketplace/BusinessListingsMap";
-import { ListingViewToggle } from "../../../components/marketplace/ListingViewToggle";
+import { ListingBrowseToolbar } from "../../../components/marketplace/ListingBrowseToolbar";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { FindBookGlowCta } from "../../../components/marketplace/FindBookGlowCta";
 import type { PublicCategory } from "@/lib/public-categories";
@@ -44,10 +44,13 @@ const CATEGORY_HERO_IMAGES: Record<string, string> = {
 const DEFAULT_HERO_IMAGE =
   "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2938&auto=format&fit=crop";
 
+const PAGE_SIZE = 48;
+
 type CategoryClientProps = {
   slug: string;
   categories: PublicCategory[];
   initialListings: BusinessListingCardData[];
+  initialHasMore?: boolean;
   categoryLabel: string;
 };
 
@@ -55,9 +58,13 @@ export default function CategoryClient({
   slug: slugStr,
   categories,
   initialListings,
+  initialHasMore = false,
   categoryLabel: initialCategoryLabel,
 }: CategoryClientProps) {
   const [listings, setListings] = useState<BusinessListingCardData[]>(initialListings);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [page, setPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
@@ -87,6 +94,33 @@ export default function CategoryClient({
     });
   }, [slugStr, categoryLabel, initialListings.length]);
 
+  const loadListings = async (nextPage: number, reset: boolean) => {
+    const params = new URLSearchParams({
+      limit: String(PAGE_SIZE),
+      offset: String(nextPage * PAGE_SIZE),
+      category: slugStr,
+      categoryName: categoryLabel,
+      publishedOnly: "true",
+    });
+    if (appliedSearch) params.set("q", appliedSearch);
+    if (appliedLocation) params.set("location", appliedLocation);
+
+    const res = await fetch(`/api/business-listings/search?${params.toString()}`);
+    const payload = await res.json();
+    if (!res.ok) throw new Error(payload.error || "Failed to load listings");
+
+    const nextListings = (payload.listings || []) as BusinessListingCardData[];
+    if (reset) setListings(nextListings);
+    else {
+      setListings((prev) => {
+        const ids = new Set(prev.map((item) => item.id));
+        return [...prev, ...nextListings.filter((item) => !ids.has(item.id))];
+      });
+    }
+    setHasMore(Boolean(payload.hasMore));
+    return nextListings;
+  };
+
   useEffect(() => {
     if (!slugStr) return;
 
@@ -101,22 +135,9 @@ export default function CategoryClient({
 
     void (async () => {
       try {
-        const params = new URLSearchParams({
-          limit: "48",
-          category: slugStr,
-          categoryName: categoryLabel,
-          publishedOnly: "true",
-        });
-        if (appliedSearch) params.set("q", appliedSearch);
-        if (appliedLocation) params.set("location", appliedLocation);
-
-        const res = await fetch(`/api/business-listings/search?${params.toString()}`);
-        const payload = await res.json();
+        setPage(0);
+        const nextListings = await loadListings(0, true);
         if (cancelled) return;
-        if (!res.ok) throw new Error(payload.error || "Failed to load listings");
-
-        const nextListings = (payload.listings || []) as BusinessListingCardData[];
-        setListings(nextListings);
         setLoadedFetchKey(key);
 
         if (appliedSearch || appliedLocation) {
@@ -138,6 +159,7 @@ export default function CategoryClient({
         const message = err instanceof Error ? err.message : String(err);
         console.error("Failed to load category page listings:", message);
         setListings([]);
+        setHasMore(false);
         setLoadedFetchKey(key);
       }
     })();
@@ -311,22 +333,23 @@ export default function CategoryClient({
       )}
 
       {/* 2 & 3. QUICK FILTER BAR */}
-      <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex items-center justify-between h-16">
-            
-            <div className="hidden lg:flex items-center gap-2">
-               <Button variant="outline" className="h-9 rounded-full border-slate-200 text-zinc-600 font-medium">
-                 <SlidersHorizontal className="w-4 h-4 mr-2" /> All Filters
-               </Button>
-               <div className="h-6 w-px bg-slate-200 mx-2" />
-               <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Any Price</Button>
-               <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Open Now</Button>
-               <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Highest Rated</Button>
-            </div>
+      <ListingBrowseToolbar
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        count={filteredListings.length}
+        countLabel={`${categoryName} listings`}
+      />
 
-            <ListingViewToggle viewMode={viewMode} onChange={setViewMode} />
-
+      <div className="border-b border-slate-200 bg-white">
+        <div className="container mx-auto max-w-7xl px-4 py-3">
+          <div className="hidden lg:flex items-center gap-2">
+             <Button variant="outline" className="h-9 rounded-full border-slate-200 text-zinc-600 font-medium">
+               <SlidersHorizontal className="w-4 h-4 mr-2" /> All Filters
+             </Button>
+             <div className="h-6 w-px bg-slate-200 mx-2" />
+             <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Any Price</Button>
+             <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Open Now</Button>
+             <Button variant="ghost" className="h-9 rounded-full text-zinc-600 bg-slate-100 hover:bg-slate-200 font-medium">Highest Rated</Button>
           </div>
         </div>
       </div>
@@ -347,11 +370,42 @@ export default function CategoryClient({
         ) : viewMode === "map" ? (
           <BusinessListingsMap listings={filteredListings} />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-            {filteredListings.map((listing, index) => (
-              <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+              {filteredListings.map((listing, index) => (
+                <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-10 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="rounded-xl px-8 font-bold"
+                  disabled={loadingMore}
+                  onClick={() => {
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    setLoadingMore(true);
+                    void loadListings(nextPage, false)
+                      .catch((error: unknown) => {
+                        console.error(error);
+                      })
+                      .finally(() => setLoadingMore(false));
+                  }}
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    "Load more listings"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
       </div>

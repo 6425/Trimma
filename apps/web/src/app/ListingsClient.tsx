@@ -7,7 +7,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import { BusinessListingsMap } from "../components/marketplace/BusinessListingsMap";
-import { ListingViewToggle } from "../components/marketplace/ListingViewToggle";
+import { ListingBrowseToolbar } from "../components/marketplace/ListingBrowseToolbar";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import type { PublicCategory } from "@/lib/public-categories";
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
@@ -65,6 +65,7 @@ function buildListingSearchParams(
   if (activeCategory?.name) {
     params.set("categoryName", activeCategory.name);
   }
+  params.set("publishedOnly", "true");
   return params;
 }
 
@@ -244,28 +245,30 @@ export default function ListingsClient({
         </div>
       </section>
 
+      <ListingBrowseToolbar
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        count={listings.length}
+        trailing={
+          <Link
+            href="/bookings"
+            className={buttonVariants({
+              variant: "outline",
+              className: "h-10 min-h-10 rounded-xl font-bold",
+            })}
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Book verified salons
+          </Link>
+        }
+      />
+
       <div className="border-b border-slate-200 bg-white">
-        <div className="container mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 text-sm">
+        <div className="container mx-auto max-w-7xl px-4 py-3 text-sm">
           <p className="font-semibold text-zinc-800">
             {locationLabel}
-            {activeCategory ? ` · ${activeCategory.name}` : " · Lead Management listings"}
+            {activeCategory ? ` · ${activeCategory.name}` : " · Published listings"}
           </p>
-          <div className="flex items-center gap-3">
-            <ListingViewToggle viewMode={viewMode} onChange={setViewMode} />
-            <p className="text-zinc-500">
-              <span className="font-bold text-zinc-900">{listings.length}</span> businesses
-            </p>
-            <Link
-              href="/bookings"
-              className={buttonVariants({
-                variant: "outline",
-                className: "h-10 min-h-10 rounded-xl font-bold",
-              })}
-            >
-              <Sparkles className="mr-2 h-4 w-4" />
-              Book verified salons
-            </Link>
-          </div>
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
 import { isSalonClaimable } from "@/lib/salon-public-listing";
 import { readSalonSocialLinks } from "@/lib/salon-public-social";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+import { getSalonMapEmbedUrl, salonHasMapData } from "@/lib/salon-map";
 
 export type BusinessListingCardData = {
   id: string;
@@ -64,6 +65,9 @@ function isBusinessListingClaimable(row: Record<string, unknown>): boolean {
   if (status === "LISTING_PUBLISHED" || status === "LISTING_CAPTURED") {
     return true;
   }
+  if (String(row.source_type || "") === "LISTING_GENERATION") {
+    return true;
+  }
   return isSalonClaimable(row);
 }
 
@@ -124,4 +128,32 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
     instagramUrl,
     isClaimable: isBusinessListingClaimable(row),
   };
+}
+
+export function listingHasMapDisplay(listing: BusinessListingCardData): boolean {
+  return salonHasMapData({
+    name: listing.name,
+    address: listing.address,
+    city: listing.city,
+    district: listing.district,
+    province: listing.province,
+    place_id: listing.placeId,
+    latitude: listing.latitude,
+    longitude: listing.longitude,
+    map_url: listing.mapUrl,
+  });
+}
+
+export function getListingMapEmbedUrl(listing: BusinessListingCardData): string | null {
+  return getSalonMapEmbedUrl({
+    name: listing.name,
+    address: listing.address,
+    city: listing.city,
+    district: listing.district,
+    province: listing.province,
+    place_id: listing.placeId,
+    latitude: listing.latitude,
+    longitude: listing.longitude,
+    map_url: listing.mapUrl,
+  });
 }

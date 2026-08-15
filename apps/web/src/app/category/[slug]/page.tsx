@@ -27,6 +27,7 @@ export default async function CategoryPage({ params }: PageProps) {
       .replace(/\b\w/g, (char) => char.toUpperCase());
 
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
+  let initialHasMore = false;
   try {
     const result = await fetchBusinessListingCards(supabase, {
       category: canonicalSlug,
@@ -36,6 +37,7 @@ export default async function CategoryPage({ params }: PageProps) {
       offset: 0,
     });
     initialListings = result.listings;
+    initialHasMore = result.hasMore;
   } catch {
     initialListings = [];
   }
@@ -46,6 +48,7 @@ export default async function CategoryPage({ params }: PageProps) {
       slug={canonicalSlug}
       categories={categories}
       initialListings={initialListings}
+      initialHasMore={initialHasMore}
       categoryLabel={categoryLabel}
     />
   );
