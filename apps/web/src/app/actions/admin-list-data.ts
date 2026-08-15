@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
+import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 
 export async function fetchAdminSubscriptionPlans() {
   const result = await withAdminDb(async (supabase) => {
@@ -14,9 +15,15 @@ export async function fetchAdminSubscriptionPlans() {
 
 export async function fetchAdminSalons() {
   const result = await withAdminDb(async (supabase) => {
-    const { data, error } = await supabase.from("salons").select("*").order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return { salons: data || [] };
+    const salons = await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase.from("salons").select("*").order("id", { ascending: true }).limit(pageSize);
+      if (afterId) query = query.gt("id", afterId);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return data || [];
+    });
+    salons.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+    return { salons };
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const, salons: result.data.salons };
@@ -69,10 +76,20 @@ export async function fetchAdminPaymentsPage() {
 
 export async function fetchAdminFinancePage() {
   const result = await withAdminDb(async (supabase) => {
-    const [rolesRes, commissionRes, salonsRes, bookingsRes] = await Promise.all([
+    const [rolesRes, commissionRes, salons, bookingsRes] = await Promise.all([
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
       supabase.from("commission_master").select("*"),
-      supabase.from("salons").select("id, name, owner_email, subscription_plan_id"),
+      fetchAllByIdCursor(async (afterId, pageSize) => {
+        let query = supabase
+          .from("salons")
+          .select("id, name, owner_email, subscription_plan_id")
+          .order("id", { ascending: true })
+          .limit(pageSize);
+        if (afterId) query = query.gt("id", afterId);
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        return data || [];
+      }),
       supabase
         .from("bookings")
         .select(
@@ -82,7 +99,6 @@ export async function fetchAdminFinancePage() {
     ]);
     if (rolesRes.error) throw new Error(rolesRes.error.message);
     if (commissionRes.error) throw new Error(commissionRes.error.message);
-    if (salonsRes.error) throw new Error(salonsRes.error.message);
     if (bookingsRes.error) throw new Error(bookingsRes.error.message);
 
     // Subscription ledger is optional: it only exists after SUBSCRIPTION_COMMISSION_PATCH.
@@ -99,7 +115,7 @@ export async function fetchAdminFinancePage() {
     return {
       adminRoles: rolesRes.data || [],
       commissionMaster: commissionRes.data || [],
-      salons: salonsRes.data || [],
+      salons,
       bookings: bookingsRes.data || [],
       subscriptionLedger,
     };
@@ -166,18 +182,25 @@ export async function fetchAdminAgentsPage() {
 
 export async function fetchAdminLeadsPage() {
   const result = await withAdminDb(async (supabase) => {
-    const [salonsRes, usersRes, rolesRes, plansRes, catRes] = await Promise.all([
-      supabase.from("salons").select("*").order("created_at", { ascending: false }),
+    const [salons, usersRes, rolesRes, plansRes, catRes] = await Promise.all([
+      fetchAllByIdCursor(async (afterId, pageSize) => {
+        let query = supabase.from("salons").select("*").order("id", { ascending: true }).limit(pageSize);
+        if (afterId) query = query.gt("id", afterId);
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        return data || [];
+      }),
       supabase.from("users").select("*"),
       supabase.from("global_staff_roles").select("*"),
       supabase.from("subscription_plans").select("*"),
       supabase.from("categories").select("name").order("name"),
     ]);
-    for (const res of [salonsRes, usersRes, rolesRes, plansRes, catRes]) {
+    for (const res of [usersRes, rolesRes, plansRes, catRes]) {
       if (res.error) throw new Error(res.error.message);
     }
+    salons.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
     return {
-      salons: salonsRes.data || [],
+      salons,
       users: usersRes.data || [],
       staffRoles: rolesRes.data || [],
       subscriptionPlans: plansRes.data || [],

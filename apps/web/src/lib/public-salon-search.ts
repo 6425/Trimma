@@ -6,7 +6,7 @@ import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
-import { fetchAllQueryPages } from "@/lib/supabase-fetch-all";
+import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 
 function normalizeCategoryText(value: string): string {
   return value
@@ -125,7 +125,7 @@ export async function fetchPublicSalons(
       services ( id, name, price, category )
     `;
 
-  const applyFilters = (builder: ReturnType<typeof supabase.from>) => {
+  const applyFilters = (builder: ReturnType<typeof supabase.from>, withDisplayOrder: boolean) => {
     let query = builder.select(select);
     if (q) {
       query = query.or(
@@ -138,20 +138,26 @@ export async function fetchPublicSalons(
     }
     if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
     if (verifiedOnly) query = query.eq("is_verified", true);
-    if (sort === "rating") query = query.order("rating", { ascending: false });
-    else if (sort === "name") query = query.order("name", { ascending: true });
-    else query = query.order("is_featured", { ascending: false }).order("rating", { ascending: false });
+    if (withDisplayOrder) {
+      if (sort === "rating") query = query.order("rating", { ascending: false });
+      else if (sort === "name") query = query.order("name", { ascending: true });
+      else query = query.order("is_featured", { ascending: false }).order("rating", { ascending: false });
+    }
     return query;
   };
 
   const data = postFilterActive
-    ? await fetchAllQueryPages(async (from, to) => {
-        const { data: page, error } = await applyFilters(supabase.from("salons")).range(from, to);
+    ? await fetchAllByIdCursor(async (afterId, pageSize) => {
+        let query = applyFilters(supabase.from("salons"), false)
+          .order("id", { ascending: true })
+          .limit(pageSize);
+        if (afterId) query = query.gt("id", afterId);
+        const { data: page, error } = await query;
         if (error) throw new Error(error.message);
         return page || [];
       })
     : await (async () => {
-        const { data: page, error } = await applyFilters(supabase.from("salons")).range(
+        const { data: page, error } = await applyFilters(supabase.from("salons"), true).range(
           offset,
           offset + Math.max(limit, 1) - 1
         );
@@ -232,6 +238,25 @@ function filterBusinessListingRows(
   return rows;
 }
 
+function sortBusinessListingRows(
+  rows: Array<Record<string, unknown>>,
+  sort: string
+): Array<Record<string, unknown>> {
+  const copy = [...rows];
+  copy.sort((a, b) => {
+    if (sort === "name") {
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    }
+    if (sort === "rating") {
+      return Number(b.rating || 0) - Number(a.rating || 0);
+    }
+    const featured = Number(Boolean(b.is_featured)) - Number(Boolean(a.is_featured));
+    if (featured) return featured;
+    return Number(b.rating || 0) - Number(a.rating || 0);
+  });
+  return copy;
+}
+
 export async function fetchBusinessListingCards(
   supabase: SupabaseClient,
   params: Omit<PublicSalonSearchParams, "bookableOnly">
@@ -249,7 +274,7 @@ export async function fetchBusinessListingCards(
     offset = 0,
   } = params;
 
-  const data = await fetchAllQueryPages(async (from, to) => {
+  const data = await fetchAllByIdCursor(async (afterId, pageSize) => {
     let query = supabase.from("salons").select(BUSINESS_LISTING_SELECT);
 
     if (publishedOnly) {
@@ -269,16 +294,18 @@ export async function fetchBusinessListingCards(
     if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
     if (verifiedOnly) query = query.eq("is_verified", true);
 
-    if (sort === "rating") query = query.order("rating", { ascending: false });
-    else if (sort === "name") query = query.order("name", { ascending: true });
-    else query = query.order("is_featured", { ascending: false }).order("rating", { ascending: false });
+    query = query.order("id", { ascending: true }).limit(pageSize);
+    if (afterId) query = query.gt("id", afterId);
 
-    const { data: page, error } = await query.range(from, to);
+    const { data: page, error } = await query;
     if (error) throw new Error(error.message);
     return (page ?? []) as Array<Record<string, unknown>>;
   });
 
-  const rows = filterBusinessListingRows(data, { category, categoryName, publishedOnly });
+  const rows = sortBusinessListingRows(
+    filterBusinessListingRows(data, { category, categoryName, publishedOnly }),
+    sort
+  );
   const pagedRows = !limit || limit <= 0 ? rows.slice(offset) : rows.slice(offset, offset + limit);
   const listings = pagedRows.map((row, idx) => mapSalonRowToBusinessListing(row, idx + offset));
 
@@ -293,14 +320,18 @@ export async function countPublishedListingsByCategory(
   supabase: SupabaseClient,
   categories: Array<{ name: string; slug: string }>
 ): Promise<Record<string, number>> {
-  const data = await fetchAllQueryPages(async (from, to) => {
-    const { data: page, error } = await supabase
+  const data = await fetchAllByIdCursor(async (afterId, pageSize) => {
+    let query = supabase
       .from("salons")
       .select("id, name, slug, category, status, public_visibility, is_verified, booking_enabled, source_type, onboarding_status, business_info_extended")
       .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED)
       .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"])
-      .range(from, to);
+      .order("id", { ascending: true })
+      .limit(pageSize);
 
+    if (afterId) query = query.gt("id", afterId);
+
+    const { data: page, error } = await query;
     if (error) throw new Error(error.message);
     return (page ?? []) as Array<Record<string, unknown>>;
   });

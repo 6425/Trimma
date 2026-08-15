@@ -1,21 +1,35 @@
-const SUPABASE_PAGE_SIZE = 100;
+/** Page size kept well under PostgREST max_rows (often 500). */
+export const SUPABASE_ID_PAGE_SIZE = 100;
 
 /**
- * Load every matching row by paging.
- * Supabase/PostgREST often caps a single request at 500 or 1000 rows.
- * Using 100-row pages avoids that hard stop.
+ * Load every matching row using id-cursor pages.
+ *
+ * Offset/range pagination cannot pass PostgREST max_rows: range(500, 599)
+ * returns empty when max_rows is 500, so listed counts freeze at 500.
+ * Filtering `id > lastId` is not an offset, so it is not blocked.
  */
-export async function fetchAllQueryPages<T>(
-  run: (from: number, to: number) => Promise<T[] | null>
+export async function fetchAllByIdCursor<T extends { id?: unknown }>(
+  run: (afterId: string | null, pageSize: number) => Promise<T[] | null>
 ): Promise<T[]> {
   const rows: T[] = [];
-  let from = 0;
+  const seen = new Set<string>();
+  let afterId: string | null = null;
 
-  while (true) {
-    const page = (await run(from, from + SUPABASE_PAGE_SIZE - 1)) ?? [];
-    rows.push(...page);
-    if (page.length < SUPABASE_PAGE_SIZE) break;
-    from += SUPABASE_PAGE_SIZE;
+  for (let i = 0; i < 5000; i++) {
+    const page = (await run(afterId, SUPABASE_ID_PAGE_SIZE)) ?? [];
+    if (page.length === 0) break;
+
+    for (const row of page) {
+      const id = row.id == null ? "" : String(row.id);
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      rows.push(row);
+    }
+
+    if (page.length < SUPABASE_ID_PAGE_SIZE) break;
+    const lastId = page[page.length - 1]?.id;
+    afterId = lastId == null ? null : String(lastId);
+    if (!afterId) break;
   }
 
   return rows;

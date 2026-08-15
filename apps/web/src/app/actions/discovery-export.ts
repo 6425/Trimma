@@ -9,6 +9,7 @@ import {
   mergeGoogleProfileIntoSalonRow,
 } from "@/lib/google-place-profile";
 import { syncSalonImagesFromGooglePlace, applySalonGoogleImageSync } from "@/lib/google-place-images";
+import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 
 const DISCOVERY_EXPORT_COLUMNS =
   "id, name, slug, category, address, city, district, province, phone, website, owner_email, owner_gmail, map_url, place_id, rating, review_count, price_level, latitude, longitude, working_hours, summary, description, onboarding_status, assign_to, source_type, status, created_at, business_info_extended";
@@ -22,27 +23,34 @@ export async function fetchDiscoveryExportSalons(input?: {
   if ("error" in adminAuth) return { success: false as const, error: adminAuth.error };
 
   const supabase = createSupabaseAdminClient();
-  let query = supabase.from("salons").select(DISCOVERY_EXPORT_COLUMNS).order("created_at", { ascending: false });
+  try {
+    const rows = await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase.from("salons").select(DISCOVERY_EXPORT_COLUMNS).order("id", { ascending: true }).limit(pageSize);
 
-  if (input?.salonIds?.length) {
-    query = query.in("id", input.salonIds);
-  } else if (input?.onboardingStatus?.length) {
-    query = query.in("onboarding_status", input.onboardingStatus);
+      if (input?.salonIds?.length) {
+        query = query.in("id", input.salonIds);
+      } else if (input?.onboardingStatus?.length) {
+        query = query.in("onboarding_status", input.onboardingStatus);
+      }
+
+      if (input?.search?.trim()) {
+        const term = input.search.trim();
+        query = query.or(
+          `name.ilike.%${term}%,phone.ilike.%${term}%,address.ilike.%${term}%,category.ilike.%${term}%`
+        );
+      }
+
+      if (afterId) query = query.gt("id", afterId);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return data || [];
+    });
+    rows.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+    return { success: true as const, rows };
+  } catch (error: unknown) {
+    return { success: false as const, error: error instanceof Error ? error.message : "Export failed." };
   }
-
-  if (input?.search?.trim()) {
-    const term = input.search.trim();
-    query = query.or(
-      `name.ilike.%${term}%,phone.ilike.%${term}%,address.ilike.%${term}%,category.ilike.%${term}%`
-    );
-  }
-
-  const { data, error } = await query;
-  if (error) return { success: false as const, error: error.message };
-  return { success: true as const, rows: data || [] };
 }
-
-export async function fetchAgentDiscoveryExportSalons(input?: {
   search?: string;
   salonIds?: string[];
 }) {
@@ -50,29 +58,39 @@ export async function fetchAgentDiscoveryExportSalons(input?: {
   if ("error" in auth) return { success: false as const, error: auth.error };
 
   const supabase = createSupabaseAdminClient();
-  let query = supabase
-    .from("salons")
-    .select(DISCOVERY_EXPORT_COLUMNS)
-    .order("created_at", { ascending: false });
+  try {
+    const rows = await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase
+        .from("salons")
+        .select(DISCOVERY_EXPORT_COLUMNS)
+        .order("id", { ascending: true })
+        .limit(pageSize);
 
-  if (auth.role === "agent") {
-    query = query.eq("assign_to", auth.email);
+      if (auth.role === "agent") {
+        query = query.eq("assign_to", auth.email);
+      }
+
+      if (input?.salonIds?.length) {
+        query = query.in("id", input.salonIds);
+      }
+
+      if (input?.search?.trim()) {
+        const term = input.search.trim();
+        query = query.or(
+          `name.ilike.%${term}%,phone.ilike.%${term}%,address.ilike.%${term}%,category.ilike.%${term}%`
+        );
+      }
+
+      if (afterId) query = query.gt("id", afterId);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return data || [];
+    });
+    rows.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+    return { success: true as const, rows };
+  } catch (error: unknown) {
+    return { success: false as const, error: error instanceof Error ? error.message : "Export failed." };
   }
-
-  if (input?.salonIds?.length) {
-    query = query.in("id", input.salonIds);
-  }
-
-  if (input?.search?.trim()) {
-    const term = input.search.trim();
-    query = query.or(
-      `name.ilike.%${term}%,phone.ilike.%${term}%,address.ilike.%${term}%,category.ilike.%${term}%`
-    );
-  }
-
-  const { data, error } = await query;
-  if (error) return { success: false as const, error: error.message };
-  return { success: true as const, rows: data || [] };
 }
 
 export async function refreshSalonFromGoogleBusiness(salonId: string) {

@@ -4,7 +4,7 @@ import {
   readListingCapturedAt,
 } from "@/lib/salon-listing-pipeline";
 import { isMissingDbSchemaError } from "@/lib/with-admin-db";
-import { fetchAllQueryPages } from "@/lib/supabase-fetch-all";
+import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 
 export type ListingQueueRow = {
   id: string;
@@ -57,6 +57,14 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
   }));
 }
 
+function sortQueueRowsNewestFirst(rows: ListingQueueRow[]): ListingQueueRow[] {
+  return [...rows].sort((a, b) => {
+    const byCaptured = String(b.captured_at || "").localeCompare(String(a.captured_at || ""));
+    if (byCaptured) return byCaptured;
+    return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+  });
+}
+
 async function queryQueueRows(
   supabase: SupabaseClient,
   select: string
@@ -66,40 +74,53 @@ async function queryQueueRows(
     LISTING_ONBOARDING_STATUS.PUBLISHED,
   ];
 
-  return fetchAllQueryPages(async (from, to) => {
-    const { data, error } = await supabase
+  return fetchAllByIdCursor(async (afterId, pageSize) => {
+    let query = supabase
       .from("salons")
       .select(select)
       .in("onboarding_status", statuses)
-      .order("created_at", { ascending: false })
-      .range(from, to);
+      .order("id", { ascending: true })
+      .limit(pageSize);
 
+    if (afterId) query = query.gt("id", afterId);
+
+    const { data, error } = await query;
     if (error) throw error;
     return (data ?? []) as unknown as Array<Record<string, unknown>>;
   });
 }
 
+async function countSalonsByOnboardingStatus(
+  supabase: SupabaseClient,
+  status: string
+): Promise<number> {
+  const rows = await fetchAllByIdCursor(async (afterId, pageSize) => {
+    let query = supabase
+      .from("salons")
+      .select("id")
+      .eq("onboarding_status", status)
+      .order("id", { ascending: true })
+      .limit(pageSize);
+
+    if (afterId) query = query.gt("id", afterId);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data ?? [];
+  });
+
+  return rows.length;
+}
+
 export async function countListingGenerationQueue(
   supabase: SupabaseClient
 ): Promise<{ pendingCount: number; listedCount: number }> {
-  const [pending, listed] = await Promise.all([
-    supabase
-      .from("salons")
-      .select("id", { count: "exact", head: true })
-      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.CAPTURED),
-    supabase
-      .from("salons")
-      .select("id", { count: "exact", head: true })
-      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED),
+  const [pendingCount, listedCount] = await Promise.all([
+    countSalonsByOnboardingStatus(supabase, LISTING_ONBOARDING_STATUS.CAPTURED),
+    countSalonsByOnboardingStatus(supabase, LISTING_ONBOARDING_STATUS.PUBLISHED),
   ]);
 
-  if (pending.error) throw pending.error;
-  if (listed.error) throw listed.error;
-
-  return {
-    pendingCount: pending.count ?? 0,
-    listedCount: listed.count ?? 0,
-  };
+  return { pendingCount, listedCount };
 }
 
 export async function loadListingGenerationQueueRows(
@@ -107,7 +128,7 @@ export async function loadListingGenerationQueueRows(
 ): Promise<ListingQueueRow[]> {
   try {
     const rows = await queryQueueRows(supabase, QUEUE_SELECT_FULL);
-    return mapQueueRows(rows);
+    return sortQueueRowsNewestFirst(mapQueueRows(rows));
   } catch (primaryError) {
     const message =
       typeof primaryError === "object" && primaryError && "message" in primaryError
@@ -119,6 +140,6 @@ export async function loadListingGenerationQueueRows(
     }
 
     const rows = await queryQueueRows(supabase, QUEUE_SELECT_BASE);
-    return mapQueueRows(rows);
+    return sortQueueRowsNewestFirst(mapQueueRows(rows));
   }
 }

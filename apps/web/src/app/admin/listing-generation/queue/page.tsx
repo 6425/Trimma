@@ -92,14 +92,16 @@ function ListingQueueContent() {
       const nextRows = queuePayload.rows || [];
       setRows(nextRows);
       setPendingCount(
-        typeof queuePayload.pendingCount === "number"
-          ? queuePayload.pendingCount
-          : nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED).length
+        Math.max(
+          typeof queuePayload.pendingCount === "number" ? queuePayload.pendingCount : 0,
+          nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED).length
+        )
       );
       setListedCount(
-        typeof queuePayload.listedCount === "number"
-          ? queuePayload.listedCount
-          : nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED).length
+        Math.max(
+          typeof queuePayload.listedCount === "number" ? queuePayload.listedCount : 0,
+          nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED).length
+        )
       );
 
       if (requestResult.success === false) {

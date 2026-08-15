@@ -3,6 +3,7 @@ import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { SRI_LANKA_PROVINCES, slugifyLocation } from "@/lib/sri-lanka-locations";
 import { KNOWN_CATEGORY_SLUGS, STATIC_INDEXABLE_PAGES } from "@/lib/site-seo";
 import { absoluteUrl } from "@/lib/site-url";
+import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 
 export type SitemapEntry = {
   url: string;
@@ -80,15 +81,18 @@ async function fetchCategoryPaths(): Promise<string[]> {
 async function fetchSalonPaths(): Promise<string[]> {
   try {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from("salons")
-      .select("id, slug, name, updated_at")
-      .not("slug", "is", null);
-
-    if (error) {
-      console.error("[sitemap] salons:", error.message);
-      return [];
-    }
+    const data = await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase
+        .from("salons")
+        .select("id, slug, name, updated_at")
+        .not("slug", "is", null)
+        .order("id", { ascending: true })
+        .limit(pageSize);
+      if (afterId) query = query.gt("id", afterId);
+      const { data: page, error } = await query;
+      if (error) throw error;
+      return page || [];
+    });
 
     return filterPublicSalons(data || [])
       .map((row) => row.slug?.trim())
