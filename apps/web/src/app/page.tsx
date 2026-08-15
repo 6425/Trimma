@@ -6,9 +6,9 @@ import ListingsClient from "./ListingsClient";
 import { redirect } from "next/navigation";
 
 export const metadata = buildPublicPageMetadata({
-  title: "Business Listings — Trimma OS",
+  title: "Your Business. Your Customers. Your Growth. — Trimma",
   description:
-    "Browse salons and spas discovered across Sri Lanka. Claim your business with Google sign-in.",
+    "Salons, spas, and wellness businesses discovered by Trimma are brought to customers looking for their next appointment. Claim your business with Google Sign-In.",
   path: "/",
 });
 

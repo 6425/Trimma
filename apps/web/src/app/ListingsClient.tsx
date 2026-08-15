@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, MapPin, Loader2, Building2, Sparkles } from "lucide-react";
+import { Search, MapPin, Loader2, Sparkles } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import { BusinessListingsMap } from "../components/marketplace/BusinessListingsMap";
 import { ListingBrowseToolbar } from "../components/marketplace/ListingBrowseToolbar";
@@ -185,25 +184,37 @@ export default function ListingsClient({
         <div className="container relative z-10 mx-auto max-w-7xl">
           <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-between">
             <div className="home-hero-top">
-              <Badge variant="hero">
-                <Building2 className="mr-1.5 h-3.5 w-3.5" />
-                Admin Lead Listings
-              </Badge>
-
               <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
-                <span className="home-hero-title-line">Beauty Business Across</span>
+                <span className="home-hero-title-line">Your Business. Your Customers. Your Growth.</span>
                 <span className="home-hero-title-accent underline decoration-[#ffde5a] decoration-4 underline-offset-4">
-                  Sri Lanka
+                  Powered by Trimma.
                 </span>
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Salons and spas discovered by Trimma admin through Lead Management. Own a business here?
-                Claim it with Google sign-in — same verified flow used for Google Business profile claims.
+                Salons, spas, and wellness businesses discovered by Trimma are brought to customers looking for
+                their next appointment. Own a business listed on Trimma? Claim your business with Google Sign-In
+                through our verified business claim flow.
               </p>
             </div>
 
             <div className="home-hero-middle">
+              <div className="flex flex-col items-start gap-3">
+                <Link
+                  href="/onboarding"
+                  className={buttonVariants({
+                    variant: "default",
+                    className:
+                      "hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 text-sm font-bold shadow-md sm:w-auto",
+                  })}
+                >
+                  Claim Your Business — It's Free
+                </Link>
+                <p className="max-w-lg text-sm font-medium leading-relaxed text-zinc-800">
+                  Get discovered. Manage bookings. Grow your business with Trimma.
+                </p>
+              </div>
+
               <div className="home-hero-stats flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-bold">
                 <span className="hero-badge hero-eyebrow px-3 py-1">{listings.length} Businesses Listed</span>
                 <span className="home-hero-stats-dot w-1.5 h-1.5 rounded-full shrink-0 hidden sm:block" aria-hidden="true" />
