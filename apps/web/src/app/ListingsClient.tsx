@@ -9,7 +9,6 @@ import { BusinessListingsMap } from "../components/marketplace/BusinessListingsM
 import { ListingBrowseToolbar } from "../components/marketplace/ListingBrowseToolbar";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import type { PublicCategory } from "@/lib/public-categories";
-import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/sri-lanka-locations";
 import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
 
@@ -208,7 +207,7 @@ export default function ListingsClient({
                       "hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 text-sm font-bold shadow-md sm:w-auto",
                   })}
                 >
-                  Claim Your Business — It's Free
+                  Claim Your Business — It&apos;s Free
                 </Link>
                 <p className="max-w-lg text-sm font-medium leading-relaxed text-zinc-800">
                   Get discovered. Manage bookings. Grow your business with Trimma.
