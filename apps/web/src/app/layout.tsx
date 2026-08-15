@@ -71,7 +71,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('trimma-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('trimma-theme');if(t==='dark'){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}}catch(e){}try{var r=localStorage.getItem('trimma-cookie-consent');if(!r)return;var p=JSON.parse(r);if(p&&p.essential===true&&Number(p.version)===4){document.documentElement.setAttribute('data-trimma-cookie-consent','1')}}catch(e){}})();`,
           }}
         />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />

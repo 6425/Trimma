@@ -2642,3 +2642,7 @@ html.dark .trimma-dashboard-modal [data-slot="textarea"]::placeholder {
   border-color: #0a0a0a !important;
   color: #ffde5a !important;
 }
+
+html[data-trimma-cookie-consent] #trimma-cookie-banner {
+  display: none !important;
+}

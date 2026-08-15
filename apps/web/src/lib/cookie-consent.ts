@@ -63,6 +63,18 @@ export function readCookieConsent(): CookieConsentPreferences | null {
   }
 }
 
+export const COOKIE_CONSENT_HTML_ATTR = "data-trimma-cookie-consent";
+
+function syncCookieConsentHtmlFlag(hasChoice: boolean) {
+  if (typeof document === "undefined") return;
+  if (hasChoice) {
+    document.documentElement.setAttribute(COOKIE_CONSENT_HTML_ATTR, "1");
+    document.documentElement.style.overflow = "";
+  } else {
+    document.documentElement.removeAttribute(COOKIE_CONSENT_HTML_ATTR);
+  }
+}
+
 export function saveCookieConsent(
   preferences: Omit<CookieConsentPreferences, "updatedAt" | "version"> & { version?: number }
 ) {
@@ -77,6 +89,7 @@ export function saveCookieConsent(
   };
 
   localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, JSON.stringify(payload));
+  syncCookieConsentHtmlFlag(true);
   window.dispatchEvent(new CustomEvent("trimma-cookie-consent-updated", { detail: payload }));
 }
 
@@ -84,9 +97,20 @@ export function hasCookieConsentChoice(): boolean {
   return readCookieConsent() !== null;
 }
 
+export function subscribeCookieConsent(onStoreChange: () => void) {
+  const onChange = () => onStoreChange();
+  window.addEventListener("trimma-cookie-consent-updated", onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener("trimma-cookie-consent-updated", onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
 export function reopenCookieConsentPreferences() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(COOKIE_CONSENT_STORAGE_KEY);
+  syncCookieConsentHtmlFlag(false);
   window.dispatchEvent(new CustomEvent("trimma-cookie-consent-updated"));
 }
 
