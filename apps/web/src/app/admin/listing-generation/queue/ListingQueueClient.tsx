@@ -19,18 +19,18 @@ type QueueTab = "pending" | "listed";
 async function postListingAction(
   path: string,
   body: Record<string, unknown>
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; publishedCount?: number }> {
   const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
     body: JSON.stringify(body),
   });
-  const data = (await response.json().catch(() => ({}))) as { error?: string };
+  const data = (await response.json().catch(() => ({}))) as { error?: string; publishedCount?: number };
   if (!response.ok) {
     return { success: false, error: data.error || `Request failed (${response.status}).` };
   }
-  return { success: true };
+  return { success: true, publishedCount: data.publishedCount };
 }
 
 export default function ListingQueueClient({ initialQueue }: { initialQueue: ListingQueuePayload }) {
@@ -141,6 +141,32 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
     }
   };
 
+  const publishAllPending = async () => {
+    if (pendingCount < 1) {
+      toast.message("There are no pending listings to publish.");
+      return;
+    }
+    const confirmed = window.confirm(
+      `Publish all ${pendingCount} pending listing${pendingCount === 1 ? "" : "s"} to the marketplace? Booking stays off until onboarding starts.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setBusyId("__all__");
+      const result = await postListingAction("/api/admin/listing-generation/publish", { allPending: true });
+      if (result.success === false) throw new Error(result.error);
+      const count = result.publishedCount ?? pendingCount;
+      toast.success(
+        count === 0 ? "No pending listings were left to publish." : `Published ${count} listing${count === 1 ? "" : "s"}.`
+      );
+      await load();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Publish all failed.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6 pb-12 duration-500">
       <div>
@@ -192,9 +218,28 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
             <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">{listedCount}</span>
           </button>
         </div>
-        <p className="text-xs font-medium text-zinc-500">
-          Captured listings stay in <strong>Pending</strong> until you publish them to the marketplace.
-        </p>
+        {activeTab === "pending" ? (
+          <Button
+            type="button"
+            variant="default"
+            className="h-11 min-h-11 w-full font-bold sm:w-auto"
+            disabled={busyId !== null || pendingCount < 1}
+            onClick={() => void publishAllPending()}
+          >
+            {busyId === "__all__" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Rocket className="mr-1.5 h-4 w-4" />
+                Publish all{pendingCount > 0 ? ` (${pendingCount})` : ""}
+              </>
+            )}
+          </Button>
+        ) : (
+          <p className="text-xs font-medium text-zinc-500">
+            Captured listings stay in <strong>Pending</strong> until you publish them to the marketplace.
+          </p>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm">
@@ -279,7 +324,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                               variant="outline"
                               size="sm"
                               className="h-9"
-                              disabled={busyId === row.id}
+                              disabled={busyId !== null}
                               onClick={() =>
                                 void runAction(row.id, () =>
                                   postListingAction("/api/admin/listing-generation/unpublish", {
@@ -304,7 +349,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                             variant="default"
                             size="sm"
                             className="h-9 font-bold"
-                            disabled={busyId === row.id}
+                            disabled={busyId !== null}
                             onClick={() =>
                               void runAction(row.id, () =>
                                 postListingAction("/api/admin/listing-generation/publish", {

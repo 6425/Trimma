@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAdminActorEmail } from "@/lib/server-admin-auth";
 import { isMissingDbSchemaError } from "@/lib/with-admin-db";
+import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import {
   BOOKING_ONBOARDING_ENTRY_STATUS,
   LISTING_ONBOARDING_STATUS,
@@ -68,6 +69,57 @@ export async function publishListingSalonRecord(
     action: "LISTING_PUBLISHED",
     notes: `Published to marketplace (${salon.category || "Uncategorized"} · ${salon.city || salon.district || "Sri Lanka"}). Booking remains off until booking onboarding starts.`,
   });
+}
+
+export async function publishAllPendingListingSalonRecords(
+  supabase: SupabaseClient
+): Promise<{ publishedCount: number }> {
+  const pending = await fetchAllByIdCursor(async (afterId, pageSize) => {
+    let query = supabase
+      .from("salons")
+      .select("id")
+      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.CAPTURED)
+      .eq("source_type", "LISTING_GENERATION")
+      .order("id", { ascending: true })
+      .limit(pageSize);
+    if (afterId) query = query.gt("id", afterId);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return data || [];
+  });
+
+  const ids = pending.map((row) => String(row.id)).filter(Boolean);
+  if (ids.length === 0) return { publishedCount: 0 };
+
+  const updates = { ...LISTING_PUBLISH_SALON_UPDATES };
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
+    let result = await supabase
+      .from("salons")
+      .update(updates)
+      .in("id", chunk)
+      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.CAPTURED)
+      .eq("source_type", "LISTING_GENERATION");
+    if (result.error && isMissingDbSchemaError(result.error.message)) {
+      const fallback = { ...updates };
+      delete fallback.booking_enabled;
+      result = await supabase
+        .from("salons")
+        .update(fallback)
+        .in("id", chunk)
+        .eq("onboarding_status", LISTING_ONBOARDING_STATUS.CAPTURED)
+        .eq("source_type", "LISTING_GENERATION");
+    }
+    if (result.error) throw new Error(result.error.message);
+  }
+
+  await tryInsertOnboardingLog(supabase, {
+    salon_id: ids[0],
+    action: "LISTING_PUBLISHED_ALL",
+    notes: `Bulk published ${ids.length} pending listing generation salon(s) to the marketplace. Booking remains off until booking onboarding starts.`,
+  });
+
+  return { publishedCount: ids.length };
 }
 
 export async function unpublishListingSalonRecord(
