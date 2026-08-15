@@ -17,9 +17,15 @@ export type DeviceCoords = { lat: number; lng: number };
 
 type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable";
 
+function readInitialOrigin(): DeviceCoords | null {
+  if (typeof window === "undefined") return null;
+  const stored = readStoredDeviceLocation();
+  return stored ? { lat: stored.lat, lng: stored.lng } : null;
+}
+
 export function useDeviceTravel(salon: SalonMapInput | null) {
-  const [status, setStatus] = useState<LocationStatus>("idle");
-  const [origin, setOrigin] = useState<DeviceCoords | null>(null);
+  const [origin, setOrigin] = useState<DeviceCoords | null>(readInitialOrigin);
+  const [status, setStatus] = useState<LocationStatus>(() => (readInitialOrigin() ? "granted" : "idle"));
   const [estimate, setEstimate] = useState<TravelEstimate | null>(null);
   const [loadingTravel, setLoadingTravel] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,16 +38,7 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
       placeId: salon.place_id ?? null,
       address: getSalonFullAddress(salon),
     };
-  }, [
-    salon?.place_id,
-    salon?.latitude,
-    salon?.longitude,
-    salon?.address,
-    salon?.city,
-    salon?.district,
-    salon?.province,
-    salon?.name,
-  ]);
+  }, [salon]);
 
   const applyCoords = useCallback((coords: DeviceCoords) => {
     setOrigin(coords);
@@ -77,22 +74,16 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
   }, [applyCoords]);
 
   useEffect(() => {
-    const stored = readStoredDeviceLocation();
-    if (stored) {
-      applyCoords({ lat: stored.lat, lng: stored.lng });
-      return;
-    }
-    if (hasLocationConsent()) {
-      setStatus("requesting");
-      requestDeviceLocation({
-        onGranted: (coords) => applyCoords({ lat: coords.lat, lng: coords.lng }),
-        onDenied: (message) => {
-          setStatus("denied");
-          setError(message);
-        },
-      });
-    }
-  }, [applyCoords]);
+    if (origin) return;
+    if (!hasLocationConsent()) return;
+    requestDeviceLocation({
+      onGranted: (coords) => applyCoords({ lat: coords.lat, lng: coords.lng }),
+      onDenied: (message) => {
+        setStatus("denied");
+        setError(message);
+      },
+    });
+  }, [applyCoords, origin]);
 
   useEffect(() => {
     const onStored = (event: Event) => {
@@ -104,16 +95,13 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
   }, [applyCoords]);
 
   useEffect(() => {
-    if (!origin || !destination) {
-      setEstimate(null);
-      return;
-    }
+    if (!origin || !destination) return;
 
     const controller = new AbortController();
-    setLoadingTravel(true);
-    setError(null);
 
     void (async () => {
+      setLoadingTravel(true);
+      setError(null);
       try {
         const response = await fetch("/api/maps/travel", {
           method: "POST",
@@ -142,5 +130,12 @@ export function useDeviceTravel(salon: SalonMapInput | null) {
     return () => controller.abort();
   }, [origin, destination]);
 
-  return { status, origin, estimate, loadingTravel, error, requestLocation };
+  return {
+    status,
+    origin,
+    estimate: origin && destination ? estimate : null,
+    loadingTravel: Boolean(origin && destination && loadingTravel),
+    error,
+    requestLocation,
+  };
 }
