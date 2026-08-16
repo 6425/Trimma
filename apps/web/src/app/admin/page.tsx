@@ -160,7 +160,9 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    void fetchStats();
+    void Promise.resolve().then(() => {
+      void fetchStats();
+    });
   }, []);
 
   const handleSyncData = async () => {
