@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { revalidateMarketplaceListingPages } from "@/lib/listing-marketplace-revalidate";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import {
   publishAllPendingListingSalonRecords,
@@ -29,8 +29,7 @@ export async function POST(req: Request) {
 
     if (body.allPending) {
       const result = await publishAllPendingListingSalonRecords(supabase);
-      revalidatePath("/admin/listing-generation/queue");
-      revalidatePath("/");
+      revalidateMarketplaceListingPages();
       return NextResponse.json({ success: true, publishedCount: result.publishedCount });
     }
 
@@ -41,8 +40,7 @@ export async function POST(req: Request) {
 
     await publishListingSalonRecord(supabase, salonId);
 
-    revalidatePath("/admin/listing-generation/queue");
-    revalidatePath("/");
+    revalidateMarketplaceListingPages();
 
     return NextResponse.json({ success: true, publishedCount: 1 });
   } catch (error: unknown) {

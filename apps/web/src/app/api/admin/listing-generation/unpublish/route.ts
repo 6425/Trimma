@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { revalidateMarketplaceListingPages } from "@/lib/listing-marketplace-revalidate";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { unpublishListingSalonRecord } from "@/lib/listing-generation-mutations";
 
@@ -30,8 +30,7 @@ export async function POST(req: Request) {
     const supabase = createSupabaseAdminClient();
     await unpublishListingSalonRecord(supabase, salonId);
 
-    revalidatePath("/admin/listing-generation/queue");
-    revalidatePath("/");
+    revalidateMarketplaceListingPages();
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

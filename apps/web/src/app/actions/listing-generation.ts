@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateMarketplaceListingPages } from "@/lib/listing-marketplace-revalidate";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import {
@@ -35,8 +36,7 @@ export async function publishListingSalon(salonId: string) {
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
-  revalidatePath("/admin/listing-generation/queue");
-  revalidatePath("/");
+  revalidateMarketplaceListingPages();
   return { success: true as const };
 }
 
@@ -49,8 +49,7 @@ export async function unpublishListingSalon(salonId: string) {
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
-  revalidatePath("/admin/listing-generation/queue");
-  revalidatePath("/");
+  revalidateMarketplaceListingPages();
   return { success: true as const };
 }
 
