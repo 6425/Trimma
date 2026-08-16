@@ -1,20 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState } from "react";
 import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "../../../components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "../../../config/supabase";
-import {
-  confirmAdminAccessForSession,
-  syncTrimmaSecureSession,
-  redirectAfterAuth,
-} from "../../../lib/trimma-role";
+import { syncTrimmaSecureSession, redirectAfterAuth } from "../../../lib/trimma-role";
 import { normalizeEmail } from "@/lib/normalize-email";
-import type { Session } from "@supabase/supabase-js";
 
 /**
  * Admin portal: email + password only (no Google OAuth).
@@ -24,69 +19,6 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
-  const completeAdminSignIn = useCallback(async (session: Session) => {
-    setStatusMessage("Checking administrator access…");
-
-    const gate = await confirmAdminAccessForSession(
-      session.access_token,
-      session.user.id,
-      session.user.email
-    );
-
-    if (!gate.allowed) {
-      throw new Error(gate.error || "You are not allowed to access the admin dashboard.");
-    }
-
-    const sessionResult = await syncTrimmaSecureSession(session.access_token);
-    if ("error" in sessionResult) {
-      throw new Error(sessionResult.error);
-    }
-
-    setStatusMessage("Opening admin dashboard…");
-    const params = new URLSearchParams(window.location.search);
-    const next = params.get("redirectTo") || params.get("redirect") || "/admin";
-    const destination =
-      next.startsWith("/admin") && !next.startsWith("/admin/login") ? next : "/admin";
-    redirectAfterAuth(destination);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void Promise.resolve().then(async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (cancelled || !session?.access_token) return;
-
-      setLoading(true);
-      setStatusMessage("Restoring your admin session…");
-      try {
-        const sessionResult = await syncTrimmaSecureSession(session.access_token);
-        if (cancelled) return;
-        if ("error" in sessionResult || sessionResult.role !== "admin") {
-          setLoading(false);
-          setStatusMessage(null);
-          return;
-        }
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get("redirectTo") || params.get("redirect") || "/admin";
-        const destination =
-          next.startsWith("/admin") && !next.startsWith("/admin/login") ? next : "/admin";
-        redirectAfterAuth(destination);
-      } catch {
-        if (!cancelled) {
-          setLoading(false);
-          setStatusMessage(null);
-        }
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +48,15 @@ export default function AdminLogin() {
     }
 
     try {
-      await completeAdminSignIn(session);
+      setStatusMessage("Opening admin dashboard…");
+      const sessionResult = await syncTrimmaSecureSession(session.access_token);
+      if ("error" in sessionResult) {
+        throw new Error(sessionResult.error);
+      }
+      if (sessionResult.role !== "admin") {
+        throw new Error("You are not allowed to access the admin dashboard.");
+      }
+      redirectAfterAuth("/admin");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not complete admin sign-in.");
       setLoading(false);

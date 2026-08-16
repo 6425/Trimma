@@ -12,14 +12,17 @@ export async function resolveSessionRoleForUser(
   let linkedRole: TrimmaUserRole | null = null;
 
   try {
-    const linkResult = await linkInvitedOwnerAccount(
-      userId,
-      email,
-      (userMetadata?.full_name as string | undefined) ||
-        (userMetadata?.first_name as string | undefined),
-      userMetadata?.avatar_url as string | undefined
-    );
-    linkedRole = linkResult.role;
+    const linkResult = await Promise.race([
+      linkInvitedOwnerAccount(
+        userId,
+        email,
+        (userMetadata?.full_name as string | undefined) ||
+          (userMetadata?.first_name as string | undefined),
+        userMetadata?.avatar_url as string | undefined
+      ),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+    ]);
+    if (linkResult) linkedRole = linkResult.role;
   } catch (err) {
     console.warn("Owner link during session resolve failed:", err);
   }
