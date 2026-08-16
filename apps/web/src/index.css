@@ -2377,6 +2377,15 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats 
   background-color: rgb(113 113 122) !important;
 }
 
+.page-hero-shell h1,
+.page-hero-shell .home-hero-title,
+.home-hero-split h1,
+.home-hero-split .home-hero-title,
+.page-hero-light h1 {
+  font-size: 40px !important;
+  line-height: 1.15 !important;
+}
+
 .home-hero-split .hero-ink p,
 .page-hero-shell .hero-ink p,
 .page-hero-shell .home-hero-top > p,
