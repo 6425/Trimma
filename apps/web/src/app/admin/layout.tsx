@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Calendar, Users, Scissors, Settings, Search, Menu, X, LogOut, LayoutDashboard, Store, Tag, UserPlus, DollarSign, Briefcase, MapPin, ChevronDown, Share2, Star, Bot, BarChart3, CreditCard, HelpCircle, MessageSquare, Sparkles, User, Map as MapIcon, Package, Globe } from "lucide-react";
-import { signOutTrimmaSession, supabase } from "../../config/supabase";
-import { refreshTrimmaSecureCookies } from "@/lib/keep-trimma-session-fresh";
+import { signOutTrimmaSession } from "../../config/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
@@ -41,33 +40,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     void Promise.resolve().then(() => {
       setMobileMenuOpen(false);
     });
-  }, [pathname]);
-
-  useEffect(() => {
-    if (pathname === "/admin/login") return;
-
-    let cancelled = false;
-    const syncLiveSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (cancelled || !session?.access_token) return;
-      await refreshTrimmaSecureCookies(session.access_token);
-    };
-
-    void syncLiveSession();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "TOKEN_REFRESHED" && session?.access_token) {
-        void refreshTrimmaSecureCookies(session.access_token);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
   }, [pathname]);
 
   useEffect(() => {

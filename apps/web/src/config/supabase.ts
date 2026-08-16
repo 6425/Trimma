@@ -195,12 +195,7 @@ if (typeof window !== 'undefined') {
       return;
     }
 
-    if (
-      (event === 'TOKEN_REFRESHED' ||
-        event === 'INITIAL_SESSION' ||
-        event === 'SIGNED_IN') &&
-      session?.access_token
-    ) {
+    if (event === 'TOKEN_REFRESHED' && session?.access_token) {
       void import('@/lib/keep-trimma-session-fresh').then(({ refreshTrimmaSecureCookies }) => {
         void refreshTrimmaSecureCookies(session.access_token);
       });

@@ -138,9 +138,6 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!hasSession || !userRole) {
-    if (hasSession && pathname.startsWith('/admin')) {
-      return redirectToSessionRefresh(req, pathname);
-    }
     return redirectToLogin(req, pathname);
   }
 
@@ -178,10 +175,17 @@ export async function middleware(req: NextRequest) {
   }
 
   if (pathname.startsWith('/admin') && userRole !== 'admin') {
-    return redirectToSessionRefresh(req, pathname);
+    const loginUrl = new URL('/admin/login', req.url);
+    loginUrl.searchParams.set('redirectTo', pathname);
+    return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
   }
 
   if (!hasPermission(userRole, pathname)) {
+    if (pathname.startsWith('/admin')) {
+      const loginUrl = new URL('/admin/login', req.url);
+      loginUrl.searchParams.set('redirectTo', pathname);
+      return withRouteHeaders(pathname, NextResponse.redirect(loginUrl));
+    }
     return redirectToSessionRefresh(req, pathname);
   }
 

@@ -1,7 +1,7 @@
 import { isPlatformAdminRole } from "@/lib/trimma-role-core";
 import { resolveAdminAccess } from "@/lib/trimma-role";
 
-const ADMIN_CHECK_TIMEOUT_MS = 8_000;
+const ADMIN_CHECK_TIMEOUT_MS = 2_500;
 
 /** Legacy readable cookie from setTrimmaMiddlewareCookies (pre-HttpOnly sessions). */
 export function readMiddlewareRoleCookie(): string | null {
@@ -59,6 +59,8 @@ export async function isAdminForSession(
   email: string | null | undefined,
   accessToken?: string | null
 ): Promise<boolean> {
+  if (hasAdminRoleCookie()) return true;
+
   const secureSession = await isAdminViaSecureSession();
   if (secureSession === true) return true;
 
@@ -66,8 +68,6 @@ export async function isAdminForSession(
     const serverVerified = await isAdminViaServerAction(accessToken);
     if (serverVerified) return true;
   }
-
-  if (hasAdminRoleCookie()) return true;
 
   try {
     return await Promise.race([

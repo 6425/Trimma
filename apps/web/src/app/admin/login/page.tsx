@@ -35,13 +35,11 @@ export default function AdminLogin() {
     );
 
     if (!gate.allowed) {
-      await supabase.auth.signOut();
       throw new Error(gate.error || "You are not allowed to access the admin dashboard.");
     }
 
     const sessionResult = await syncTrimmaSecureSession(session.access_token);
     if ("error" in sessionResult) {
-      await supabase.auth.signOut();
       throw new Error(sessionResult.error);
     }
 
@@ -63,10 +61,20 @@ export default function AdminLogin() {
       if (cancelled || !session?.access_token) return;
 
       setLoading(true);
-      setError(null);
       setStatusMessage("Restoring your admin session…");
       try {
-        await completeAdminSignIn(session);
+        const sessionResult = await syncTrimmaSecureSession(session.access_token);
+        if (cancelled) return;
+        if ("error" in sessionResult || sessionResult.role !== "admin") {
+          setLoading(false);
+          setStatusMessage(null);
+          return;
+        }
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("redirectTo") || params.get("redirect") || "/admin";
+        const destination =
+          next.startsWith("/admin") && !next.startsWith("/admin/login") ? next : "/admin";
+        redirectAfterAuth(destination);
       } catch {
         if (!cancelled) {
           setLoading(false);
@@ -78,7 +86,7 @@ export default function AdminLogin() {
     return () => {
       cancelled = true;
     };
-  }, [completeAdminSignIn]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

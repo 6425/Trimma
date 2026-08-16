@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import AdminCard from "../../components/ui/AdminCard";
 import { supabase } from "@/config/supabase";
-import { useRouter } from "next/navigation";
 import { Loader2, RefreshCw, Play, ShieldAlert, ShieldCheck, Globe, Activity, Database, Lock, Server, CreditCard, ExternalLink, Settings, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -12,8 +11,6 @@ import { seedMarketplaceData } from "@/services/seedService";
 import { toast } from "sonner";
 import { fetchAdminDashboard } from "@/app/actions/admin-list-data";
 import { fetchAdminDashboardClient } from "@/lib/admin-dashboard-client";
-import { isAdminForSession } from "@/lib/admin-session-gate";
-import { refreshTrimmaSecureCookies } from "@/lib/keep-trimma-session-fresh";
 import { withTimeout } from "@/lib/promise-timeout";
 import {
   ActivityItem,
@@ -23,7 +20,6 @@ import {
 } from "@/lib/dashboard-stats";
 
 export default function AdminDashboard() {
-  const router = useRouter();
   const [stats, setStats] = useState({
     salons: 0,
     salonsThisWeek: 0,
@@ -68,23 +64,7 @@ export default function AdminDashboard() {
           result.error.includes("SUPABASE_SERVICE_ROLE_KEY");
 
         if (authLike) {
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-          if (session?.access_token) {
-            await refreshTrimmaSecureCookies(session.access_token);
-          }
-          const stillAdmin =
-            session?.user &&
-            (await isAdminForSession(
-              session.user.id,
-              session.user.email,
-              session.access_token
-            ));
-          if (!stillAdmin) {
-            router.replace("/admin/login?redirect=/admin");
-            return;
-          }
+          // Stay on the admin page — a slow/failed server check must not force re-login.
         }
 
         result = await fetchAdminDashboardClient();
@@ -180,42 +160,8 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    void Promise.resolve().then(async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      let activeSession = session;
-      if (!activeSession?.user) {
-        const refreshed = await supabase.auth.refreshSession();
-        activeSession = refreshed.data.session;
-      }
-
-      if (!activeSession?.user) {
-        setLoading(false);
-        router.replace("/admin/login?redirect=/admin");
-        return;
-      }
-
-      await refreshTrimmaSecureCookies(activeSession.access_token);
-
-      const isAdmin = await isAdminForSession(
-        activeSession.user.id,
-        activeSession.user.email,
-        activeSession.access_token
-      );
-      if (!isAdmin) {
-        setLoading(false);
-        toast.error(
-          "You are not allowed to access the admin dashboard. Sign in at /admin/login with an admin account."
-        );
-        router.replace("/admin/login?redirect=/admin");
-        return;
-      }
-
-      setAuthorized(true);
-      await fetchStats();
-    });
+    setAuthorized(true);
+    void fetchStats();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

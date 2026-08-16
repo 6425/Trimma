@@ -16,9 +16,16 @@ export async function refreshTrimmaSecureCookies(
     try {
       const { establishTrimmaSession } = await import("@/lib/establish-trimma-session");
       const result = await establishTrimmaSession(token);
-      if (!("error" in result)) {
-        lastSyncedToken = token;
+      if ("error" in result) return;
+      // A failed role lookup returns "customer" and would kick an admin out.
+      if (
+        result.role === "customer" &&
+        typeof window !== "undefined" &&
+        window.location.pathname.startsWith("/admin")
+      ) {
+        return;
       }
+      lastSyncedToken = token;
     } catch {
       // Next refresh or navigation can retry.
     } finally {
