@@ -9,24 +9,25 @@ export async function resolveSessionRoleForUser(
   email: string | null | undefined,
   userMetadata?: Record<string, unknown> | null
 ): Promise<TrimmaUserRole> {
+  const dbRole = await resolveTrimmaUserRoleServer(userId, email);
+  if (dbRole === "admin") {
+    return "admin";
+  }
+
   let linkedRole: TrimmaUserRole | null = null;
 
   try {
-    const linkResult = await Promise.race([
-      linkInvitedOwnerAccount(
-        userId,
-        email,
-        (userMetadata?.full_name as string | undefined) ||
-          (userMetadata?.first_name as string | undefined),
-        userMetadata?.avatar_url as string | undefined
-      ),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
-    ]);
-    if (linkResult) linkedRole = linkResult.role;
+    const linkResult = await linkInvitedOwnerAccount(
+      userId,
+      email,
+      (userMetadata?.full_name as string | undefined) ||
+        (userMetadata?.first_name as string | undefined),
+      userMetadata?.avatar_url as string | undefined
+    );
+    linkedRole = linkResult.role;
   } catch (err) {
     console.warn("Owner link during session resolve failed:", err);
   }
 
-  const dbRole = await resolveTrimmaUserRoleServer(userId, email);
   return pickHighestRole(linkedRole, dbRole) ?? dbRole ?? "customer";
 }
