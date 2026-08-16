@@ -7,8 +7,8 @@ export function revalidateMarketplaceListingPages() {
   revalidatePath("/category", "layout");
   revalidatePath("/categories");
   revalidatePath("/locations");
+  revalidatePath("/salons", "layout");
   revalidatePath("/bookings");
   revalidatePath("/deals");
-  revalidatePath("/salons", "layout");
   revalidatePath("/admin/listing-generation/queue");
 }

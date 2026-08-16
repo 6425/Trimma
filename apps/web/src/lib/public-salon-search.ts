@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonPubliclyBookable, isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
@@ -7,7 +8,6 @@ import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/li
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
-import { postSupabaseRpc } from "@/lib/supabase-rpc";
 import {
   pinTopReviewedListingsWithPhone,
   splitMarketplaceListingSections,
@@ -215,6 +215,12 @@ function isLeadGenerationSource(row: Record<string, unknown>): boolean {
   return source === "GOOGLE_PLACES" || source === "LISTING_GENERATION";
 }
 
+function isPublishedMarketplaceRow(row: Record<string, unknown>): boolean {
+  if (!isListingPublished(row)) return false;
+  const status = String(row.status || "").toLowerCase();
+  return status !== "rejected" && status !== "inactive";
+}
+
 function filterBusinessListingRows(
   data: Array<Record<string, unknown>>,
   params: {
@@ -226,9 +232,9 @@ function filterBusinessListingRows(
   let rows = filterPublicSalons(data);
 
   if (params.publishedOnly) {
-    // Published marketplace rows must stay visible even if an older import
-    // left is_verified / booking flags set. Do not reuse the browse-only gate.
-    rows = rows.filter(isListingPublished).filter(isSalonPubliclyListable);
+    // Show every published listing. Do not hide rows because of leftover
+    // is_verified / booking / source_type flags from an import or update.
+    rows = rows.filter(isPublishedMarketplaceRow);
   } else {
     rows = rows
       .filter(isSalonPublicBrowseListing)
@@ -263,16 +269,28 @@ function sortBusinessListingRows(
   );
 }
 
-async function loadPublishedMarketplaceListings(
-  _supabase: SupabaseClient
-): Promise<Array<Record<string, unknown>> | null> {
+function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
   try {
-    const raw = await postSupabaseRpc("published_marketplace_listings");
-    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-    return Array.isArray(parsed) ? (parsed as Array<Record<string, unknown>>) : null;
+    return createSupabaseAdminClient();
   } catch {
-    return null;
+    return fallback;
   }
+}
+
+async function loadPublishedSalonRows(
+  supabase: SupabaseClient
+): Promise<Array<Record<string, unknown>>> {
+  const client = publishedListingsClient(supabase);
+  return fetchAllByIdCursor(async (afterId, pageSize) => {
+    let query = client
+      .from("salons")
+      .select(BUSINESS_LISTING_SELECT)
+      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+    if (afterId) query = query.gt("id", afterId);
+    const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+    if (error) throw new Error(error.message);
+    return (page ?? []) as Array<Record<string, unknown>>;
+  });
 }
 
 function rowMatchesTextQuery(row: Record<string, unknown>, q: string): boolean {
@@ -312,38 +330,33 @@ export async function fetchBusinessListingCards(
     offset = 0,
   } = params;
 
-  let data = publishedOnly ? await loadPublishedMarketplaceListings(supabase) : null;
-  if (data && data.length === 0) {
-    data = null;
-  }
+  let data = publishedOnly
+    ? await loadPublishedSalonRows(supabase)
+    : await fetchAllByIdCursor(async (afterId, pageSize) => {
+        let query = supabase
+          .from("salons")
+          .select(BUSINESS_LISTING_SELECT)
+          .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
 
-  if (!data) {
-    data = await fetchAllByIdCursor(async (afterId, pageSize) => {
-      let query = supabase.from("salons").select(BUSINESS_LISTING_SELECT);
+        if (q) {
+          query = query.or(
+            `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
+          );
+        }
+        if (location) {
+          const locationFilter = buildSalonLocationOrFilter(location);
+          if (locationFilter) query = query.or(locationFilter);
+        }
+        if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
+        if (verifiedOnly) query = query.eq("is_verified", true);
 
-      if (publishedOnly) {
-        query = query.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
-      }
-      query = query.in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
+        if (afterId) query = query.gt("id", afterId);
+        const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+        if (error) throw new Error(error.message);
+        return (page ?? []) as Array<Record<string, unknown>>;
+      });
 
-      if (q) {
-        query = query.or(
-          `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
-        );
-      }
-      if (location) {
-        const locationFilter = buildSalonLocationOrFilter(location);
-        if (locationFilter) query = query.or(locationFilter);
-      }
-      if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
-      if (verifiedOnly) query = query.eq("is_verified", true);
-
-      if (afterId) query = query.gt("id", afterId);
-      const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
-      if (error) throw new Error(error.message);
-      return (page ?? []) as Array<Record<string, unknown>>;
-    });
-  } else {
+  if (publishedOnly) {
     if (q) data = data.filter((row) => rowMatchesTextQuery(row, q));
     if (location) data = data.filter((row) => rowMatchesLocationQuery(row, location));
     if (minRating > 0) {
@@ -406,20 +419,7 @@ export async function countPublishedListingsByCategory(
   supabase: SupabaseClient,
   categories: Array<{ name: string; slug: string }>
 ): Promise<Record<string, number>> {
-  const rpcRows = await loadPublishedMarketplaceListings(supabase);
-  const data =
-    rpcRows ??
-    (await fetchAllByIdCursor(async (afterId, pageSize) => {
-      let query = supabase
-        .from("salons")
-        .select("id, name, slug, category, status, public_visibility, is_verified, booking_enabled, source_type, onboarding_status, business_info_extended")
-        .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED)
-        .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
-      if (afterId) query = query.gt("id", afterId);
-      const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
-      if (error) throw new Error(error.message);
-      return (page ?? []) as Array<Record<string, unknown>>;
-    }));
+  const data = await loadPublishedSalonRows(supabase);
 
   const rows = filterBusinessListingRows(data, { publishedOnly: true });
   const counts: Record<string, number> = {};

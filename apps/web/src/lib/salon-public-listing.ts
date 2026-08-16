@@ -68,10 +68,6 @@ export function isSalonPublicBrowseListing(salon: {
   source_type?: string | null;
   onboarding_status?: string | null;
 }): boolean {
-  const onboardingStatus = String(salon.onboarding_status || "");
-  if (onboardingStatus === "LISTING_PUBLISHED") {
-    return isSalonPubliclyListable(salon);
-  }
   if (isSalonApprovedForBookings(salon)) return false;
   return isSalonPubliclyListable(salon);
 }

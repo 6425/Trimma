@@ -68,7 +68,6 @@ export const LISTING_PUBLISH_SALON_UPDATES = {
   onboarding_status: LISTING_ONBOARDING_STATUS.PUBLISHED,
   public_visibility: "public",
   booking_enabled: false,
-  is_verified: false,
   status: "active",
 } as const;
 
@@ -176,7 +175,6 @@ export async function finalizeListingPipelineCapture(
       .from("salons")
       .update({
         source_type: "LISTING_GENERATION",
-        ...LISTING_PUBLISH_SALON_UPDATES,
       })
       .in("id", toRefresh);
     if (error) throw new Error(error.message);
