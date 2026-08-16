@@ -129,6 +129,9 @@ export async function upsertDiscoveredGooglePlaces(
 
     if (options?.listingPipeline) {
       Object.assign(incoming, LISTING_CAPTURE_SALON_DEFAULTS);
+      incoming.owner_email = null;
+      incoming.owner_gmail = null;
+      incoming.subscription_plan_id = null;
     }
 
     const existing = resolveExistingSalonMatch(incoming as SalonDuplicateRow, indexes);
@@ -175,13 +178,21 @@ export async function upsertDiscoveredGooglePlaces(
   }
 
   if (rowsToInsert.length) {
-    let insertResult = await supabase.from("salons").upsert(rowsToInsert, { onConflict: "place_id" });
+    const listingInserts = options?.listingPipeline
+      ? rowsToInsert.map((row) => ({
+          ...row,
+          owner_email: null,
+          owner_gmail: null,
+          subscription_plan_id: null,
+        }))
+      : rowsToInsert;
+    let insertResult = await supabase.from("salons").upsert(listingInserts, { onConflict: "place_id" });
     if (insertResult.error && isMissingDiscoveryColumnError(insertResult.error)) {
       upsertWarning =
         upsertWarning ||
         "Saved basic salon data only. Run DISCOVERY_SALON_COLUMNS_PATCH.sql for review_count and business_info_extended.";
       insertResult = await supabase.from("salons").upsert(
-        rowsToInsert.map(stripOptionalDiscoveryColumns),
+        listingInserts.map(stripOptionalDiscoveryColumns),
         { onConflict: "place_id" }
       );
     }
@@ -192,8 +203,10 @@ export async function upsertDiscoveredGooglePlaces(
     await finalizeListingPipelineCapture(supabase, placeIds);
   }
 
-  const refreshedCandidates = await loadSalonDuplicateCandidates(supabase, context, placeIds);
-  stats.removed = await removeDuplicateSalonRows(supabase, refreshedCandidates);
+  if (!options?.listingPipeline) {
+    const refreshedCandidates = await loadSalonDuplicateCandidates(supabase, context, placeIds);
+    stats.removed = await removeDuplicateSalonRows(supabase, refreshedCandidates);
+  }
 
   return {
     count: rowsToInsert.length + rowsToUpdate.length,

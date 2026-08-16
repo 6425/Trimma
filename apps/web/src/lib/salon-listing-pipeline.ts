@@ -164,6 +164,7 @@ export async function finalizeListingPipelineCapture(
       .from("salons")
       .update({
         ...LISTING_CAPTURE_SALON_DEFAULTS,
+        subscription_plan_id: null,
       })
       .in("id", toCapture);
     if (error) throw new Error(error.message);
