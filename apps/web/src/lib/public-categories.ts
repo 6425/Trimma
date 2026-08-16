@@ -123,8 +123,13 @@ async function loadPublicCategories(): Promise<PublicCategory[]> {
 
   try {
     const supabase = createServerSupabaseClient();
-    const { data, error } = await withTimeout(
-      supabase.from("categories").select("id, name, slug, icon").order("name"),
+    const { data, error } = await withTimeout<{
+      data: PublicCategory[] | null;
+      error: { message: string } | null;
+    }>(
+      Promise.resolve(
+        supabase.from("categories").select("id, name, slug, icon").order("name")
+      ),
       CATEGORY_FETCH_TIMEOUT_MS,
       "upstream request timeout"
     );
