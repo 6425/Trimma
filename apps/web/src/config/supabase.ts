@@ -146,6 +146,15 @@ if (typeof window !== 'undefined') {
     sessionStorage.setItem(FORCE_CLEAR_KEY, '1');
 
     try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // HttpOnly cookies may survive a client-only wipe; best-effort.
+    }
+
+    try {
       await supabase.auth.signOut({ scope: 'local' });
     } catch {
       // Local sign-out only; ignore server errors for revoked tokens.
@@ -180,9 +189,21 @@ if (typeof window !== 'undefined') {
     handleAuthError(event.reason);
   });
 
-  supabase.auth.onAuthStateChange((event) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT') {
       sessionStorage.removeItem('sb-auth-reloaded');
+      return;
+    }
+
+    if (
+      (event === 'TOKEN_REFRESHED' ||
+        event === 'INITIAL_SESSION' ||
+        event === 'SIGNED_IN') &&
+      session?.access_token
+    ) {
+      void import('@/lib/keep-trimma-session-fresh').then(({ refreshTrimmaSecureCookies }) => {
+        void refreshTrimmaSecureCookies(session.access_token);
+      });
     }
   });
 }

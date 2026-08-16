@@ -16,22 +16,32 @@ function safeRedirectPath(value: string | null): string | null {
   return safe;
 }
 
+function loginPathFor(fromPath: string | null): string {
+  if (fromPath?.startsWith("/admin")) return "/admin/login";
+  if (fromPath?.startsWith("/agent") || fromPath?.startsWith("/regional-head")) {
+    return "/agent/login";
+  }
+  return "/login";
+}
+
+function redirectToLogin(request: NextRequest, fromPath: string | null): NextResponse {
+  const loginUrl = new URL(loginPathFor(fromPath), request.url);
+  if (fromPath) loginUrl.searchParams.set("redirectTo", fromPath);
+  return NextResponse.redirect(loginUrl);
+}
+
 /** Re-read DB role, re-mint trimma-session, and redirect (middleware recovery path). */
 export async function GET(request: NextRequest) {
   const fromPath = safeRedirectPath(request.nextUrl.searchParams.get("from"));
   const accessToken = reassembleAccessTokenCookie(request);
 
   if (!accessToken) {
-    const loginUrl = new URL("/login", request.url);
-    if (fromPath) loginUrl.searchParams.set("redirectTo", fromPath);
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, fromPath);
   }
 
   const verified = await verifyAccessToken(accessToken);
   if (!verified) {
-    const loginUrl = new URL("/login", request.url);
-    if (fromPath) loginUrl.searchParams.set("redirectTo", fromPath);
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request, fromPath);
   }
 
   try {

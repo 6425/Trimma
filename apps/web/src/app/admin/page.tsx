@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { fetchAdminDashboard } from "@/app/actions/admin-list-data";
 import { fetchAdminDashboardClient } from "@/lib/admin-dashboard-client";
 import { isAdminForSession } from "@/lib/admin-session-gate";
+import { refreshTrimmaSecureCookies } from "@/lib/keep-trimma-session-fresh";
 import { withTimeout } from "@/lib/promise-timeout";
 import {
   ActivityItem,
@@ -70,6 +71,9 @@ export default function AdminDashboard() {
           const {
             data: { session },
           } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            await refreshTrimmaSecureCookies(session.access_token);
+          }
           const stillAdmin =
             session?.user &&
             (await isAdminForSession(
@@ -181,16 +185,24 @@ export default function AdminDashboard() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session?.user) {
+      let activeSession = session;
+      if (!activeSession?.user) {
+        const refreshed = await supabase.auth.refreshSession();
+        activeSession = refreshed.data.session;
+      }
+
+      if (!activeSession?.user) {
         setLoading(false);
         router.replace("/admin/login?redirect=/admin");
         return;
       }
 
+      await refreshTrimmaSecureCookies(activeSession.access_token);
+
       const isAdmin = await isAdminForSession(
-        session.user.id,
-        session.user.email,
-        session.access_token
+        activeSession.user.id,
+        activeSession.user.email,
+        activeSession.access_token
       );
       if (!isAdmin) {
         setLoading(false);

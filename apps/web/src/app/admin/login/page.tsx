@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "../../../components/Logo";
 import { Button } from "@/components/ui/button";
@@ -46,8 +46,39 @@ export default function AdminLogin() {
     }
 
     setStatusMessage("Opening admin dashboard…");
-    redirectAfterAuth("/admin");
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("redirectTo") || params.get("redirect") || "/admin";
+    const destination =
+      next.startsWith("/admin") && !next.startsWith("/admin/login") ? next : "/admin";
+    redirectAfterAuth(destination);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void Promise.resolve().then(async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled || !session?.access_token) return;
+
+      setLoading(true);
+      setError(null);
+      setStatusMessage("Restoring your admin session…");
+      try {
+        await completeAdminSignIn(session);
+      } catch {
+        if (!cancelled) {
+          setLoading(false);
+          setStatusMessage(null);
+        }
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [completeAdminSignIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
