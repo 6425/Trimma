@@ -91,49 +91,54 @@ function loadMapsPlacesLibrary(): Promise<void> {
   });
 }
 
-async function searchPlacesService(query: string, limit: number): Promise<BrowserPlaceResult[]> {
-  await loadMapsPlacesLibrary();
-  const maps = (window as Window & {
-    google: {
-      maps: {
-        places: {
-          PlacesService: new (attr: HTMLDivElement) => {
-            textSearch: (
-              request: { query: string },
-              callback: (
-                results: Array<{
-                  place_id?: string;
-                  name?: string;
-                  formatted_address?: string;
-                  rating?: number;
-                  user_ratings_total?: number;
-                  types?: string[];
-                  geometry?: { location?: { lat: () => number; lng: () => number } };
-                }> | null,
-                status: string,
-                pagination?: { hasNextPage: boolean; nextPage: () => void }
-              ) => void
-            );
+type MapsPlaceResult = {
+  place_id?: string;
+  name?: string;
+  formatted_address?: string;
+  rating?: number;
+  user_ratings_total?: number;
+  types?: string[];
+  geometry?: { location?: { lat: () => number; lng: () => number } };
+};
+
+type MapsPlacesService = {
+  textSearch: (
+    request: { query: string },
+    callback: (
+      results: MapsPlaceResult[] | null,
+      status: string,
+      pagination?: { hasNextPage: boolean; nextPage: () => void }
+    ) => void
+  ) => void;
+};
+
+function getMapsPlacesService(): MapsPlacesService {
+  const googleWindow = window as unknown as {
+    google?: {
+      maps?: {
+        places?: {
+          PlacesService: {
+            new (el: HTMLElement): MapsPlacesService;
           };
         };
       };
     };
-  }).google.maps.places;
+  };
+  const PlacesService = googleWindow.google?.maps?.places?.PlacesService;
+  if (!PlacesService) {
+    throw new Error("Google Maps Places is not available.");
+  }
+  return new PlacesService(document.createElement("div"));
+}
 
-  const service = new maps.PlacesService(document.createElement("div"));
+async function searchPlacesService(query: string, limit: number): Promise<BrowserPlaceResult[]> {
+  await loadMapsPlacesLibrary();
+  const service = getMapsPlacesService();
   const collected: BrowserPlaceResult[] = [];
 
   await new Promise<void>((resolve, reject) => {
     const handlePage = (
-      results: Array<{
-        place_id?: string;
-        name?: string;
-        formatted_address?: string;
-        rating?: number;
-        user_ratings_total?: number;
-        types?: string[];
-        geometry?: { location?: { lat: () => number; lng: () => number } };
-      }> | null,
+      results: MapsPlaceResult[] | null,
       status: string,
       pagination?: { hasNextPage: boolean; nextPage: () => void }
     ) => {
