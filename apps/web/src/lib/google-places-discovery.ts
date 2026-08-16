@@ -129,9 +129,10 @@ export async function upsertDiscoveredGooglePlaces(
 
     if (options?.listingPipeline) {
       Object.assign(incoming, LISTING_CAPTURE_SALON_DEFAULTS);
-      incoming.owner_email = null;
-      incoming.owner_gmail = null;
-      incoming.subscription_plan_id = null;
+      const listingRow = incoming as Record<string, unknown>;
+      listingRow.owner_email = null;
+      listingRow.owner_gmail = null;
+      listingRow.subscription_plan_id = null;
     }
 
     const existing = resolveExistingSalonMatch(incoming as SalonDuplicateRow, indexes);
@@ -179,12 +180,13 @@ export async function upsertDiscoveredGooglePlaces(
 
   if (rowsToInsert.length) {
     const listingInserts = options?.listingPipeline
-      ? rowsToInsert.map((row) => ({
-          ...row,
-          owner_email: null,
-          owner_gmail: null,
-          subscription_plan_id: null,
-        }))
+      ? rowsToInsert.map((row) => {
+          const listingRow = { ...row } as Record<string, unknown>;
+          listingRow.owner_email = null;
+          listingRow.owner_gmail = null;
+          listingRow.subscription_plan_id = null;
+          return listingRow;
+        })
       : rowsToInsert;
     let insertResult = await supabase.from("salons").upsert(listingInserts, { onConflict: "place_id" });
     if (insertResult.error && isMissingDiscoveryColumnError(insertResult.error)) {
