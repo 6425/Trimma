@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
+import { getGoogleMapsApiKey } from "@/lib/google-place-images";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import {
   BEAUTY_DISCOVERY_CATEGORIES,
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: adminAuth.error }, { status: 401 });
     }
 
-    const apiKey = process.env.GOOGLE_API;
+    const apiKey = getGoogleMapsApiKey();
     if (!apiKey) {
       return NextResponse.json({ error: "Google API key is not configured" }, { status: 500 });
     }

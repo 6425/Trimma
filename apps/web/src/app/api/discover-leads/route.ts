@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
+import { getGoogleMapsApiKey } from "@/lib/google-place-images";
 import { discoverGooglePlacesInContext } from "@/lib/google-places-discovery";
 
 function getRouteErrorMessage(error: unknown): string {
@@ -19,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const { province, district, city, category, limit, syncImages } = await req.json();
-    const apiKey = process.env.GOOGLE_API;
+    const apiKey = getGoogleMapsApiKey();
 
     if (!apiKey) {
       return NextResponse.json({ error: "Google API key is not configured" }, { status: 500 });

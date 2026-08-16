@@ -1,4 +1,4 @@
-import { getGoogleMapsApiKey } from "@/lib/google-place-images";
+import { fetchGooglePlaceDetailsRaw } from "@/lib/google-places-client";
 import { pickGooglePlacePhone } from "@/lib/google-place-details";
 import { GOOGLE_DISCOVERY_SALON_DEFAULTS } from "@/lib/salon-public-listing";
 import { LISTING_PIPELINE_STATUSES } from "@/lib/salon-listing-pipeline";
@@ -28,28 +28,6 @@ export type GooglePlaceProfile = {
   utc_offset?: number;
   reviews?: Array<{ author_name?: string; rating?: number; text?: string; relative_time_description?: string }>;
 };
-
-const GOOGLE_PROFILE_FIELDS = [
-  "place_id",
-  "name",
-  "formatted_address",
-  "address_components",
-  "formatted_phone_number",
-  "international_phone_number",
-  "website",
-  "url",
-  "geometry",
-  "opening_hours",
-  "price_level",
-  "rating",
-  "user_ratings_total",
-  "types",
-  "editorial_summary",
-  "business_status",
-  "plus_code",
-  "utc_offset",
-  "reviews",
-].join(",");
 
 const GOOGLE_TYPE_CATEGORY_MAP: Record<string, string> = {
   hair_care: "Barber Salon",
@@ -159,27 +137,9 @@ export async function fetchGooglePlaceProfile(
   placeId: string,
   apiKey?: string | null
 ): Promise<GooglePlaceProfile | null> {
-  const key = apiKey || getGoogleMapsApiKey();
-  if (!key || !placeId?.trim()) return null;
-
-  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId.trim())}&fields=${GOOGLE_PROFILE_FIELDS}&key=${key}`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.status !== "OK" || !data.result) {
-      if (data.status && data.status !== "OK") {
-        console.warn(
-          `[fetchGooglePlaceProfile] ${placeId}: ${data.status}${data.error_message ? ` — ${data.error_message}` : ""}`
-        );
-      }
-      return null;
-    }
-    return data.result as GooglePlaceProfile;
-  } catch (err) {
-    console.error("[fetchGooglePlaceProfile]", err);
-    return null;
-  }
+  if (!placeId?.trim()) return null;
+  const result = await fetchGooglePlaceDetailsRaw(placeId, apiKey);
+  return result as GooglePlaceProfile | null;
 }
 
 export type GoogleSalonUpsertContext = {

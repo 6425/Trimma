@@ -30,6 +30,13 @@ import {
   syncGoogleImagesForPlaceIds,
   type GoogleImageSyncStats,
 } from "@/lib/google-place-images";
+import {
+  formatGooglePlacesError,
+  searchGooglePlacesTextPage,
+  type GoogleTextSearchResult,
+} from "@/lib/google-places-client";
+
+export type { GoogleTextSearchResult };
 
 export type { DiscoveryDedupStats };
 export type { GoogleImageSyncStats };
@@ -50,36 +57,12 @@ export type GoogleDiscoverySearchContext = GoogleSalonUpsertContext & {
   category?: string | null;
 };
 
-export type GoogleTextSearchResult = {
-  place_id?: string;
-  name?: string;
-  formatted_address?: string;
-  rating?: number;
-  user_ratings_total?: number;
-  types?: string[];
-  geometry?: { location?: { lat?: number; lng?: number } };
-};
-
 export async function searchGooglePlacesText(
   query: string,
   apiKey: string,
   pageToken?: string | null
-): Promise<{ places: GoogleTextSearchResult[]; nextPageToken: string | null; status: string }> {
-  const params = new URLSearchParams({
-    query,
-    key: apiKey,
-  });
-  if (pageToken) params.set("pagetoken", pageToken);
-
-  const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?${params.toString()}`;
-  const searchRes = await fetch(searchUrl);
-  const searchData = await searchRes.json();
-
-  return {
-    places: (searchData.results || []) as GoogleTextSearchResult[],
-    nextPageToken: searchData.next_page_token || null,
-    status: searchData.status || "UNKNOWN",
-  };
+): Promise<{ places: GoogleTextSearchResult[]; nextPageToken: string | null; status: string; errorMessage?: string }> {
+  return searchGooglePlacesTextPage(query, apiKey, pageToken);
 }
 
 export function buildBeautyDiscoveryQuery(context: GoogleDiscoverySearchContext): string {
@@ -257,9 +240,7 @@ export async function discoverGooglePlacesInContext(
 
   const firstPage = await searchGooglePlacesText(query, apiKey);
   if (firstPage.status !== "OK" && firstPage.status !== "ZERO_RESULTS") {
-    throw new Error(
-      `Google Places API returned error status: ${firstPage.status}`
-    );
+    throw new Error(formatGooglePlacesError(firstPage));
   }
 
   let collected = [...firstPage.places];
