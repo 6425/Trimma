@@ -223,13 +223,17 @@ function filterBusinessListingRows(
     publishedOnly?: boolean;
   }
 ) {
-  let rows = filterPublicSalons(data)
-    .filter(isSalonPublicBrowseListing)
-    .filter((row) => !isSalonPubliclyBookable(row))
-    .filter(isLeadGenerationSource);
+  let rows = filterPublicSalons(data);
 
   if (params.publishedOnly) {
-    rows = rows.filter(isListingPublished);
+    // Published marketplace rows must stay visible even if an older import
+    // left is_verified / booking flags set. Do not reuse the browse-only gate.
+    rows = rows.filter(isListingPublished).filter(isSalonPubliclyListable);
+  } else {
+    rows = rows
+      .filter(isSalonPublicBrowseListing)
+      .filter((row) => !isSalonPubliclyBookable(row))
+      .filter(isLeadGenerationSource);
   }
 
   const category = params.category || "";
@@ -309,6 +313,9 @@ export async function fetchBusinessListingCards(
   } = params;
 
   let data = publishedOnly ? await loadPublishedMarketplaceListings(supabase) : null;
+  if (data && data.length === 0) {
+    data = null;
+  }
 
   if (!data) {
     data = await fetchAllByIdCursor(async (afterId, pageSize) => {

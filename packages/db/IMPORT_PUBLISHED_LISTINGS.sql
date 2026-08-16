@@ -84,6 +84,7 @@ BEGIN
         phone = rec->>'phone',
         working_hours = rec->>'working_hours',
         booking_enabled = false,
+        is_verified = false,
         public_visibility = 'public',
         map_url = rec->>'map_url',
         source_type = CASE

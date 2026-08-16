@@ -5,8 +5,10 @@ export function revalidateMarketplaceListingPages() {
   revalidatePath("/", "layout");
   revalidatePath("/");
   revalidatePath("/category", "layout");
+  revalidatePath("/categories");
   revalidatePath("/locations");
   revalidatePath("/bookings");
   revalidatePath("/deals");
+  revalidatePath("/salons", "layout");
   revalidatePath("/admin/listing-generation/queue");
 }
