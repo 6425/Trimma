@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   });
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
+  const [authorized] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [diagResults, setDiagResults] = useState<any[]>([]);
@@ -160,9 +160,7 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    setAuthorized(true);
     void fetchStats();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSyncData = async () => {
