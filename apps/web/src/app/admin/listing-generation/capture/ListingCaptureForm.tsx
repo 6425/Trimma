@@ -45,8 +45,8 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
   }, [districts, selectedDistrict]);
 
   const handleCapture = async () => {
-    if (!selectedProvince || !selectedDistrict || !selectedCity) {
-      toast.error("Select province, district, and city.");
+    if (!selectedProvince || !selectedDistrict) {
+      toast.error("Select province and district.");
       return;
     }
     if (!selectedCategory?.name) {
@@ -54,9 +54,11 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
       return;
     }
 
+    const areaLabel = selectedCity || selectedDistrict;
+
     try {
       setCapturing(true);
-      toast.loading(`Capturing listing data in ${selectedCity}…`, { id: "listing_capture" });
+      toast.loading(`Capturing listing data in ${areaLabel}…`, { id: "listing_capture" });
 
       const response = await fetch("/api/listing-generation/capture", {
         method: "POST",
@@ -65,7 +67,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
         body: JSON.stringify({
           province: selectedProvince,
           district: selectedDistrict,
-          city: selectedCity,
+          city: selectedCity || "",
           category: selectedCategory.name,
           categoryId: selectedCategory.id,
           limit: fetchLimit,
@@ -108,7 +110,8 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
         </Link>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#1A1C29]">Data Capture</h1>
         <p className="mt-2 max-w-3xl text-sm text-zinc-600">
-          Import Google Places businesses for a Trimma global category. Captured rows land in the{" "}
+          Import Google Places businesses for a Trimma global category. Province and district are required; city is optional.
+          Captured rows land in the{" "}
           <strong>Pending</strong> queue with Trimma category tags (a salon can appear under multiple categories
           after publish).
         </p>
@@ -167,7 +170,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
 
           <div className="space-y-1.5">
             <label className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-zinc-500">
-              <MapPin className="h-3.5 w-3.5" /> City
+              <MapPin className="h-3.5 w-3.5" /> City (optional)
             </label>
             <select
               value={selectedCity}
@@ -175,7 +178,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
               onChange={(e) => setSelectedCity(e.target.value)}
               className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs font-medium text-zinc-800 disabled:opacity-40"
             >
-              <option value="">Choose…</option>
+              <option value="">Any city</option>
               {cities.map((city) => (
                 <option key={city} value={city}>
                   {city}
@@ -221,7 +224,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
           <Button
             type="button"
             variant="dark"
-            disabled={capturing || !selectedCity || !selectedCategory?.name}
+            disabled={capturing || !selectedProvince || !selectedDistrict || !selectedCategory?.name}
             onClick={() => void handleCapture()}
             className="h-11 min-h-11 w-full rounded-xl text-xs font-bold"
           >

@@ -81,10 +81,10 @@ export function buildBeautyDiscoveryQuery(context: GoogleDiscoverySearchContext)
     return context.searchQuery.trim();
   }
   const category = context.category || "beauty salon";
-  const city = context.city || "";
-  const district = context.district || "";
-  const province = context.province || "";
-  return `${category} in ${city}, ${district}, ${province}, Sri Lanka`.replace(/\s+/g, " ").trim();
+  const location = [context.city, context.district, context.province, "Sri Lanka"]
+    .filter(Boolean)
+    .join(", ");
+  return `${category} in ${location}`.replace(/\s+/g, " ").trim();
 }
 
 export async function upsertDiscoveredGooglePlaces(

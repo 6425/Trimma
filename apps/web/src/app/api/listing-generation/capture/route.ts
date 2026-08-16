@@ -38,6 +38,10 @@ export async function POST(req: Request) {
       null;
     const categoryName = selectedCategory?.name || String(category || "").trim();
 
+    if (!String(province || "").trim() || !String(district || "").trim()) {
+      return NextResponse.json({ error: "Select province and district." }, { status: 400 });
+    }
+
     if (!categoryName) {
       return NextResponse.json({ error: "Select a Trimma category." }, { status: 400 });
     }
