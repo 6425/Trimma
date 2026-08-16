@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { PublicCategory } from "@/lib/public-categories";
 import type { GlobalServiceSummary } from "@/lib/listing-generation-categories";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { searchListingPlacesInBrowser } from "@/lib/google-places-browser";
 
 type Props = {
   categories: PublicCategory[];
@@ -60,6 +61,21 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
       setCapturing(true);
       toast.loading(`Capturing listing data in ${areaLabel}…`, { id: "listing_capture" });
 
+      let places: Awaited<ReturnType<typeof searchListingPlacesInBrowser>>["places"] = [];
+      try {
+        const browserSearch = await searchListingPlacesInBrowser({
+          categoryName: selectedCategory.name,
+          city: selectedCity || "",
+          district: selectedDistrict,
+          province: selectedProvince,
+          globalServices: relatedServices,
+          limit: fetchLimit,
+        });
+        places = browserSearch.places;
+      } catch {
+        places = [];
+      }
+
       const response = await fetch("/api/listing-generation/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,6 +87,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
           category: selectedCategory.name,
           categoryId: selectedCategory.id,
           limit: fetchLimit,
+          places,
         }),
       });
 

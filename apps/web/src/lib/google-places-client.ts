@@ -1,5 +1,4 @@
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
-import { getSiteUrl } from "@/lib/site-url";
 
 export type GoogleTextSearchResult = {
   place_id?: string;
@@ -22,12 +21,16 @@ function uniqueKeys(preferred?: string | null): string[] {
   return [...new Set([preferred, getGoogleMapsApiKey()].filter((key): key is string => Boolean(key?.trim())))];
 }
 
-function googleRequestHeaders(apiKey: string, fieldMask?: string): HeadersInit {
-  const site = getSiteUrl();
-  const headers: Record<string, string> = {
-    Referer: site,
-    Origin: site,
-  };
+function refererCandidates(): Array<string | null> {
+  return [null, "https://www.trimma.io"];
+}
+
+function googleRequestHeaders(apiKey: string, fieldMask?: string, referer?: string | null): HeadersInit {
+  const headers: Record<string, string> = {};
+  if (referer) {
+    headers.Referer = referer;
+    headers.Origin = referer;
+  }
   if (fieldMask) {
     headers["Content-Type"] = "application/json";
     headers["X-Goog-Api-Key"] = apiKey;
@@ -56,13 +59,14 @@ function mapNewPlaceToTextSearch(place: Record<string, unknown>): GoogleTextSear
 async function searchLegacy(
   query: string,
   apiKey: string,
-  pageToken?: string | null
+  pageToken?: string | null,
+  referer?: string | null
 ): Promise<GooglePlacesSearchPage> {
   const params = new URLSearchParams({ query, key: apiKey });
   if (pageToken) params.set("pagetoken", pageToken);
   const res = await fetch(
     `https://maps.googleapis.com/maps/api/place/textsearch/json?${params.toString()}`,
-    { headers: googleRequestHeaders(apiKey), cache: "no-store" }
+    { headers: googleRequestHeaders(apiKey, undefined, referer), cache: "no-store" }
   );
   const data = (await res.json()) as {
     results?: GoogleTextSearchResult[];
@@ -78,17 +82,20 @@ async function searchLegacy(
   };
 }
 
+const NEW_SEARCH_MASKS = [
+  "places.id,places.displayName,places.formattedAddress,places.types,places.location,nextPageToken",
+];
+
 async function searchPlacesNew(
   query: string,
   apiKey: string,
-  pageToken?: string | null
+  pageToken?: string | null,
+  referer?: string | null,
+  fieldMask = NEW_SEARCH_MASKS[0]
 ): Promise<GooglePlacesSearchPage> {
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
-    headers: googleRequestHeaders(
-      apiKey,
-      "places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.types,places.location,nextPageToken"
-    ),
+    headers: googleRequestHeaders(apiKey, fieldMask, referer),
     body: JSON.stringify({
       textQuery: query,
       languageCode: "en",
@@ -133,13 +140,15 @@ export async function searchGooglePlacesTextPage(
 
   let lastDenied: GooglePlacesSearchPage | null = null;
   for (const key of keys) {
-    const legacy = await searchLegacy(query, key, pageToken);
-    if (legacy.status === "OK" || legacy.status === "ZERO_RESULTS") return legacy;
-    lastDenied = legacy;
-    if (legacy.status === "REQUEST_DENIED" || legacy.status === "OVER_QUERY_LIMIT") {
-      const next = await searchPlacesNew(query, key, pageToken);
-      if (next.status === "OK" || next.status === "ZERO_RESULTS") return next;
-      lastDenied = next;
+    for (const referer of refererCandidates()) {
+      const legacy = await searchLegacy(query, key, pageToken, referer);
+      if (legacy.status === "OK" || legacy.status === "ZERO_RESULTS") return legacy;
+      lastDenied = legacy;
+      for (const mask of NEW_SEARCH_MASKS) {
+        const next = await searchPlacesNew(query, key, pageToken, referer, mask);
+        if (next.status === "OK" || next.status === "ZERO_RESULTS") return next;
+        lastDenied = next;
+      }
     }
   }
 

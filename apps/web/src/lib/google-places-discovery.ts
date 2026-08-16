@@ -232,26 +232,32 @@ export async function discoverGooglePlacesInContext(
     enrichProfiles?: boolean;
     listingPipeline?: boolean;
     syncImages?: boolean;
+    places?: GoogleTextSearchResult[];
   }
 ): Promise<{ count: number; queued?: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats; placeIds?: string[] }> {
   const query = buildBeautyDiscoveryQuery(context);
   const targetLimit =
     !options?.limit || options.limit <= 0 ? Number.POSITIVE_INFINITY : Math.max(options.limit, 1);
 
-  const firstPage = await searchGooglePlacesText(query, apiKey);
-  if (firstPage.status !== "OK" && firstPage.status !== "ZERO_RESULTS") {
-    throw new Error(formatGooglePlacesError(firstPage));
-  }
+  let collected: GoogleTextSearchResult[] = [];
+  if (options?.places?.length) {
+    collected = options.places.filter((place) => place.place_id);
+  } else {
+    const firstPage = await searchGooglePlacesText(query, apiKey);
+    if (firstPage.status !== "OK" && firstPage.status !== "ZERO_RESULTS") {
+      throw new Error(formatGooglePlacesError(firstPage));
+    }
 
-  let collected = [...firstPage.places];
-  let nextToken = firstPage.nextPageToken;
+    collected = [...firstPage.places];
+    let nextToken = firstPage.nextPageToken;
 
-  while (collected.length < targetLimit && nextToken) {
-    await new Promise((resolve) => setTimeout(resolve, 2100));
-    const nextPage = await searchGooglePlacesText(query, apiKey, nextToken);
-    if (nextPage.status !== "OK") break;
-    collected = collected.concat(nextPage.places);
-    nextToken = nextPage.nextPageToken;
+    while (collected.length < targetLimit && nextToken) {
+      await new Promise((resolve) => setTimeout(resolve, 2100));
+      const nextPage = await searchGooglePlacesText(query, apiKey, nextToken);
+      if (nextPage.status !== "OK") break;
+      collected = collected.concat(nextPage.places);
+      nextToken = nextPage.nextPageToken;
+    }
   }
 
   const topPlaces =

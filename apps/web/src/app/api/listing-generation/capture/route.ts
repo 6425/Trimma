@@ -25,12 +25,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: adminAuth.error }, { status: 401 });
     }
 
+    const { province, district, city, category, categoryId, limit, places: rawPlaces } = await req.json();
+    const prefetchedPlaces = Array.isArray(rawPlaces)
+      ? rawPlaces
+          .slice(0, 200)
+          .map((row) => ({
+            place_id: String(row?.place_id || "").trim() || undefined,
+            name: typeof row?.name === "string" ? row.name : undefined,
+            formatted_address: typeof row?.formatted_address === "string" ? row.formatted_address : undefined,
+            rating: typeof row?.rating === "number" ? row.rating : undefined,
+            user_ratings_total: typeof row?.user_ratings_total === "number" ? row.user_ratings_total : undefined,
+            types: Array.isArray(row?.types) ? row.types.filter((type: unknown) => typeof type === "string") : undefined,
+            geometry: row?.geometry?.location
+              ? {
+                  location: {
+                    lat: Number(row.geometry.location.lat),
+                    lng: Number(row.geometry.location.lng),
+                  },
+                }
+              : undefined,
+          }))
+          .filter((row) => row.place_id)
+      : [];
+
     const apiKey = getGoogleMapsApiKey();
-    if (!apiKey) {
+    if (!prefetchedPlaces.length && !apiKey) {
       return NextResponse.json({ error: "Google API key is not configured" }, { status: 500 });
     }
-
-    const { province, district, city, category, categoryId, limit } = await req.json();
     const supabase = createSupabaseAdminClient();
     const catalog = await loadListingCaptureCatalog(supabase);
     const selectedCategory =
@@ -60,14 +81,15 @@ export async function POST(req: Request) {
 
     const result = await discoverGooglePlacesInContext(
       supabase,
-      apiKey,
+      apiKey || "",
       { province, district, city, category: categoryName, searchQuery },
       {
         limit: limit == null || limit === "" ? 0 : Number(limit),
         assignTerritoryAgent: false,
-        enrichProfiles: true,
+        enrichProfiles: Boolean(apiKey),
         listingPipeline: true,
         syncImages: false,
+        places: prefetchedPlaces,
       }
     );
 
