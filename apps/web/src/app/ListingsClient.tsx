@@ -47,6 +47,8 @@ function readFiltersFromLocation(): ListingFilters {
   };
 }
 
+const LISTING_PAGE_SIZE = 20;
+
 function buildListingSearchParams(
   filters: ListingFilters,
   categories: PublicCategory[],
@@ -56,8 +58,8 @@ function buildListingSearchParams(
     q: filters.q,
     location: filters.location,
     category: filters.category,
-    limit: "0",
-    offset: "0",
+    limit: String(LISTING_PAGE_SIZE),
+    offset: String(page * LISTING_PAGE_SIZE),
   });
   const activeCategory = categories.find((category) => category.slug === filters.category);
   if (activeCategory?.name) {
@@ -86,6 +88,7 @@ export default function ListingsClient({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const loadListings = useCallback(
     async (
@@ -94,7 +97,8 @@ export default function ListingsClient({
       reset: boolean,
       categoryList: PublicCategory[]
     ) => {
-      setIsLoading(true);
+      setIsLoading(reset);
+      if (!reset) setIsLoadingMore(true);
       try {
         const params = buildListingSearchParams(filters, categoryList, nextPage);
         const res = await fetch(`/api/business-listings/search?${params.toString()}`, {
@@ -124,6 +128,7 @@ export default function ListingsClient({
         setHasMore(false);
       } finally {
         setIsLoading(false);
+        setIsLoadingMore(false);
       }
     },
     []
@@ -168,6 +173,22 @@ export default function ListingsClient({
       location: selectedLocation,
       category: urlCategory,
     });
+  };
+
+  const handleLoadMore = () => {
+    if (isLoading || isLoadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    void loadListings(
+      {
+        q: searchQuery.trim(),
+        location: selectedLocation,
+        category: urlCategory,
+      },
+      nextPage,
+      false,
+      categories
+    );
   };
 
   const locationLabel = resolveLocationDisplayLabel(selectedLocation);
@@ -312,11 +333,27 @@ export default function ListingsClient({
             {viewMode === "map" ? (
               <BusinessListingsMap listings={listings} searchLocation={selectedLocation} />
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {listings.map((listing, index) => (
-                  <BusinessListingCard key={listing.id} listing={listing} priority={index < 8} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {listings.map((listing, index) => (
+                    <BusinessListingCard key={listing.id} listing={listing} priority={index < 8} />
+                  ))}
+                </div>
+                {hasMore ? (
+                  <div className="flex justify-center pt-8">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="h-11 min-h-11 rounded-xl px-8 font-bold"
+                      disabled={isLoadingMore}
+                      onClick={handleLoadMore}
+                    >
+                      {isLoadingMore ? <Loader2 className="h-5 w-5 animate-spin" /> : "Load more"}
+                    </Button>
+                  </div>
+                ) : null}
+              </>
             )}
           </>
         )}

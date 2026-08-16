@@ -65,10 +65,13 @@ function categoryHeroImage(slug: string): string | undefined {
   return CATEGORY_HERO_IMAGES[canonical] || CATEGORY_HERO_IMAGES[slug];
 }
 
+const LISTING_PAGE_SIZE = 20;
+
 export default function CategoryClient({
   slug: slugStr,
   categories,
   initialListings,
+  initialHasMore = false,
   initialTotalCount = 0,
   categoryLabel: initialCategoryLabel,
   initialQuery = "",
@@ -76,6 +79,8 @@ export default function CategoryClient({
 }: CategoryClientProps) {
   const [listings, setListings] = useState<BusinessListingCardData[]>(initialListings);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation);
   const [appliedSearch, setAppliedSearch] = useState(initialQuery);
@@ -105,10 +110,11 @@ export default function CategoryClient({
     });
   }, [slugStr, categoryLabel, initialListings.length]);
 
-  const loadListings = async () => {
+  const loadListings = async (options?: { offset?: number; append?: boolean }) => {
+    const offset = options?.offset ?? 0;
     const params = new URLSearchParams({
-      limit: "0",
-      offset: "0",
+      limit: String(LISTING_PAGE_SIZE),
+      offset: String(offset),
       category: slugStr,
       categoryName: categoryLabel,
       publishedOnly: "true",
@@ -124,8 +130,24 @@ export default function CategoryClient({
     if (typeof payload.totalCount === "number") {
       setTotalCount(payload.totalCount);
     }
-    setListings(nextListings);
+    setHasMore(Boolean(payload.hasMore));
+    if (options?.append) {
+      setListings((prev) => {
+        const ids = new Set(prev.map((item) => item.id));
+        return [...prev, ...nextListings.filter((item) => !ids.has(item.id))];
+      });
+    } else {
+      setListings(nextListings);
+    }
     return nextListings;
+  };
+
+  const handleLoadMore = () => {
+    if (loading || isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    void loadListings({ offset: listings.length, append: true }).finally(() => {
+      setIsLoadingMore(false);
+    });
   };
 
   useEffect(() => {
@@ -166,6 +188,7 @@ export default function CategoryClient({
         console.error("Failed to load category page listings:", message);
         setListings([]);
         setTotalCount(0);
+        setHasMore(false);
         setLoadedFetchKey(key);
       }
     })();
@@ -404,6 +427,20 @@ export default function CategoryClient({
                 <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
               ))}
             </div>
+            {hasMore ? (
+              <div className="flex justify-center pt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="h-11 min-h-11 rounded-xl px-8 font-bold"
+                  disabled={isLoadingMore}
+                  onClick={handleLoadMore}
+                >
+                  {isLoadingMore ? <Loader2 className="h-5 w-5 animate-spin" /> : "Load more"}
+                </Button>
+              </div>
+            ) : null}
           </>
         )}
 

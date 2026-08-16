@@ -2377,6 +2377,16 @@ html.dark .trimma-marketplace-shell .home-hero-split .hero-ink .home-hero-stats 
   background-color: rgb(113 113 122) !important;
 }
 
+.home-hero-split .hero-ink p,
+.page-hero-shell .hero-ink p,
+.page-hero-shell .home-hero-top > p,
+.page-hero-shell .home-hero-middle > p,
+.page-hero-shell > .container > p,
+.page-hero-shell .container.relative > p {
+  font-size: 14px !important;
+  line-height: 1.625 !important;
+}
+
 /*
  * Portaled surfaces (select, dropdown, dialog) render on document.body and
  * inherit :root dark tokens — force readable light-surface contrast.

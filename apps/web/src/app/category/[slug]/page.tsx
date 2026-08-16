@@ -45,7 +45,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       category: canonicalSlug,
       categoryName: categoryLabel,
       publishedOnly: true,
-      limit: 0,
+      limit: 20,
       offset: 0,
     });
     initialListings = result.listings;
