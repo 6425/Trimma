@@ -191,6 +191,16 @@ export function resolveExistingSalonMatch(
   return pickCanonicalSalonRow(matches);
 }
 
+/** Listing-generation capture must not attach to a same-name agent salon. */
+export function resolveExistingSalonByPlaceId(
+  incoming: SalonDuplicateRow,
+  indexes: ReturnType<typeof indexSalonsForDiscoveryDedup>
+): SalonDuplicateRow | null {
+  const placeId = readStoredGooglePlaceId(incoming);
+  if (!placeId) return null;
+  return indexes.byPlaceId.get(placeId) || null;
+}
+
 export async function loadSalonDuplicateCandidates(
   supabase: SupabaseClient,
   context: { province?: string | null; district?: string | null; city?: string | null },

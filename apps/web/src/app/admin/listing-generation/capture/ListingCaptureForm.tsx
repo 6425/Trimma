@@ -78,12 +78,14 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
         error?: string;
         message?: string;
         count?: number;
+        queued?: number;
       };
       if (!response.ok) throw new Error(data.error || `Capture failed (${response.status})`);
 
+      const queued = data.queued ?? data.count ?? 0;
       toast.success(data.message || "Listing data captured.", { id: "listing_capture" });
-      if (typeof data.count === "number" && data.count > 0) {
-        toast.message(`${data.count} listing(s) added to the Pending queue.`, {
+      if (queued > 0) {
+        toast.message(`${queued} listing(s) added to the Pending queue.`, {
           action: {
             label: "Open Pending",
             onClick: () => {

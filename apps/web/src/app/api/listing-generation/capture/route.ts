@@ -81,7 +81,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      count: result.count,
+      count: result.queued ?? result.count,
+      queued: result.queued ?? result.count,
       message: result.message,
       warning: result.warning,
       stats: result.stats,

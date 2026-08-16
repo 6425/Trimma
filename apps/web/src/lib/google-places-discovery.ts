@@ -13,13 +13,19 @@ import {
   dedupeGooglePlacesByPlaceId,
   loadSalonDuplicateCandidates,
   indexSalonsForDiscoveryDedup,
+  resolveExistingSalonByPlaceId,
   resolveExistingSalonMatch,
   removeDuplicateSalonRows,
   type DiscoveryDedupStats,
   type SalonDuplicateRow,
 } from "@/lib/salon-discovery-dedup";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
-import { applyListingPipelineCaptureFields, finalizeListingPipelineCapture, LISTING_CAPTURE_SALON_DEFAULTS } from "@/lib/salon-listing-pipeline";
+import {
+  applyListingPipelineCaptureFields,
+  finalizeListingPipelineCapture,
+  isBookingPipelineLockedStatus,
+  LISTING_CAPTURE_SALON_DEFAULTS,
+} from "@/lib/salon-listing-pipeline";
 import {
   syncGoogleImagesForPlaceIds,
   type GoogleImageSyncStats,
@@ -92,7 +98,7 @@ export async function upsertDiscoveredGooglePlaces(
   enrichedPlaces: Array<{ place: GoogleTextSearchResult; profile: Awaited<ReturnType<typeof fetchGooglePlaceProfile>> }>,
   context: GoogleDiscoverySearchContext,
   options?: { assignTerritoryAgent?: boolean; listingPipeline?: boolean }
-): Promise<{ count: number; warning?: string; placeIds: string[]; stats: DiscoveryDedupStats }> {
+): Promise<{ count: number; queued?: number; warning?: string; placeIds: string[]; stats: DiscoveryDedupStats }> {
   const dedupedPlaces = dedupeGooglePlacesByPlaceId(enrichedPlaces);
   const stats: DiscoveryDedupStats = {
     created: 0,
@@ -120,6 +126,7 @@ export async function upsertDiscoveredGooglePlaces(
 
   const rowsToInsert: Record<string, unknown>[] = [];
   const rowsToUpdate: Record<string, unknown>[] = [];
+  const writtenPlaceIds: string[] = [];
 
   for (const entry of dedupedPlaces.filter((item) => item.place.place_id)) {
     const placeId = entry.place.place_id!;
@@ -135,7 +142,18 @@ export async function upsertDiscoveredGooglePlaces(
       listingRow.subscription_plan_id = null;
     }
 
-    const existing = resolveExistingSalonMatch(incoming as SalonDuplicateRow, indexes);
+    const existing = options?.listingPipeline
+      ? resolveExistingSalonByPlaceId(incoming as SalonDuplicateRow, indexes)
+      : resolveExistingSalonMatch(incoming as SalonDuplicateRow, indexes);
+
+    if (
+      options?.listingPipeline &&
+      existing &&
+      isBookingPipelineLockedStatus(String(existing.onboarding_status || ""))
+    ) {
+      stats.skipped += 1;
+      continue;
+    }
 
     if (!options?.listingPipeline && assignTo && !existing?.assign_to) {
       (incoming as Record<string, unknown>).assign_to = assignTo;
@@ -157,10 +175,11 @@ export async function upsertDiscoveredGooglePlaces(
       rowsToInsert.push(merged);
       stats.created += 1;
     }
+    writtenPlaceIds.push(placeId);
   }
 
   if (!rowsToInsert.length && !rowsToUpdate.length) {
-    return { count: 0, placeIds: [], stats };
+    return { count: 0, queued: 0, placeIds: [], stats };
   }
 
   let upsertWarning: string | undefined;
@@ -201,8 +220,9 @@ export async function upsertDiscoveredGooglePlaces(
     if (insertResult.error) throwSalonUpsertError(insertResult.error);
   }
 
-  if (options?.listingPipeline && placeIds.length) {
-    await finalizeListingPipelineCapture(supabase, placeIds);
+  let queued = rowsToInsert.length + rowsToUpdate.length;
+  if (options?.listingPipeline && writtenPlaceIds.length) {
+    queued = await finalizeListingPipelineCapture(supabase, writtenPlaceIds);
   }
 
   if (!options?.listingPipeline) {
@@ -212,8 +232,9 @@ export async function upsertDiscoveredGooglePlaces(
 
   return {
     count: rowsToInsert.length + rowsToUpdate.length,
+    queued,
     warning: upsertWarning,
-    placeIds,
+    placeIds: writtenPlaceIds,
     stats,
   };
 }
@@ -229,7 +250,7 @@ export async function discoverGooglePlacesInContext(
     listingPipeline?: boolean;
     syncImages?: boolean;
   }
-): Promise<{ count: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats; placeIds?: string[] }> {
+): Promise<{ count: number; queued?: number; warning?: string; message: string; stats?: DiscoveryDedupStats; imageStats?: GoogleImageSyncStats; placeIds?: string[] }> {
   const query = buildBeautyDiscoveryQuery(context);
   const targetLimit =
     !options?.limit || options.limit <= 0 ? Number.POSITIVE_INFINITY : Math.max(options.limit, 1);
@@ -297,11 +318,19 @@ export async function discoverGooglePlacesInContext(
   const imageSummary = imageStats
     ? ` Images synced for ${imageStats.synced} salon(s) (${imageStats.photos} Google photos${imageStats.skipped ? `, ${imageStats.skipped} without photos` : ""}${imageStats.failed ? `, ${imageStats.failed} failed` : ""}).`
     : "";
-  const actionLabel = options?.listingPipeline ? "Captured" : "Discovered and published";
-  const baseMessage = `${actionLabel} ${result.count} listing(s) for ${label || "Sri Lanka"}.${dedupSummary}${imageSummary}`;
+  const queued = result.queued ?? result.count;
+  const skippedNote =
+    options?.listingPipeline && result.stats.skipped > 0
+      ? ` ${result.stats.skipped} already in booking onboarding were left unchanged.`
+      : "";
+  const actionLabel = options?.listingPipeline
+    ? `Captured ${queued} listing(s) into the Pending queue`
+    : `Discovered and published ${result.count} listing(s)`;
+  const baseMessage = `${actionLabel} for ${label || "Sri Lanka"}.${dedupSummary}${skippedNote}${imageSummary}`;
 
   return {
     count: result.count,
+    queued,
     warning: result.warning,
     message: result.warning ? `${baseMessage} ${result.warning}` : baseMessage,
     stats: result.stats,
