@@ -30,6 +30,7 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  staticPageGenerationTimeout: 120,
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },

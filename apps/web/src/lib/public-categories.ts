@@ -1,6 +1,16 @@
 import { unstable_cache } from "next/cache";
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS } from "@/lib/admin-lead-categories";
+import { withTimeout } from "@/lib/promise-timeout";
+
+const CATEGORY_FETCH_TIMEOUT_MS = 8_000;
+
+function isProductionBuildPhase(): boolean {
+  return (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.NEXT_PRIVATE_BUILD_WORKER === "1"
+  );
+}
 
 export type PublicCategory = {
   id: string;
@@ -103,23 +113,32 @@ function buildFallbackPublicCategories(): PublicCategory[] {
 }
 
 async function loadPublicCategories(): Promise<PublicCategory[]> {
+  const fallbacks = dedupePublicCategories(buildFallbackPublicCategories());
+
+  // Production SSG prerenders ~160 pages through the root layout. A hung
+  // Supabase call during `next build` exceeds Next's 60s page timeout.
+  if (isProductionBuildPhase()) {
+    return fallbacks;
+  }
+
   try {
     const supabase = createServerSupabaseClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, name, slug, icon")
-      .order("name");
+    const { data, error } = await withTimeout(
+      supabase.from("categories").select("id, name, slug, icon").order("name"),
+      CATEGORY_FETCH_TIMEOUT_MS,
+      "upstream request timeout"
+    );
 
     if (error) {
       console.error("fetchPublicCategories:", error.message);
-      return dedupePublicCategories(buildFallbackPublicCategories());
+      return fallbacks;
     }
 
     const categories = dedupePublicCategories((data ?? []) as PublicCategory[]);
-    return categories.length ? categories : dedupePublicCategories(buildFallbackPublicCategories());
+    return categories.length ? categories : fallbacks;
   } catch (error) {
     console.error("fetchPublicCategories:", error);
-    return dedupePublicCategories(buildFallbackPublicCategories());
+    return fallbacks;
   }
 }
 
