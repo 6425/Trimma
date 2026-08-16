@@ -8,7 +8,10 @@ import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listi
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import { postSupabaseRpc } from "@/lib/supabase-rpc";
-import { pinTopReviewedListingsWithPhone } from "@/lib/listing-marketplace-rank";
+import {
+  pinTopReviewedListingsWithPhone,
+  splitMarketplaceListingSections,
+} from "@/lib/listing-marketplace-rank";
 
 function normalizeCategoryText(value: string): string {
   return value
@@ -285,7 +288,13 @@ function rowMatchesLocationQuery(row: Record<string, unknown>, location: string)
 export async function fetchBusinessListingCards(
   supabase: SupabaseClient,
   params: Omit<PublicSalonSearchParams, "bookableOnly">
-): Promise<{ listings: BusinessListingCardData[]; hasMore: boolean; totalCount: number }> {
+): Promise<{
+  listings: BusinessListingCardData[];
+  topRated: BusinessListingCardData[];
+  featured: BusinessListingCardData[];
+  hasMore: boolean;
+  totalCount: number;
+}> {
   const {
     q = "",
     location = "",
@@ -338,17 +347,51 @@ export async function fetchBusinessListingCards(
     if (verifiedOnly) data = data.filter((row) => Boolean(row.is_verified));
   }
 
-  const rows = sortBusinessListingRows(
-    filterBusinessListingRows(data, { category, categoryName, publishedOnly }),
-    sort
-  );
-  const pagedRows = !limit || limit <= 0 ? rows.slice(offset) : rows.slice(offset, offset + limit);
-  const listings = pagedRows.map((row, idx) => mapSalonRowToBusinessListing(row, idx + offset));
+  const filtered = filterBusinessListingRows(data, { category, categoryName, publishedOnly });
+  const toCards = (rows: Array<Record<string, unknown>>, start = 0) =>
+    rows.map((row, idx) => mapSalonRowToBusinessListing(row, idx + start));
 
+  if (sort === "name" || sort === "rating") {
+    const rows = sortBusinessListingRows(filtered, sort);
+    const pagedRows = !limit || limit <= 0 ? rows.slice(offset) : rows.slice(offset, offset + limit);
+    const listings = toCards(pagedRows, offset);
+    return {
+      listings,
+      topRated: [],
+      featured: [],
+      hasMore: Boolean(limit && limit > 0 && offset + listings.length < rows.length),
+      totalCount: rows.length,
+    };
+  }
+
+  const { topRated, featured, rest } = splitMarketplaceListingSections(
+    filtered.map((row) => ({
+      ...row,
+      reviews: Number(row.review_count || 0),
+      is_featured: row.is_featured === true,
+    }))
+  );
+  const topRatedCards = toCards(topRated);
+  const featuredCards = toCards(featured);
+  const totalCount = topRated.length + featured.length + rest.length;
+
+  if (!limit || limit <= 0) {
+    return {
+      listings: toCards([...topRated, ...featured, ...rest]),
+      topRated: topRatedCards,
+      featured: featuredCards,
+      hasMore: false,
+      totalCount,
+    };
+  }
+
+  const pagedRest = rest.slice(offset, offset + limit);
   return {
-    listings,
-    hasMore: Boolean(limit && limit > 0 && offset + listings.length < rows.length),
-    totalCount: rows.length,
+    listings: toCards(pagedRest, offset),
+    topRated: topRatedCards,
+    featured: featuredCards,
+    hasMore: offset + pagedRest.length < rest.length,
+    totalCount,
   };
 }
 

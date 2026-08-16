@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
     const supabase = createServerSupabaseClient();
-    const { listings, hasMore, totalCount } = await fetchBusinessListingCards(supabase, {
+    const { listings, topRated, featured, hasMore, totalCount } = await fetchBusinessListingCards(supabase, {
       q,
       location,
       category,
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(
-      { listings, hasMore, totalCount },
+      { listings, topRated, featured, hasMore, totalCount },
       {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",

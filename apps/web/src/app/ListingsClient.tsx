@@ -4,9 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Search, MapPin, Loader2, Sparkles } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { BusinessListingCard } from "../components/marketplace/BusinessListingCard";
 import { BusinessListingsMap } from "../components/marketplace/BusinessListingsMap";
 import { ListingBrowseToolbar } from "../components/marketplace/ListingBrowseToolbar";
+import {
+  ListingResultsSections,
+  mergeListingSectionCards,
+} from "../components/marketplace/ListingResultsSections";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import type { PublicCategory } from "@/lib/public-categories";
 import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/sri-lanka-locations";
@@ -24,6 +27,8 @@ type Props = {
   categories?: PublicCategory[];
   initialSearch: InitialSearch;
   initialListings?: BusinessListingCardData[];
+  initialTopRated?: BusinessListingCardData[];
+  initialFeatured?: BusinessListingCardData[];
   initialHasMore?: boolean;
   initialTotalCount?: number;
   ssrSeeded?: boolean;
@@ -73,6 +78,8 @@ export default function ListingsClient({
   categories = [],
   initialSearch,
   initialListings = [],
+  initialTopRated = [],
+  initialFeatured = [],
   initialHasMore = true,
   initialTotalCount = 0,
   ssrSeeded = false,
@@ -83,6 +90,8 @@ export default function ListingsClient({
   );
   const [urlCategory, setUrlCategory] = useState(initialSearch.category);
   const [listings, setListings] = useState(initialListings);
+  const [topRated, setTopRated] = useState(initialTopRated);
+  const [featured, setFeatured] = useState(initialFeatured);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -111,8 +120,11 @@ export default function ListingsClient({
           setTotalCount(data.totalCount);
         }
 
-        if (reset) setListings(rows);
-        else {
+        if (reset) {
+          setTopRated((data.topRated || []) as BusinessListingCardData[]);
+          setFeatured((data.featured || []) as BusinessListingCardData[]);
+          setListings(rows);
+        } else {
           setListings((prev) => {
             const ids = new Set(prev.map((item) => item.id));
             return [...prev, ...rows.filter((item) => !ids.has(item.id))];
@@ -123,6 +135,8 @@ export default function ListingsClient({
         console.error(error);
         if (reset) {
           setListings([]);
+          setTopRated([]);
+          setFeatured([]);
           setTotalCount(0);
         }
         setHasMore(false);
@@ -193,6 +207,7 @@ export default function ListingsClient({
 
   const locationLabel = resolveLocationDisplayLabel(selectedLocation);
   const activeCategory = categories.find((category) => category.slug === urlCategory);
+  const allVisibleListings = mergeListingSectionCards(topRated, featured, listings);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -316,12 +331,12 @@ export default function ListingsClient({
       </div>
 
       <main className="container mx-auto max-w-7xl flex-1 px-4 py-8">
-        {isLoading && listings.length === 0 ? (
+        {isLoading && allVisibleListings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="mb-4 h-10 w-10 animate-spin text-brand" />
             <p className="text-sm font-bold text-zinc-500">Loading business listings…</p>
           </div>
-        ) : listings.length === 0 ? (
+        ) : allVisibleListings.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center">
             <p className="text-lg font-black text-[#1A1C29]">No listings found</p>
             <p className="mt-2 text-sm text-zinc-500">
@@ -331,29 +346,17 @@ export default function ListingsClient({
         ) : (
           <>
             {viewMode === "map" ? (
-              <BusinessListingsMap listings={listings} searchLocation={selectedLocation} />
+              <BusinessListingsMap listings={allVisibleListings} searchLocation={selectedLocation} />
             ) : (
-              <>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {listings.map((listing, index) => (
-                    <BusinessListingCard key={listing.id} listing={listing} priority={index < 8} />
-                  ))}
-                </div>
-                {hasMore ? (
-                  <div className="flex justify-center pt-8">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      className="h-11 min-h-11 rounded-xl px-8 font-bold"
-                      disabled={isLoadingMore}
-                      onClick={handleLoadMore}
-                    >
-                      {isLoadingMore ? <Loader2 className="h-5 w-5 animate-spin" /> : "Load more"}
-                    </Button>
-                  </div>
-                ) : null}
-              </>
+              <ListingResultsSections
+                topRated={topRated}
+                featured={featured}
+                more={listings}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={handleLoadMore}
+                gridClassName="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              />
             )}
           </>
         )}

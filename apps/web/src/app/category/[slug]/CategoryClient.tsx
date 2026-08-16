@@ -17,9 +17,12 @@ const IconMap: Record<string, any> = {
 };
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BusinessListingCard } from "../../../components/marketplace/BusinessListingCard";
 import { BusinessListingsMap } from "../../../components/marketplace/BusinessListingsMap";
 import { ListingBrowseToolbar } from "../../../components/marketplace/ListingBrowseToolbar";
+import {
+  ListingResultsSections,
+  mergeListingSectionCards,
+} from "../../../components/marketplace/ListingResultsSections";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { FindBookGlowCta } from "../../../components/marketplace/FindBookGlowCta";
 import {
@@ -53,6 +56,8 @@ type CategoryClientProps = {
   slug: string;
   categories: PublicCategory[];
   initialListings: BusinessListingCardData[];
+  initialTopRated?: BusinessListingCardData[];
+  initialFeatured?: BusinessListingCardData[];
   initialHasMore?: boolean;
   initialTotalCount?: number;
   categoryLabel: string;
@@ -71,6 +76,8 @@ export default function CategoryClient({
   slug: slugStr,
   categories,
   initialListings,
+  initialTopRated = [],
+  initialFeatured = [],
   initialHasMore = false,
   initialTotalCount = 0,
   categoryLabel: initialCategoryLabel,
@@ -78,6 +85,8 @@ export default function CategoryClient({
   initialLocation = "",
 }: CategoryClientProps) {
   const [listings, setListings] = useState<BusinessListingCardData[]>(initialListings);
+  const [topRated, setTopRated] = useState<BusinessListingCardData[]>(initialTopRated);
+  const [featured, setFeatured] = useState<BusinessListingCardData[]>(initialFeatured);
   const [totalCount, setTotalCount] = useState(initialTotalCount);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -137,6 +146,8 @@ export default function CategoryClient({
         return [...prev, ...nextListings.filter((item) => !ids.has(item.id))];
       });
     } else {
+      setTopRated((payload.topRated || []) as BusinessListingCardData[]);
+      setFeatured((payload.featured || []) as BusinessListingCardData[]);
       setListings(nextListings);
     }
     return nextListings;
@@ -187,6 +198,8 @@ export default function CategoryClient({
         const message = err instanceof Error ? err.message : String(err);
         console.error("Failed to load category page listings:", message);
         setListings([]);
+        setTopRated([]);
+        setFeatured([]);
         setTotalCount(0);
         setHasMore(false);
         setLoadedFetchKey(key);
@@ -215,7 +228,7 @@ export default function CategoryClient({
   const useSplitHero = Boolean(splitHeroImage);
   const categoryName = categoryLabel;
   const heroCopy = getCategoryHeroCopy(slugStr, categoryName);
-  const filteredListings = listings;
+  const filteredListings = mergeListingSectionCards(topRated, featured, listings);
   const claimCtaClass = buttonVariants({
     variant: "hero",
     size: "lg",
@@ -421,27 +434,15 @@ export default function CategoryClient({
         ) : viewMode === "map" ? (
           <BusinessListingsMap listings={filteredListings} searchLocation={appliedLocation} />
         ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-              {filteredListings.map((listing, index) => (
-                <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
-              ))}
-            </div>
-            {hasMore ? (
-              <div className="flex justify-center pt-8">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="h-11 min-h-11 rounded-xl px-8 font-bold"
-                  disabled={isLoadingMore}
-                  onClick={handleLoadMore}
-                >
-                  {isLoadingMore ? <Loader2 className="h-5 w-5 animate-spin" /> : "Load more"}
-                </Button>
-              </div>
-            ) : null}
-          </>
+          <ListingResultsSections
+            topRated={topRated}
+            featured={featured}
+            more={listings}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
+            gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
+          />
         )}
 
       </div>

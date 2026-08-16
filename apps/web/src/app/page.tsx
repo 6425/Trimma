@@ -36,6 +36,8 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
   }
 
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
+  let initialTopRated: Awaited<ReturnType<typeof fetchBusinessListingCards>>["topRated"] = [];
+  let initialFeatured: Awaited<ReturnType<typeof fetchBusinessListingCards>>["featured"] = [];
   let initialHasMore = false;
   let initialTotalCount = 0;
   let categories: Awaited<ReturnType<typeof fetchPublicCategories>> = [];
@@ -50,9 +52,17 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
       publishedOnly: true,
       limit: 20,
       offset: 0,
-    }).catch(() => ({ listings: [], hasMore: false, totalCount: 0 }));
+    }).catch(() => ({
+      listings: [],
+      topRated: [],
+      featured: [],
+      hasMore: false,
+      totalCount: 0,
+    }));
 
     initialListings = result.listings;
+    initialTopRated = result.topRated;
+    initialFeatured = result.featured;
     initialHasMore = result.hasMore;
     initialTotalCount = result.totalCount;
   } catch (error) {
@@ -68,6 +78,8 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
         category: sp.category ?? "",
       }}
       initialListings={initialListings}
+      initialTopRated={initialTopRated}
+      initialFeatured={initialFeatured}
       initialHasMore={initialHasMore}
       initialTotalCount={initialTotalCount}
       ssrSeeded

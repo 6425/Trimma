@@ -26,6 +26,7 @@ export type BusinessListingCardData = {
   facebookUrl: string | null;
   instagramUrl: string | null;
   isClaimable: boolean;
+  isFeatured: boolean;
 };
 
 const FALLBACK_IMAGES = [
@@ -127,6 +128,7 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
     facebookUrl: social.facebookUrl,
     instagramUrl,
     isClaimable: isBusinessListingClaimable(row),
+    isFeatured: row.is_featured === true,
   };
 }
 

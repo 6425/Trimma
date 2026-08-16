@@ -36,6 +36,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const initialLocation = sp.l?.trim() || "";
 
   let initialListings: Awaited<ReturnType<typeof fetchBusinessListingCards>>["listings"] = [];
+  let initialTopRated: Awaited<ReturnType<typeof fetchBusinessListingCards>>["topRated"] = [];
+  let initialFeatured: Awaited<ReturnType<typeof fetchBusinessListingCards>>["featured"] = [];
   let initialHasMore = false;
   let initialTotalCount = 0;
   try {
@@ -49,6 +51,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       offset: 0,
     });
     initialListings = result.listings;
+    initialTopRated = result.topRated;
+    initialFeatured = result.featured;
     initialHasMore = result.hasMore;
     initialTotalCount = result.totalCount;
   } catch {
@@ -61,6 +65,8 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       slug={canonicalSlug}
       categories={categories}
       initialListings={initialListings}
+      initialTopRated={initialTopRated}
+      initialFeatured={initialFeatured}
       initialHasMore={initialHasMore}
       initialTotalCount={initialTotalCount}
       categoryLabel={categoryLabel}
