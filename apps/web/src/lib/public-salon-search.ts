@@ -326,6 +326,10 @@ function applyPublishedListingFilters<T extends {
   return next;
 }
 
+function asSalonRows(data: unknown): Array<Record<string, unknown>> {
+  return (Array.isArray(data) ? data : []) as unknown as Array<Record<string, unknown>>;
+}
+
 async function loadPublishedSalonRows(
   supabase: SupabaseClient,
   select = BUSINESS_LISTING_CARD_SELECT
@@ -339,7 +343,7 @@ async function loadPublishedSalonRows(
     if (afterId) query = query.gt("id", afterId);
     const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
     if (error) throw new Error(error.message);
-    return (page ?? []) as Array<Record<string, unknown>>;
+    return asSalonRows(page);
   });
 }
 
@@ -393,19 +397,20 @@ async function loadPublishedMarketplaceWindow(
   if (featuredRes.error) throw new Error(featuredRes.error.message);
   if (popularRes.error) throw new Error(popularRes.error.message);
 
+  const featuredRows = asSalonRows(featuredRes.data);
+  const popularRows = asSalonRows(popularRes.data);
+
   const byId = new Map<string, Record<string, unknown>>();
-  for (const row of [...(featuredRes.data ?? []), ...(popularRes.data ?? [])]) {
-    const id = String((row as { id?: unknown }).id || "");
+  for (const row of [...featuredRows, ...popularRows]) {
+    const id = String(row.id || "");
     if (!id) continue;
-    byId.set(id, row as Record<string, unknown>);
+    byId.set(id, row);
   }
 
-  const rows = [...byId.values()];
-  const popularCount = (popularRes.data ?? []).length;
   return {
-    rows,
-    totalCount: rows.length,
-    hasMore: popularCount >= windowSize,
+    rows: [...byId.values()],
+    totalCount: byId.size,
+    hasMore: popularRows.length >= windowSize,
   };
 }
 
@@ -474,7 +479,7 @@ export async function fetchBusinessListingCards(
       if (afterId) query = query.gt("id", afterId);
       const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
       if (error) throw new Error(error.message);
-      return (page ?? []) as Array<Record<string, unknown>>;
+      return asSalonRows(page);
     });
   }
 
