@@ -1,5 +1,7 @@
 "use server";
 
+import { isRetiredPublicCategory } from "@/lib/public-categories";
+import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
 export type SaveCategoryInput = {
@@ -23,6 +25,8 @@ function buildPayload(input: SaveCategoryInput) {
 
 export async function fetchCategoriesCatalog() {
   const result = await withAdminDb(async (supabase) => {
+    await purgeRetiredMarketplaceCategories(supabase);
+
     const [{ data: categories, error: categoriesError }, { data: services, error: servicesError }, { data: globalServices, error: globalError }] =
       await Promise.all([
         supabase.from("categories").select("*").order("name"),
@@ -48,11 +52,13 @@ export async function fetchCategoriesCatalog() {
       globalCounts.set(id, (globalCounts.get(id) || 0) + 1);
     }
 
-    const rows = (categories || []).map((category) => ({
-      ...category,
-      services: [{ count: serviceCounts.get(category.id) || 0 }],
-      global_services: [{ count: globalCounts.get(category.id) || 0 }],
-    }));
+    const rows = (categories || [])
+      .filter((category) => !isRetiredPublicCategory(category))
+      .map((category) => ({
+        ...category,
+        services: [{ count: serviceCounts.get(category.id) || 0 }],
+        global_services: [{ count: globalCounts.get(category.id) || 0 }],
+      }));
 
     return { categories: rows };
   });
@@ -68,6 +74,13 @@ export async function saveCategory(input: SaveCategoryInput) {
   }
 
   const payload = buildPayload(input);
+  if (isRetiredPublicCategory({ name: payload.name, slug: payload.slug })) {
+    return {
+      success: false as const,
+      error: "That category was removed from Trimma and cannot be created again.",
+    };
+  }
+
   const result = await withAdminDb(async (supabase) => {
     if (input.id) {
       const { data, error } = await supabase

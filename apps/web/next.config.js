@@ -53,6 +53,31 @@ const nextConfig = {
         destination: '/cancellation-help',
         permanent: true,
       },
+      {
+        source: '/category/kids-family',
+        destination: '/categories',
+        permanent: true,
+      },
+      {
+        source: '/category/kids-and-family',
+        destination: '/categories',
+        permanent: true,
+      },
+      {
+        source: '/category/beauty-parlours',
+        destination: '/category/bridal-beauty',
+        permanent: true,
+      },
+      {
+        source: '/category/beauty-salon',
+        destination: '/category/bridal-beauty',
+        permanent: true,
+      },
+      {
+        source: '/category/spa-and-wellness',
+        destination: '/category/spa-wellness',
+        permanent: true,
+      },
     ]
   },
   async headers() {

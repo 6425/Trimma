@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { SRI_LANKA_PROVINCES, slugifyLocation } from "@/lib/sri-lanka-locations";
 import { KNOWN_CATEGORY_SLUGS, STATIC_INDEXABLE_PAGES } from "@/lib/site-seo";
+import { canonicalizeCategorySlug, RETIRED_MARKETPLACE_CATEGORY_SLUGS } from "@/lib/public-categories";
 import { absoluteUrl } from "@/lib/site-url";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 
@@ -66,9 +67,9 @@ async function fetchCategoryPaths(): Promise<string[]> {
     }
 
     const fromDb = (data || [])
-      .map((row) => row.slug?.trim())
-      .filter((slug): slug is string => Boolean(slug))
-      .map((slug) => `/category/${slug}`);
+      .map((row) => String(row.slug || "").trim().toLowerCase())
+      .filter((slug) => slug && !RETIRED_MARKETPLACE_CATEGORY_SLUGS.has(slug))
+      .map((slug) => `/category/${canonicalizeCategorySlug(slug)}`);
 
     const merged = new Set([...fromDb, ...KNOWN_CATEGORY_SLUGS.map((slug) => `/category/${slug}`)]);
     return [...merged];

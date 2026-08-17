@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchBusinessListingCards } from "@/lib/public-salon-search";
 import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
-import { fetchPublicCategories, canonicalizeCategorySlug, findPublicCategory } from "@/lib/public-categories";
+import { fetchPublicCategories, canonicalizeCategorySlug, findPublicCategory, retiredCategoryRedirectPath } from "@/lib/public-categories";
 import CategoryClient from "./CategoryClient";
 import { redirect } from "next/navigation";
 
@@ -15,6 +15,10 @@ type PageProps = {
 export default async function CategoryPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const sp = await searchParams;
+  const retiredRedirect = retiredCategoryRedirectPath(slug);
+  if (retiredRedirect) {
+    redirect(retiredRedirect);
+  }
   const canonicalSlug = canonicalizeCategorySlug(slug);
   if (canonicalSlug !== slug) {
     const paramsOut = new URLSearchParams();

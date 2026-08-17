@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 
 export async function runSeedMarketplaceData(supabase: SupabaseClient) {
   // 1. SEED PROVINCES
@@ -26,14 +27,12 @@ export async function runSeedMarketplaceData(supabase: SupabaseClient) {
   // 2. SEED CATEGORIES (Primary for Services)
   const categories = [
     { name: "Barber Salon", slug: "barber-salon", description: "Traditional and modern gents grooming." },
-    { name: "Beauty Parlours", slug: "beauty-parlours", description: "Complete beauty care for ladies." },
     { name: "Bridal & Beauty", slug: "bridal-beauty", description: "Premium bridal dressing and event makeup." },
     { name: "Nail Studio", slug: "nail-studio", description: "Professional nail care and art." },
     { name: "Skincare Clinics", slug: "skincare-clinics", description: "Advanced dermatological treatments." },
     { name: "Spa & Wellness", slug: "spa-wellness", description: "Relaxation and holistic body care." },
     { name: "Yoga Studio", slug: "yoga-studio", description: "Physical and mental wellness classes." },
     { name: "Men's Grooming", slug: "mens-grooming", description: "Executive level grooming for men." },
-    { name: "Kids & Family", slug: "kids-family", description: "Salon services for children and families." },
     { name: "Tattoo Studio", slug: "tattoo-studio", description: "Custom body art and piercings." },
   ];
 
@@ -43,6 +42,8 @@ export async function runSeedMarketplaceData(supabase: SupabaseClient) {
     .select();
 
   if (catError) throw catError;
+
+  await purgeRetiredMarketplaceCategories(supabase);
 
   // 3. SEED DISTRICTS (Must map to Province IDs)
   const districtData = [
@@ -220,12 +221,6 @@ export async function runSeedMarketplaceData(supabase: SupabaseClient) {
     { cName: "Bridal & Beauty", name: "Bridal Hand Spa + Gel", slug: "bridal-hand-spa-gel", description: "Exfoliating hand treatment finished with long-lasting gel polish.", price: 15000, icon: "Paintbrush" },
     { cName: "Bridal & Beauty", name: "Pre-Bridal Full Body Wax", slug: "pre-bridal-full-body-wax", description: "Complete body wax (arms, legs, face) before the big day.", price: 25000, icon: "Sparkles" },
     { cName: "Bridal & Beauty", name: "Complete Bridal Dressing", slug: "complete-bridal-dressing", description: "Full wedding day package including makeup, hair, and dressing.", price: 60000, icon: "Heart" },
-    { cName: "Beauty Parlours", name: "Eyebrow Threading", slug: "eyebrow-threading", description: "Precise shaping of eyebrows using the threading technique.", price: 300, icon: "Scissors" },
-    { cName: "Beauty Parlours", name: "Clean Up Facial", slug: "clean-up-facial", description: "Standard face exfoliation, steam, and pack for daily upkeep.", price: 3500, icon: "Sparkles" },
-    { cName: "Beauty Parlours", name: "Hair Wash & Blast Dry", slug: "hair-wash-blast-dry", description: "Basic hair wash followed by standard high-speed blow drying.", price: 1800, icon: "Droplet" },
-    { cName: "Beauty Parlours", name: "Full Arms & Legs Wax", slug: "full-arms-legs-wax", description: "Normal warm wax hair removal for both hands and legs.", price: 4500, icon: "Sparkles" },
-    { cName: "Beauty Parlours", name: "Permanent Rebonding", slug: "permanent-rebonding", description: "Chemical straightening system for sleek, permanently flat hair.", price: 15000, icon: "Sparkles" },
-    { cName: "Beauty Parlours", name: "Keratin Treatment", slug: "keratin-treatment", description: "Smoothing and frizz-reduction protein coat for mid-length hair.", price: 35000, icon: "Sparkles" },
     { cName: "Nail Studio", name: "Express Manicure", slug: "express-manicure", description: "Quick nail file, shape, cuticle cleaning, and regular nail polish.", price: 2500, icon: "Paintbrush" },
     { cName: "Nail Studio", name: "Gel Polish Application", slug: "gel-polish-application", description: "Standard long-lasting gel color cured under a UV/LED lamp.", price: 4000, icon: "Paintbrush" },
     { cName: "Nail Studio", name: "Acrylic Nail Extensions", slug: "acrylic-nail-extensions", description: "Lengthening nails using artificial acrylic tips with base overlays.", price: 12000, icon: "Paintbrush" },
@@ -256,12 +251,6 @@ export async function runSeedMarketplaceData(supabase: SupabaseClient) {
     { cName: "Men's Grooming", name: "Premium Beard Sculpting", slug: "premium-beard-sculpting", description: "Intricate beard fading, hot oil conditioning, and luxury line-up.", price: 2000, icon: "User" },
     { cName: "Men's Grooming", name: "Hair Detox Treatment", slug: "hair-detox-treatment", description: "Scalp scaling to treat heavy dandruff or hair thinning problems.", price: 5500, icon: "Sparkles" },
     { cName: "Men's Grooming", name: "Gents Mani-Pedi Duo", slug: "gents-mani-pedi", description: "Executive nail cleaning and hand/foot moisturizing for men.", price: 7000, icon: "Paintbrush" },
-    { cName: "Kids & Family", name: "Boys Haircut (Under 10yrs)", slug: "boys-haircut-kids", description: "Fast, friendly trim usually on a specialty chair or car seat.", price: 1200, icon: "Users" },
-    { cName: "Kids & Family", name: "Girls Haircut & Blow-dry", slug: "girls-haircut-kids", description: "Basic hair shaping and light blast styling for young girls.", price: 1800, icon: "Users" },
-    { cName: "Kids & Family", name: "Kids Mini Manicure", slug: "kids-mini-manicure", description: "Gentle nail clipping, filing, and optional non-toxic nail paint.", price: 1500, icon: "Paintbrush" },
-    { cName: "Kids & Family", name: "Family Haircut Bundle", slug: "family-haircut-bundle", description: "Package haircut for Mom, Dad, and one child at a discount.", price: 6000, icon: "Users" },
-    { cName: "Kids & Family", name: "Lice Treatment Session", slug: "lice-treatment", description: "Natural, safe comb-through and wash to eliminate head lice.", price: 3500, icon: "Droplet" },
-    { cName: "Kids & Family", name: "Baby's First Haircut Ceremony", slug: "babys-first-haircut", description: "Gentle clipping of first baby hairs with a souvenir certificate.", price: 1500, icon: "Users" },
     { cName: "Tattoo Studio", name: "Minimalist/Fine Line Tattoo", slug: "minimalist-tattoo", description: "Small symbolic tattoos (less than 7cm) like script or symbols.", price: 15000, icon: "PenTool" },
     { cName: "Tattoo Studio", name: "Custom Designed Tattoo (Hourly)", slug: "custom-tattoo-hourly", description: "Large or complex custom artwork calculated per hour of work.", price: 20000, icon: "PenTool" },
     { cName: "Tattoo Studio", name: "Sri Lankan Souvenir Flash", slug: "srilankan-souvenir-flash", description: "Pre-drawn cultural tattoos (e.g., Sigiriya, Lion, Lotus, Sun/Moon).", price: 25000, icon: "PenTool" },

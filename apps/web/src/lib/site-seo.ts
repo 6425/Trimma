@@ -4,9 +4,7 @@ export const INDEXABLE_PUBLIC_EXACT_PATHS = ["/agent/login"] as const;
 /** Category slugs used when DB fetch fails or for sitemap completeness. */
 export const KNOWN_CATEGORY_SLUGS = [
   "barber-salon",
-  "beauty-parlours",
   "bridal-beauty",
-  "kids-family",
   "mens-grooming",
   "nail-studio",
   "skincare-clinics",
@@ -82,7 +80,7 @@ export const PUBLIC_SITE_NAV_LINKS = [
   {
     name: "Categories",
     path: "/categories",
-    description: "Explore salon categories — barbers, spas, beauty parlours, nail studios, and more.",
+    description: "Explore salon categories — barbers, spas, bridal studios, nail studios, and more.",
   },
   {
     name: "Deals",

@@ -3,9 +3,11 @@ import {
   ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS,
 } from "@/lib/admin-lead-categories";
 import {
+  canonicalizeCategorySlug,
   dedupePublicCategories,
   type PublicCategory,
 } from "@/lib/public-categories";
+import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 
 export type GlobalServiceSummary = {
   id: string;
@@ -27,17 +29,18 @@ function normalizeCategoryKey(value: string): string {
 }
 
 function slugifyCategoryName(name: string): string {
-  return name
+  const slug = name
     .toLowerCase()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+  return canonicalizeCategorySlug(slug);
 }
 
 const GOOGLE_TYPE_CATEGORY_HINTS: Record<string, string[]> = {
   hair_care: ["barber", "grooming", "mens"],
   barber_shop: ["barber", "grooming", "mens"],
-  beauty_salon: ["beauty", "parlour", "parlor", "salon"],
+  beauty_salon: ["bridal", "beauty"],
   spa: ["spa", "wellness"],
   nail_salon: ["nail"],
   skin_care_clinic: ["skincare", "skin", "clinic"],
@@ -49,7 +52,6 @@ const GOOGLE_TYPE_CATEGORY_HINTS: Record<string, string[]> = {
 
 const TRIMMA_CATEGORY_GOOGLE_QUERY_HINTS: Record<string, string> = {
   "barber salon": "barber shop hair salon",
-  "beauty parlours": "beauty salon parlour",
   "bridal and beauty": "bridal makeup beauty salon",
   "bridal & beauty": "bridal makeup beauty salon",
   "nail studio": "nail salon manicure",
@@ -59,8 +61,6 @@ const TRIMMA_CATEGORY_GOOGLE_QUERY_HINTS: Record<string, string> = {
   "skincare clinics": "skin care clinic facial",
   "tattoo studio": "tattoo shop",
   "yoga studio": "yoga studio wellness",
-  "kids and family": "kids hair salon family",
-  "kids & family": "kids hair salon family",
 };
 
 function fallbackCaptureCategories(): PublicCategory[] {
@@ -76,6 +76,8 @@ function fallbackCaptureCategories(): PublicCategory[] {
 export async function loadListingCaptureCatalog(
   supabase: SupabaseClient
 ): Promise<ListingCaptureCatalog> {
+  await purgeRetiredMarketplaceCategories(supabase);
+
   const [categoriesRes, servicesRes] = await Promise.all([
     supabase.from("categories").select("id, name, slug, icon").order("name"),
     supabase

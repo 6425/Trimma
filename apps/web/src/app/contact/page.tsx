@@ -133,7 +133,7 @@ const FAQS = [
   },
   {
     q: "Is Trimma available for multiple business types?",
-    a: "Yes. Trimma supports barber salons, beauty parlours, nail studios, bridal studios, spas, yoga studios, men's grooming centres, tattoo studios, skincare clinics, and more.",
+    a: "Yes. Trimma supports barber salons, bridal studios, nail studios, spas, yoga studios, men's grooming centres, tattoo studios, skincare clinics, and more.",
   },
   {
     q: "How quickly can my business get onboarded?",

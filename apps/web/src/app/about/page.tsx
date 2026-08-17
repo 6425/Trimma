@@ -44,9 +44,8 @@ const VALUES = [
 
 const INDUSTRIES = [
   "Barber Salons",
-  "Beauty Parlours",
-  "Nail Studios",
   "Bridal Studios",
+  "Nail Studios",
   "Spas & Wellness",
   "Men's Grooming",
   "Tattoo Studios",

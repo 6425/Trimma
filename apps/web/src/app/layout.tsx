@@ -32,7 +32,7 @@ export const metadata = {
     template: '%s | Trimma',
   },
   description:
-    'Find and book salons across Sri Lanka — barbers, beauty parlours, spas, nail studios, and more.',
+    'Find and book salons across Sri Lanka — barbers, spas, bridal studios, nail studios, and more.',
   robots: {
     index: true,
     follow: true,

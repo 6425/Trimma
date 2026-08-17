@@ -11,16 +11,6 @@ const CATEGORY_HERO_COPY: Record<string, CategoryHeroCopy> = {
     description:
       "Your barber shop can be discovered by customers looking for their next haircut or grooming appointment. Own this business? Claim it with Google Sign-In through Trimma's verified business claim flow.",
   },
-  "beauty-parlours": {
-    headline: "Put Your Beauty Salon in Front of More Customers",
-    description:
-      "Help customers discover your salon, explore your services, and book their next appointment. Own this business? Claim it with Google Sign-In through Trimma's verified business claim flow.",
-  },
-  "beauty-salon": {
-    headline: "Put Your Beauty Salon in Front of More Customers",
-    description:
-      "Help customers discover your salon, explore your services, and book their next appointment. Own this business? Claim it with Google Sign-In through Trimma's verified business claim flow.",
-  },
   "bridal-beauty": {
     headline: "Turn Bridal Searches into Real Appointments",
     description:

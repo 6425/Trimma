@@ -18,10 +18,8 @@ const CATEGORY_IMAGES: Record<string, string> = {
   tattoo: "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?q=80&w=600&fm=webp&fit=crop",
   "tattoo-studio": "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?q=80&w=600&fm=webp&fit=crop",
   "bridal-beauty": "https://images.unsplash.com/photo-1509631179647-0c739a4e6dd5?q=80&w=600&fm=webp&fit=crop",
-  "beauty-parlours": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=600&fm=webp&fit=crop",
   "yoga-studio": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=600&fm=webp&fit=crop",
   "mens-grooming": "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&fm=webp&fit=crop",
-  "kids-family": "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=600&fm=webp&fit=crop",
 };
 
 const DEFAULT_IMG =

@@ -1,7 +1,8 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { canonicalizeCategorySlug } from "@/lib/public-categories";
+import { canonicalizeCategorySlug, isRetiredPublicCategory, rejectRetiredPublicCategories } from "@/lib/public-categories";
+import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
@@ -28,10 +29,8 @@ const CATEGORY_IMAGES: Record<string, string> = {
   "tattoo": "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?q=80&w=400&fm=webp&fit=crop",
   "tattoo-studio": "https://images.unsplash.com/photo-1598371839696-5c5bb00bdc28?q=80&w=400&fm=webp&fit=crop",
   "bridal-beauty": "https://images.unsplash.com/photo-1509631179647-0c739a4e6dd5?q=80&w=400&fm=webp&fit=crop",
-  "beauty-parlours": "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=400&fm=webp&fit=crop",
   "yoga-studio": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=400&fm=webp&fit=crop",
   "mens-grooming": "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=400&fm=webp&fit=crop",
-  "kids-family": "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=400&fm=webp&fit=crop",
 };
 
 const DEFAULT_IMG = "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=400&fm=webp&fit=crop";
@@ -44,12 +43,22 @@ export async function getLandingCategories(): Promise<LandingCategory[]> {
     const catRes = await supabase.from("categories").select("id, name, slug, image_url");
     if (catRes.error) throw catRes.error;
 
-    const categoryRows = (catRes.data || []).map((c: { id: string; name: string; slug: string; image_url?: string | null }) => ({
-      id: c.id,
-      name: c.name,
-      slug: canonicalizeCategorySlug(String(c.slug || "")),
-      img: c.image_url,
-    }));
+    let categorySource = catRes.data || [];
+    if (categorySource.some((row) => isRetiredPublicCategory(row))) {
+      await purgeRetiredMarketplaceCategories(supabase);
+      const refreshed = await supabase.from("categories").select("id, name, slug, image_url");
+      if (refreshed.error) throw refreshed.error;
+      categorySource = refreshed.data || [];
+    }
+
+    const categoryRows = rejectRetiredPublicCategories(categorySource).map(
+      (c: { id: string; name: string; slug: string; image_url?: string | null }) => ({
+        id: c.id,
+        name: c.name,
+        slug: canonicalizeCategorySlug(String(c.slug || "")),
+        img: c.image_url,
+      })
+    );
 
     const counts = await countPublishedListingsByCategory(
       supabase,

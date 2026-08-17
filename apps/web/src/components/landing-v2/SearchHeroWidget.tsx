@@ -23,7 +23,7 @@ const getCategoryIcon = (slug: string) => {
     "spa": Flower2,
     "spa-wellness": Flower2,
     "massage": Hand,
-    "beauty-parlours": Smile,
+    "bridal-beauty": Smile,
   };
   return mapping[slug.toLowerCase()] || Star;
 };

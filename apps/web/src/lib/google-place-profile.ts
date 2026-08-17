@@ -32,7 +32,7 @@ export type GooglePlaceProfile = {
 const GOOGLE_TYPE_CATEGORY_MAP: Record<string, string> = {
   hair_care: "Barber Salon",
   barber_shop: "Barber Salon",
-  beauty_salon: "Beauty Parlours",
+  beauty_salon: "Bridal & Beauty",
   spa: "Spa & Wellness",
   nail_salon: "Nail Studio",
   skin_care_clinic: "Skincare Clinics",

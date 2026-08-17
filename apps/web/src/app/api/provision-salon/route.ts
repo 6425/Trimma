@@ -9,7 +9,7 @@ const DEFAULT_SERVICES: Record<string, any[]> = {
     { name: "Beard Trim & Shape", category: "Grooming", price: 800, duration_min: 15, description: "Detailed beard sculpting." },
     { name: "Hot Towel Shave", category: "Grooming", price: 1200, duration_min: 30, description: "Traditional hot towel clean shave." }
   ],
-  "Beauty Parlours": [
+  "Bridal & Beauty": [
     { name: "Classic Facial", category: "Facial", price: 3500, duration_min: 60, description: "Deep cleansing facial." },
     { name: "Manicure & Pedicure", category: "Nails", price: 2500, duration_min: 45, description: "Complete hand and foot care." },
     { name: "Eyebrow Threading", category: "Threading", price: MIN_SERVICE_PRICE_LKR, duration_min: 15, description: "Precision eyebrow shaping." }
