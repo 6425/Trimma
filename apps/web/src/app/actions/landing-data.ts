@@ -1,8 +1,8 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { canonicalizeCategorySlug, isRetiredPublicCategory, rejectRetiredPublicCategories } from "@/lib/public-categories";
-import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
+import { canonicalizeCategorySlug, rejectRetiredPublicCategories } from "@/lib/public-categories";
+import { syncMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
@@ -40,16 +40,11 @@ export async function getLandingCategories(): Promise<LandingCategory[]> {
     const supabase = createSupabaseAdminClient();
 
     // Run both queries in parallel on the server
+    await syncMarketplaceCategories(supabase);
     const catRes = await supabase.from("categories").select("id, name, slug, image_url");
     if (catRes.error) throw catRes.error;
 
-    let categorySource = catRes.data || [];
-    if (categorySource.some((row) => isRetiredPublicCategory(row))) {
-      await purgeRetiredMarketplaceCategories(supabase);
-      const refreshed = await supabase.from("categories").select("id, name, slug, image_url");
-      if (refreshed.error) throw refreshed.error;
-      categorySource = refreshed.data || [];
-    }
+    const categorySource = catRes.data || [];
 
     const categoryRows = rejectRetiredPublicCategories(categorySource).map(
       (c: { id: string; name: string; slug: string; image_url?: string | null }) => ({

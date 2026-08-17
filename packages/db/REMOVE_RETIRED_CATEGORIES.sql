@@ -1,6 +1,5 @@
--- Permanently remove Beauty Parlours, Kids & Family, and the Spa & Wellness
--- duplicate without an image (slug spa-and-wellness).
--- Keep Spa & Wellness with slug spa-wellness.
+-- Permanently remove Beauty Parlours and Kids & Family.
+-- Do not delete Spa & Wellness (including slug spa-and-wellness).
 -- Run this in the Supabase SQL Editor for each environment (live and beta).
 
 -- Preview
@@ -10,12 +9,10 @@ WHERE slug IN (
     'beauty-parlours',
     'beauty-salon',
     'kids-family',
-    'kids-and-family',
-    'spa-and-wellness'
+    'kids-and-family'
   )
   OR name IN ('Beauty Parlours', 'Beauty Parlors', 'Kids & Family', 'Kids and Family');
 
--- Detach / delete dependent global services
 DELETE FROM global_services
 WHERE category_id IN (
   SELECT id FROM categories
@@ -23,13 +20,11 @@ WHERE category_id IN (
       'beauty-parlours',
       'beauty-salon',
       'kids-family',
-      'kids-and-family',
-      'spa-and-wellness'
+      'kids-and-family'
     )
     OR name IN ('Beauty Parlours', 'Beauty Parlors', 'Kids & Family', 'Kids and Family')
 );
 
--- Salon services: drop the retired category FK, keep the service rows
 UPDATE services
 SET category_id = NULL
 WHERE category_id IN (
@@ -38,8 +33,7 @@ WHERE category_id IN (
       'beauty-parlours',
       'beauty-salon',
       'kids-family',
-      'kids-and-family',
-      'spa-and-wellness'
+      'kids-and-family'
     )
     OR name IN ('Beauty Parlours', 'Beauty Parlors', 'Kids & Family', 'Kids and Family')
 );
@@ -49,12 +43,10 @@ WHERE slug IN (
     'beauty-parlours',
     'beauty-salon',
     'kids-family',
-    'kids-and-family',
-    'spa-and-wellness'
+    'kids-and-family'
   )
   OR name IN ('Beauty Parlours', 'Beauty Parlors', 'Kids & Family', 'Kids and Family');
 
--- Remap listing labels so cards do not keep showing retired names
 UPDATE salons
 SET category = 'Bridal & Beauty'
 WHERE category IN ('Beauty Parlours', 'Beauty Parlors', 'Beauty Salon');

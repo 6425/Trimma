@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
+import { syncMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 
 export async function runSeedMarketplaceData(supabase: SupabaseClient) {
   // 1. SEED PROVINCES
@@ -43,7 +43,7 @@ export async function runSeedMarketplaceData(supabase: SupabaseClient) {
 
   if (catError) throw catError;
 
-  await purgeRetiredMarketplaceCategories(supabase);
+  await syncMarketplaceCategories(supabase);
 
   // 3. SEED DISTRICTS (Must map to Province IDs)
   const districtData = [

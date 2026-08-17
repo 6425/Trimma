@@ -7,7 +7,7 @@ import {
   dedupePublicCategories,
   type PublicCategory,
 } from "@/lib/public-categories";
-import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
+import { syncMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 
 export type GlobalServiceSummary = {
   id: string;
@@ -76,7 +76,7 @@ function fallbackCaptureCategories(): PublicCategory[] {
 export async function loadListingCaptureCatalog(
   supabase: SupabaseClient
 ): Promise<ListingCaptureCatalog> {
-  await purgeRetiredMarketplaceCategories(supabase);
+  await syncMarketplaceCategories(supabase);
 
   const [categoriesRes, servicesRes] = await Promise.all([
     supabase.from("categories").select("id, name, slug, icon").order("name"),

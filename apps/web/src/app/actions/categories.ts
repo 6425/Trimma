@@ -1,7 +1,7 @@
 "use server";
 
 import { isRetiredPublicCategory } from "@/lib/public-categories";
-import { purgeRetiredMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
+import { syncMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
 
 export type SaveCategoryInput = {
@@ -25,7 +25,7 @@ function buildPayload(input: SaveCategoryInput) {
 
 export async function fetchCategoriesCatalog() {
   const result = await withAdminDb(async (supabase) => {
-    await purgeRetiredMarketplaceCategories(supabase);
+    await syncMarketplaceCategories(supabase);
 
     const [{ data: categories, error: categoriesError }, { data: services, error: servicesError }, { data: globalServices, error: globalError }] =
       await Promise.all([

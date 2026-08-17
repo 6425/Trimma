@@ -29,15 +29,13 @@ function normalizeCategoryNameKey(name: string): string {
 
 /**
  * Duplicate / retired marketplace categories — never show or re-seed these.
- * Keep `spa-wellness` (Spa & Wellness with image). Do not re-add these slugs
- * to seed data or admin fallbacks.
+ * Spa & Wellness stays. Do not re-add Beauty Parlours or Kids & Family.
  */
 export const RETIRED_MARKETPLACE_CATEGORY_SLUGS = new Set([
   "beauty-parlours",
   "beauty-salon",
   "kids-family",
   "kids-and-family",
-  "spa-and-wellness",
 ]);
 
 export function isRetiredPublicCategory(category: { slug?: string | null; name?: string | null }): boolean {
@@ -47,6 +45,13 @@ export function isRetiredPublicCategory(category: { slug?: string | null; name?:
   if (nameKey === "beauty parlours" || nameKey === "beauty parlors") return true;
   if (nameKey === "kids family" || nameKey === "kids and family") return true;
   return false;
+}
+
+export function isSpaWellnessCategory(category: { slug?: string | null; name?: string | null }): boolean {
+  const rawSlug = String(category.slug || "").trim().toLowerCase();
+  if (rawSlug === "spa-wellness" || rawSlug === "spa-and-wellness") return true;
+  const nameKey = normalizeCategoryNameKey(String(category.name || ""));
+  return nameKey === "spa and wellness" || nameKey === "spa wellness";
 }
 
 export function rejectRetiredPublicCategories<T extends { slug?: string | null; name?: string | null }>(
