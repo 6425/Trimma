@@ -284,13 +284,17 @@ function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
   }
 }
 
-function applyPublishedListingFilters<T extends {
-  eq: (column: string, value: unknown) => T;
-  or: (filters: string) => T;
-  gt: (column: string, value: number) => T;
-  gte: (column: string, value: number) => T;
-}>(
-  query: T,
+type LooseListingQuery = {
+  eq: (column: string, value: unknown) => LooseListingQuery;
+  or: (filters: string) => LooseListingQuery;
+  gt: (column: string, value: number) => LooseListingQuery;
+  gte: (column: string, value: number) => LooseListingQuery;
+  order: (column: string, options?: { ascending?: boolean }) => LooseListingQuery;
+  limit: (count: number) => Promise<{ data: unknown; error: { message: string } | null }>;
+};
+
+function applyPublishedListingFilters(
+  query: unknown,
   params: {
     q: string;
     location: string;
@@ -299,8 +303,9 @@ function applyPublishedListingFilters<T extends {
     category?: string;
     categoryName?: string;
   }
-): T {
-  let next = query.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+): LooseListingQuery {
+  let next = query as LooseListingQuery;
+  next = next.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
   const q = params.q.trim();
   if (q) {
     next = next.or(
@@ -321,8 +326,12 @@ function applyPublishedListingFilters<T extends {
   if (categoryNeedles.length) {
     next = next.or(categoryNeedles.map((needle) => `category.ilike.%${needle}%`).join(","));
   }
-  if (params.minRating > 0) next = next.gt("review_count", 0).gte("rating", params.minRating);
-  if (params.verifiedOnly) next = next.eq("is_verified", true);
+  if (params.minRating > 0) {
+    next = next.gt("review_count", 0).gte("rating", params.minRating);
+  }
+  if (params.verifiedOnly) {
+    next = next.eq("is_verified", true);
+  }
   return next;
 }
 
@@ -379,13 +388,13 @@ async function loadPublishedMarketplaceWindow(
         );
 
   const featuredQuery = applyPublishedListingFilters(
-    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT),
+    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown,
     filters
   )
     .eq("is_featured", true)
     .limit(FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT);
   const popularQuery = applyPublishedListingFilters(
-    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT),
+    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown,
     filters
   )
     .order("review_count", { ascending: false })
