@@ -60,7 +60,7 @@ export default function Salons() {
       const result = await withTimeout(
         fetchAdminSalons(),
         20000,
-        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+        "Loading timed out. Refresh the page and try again."
       );
 
       if (result.success === false) {

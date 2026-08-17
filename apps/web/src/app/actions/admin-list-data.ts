@@ -13,10 +13,50 @@ export async function fetchAdminSubscriptionPlans() {
   return { success: true as const, plans: result.data.plans };
 }
 
+const ADMIN_SALON_DIRECTORY_COLUMNS = [
+  "id",
+  "name",
+  "slug",
+  "city",
+  "district",
+  "province",
+  "address",
+  "phone",
+  "owner_email",
+  "owner_gmail",
+  "status",
+  "onboarding_status",
+  "is_verified",
+  "assign_to",
+  "logo_url",
+  "cover_url",
+  "hero_url",
+  "place_id",
+  "latitude",
+  "longitude",
+  "rating",
+  "review_count",
+  "description",
+  "working_hours",
+  "created_at",
+  "rejection_reason",
+  "source_type",
+  "category",
+  "website",
+  "map_url",
+  "price_level",
+  "summary",
+].join(", ");
+
 export async function fetchAdminSalons() {
   const result = await withAdminDb(async (supabase) => {
     const salons = await fetchAllByIdCursor(async (afterId, pageSize) => {
-      let query = supabase.from("salons").select("*").order("id", { ascending: true }).limit(pageSize);
+      let query = supabase
+        .from("salons")
+        .select(ADMIN_SALON_DIRECTORY_COLUMNS)
+        .not("onboarding_status", "in", "(LISTING_CAPTURED,LISTING_PUBLISHED)")
+        .order("id", { ascending: true })
+        .limit(pageSize);
       if (afterId) query = query.gt("id", afterId);
       const { data, error } = await query;
       if (error) throw new Error(error.message);
