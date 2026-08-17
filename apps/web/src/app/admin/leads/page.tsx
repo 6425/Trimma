@@ -216,7 +216,7 @@ function Leads() {
       const result = await withTimeout(
         fetchAdminLeadsPage(),
         20000,
-        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+        "Loading timed out. Refresh the page and try again."
       );
 
       if (result.success === false) {
@@ -243,7 +243,7 @@ function Leads() {
       const result = await withTimeout(
         fetchAdminLeadsPage(),
         20000,
-        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+        "Loading timed out. Refresh the page and try again."
       );
 
       if (result.success === false) {
@@ -269,7 +269,7 @@ function Leads() {
       const result = await withTimeout(
         fetchAdminLeadsPage(),
         20000,
-        "Loading timed out. Check Vercel env (SUPABASE_SERVICE_ROLE_KEY) and refresh."
+        "Loading timed out. Refresh the page and try again."
       );
 
       if (result.success === false) {

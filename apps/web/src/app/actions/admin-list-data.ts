@@ -48,6 +48,8 @@ const ADMIN_SALON_DIRECTORY_COLUMNS = [
   "summary",
 ].join(", ");
 
+const ADMIN_LEAD_SHEET_COLUMNS = `${ADMIN_SALON_DIRECTORY_COLUMNS}, activation_status, admin_notes`;
+
 export async function fetchAdminSalons() {
   const result = await withAdminDb(async (supabase) => {
     const salons = await fetchAllByIdCursor(async (afterId, pageSize) => {
@@ -224,11 +226,17 @@ export async function fetchAdminLeadsPage() {
   const result = await withAdminDb(async (supabase) => {
     const [salons, usersRes, rolesRes, plansRes, catRes] = await Promise.all([
       fetchAllByIdCursor(async (afterId, pageSize) => {
-        let query = supabase.from("salons").select("*").order("id", { ascending: true }).limit(pageSize);
+        let query = supabase
+          .from("salons")
+          .select(ADMIN_LEAD_SHEET_COLUMNS)
+          .eq("activation_status", "INACTIVE")
+          .not("onboarding_status", "in", "(LISTING_CAPTURED,LISTING_PUBLISHED)")
+          .order("id", { ascending: true })
+          .limit(pageSize);
         if (afterId) query = query.gt("id", afterId);
         const { data, error } = await query;
         if (error) throw new Error(error.message);
-        return data || [];
+        return (data ?? []) as Array<{ id?: unknown; created_at?: string | null }>;
       }),
       supabase.from("users").select("*"),
       supabase.from("global_staff_roles").select("*"),
