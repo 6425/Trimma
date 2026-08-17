@@ -29,7 +29,9 @@ export type ListingQueuePayload = {
 };
 
 const QUEUE_SELECT =
-  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,created_at,business_info_extended";
+  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,created_at";
+
+const QUEUE_PAGE_SIZE = 400;
 
 function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
   return data.map((row) => ({
@@ -49,12 +51,15 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     source_type: (row.source_type as string | null) ?? null,
     is_featured: row.is_featured === true,
     created_at: String(row.created_at || ""),
-    captured_at: readListingCapturedAt({
-      created_at: row.created_at as string | null,
-      onboarding_status: row.onboarding_status as string | null,
-      source_type: row.source_type as string | null,
-      business_info_extended: row.business_info_extended,
-    }),
+    captured_at:
+      typeof row.listing_captured_at === "string" && row.listing_captured_at.trim()
+        ? String(row.listing_captured_at)
+        : readListingCapturedAt({
+            created_at: row.created_at as string | null,
+            onboarding_status: row.onboarding_status as string | null,
+            source_type: row.source_type as string | null,
+            business_info_extended: row.business_info_extended,
+          }),
   }));
 }
 
@@ -87,6 +92,7 @@ async function restGet(path: string): Promise<unknown> {
       apikey: serviceRoleKey,
       Authorization: `Bearer ${serviceRoleKey}`,
       Accept: "application/json",
+      Prefer: "count=none",
     },
     cache: "no-store",
   });
@@ -117,50 +123,46 @@ async function restCount(status: string): Promise<number | null> {
 }
 
 async function loadRowsByStatus(status: string): Promise<ListingQueueRow[]> {
-  const collected: Array<Record<string, unknown>> = [];
-  const seen = new Set<string>();
-  let afterId: string | null = null;
+  const qs = [
+    `select=${encodeURIComponent(QUEUE_SELECT)}`,
+    `onboarding_status=eq.${encodeURIComponent(status)}`,
+    "order=created_at.desc",
+    `limit=${QUEUE_PAGE_SIZE}`,
+  ];
+  return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+}
 
-  for (let i = 0; i < 500; i++) {
-    const qs = [
-      `select=${encodeURIComponent(QUEUE_SELECT)}`,
-      `onboarding_status=eq.${encodeURIComponent(status)}`,
-      "order=id.asc",
-      "limit=100",
-    ];
-    if (afterId) qs.push(`id=gt.${afterId}`);
-    const page = asRecordArray(await restGet(`salons?${qs.join("&")}`));
-    if (page.length === 0) break;
-
-    let added = 0;
-    for (const row of page) {
-      const id = String(row.id || "");
-      if (!id || seen.has(id)) continue;
-      seen.add(id);
-      collected.push(row);
-      added += 1;
-    }
-    if (added === 0 || page.length < 100) break;
-    afterId = String(page[page.length - 1]?.id || "");
-    if (!afterId) break;
-  }
-
-  return mapQueueRows(collected);
+async function loadListingGenerationDiscovered(): Promise<ListingQueueRow[]> {
+  const qs = [
+    `select=${encodeURIComponent(QUEUE_SELECT)}`,
+    "source_type=eq.LISTING_GENERATION",
+    "onboarding_status=eq.DISCOVERED",
+    "order=created_at.desc",
+    `limit=${QUEUE_PAGE_SIZE}`,
+  ];
+  return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
 }
 
 export async function loadListingGenerationQueue(
   _supabase?: SupabaseClient
 ): Promise<ListingQueuePayload> {
-  const [pendingRows, listedRows, pendingCount, listedCount] = await Promise.all([
+  const [pendingCaptured, pendingDiscovered, listedRows, pendingCount, listedCount] = await Promise.all([
     loadRowsByStatus(LISTING_ONBOARDING_STATUS.CAPTURED),
+    loadListingGenerationDiscovered(),
     loadRowsByStatus(LISTING_ONBOARDING_STATUS.PUBLISHED),
     restCount(LISTING_ONBOARDING_STATUS.CAPTURED),
     restCount(LISTING_ONBOARDING_STATUS.PUBLISHED),
   ]);
 
+  const pendingById = new Map<string, ListingQueueRow>();
+  for (const row of [...pendingCaptured, ...pendingDiscovered]) {
+    pendingById.set(row.id, row);
+  }
+  const pendingRows = [...pendingById.values()];
+
   return {
     rows: sortQueueRowsNewestFirst([...pendingRows, ...listedRows]),
-    pendingCount: pendingCount ?? pendingRows.length,
+    pendingCount: Math.max(pendingCount ?? 0, pendingRows.length),
     listedCount: listedCount ?? listedRows.length,
   };
 }

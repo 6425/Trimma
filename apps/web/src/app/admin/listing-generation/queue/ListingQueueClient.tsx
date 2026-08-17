@@ -17,6 +17,11 @@ import { buildSalonPublicPath } from "@/lib/salon-public-path";
 
 type QueueTab = "pending" | "listed";
 
+function isPendingQueueRow(row: { onboarding_status: string | null; source_type: string | null }) {
+  if (row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED) return true;
+  return row.source_type === "LISTING_GENERATION" && row.onboarding_status === "DISCOVERED";
+}
+
 async function postListingAction(
   path: string,
   body: Record<string, unknown>
@@ -61,7 +66,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
   const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
 
   const pendingRows = useMemo(
-    () => rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED),
+    () => rows.filter(isPendingQueueRow),
     [rows]
   );
   const listedRows = useMemo(
@@ -107,7 +112,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
       setPendingCount(
         typeof queuePayload.pendingCount === "number"
           ? queuePayload.pendingCount
-          : nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED).length
+          : nextRows.filter(isPendingQueueRow).length
       );
       setListedCount(
         typeof queuePayload.listedCount === "number"

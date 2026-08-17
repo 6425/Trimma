@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 import { getGoogleMapsApiKey } from "@/lib/google-place-images";
@@ -101,6 +102,8 @@ export async function POST(req: Request) {
         catalog.categories
       );
     }
+
+    revalidatePath("/admin/listing-generation/queue");
 
     return NextResponse.json({
       success: true,
