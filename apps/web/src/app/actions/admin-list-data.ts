@@ -60,7 +60,7 @@ export async function fetchAdminSalons() {
       if (afterId) query = query.gt("id", afterId);
       const { data, error } = await query;
       if (error) throw new Error(error.message);
-      return data || [];
+      return (data ?? []) as Array<{ id?: unknown; created_at?: string | null }>;
     });
     salons.sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
     return { salons };
