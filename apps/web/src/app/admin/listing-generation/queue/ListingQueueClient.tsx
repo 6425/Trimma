@@ -3,13 +3,14 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ExternalLink, Rocket, PauseCircle } from "lucide-react";
+import { Loader2, ExternalLink, Rocket, PauseCircle, Star } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { trimmaFilterTabClass } from "@/lib/customer-dashboard-ui";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
+import { FEATURED_LISTING_COUNT } from "@/lib/listing-marketplace-rank";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generation-queue";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
@@ -64,10 +65,19 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
     [rows]
   );
   const listedRows = useMemo(
-    () => rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED),
+    () =>
+      rows
+        .filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED)
+        .sort((a, b) => {
+          if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+          const byCaptured = String(b.captured_at || "").localeCompare(String(a.captured_at || ""));
+          if (byCaptured) return byCaptured;
+          return String(b.created_at || "").localeCompare(String(a.created_at || ""));
+        }),
     [rows]
   );
   const visibleRows = activeTab === "listed" ? listedRows : pendingRows;
+  const featuredCount = listedRows.filter((row) => row.is_featured).length;
 
   const load = useCallback(async (options?: { showLoading?: boolean }) => {
     const showLoading = options?.showLoading !== false;
@@ -237,7 +247,8 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
           </Button>
         ) : (
           <p className="text-xs font-medium text-zinc-500">
-            Captured listings stay in <strong>Pending</strong> until you publish them to the marketplace.
+            Feature a listed salon to pin it in the public <strong>Featured Salons</strong> row (up to{" "}
+            {FEATURED_LISTING_COUNT} on the homepage). Extra featured listings are ranked by reviews.
           </p>
         )}
       </div>
@@ -303,14 +314,54 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                       {formatListingCapturedDate(row.captured_at)}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="outline" className={isPublished ? "border-emerald-200 text-emerald-700" : ""}>
-                        {listingPipelineLabel(row.onboarding_status)}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Badge variant="outline" className={isPublished ? "border-emerald-200 text-emerald-700" : ""}>
+                          {listingPipelineLabel(row.onboarding_status)}
+                        </Badge>
+                        {row.is_featured ? (
+                          <Badge className="border-none bg-[#ffde5a] text-black">Featured</Badge>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap justify-end gap-1.5">
                         {isPublished ? (
                           <>
+                            <Button
+                              type="button"
+                              variant={row.is_featured ? "default" : "outline"}
+                              size="sm"
+                              className="h-9 font-bold"
+                              disabled={busyId !== null}
+                              onClick={() =>
+                                void runAction(row.id, async () => {
+                                  const nextFeatured = !row.is_featured;
+                                  const result = await postListingAction(
+                                    "/api/admin/listing-generation/feature",
+                                    { salonId: row.id, featured: nextFeatured }
+                                  );
+                                  if (result.success) {
+                                    if (nextFeatured && !row.is_featured && featuredCount >= FEATURED_LISTING_COUNT) {
+                                      toast.success(
+                                        `Featured. Homepage shows up to ${FEATURED_LISTING_COUNT}; extras are ranked by reviews.`
+                                      );
+                                    } else {
+                                      toast.success(nextFeatured ? "Featured on the marketplace." : "Removed from featured.");
+                                    }
+                                  }
+                                  return result;
+                                })
+                              }
+                            >
+                              {busyId === row.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <>
+                                  <Star className={cn("mr-1 h-3.5 w-3.5", row.is_featured && "fill-current")} />
+                                  {row.is_featured ? "Featured" : "Feature"}
+                                </>
+                              )}
+                            </Button>
                             <Link
                               href={buildSalonPublicPath(row)}
                               target="_blank"
@@ -402,7 +453,9 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
           </tbody>
         </table>
         <p className="border-t border-zinc-100 px-4 py-2 text-xs text-zinc-500">
-          Showing {visibleRows.length} {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed {listedCount}
+          Showing {visibleRows.length} {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed{" "}
+          {listedCount}
+          {activeTab === "listed" ? ` · Featured ${featuredCount}` : ""}
         </p>
       </div>
     </div>

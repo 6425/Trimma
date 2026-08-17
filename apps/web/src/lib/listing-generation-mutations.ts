@@ -211,3 +211,34 @@ export async function startBookingOnboardingFromListingRecord(
 
   return { assignedAgent };
 }
+
+export async function setListingFeaturedRecord(
+  supabase: SupabaseClient,
+  salonId: string,
+  featured: boolean
+): Promise<void> {
+  const { data: salon, error: fetchError } = await supabase
+    .from("salons")
+    .select("id, name, source_type, onboarding_status")
+    .eq("id", salonId)
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!salon?.id) throw new Error("Salon not found.");
+  if (!isListingPipelineSalon(salon)) {
+    throw new Error("This salon is not in the listing generation pipeline.");
+  }
+  if (salon.onboarding_status !== LISTING_ONBOARDING_STATUS.PUBLISHED) {
+    throw new Error("Publish the listing before featuring it on the marketplace.");
+  }
+
+  await updateSalonWithOptionalColumns(supabase, salonId, { is_featured: featured === true });
+
+  await tryInsertOnboardingLog(supabase, {
+    salon_id: salonId,
+    action: featured ? "LISTING_FEATURED" : "LISTING_UNFEATURED",
+    notes: featured
+      ? "Pinned as a featured marketplace listing."
+      : "Removed from featured marketplace listings.",
+  });
+}

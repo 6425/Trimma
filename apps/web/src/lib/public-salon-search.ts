@@ -9,6 +9,9 @@ import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listi
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import {
+  FEATURED_LISTING_COUNT,
+  TOP_RATED_LISTING_COUNT,
+  YOU_MAY_ALSO_LIKE_COUNT,
   pinTopReviewedListingsWithPhone,
   splitMarketplaceListingSections,
 } from "@/lib/listing-marketplace-rank";
@@ -200,13 +203,17 @@ export async function fetchPublicSalons(
   };
 }
 
-const BUSINESS_LISTING_SELECT = `
+const BUSINESS_LISTING_CARD_SELECT = `
       id, name, slug, rating, review_count,
       city, district, province, category, logo_url, cover_url, hero_url, featured_images,
       is_featured, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail, website, map_url, business_info_extended,
-      address, latitude, longitude, place_id,
+      address, latitude, longitude, place_id
+    `;
+
+const BUSINESS_LISTING_SELECT = `
+      ${BUSINESS_LISTING_CARD_SELECT},
       services ( id, name, price, category )
     `;
 
@@ -277,14 +284,57 @@ function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
   }
 }
 
+function applyPublishedListingFilters<T extends {
+  eq: (column: string, value: unknown) => T;
+  or: (filters: string) => T;
+  gt: (column: string, value: number) => T;
+  gte: (column: string, value: number) => T;
+}>(
+  query: T,
+  params: {
+    q: string;
+    location: string;
+    minRating: number;
+    verifiedOnly: boolean;
+    category?: string;
+    categoryName?: string;
+  }
+): T {
+  let next = query.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+  const q = params.q.trim();
+  if (q) {
+    next = next.or(
+      `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%,address.ilike.%${q}%`
+    );
+  }
+  if (params.location.trim()) {
+    const locationFilter = buildSalonLocationOrFilter(params.location);
+    if (locationFilter) next = next.or(locationFilter);
+  }
+  const categoryNeedles = [
+    ...new Set(
+      [params.category?.replace(/-/g, " ").trim(), params.categoryName?.trim()].filter(
+        (value): value is string => Boolean(value)
+      )
+    ),
+  ];
+  if (categoryNeedles.length) {
+    next = next.or(categoryNeedles.map((needle) => `category.ilike.%${needle}%`).join(","));
+  }
+  if (params.minRating > 0) next = next.gt("review_count", 0).gte("rating", params.minRating);
+  if (params.verifiedOnly) next = next.eq("is_verified", true);
+  return next;
+}
+
 async function loadPublishedSalonRows(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
+  select = BUSINESS_LISTING_CARD_SELECT
 ): Promise<Array<Record<string, unknown>>> {
   const client = publishedListingsClient(supabase);
   return fetchAllByIdCursor(async (afterId, pageSize) => {
     let query = client
       .from("salons")
-      .select(BUSINESS_LISTING_SELECT)
+      .select(select)
       .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
     if (afterId) query = query.gt("id", afterId);
     const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
@@ -293,18 +343,70 @@ async function loadPublishedSalonRows(
   });
 }
 
-function rowMatchesTextQuery(row: Record<string, unknown>, q: string): boolean {
-  if (!q.trim()) return true;
-  const needle = q.trim().toLowerCase();
-  return [row.name, row.category, row.city, row.district, row.province, row.address]
-    .some((value) => String(value || "").toLowerCase().includes(needle));
-}
+/** Homepage / browse: do not download every published salon on each request. */
+async function loadPublishedMarketplaceWindow(
+  supabase: SupabaseClient,
+  params: {
+    q: string;
+    location: string;
+    minRating: number;
+    verifiedOnly: boolean;
+    category?: string;
+    categoryName?: string;
+    limit: number;
+    offset: number;
+  }
+): Promise<{ rows: Array<Record<string, unknown>>; totalCount: number; hasMore: boolean }> {
+  const client = publishedListingsClient(supabase);
+  const filters = {
+    q: params.q,
+    location: params.location,
+    minRating: params.minRating,
+    verifiedOnly: params.verifiedOnly,
+    category: params.category,
+    categoryName: params.categoryName,
+  };
+  const windowSize =
+    !params.limit || params.limit <= 0
+      ? 80
+      : Math.min(
+          400,
+          params.offset + params.limit + FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT
+        );
 
-function rowMatchesLocationQuery(row: Record<string, unknown>, location: string): boolean {
-  if (!location.trim()) return true;
-  const needle = location.trim().toLowerCase();
-  return [row.city, row.district, row.province, row.address]
-    .some((value) => String(value || "").toLowerCase().includes(needle));
+  const featuredQuery = applyPublishedListingFilters(
+    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT),
+    filters
+  )
+    .eq("is_featured", true)
+    .limit(FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT);
+  const popularQuery = applyPublishedListingFilters(
+    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT),
+    filters
+  )
+    .order("review_count", { ascending: false })
+    .order("rating", { ascending: false })
+    .limit(windowSize);
+
+  const [featuredRes, popularRes] = await Promise.all([featuredQuery, popularQuery]);
+
+  if (featuredRes.error) throw new Error(featuredRes.error.message);
+  if (popularRes.error) throw new Error(popularRes.error.message);
+
+  const byId = new Map<string, Record<string, unknown>>();
+  for (const row of [...(featuredRes.data ?? []), ...(popularRes.data ?? [])]) {
+    const id = String((row as { id?: unknown }).id || "");
+    if (!id) continue;
+    byId.set(id, row as Record<string, unknown>);
+  }
+
+  const rows = [...byId.values()];
+  const popularCount = (popularRes.data ?? []).length;
+  return {
+    rows,
+    totalCount: rows.length,
+    hasMore: popularCount >= windowSize,
+  };
 }
 
 export async function fetchBusinessListingCards(
@@ -326,45 +428,54 @@ export async function fetchBusinessListingCards(
     minRating = 0,
     verifiedOnly = false,
     publishedOnly = false,
-    limit = 24,
+    limit = YOU_MAY_ALSO_LIKE_COUNT,
     offset = 0,
   } = params;
 
-  let data = publishedOnly
-    ? await loadPublishedSalonRows(supabase)
-    : await fetchAllByIdCursor(async (afterId, pageSize) => {
-        let query = supabase
-          .from("salons")
-          .select(BUSINESS_LISTING_SELECT)
-          .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
+  const categoryActive = category.replace(/-/g, " ").trim().length > 0;
 
-        if (q) {
-          query = query.or(
-            `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
-          );
-        }
-        if (location) {
-          const locationFilter = buildSalonLocationOrFilter(location);
-          if (locationFilter) query = query.or(locationFilter);
-        }
-        if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
-        if (verifiedOnly) query = query.eq("is_verified", true);
-
-        if (afterId) query = query.gt("id", afterId);
-        const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
-        if (error) throw new Error(error.message);
-        return (page ?? []) as Array<Record<string, unknown>>;
-      });
+  let data: Array<Record<string, unknown>>;
+  let countedTotal: number | null = null;
+  let windowHasMore: boolean | null = null;
 
   if (publishedOnly) {
-    if (q) data = data.filter((row) => rowMatchesTextQuery(row, q));
-    if (location) data = data.filter((row) => rowMatchesLocationQuery(row, location));
-    if (minRating > 0) {
-      data = data.filter(
-        (row) => Number(row.review_count || 0) > 0 && Number(row.rating || 0) >= minRating
-      );
-    }
-    if (verifiedOnly) data = data.filter((row) => Boolean(row.is_verified));
+    const windowed = await loadPublishedMarketplaceWindow(supabase, {
+      q,
+      location,
+      minRating,
+      verifiedOnly,
+      category,
+      categoryName,
+      limit,
+      offset,
+    });
+    data = windowed.rows;
+    countedTotal = windowed.totalCount;
+    windowHasMore = windowed.hasMore;
+  } else {
+    data = await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = supabase
+        .from("salons")
+        .select(categoryActive ? BUSINESS_LISTING_SELECT : BUSINESS_LISTING_CARD_SELECT)
+        .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
+
+      if (q) {
+        query = query.or(
+          `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
+        );
+      }
+      if (location) {
+        const locationFilter = buildSalonLocationOrFilter(location);
+        if (locationFilter) query = query.or(locationFilter);
+      }
+      if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
+      if (verifiedOnly) query = query.eq("is_verified", true);
+
+      if (afterId) query = query.gt("id", afterId);
+      const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+      if (error) throw new Error(error.message);
+      return (page ?? []) as Array<Record<string, unknown>>;
+    });
   }
 
   const filtered = filterBusinessListingRows(data, { category, categoryName, publishedOnly });
@@ -375,12 +486,13 @@ export async function fetchBusinessListingCards(
     const rows = sortBusinessListingRows(filtered, sort);
     const pagedRows = !limit || limit <= 0 ? rows.slice(offset) : rows.slice(offset, offset + limit);
     const listings = toCards(pagedRows, offset);
+    const totalCount = countedTotal ?? rows.length;
     return {
       listings,
       topRated: [],
       featured: [],
-      hasMore: Boolean(limit && limit > 0 && offset + listings.length < rows.length),
-      totalCount: rows.length,
+      hasMore: Boolean(limit && limit > 0 && offset + listings.length < totalCount),
+      totalCount,
     };
   }
 
@@ -391,9 +503,9 @@ export async function fetchBusinessListingCards(
       is_featured: row.is_featured === true,
     }))
   );
-  const topRatedCards = toCards(topRated);
-  const featuredCards = toCards(featured);
-  const totalCount = topRated.length + featured.length + rest.length;
+  const topRatedCards = toCards(topRated).slice(0, TOP_RATED_LISTING_COUNT);
+  const featuredCards = toCards(featured).slice(0, FEATURED_LISTING_COUNT);
+  const totalCount = countedTotal ?? topRated.length + featured.length + rest.length;
 
   if (!limit || limit <= 0) {
     return {
@@ -410,7 +522,10 @@ export async function fetchBusinessListingCards(
     listings: toCards(pagedRest, offset),
     topRated: topRatedCards,
     featured: featuredCards,
-    hasMore: offset + pagedRest.length < rest.length,
+    hasMore:
+      windowHasMore != null
+        ? windowHasMore
+        : offset + pagedRest.length < rest.length,
     totalCount,
   };
 }

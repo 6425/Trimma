@@ -2,6 +2,8 @@ import { createServerSupabaseClient } from "@/config/supabase-server";
 import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
 import { canonicalizeCategorySlug, fetchPublicCategories } from "@/lib/public-categories";
 import { fetchBusinessListingCards } from "@/lib/public-salon-search";
+import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
+import { withTimeout } from "@/lib/promise-timeout";
 import ListingsClient from "./ListingsClient";
 import { redirect } from "next/navigation";
 
@@ -44,22 +46,30 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
 
   try {
     const supabase = createServerSupabaseClient();
-    categories = await fetchPublicCategories().catch(() => []);
-
-    const result = await fetchBusinessListingCards(supabase, {
-      q: sp.q ?? "",
-      location: sp.l ?? "",
-      publishedOnly: true,
-      limit: 20,
-      offset: 0,
-    }).catch(() => ({
-      listings: [],
-      topRated: [],
-      featured: [],
+    const emptyListings = {
+      listings: [] as typeof initialListings,
+      topRated: [] as typeof initialTopRated,
+      featured: [] as typeof initialFeatured,
       hasMore: false,
       totalCount: 0,
-    }));
+    };
 
+    const [nextCategories, result] = await Promise.all([
+      fetchPublicCategories().catch(() => []),
+      withTimeout(
+        fetchBusinessListingCards(supabase, {
+          q: sp.q ?? "",
+          location: sp.l ?? "",
+          publishedOnly: true,
+          limit: YOU_MAY_ALSO_LIKE_COUNT,
+          offset: 0,
+        }),
+        8_000,
+        "Listing search timed out"
+      ).catch(() => emptyListings),
+    ]);
+
+    categories = nextCategories;
     initialListings = result.listings;
     initialTopRated = result.topRated;
     initialFeatured = result.featured;
@@ -82,7 +92,9 @@ export default async function BusinessListingsPage({ searchParams }: PageProps) 
       initialFeatured={initialFeatured}
       initialHasMore={initialHasMore}
       initialTotalCount={initialTotalCount}
-      ssrSeeded
+      ssrSeeded={
+        initialListings.length + initialTopRated.length + initialFeatured.length > 0
+      }
     />
   );
 }

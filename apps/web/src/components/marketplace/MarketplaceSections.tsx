@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SalonCard } from "./SalonCard";
 import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
-import { pickFeaturedListingsWithPhone } from "@/lib/listing-marketplace-rank";
+import { pickAdminFeaturedListings } from "@/lib/listing-marketplace-rank";
 
 interface Salon {
   id: string;
@@ -33,7 +33,7 @@ interface MarketplaceSectionsProps {
 
 // 1. FEATURED SALONS SECTION
 export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectionsProps) {
-  const featured = pickFeaturedListingsWithPhone(salons, 4);
+  const featured = pickAdminFeaturedListings(salons, 4);
 
   if (featured.length === 0) return null;
 
@@ -160,7 +160,7 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
 
 // 2. MOST POPULAR SALONS SECTION
 export function PopularSalonsSection({ salons, contextName }: MarketplaceSectionsProps) {
-  const featuredIds = new Set(pickFeaturedListingsWithPhone(salons, 4).map((salon) => salon.id));
+  const featuredIds = new Set(pickAdminFeaturedListings(salons, 4).map((salon) => salon.id));
   const popular = [...salons]
     .filter((salon) => !featuredIds.has(salon.id))
     .sort((a, b) => b.reviews - a.reviews || b.rating - a.rating)

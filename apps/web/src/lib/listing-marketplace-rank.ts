@@ -1,5 +1,7 @@
 export const TOP_RATED_LISTING_COUNT = 4;
 export const FEATURED_LISTING_COUNT = 4;
+/** First "You may also like" page, and each Load more page, on landing + category. */
+export const YOU_MAY_ALSO_LIKE_COUNT = 8;
 
 export function hasListingPhone(phone: unknown): boolean {
   return String(phone || "").replace(/\D/g, "").length >= 7;
@@ -13,6 +15,7 @@ type RankableListing = {
   review_count?: number | null;
   is_featured?: boolean | null;
   isFeatured?: boolean | null;
+  featured?: boolean | null;
 };
 
 function listingId(item: RankableListing): string {
@@ -20,7 +23,7 @@ function listingId(item: RankableListing): string {
 }
 
 function isAdminFeatured(item: RankableListing): boolean {
-  return item.is_featured === true || item.isFeatured === true;
+  return item.is_featured === true || item.isFeatured === true || item.featured === true;
 }
 
 export function listingReviewCount(listing: RankableListing): number {
@@ -57,7 +60,18 @@ export function pickFeaturedListingsWithPhone<T extends RankableListing>(
   items: T[],
   featuredCount = FEATURED_LISTING_COUNT
 ): T[] {
-  return pinTopReviewedListingsWithPhone(items, featuredCount).slice(0, featuredCount);
+  return pickAdminFeaturedListings(items, featuredCount);
+}
+
+/** Homepage / district Featured = admin-flagged listings only. Do not pad with popularity. */
+export function pickAdminFeaturedListings<T extends RankableListing>(
+  items: T[],
+  featuredCount = FEATURED_LISTING_COUNT
+): T[] {
+  return [...items]
+    .filter(isAdminFeatured)
+    .sort(compareListingPopularity)
+    .slice(0, featuredCount);
 }
 
 export function splitMarketplaceListingSections<T extends RankableListing>(
@@ -66,27 +80,21 @@ export function splitMarketplaceListingSections<T extends RankableListing>(
   featuredCount = FEATURED_LISTING_COUNT
 ): { topRated: T[]; featured: T[]; rest: T[] } {
   const popularity = [...items].sort(compareListingPopularity);
-  const topRated = popularity.filter((item) => hasListingPhone(item.phone)).slice(0, topCount);
-  const taken = new Set(topRated.map(listingId));
+  const taken = new Set<string>();
 
   const featured: T[] = [];
   for (const item of popularity) {
     if (featured.length >= featuredCount) break;
     const id = listingId(item);
-    if (!id || taken.has(id) || !isAdminFeatured(item)) continue;
+    if (!id || !isAdminFeatured(item)) continue;
     featured.push(item);
     taken.add(id);
   }
 
-  if (featured.length < featuredCount) {
-    for (const item of popularity) {
-      if (featured.length >= featuredCount) break;
-      const id = listingId(item);
-      if (!id || taken.has(id)) continue;
-      featured.push(item);
-      taken.add(id);
-    }
-  }
+  const topRated = popularity
+    .filter((item) => !taken.has(listingId(item)) && hasListingPhone(item.phone))
+    .slice(0, topCount);
+  for (const item of topRated) taken.add(listingId(item));
 
   const rest = popularity.filter((item) => !taken.has(listingId(item)));
   return { topRated, featured, rest };

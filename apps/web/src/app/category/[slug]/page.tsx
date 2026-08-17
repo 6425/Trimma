@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/config/supabase-server";
 import { fetchBusinessListingCards } from "@/lib/public-salon-search";
+import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
 import { fetchPublicCategories, canonicalizeCategorySlug, findPublicCategory } from "@/lib/public-categories";
 import CategoryClient from "./CategoryClient";
 import { redirect } from "next/navigation";
@@ -47,7 +48,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       category: canonicalSlug,
       categoryName: categoryLabel,
       publishedOnly: true,
-      limit: 20,
+      limit: YOU_MAY_ALSO_LIKE_COUNT,
       offset: 0,
     });
     initialListings = result.listings;

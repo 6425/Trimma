@@ -14,6 +14,7 @@ import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import type { PublicCategory } from "@/lib/public-categories";
 import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/sri-lanka-locations";
 import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
+import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
 
 const HERO_IMAGE = "/assets/business-listings-hero.png";
 
@@ -52,8 +53,6 @@ function readFiltersFromLocation(): ListingFilters {
   };
 }
 
-const LISTING_PAGE_SIZE = 20;
-
 function buildListingSearchParams(
   filters: ListingFilters,
   categories: PublicCategory[],
@@ -63,8 +62,8 @@ function buildListingSearchParams(
     q: filters.q,
     location: filters.location,
     category: filters.category,
-    limit: String(LISTING_PAGE_SIZE),
-    offset: String(page * LISTING_PAGE_SIZE),
+    limit: String(YOU_MAY_ALSO_LIKE_COUNT),
+    offset: String(page * YOU_MAY_ALSO_LIKE_COUNT),
   });
   const activeCategory = categories.find((category) => category.slug === filters.category);
   if (activeCategory?.name) {

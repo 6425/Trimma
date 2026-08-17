@@ -17,6 +17,7 @@ export type ListingQueueRow = {
   onboarding_status: string | null;
   public_visibility: string | null;
   source_type: string | null;
+  is_featured: boolean;
   created_at: string;
   captured_at: string | null;
 };
@@ -28,7 +29,7 @@ export type ListingQueuePayload = {
 };
 
 const QUEUE_SELECT =
-  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,created_at,business_info_extended";
+  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,created_at,business_info_extended";
 
 function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
   return data.map((row) => ({
@@ -46,6 +47,7 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     onboarding_status: (row.onboarding_status as string | null) ?? null,
     public_visibility: (row.public_visibility as string | null) ?? null,
     source_type: (row.source_type as string | null) ?? null,
+    is_featured: row.is_featured === true,
     created_at: String(row.created_at || ""),
     captured_at: readListingCapturedAt({
       created_at: row.created_at as string | null,

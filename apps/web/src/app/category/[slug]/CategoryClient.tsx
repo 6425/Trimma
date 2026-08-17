@@ -33,6 +33,7 @@ import {
 import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
 import { getCategoryHeroCopy } from "@/lib/category-hero-copy";
 import { SriLankaLocationSelect } from "../../../components/locations/SriLankaLocationSelect";
+import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
   "barber-salon": "/assets/category-barber-salon-hero.webp",
@@ -69,8 +70,6 @@ function categoryHeroImage(slug: string): string | undefined {
   const canonical = canonicalizeCategorySlug(slug);
   return CATEGORY_HERO_IMAGES[canonical] || CATEGORY_HERO_IMAGES[slug];
 }
-
-const LISTING_PAGE_SIZE = 20;
 
 export default function CategoryClient({
   slug: slugStr,
@@ -122,7 +121,7 @@ export default function CategoryClient({
   const loadListings = async (options?: { offset?: number; append?: boolean }) => {
     const offset = options?.offset ?? 0;
     const params = new URLSearchParams({
-      limit: String(LISTING_PAGE_SIZE),
+      limit: String(YOU_MAY_ALSO_LIKE_COUNT),
       offset: String(offset),
       category: slugStr,
       categoryName: categoryLabel,

@@ -42,7 +42,7 @@ export function ListingResultsSections({
             description="Highest Google review counts and ratings among published businesses that list a contact number, so you can call or message them straight away."
           />
           <div className={gridClassName}>
-            {topRated.map((listing, index) => (
+            {topRated.slice(0, 4).map((listing, index) => (
               <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
             ))}
           </div>
@@ -53,10 +53,10 @@ export function ListingResultsSections({
         <section>
           <SectionHeading
             title="Featured Salons"
-            description="Businesses highlighted by Trimma admin. If none are selected, this row shows the next-best listings after Top Rated."
+            description="Businesses highlighted by Trimma admin for the marketplace."
           />
           <div className={gridClassName}>
-            {featured.map((listing) => (
+            {featured.slice(0, 4).map((listing) => (
               <BusinessListingCard key={listing.id} listing={listing} />
             ))}
           </div>
