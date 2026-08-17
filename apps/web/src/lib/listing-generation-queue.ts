@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { LISTING_ONBOARDING_STATUS, readListingCapturedAt } from "@/lib/salon-listing-pipeline";
-import { postSupabaseRpc } from "@/lib/supabase-rpc";
 import { getSupabaseServerEnv } from "@/lib/supabase-server-env";
 
 export type ListingQueueRow = {
@@ -79,17 +78,6 @@ function asRecordArray(raw: unknown): Array<Record<string, unknown>> {
   return [];
 }
 
-function asCount(raw: unknown): number | null {
-  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
-  if (typeof raw === "string" && raw.trim() && Number.isFinite(Number(raw))) return Number(raw);
-  if (raw && typeof raw === "object") {
-    const record = raw as Record<string, unknown>;
-    if ("published_listing_count" in record) return asCount(record.published_listing_count);
-    if ("pending_listing_count" in record) return asCount(record.pending_listing_count);
-  }
-  return null;
-}
-
 async function restGet(path: string): Promise<unknown> {
   const { url, serviceRoleKey } = getSupabaseServerEnv();
   const response = await fetch(`${url}/rest/v1/${path}`, {
@@ -126,15 +114,15 @@ async function restCount(status: string): Promise<number | null> {
   return Number.isFinite(count) ? count : null;
 }
 
-async function loadRowsViaRest(): Promise<ListingQueueRow[]> {
+async function loadRowsByStatus(status: string): Promise<ListingQueueRow[]> {
   const collected: Array<Record<string, unknown>> = [];
   const seen = new Set<string>();
   let afterId: string | null = null;
 
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 500; i++) {
     const qs = [
       `select=${encodeURIComponent(QUEUE_SELECT)}`,
-      "onboarding_status=in.(LISTING_CAPTURED,LISTING_PUBLISHED)",
+      `onboarding_status=eq.${encodeURIComponent(status)}`,
       "order=id.asc",
       "limit=100",
     ];
@@ -155,73 +143,23 @@ async function loadRowsViaRest(): Promise<ListingQueueRow[]> {
     if (!afterId) break;
   }
 
-  return sortQueueRowsNewestFirst(mapQueueRows(collected));
-}
-
-function parsePayloadRpc(raw: unknown): ListingQueuePayload | null {
-  let payload: Record<string, unknown> | null = null;
-  if (typeof raw === "string") {
-    try {
-      payload = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  } else if (raw && typeof raw === "object" && !Array.isArray(raw)) {
-    payload = raw as Record<string, unknown>;
-    if (payload.listing_generation_queue_payload) {
-      return parsePayloadRpc(payload.listing_generation_queue_payload);
-    }
-  }
-  if (!payload) return null;
-  const list = asRecordArray(payload.rows);
-  const pendingCount = asCount(payload.pendingCount);
-  const listedCount = asCount(payload.listedCount);
-  if (pendingCount == null || listedCount == null) return null;
-  return {
-    rows: sortQueueRowsNewestFirst(mapQueueRows(list)),
-    pendingCount,
-    listedCount,
-  };
-}
-
-async function tryRpc<T>(run: () => Promise<T>): Promise<T | null> {
-  try {
-    return await run();
-  } catch {
-    return null;
-  }
+  return mapQueueRows(collected);
 }
 
 export async function loadListingGenerationQueue(
   _supabase?: SupabaseClient
 ): Promise<ListingQueuePayload> {
-  const fromPayload = await tryRpc(async () => {
-    const parsed = parsePayloadRpc(await postSupabaseRpc("listing_generation_queue_payload"));
-    if (!parsed) throw new Error("payload parse failed");
-    return parsed;
-  });
-  if (fromPayload) return fromPayload;
-
-  const [listedCount, pendingCount, rows] = await Promise.all([
-    tryRpc(async () => asCount(await postSupabaseRpc("published_listing_count"))).then(async (count) => {
-      if (count != null) return count;
-      return restCount(LISTING_ONBOARDING_STATUS.PUBLISHED);
-    }),
-    tryRpc(async () => asCount(await postSupabaseRpc("pending_listing_count"))).then(async (count) => {
-      if (count != null) return count;
-      return restCount(LISTING_ONBOARDING_STATUS.CAPTURED);
-    }),
-    tryRpc(() => loadRowsViaRest()).then((value) => value ?? []),
+  const [pendingRows, listedRows, pendingCount, listedCount] = await Promise.all([
+    loadRowsByStatus(LISTING_ONBOARDING_STATUS.CAPTURED),
+    loadRowsByStatus(LISTING_ONBOARDING_STATUS.PUBLISHED),
+    restCount(LISTING_ONBOARDING_STATUS.CAPTURED),
+    restCount(LISTING_ONBOARDING_STATUS.PUBLISHED),
   ]);
 
   return {
-    rows,
-    pendingCount:
-      pendingCount ??
-      rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.CAPTURED).length,
-    listedCount:
-      listedCount ??
-      rows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED).length,
+    rows: sortQueueRowsNewestFirst([...pendingRows, ...listedRows]),
+    pendingCount: pendingCount ?? pendingRows.length,
+    listedCount: listedCount ?? listedRows.length,
   };
 }
 
