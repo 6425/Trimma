@@ -64,6 +64,7 @@ export default function CityDetailPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [listings, setListings] = useState<BusinessListingCardData[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const cityOptions = districtMeta.cities;
 
@@ -94,12 +95,24 @@ export default function CityDetailPage() {
           limit: "0",
         });
         const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store" });
-        const payload = (await res.json()) as { listings?: BusinessListingCardData[]; error?: string };
+        const payload = (await res.json()) as {
+          listings?: BusinessListingCardData[];
+          totalCount?: number;
+          error?: string;
+        };
         if (!res.ok) throw new Error(payload.error || "Failed to load city listings.");
-        if (!cancelled) setListings(payload.listings || []);
+        if (!cancelled) {
+          setListings(payload.listings || []);
+          setTotalCount(
+            typeof payload.totalCount === "number" ? payload.totalCount : payload.listings?.length || 0
+          );
+        }
       } catch (err) {
         console.error("Failed to load live salons for city page:", err);
-        if (!cancelled) setListings([]);
+        if (!cancelled) {
+          setListings([]);
+          setTotalCount(0);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -152,7 +165,7 @@ export default function CityDetailPage() {
              <div className="flex flex-wrap items-center gap-3 text-xs font-bold mb-6">
                <div className="bg-black/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-black/10 flex items-center gap-2">
                  <Store className="w-4 h-4 text-zinc-900" />
-                 <span className="text-zinc-900">{listings.length} Salons Here</span>
+                 <span className="text-zinc-900">{totalCount} Salons Here</span>
                </div>
                <div className="bg-black/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-black/10 flex items-center gap-2">
                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />

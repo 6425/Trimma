@@ -20,6 +20,7 @@ export default function DistrictDetailPage() {
   const districtMeta = match?.district || provinceMeta.districts[0];
 
   const [listings, setListings] = useState<BusinessListingCardData[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const districtData: DistrictData = useMemo(
@@ -29,7 +30,7 @@ export default function DistrictDetailPage() {
       province: provinceMeta.name,
       provinceSlug: provinceMeta.slug,
       description: `Discover salons, spas, and beauty studios in ${districtMeta.name} District, ${provinceMeta.name}.`,
-      salonCount: listings.length,
+      salonCount: totalCount,
       avgRating: 4.7,
       image: provinceMeta.image,
       popularCategories: ["Barber", "Hair", "Spa"],
@@ -43,7 +44,7 @@ export default function DistrictDetailPage() {
       },
       salons: [],
     }),
-    [districtMeta, provinceMeta, listings.length]
+    [districtMeta, provinceMeta, totalCount]
   );
 
   useEffect(() => {
@@ -57,12 +58,24 @@ export default function DistrictDetailPage() {
           limit: "0",
         });
         const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store" });
-        const payload = (await res.json()) as { listings?: BusinessListingCardData[]; error?: string };
+        const payload = (await res.json()) as {
+          listings?: BusinessListingCardData[];
+          totalCount?: number;
+          error?: string;
+        };
         if (!res.ok) throw new Error(payload.error || "Failed to load district listings.");
-        if (!cancelled) setListings(payload.listings || []);
+        if (!cancelled) {
+          setListings(payload.listings || []);
+          setTotalCount(
+            typeof payload.totalCount === "number" ? payload.totalCount : payload.listings?.length || 0
+          );
+        }
       } catch (err) {
         console.error("Failed to load live salons for district page:", err);
-        if (!cancelled) setListings([]);
+        if (!cancelled) {
+          setListings([]);
+          setTotalCount(0);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

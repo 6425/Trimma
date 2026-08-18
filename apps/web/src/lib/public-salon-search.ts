@@ -287,6 +287,7 @@ function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
 type LooseListingQuery = {
   eq: (column: string, value: unknown) => LooseListingQuery;
   or: (filters: string) => LooseListingQuery;
+  not: (column: string, operator: string, value: string) => LooseListingQuery;
   gt: (column: string, value: number) => LooseListingQuery;
   gte: (column: string, value: number) => LooseListingQuery;
   order: (column: string, options?: { ascending?: boolean }) => LooseListingQuery;
@@ -306,6 +307,7 @@ function applyPublishedListingFilters(
 ): LooseListingQuery {
   let next = query as LooseListingQuery;
   next = next.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+  next = next.not("status", "in", "(rejected,inactive)");
   const q = params.q.trim();
   if (q) {
     next = next.or(
@@ -333,6 +335,30 @@ function applyPublishedListingFilters(
     next = next.eq("is_verified", true);
   }
   return next;
+}
+
+async function countPublishedMarketplaceListings(
+  supabase: SupabaseClient,
+  filters: {
+    q: string;
+    location: string;
+    minRating: number;
+    verifiedOnly: boolean;
+    category?: string;
+    categoryName?: string;
+  }
+): Promise<number> {
+  const client = publishedListingsClient(supabase);
+  const query = applyPublishedListingFilters(
+    client.from("salons").select("id", { count: "exact", head: true }) as unknown,
+    filters
+  );
+  const { count, error } = await (query as unknown as Promise<{
+    count: number | null;
+    error: { message: string } | null;
+  }>);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
 }
 
 function asSalonRows(data: unknown): Array<Record<string, unknown>> {
@@ -401,7 +427,11 @@ async function loadPublishedMarketplaceWindow(
     .order("rating", { ascending: false })
     .limit(windowSize);
 
-  const [featuredRes, popularRes] = await Promise.all([featuredQuery, popularQuery]);
+  const [featuredRes, popularRes, totalCount] = await Promise.all([
+    featuredQuery,
+    popularQuery,
+    countPublishedMarketplaceListings(supabase, filters),
+  ]);
 
   if (featuredRes.error) throw new Error(featuredRes.error.message);
   if (popularRes.error) throw new Error(popularRes.error.message);
@@ -418,9 +448,24 @@ async function loadPublishedMarketplaceWindow(
 
   return {
     rows: [...byId.values()],
-    totalCount: byId.size,
-    hasMore: popularRows.length >= windowSize,
+    totalCount,
+    hasMore:
+      !params.limit || params.limit <= 0
+        ? false
+        : params.offset + params.limit + FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT < totalCount,
   };
+}
+
+export async function countPublishedListingsForLocation(
+  supabase: SupabaseClient,
+  location: string
+): Promise<number> {
+  return countPublishedMarketplaceListings(supabase, {
+    q: "",
+    location,
+    minRating: 0,
+    verifiedOnly: false,
+  });
 }
 
 export async function fetchBusinessListingCards(

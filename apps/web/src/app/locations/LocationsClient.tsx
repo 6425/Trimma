@@ -9,15 +9,18 @@ import { buildLocationSearchHref, SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-lo
 import { ProvinceNavLinks } from "../../components/locations/ProvinceNavLinks";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 
-const provinces = SRI_LANKA_PROVINCES.map((province) => ({
-  id: province.slug,
-  name: province.name,
-  salonCount: 0,
-  categories: province.districts.map((d) => d.name).slice(0, 3),
-  image: province.image,
-}));
-
-export default function LocationsClient() {
+export default function LocationsClient({
+  salonCounts = {},
+}: {
+  salonCounts?: Record<string, number>;
+}) {
+  const provinces = SRI_LANKA_PROVINCES.map((province) => ({
+    id: province.slug,
+    name: province.name,
+    salonCount: salonCounts[province.slug] ?? salonCounts[province.name] ?? 0,
+    categories: province.districts.map((d) => d.name).slice(0, 3),
+    image: province.image,
+  }));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
