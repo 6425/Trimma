@@ -52,5 +52,5 @@ SET category = 'Bridal & Beauty'
 WHERE category IN ('Beauty Parlours', 'Beauty Parlors', 'Beauty Salon');
 
 UPDATE salons
-SET category = NULL
+SET category = 'Barber Salon'
 WHERE category IN ('Kids & Family', 'Kids and Family');

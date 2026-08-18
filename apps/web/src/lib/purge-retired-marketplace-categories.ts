@@ -124,7 +124,7 @@ export async function purgeRetiredMarketplaceCategories(supabase: SupabaseClient
 
   const { error: kidsRemapError } = await supabase
     .from("salons")
-    .update({ category: null })
+    .update({ category: "Barber Salon" })
     .in("category", KIDS_FAMILY_SALON_NAMES);
   if (kidsRemapError) {
     console.warn("purgeRetiredMarketplaceCategories salon remap kids:", kidsRemapError.message);
