@@ -48,8 +48,8 @@ WHERE slug IN (
   OR name IN ('Beauty Parlours', 'Beauty Parlors', 'Kids & Family', 'Kids and Family');
 
 UPDATE salons
-SET category = 'Bridal & Beauty'
-WHERE category IN ('Beauty Parlours', 'Beauty Parlors', 'Beauty Salon');
+SET category = 'Barber Salon'
+WHERE category IN ('Beauty Parlours', 'Beauty Parlors');
 
 UPDATE salons
 SET category = 'Barber Salon'

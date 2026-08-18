@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isRetiredPublicCategory, isSpaWellnessCategory } from "@/lib/public-categories";
 
-const BEAUTY_PARLOUR_SALON_NAMES = ["Beauty Parlours", "Beauty Parlors", "Beauty Salon"];
+const BEAUTY_PARLOUR_SALON_NAMES = ["Beauty Parlours", "Beauty Parlors"];
 const KIDS_FAMILY_SALON_NAMES = ["Kids & Family", "Kids and Family"];
 
 const SPA_WELLNESS_SLUG = "spa-wellness";
@@ -116,7 +116,7 @@ export async function purgeRetiredMarketplaceCategories(supabase: SupabaseClient
 
   const { error: beautyRemapError } = await supabase
     .from("salons")
-    .update({ category: "Bridal & Beauty" })
+    .update({ category: "Barber Salon" })
     .in("category", BEAUTY_PARLOUR_SALON_NAMES);
   if (beautyRemapError) {
     console.warn("purgeRetiredMarketplaceCategories salon remap beauty:", beautyRemapError.message);
