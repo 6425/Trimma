@@ -302,6 +302,8 @@ function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
   }
 }
 
+type ListingQueryResult = { data: unknown; error: { message: string } | null };
+
 type LooseListingQuery = {
   eq: (column: string, value: unknown) => LooseListingQuery;
   or: (filters: string) => LooseListingQuery;
@@ -310,8 +312,12 @@ type LooseListingQuery = {
   lte: (column: string, value: unknown) => LooseListingQuery;
   gte: (column: string, value: unknown) => LooseListingQuery;
   order: (column: string, options?: { ascending?: boolean }) => LooseListingQuery;
-  limit: (count: number) => Promise<{ data: unknown; error: { message: string } | null }>;
+  limit: (count: number) => LooseListingQuery;
 };
+
+function runListingQuery(query: LooseListingQuery): Promise<ListingQueryResult> {
+  return query as unknown as Promise<ListingQueryResult>;
+}
 
 function applyPublishedListingFilters(
   query: unknown,
@@ -443,18 +449,19 @@ async function loadPublishedMarketplaceWindow(
 
   const today = todayInFeaturedTimezone();
   const featuredSelect = BUSINESS_LISTING_CARD_SELECT;
-  let featuredQuery = applyPublishedListingFilters(
-    client.from("salons").select(featuredSelect) as unknown,
-    filters
-  ).eq("is_featured", true);
-  featuredQuery = featuredQuery.lte("featured_starts_at", today).gte("featured_ends_at", today).limit(40);
-  const popularQuery = applyPublishedListingFilters(
-    client.from("salons").select(featuredSelect) as unknown,
-    filters
-  )
-    .order("review_count", { ascending: false })
-    .order("rating", { ascending: false })
-    .limit(windowSize);
+  const featuredQuery = runListingQuery(
+    applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, filters)
+      .eq("is_featured", true)
+      .lte("featured_starts_at", today)
+      .gte("featured_ends_at", today)
+      .limit(40)
+  );
+  const popularQuery = runListingQuery(
+    applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, filters)
+      .order("review_count", { ascending: false })
+      .order("rating", { ascending: false })
+      .limit(windowSize)
+  );
 
   let [featuredRes, popularRes, totalCount] = await Promise.all([
     featuredQuery,
@@ -467,20 +474,19 @@ async function loadPublishedMarketplaceWindow(
     (popularRes.error && isMissingDbSchemaError(popularRes.error.message))
   ) {
     const fallbackSelect = withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT);
-    const fallbackFeatured = applyPublishedListingFilters(
-      client.from("salons").select(fallbackSelect) as unknown,
-      filters
-    )
-      .eq("is_featured", true)
-      .limit(40);
-    const fallbackPopular = applyPublishedListingFilters(
-      client.from("salons").select(fallbackSelect) as unknown,
-      filters
-    )
-      .order("review_count", { ascending: false })
-      .order("rating", { ascending: false })
-      .limit(windowSize);
-    const fallback = await Promise.all([fallbackFeatured, fallbackPopular]);
+    const fallback = await Promise.all([
+      runListingQuery(
+        applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
+          .eq("is_featured", true)
+          .limit(40)
+      ),
+      runListingQuery(
+        applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
+          .order("review_count", { ascending: false })
+          .order("rating", { ascending: false })
+          .limit(windowSize)
+      ),
+    ]);
     featuredRes = fallback[0];
     popularRes = fallback[1];
   }
