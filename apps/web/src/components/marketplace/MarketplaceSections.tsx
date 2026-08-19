@@ -44,10 +44,10 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
           <Sparkles className="w-3.5 h-3.5 text-amber-500 mr-1.5 animate-pulse inline" /> Handpicked Premium Selection
         </Badge>
         <h2 className="text-3xl font-black tracking-tight text-zinc-900 leading-tight">
-          Featured Salons {contextName ? `in ${contextName}` : ""}
+          Featured Beauty Business {contextName ? `in ${contextName}` : ""}
         </h2>
         <p className="text-zinc-500 text-sm font-medium mt-1">
-          Vetted partners selected by our editors for exceptional styling, hygiene standards, and guest reviews.
+          Businesses selected by Trimma admin for a featured period. Up to four currently live featured listings appear here.
         </p>
       </div>
 

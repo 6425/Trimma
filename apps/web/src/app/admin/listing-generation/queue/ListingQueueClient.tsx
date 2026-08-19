@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ExternalLink, Rocket, PauseCircle, Star } from "lucide-react";
+import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -26,6 +26,13 @@ function addIsoDays(iso: string, days: number): string {
   const date = new Date(`${iso}T12:00:00`);
   date.setDate(date.getDate() + days);
   return date.toLocaleDateString("en-CA");
+}
+
+function matchesQueueSearch(row: ListingQueueRow, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  return [row.name, row.category, row.city, row.district, row.province, row.address]
+    .some((value) => String(value || "").toLowerCase().includes(needle));
 }
 
 type QueueTab = "pending" | "listed";
@@ -76,6 +83,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(initialQueue.rows.length === 0);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [featureEditor, setFeatureEditor] = useState<{
     salonId: string;
     name: string;
@@ -104,7 +112,11 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
         }),
     [rows]
   );
-  const visibleRows = activeTab === "listed" ? listedRows : pendingRows;
+  const tabRows = activeTab === "listed" ? listedRows : pendingRows;
+  const visibleRows = useMemo(
+    () => tabRows.filter((row) => matchesQueueSearch(row, searchQuery)),
+    [tabRows, searchQuery]
+  );
   const featuredCount = listedRows.filter((row) => featuredListingStatus(row) === "live").length;
 
   const load = useCallback(async (options?: { showLoading?: boolean }) => {
@@ -283,29 +295,46 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
         )}
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm">
-        <table className="min-w-full text-sm">
-          <thead className="border-b border-zinc-100 bg-zinc-50 text-left text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+      <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
+        <div className="border-b border-zinc-100 p-2.5">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder={
+                activeTab === "listed"
+                  ? "Search listed salons by name, category, or location to feature…"
+                  : "Search pending salons by name, category, or location…"
+              }
+              className="h-11 min-h-11 rounded-xl pl-10 text-sm"
+            />
+          </div>
+        </div>
+        <table className="w-full table-fixed text-[11px] leading-tight">
+          <thead className="border-b border-zinc-100 bg-zinc-50 text-left text-[10px] font-bold uppercase tracking-wider text-zinc-500">
             <tr>
-              <th className="px-4 py-3">Business</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Captured</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="w-[20%] px-2 py-1.5">Business</th>
+              <th className="w-[14%] px-2 py-1.5">Category</th>
+              <th className="w-[16%] px-2 py-1.5">Location</th>
+              <th className="w-[11%] px-2 py-1.5">Captured</th>
+              <th className="w-[15%] px-2 py-1.5">Status</th>
+              <th className="w-[24%] px-2 py-1.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
+                <td colSpan={6} className="px-2 py-12 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
                 </td>
               </tr>
             ) : visibleRows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-16 text-center text-zinc-500">
-                  {activeTab === "pending" ? (
+                <td colSpan={6} className="px-2 py-12 text-center text-zinc-500">
+                  {tabRows.length > 0 && searchQuery.trim() ? (
+                    <>No {activeTab === "listed" ? "listed" : "pending"} salons match “{searchQuery.trim()}”.</>
+                  ) : activeTab === "pending" ? (
                     <>
                       No pending listings. Run{" "}
                       <Link href="/admin/listing-generation/capture" className="font-bold underline">
@@ -331,30 +360,31 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
 
                 return (
                   <tr key={row.id} className="border-b border-zinc-50 hover:bg-zinc-50/80">
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-zinc-900">{row.name}</div>
-                      <div className="text-xs text-zinc-500">
+                    <td className="truncate px-2 py-1.5">
+                      <div className="truncate font-semibold text-zinc-900">{row.name}</div>
+                      <div className="truncate text-[10px] text-zinc-500">
                         {row.rating != null ? `${row.rating}★` : "—"}
                         {row.review_count ? ` · ${row.review_count} reviews` : ""}
                       </div>
                     </td>
-                    <td className="px-4 py-3">{row.category || "Uncategorized"}</td>
-                    <td className="px-4 py-3">{location}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-zinc-600">
+                    <td className="truncate px-2 py-1.5 text-zinc-700">{row.category || "Uncategorized"}</td>
+                    <td className="truncate px-2 py-1.5 text-zinc-700">{location}</td>
+                    <td className="truncate px-2 py-1.5 whitespace-nowrap text-zinc-600">
                       {formatListingCapturedDate(row.captured_at)}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="outline" className={isPublished ? "border-emerald-200 text-emerald-700" : ""}>
+                    <td className="px-2 py-1.5">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className={cn("px-1.5 py-0 text-[10px]", isPublished ? "border-emerald-200 text-emerald-700" : "")}>
                           {listingPipelineLabel(row.onboarding_status)}
                         </Badge>
                         {row.is_featured ? (
                           <Badge
-                            className={
+                            className={cn(
+                              "px-1.5 py-0 text-[10px]",
                               featuredListingStatus(row) === "live"
                                 ? "border-none bg-[#ffde5a] text-black"
                                 : "border-none bg-zinc-200 text-zinc-800"
-                            }
+                            )}
                           >
                             {featuredListingStatus(row) === "live"
                               ? "Featured"
@@ -368,15 +398,15 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap justify-end gap-1.5">
+                    <td className="px-2 py-1.5">
+                      <div className="flex flex-wrap justify-end gap-1">
                         {isPublished ? (
                           <>
                             <Button
                               type="button"
                               variant={featuredListingStatus(row) === "live" ? "default" : "outline"}
                               size="sm"
-                              className="h-9 min-h-9 font-bold"
+                              className="h-7 min-h-7 px-2 text-[10px] font-bold"
                               disabled={busyId !== null}
                               onClick={() => {
                                 const today = todayInFeaturedTimezone();
@@ -390,27 +420,27 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                               }}
                             >
                               {busyId === row.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
-                                  <Star className={cn("mr-1 h-3.5 w-3.5", featuredListingStatus(row) === "live" && "fill-current")} />
-                                  {row.is_featured ? "Edit feature" : "Feature"}
+                                  <Star className={cn("mr-0.5 h-3 w-3", featuredListingStatus(row) === "live" && "fill-current")} />
+                                  {row.is_featured ? "Edit" : "Feature"}
                                 </>
                               )}
                             </Button>
                             <Link
                               href={buildSalonPublicPath(row)}
                               target="_blank"
-                              className={buttonVariants({ variant: "outline", size: "sm", className: "h-9" })}
+                              className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 min-h-7 px-2 text-[10px]" })}
                             >
-                              <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                              <ExternalLink className="mr-0.5 h-3 w-3" />
                               View
                             </Link>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-9"
+                              className="h-7 min-h-7 px-2 text-[10px]"
                               disabled={busyId !== null}
                               onClick={() =>
                                 void runAction(row.id, () =>
@@ -421,11 +451,11 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                               }
                             >
                               {busyId === row.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
                                 <>
-                                  <PauseCircle className="mr-1 h-3.5 w-3.5" />
-                                  Unpublish
+                                  <PauseCircle className="mr-0.5 h-3 w-3" />
+                                  Unpub
                                 </>
                               )}
                             </Button>
@@ -435,7 +465,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                             type="button"
                             variant="default"
                             size="sm"
-                            className="h-9 font-bold"
+                            className="h-7 min-h-7 px-2 text-[10px] font-bold"
                             disabled={busyId !== null}
                             onClick={() =>
                               void runAction(row.id, () =>
@@ -446,11 +476,11 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                             }
                           >
                             {busyId === row.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <Loader2 className="h-3 w-3 animate-spin" />
                             ) : (
                               <>
-                                <Rocket className="mr-1 h-3.5 w-3.5" />
-                                Publish listing
+                                <Rocket className="mr-0.5 h-3 w-3" />
+                                Publish
                               </>
                             )}
                           </Button>
@@ -460,7 +490,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                           type="button"
                           variant="dark"
                           size="sm"
-                          className="h-9 font-bold"
+                          className="h-7 min-h-7 px-2 text-[10px] font-bold"
                           disabled={busyId !== null}
                           onClick={() =>
                             void runAction(row.id, () =>
@@ -478,7 +508,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                             )
                           }
                         >
-                          Start booking onboarding
+                          Onboard
                         </Button>
                       </div>
                     </td>
@@ -488,9 +518,10 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
             )}
           </tbody>
         </table>
-        <p className="border-t border-zinc-100 px-4 py-2 text-xs text-zinc-500">
-          Showing {visibleRows.length} {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed{" "}
-          {listedCount}
+        <p className="border-t border-zinc-100 px-2.5 py-1.5 text-[11px] text-zinc-500">
+          Showing {visibleRows.length}
+          {searchQuery.trim() && tabRows.length !== visibleRows.length ? ` of ${tabRows.length}` : ""}{" "}
+          {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed {listedCount}
           {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
         </p>
       </div>

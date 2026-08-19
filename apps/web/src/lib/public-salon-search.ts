@@ -626,7 +626,7 @@ export async function fetchBusinessListingCards(
 
   if (!limit || limit <= 0) {
     return {
-      listings: toCards([...topRated, ...featured, ...rest]),
+      listings: toCards([...featured, ...topRated, ...rest]),
       topRated: topRatedCards,
       featured: featuredCards,
       hasMore: false,

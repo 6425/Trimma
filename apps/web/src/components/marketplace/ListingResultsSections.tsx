@@ -35,20 +35,6 @@ export function ListingResultsSections({
 }: Props) {
   return (
     <div className="space-y-12">
-      {topRated.length > 0 ? (
-        <section>
-          <SectionHeading
-            title="Top Rated"
-            description="Highest Google review counts and ratings among published businesses that list a contact number, so you can call or message them straight away."
-          />
-          <div className={gridClassName}>
-            {topRated.slice(0, 4).map((listing, index) => (
-              <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       {featured.length > 0 ? (
         <section>
           <SectionHeading
@@ -56,7 +42,21 @@ export function ListingResultsSections({
             description="Businesses selected by Trimma admin for a featured period. Up to four currently live featured listings appear here."
           />
           <div className={gridClassName}>
-            {featured.slice(0, 4).map((listing) => (
+            {featured.slice(0, 4).map((listing, index) => (
+              <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {topRated.length > 0 ? (
+        <section>
+          <SectionHeading
+            title="Top Rated"
+            description="Highest Google review counts and ratings among published businesses that list a contact number, so you can call or message them straight away."
+          />
+          <div className={gridClassName}>
+            {topRated.slice(0, 4).map((listing) => (
               <BusinessListingCard key={listing.id} listing={listing} />
             ))}
           </div>
@@ -103,7 +103,7 @@ export function mergeListingSectionCards(
 ): BusinessListingCardData[] {
   const seen = new Set<string>();
   const merged: BusinessListingCardData[] = [];
-  for (const listing of [...topRated, ...featured, ...more]) {
+  for (const listing of [...featured, ...topRated, ...more]) {
     if (seen.has(listing.id)) continue;
     seen.add(listing.id);
     merged.push(listing);
