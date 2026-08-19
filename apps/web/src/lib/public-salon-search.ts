@@ -156,14 +156,14 @@ export async function fetchPublicSalons(
     return query;
   };
 
-  const fetchRows = async () =>
+  const fetchRows = async (): Promise<Array<Record<string, unknown>>> =>
     postFilterActive
       ? fetchAllByIdCursor(async (afterId, pageSize) => {
           let query = applyFilters(supabase.from("salons"), false);
           if (afterId) query = query.gt("id", afterId);
           const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
           if (error) throw new Error(error.message);
-          return page || [];
+          return asSalonRows(page);
         })
       : (async () => {
           const { data: page, error } = await applyFilters(supabase.from("salons"), true).range(
@@ -171,10 +171,10 @@ export async function fetchPublicSalons(
             offset + Math.max(limit, 1) - 1
           );
           if (error) throw new Error(error.message);
-          return page || [];
+          return asSalonRows(page);
         })();
 
-  let data: Awaited<ReturnType<typeof fetchRows>>;
+  let data: Array<Record<string, unknown>>;
   try {
     data = await fetchRows();
   } catch (error) {
