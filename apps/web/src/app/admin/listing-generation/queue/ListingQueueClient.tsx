@@ -50,18 +50,22 @@ function isPendingQueueRow(row: { onboarding_status: string | null; source_type:
 async function postListingAction(
   path: string,
   body: Record<string, unknown>
-): Promise<{ success: boolean; error?: string; publishedCount?: number }> {
+): Promise<{ success: boolean; error?: string; publishedCount?: number; updatedCount?: number }> {
   const response = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "same-origin",
     body: JSON.stringify(body),
   });
-  const data = (await response.json().catch(() => ({}))) as { error?: string; publishedCount?: number };
+  const data = (await response.json().catch(() => ({}))) as {
+    error?: string;
+    publishedCount?: number;
+    updatedCount?: number;
+  };
   if (!response.ok) {
     return { success: false, error: data.error || `Request failed (${response.status}).` };
   }
-  return { success: true, publishedCount: data.publishedCount };
+  return { success: true, publishedCount: data.publishedCount, updatedCount: data.updatedCount };
 }
 
 export default function ListingQueueClient({
@@ -95,6 +99,7 @@ function ListingQueueContent({
   const searchParams = useSearchParams();
   const router = useRouter();
   const [rows, setRows] = useState<ListingQueueRow[]>(initialQueue.rows);
+  const [featuredRows, setFeaturedRows] = useState<ListingQueueRow[]>(initialQueue.featuredRows || []);
   const [pendingCount, setPendingCount] = useState(initialQueue.pendingCount);
   const [listedCount, setListedCount] = useState(initialQueue.listedCount);
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
@@ -118,6 +123,7 @@ function ListingQueueContent({
     name: string;
     about: string;
   } | null>(null);
+  const [batchDraft, setBatchDraft] = useState<{ start: string; end: string } | null>(null);
   const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
 
   const pendingRows = useMemo(
@@ -150,7 +156,36 @@ function ListingQueueContent({
   const hasActiveFilters = Boolean(searchQuery.trim() || districtSlug || categoryName);
   const visibleRows = hasActiveFilters ? searchRows || [] : tabRows;
   const tableLoading = loading || (hasActiveFilters && searching && searchRows === null);
-  const featuredCount = listedRows.filter((row) => featuredListingStatus(row) === "live").length;
+  const featuredBatch = useMemo(() => {
+    return [...featuredRows]
+      .filter((row) => row.is_featured)
+      .sort((a, b) => {
+        const rank = (row: ListingQueueRow) => {
+          const status = featuredListingStatus(row);
+          if (status === "live") return 0;
+          if (status === "scheduled") return 1;
+          return 2;
+        };
+        if (rank(a) !== rank(b)) return rank(a) - rank(b);
+        return a.name.localeCompare(b.name);
+      });
+  }, [featuredRows]);
+  const featuredLiveCount = featuredBatch.filter((row) => featuredListingStatus(row) === "live").length;
+  const sharedBatchPeriod = useMemo(() => {
+    const today = todayInFeaturedTimezone();
+    const fallback = { start: today, end: addIsoDays(today, 13) };
+    if (!featuredBatch.length) return fallback;
+    const start = featuredBatch[0].featured_starts_at;
+    const end = featuredBatch[0].featured_ends_at;
+    const same = featuredBatch.every(
+      (row) => row.featured_starts_at === start && row.featured_ends_at === end
+    );
+    if (same && start && end) return { start, end };
+    return { start: start || fallback.start, end: end || fallback.end };
+  }, [featuredBatch]);
+  const batchStart = batchDraft?.start || sharedBatchPeriod.start;
+  const batchEnd = batchDraft?.end || sharedBatchPeriod.end;
+  const featuredCount = featuredLiveCount;
 
   const load = useCallback(async (options?: { showLoading?: boolean }) => {
     const showLoading = options?.showLoading !== false;
@@ -167,6 +202,7 @@ function ListingQueueContent({
 
       const queuePayload = (await queueRes.json()) as {
         rows?: ListingQueueRow[];
+        featuredRows?: ListingQueueRow[];
         pendingCount?: number;
         listedCount?: number;
         error?: string;
@@ -177,6 +213,8 @@ function ListingQueueContent({
 
       const nextRows = queuePayload.rows || [];
       setRows(nextRows);
+      setFeaturedRows(queuePayload.featuredRows || []);
+      setBatchDraft(null);
       setPendingCount(
         typeof queuePayload.pendingCount === "number"
           ? queuePayload.pendingCount
@@ -367,6 +405,144 @@ function ListingQueueContent({
         )}
       </div>
 
+      {activeTab === "listed" ? (
+        <div className="overflow-hidden rounded-2xl border border-amber-200 bg-[#fffbeb] shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-amber-200 p-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-zinc-900">Featured Batch</h2>
+              <p className="mt-0.5 text-xs text-zinc-600">
+                All featured listed salons. Public Featured Beauty Business shows up to {FEATURED_LISTING_COUNT}{" "}
+                live listings; extras are ranked by reviews.
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-zinc-500">
+                {featuredBatch.length} in batch · {featuredLiveCount} live
+                {formatFeaturedDateRange(batchStart, batchEnd) ? ` · ${formatFeaturedDateRange(batchStart, batchEnd)}` : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                Start
+                <Input
+                  type="date"
+                  className="mt-1 h-11 min-h-11 w-40"
+                  value={batchStart}
+                  onChange={(event) =>
+                    setBatchDraft({ start: event.target.value, end: batchEnd })
+                  }
+                />
+              </label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                End
+                <Input
+                  type="date"
+                  className="mt-1 h-11 min-h-11 w-40"
+                  value={batchEnd}
+                  min={batchStart}
+                  onChange={(event) =>
+                    setBatchDraft({ start: batchStart, end: event.target.value })
+                  }
+                />
+              </label>
+              <Button
+                type="button"
+                variant="default"
+                className="h-11 min-h-11 font-bold"
+                disabled={busyId !== null || featuredBatch.length === 0}
+                onClick={() =>
+                  void runAction("__batch__", async () => {
+                    if (!isValidFeaturedPeriod(batchStart, batchEnd)) {
+                      return { success: false, error: "Choose a start date and an end date on or after start." };
+                    }
+                    const result = await postListingAction("/api/admin/listing-generation/feature-batch", {
+                      featuredStartsAt: batchStart,
+                      featuredEndsAt: batchEnd,
+                    });
+                    if (result.success) {
+                      toast.success(
+                        `Featured batch dates saved for ${result.updatedCount ?? featuredBatch.length} salon${
+                          (result.updatedCount ?? featuredBatch.length) === 1 ? "" : "s"
+                        }.`
+                      );
+                    }
+                    return result;
+                  })
+                }
+              >
+                {busyId === "__batch__" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save batch dates"}
+              </Button>
+            </div>
+          </div>
+          {featuredBatch.length === 0 ? (
+            <p className="px-3 py-6 text-center text-xs text-zinc-500">
+              No featured salons yet. Search listed salons below and click Feature to add them to this batch.
+            </p>
+          ) : (
+            <table className="w-full table-fixed text-[11px] leading-tight">
+              <thead className="border-b border-amber-200 bg-amber-50 text-left text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                <tr>
+                  <th className="w-[28%] px-2 py-1.5">Business</th>
+                  <th className="w-[18%] px-2 py-1.5">Category</th>
+                  <th className="w-[22%] px-2 py-1.5">Location</th>
+                  <th className="w-[16%] px-2 py-1.5">Status</th>
+                  <th className="w-[16%] px-2 py-1.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {featuredBatch.map((row) => {
+                  const location = [row.city, row.district].filter(Boolean).join(", ") || row.province || "—";
+                  const status = featuredListingStatus(row);
+                  return (
+                    <tr key={row.id} className="border-b border-amber-100">
+                      <td className="truncate px-2 py-1.5 font-semibold text-zinc-900">{row.name}</td>
+                      <td className="truncate px-2 py-1.5 text-zinc-700">{row.category || "Uncategorized"}</td>
+                      <td className="truncate px-2 py-1.5 text-zinc-700">{location}</td>
+                      <td className="px-2 py-1.5">
+                        <Badge
+                          className={cn(
+                            "px-1.5 py-0 text-[10px]",
+                            status === "live"
+                              ? "border-none bg-[#ffde5a] text-black"
+                              : "border-none bg-zinc-200 text-zinc-800"
+                          )}
+                        >
+                          {status === "live" ? "Featured" : status === "scheduled" ? "Scheduled" : "Expired"}
+                          {formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)
+                            ? ` · ${formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)}`
+                            : ""}
+                        </Badge>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <div className="flex flex-wrap justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 min-h-7 px-2 text-[10px]"
+                            disabled={busyId !== null}
+                            onClick={() =>
+                              void runAction(row.id, async () => {
+                                const result = await postListingAction("/api/admin/listing-generation/feature", {
+                                  salonId: row.id,
+                                  featured: false,
+                                });
+                                if (result.success) toast.success(`Removed ${row.name} from the featured batch.`);
+                                return result;
+                              })
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
         <div className="border-b border-zinc-100 p-2.5">
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_12rem]">
@@ -519,8 +695,8 @@ function ListingQueueContent({
                                 setFeatureEditor({
                                   salonId: row.id,
                                   name: row.name,
-                                  start: row.featured_starts_at || today,
-                                  end: row.featured_ends_at || addIsoDays(today, 13),
+                                  start: row.featured_starts_at || batchStart || today,
+                                  end: row.featured_ends_at || batchEnd || addIsoDays(today, 13),
                                   isFeatured: row.is_featured,
                                 });
                               }}

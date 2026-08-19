@@ -8,7 +8,7 @@ import ListingQueueClient from "./ListingQueueClient";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const EMPTY_QUEUE: ListingQueuePayload = { rows: [], pendingCount: 0, listedCount: 0 };
+const EMPTY_QUEUE: ListingQueuePayload = { rows: [], featuredRows: [], pendingCount: 0, listedCount: 0 };
 
 export default async function ListingQueuePage() {
   let initialQueue = EMPTY_QUEUE;

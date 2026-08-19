@@ -19,6 +19,7 @@ export async function GET() {
     return NextResponse.json(
       {
         rows: payload.rows,
+        featuredRows: payload.featuredRows,
         pendingCount: payload.pendingCount,
         listedCount: payload.listedCount,
       },

@@ -268,6 +268,49 @@ export async function setListingFeaturedRecord(
   });
 }
 
+export async function applyFeaturedBatchPeriod(
+  supabase: SupabaseClient,
+  period: { startsAt?: string | null; endsAt?: string | null }
+): Promise<{ updatedCount: number }> {
+  const startsAt = parseFeaturedDate(period.startsAt);
+  const endsAt = parseFeaturedDate(period.endsAt);
+  if (!isValidFeaturedPeriod(startsAt, endsAt)) {
+    throw new Error("Featured start and end dates are required, and end must be on or after start.");
+  }
+
+  const { data: salons, error: fetchError } = await supabase
+    .from("salons")
+    .select("id")
+    .eq("is_featured", true)
+    .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+
+  if (fetchError) throw new Error(fetchError.message);
+  const ids = (salons || []).map((row) => String(row.id)).filter(Boolean);
+  if (!ids.length) {
+    throw new Error("There are no featured salons in the batch yet.");
+  }
+
+  let result = await supabase
+    .from("salons")
+    .update({
+      featured_starts_at: startsAt,
+      featured_ends_at: endsAt,
+    })
+    .in("id", ids);
+  if (result.error && isMissingDbSchemaError(result.error.message)) {
+    throw new Error("Run packages/db/FEATURED_LISTING_PERIOD.sql in Supabase before featuring listings.");
+  }
+  if (result.error) throw new Error(result.error.message);
+
+  await tryInsertOnboardingLog(supabase, {
+    salon_id: ids[0],
+    action: "LISTING_FEATURED_BATCH",
+    notes: `Updated featured batch period for ${ids.length} listed salon${ids.length === 1 ? "" : "s"} from ${startsAt} to ${endsAt}.`,
+  });
+
+  return { updatedCount: ids.length };
+}
+
 export async function setListingAboutRecord(
   supabase: SupabaseClient,
   salonId: string,

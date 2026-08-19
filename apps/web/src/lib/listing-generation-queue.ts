@@ -30,6 +30,7 @@ export type ListingQueueRow = {
 
 export type ListingQueuePayload = {
   rows: ListingQueueRow[];
+  featuredRows: ListingQueueRow[];
   pendingCount: number;
   listedCount: number;
 };
@@ -238,13 +239,32 @@ export async function searchListingGenerationQueue(input: {
   return [...byId.values()];
 }
 
+async function loadFeaturedListedRows(select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
+  const qs = [
+    `select=${encodeURIComponent(select)}`,
+    `onboarding_status=eq.${encodeURIComponent(LISTING_ONBOARDING_STATUS.PUBLISHED)}`,
+    "is_featured=eq.true",
+    "order=name.asc",
+    "limit=200",
+  ];
+  try {
+    return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+  } catch (error) {
+    if (select !== QUEUE_SELECT_BASE) {
+      return loadFeaturedListedRows(QUEUE_SELECT_BASE);
+    }
+    throw error;
+  }
+}
+
 export async function loadListingGenerationQueue(
   _supabase?: SupabaseClient
 ): Promise<ListingQueuePayload> {
-  const [pendingCaptured, pendingDiscovered, listedRows, pendingCount, listedCount] = await Promise.all([
+  const [pendingCaptured, pendingDiscovered, listedRows, featuredRows, pendingCount, listedCount] = await Promise.all([
     loadRowsByStatus(LISTING_ONBOARDING_STATUS.CAPTURED),
     loadListingGenerationDiscovered(),
     loadRowsByStatus(LISTING_ONBOARDING_STATUS.PUBLISHED),
+    loadFeaturedListedRows(),
     restCount(LISTING_ONBOARDING_STATUS.CAPTURED),
     restCount(LISTING_ONBOARDING_STATUS.PUBLISHED),
   ]);
@@ -257,6 +277,7 @@ export async function loadListingGenerationQueue(
 
   return {
     rows: sortQueueRowsNewestFirst([...pendingRows, ...listedRows]),
+    featuredRows,
     pendingCount: Math.max(pendingCount ?? 0, pendingRows.length),
     listedCount: listedCount ?? listedRows.length,
   };
