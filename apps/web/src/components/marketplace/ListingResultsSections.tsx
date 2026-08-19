@@ -43,7 +43,12 @@ export function ListingResultsSections({
           />
           <div className={gridClassName}>
             {featured.map((listing, index) => (
-              <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
+              <BusinessListingCard
+                key={listing.id}
+                listing={listing}
+                priority={index < 4}
+                featuredBatch
+              />
             ))}
           </div>
         </section>
@@ -57,7 +62,11 @@ export function ListingResultsSections({
           />
           <div className={gridClassName}>
             {topRated.slice(0, 4).map((listing) => (
-              <BusinessListingCard key={listing.id} listing={listing} />
+              <BusinessListingCard
+                key={listing.id}
+                listing={listing}
+                featuredBatch={listing.isFeatured}
+              />
             ))}
           </div>
         </section>
@@ -71,9 +80,13 @@ export function ListingResultsSections({
           />
           {more.length > 0 ? (
             <div className={gridClassName}>
-              {more.map((listing) => (
-                <BusinessListingCard key={listing.id} listing={listing} />
-              ))}
+            {more.map((listing) => (
+              <BusinessListingCard
+                key={listing.id}
+                listing={listing}
+                featuredBatch={listing.isFeatured}
+              />
+            ))}
             </div>
           ) : null}
           {hasMore ? (

@@ -14,11 +14,14 @@ const FALLBACK_IMAGE =
 type Props = {
   listing: BusinessListingCardData;
   priority?: boolean;
+  /** Always show the Featured Batch mark on this card (used in the Featured Beauty Business row). */
+  featuredBatch?: boolean;
 };
 
-export function BusinessListingCard({ listing, priority = false }: Props) {
+export function BusinessListingCard({ listing, priority = false, featuredBatch = false }: Props) {
   const claimUrl = buildSalonClaimLoginUrl(listing.id);
   const profileUrl = buildSalonPublicPath(listing);
+  const showFeaturedBatch = featuredBatch || listing.isFeatured;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
@@ -31,16 +34,15 @@ export function BusinessListingCard({ listing, priority = false }: Props) {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           className="object-cover transition-transform duration-500 hover:scale-[1.03]"
         />
+        {showFeaturedBatch ? (
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-black shadow-sm">
+            Featured Batch
+          </span>
+        ) : null}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">
-          {listing.isFeatured ? (
-            <p className="mb-1 inline-flex rounded-md bg-[#ffde5a] px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-black">
-              Featured
-            </p>
-          ) : (
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">
-              {listing.isClaimable ? "Claim your business" : "Lead listing"}
-            </p>
-          )}
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">
+            {listing.isClaimable ? "Claim your business" : "Lead listing"}
+          </p>
           <p className="text-xs font-medium text-white/90 line-clamp-1">{listing.category}</p>
         </div>
       </Link>

@@ -629,7 +629,9 @@ export async function fetchBusinessListingCards(
     }))
   );
   const topRatedCards = toCards(topRated).slice(0, TOP_RATED_LISTING_COUNT);
-  const featuredCards = toCards(featured).slice(0, FEATURED_BATCH_PUBLIC_LIMIT);
+  const featuredCards = toCards(featured)
+    .slice(0, FEATURED_BATCH_PUBLIC_LIMIT)
+    .map((listing) => ({ ...listing, isFeatured: true }));
   const totalCount = countedTotal ?? topRated.length + featured.length + rest.length;
 
   if (!limit || limit <= 0) {
