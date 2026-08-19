@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseFeaturedDate } from "@/lib/listing-featured";
 import { LISTING_ONBOARDING_STATUS, readListingCapturedAt } from "@/lib/salon-listing-pipeline";
+import { getDistrictFilterOptions } from "@/lib/sri-lanka-locations";
 import { getSupabaseServerEnv } from "@/lib/supabase-server-env";
 
 export type ListingQueueRow = {
@@ -36,6 +37,16 @@ const QUEUE_SELECT_BASE =
 const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
 const QUEUE_PAGE_SIZE = 400;
+const QUEUE_SEARCH_LIMIT = 200;
+
+function sanitizeIlikeTerm(value: string): string {
+  return value.replace(/[%_,.()"'\\]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function districtSearchLabel(districtSlug: string): string {
+  const match = getDistrictFilterOptions().find((district) => district.value === districtSlug);
+  return match?.label || districtSlug.replace(/-/g, " ");
+}
 
 function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
   return data.map((row) => ({
@@ -161,6 +172,66 @@ async function loadListingGenerationDiscovered(select = QUEUE_SELECT): Promise<L
     }
     throw error;
   }
+}
+
+export async function searchListingGenerationQueue(input: {
+  tab: "pending" | "listed";
+  q?: string;
+  district?: string;
+  category?: string;
+}): Promise<ListingQueueRow[]> {
+  const q = sanitizeIlikeTerm(input.q || "");
+  const district = sanitizeIlikeTerm(districtSearchLabel(input.district || ""));
+  const category = sanitizeIlikeTerm(input.category || "");
+  if (!q && !district && !category) return [];
+
+  const clauses: string[] = [];
+  if (q) {
+    clauses.push(`or(name.ilike.%${q}%,slug.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,address.ilike.%${q}%)`);
+  }
+  if (district) {
+    clauses.push(`or(district.ilike.%${district}%,city.ilike.%${district}%,address.ilike.%${district}%)`);
+  }
+  if (category) {
+    clauses.push(`category.ilike.%${category}%`);
+  }
+
+  const andFilter = `(${clauses.join(",")})`;
+  const select = encodeURIComponent(QUEUE_SELECT);
+
+  const searchByStatus = async (status: string, extra: string[] = []) => {
+    const qs = [
+      `select=${select}`,
+      `onboarding_status=eq.${encodeURIComponent(status)}`,
+      ...extra,
+      `and=${encodeURIComponent(andFilter)}`,
+      "order=created_at.desc",
+      `limit=${QUEUE_SEARCH_LIMIT}`,
+    ];
+    try {
+      return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+    } catch (error) {
+      const fallbackQs = qs.map((part) =>
+        part.startsWith("select=") ? `select=${encodeURIComponent(QUEUE_SELECT_BASE)}` : part
+      );
+      if (select !== encodeURIComponent(QUEUE_SELECT_BASE)) {
+        return mapQueueRows(asRecordArray(await restGet(`salons?${fallbackQs.join("&")}`)));
+      }
+      throw error;
+    }
+  };
+
+  if (input.tab === "listed") {
+    return searchByStatus(LISTING_ONBOARDING_STATUS.PUBLISHED);
+  }
+
+  const [captured, discovered] = await Promise.all([
+    searchByStatus(LISTING_ONBOARDING_STATUS.CAPTURED),
+    searchByStatus("DISCOVERED", ["source_type=eq.LISTING_GENERATION"]),
+  ]);
+  const byId = new Map<string, ListingQueueRow>();
+  for (const row of [...captured, ...discovered]) byId.set(row.id, row);
+  return [...byId.values()];
 }
 
 export async function loadListingGenerationQueue(

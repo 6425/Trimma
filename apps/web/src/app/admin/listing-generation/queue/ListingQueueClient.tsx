@@ -22,7 +22,7 @@ import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/sal
 import { ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS } from "@/lib/admin-lead-categories";
 import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generation-queue";
 import type { PublicCategory } from "@/lib/public-categories";
-import { getDistrictFilterOptions, salonMatchesDistrict, slugifyLocation } from "@/lib/sri-lanka-locations";
+import { getDistrictFilterOptions } from "@/lib/sri-lanka-locations";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
 
 const DISTRICT_OPTIONS = getDistrictFilterOptions();
@@ -31,34 +31,6 @@ function addIsoDays(iso: string, days: number): string {
   const date = new Date(`${iso}T12:00:00`);
   date.setDate(date.getDate() + days);
   return date.toLocaleDateString("en-CA");
-}
-
-function normalizeFilterKey(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function matchesQueueSearch(row: ListingQueueRow, query: string): boolean {
-  const needle = query.trim().toLowerCase();
-  if (!needle) return true;
-  return [row.name, row.category, row.city, row.district, row.province, row.address]
-    .some((value) => String(value || "").toLowerCase().includes(needle));
-}
-
-function matchesQueueDistrict(row: ListingQueueRow, districtSlug: string): boolean {
-  if (!districtSlug) return true;
-  if (slugifyLocation(row.district || "") === districtSlug) return true;
-  return salonMatchesDistrict({ district: row.district, city: row.city }, districtSlug);
-}
-
-function matchesQueueCategory(row: ListingQueueRow, categoryName: string): boolean {
-  if (!categoryName) return true;
-  const selected = normalizeFilterKey(categoryName);
-  const rowKey = normalizeFilterKey(row.category || "");
-  return rowKey === selected || rowKey.includes(selected) || selected.includes(rowKey);
 }
 
 const FILTER_SELECT_CLASS =
@@ -127,6 +99,9 @@ function ListingQueueContent({
   const [searchQuery, setSearchQuery] = useState("");
   const [districtSlug, setDistrictSlug] = useState("");
   const [categoryName, setCategoryName] = useState("");
+  const [searchRows, setSearchRows] = useState<ListingQueueRow[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchTick, setSearchTick] = useState(0);
   const [featureEditor, setFeatureEditor] = useState<{
     salonId: string;
     name: string;
@@ -163,17 +138,9 @@ function ListingQueueContent({
         : ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS.map((name) => ({ id: name, name, slug: name, icon: null })),
     [categories]
   );
-  const visibleRows = useMemo(
-    () =>
-      tabRows.filter(
-        (row) =>
-          matchesQueueSearch(row, searchQuery) &&
-          matchesQueueDistrict(row, districtSlug) &&
-          matchesQueueCategory(row, categoryName)
-      ),
-    [tabRows, searchQuery, districtSlug, categoryName]
-  );
   const hasActiveFilters = Boolean(searchQuery.trim() || districtSlug || categoryName);
+  const visibleRows = hasActiveFilters ? searchRows || [] : tabRows;
+  const tableLoading = loading || (hasActiveFilters && searching && searchRows === null);
   const featuredCount = listedRows.filter((row) => featuredListingStatus(row) === "live").length;
 
   const load = useCallback(async (options?: { showLoading?: boolean }) => {
@@ -235,12 +202,55 @@ function ListingQueueContent({
   }, [load]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setSearchRows(null);
+      setSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        setSearching(true);
+        const params = new URLSearchParams({
+          tab: activeTab,
+          q: searchQuery.trim(),
+          district: districtSlug,
+          category: categoryName,
+        });
+        const response = await fetch(`/api/admin/listing-generation/queue/search?${params}`, {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        const data = (await response.json().catch(() => ({}))) as { rows?: ListingQueueRow[]; error?: string };
+        if (!response.ok) {
+          throw new Error(data.error || `Search failed (${response.status}).`);
+        }
+        setSearchRows(data.rows || []);
+      } catch (error: unknown) {
+        if (controller.signal.aborted) return;
+        toast.error(error instanceof Error ? error.message : "Failed to search listed salons.");
+        setSearchRows([]);
+      } finally {
+        if (!controller.signal.aborted) setSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [hasActiveFilters, searchQuery, districtSlug, categoryName, activeTab, searchTick]);
+
   const runAction = async (salonId: string, action: () => Promise<{ success: boolean; error?: string }>) => {
     try {
       setBusyId(salonId);
       const result = await action();
       if (result.success === false) throw new Error(result.error);
       await load();
+      setSearchTick((current) => current + 1);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Action failed.");
     } finally {
@@ -414,7 +424,7 @@ function ListingQueueContent({
             </tr>
           </thead>
           <tbody>
-            {loading ? (
+            {tableLoading ? (
               <tr>
                 <td colSpan={6} className="px-2 py-12 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
@@ -611,8 +621,10 @@ function ListingQueueContent({
         </table>
         <p className="border-t border-zinc-100 px-2.5 py-1.5 text-[11px] text-zinc-500">
           Showing {visibleRows.length}
-          {hasActiveFilters && tabRows.length !== visibleRows.length ? ` of ${tabRows.length}` : ""}{" "}
-          {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed {listedCount}
+          {hasActiveFilters
+            ? ` match${visibleRows.length === 1 ? "" : "es"} across all ${activeTab}`
+            : ` ${activeTab === "listed" ? "listed" : "pending"}`}{" "}
+          · Pending {pendingCount} · Listed {listedCount}
           {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
         </p>
       </div>
