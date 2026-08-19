@@ -19,13 +19,26 @@ import {
 } from "@/lib/listing-featured";
 import { Input } from "@/components/ui/input";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
+import { ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS } from "@/lib/admin-lead-categories";
 import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generation-queue";
+import type { PublicCategory } from "@/lib/public-categories";
+import { getDistrictFilterOptions, salonMatchesDistrict, slugifyLocation } from "@/lib/sri-lanka-locations";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
+
+const DISTRICT_OPTIONS = getDistrictFilterOptions();
 
 function addIsoDays(iso: string, days: number): string {
   const date = new Date(`${iso}T12:00:00`);
   date.setDate(date.getDate() + days);
   return date.toLocaleDateString("en-CA");
+}
+
+function normalizeFilterKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function matchesQueueSearch(row: ListingQueueRow, query: string): boolean {
@@ -34,6 +47,22 @@ function matchesQueueSearch(row: ListingQueueRow, query: string): boolean {
   return [row.name, row.category, row.city, row.district, row.province, row.address]
     .some((value) => String(value || "").toLowerCase().includes(needle));
 }
+
+function matchesQueueDistrict(row: ListingQueueRow, districtSlug: string): boolean {
+  if (!districtSlug) return true;
+  if (slugifyLocation(row.district || "") === districtSlug) return true;
+  return salonMatchesDistrict({ district: row.district, city: row.city }, districtSlug);
+}
+
+function matchesQueueCategory(row: ListingQueueRow, categoryName: string): boolean {
+  if (!categoryName) return true;
+  const selected = normalizeFilterKey(categoryName);
+  const rowKey = normalizeFilterKey(row.category || "");
+  return rowKey === selected || rowKey.includes(selected) || selected.includes(rowKey);
+}
+
+const FILTER_SELECT_CLASS =
+  "h-11 min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800";
 
 type QueueTab = "pending" | "listed";
 
@@ -59,7 +88,13 @@ async function postListingAction(
   return { success: true, publishedCount: data.publishedCount };
 }
 
-export default function ListingQueueClient({ initialQueue }: { initialQueue: ListingQueuePayload }) {
+export default function ListingQueueClient({
+  initialQueue,
+  categories = [],
+}: {
+  initialQueue: ListingQueuePayload;
+  categories?: PublicCategory[];
+}) {
   return (
     <Suspense
       fallback={
@@ -69,12 +104,18 @@ export default function ListingQueueClient({ initialQueue }: { initialQueue: Lis
         </div>
       }
     >
-      <ListingQueueContent initialQueue={initialQueue} />
+      <ListingQueueContent initialQueue={initialQueue} categories={categories} />
     </Suspense>
   );
 }
 
-function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePayload }) {
+function ListingQueueContent({
+  initialQueue,
+  categories,
+}: {
+  initialQueue: ListingQueuePayload;
+  categories: PublicCategory[];
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [rows, setRows] = useState<ListingQueueRow[]>(initialQueue.rows);
@@ -84,6 +125,8 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
   const [loading, setLoading] = useState(initialQueue.rows.length === 0);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [districtSlug, setDistrictSlug] = useState("");
+  const [categoryName, setCategoryName] = useState("");
   const [featureEditor, setFeatureEditor] = useState<{
     salonId: string;
     name: string;
@@ -113,10 +156,24 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
     [rows]
   );
   const tabRows = activeTab === "listed" ? listedRows : pendingRows;
-  const visibleRows = useMemo(
-    () => tabRows.filter((row) => matchesQueueSearch(row, searchQuery)),
-    [tabRows, searchQuery]
+  const categoryOptions = useMemo(
+    () =>
+      categories.length
+        ? [...categories].sort((a, b) => a.name.localeCompare(b.name))
+        : ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS.map((name) => ({ id: name, name, slug: name, icon: null })),
+    [categories]
   );
+  const visibleRows = useMemo(
+    () =>
+      tabRows.filter(
+        (row) =>
+          matchesQueueSearch(row, searchQuery) &&
+          matchesQueueDistrict(row, districtSlug) &&
+          matchesQueueCategory(row, categoryName)
+      ),
+    [tabRows, searchQuery, districtSlug, categoryName]
+  );
+  const hasActiveFilters = Boolean(searchQuery.trim() || districtSlug || categoryName);
   const featuredCount = listedRows.filter((row) => featuredListingStatus(row) === "live").length;
 
   const load = useCallback(async (options?: { showLoading?: boolean }) => {
@@ -297,18 +354,52 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
 
       <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
         <div className="border-b border-zinc-100 p-2.5">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={
-                activeTab === "listed"
-                  ? "Search listed salons by name, category, or location to feature…"
-                  : "Search pending salons by name, category, or location…"
-              }
-              className="h-11 min-h-11 rounded-xl pl-10 text-sm"
-            />
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_12rem]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={
+                  activeTab === "listed"
+                    ? "Search listed salons by name or address…"
+                    : "Search pending salons by name or address…"
+                }
+                className="h-11 min-h-11 rounded-xl pl-10 text-sm"
+              />
+            </div>
+            <label className="sr-only" htmlFor="queue-district-filter">
+              District
+            </label>
+            <select
+              id="queue-district-filter"
+              value={districtSlug}
+              onChange={(event) => setDistrictSlug(event.target.value)}
+              className={FILTER_SELECT_CLASS}
+            >
+              <option value="">Any district</option>
+              {DISTRICT_OPTIONS.map((district) => (
+                <option key={district.value} value={district.value}>
+                  {district.label}
+                </option>
+              ))}
+            </select>
+            <label className="sr-only" htmlFor="queue-category-filter">
+              Category
+            </label>
+            <select
+              id="queue-category-filter"
+              value={categoryName}
+              onChange={(event) => setCategoryName(event.target.value)}
+              className={FILTER_SELECT_CLASS}
+            >
+              <option value="">Any category</option>
+              {categoryOptions.map((category) => (
+                <option key={category.slug || category.name} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <table className="w-full table-fixed text-[11px] leading-tight">
@@ -332,8 +423,8 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
             ) : visibleRows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-2 py-12 text-center text-zinc-500">
-                  {tabRows.length > 0 && searchQuery.trim() ? (
-                    <>No {activeTab === "listed" ? "listed" : "pending"} salons match “{searchQuery.trim()}”.</>
+                  {tabRows.length > 0 && hasActiveFilters ? (
+                    <>No {activeTab === "listed" ? "listed" : "pending"} salons match these filters.</>
                   ) : activeTab === "pending" ? (
                     <>
                       No pending listings. Run{" "}
@@ -520,7 +611,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
         </table>
         <p className="border-t border-zinc-100 px-2.5 py-1.5 text-[11px] text-zinc-500">
           Showing {visibleRows.length}
-          {searchQuery.trim() && tabRows.length !== visibleRows.length ? ` of ${tabRows.length}` : ""}{" "}
+          {hasActiveFilters && tabRows.length !== visibleRows.length ? ` of ${tabRows.length}` : ""}{" "}
           {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed {listedCount}
           {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
         </p>
