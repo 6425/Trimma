@@ -11,9 +11,22 @@ import { cn } from "@/lib/utils";
 import { trimmaFilterTabClass } from "@/lib/customer-dashboard-ui";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
 import { FEATURED_LISTING_COUNT } from "@/lib/listing-marketplace-rank";
+import {
+  featuredListingStatus,
+  formatFeaturedDateRange,
+  isValidFeaturedPeriod,
+  todayInFeaturedTimezone,
+} from "@/lib/listing-featured";
+import { Input } from "@/components/ui/input";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generation-queue";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
+
+function addIsoDays(iso: string, days: number): string {
+  const date = new Date(`${iso}T12:00:00`);
+  date.setDate(date.getDate() + days);
+  return date.toLocaleDateString("en-CA");
+}
 
 type QueueTab = "pending" | "listed";
 
@@ -63,6 +76,13 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(initialQueue.rows.length === 0);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [featureEditor, setFeatureEditor] = useState<{
+    salonId: string;
+    name: string;
+    start: string;
+    end: string;
+    isFeatured: boolean;
+  } | null>(null);
   const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
 
   const pendingRows = useMemo(
@@ -74,6 +94,9 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
       rows
         .filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED)
         .sort((a, b) => {
+          const aLive = featuredListingStatus(a) === "live" ? 1 : 0;
+          const bLive = featuredListingStatus(b) === "live" ? 1 : 0;
+          if (aLive !== bLive) return bLive - aLive;
           if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
           const byCaptured = String(b.captured_at || "").localeCompare(String(a.captured_at || ""));
           if (byCaptured) return byCaptured;
@@ -82,7 +105,7 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
     [rows]
   );
   const visibleRows = activeTab === "listed" ? listedRows : pendingRows;
-  const featuredCount = listedRows.filter((row) => row.is_featured).length;
+  const featuredCount = listedRows.filter((row) => featuredListingStatus(row) === "live").length;
 
   const load = useCallback(async (options?: { showLoading?: boolean }) => {
     const showLoading = options?.showLoading !== false;
@@ -252,8 +275,10 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
           </Button>
         ) : (
           <p className="text-xs font-medium text-zinc-500">
-            Feature a listed salon to pin it in the public <strong>Featured Salons</strong> row (up to{" "}
-            {FEATURED_LISTING_COUNT} on the homepage). Extra featured listings are ranked by reviews.
+            Feature a listed salon with a start and end date. The public{" "}
+            <strong>Featured Beauty Business</strong> row shows up to {FEATURED_LISTING_COUNT} currently
+            live featured listings on the homepage and on each category page. Extra live featured
+            listings are ranked by reviews.
           </p>
         )}
       </div>
@@ -324,7 +349,22 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                           {listingPipelineLabel(row.onboarding_status)}
                         </Badge>
                         {row.is_featured ? (
-                          <Badge className="border-none bg-[#ffde5a] text-black">Featured</Badge>
+                          <Badge
+                            className={
+                              featuredListingStatus(row) === "live"
+                                ? "border-none bg-[#ffde5a] text-black"
+                                : "border-none bg-zinc-200 text-zinc-800"
+                            }
+                          >
+                            {featuredListingStatus(row) === "live"
+                              ? "Featured"
+                              : featuredListingStatus(row) === "scheduled"
+                                ? "Scheduled"
+                                : "Expired"}
+                            {formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)
+                              ? ` · ${formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)}`
+                              : ""}
+                          </Badge>
                         ) : null}
                       </div>
                     </td>
@@ -334,36 +374,27 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
                           <>
                             <Button
                               type="button"
-                              variant={row.is_featured ? "default" : "outline"}
+                              variant={featuredListingStatus(row) === "live" ? "default" : "outline"}
                               size="sm"
-                              className="h-9 font-bold"
+                              className="h-9 min-h-9 font-bold"
                               disabled={busyId !== null}
-                              onClick={() =>
-                                void runAction(row.id, async () => {
-                                  const nextFeatured = !row.is_featured;
-                                  const result = await postListingAction(
-                                    "/api/admin/listing-generation/feature",
-                                    { salonId: row.id, featured: nextFeatured }
-                                  );
-                                  if (result.success) {
-                                    if (nextFeatured && !row.is_featured && featuredCount >= FEATURED_LISTING_COUNT) {
-                                      toast.success(
-                                        `Featured. Homepage shows up to ${FEATURED_LISTING_COUNT}; extras are ranked by reviews.`
-                                      );
-                                    } else {
-                                      toast.success(nextFeatured ? "Featured on the marketplace." : "Removed from featured.");
-                                    }
-                                  }
-                                  return result;
-                                })
-                              }
+                              onClick={() => {
+                                const today = todayInFeaturedTimezone();
+                                setFeatureEditor({
+                                  salonId: row.id,
+                                  name: row.name,
+                                  start: row.featured_starts_at || today,
+                                  end: row.featured_ends_at || addIsoDays(today, 13),
+                                  isFeatured: row.is_featured,
+                                });
+                              }}
                             >
                               {busyId === row.id ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
                                 <>
-                                  <Star className={cn("mr-1 h-3.5 w-3.5", row.is_featured && "fill-current")} />
-                                  {row.is_featured ? "Featured" : "Feature"}
+                                  <Star className={cn("mr-1 h-3.5 w-3.5", featuredListingStatus(row) === "live" && "fill-current")} />
+                                  {row.is_featured ? "Edit feature" : "Feature"}
                                 </>
                               )}
                             </Button>
@@ -460,9 +491,115 @@ function ListingQueueContent({ initialQueue }: { initialQueue: ListingQueuePaylo
         <p className="border-t border-zinc-100 px-4 py-2 text-xs text-zinc-500">
           Showing {visibleRows.length} {activeTab === "listed" ? "listed" : "pending"} · Pending {pendingCount} · Listed{" "}
           {listedCount}
-          {activeTab === "listed" ? ` · Featured ${featuredCount}` : ""}
+          {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
         </p>
       </div>
+
+      {featureEditor ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            <h2 className="text-lg font-bold text-zinc-900">Feature {featureEditor.name}</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              This business will appear in Featured Beauty Business on the homepage and matching category pages between these dates (inclusive).
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                Start date
+                <Input
+                  type="date"
+                  className="mt-1 min-h-11"
+                  value={featureEditor.start}
+                  onChange={(event) =>
+                    setFeatureEditor((current) =>
+                      current ? { ...current, start: event.target.value } : current
+                    )
+                  }
+                />
+              </label>
+              <label className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                End date
+                <Input
+                  type="date"
+                  className="mt-1 min-h-11"
+                  value={featureEditor.end}
+                  min={featureEditor.start}
+                  onChange={(event) =>
+                    setFeatureEditor((current) =>
+                      current ? { ...current, end: event.target.value } : current
+                    )
+                  }
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              {featureEditor.isFeatured ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 min-h-11 w-full font-bold sm:w-auto"
+                  disabled={busyId !== null}
+                  onClick={() =>
+                    void runAction(featureEditor.salonId, async () => {
+                      const result = await postListingAction("/api/admin/listing-generation/feature", {
+                        salonId: featureEditor.salonId,
+                        featured: false,
+                      });
+                      if (result.success) {
+                        toast.success("Removed from featured.");
+                        setFeatureEditor(null);
+                      }
+                      return result;
+                    })
+                  }
+                >
+                  Remove featured
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 min-h-11 w-full font-bold sm:w-auto"
+                disabled={busyId !== null}
+                onClick={() => setFeatureEditor(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                className="h-11 min-h-11 w-full font-bold sm:w-auto"
+                disabled={busyId !== null}
+                onClick={() =>
+                  void runAction(featureEditor.salonId, async () => {
+                    if (!isValidFeaturedPeriod(featureEditor.start, featureEditor.end)) {
+                      return { success: false, error: "Choose a start date and an end date on or after start." };
+                    }
+                    const result = await postListingAction("/api/admin/listing-generation/feature", {
+                      salonId: featureEditor.salonId,
+                      featured: true,
+                      featuredStartsAt: featureEditor.start,
+                      featuredEndsAt: featureEditor.end,
+                    });
+                    if (result.success) {
+                      if (featuredCount >= FEATURED_LISTING_COUNT) {
+                        toast.success(
+                          `Featured for this period. Homepage and category pages show up to ${FEATURED_LISTING_COUNT}; extras are ranked by reviews.`
+                        );
+                      } else {
+                        toast.success("Featured for the selected period.");
+                      }
+                      setFeatureEditor(null);
+                    }
+                    return result;
+                  })
+                }
+              >
+                Save featured period
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

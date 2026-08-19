@@ -20,6 +20,8 @@ export const ADMIN_SALON_UPDATE_FIELDS = new Set([
   "status",
   "is_verified",
   "is_featured",
+  "featured_starts_at",
+  "featured_ends_at",
   "working_hours",
   "owner_email",
   "owner_gmail",

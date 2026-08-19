@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { parseFeaturedDate } from "@/lib/listing-featured";
 import { LISTING_ONBOARDING_STATUS, readListingCapturedAt } from "@/lib/salon-listing-pipeline";
 import { getSupabaseServerEnv } from "@/lib/supabase-server-env";
 
@@ -18,6 +19,8 @@ export type ListingQueueRow = {
   public_visibility: string | null;
   source_type: string | null;
   is_featured: boolean;
+  featured_starts_at: string | null;
+  featured_ends_at: string | null;
   created_at: string;
   captured_at: string | null;
 };
@@ -28,8 +31,9 @@ export type ListingQueuePayload = {
   listedCount: number;
 };
 
-const QUEUE_SELECT =
+const QUEUE_SELECT_BASE =
   "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,created_at";
+const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
 const QUEUE_PAGE_SIZE = 400;
 
@@ -50,6 +54,8 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     public_visibility: (row.public_visibility as string | null) ?? null,
     source_type: (row.source_type as string | null) ?? null,
     is_featured: row.is_featured === true,
+    featured_starts_at: parseFeaturedDate(row.featured_starts_at),
+    featured_ends_at: parseFeaturedDate(row.featured_ends_at),
     created_at: String(row.created_at || ""),
     captured_at:
       typeof row.listing_captured_at === "string" && row.listing_captured_at.trim()
@@ -122,25 +128,39 @@ async function restCount(status: string): Promise<number | null> {
   return Number.isFinite(count) ? count : null;
 }
 
-async function loadRowsByStatus(status: string): Promise<ListingQueueRow[]> {
+async function loadRowsByStatus(status: string, select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
   const qs = [
-    `select=${encodeURIComponent(QUEUE_SELECT)}`,
+    `select=${encodeURIComponent(select)}`,
     `onboarding_status=eq.${encodeURIComponent(status)}`,
     "order=created_at.desc",
     `limit=${QUEUE_PAGE_SIZE}`,
   ];
-  return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+  try {
+    return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+  } catch (error) {
+    if (select !== QUEUE_SELECT_BASE) {
+      return loadRowsByStatus(status, QUEUE_SELECT_BASE);
+    }
+    throw error;
+  }
 }
 
-async function loadListingGenerationDiscovered(): Promise<ListingQueueRow[]> {
+async function loadListingGenerationDiscovered(select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
   const qs = [
-    `select=${encodeURIComponent(QUEUE_SELECT)}`,
+    `select=${encodeURIComponent(select)}`,
     "source_type=eq.LISTING_GENERATION",
     "onboarding_status=eq.DISCOVERED",
     "order=created_at.desc",
     `limit=${QUEUE_PAGE_SIZE}`,
   ];
-  return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+  try {
+    return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
+  } catch (error) {
+    if (select !== QUEUE_SELECT_BASE) {
+      return loadListingGenerationDiscovered(QUEUE_SELECT_BASE);
+    }
+    throw error;
+  }
 }
 
 export async function loadListingGenerationQueue(

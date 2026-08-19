@@ -53,6 +53,7 @@ function listingToSectionSalon(listing: BusinessListingCardData) {
     categories: [listing.category].filter(Boolean),
     nextAvailable: "Hours not listed",
     priceFrom: 1500,
+    featured: listing.isFeatured,
     phone: listing.phone,
   };
 }

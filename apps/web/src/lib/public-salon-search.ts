@@ -8,6 +8,8 @@ import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/li
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
+import { isMissingDbSchemaError } from "@/lib/with-admin-db";
+import { todayInFeaturedTimezone } from "@/lib/listing-featured";
 import {
   FEATURED_LISTING_COUNT,
   TOP_RATED_LISTING_COUNT,
@@ -124,10 +126,10 @@ export async function fetchPublicSalons(
   const postFilterActive =
     categoryFilterActive || bookableOnly || browseOnly || approvedOnly || leadListingsOnly;
 
-  const select = `
+  let select = `
       id, name, slug, rating, review_count,
       city, district, province, category, logo_url, cover_url, hero_url, featured_images,
-      is_featured, is_verified, working_hours, status, public_visibility,
+      is_featured, featured_starts_at, featured_ends_at, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail, website, map_url,
       services ( id, name, price, category )
@@ -154,22 +156,34 @@ export async function fetchPublicSalons(
     return query;
   };
 
-  const data = postFilterActive
-    ? await fetchAllByIdCursor(async (afterId, pageSize) => {
-        let query = applyFilters(supabase.from("salons"), false);
-        if (afterId) query = query.gt("id", afterId);
-        const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
-        if (error) throw new Error(error.message);
-        return page || [];
-      })
-    : await (async () => {
-        const { data: page, error } = await applyFilters(supabase.from("salons"), true).range(
-          offset,
-          offset + Math.max(limit, 1) - 1
-        );
-        if (error) throw new Error(error.message);
-        return page || [];
-      })();
+  const fetchRows = async () =>
+    postFilterActive
+      ? fetchAllByIdCursor(async (afterId, pageSize) => {
+          let query = applyFilters(supabase.from("salons"), false);
+          if (afterId) query = query.gt("id", afterId);
+          const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+          if (error) throw new Error(error.message);
+          return page || [];
+        })
+      : (async () => {
+          const { data: page, error } = await applyFilters(supabase.from("salons"), true).range(
+            offset,
+            offset + Math.max(limit, 1) - 1
+          );
+          if (error) throw new Error(error.message);
+          return page || [];
+        })();
+
+  let data: Awaited<ReturnType<typeof fetchRows>>;
+  try {
+    data = await fetchRows();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const fallbackSelect = withoutFeaturedPeriodSelect(select);
+    if (fallbackSelect === select || !isMissingDbSchemaError(message)) throw error;
+    select = fallbackSelect;
+    data = await fetchRows();
+  }
 
   let rows = filterPublicSalons(data);
   if (approvedOnly) {
@@ -206,7 +220,7 @@ export async function fetchPublicSalons(
 const BUSINESS_LISTING_CARD_SELECT = `
       id, name, slug, rating, review_count,
       city, district, province, category, logo_url, cover_url, hero_url, featured_images,
-      is_featured, is_verified, working_hours, status, public_visibility,
+      is_featured, featured_starts_at, featured_ends_at, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail, website, map_url, business_info_extended,
       address, latitude, longitude, place_id
@@ -216,6 +230,10 @@ const BUSINESS_LISTING_SELECT = `
       ${BUSINESS_LISTING_CARD_SELECT},
       services ( id, name, price, category )
     `;
+
+function withoutFeaturedPeriodSelect(select: string): string {
+  return select.replace("featured_starts_at, featured_ends_at, ", "");
+}
 
 function isLeadGenerationSource(row: Record<string, unknown>): boolean {
   const source = String(row.source_type || "");
@@ -289,7 +307,8 @@ type LooseListingQuery = {
   or: (filters: string) => LooseListingQuery;
   not: (column: string, operator: string, value: string) => LooseListingQuery;
   gt: (column: string, value: number) => LooseListingQuery;
-  gte: (column: string, value: number) => LooseListingQuery;
+  lte: (column: string, value: unknown) => LooseListingQuery;
+  gte: (column: string, value: unknown) => LooseListingQuery;
   order: (column: string, options?: { ascending?: boolean }) => LooseListingQuery;
   limit: (count: number) => Promise<{ data: unknown; error: { message: string } | null }>;
 };
@@ -370,16 +389,25 @@ async function loadPublishedSalonRows(
   select = BUSINESS_LISTING_CARD_SELECT
 ): Promise<Array<Record<string, unknown>>> {
   const client = publishedListingsClient(supabase);
-  return fetchAllByIdCursor(async (afterId, pageSize) => {
-    let query = client
-      .from("salons")
-      .select(select)
-      .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
-    if (afterId) query = query.gt("id", afterId);
-    const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
-    if (error) throw new Error(error.message);
-    return asSalonRows(page);
-  });
+  try {
+    return await fetchAllByIdCursor(async (afterId, pageSize) => {
+      let query = client
+        .from("salons")
+        .select(select)
+        .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
+      if (afterId) query = query.gt("id", afterId);
+      const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+      if (error) throw new Error(error.message);
+      return asSalonRows(page);
+    });
+  } catch (error) {
+    const fallbackSelect = withoutFeaturedPeriodSelect(select);
+    const message = error instanceof Error ? error.message : String(error);
+    if (fallbackSelect !== select && isMissingDbSchemaError(message)) {
+      return loadPublishedSalonRows(supabase, fallbackSelect);
+    }
+    throw error;
+  }
 }
 
 /** Homepage / browse: do not download every published salon on each request. */
@@ -413,25 +441,49 @@ async function loadPublishedMarketplaceWindow(
           params.offset + params.limit + FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT
         );
 
-  const featuredQuery = applyPublishedListingFilters(
-    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown,
+  const today = todayInFeaturedTimezone();
+  const featuredSelect = BUSINESS_LISTING_CARD_SELECT;
+  let featuredQuery = applyPublishedListingFilters(
+    client.from("salons").select(featuredSelect) as unknown,
     filters
-  )
-    .eq("is_featured", true)
-    .limit(FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT);
+  ).eq("is_featured", true);
+  featuredQuery = featuredQuery.lte("featured_starts_at", today).gte("featured_ends_at", today).limit(40);
   const popularQuery = applyPublishedListingFilters(
-    client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown,
+    client.from("salons").select(featuredSelect) as unknown,
     filters
   )
     .order("review_count", { ascending: false })
     .order("rating", { ascending: false })
     .limit(windowSize);
 
-  const [featuredRes, popularRes, totalCount] = await Promise.all([
+  let [featuredRes, popularRes, totalCount] = await Promise.all([
     featuredQuery,
     popularQuery,
     countPublishedMarketplaceListings(supabase, filters),
   ]);
+
+  if (
+    (featuredRes.error && isMissingDbSchemaError(featuredRes.error.message)) ||
+    (popularRes.error && isMissingDbSchemaError(popularRes.error.message))
+  ) {
+    const fallbackSelect = withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT);
+    const fallbackFeatured = applyPublishedListingFilters(
+      client.from("salons").select(fallbackSelect) as unknown,
+      filters
+    )
+      .eq("is_featured", true)
+      .limit(40);
+    const fallbackPopular = applyPublishedListingFilters(
+      client.from("salons").select(fallbackSelect) as unknown,
+      filters
+    )
+      .order("review_count", { ascending: false })
+      .order("rating", { ascending: false })
+      .limit(windowSize);
+    const fallback = await Promise.all([fallbackFeatured, fallbackPopular]);
+    featuredRes = fallback[0];
+    popularRes = fallback[1];
+  }
 
   if (featuredRes.error) throw new Error(featuredRes.error.message);
   if (popularRes.error) throw new Error(popularRes.error.message);

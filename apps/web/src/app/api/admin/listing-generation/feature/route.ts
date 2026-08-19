@@ -21,7 +21,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: adminAuth.error }, { status: 401 });
     }
 
-    const body = (await req.json().catch(() => ({}))) as { salonId?: string; featured?: boolean };
+    const body = (await req.json().catch(() => ({}))) as {
+      salonId?: string;
+      featured?: boolean;
+      featuredStartsAt?: string;
+      featuredEndsAt?: string;
+    };
     const salonId = String(body.salonId || "").trim();
     if (!salonId) {
       return NextResponse.json({ error: "salonId is required." }, { status: 400 });
@@ -31,10 +36,18 @@ export async function POST(req: Request) {
     }
 
     const supabase = createSupabaseAdminClient();
-    await setListingFeaturedRecord(supabase, salonId, body.featured);
+    await setListingFeaturedRecord(supabase, salonId, body.featured, {
+      startsAt: body.featuredStartsAt,
+      endsAt: body.featuredEndsAt,
+    });
     revalidateMarketplaceListingPages();
 
-    return NextResponse.json({ success: true, featured: body.featured });
+    return NextResponse.json({
+      success: true,
+      featured: body.featured,
+      featuredStartsAt: body.featured ? body.featuredStartsAt : null,
+      featuredEndsAt: body.featured ? body.featuredEndsAt : null,
+    });
   } catch (error: unknown) {
     console.error("[admin/listing-generation/feature]", error);
     return NextResponse.json({ error: routeError(error) }, { status: 500 });

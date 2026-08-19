@@ -8,6 +8,7 @@ import {
   LISTING_PUBLISH_SALON_UPDATES,
   isListingPipelineSalon,
 } from "@/lib/salon-listing-pipeline";
+import { isValidFeaturedPeriod, parseFeaturedDate } from "@/lib/listing-featured";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 
 async function tryInsertOnboardingLog(
@@ -215,7 +216,8 @@ export async function startBookingOnboardingFromListingRecord(
 export async function setListingFeaturedRecord(
   supabase: SupabaseClient,
   salonId: string,
-  featured: boolean
+  featured: boolean,
+  period?: { startsAt?: string | null; endsAt?: string | null }
 ): Promise<void> {
   const { data: salon, error: fetchError } = await supabase
     .from("salons")
@@ -232,13 +234,36 @@ export async function setListingFeaturedRecord(
     throw new Error("Publish the listing before featuring it on the marketplace.");
   }
 
-  await updateSalonWithOptionalColumns(supabase, salonId, { is_featured: featured === true });
+  if (featured) {
+    const startsAt = parseFeaturedDate(period?.startsAt);
+    const endsAt = parseFeaturedDate(period?.endsAt);
+    if (!isValidFeaturedPeriod(startsAt, endsAt)) {
+      throw new Error("Featured start and end dates are required, and end must be on or after start.");
+    }
+    await updateSalonWithOptionalColumns(supabase, salonId, {
+      is_featured: true,
+      featured_starts_at: startsAt,
+      featured_ends_at: endsAt,
+    }).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      if (isMissingDbSchemaError(message)) {
+        throw new Error("Run packages/db/FEATURED_LISTING_PERIOD.sql in Supabase before featuring listings.");
+      }
+      throw error;
+    });
+  } else {
+    await updateSalonWithOptionalColumns(supabase, salonId, {
+      is_featured: false,
+      featured_starts_at: null,
+      featured_ends_at: null,
+    });
+  }
 
   await tryInsertOnboardingLog(supabase, {
     salon_id: salonId,
     action: featured ? "LISTING_FEATURED" : "LISTING_UNFEATURED",
     notes: featured
-      ? "Pinned as a featured marketplace listing."
+      ? `Pinned as a featured marketplace listing from ${period?.startsAt} to ${period?.endsAt}.`
       : "Removed from featured marketplace listings.",
   });
 }

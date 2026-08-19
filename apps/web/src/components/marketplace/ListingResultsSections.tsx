@@ -52,8 +52,8 @@ export function ListingResultsSections({
       {featured.length > 0 ? (
         <section>
           <SectionHeading
-            title="Featured Salons"
-            description="Businesses highlighted by Trimma admin for the marketplace."
+            title="Featured Beauty Business"
+            description="Businesses selected by Trimma admin for a featured period. Up to four currently live featured listings appear here."
           />
           <div className={gridClassName}>
             {featured.slice(0, 4).map((listing) => (

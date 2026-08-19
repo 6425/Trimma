@@ -1,4 +1,5 @@
 import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
+import { isListingFeaturedNow } from "@/lib/listing-featured";
 import { computeSalonListingAvailability } from "@/lib/salon-operating-hours";
 import { isSalonClaimable } from "@/lib/salon-public-listing";
 
@@ -88,7 +89,7 @@ export function mapSalonRowToUI(s: any, idx: number) {
     category: s.category || tags[0] || "Beauty Lounge",
     logo: s.logo_url || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug}&backgroundColor=18181b`,
     image,
-    featured: s.is_featured === true,
+    featured: isListingFeaturedNow(s),
     openNow: availability.openNow,
     startingPrice,
     tags: tags.slice(0, 3),

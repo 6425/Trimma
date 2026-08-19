@@ -1,3 +1,5 @@
+import { isListingFeaturedNow } from "@/lib/listing-featured";
+
 export const TOP_RATED_LISTING_COUNT = 4;
 export const FEATURED_LISTING_COUNT = 4;
 /** First "You may also like" page, and each Load more page, on landing + category. */
@@ -16,6 +18,10 @@ type RankableListing = {
   is_featured?: boolean | null;
   isFeatured?: boolean | null;
   featured?: boolean | null;
+  featured_starts_at?: unknown;
+  featured_ends_at?: unknown;
+  featuredStartsAt?: unknown;
+  featuredEndsAt?: unknown;
 };
 
 function listingId(item: RankableListing): string {
@@ -23,7 +29,7 @@ function listingId(item: RankableListing): string {
 }
 
 function isAdminFeatured(item: RankableListing): boolean {
-  return item.is_featured === true || item.isFeatured === true || item.featured === true;
+  return isListingFeaturedNow(item);
 }
 
 export function listingReviewCount(listing: RankableListing): number {
