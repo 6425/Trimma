@@ -33,7 +33,7 @@ interface MarketplaceSectionsProps {
 
 // 1. FEATURED SALONS SECTION
 export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectionsProps) {
-  const featured = pickAdminFeaturedListings(salons, 4);
+  const featured = pickAdminFeaturedListings(salons);
 
   if (featured.length === 0) return null;
 
@@ -47,7 +47,7 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
           Featured Beauty Business {contextName ? `in ${contextName}` : ""}
         </h2>
         <p className="text-zinc-500 text-sm font-medium mt-1">
-          Businesses selected by Trimma admin for a featured period. Up to four currently live featured listings appear here.
+          The current Featured Batch: businesses Trimma admin selected for a live featured period.
         </p>
       </div>
 
@@ -78,8 +78,8 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
                 )}
                 
                 <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 sm:gap-2 z-20 flex-wrap max-w-[calc(100%-0.5rem)]">
-                  <Badge className="bg-amber-500 font-extrabold border-none shadow-sm text-white text-[8px] sm:text-[10px] uppercase tracking-wider px-1.5 py-0.5 sm:px-2.5 sm:py-1">
-                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1 fill-white" /> Featured
+                  <Badge className="bg-[#ffde5a] font-extrabold border-none shadow-sm text-black text-[8px] sm:text-[10px] uppercase tracking-wider px-1.5 py-0.5 sm:px-2.5 sm:py-1">
+                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1 fill-black text-black" /> Featured
                   </Badge>
                   {isVerified && <VerifiedSalonBadge size="xs" />}
                   {salon.status === "Open Now" && (
@@ -160,7 +160,7 @@ export function FeaturedSalonsSection({ salons, contextName }: MarketplaceSectio
 
 // 2. MOST POPULAR SALONS SECTION
 export function PopularSalonsSection({ salons, contextName }: MarketplaceSectionsProps) {
-  const featuredIds = new Set(pickAdminFeaturedListings(salons, 4).map((salon) => salon.id));
+  const featuredIds = new Set(pickAdminFeaturedListings(salons).map((salon) => salon.id));
   const popular = [...salons]
     .filter((salon) => !featuredIds.has(salon.id))
     .sort((a, b) => b.reviews - a.reviews || b.rating - a.rating)

@@ -11,7 +11,7 @@ import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import { isMissingDbSchemaError } from "@/lib/with-admin-db";
 import { todayInFeaturedTimezone } from "@/lib/listing-featured";
 import {
-  FEATURED_LISTING_COUNT,
+  FEATURED_BATCH_PUBLIC_LIMIT,
   TOP_RATED_LISTING_COUNT,
   YOU_MAY_ALSO_LIKE_COUNT,
   pinTopReviewedListingsWithPhone,
@@ -444,17 +444,19 @@ async function loadPublishedMarketplaceWindow(
       ? 80
       : Math.min(
           400,
-          params.offset + params.limit + FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT
+          params.offset + params.limit + FEATURED_BATCH_PUBLIC_LIMIT + TOP_RATED_LISTING_COUNT
         );
 
   const today = todayInFeaturedTimezone();
   const featuredSelect = BUSINESS_LISTING_CARD_SELECT;
+  const featuredFilters = { ...filters, q: "", minRating: 0 };
   const featuredQuery = runListingQuery(
-    applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, filters)
+    applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, featuredFilters)
       .eq("is_featured", true)
       .lte("featured_starts_at", today)
       .gte("featured_ends_at", today)
-      .limit(40)
+      .order("name", { ascending: true })
+      .limit(FEATURED_BATCH_PUBLIC_LIMIT)
   );
   const popularQuery = runListingQuery(
     applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, filters)
@@ -476,9 +478,10 @@ async function loadPublishedMarketplaceWindow(
     const fallbackSelect = withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT);
     const fallback = await Promise.all([
       runListingQuery(
-        applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
+        applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, featuredFilters)
           .eq("is_featured", true)
-          .limit(40)
+          .order("name", { ascending: true })
+          .limit(FEATURED_BATCH_PUBLIC_LIMIT)
       ),
       runListingQuery(
         applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
@@ -498,7 +501,12 @@ async function loadPublishedMarketplaceWindow(
   const popularRows = asSalonRows(popularRes.data);
 
   const byId = new Map<string, Record<string, unknown>>();
-  for (const row of [...featuredRows, ...popularRows]) {
+  for (const row of popularRows) {
+    const id = String(row.id || "");
+    if (!id) continue;
+    byId.set(id, row);
+  }
+  for (const row of featuredRows) {
     const id = String(row.id || "");
     if (!id) continue;
     byId.set(id, row);
@@ -510,7 +518,7 @@ async function loadPublishedMarketplaceWindow(
     hasMore:
       !params.limit || params.limit <= 0
         ? false
-        : params.offset + params.limit + FEATURED_LISTING_COUNT + TOP_RATED_LISTING_COUNT < totalCount,
+        : params.offset + params.limit + FEATURED_BATCH_PUBLIC_LIMIT + TOP_RATED_LISTING_COUNT < totalCount,
   };
 }
 
@@ -621,7 +629,7 @@ export async function fetchBusinessListingCards(
     }))
   );
   const topRatedCards = toCards(topRated).slice(0, TOP_RATED_LISTING_COUNT);
-  const featuredCards = toCards(featured).slice(0, FEATURED_LISTING_COUNT);
+  const featuredCards = toCards(featured).slice(0, FEATURED_BATCH_PUBLIC_LIMIT);
   const totalCount = countedTotal ?? topRated.length + featured.length + rest.length;
 
   if (!limit || limit <= 0) {

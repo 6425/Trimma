@@ -39,10 +39,10 @@ export function ListingResultsSections({
         <section>
           <SectionHeading
             title="Featured Beauty Business"
-            description="Businesses selected by Trimma admin for a featured period. Up to four currently live featured listings appear here."
+            description="The current Featured Batch: businesses Trimma admin selected for a live featured period."
           />
           <div className={gridClassName}>
-            {featured.slice(0, 4).map((listing, index) => (
+            {featured.map((listing, index) => (
               <BusinessListingCard key={listing.id} listing={listing} priority={index < 4} />
             ))}
           </div>

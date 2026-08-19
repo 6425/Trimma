@@ -1,7 +1,9 @@
 import { isListingFeaturedNow } from "@/lib/listing-featured";
 
 export const TOP_RATED_LISTING_COUNT = 4;
+/** Public Featured Beauty Business shows the live admin batch, not a review-ranked subset. */
 export const FEATURED_LISTING_COUNT = 4;
+export const FEATURED_BATCH_PUBLIC_LIMIT = 40;
 /** First "You may also like" page, and each Load more page, on landing + category. */
 export const YOU_MAY_ALSO_LIKE_COUNT = 8;
 
@@ -11,6 +13,7 @@ export function hasListingPhone(phone: unknown): boolean {
 
 type RankableListing = {
   id?: string;
+  name?: string | null;
   phone?: string | null;
   rating?: number | null;
   reviews?: number | null;
@@ -62,40 +65,34 @@ export function pinTopReviewedListingsWithPhone<T extends RankableListing>(
   return [...featured, ...rest];
 }
 
+export function compareFeaturedBatchOrder(a: RankableListing, b: RankableListing): number {
+  return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
+}
+
 export function pickFeaturedListingsWithPhone<T extends RankableListing>(
   items: T[],
-  featuredCount = FEATURED_LISTING_COUNT
+  featuredCount = FEATURED_BATCH_PUBLIC_LIMIT
 ): T[] {
   return pickAdminFeaturedListings(items, featuredCount);
 }
 
-/** Homepage / district Featured = admin-flagged listings only. Do not pad with popularity. */
+/** Homepage / district Featured = live admin batch, in the same name order as Featured Batch. */
 export function pickAdminFeaturedListings<T extends RankableListing>(
   items: T[],
-  featuredCount = FEATURED_LISTING_COUNT
+  featuredCount = FEATURED_BATCH_PUBLIC_LIMIT
 ): T[] {
-  return [...items]
-    .filter(isAdminFeatured)
-    .sort(compareListingPopularity)
-    .slice(0, featuredCount);
+  const featured = [...items].filter(isAdminFeatured).sort(compareFeaturedBatchOrder);
+  return featuredCount > 0 ? featured.slice(0, featuredCount) : featured;
 }
 
 export function splitMarketplaceListingSections<T extends RankableListing>(
   items: T[],
   topCount = TOP_RATED_LISTING_COUNT,
-  featuredCount = FEATURED_LISTING_COUNT
+  featuredCount = FEATURED_BATCH_PUBLIC_LIMIT
 ): { topRated: T[]; featured: T[]; rest: T[] } {
+  const featured = pickAdminFeaturedListings(items, featuredCount);
+  const taken = new Set(featured.map(listingId).filter(Boolean));
   const popularity = [...items].sort(compareListingPopularity);
-  const taken = new Set<string>();
-
-  const featured: T[] = [];
-  for (const item of popularity) {
-    if (featured.length >= featuredCount) break;
-    const id = listingId(item);
-    if (!id || !isAdminFeatured(item)) continue;
-    featured.push(item);
-    taken.add(id);
-  }
 
   const topRated = popularity
     .filter((item) => !taken.has(listingId(item)) && hasListingPhone(item.phone))

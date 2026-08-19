@@ -1,5 +1,5 @@
 -- Featured marketplace placement: admin-selected period on listed businesses.
--- Inclusive dates. Public Featured Beauty Business shows only rows where
+-- Inclusive dates. Public Featured Beauty Business shows the live Featured Batch:
 -- is_featured is true AND current date is between featured_starts_at and featured_ends_at.
 -- Run in the Supabase SQL Editor for live (and beta if needed).
 

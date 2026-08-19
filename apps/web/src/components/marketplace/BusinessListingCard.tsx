@@ -32,9 +32,15 @@ export function BusinessListingCard({ listing, priority = false }: Props) {
           className="object-cover transition-transform duration-500 hover:scale-[1.03]"
         />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">
-            {listing.isClaimable ? "Claim your business" : "Lead listing"}
-          </p>
+          {listing.isFeatured ? (
+            <p className="mb-1 inline-flex rounded-md bg-[#ffde5a] px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-black">
+              Featured
+            </p>
+          ) : (
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">
+              {listing.isClaimable ? "Claim your business" : "Lead listing"}
+            </p>
+          )}
           <p className="text-xs font-medium text-white/90 line-clamp-1">{listing.category}</p>
         </div>
       </Link>

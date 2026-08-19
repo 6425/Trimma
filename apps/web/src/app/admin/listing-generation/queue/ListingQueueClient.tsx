@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { trimmaFilterTabClass } from "@/lib/customer-dashboard-ui";
 import { LISTING_ONBOARDING_STATUS, listingPipelineLabel, formatListingCapturedDate } from "@/lib/salon-listing-pipeline";
-import { FEATURED_LISTING_COUNT } from "@/lib/listing-marketplace-rank";
 import {
   featuredListingStatus,
   formatFeaturedDateRange,
@@ -398,9 +397,8 @@ function ListingQueueContent({
         ) : (
           <p className="text-xs font-medium text-zinc-500">
             Feature a listed salon with a start and end date. The public{" "}
-            <strong>Featured Beauty Business</strong> row shows up to {FEATURED_LISTING_COUNT} currently
-            live featured listings on the homepage and on each category page. Extra live featured
-            listings are ranked by reviews.
+            <strong>Featured Beauty Business</strong> row shows the live Featured Batch on the homepage
+            and on each category page.
           </p>
         )}
       </div>
@@ -411,8 +409,8 @@ function ListingQueueContent({
             <div>
               <h2 className="text-sm font-bold text-zinc-900">Featured Batch</h2>
               <p className="mt-0.5 text-xs text-zinc-600">
-                All featured listed salons. Public Featured Beauty Business shows up to {FEATURED_LISTING_COUNT}{" "}
-                live listings; extras are ranked by reviews.
+                All featured listed salons. Save batch dates to apply one period to every salon in this
+                list. Public Featured Beauty Business shows this live batch.
               </p>
               <p className="mt-1 text-[11px] font-medium text-zinc-500">
                 {featuredBatch.length} in batch · {featuredLiveCount} live
@@ -913,13 +911,7 @@ function ListingQueueContent({
                       featuredEndsAt: featureEditor.end,
                     });
                     if (result.success) {
-                      if (featuredCount >= FEATURED_LISTING_COUNT) {
-                        toast.success(
-                          `Featured for this period. Homepage and category pages show up to ${FEATURED_LISTING_COUNT}; extras are ranked by reviews.`
-                        );
-                      } else {
-                        toast.success("Featured for the selected period.");
-                      }
+                      toast.success("Featured for the selected period. Public Featured Beauty Business uses this batch.");
                       setFeatureEditor(null);
                     }
                     return result;
