@@ -35,8 +35,8 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
           className="object-cover transition-transform duration-500 hover:scale-[1.03]"
         />
         {showFeaturedBatch ? (
-          <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-black shadow-sm">
-            Featured Batch
+          <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-black shadow-sm">
+            Featured
           </span>
         ) : null}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">

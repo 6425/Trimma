@@ -39,7 +39,7 @@ export function ListingResultsSections({
         <section>
           <SectionHeading
             title="Featured Beauty Business"
-            description="The current Featured Batch: businesses Trimma admin selected for a live featured period."
+            description="Businesses Trimma admin selected for a live featured period."
           />
           <div className={gridClassName}>
             {featured.map((listing, index) => (
