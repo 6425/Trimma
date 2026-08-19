@@ -22,6 +22,8 @@ export type ListingQueueRow = {
   is_featured: boolean;
   featured_starts_at: string | null;
   featured_ends_at: string | null;
+  description: string | null;
+  summary: string | null;
   created_at: string;
   captured_at: string | null;
 };
@@ -33,7 +35,7 @@ export type ListingQueuePayload = {
 };
 
 const QUEUE_SELECT_BASE =
-  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,created_at";
+  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
 const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
 const QUEUE_PAGE_SIZE = 400;
@@ -67,6 +69,8 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     is_featured: row.is_featured === true,
     featured_starts_at: parseFeaturedDate(row.featured_starts_at),
     featured_ends_at: parseFeaturedDate(row.featured_ends_at),
+    description: typeof row.description === "string" && row.description.trim() ? String(row.description) : null,
+    summary: typeof row.summary === "string" && row.summary.trim() ? String(row.summary) : null,
     created_at: String(row.created_at || ""),
     captured_at:
       typeof row.listing_captured_at === "string" && row.listing_captured_at.trim()
