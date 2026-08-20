@@ -619,7 +619,7 @@ export default function SalonsClient({
                 <div
                   className={
                     isBooking
-                      ? "grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 sm:gap-6"
+                      ? "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-6"
                       : "grid grid-cols-2 gap-3 lg:hidden"
                   }
                 >
