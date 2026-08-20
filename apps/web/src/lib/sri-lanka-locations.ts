@@ -445,44 +445,238 @@ export function resolveLocationSearchValue(location: string): string {
   return resolveLocationDisplayLabel(trimmed);
 }
 
+/** Strip province/district suffixes so "Central" never equals "North Central". */
+export function normalizePlaceName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/\bsri lanka\b/g, " ")
+    .replace(/\bdistrict\b/g, " ")
+    .replace(/\bprovince\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function placeNamesMatch(a: string, b: string): boolean {
+  const left = normalizePlaceName(a);
+  const right = normalizePlaceName(b);
+  return Boolean(left) && left === right;
+}
+
+export type LocationSearchScope =
+  | { kind: "province"; province: SriLankaProvince }
+  | { kind: "district"; province: SriLankaProvince; district: SriLankaDistrict }
+  | { kind: "city"; province: SriLankaProvince; district: SriLankaDistrict; city: string };
+
+function matchProvinceName(value: string): SriLankaProvince | undefined {
+  const needle = normalizePlaceName(value);
+  if (!needle) return undefined;
+  return SRI_LANKA_PROVINCES.find((province) =>
+    [province.name, province.shortName, province.slug.replace(/-/g, " "), province.dbSlug.replace(/-/g, " ")].some(
+      (name) => normalizePlaceName(name) === needle
+    )
+  );
+}
+
+function matchDistrictInProvince(
+  province: SriLankaProvince,
+  value: string
+): SriLankaDistrict | undefined {
+  const needle = normalizePlaceName(value);
+  const slug = slugifyLocation(value);
+  if (!needle && !slug) return undefined;
+  return province.districts.find(
+    (district) => placeNamesMatch(district.name, value) || district.slug === slug
+  );
+}
+
+function matchCityInDistrict(district: SriLankaDistrict, value: string): string | undefined {
+  const slug = slugifyLocation(value);
+  return district.cities.find(
+    (city) => placeNamesMatch(city, value) || slugifyLocation(city) === slug
+  );
+}
+
+function resolveDistrictScope(value: string): Extract<LocationSearchScope, { kind: "district" }> | undefined {
+  for (const province of SRI_LANKA_PROVINCES) {
+    const district = matchDistrictInProvince(province, value);
+    if (district) return { kind: "district", province, district };
+  }
+  return undefined;
+}
+
+function resolveCityScope(value: string): Extract<LocationSearchScope, { kind: "city" }> | undefined {
+  for (const province of SRI_LANKA_PROVINCES) {
+    for (const district of province.districts) {
+      const city = matchCityInDistrict(district, value);
+      if (city) return { kind: "city", province, district, city };
+      if (placeNamesMatch(district.name, value)) {
+        return { kind: "city", province, district, city: district.name };
+      }
+    }
+  }
+  return undefined;
+}
+
 /** Resolve a free-text location query to a known province (name, short name, or slug). */
 export function resolveProvinceForLocationQuery(location: string): SriLankaProvince | undefined {
+  return matchProvinceName(location);
+}
+
+/** Province first, then district, then city — exact names only, never substring. */
+export function resolveLocationSearchScope(location: string): LocationSearchScope | null {
   const trimmed = location.trim();
-  if (!trimmed) return undefined;
-  const lower = trimmed.toLowerCase();
-  const slug = slugifyLocation(trimmed.replace(/\s+province$/i, ""));
-  return SRI_LANKA_PROVINCES.find(
-    (p) =>
-      p.name.toLowerCase() === lower ||
-      p.shortName.toLowerCase() === lower ||
-      p.slug === slug ||
-      p.dbSlug === slugifyLocation(trimmed)
-  );
+  if (!trimmed) return null;
+
+  const province = matchProvinceName(trimmed);
+  if (province) return { kind: "province", province };
+
+  const district = resolveDistrictScope(trimmed);
+  if (district) return district;
+
+  const city = resolveCityScope(trimmed);
+  if (city) return city;
+
+  return null;
+}
+
+function postgrestExactIlike(column: string, value: string): string | null {
+  const safe = value.replace(/[%_,"()\\]/g, "").trim();
+  if (!safe) return null;
+  return `${column}.ilike."${safe}"`;
+}
+
+function exactFieldClauses(column: string, values: string[]): string[] {
+  const seen = new Set<string>();
+  const clauses: string[] = [];
+  for (const value of values) {
+    const clause = postgrestExactIlike(column, value);
+    if (!clause) continue;
+    const key = clause.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    clauses.push(clause);
+  }
+  return clauses;
 }
 
 /**
  * PostgREST `.or(...)` filter for salon location search.
- * Provinces expand to province + district/city matches so results work even when
- * `salons.province` is empty (same discovery path as district `/?l=` links).
+ * Uses exact province/district/city names so Central does not match North Central
+ * (Polonnaruwa) and Western does not match North Western.
+ * Provinces still expand to their districts and cities when `salons.province` is empty.
  */
 export function buildSalonLocationOrFilter(location: string): string {
   const trimmed = location.trim();
   if (!trimmed) return "";
 
-  const province = resolveProvinceForLocationQuery(trimmed);
-  if (province) {
-    const clauses = [
-      `province.ilike.%${province.name}%`,
-      `province.ilike.%${province.shortName}%`,
-      ...province.districts.flatMap((d) => [
-        `district.ilike.%${d.name}%`,
-        `city.ilike.%${d.name}%`,
-      ]),
-    ];
-    return clauses.join(",");
+  const scope = resolveLocationSearchScope(trimmed);
+  if (scope?.kind === "province") {
+    const { province } = scope;
+    return [
+      ...exactFieldClauses("province", [province.name, province.shortName, province.dbSlug, province.slug]),
+      ...exactFieldClauses(
+        "district",
+        province.districts.map((district) => district.name)
+      ),
+      ...exactFieldClauses(
+        "city",
+        province.districts.flatMap((district) => [district.name, ...district.cities])
+      ),
+    ].join(",");
   }
 
-  return `city.ilike.%${trimmed}%,district.ilike.%${trimmed}%,province.ilike.%${trimmed}%`;
+  if (scope?.kind === "district") {
+    const { district } = scope;
+    return [
+      ...exactFieldClauses("district", [district.name, district.slug]),
+      ...exactFieldClauses("city", [district.name, ...district.cities]),
+    ].join(",");
+  }
+
+  if (scope?.kind === "city") {
+    return exactFieldClauses("city", [scope.city]).join(",");
+  }
+
+  return [
+    ...exactFieldClauses("city", [trimmed]),
+    ...exactFieldClauses("district", [trimmed]),
+    ...exactFieldClauses("province", [trimmed]),
+  ].join(",");
+}
+
+type SalonLocationFields = {
+  province?: string | null;
+  district?: string | null;
+  city?: string | null;
+  location?: string | null;
+};
+
+function identifySalonGeography(
+  salon: SalonLocationFields
+): { province: SriLankaProvince; district?: SriLankaDistrict; city?: string } | null {
+  const parts = [salon.city, salon.district, salon.province, salon.location]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  for (const part of parts) {
+    const city = resolveCityScope(part);
+    if (city) return { province: city.province, district: city.district, city: city.city };
+  }
+  for (const part of parts) {
+    const district = resolveDistrictScope(part);
+    if (district) return { province: district.province, district: district.district };
+  }
+  for (const part of parts) {
+    const province = matchProvinceName(part);
+    if (province) return { province };
+  }
+
+  const blob = parts.join(", ");
+  if (blob) {
+    for (const piece of blob.split(/[,/|]/).map((value) => value.trim()).filter(Boolean)) {
+      const city = resolveCityScope(piece);
+      if (city) return { province: city.province, district: city.district, city: city.city };
+      const district = resolveDistrictScope(piece);
+      if (district) return { province: district.province, district: district.district };
+      const province = matchProvinceName(piece);
+      if (province) return { province };
+    }
+  }
+
+  return null;
+}
+
+/** True only when the salon belongs to the selected province, district, or city. */
+export function salonBelongsToRequestedLocation(
+  salon: SalonLocationFields,
+  location: string
+): boolean {
+  const trimmed = location.trim();
+  if (!trimmed) return true;
+
+  const scope = resolveLocationSearchScope(trimmed);
+  const geo = identifySalonGeography(salon);
+
+  if (!scope) {
+    const needle = normalizePlaceName(trimmed);
+    if (!needle) return true;
+    return [salon.city, salon.district, salon.province, salon.location].some(
+      (value) => value && normalizePlaceName(String(value)) === needle
+    );
+  }
+
+  if (!geo) return false;
+
+  if (scope.kind === "province") {
+    return geo.province.slug === scope.province.slug;
+  }
+  if (scope.kind === "district") {
+    return geo.district?.slug === scope.district.slug;
+  }
+  return Boolean(geo.city && placeNamesMatch(geo.city, scope.city));
 }
 
 export function getDistrictBySlugs(
@@ -537,32 +731,33 @@ export function getAllProvinceNames(): string[] {
 }
 
 export function salonMatchesProvince(
-  salon: { district?: string | null; city?: string | null; location?: string | null },
+  salon: {
+    province?: string | null;
+    district?: string | null;
+    city?: string | null;
+    location?: string | null;
+  },
   provinceSlug: string
 ): boolean {
   const province = getProvinceByRouteSlug(provinceSlug);
   if (!province) return true;
-
-  const haystack = `${salon.district || ""} ${salon.city || ""} ${salon.location || ""}`.toLowerCase();
-  const provinceName = province.name.toLowerCase();
-
-  if (haystack.includes(provinceName) || haystack.includes(province.shortName.toLowerCase())) {
-    return true;
-  }
-
-  return province.districts.some((district) => {
-    const districtName = district.name.toLowerCase();
-    return haystack.includes(districtName) || haystack.includes(district.slug.replace(/-/g, " "));
-  });
+  return salonBelongsToRequestedLocation(salon, province.name);
 }
 
 export function salonMatchesDistrict(
-  salon: { district?: string | null; city?: string | null; location?: string | null },
+  salon: {
+    province?: string | null;
+    district?: string | null;
+    city?: string | null;
+    location?: string | null;
+  },
   districtSlug: string
 ): boolean {
-  const normalized = slugifyLocation(districtSlug);
-  const haystack = `${salon.district || ""} ${salon.city || ""} ${salon.location || ""}`.toLowerCase();
-  return haystack.includes(normalized.replace(/-/g, " "));
+  const district = SRI_LANKA_PROVINCES.flatMap((province) => province.districts).find(
+    (entry) => entry.slug === slugifyLocation(districtSlug)
+  );
+  if (!district) return false;
+  return salonBelongsToRequestedLocation(salon, district.name);
 }
 
 export type DistrictCard = {

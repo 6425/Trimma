@@ -6,7 +6,7 @@ import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon
 import { mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
-import { buildSalonLocationOrFilter } from "@/lib/sri-lanka-locations";
+import { buildSalonLocationOrFilter, salonBelongsToRequestedLocation } from "@/lib/sri-lanka-locations";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import { isMissingDbSchemaError } from "@/lib/with-admin-db";
 import { todayInFeaturedTimezone } from "@/lib/listing-featured";
@@ -227,6 +227,9 @@ export async function fetchPublicSalons(
   if (categoryFilterActive) {
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
+  if (location.trim()) {
+    rows = rows.filter((row) => salonBelongsToRequestedLocation(row, location));
+  }
 
   const needsMemoryPage = postFilterActive || (approvedDirectoryQuery && categoryFilterActive);
   const pagedRows = needsMemoryPage ? rows.slice(offset, offset + limit) : rows.slice(0, limit);
@@ -277,6 +280,7 @@ function filterBusinessListingRows(
     category?: string;
     categoryName?: string;
     publishedOnly?: boolean;
+    location?: string;
   }
 ) {
   let rows = filterPublicSalons(data);
@@ -296,6 +300,9 @@ function filterBusinessListingRows(
   const categoryName = params.categoryName || "";
   if (category.replace(/-/g, " ").trim()) {
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
+  }
+  if (params.location?.trim()) {
+    rows = rows.filter((row) => salonBelongsToRequestedLocation(row, params.location || ""));
   }
 
   return rows;
@@ -628,7 +635,7 @@ export async function fetchBusinessListingCards(
     });
   }
 
-  const filtered = filterBusinessListingRows(data, { category, categoryName, publishedOnly });
+  const filtered = filterBusinessListingRows(data, { category, categoryName, publishedOnly, location });
   const toCards = (rows: Array<Record<string, unknown>>, start = 0) =>
     rows.map((row, idx) => mapSalonRowToBusinessListing(row, idx + start));
 
