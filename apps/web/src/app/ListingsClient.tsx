@@ -355,6 +355,12 @@ export default function ListingsClient({
                 isLoadingMore={isLoadingMore}
                 onLoadMore={handleLoadMore}
                 gridClassName="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                moreTitle={searchQuery.trim() ? "Search results" : undefined}
+                moreDescription={
+                  searchQuery.trim()
+                    ? "Businesses matching the name you searched."
+                    : undefined
+                }
               />
             )}
           </>

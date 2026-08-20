@@ -13,6 +13,8 @@ type Props = {
   isLoadingMore: boolean;
   onLoadMore: () => void;
   gridClassName: string;
+  moreTitle?: string;
+  moreDescription?: string;
 };
 
 function SectionHeading({ title, description }: { title: string; description: string }) {
@@ -32,6 +34,8 @@ export function ListingResultsSections({
   isLoadingMore,
   onLoadMore,
   gridClassName,
+  moreTitle = "You may also like",
+  moreDescription = "The rest of the published listings, sorted from the highest Google reviews and ratings to the lowest.",
 }: Props) {
   return (
     <div className="space-y-12">
@@ -75,8 +79,8 @@ export function ListingResultsSections({
       {more.length > 0 || hasMore ? (
         <section>
           <SectionHeading
-            title="You may also like"
-            description="The rest of the published listings, sorted from the highest Google reviews and ratings to the lowest."
+            title={moreTitle}
+            description={moreDescription}
           />
           {more.length > 0 ? (
             <div className={gridClassName}>

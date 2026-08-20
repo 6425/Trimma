@@ -142,11 +142,10 @@ export async function fetchPublicSalons(
   const applyFilters = (builder: ReturnType<typeof supabase.from>, withDisplayOrder: boolean) => {
     let query = builder.select(select);
     if (q) {
-      query = query.or(
-        `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
-      );
+      const textFilter = textSearchOrFilter(q);
+      if (textFilter) query = query.or(textFilter);
     }
-    if (location) {
+    if (location && !q) {
       const locationFilter = buildSalonLocationOrFilter(location);
       if (locationFilter) query = query.or(locationFilter);
     }
@@ -228,7 +227,7 @@ export async function fetchPublicSalons(
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
   if (location.trim()) {
-    rows = rows.filter((row) => salonBelongsToRequestedLocation(row, location));
+    rows = rows.filter((row) => rowAllowedForLocationSearch(row, q, location));
   }
 
   const needsMemoryPage = postFilterActive || (approvedDirectoryQuery && categoryFilterActive);
@@ -281,6 +280,7 @@ function filterBusinessListingRows(
     categoryName?: string;
     publishedOnly?: boolean;
     location?: string;
+    q?: string;
   }
 ) {
   let rows = filterPublicSalons(data);
@@ -302,7 +302,9 @@ function filterBusinessListingRows(
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
   if (params.location?.trim()) {
-    rows = rows.filter((row) => salonBelongsToRequestedLocation(row, params.location || ""));
+    rows = rows.filter((row) =>
+      rowAllowedForLocationSearch(row, params.q || "", params.location || "")
+    );
   }
 
   return rows;
@@ -351,6 +353,34 @@ function runListingQuery(query: LooseListingQuery): Promise<ListingQueryResult> 
   return query as unknown as Promise<ListingQueryResult>;
 }
 
+function sanitizeIlikeNeedle(value: string): string {
+  return value.replace(/[%_,()"]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function textSearchOrFilter(q: string): string {
+  const safe = sanitizeIlikeNeedle(q);
+  if (!safe) return "";
+  return `name.ilike.%${safe}%,slug.ilike.%${safe}%,category.ilike.%${safe}%`;
+}
+
+function listingNameMatchesQuery(row: Record<string, unknown>, q: string): boolean {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return false;
+  const name = String(row.name || "").toLowerCase();
+  const slug = String(row.slug || "").replace(/-/g, " ").toLowerCase();
+  return name.includes(needle) || slug.includes(needle);
+}
+
+function rowAllowedForLocationSearch(
+  row: Record<string, unknown>,
+  q: string,
+  location: string
+): boolean {
+  if (!location.trim()) return true;
+  if (listingNameMatchesQuery(row, q)) return true;
+  return salonBelongsToRequestedLocation(row, location);
+}
+
 function applyPublishedListingFilters(
   query: unknown,
   params: {
@@ -366,12 +396,12 @@ function applyPublishedListingFilters(
   next = next.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
   next = next.not("status", "in", "(rejected,inactive)");
   const q = params.q.trim();
-  if (q) {
-    next = next.or(
-      `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%,address.ilike.%${q}%`
-    );
+  const textFilter = textSearchOrFilter(q);
+  if (textFilter) {
+    next = next.or(textFilter);
   }
-  if (params.location.trim()) {
+  // Name search must not AND a location, or a matching salon in another province is hidden.
+  if (params.location.trim() && !q) {
     const locationFilter = buildSalonLocationOrFilter(params.location);
     if (locationFilter) next = next.or(locationFilter);
   }
@@ -478,6 +508,36 @@ async function loadPublishedMarketplaceWindow(
           400,
           params.offset + params.limit + FEATURED_BATCH_PUBLIC_LIMIT + TOP_RATED_LISTING_COUNT
         );
+
+  if (params.q.trim()) {
+    const searchLimit = Math.min(400, Math.max(windowSize, params.offset + Math.max(params.limit, 1) + 20));
+    const searchQuery = runListingQuery(
+      applyPublishedListingFilters(client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown, filters)
+        .order("review_count", { ascending: false })
+        .order("rating", { ascending: false })
+        .limit(searchLimit)
+    );
+    let [searchRes, totalCount] = await Promise.all([
+      searchQuery,
+      countPublishedMarketplaceListings(supabase, filters),
+    ]);
+    if (searchRes.error && isMissingDbSchemaError(searchRes.error.message)) {
+      const fallbackSelect = withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT);
+      searchRes = await runListingQuery(
+        applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
+          .order("review_count", { ascending: false })
+          .order("rating", { ascending: false })
+          .limit(searchLimit)
+      );
+    }
+    if (searchRes.error) throw new Error(searchRes.error.message);
+    const rows = asSalonRows(searchRes.data);
+    return {
+      rows,
+      totalCount,
+      hasMore: Boolean(params.limit && params.limit > 0 && params.offset + params.limit < totalCount),
+    };
+  }
 
   const today = todayInFeaturedTimezone();
   const featuredSelect = BUSINESS_LISTING_CARD_SELECT;
@@ -617,11 +677,10 @@ export async function fetchBusinessListingCards(
         .in("source_type", ["GOOGLE_PLACES", "LISTING_GENERATION"]);
 
       if (q) {
-        query = query.or(
-          `name.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%`
-        );
+        const textFilter = textSearchOrFilter(q);
+        if (textFilter) query = query.or(textFilter);
       }
-      if (location) {
+      if (location && !q) {
         const locationFilter = buildSalonLocationOrFilter(location);
         if (locationFilter) query = query.or(locationFilter);
       }
@@ -635,9 +694,35 @@ export async function fetchBusinessListingCards(
     });
   }
 
-  const filtered = filterBusinessListingRows(data, { category, categoryName, publishedOnly, location });
+  const filtered = filterBusinessListingRows(data, {
+    category,
+    categoryName,
+    publishedOnly,
+    location,
+    q,
+  });
   const toCards = (rows: Array<Record<string, unknown>>, start = 0) =>
     rows.map((row, idx) => mapSalonRowToBusinessListing(row, idx + start));
+
+  if (q.trim()) {
+    const ranked = [...filtered].sort((a, b) => {
+      const aHere = location.trim() && salonBelongsToRequestedLocation(a, location) ? 0 : 1;
+      const bHere = location.trim() && salonBelongsToRequestedLocation(b, location) ? 0 : 1;
+      if (aHere !== bHere) return aHere - bHere;
+      const aName = listingNameMatchesQuery(a, q) ? 0 : 1;
+      const bName = listingNameMatchesQuery(b, q) ? 0 : 1;
+      if (aName !== bName) return aName - bName;
+      return Number(b.review_count || 0) - Number(a.review_count || 0);
+    });
+    const pagedRows = !limit || limit <= 0 ? ranked.slice(offset) : ranked.slice(offset, offset + limit);
+    return {
+      listings: toCards(pagedRows, offset),
+      topRated: [],
+      featured: [],
+      hasMore: Boolean(limit && limit > 0 && offset + pagedRows.length < ranked.length),
+      totalCount: ranked.length,
+    };
+  }
 
   if (sort === "name" || sort === "rating") {
     const rows = sortBusinessListingRows(filtered, sort);
