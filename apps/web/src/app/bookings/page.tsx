@@ -3,6 +3,7 @@ import { buildPublicPageMetadata } from "@/lib/public-page-metadata";
 import { fetchPublicSalons } from "@/lib/public-salon-search";
 import { fetchPublicCategories } from "@/lib/public-categories";
 import { fetchCachedPublicDeals } from "@/lib/deals";
+import { withTimeout } from "@/lib/promise-timeout";
 import SalonsClient from "../SalonsClient";
 
 export const metadata = buildPublicPageMetadata({
@@ -30,19 +31,23 @@ export default async function BookingsDirectoryPage({ searchParams }: PageProps)
     fetchPublicCategories(),
     (async () => {
       try {
-        return await fetchPublicSalons(supabase, {
-          q: sp.q ?? "",
-          location: sp.l ?? "",
-          category: sp.category ?? "",
-          approvedOnly: true,
-          limit: 12,
-          offset: 0,
-        });
+        return await withTimeout(
+          fetchPublicSalons(supabase, {
+            q: sp.q ?? "",
+            location: sp.l ?? "",
+            category: sp.category ?? "",
+            approvedOnly: true,
+            limit: 20,
+            offset: 0,
+          }),
+          8_000,
+          "Booking directory search timed out"
+        );
       } catch {
         return { salons: [], hasMore: false };
       }
     })(),
-    fetchCachedPublicDeals().catch(() => []),
+    withTimeout(fetchCachedPublicDeals(), 4_000, "Deals timed out").catch(() => []),
   ]);
 
   const initialSalons = listingResult.salons;

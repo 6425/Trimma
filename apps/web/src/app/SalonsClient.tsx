@@ -132,7 +132,7 @@ export default function SalonsClient({
   const [isLoading, setIsLoading] = useState(!ssrSeeded);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(0);
-  const LIMIT = 12;
+  const LIMIT = isBooking ? 20 : 12;
   const trackedSearchKeyRef = useRef<string | null>(null);
   const trackedPageViewRef = useRef(false);
 
@@ -616,20 +616,28 @@ export default function SalonsClient({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-3 lg:hidden">
+                <div
+                  className={
+                    isBooking
+                      ? "grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 sm:gap-6"
+                      : "grid grid-cols-2 gap-3 lg:hidden"
+                  }
+                >
                   {filteredSalons.map((salon, index) => (
                     <SalonCard key={salon.id} salon={mapToCardProps(salon)} priority={index < 4} />
                   ))}
                 </div>
-                <div className="hidden lg:flex lg:flex-col lg:space-y-4">
-                  {filteredSalons.map((salon, index) => (
-                    <SalonListRow
-                      key={salon.id}
-                      salon={mapToRowProps(salon)}
-                      priority={index < 4}
-                    />
-                  ))}
-                </div>
+                {isBooking ? null : (
+                  <div className="hidden lg:flex lg:flex-col lg:space-y-4">
+                    {filteredSalons.map((salon, index) => (
+                      <SalonListRow
+                        key={salon.id}
+                        salon={mapToRowProps(salon)}
+                        priority={index < 4}
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             )}
 

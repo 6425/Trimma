@@ -123,8 +123,12 @@ export async function fetchPublicSalons(
 ) {
   const normalizedCategory = category.replace(/-/g, " ").trim().toLowerCase();
   const categoryFilterActive = normalizedCategory.length > 0;
+  // /bookings: only verified/approved salons. Never scan every listing-generation row.
+  const approvedDirectoryQuery =
+    approvedOnly && !bookableOnly && !browseOnly && !leadListingsOnly;
   const postFilterActive =
-    categoryFilterActive || bookableOnly || browseOnly || approvedOnly || leadListingsOnly;
+    !approvedDirectoryQuery &&
+    (categoryFilterActive || bookableOnly || browseOnly || approvedOnly || leadListingsOnly);
 
   let select = `
       id, name, slug, rating, review_count,
@@ -148,6 +152,11 @@ export async function fetchPublicSalons(
     }
     if (minRating > 0) query = query.gt("review_count", 0).gte("rating", minRating);
     if (verifiedOnly) query = query.eq("is_verified", true);
+    if (approvedDirectoryQuery) {
+      query = query
+        .or("is_verified.eq.true,onboarding_status.eq.VERIFIED")
+        .not("status", "in", "(inactive,rejected)");
+    }
     if (withDisplayOrder) {
       if (sort === "rating") query = query.order("rating", { ascending: false });
       else if (sort === "name") query = query.order("name", { ascending: true });
@@ -156,23 +165,36 @@ export async function fetchPublicSalons(
     return query;
   };
 
-  const fetchRows = async (): Promise<Array<Record<string, unknown>>> =>
-    postFilterActive
-      ? fetchAllByIdCursor(async (afterId, pageSize) => {
-          let query = applyFilters(supabase.from("salons"), false);
-          if (afterId) query = query.gt("id", afterId);
-          const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
-          if (error) throw new Error(error.message);
-          return asSalonRows(page);
-        })
-      : (async () => {
-          const { data: page, error } = await applyFilters(supabase.from("salons"), true).range(
-            offset,
-            offset + Math.max(limit, 1) - 1
-          );
-          if (error) throw new Error(error.message);
-          return asSalonRows(page);
-        })();
+  const fetchRows = async (): Promise<Array<Record<string, unknown>>> => {
+    if (approvedDirectoryQuery) {
+      const client = publishedListingsClient(supabase);
+      let query = applyFilters(client.from("salons"), !categoryFilterActive);
+      if (categoryFilterActive) {
+        const { data: page, error } = await query.limit(200);
+        if (error) throw new Error(error.message);
+        return asSalonRows(page);
+      }
+      const pageSize = Math.max(limit, 1) + 1;
+      const { data: page, error } = await query.range(offset, offset + pageSize - 1);
+      if (error) throw new Error(error.message);
+      return asSalonRows(page);
+    }
+    if (postFilterActive) {
+      return fetchAllByIdCursor(async (afterId, pageSize) => {
+        let query = applyFilters(supabase.from("salons"), false);
+        if (afterId) query = query.gt("id", afterId);
+        const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
+        if (error) throw new Error(error.message);
+        return asSalonRows(page);
+      });
+    }
+    const { data: page, error } = await applyFilters(supabase.from("salons"), true).range(
+      offset,
+      offset + Math.max(limit, 1) - 1
+    );
+    if (error) throw new Error(error.message);
+    return asSalonRows(page);
+  };
 
   let data: Array<Record<string, unknown>>;
   try {
@@ -206,14 +228,17 @@ export async function fetchPublicSalons(
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
 
-  const pagedRows = postFilterActive ? rows.slice(offset, offset + limit) : rows;
+  const needsMemoryPage = postFilterActive || (approvedDirectoryQuery && categoryFilterActive);
+  const pagedRows = needsMemoryPage ? rows.slice(offset, offset + limit) : rows.slice(0, limit);
   const salons = pagedRows.map((row, idx) => mapSalonRowToUI(row, idx + offset));
 
   return {
     salons,
-    hasMore: postFilterActive
+    hasMore: needsMemoryPage
       ? rows.length > offset + limit
-      : salons.length === limit,
+      : approvedDirectoryQuery
+        ? rows.length > limit
+        : salons.length === limit,
   };
 }
 
