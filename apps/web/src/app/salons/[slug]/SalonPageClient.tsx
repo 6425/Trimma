@@ -1142,7 +1142,7 @@ export default function SalonPage({
       <div className="container mx-auto px-4 max-w-6xl relative">
 
         {/* MAIN LAYOUT */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mt-10">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mt-10">
           <div className="flex-1 min-w-0 space-y-12">
             
             {/* 4. SERVICES SECTION */}
@@ -1392,10 +1392,12 @@ export default function SalonPage({
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR - QUICK BOOKING BAR (INLINE SMART SCHEDULING ENGINE) */}
-          <div className="hidden lg:block w-[380px] shrink-0" id="booking-sidebar-card">
-            <div className="sticky top-24 space-y-6 h-[calc(100vh-8rem)] overflow-y-auto hide-scrollbar pb-6 rounded-2xl">
-               <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-5">
+          {/* RIGHT SIDEBAR — booking form stays pinned under the site header */}
+          <aside
+            className="hidden lg:block w-[380px] shrink-0 self-start sticky top-16 z-20 max-h-[calc(100vh-4rem)] space-y-6 overflow-y-auto hide-scrollbar pb-2"
+            id="booking-sidebar-card"
+          >
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-5">
                  <div>
                    <h3 className="text-xl font-bold text-zinc-900">Book Appointment</h3>
                    <p className="text-xs text-zinc-400 mt-0.5">Select service, professional, date and time below.</p>
@@ -1616,8 +1618,7 @@ export default function SalonPage({
                   )}
                  </div>
                </div>
-            </div>
-          </div>
+          </aside>
         </div>
       </div>
 
