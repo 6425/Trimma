@@ -51,6 +51,7 @@ import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLin
 import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
 import { SalonPublicQrSection } from "../../../components/marketplace/SalonPublicQrSection";
 import { SimilarBusinessesSection } from "../../../components/marketplace/SimilarBusinessesSection";
+import { StickyBookingSidebar } from "../../../components/marketplace/StickyBookingSidebar";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
@@ -749,7 +750,7 @@ export default function SalonPage({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 animate-in fade-in duration-700 font-sans trimma-salon-page">
+    <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 font-sans trimma-salon-page">
       {showClaimBanner ? (
         <div className="max-w-6xl mx-auto px-4 pt-5">
           <ClaimBusinessBanner salonId={String(salon.id)} salonName={salon.name || "this business"} />
@@ -1393,10 +1394,7 @@ export default function SalonPage({
           </div>
 
           {/* RIGHT SIDEBAR — booking form stays pinned under the site header */}
-          <aside
-            className="hidden lg:block w-[380px] shrink-0 self-start sticky top-16 z-20 max-h-[calc(100vh-4rem)] space-y-6 overflow-y-auto hide-scrollbar pb-2"
-            id="booking-sidebar-card"
-          >
+          <StickyBookingSidebar>
             <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-5">
                  <div>
                    <h3 className="text-xl font-bold text-zinc-900">Book Appointment</h3>
@@ -1618,7 +1616,7 @@ export default function SalonPage({
                   )}
                  </div>
                </div>
-          </aside>
+          </StickyBookingSidebar>
         </div>
       </div>
 

@@ -1755,6 +1755,12 @@
   border-color: #262626 !important;
 }
 
+/* Salon profile: html/body overflow-x:clip otherwise traps sticky/fixed descendants. */
+html:has(.trimma-salon-page),
+html:has(.trimma-salon-page) body {
+  overflow-x: visible !important;
+}
+
 /* Single salon page — force black CTA buttons with white labels (overrides hero yellow text) */
 .trimma-salon-page .page-hero-shell :is(button, [data-slot="button"]).hero-btn-primary,
 .trimma-salon-page .page-hero-shell :is(button, [data-slot="button"])[class*="bg-black"],
