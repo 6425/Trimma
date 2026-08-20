@@ -44,11 +44,11 @@ export function SalonLocationMap({ salon, compact = false, className = "" }: Sal
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 w-full">
           <h4 className="text-sm font-bold text-zinc-900">Salon location</h4>
           {!compact && (
-            <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2" title={fullAddress}>
+            <p className="text-xs text-zinc-500 mt-0.5 break-words" title={fullAddress}>
               {fullAddress}
             </p>
           )}
@@ -66,7 +66,7 @@ export function SalonLocationMap({ salon, compact = false, className = "" }: Sal
             type="button"
             size="sm"
             variant="outline"
-            className="shrink-0 h-9 rounded-lg text-[11px] font-bold gap-1.5 border-slate-200"
+            className="h-11 min-h-11 w-full shrink-0 rounded-lg text-[11px] font-bold gap-1.5 border-slate-200 sm:h-9 sm:min-h-9 sm:w-auto"
             onClick={() => window.open(directionsUrl, "_blank", "noopener,noreferrer")}
           >
             <Navigation2 className="w-3.5 h-3.5" />

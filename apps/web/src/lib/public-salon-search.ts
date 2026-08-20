@@ -791,3 +791,31 @@ export async function countPublishedListingsByCategory(
 
   return counts;
 }
+
+export async function fetchSimilarBusinessListingsForSalon(
+  supabase: SupabaseClient,
+  params: {
+    salonId: string;
+    city?: string | null;
+    category?: string | null;
+  }
+): Promise<BusinessListingCardData[]> {
+  const city = String(params.city || "").trim();
+  const category = String(params.category || "").trim();
+  if (!city || !category || !params.salonId) return [];
+
+  const result = await fetchBusinessListingCards(supabase, {
+    q: "",
+    location: city,
+    categoryName: category,
+    publishedOnly: true,
+    sort: "rating",
+    limit: 8,
+    offset: 0,
+  });
+
+  return result.listings
+    .filter((listing) => listing.id !== params.salonId)
+    .filter((listing) => salonBelongsToRequestedLocation(listing, city))
+    .slice(0, 3);
+}

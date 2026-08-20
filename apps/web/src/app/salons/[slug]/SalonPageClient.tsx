@@ -50,6 +50,8 @@ import { GlobalServiceIconPreview } from "../../../components/admin/GlobalServic
 import { SalonSocialLinks } from "../../../components/marketplace/SalonSocialLinks";
 import { FacebookShareButton } from "../../../components/marketplace/FacebookShareButton";
 import { SalonPublicQrSection } from "../../../components/marketplace/SalonPublicQrSection";
+import { SimilarBusinessesSection } from "../../../components/marketplace/SimilarBusinessesSection";
+import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 import { SALON_HERO_IMAGE_ASPECT_CLASS } from "@/lib/salon-hero-image";
@@ -117,12 +119,14 @@ export default function SalonPage({
   initialData,
   initialReviews,
   initialReviewSummary,
+  initialSimilarListings = [],
   highlightServiceId,
   highlightPromoId,
 }: {
   initialData?: SalonPageInitialData;
   initialReviews?: PublicSalonReview[];
   initialReviewSummary?: SalonReviewSummary;
+  initialSimilarListings?: BusinessListingCardData[];
   highlightServiceId?: string;
   highlightPromoId?: string;
 }) {
@@ -144,6 +148,9 @@ export default function SalonPage({
   const [salonReviews, setSalonReviews] = useState<PublicSalonReview[]>(initialReviews ?? []);
   const [reviewSummary, setReviewSummary] = useState<SalonReviewSummary>(
     initialReviewSummary ?? buildReviewSummary([])
+  );
+  const [similarListings, setSimilarListings] = useState<BusinessListingCardData[]>(
+    initialSimilarListings
   );
   const [loading, setLoading] = useState(initialData == null);
   const [reviewsLoading, setReviewsLoading] = useState(!hasInitialReviews);
@@ -294,6 +301,39 @@ export default function SalonPage({
       cancelled = true;
     };
   }, [salon?.id, hasInitialReviews]);
+
+  useEffect(() => {
+    if (!salon?.id || initialData != null) return;
+    const city = String(salon.city || "").trim();
+    const category = String(salon.category || "").trim();
+    if (!city || !category) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const params = new URLSearchParams({
+          location: city,
+          categoryName: category,
+          publishedOnly: "true",
+          sort: "rating",
+          limit: "8",
+        });
+        const res = await fetch(`/api/business-listings/search?${params.toString()}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows = (data.listings || []) as BusinessListingCardData[];
+        if (!cancelled) {
+          setSimilarListings(rows.filter((listing) => listing.id !== salon.id).slice(0, 3));
+        }
+      } catch (error) {
+        console.error("Failed to load similar businesses", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [salon?.id, salon?.city, salon?.category, initialData]);
 
   useEffect(() => {
     if (loading || !salon) return;
@@ -1580,6 +1620,8 @@ export default function SalonPage({
           </div>
         </div>
       </div>
+
+      <SimilarBusinessesSection listings={similarListings} city={salon.city} />
 
       {/* MOBILE STICKY BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 lg:hidden flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 pb-safe">

@@ -39,10 +39,10 @@ export function MapTravelPanel({
           type="button"
           variant="dark"
           size="sm"
-          className="h-9 min-h-9 rounded-lg px-3 text-xs font-bold"
+          className="h-auto min-h-11 w-full whitespace-normal rounded-lg px-3 py-2 text-left text-xs font-bold leading-snug sm:min-h-9 sm:w-auto sm:py-1.5"
           onClick={onRequestLocation}
         >
-          <Navigation2 className="mr-1.5 h-3.5 w-3.5" />
+          <Navigation2 className="mr-1.5 h-3.5 w-3.5 shrink-0" />
           Enable location for accurate distance
         </Button>
         {error && <p className="mt-1 text-[11px] font-medium text-zinc-500">{error}</p>}
