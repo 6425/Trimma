@@ -1785,7 +1785,6 @@ html:has(.trimma-salon-page) body {
     overflow-y: auto;
     padding-bottom: 0.5rem;
     scrollbar-width: none;
-    grid-row: span 2;
   }
 
   .trimma-salon-booking-sidebar::-webkit-scrollbar {

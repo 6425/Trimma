@@ -304,7 +304,7 @@ export default function SalonPage({
   }, [salon?.id, hasInitialReviews]);
 
   useEffect(() => {
-    if (!salon?.id || initialData != null) return;
+    if (!salon?.id || initialSimilarListings.length > 0) return;
     const city = String(salon.city || "").trim();
     const category = String(salon.category || "").trim();
     if (!city || !category) return;
@@ -312,11 +312,9 @@ export default function SalonPage({
     void (async () => {
       try {
         const params = new URLSearchParams({
+          similarSalonId: String(salon.id),
           location: city,
           categoryName: category,
-          publishedOnly: "true",
-          sort: "rating",
-          limit: "8",
         });
         const res = await fetch(`/api/business-listings/search?${params.toString()}`, {
           cache: "no-store",
@@ -325,7 +323,7 @@ export default function SalonPage({
         const data = await res.json();
         const rows = (data.listings || []) as BusinessListingCardData[];
         if (!cancelled) {
-          setSimilarListings(rows.filter((listing) => listing.id !== salon.id).slice(0, 3));
+          setSimilarListings(rows.slice(0, 3));
         }
       } catch (error) {
         console.error("Failed to load similar businesses", error);
@@ -334,7 +332,7 @@ export default function SalonPage({
     return () => {
       cancelled = true;
     };
-  }, [salon?.id, salon?.city, salon?.category, initialData]);
+  }, [salon?.id, salon?.city, salon?.category, initialSimilarListings.length]);
 
   useEffect(() => {
     if (loading || !salon) return;
@@ -1385,6 +1383,8 @@ export default function SalonPage({
               <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
             )}
 
+            <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
+
             <div className="lg:hidden">
               <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} variant="sidebar" />
             </div>
@@ -1614,8 +1614,6 @@ export default function SalonPage({
                  </div>
                </div>
           </StickyBookingSidebar>
-
-        <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
       </div>
 
       {/* MOBILE STICKY BOTTOM BAR */}

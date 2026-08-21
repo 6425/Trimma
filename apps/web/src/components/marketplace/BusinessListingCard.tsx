@@ -41,7 +41,7 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
         ) : null}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-10">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#ffde5a]">
-            {listing.isClaimable ? "Claim your business" : "Lead listing"}
+            {listing.isClaimable ? "Claim your business" : listing.isBookable ? "Book online" : "Lead listing"}
           </p>
           <p className="text-xs font-medium text-white/90 line-clamp-1">{listing.category}</p>
         </div>

@@ -804,18 +804,36 @@ export async function fetchSimilarBusinessListingsForSalon(
   const category = String(params.category || "").trim();
   if (!city || !category || !params.salonId) return [];
 
-  const result = await fetchBusinessListingCards(supabase, {
-    q: "",
-    location: city,
-    categoryName: category,
-    publishedOnly: true,
-    sort: "rating",
-    limit: 8,
-    offset: 0,
-  });
+  const client = publishedListingsClient(supabase);
+  const locationFilter = buildSalonLocationOrFilter(city);
+  const select = BUSINESS_LISTING_CARD_SELECT;
 
-  return result.listings
-    .filter((listing) => listing.id !== params.salonId)
-    .filter((listing) => salonBelongsToRequestedLocation(listing, city))
-    .slice(0, 3);
+  const run = async (columns: string) => {
+    let query = client
+      .from("salons")
+      .select(columns)
+      .not("status", "in", "(inactive,rejected)");
+    if (locationFilter) query = query.or(locationFilter);
+    const { data, error } = await query.order("rating", { ascending: false }).limit(80);
+    if (error) throw new Error(error.message);
+    return asSalonRows(data);
+  };
+
+  let rows: Array<Record<string, unknown>>;
+  try {
+    rows = await run(select);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const fallback = withoutFeaturedPeriodSelect(select);
+    if (fallback === select || !isMissingDbSchemaError(message)) throw error;
+    rows = await run(fallback);
+  }
+
+  return filterPublicSalons(rows)
+    .filter(isSalonPubliclyListable)
+    .filter((row) => String(row.id) !== params.salonId)
+    .filter((row) => salonBelongsToRequestedLocation(row, city))
+    .filter((row) => salonMatchesCategory(row, category, category))
+    .slice(0, 3)
+    .map((row, idx) => mapSalonRowToBusinessListing(row, idx));
 }

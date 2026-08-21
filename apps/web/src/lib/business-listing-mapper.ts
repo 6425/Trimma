@@ -1,5 +1,6 @@
 import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
 import { isListingFeaturedNow } from "@/lib/listing-featured";
+import { isSalonPubliclyBookable } from "@/lib/salon-bookability";
 import { isSalonClaimable } from "@/lib/salon-public-listing";
 import { readSalonSocialLinks } from "@/lib/salon-public-social";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
@@ -27,6 +28,7 @@ export type BusinessListingCardData = {
   facebookUrl: string | null;
   instagramUrl: string | null;
   isClaimable: boolean;
+  isBookable: boolean;
   isFeatured: boolean;
 };
 
@@ -129,6 +131,7 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
     facebookUrl: social.facebookUrl,
     instagramUrl,
     isClaimable: isBusinessListingClaimable(row),
+    isBookable: isSalonPubliclyBookable(row),
     isFeatured: isListingFeaturedNow(row),
   };
 }
