@@ -1755,10 +1755,46 @@
   border-color: #262626 !important;
 }
 
-/* Salon profile: html/body overflow-x:clip otherwise traps sticky/fixed descendants. */
+/*
+ * Salon profile pin: html/body overflow-x:clip computes overflow-y to auto, so body
+ * becomes a sticky containing block as tall as the page and the sidebar never sticks.
+ */
+html.trimma-salon-profile-active,
+html.trimma-salon-profile-active body,
 html:has(.trimma-salon-page),
 html:has(.trimma-salon-page) body {
   overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+
+.trimma-salon-booking-sidebar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .trimma-salon-booking-sidebar {
+    display: block;
+    width: 380px;
+    flex-shrink: 0;
+    align-self: start;
+    position: sticky !important;
+    top: var(--trimma-salon-sticky-top, 7.5rem) !important;
+    z-index: 20;
+    max-height: calc(100dvh - var(--trimma-salon-sticky-top, 7.5rem) - 1rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    grid-row: span 2;
+  }
+
+  .trimma-salon-booking-sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trimma-salon-booking-sidebar > * + * {
+    margin-top: 1.5rem;
+  }
 }
 
 /* Single salon page — force black CTA buttons with white labels (overrides hero yellow text) */

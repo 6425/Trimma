@@ -1140,11 +1140,8 @@ export default function SalonPage({
         </div>
       </div>
 
-      <div className="container mx-auto px-4 max-w-6xl relative">
-
-        {/* MAIN LAYOUT */}
-        <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mt-10">
-          <div className="flex-1 min-w-0 space-y-12">
+      <div className="container mx-auto px-4 max-w-6xl relative mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-x-12 lg:items-start">
+          <div className="min-w-0 space-y-12">
             
             {/* 4. SERVICES SECTION */}
             <section id="services">
@@ -1617,10 +1614,9 @@ export default function SalonPage({
                  </div>
                </div>
           </StickyBookingSidebar>
-        </div>
-      </div>
 
-      <SimilarBusinessesSection listings={similarListings} city={salon.city} />
+        <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
+      </div>
 
       {/* MOBILE STICKY BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-200 lg:hidden flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 pb-safe">

@@ -6,15 +6,19 @@ import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 type Props = {
   listings: BusinessListingCardData[];
   city?: string | null;
+  embedded?: boolean;
 };
 
-export function SimilarBusinessesSection({ listings, city }: Props) {
+export function SimilarBusinessesSection({ listings, city, embedded = false }: Props) {
   if (listings.length === 0) return null;
 
   const place = String(city || "").trim();
 
   return (
-    <section className="container mx-auto max-w-6xl px-4 mt-10 mb-8" aria-label="Similar businesses">
+    <section
+      className={embedded ? "mt-10 mb-8" : "container mx-auto max-w-6xl px-4 mt-10 mb-8"}
+      aria-label="Similar businesses"
+    >
       <div className="mb-5">
         <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Similar businesses</h2>
         <p className="mt-1 text-sm font-medium text-zinc-500">
