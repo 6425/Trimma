@@ -1768,21 +1768,13 @@ html:has(.trimma-salon-page) body {
 }
 
 .trimma-salon-booking-sidebar {
-  display: none;
+  display: block;
+  width: 100%;
 }
 
 @media (min-width: 1024px) {
   .trimma-salon-booking-sidebar {
-    display: block;
     width: 380px;
-    flex-shrink: 0;
-    align-self: start;
-    position: sticky !important;
-    top: var(--trimma-salon-sticky-top, 7.5rem) !important;
-    z-index: 20;
-    max-height: calc(100dvh - var(--trimma-salon-sticky-top, 7.5rem) - 1rem);
-    overflow-x: hidden;
-    overflow-y: auto;
     padding-bottom: 0.5rem;
     scrollbar-width: none;
   }

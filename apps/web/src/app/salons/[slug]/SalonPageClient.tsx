@@ -810,13 +810,7 @@ export default function SalonPage({
                     </div>
                     <a
                       href="#find-us"
-                      className="salon-hero-map-link text-sm font-semibold text-zinc-900 hover:underline shrink-0 hidden lg:inline"
-                    >
-                      Excellent location – show map
-                    </a>
-                    <a
-                      href="#salon-hero-map"
-                      className="salon-hero-map-link text-sm font-semibold text-zinc-900 hover:underline shrink-0 lg:hidden"
+                      className="salon-hero-map-link text-sm font-semibold text-zinc-900 hover:underline shrink-0"
                     >
                       Excellent location – show map
                     </a>
@@ -1029,15 +1023,6 @@ export default function SalonPage({
                 </div>
               ) : null}
 
-              <div id="salon-hero-map" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:hidden">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div>
-                    <p className="text-sm font-bold text-zinc-900">Excellent location!</p>
-                    <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">{fullAddress}</p>
-                  </div>
-                </div>
-                <SalonLocationMap salon={salon} compact className="!space-y-2" />
-              </div>
             </aside>
           </div>
 
@@ -1138,8 +1123,8 @@ export default function SalonPage({
         </div>
       </div>
 
-      <div className="container mx-auto px-4 max-w-6xl relative mt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-x-12 lg:items-start">
-          <div className="min-w-0 space-y-12">
+      <div className="container mx-auto px-4 max-w-6xl relative mt-10 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-x-12 lg:items-start">
+          <div className="order-2 min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
             
             {/* 4. SERVICES SECTION */}
             <section id="services">
@@ -1390,8 +1375,36 @@ export default function SalonPage({
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR — booking form stays pinned under the site header */}
-          <StickyBookingSidebar>
+          {/* RIGHT SIDEBAR — map pins at the top, then booking form */}
+          <StickyBookingSidebar className="order-1 mb-10 lg:mb-0 lg:col-start-2 lg:row-start-1">
+            <section
+              id="find-us"
+              className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 space-y-4 scroll-mt-24"
+            >
+              <SalonLocationMap salon={salon} />
+              <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-brand mt-0.5 shrink-0" />
+                  <span className="text-sm text-zinc-700 leading-snug">
+                    {salon.address || salon.district || salon.city || "Address not provided"}
+                  </span>
+                </div>
+                {salon.phone && (
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-brand shrink-0" />
+                    <span className="text-sm text-zinc-700">{salon.phone}</span>
+                  </div>
+                )}
+                {ownerContactEmail && (
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-brand shrink-0" />
+                    <span className="text-sm text-zinc-700">{ownerContactEmail}</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <div className="hidden lg:block space-y-6">
             <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 space-y-5">
                  <div>
                    <h3 className="text-xl font-bold text-zinc-900">Book Appointment</h3>
@@ -1591,28 +1604,7 @@ export default function SalonPage({
                  slug={slug}
                  variant="sidebar"
                />
-
-               <div id="find-us" className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 space-y-4 scroll-mt-24">
-                 <SalonLocationMap salon={salon} />
-                 <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-brand mt-0.5 shrink-0" />
-                    <span className="text-sm text-zinc-700 leading-snug">{salon.address || salon.district || salon.city || "Address not provided"}</span>
-                  </div>
-                  {salon.phone && (
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-brand shrink-0" />
-                      <span className="text-sm text-zinc-700">{salon.phone}</span>
-                    </div>
-                  )}
-                  {ownerContactEmail && (
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-brand shrink-0" />
-                      <span className="text-sm text-zinc-700">{ownerContactEmail}</span>
-                    </div>
-                  )}
-                 </div>
-               </div>
+            </div>
           </StickyBookingSidebar>
       </div>
 
