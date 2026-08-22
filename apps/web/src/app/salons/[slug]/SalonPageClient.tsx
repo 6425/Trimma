@@ -805,8 +805,8 @@ export default function SalonPage({
 
           {/* Photo grid + info sidebar */}
           <div className="flex flex-col xl:flex-row gap-4 mb-5">
+            {galleryImages.length > 0 ? (
             <div className="flex-1 min-w-0 space-y-2">
-              {galleryImages.length > 0 ? (
                 <>
                   <div
                     className={
@@ -905,12 +905,8 @@ export default function SalonPage({
                     </div>
                   )}
                 </>
-              ) : (
-                <div className="h-[220px] sm:h-[300px] md:h-[360px] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex items-center justify-center">
-                  <OwnerWillUpdateNote topic="photos" />
-                </div>
-              )}
             </div>
+            ) : null}
 
             <aside className="xl:w-[280px] shrink-0 space-y-3">
               <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
