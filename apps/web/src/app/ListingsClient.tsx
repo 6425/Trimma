@@ -167,17 +167,16 @@ export default function ListingsClient({
 
   useEffect(() => {
     if (ssrSeeded) return;
-    void loadListings(
-      {
-        q: searchQuery.trim(),
-        location: selectedLocation,
-        category: urlCategory,
-      },
-      0,
-      true,
-      categories
-    );
-  }, [ssrSeeded]);
+    const q = searchQuery.trim();
+    const location = selectedLocation;
+    const category = urlCategory;
+    const categoryList = categories;
+    void Promise.resolve().then(() => {
+      void loadListings({ q, location, category }, 0, true, categoryList);
+    });
+    // Initial client fetch only when SSR did not seed results.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only recovery fetch
+  }, [ssrSeeded, loadListings]);
 
   useEffect(() => {
     const onPopState = () => {
