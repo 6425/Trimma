@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -11,7 +11,6 @@ import {
   CalendarClock,
   Check,
   ChevronDown,
-  Clock,
   CreditCard,
   Globe,
   Heart,
@@ -20,15 +19,12 @@ import {
   MapPin,
   MessageSquare,
   Search,
-  ShieldCheck,
   Sparkles,
   Star,
   Store,
   Tag,
-  TrendingUp,
   Users,
   X,
-  Zap,
   ExternalLink,
 } from "lucide-react";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
@@ -93,7 +89,6 @@ function SalonOwnerDashboardShowcase() {
           <DashboardPanel
             src={SALON_DASHBOARD_ASSETS.sidebar}
             alt="Trimma salon owner dashboard sidebar navigation"
-            priority
             className="rounded-none border-0 shadow-none"
           />
         </div>
@@ -209,182 +204,121 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const FEATURE_CARDS = [
+const CUSTOMER_FEATURES = [
   {
     icon: Search,
-    title: "Smart Search & Filters",
-    description: "Find salons by service, district, rating, price range, or style specialty in seconds.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Real-Time Booking",
-    description: "Lock live time slots 24/7 with instant confirmation — no waiting for callbacks.",
-  },
-  {
-    icon: Star,
-    title: "Verified Reviews",
-    description: "Read authentic ratings from real clients. Every review is tied to a completed booking.",
-  },
-  {
-    icon: LayoutDashboard,
-    title: "Salon Dashboard",
-    description: "Manage appointments, staff schedules, services, and revenue from one powerful control panel.",
-  },
-  {
-    icon: Users,
-    title: "Staff Scheduling",
-    description: "Assign stylists to services, set working hours, and prevent double-bookings automatically.",
-  },
-  {
-    icon: BarChart3,
-    title: "Revenue Analytics",
-    description: "Track daily bookings, top services, staff performance, and growth trends at a glance.",
+    title: "Salon discovery",
+    description: "Search by service, district, rating, or style and browse published salon profiles.",
   },
   {
     icon: Tag,
-    title: "Deals & Promotions",
-    description: "Launch seasonal offers, bundles, and limited-time discounts to fill empty chairs faster.",
+    title: "Services and prices",
+    description: "Compare menus, durations, and listed prices before you book.",
   },
   {
-    icon: Bell,
-    title: "Automated Reminders",
-    description: "Reduce no-shows with WhatsApp and email reminders sent before every appointment.",
+    icon: CalendarClock,
+    title: "Live availability",
+    description: "See open slots across stylists and chairs when the salon has online booking enabled.",
   },
   {
     icon: CreditCard,
-    title: "Secure Payments",
-    description: "Accept deposits and subscription payments securely with integrated checkout flows.",
+    title: "Secure booking and deposits",
+    description: "Reserve with a transparent deposit and see the balance due at the salon.",
   },
   {
-    icon: Globe,
-    title: "Multi-Location Support",
-    description: "Manage multiple branches, territories, and regional teams from a single Trimma account.",
+    icon: MessageSquare,
+    title: "WhatsApp and email confirmations",
+    description: "Get booking details in the channels you already use.",
+  },
+  {
+    icon: Star,
+    title: "Reviews on listings",
+    description: "Read ratings and review counts shown on published Trimma listings.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Rescheduling",
+    description: "Update an appointment when the salon’s booking rules allow it.",
+  },
+] as const;
+
+const SALON_FEATURES = [
+  {
+    icon: CalendarClock,
+    title: "Online appointment management",
+    description: "See bookings in one calendar instead of juggling calls and paper books.",
+  },
+  {
+    icon: Users,
+    title: "Staff and chair scheduling",
+    description: "Assign services, set hours, and reduce overlapping bookings.",
+  },
+  {
+    icon: BarChart3,
+    title: "Revenue reporting",
+    description: "Track bookings, services, and staff performance from the salon dashboard.",
   },
   {
     icon: Heart,
-    title: "Customer CRM",
-    description: "Build loyalty with visit history, favorites, and targeted re-engagement campaigns.",
+    title: "Customer management",
+    description: "Keep visit history and follow up with people who already booked with you.",
   },
   {
-    icon: ShieldCheck,
-    title: "Vetted Salon Standards",
-    description: "Every listed salon is reviewed for hygiene, credentials, and professional service quality.",
+    icon: Bell,
+    title: "Automated reminders",
+    description: "Send WhatsApp and email reminders before appointments.",
   },
-];
+  {
+    icon: Tag,
+    title: "Deals and promotions",
+    description: "Publish offers that appear on your profile and the Trimma deals page.",
+  },
+  {
+    icon: Globe,
+    title: "Multi-location management",
+    description: "Run more than one branch from a single Trimma account when you need it.",
+  },
+] as const;
 
 const BEFORE_ITEMS = [
-  "Endless phone calls to check availability",
-  "Manual appointment books and missed slots",
-  "No-shows with no automated reminders",
-  "Scattered spreadsheets for revenue tracking",
-  "Hard to attract new customers online",
+  "Phone calls to check availability",
+  "Paper books and missed slots",
+  "No automated appointment reminders",
 ];
 
 const AFTER_ITEMS = [
-  "Instant online booking in under 10 seconds",
-  "Live calendar synced across staff and chairs",
-  "Automated WhatsApp & email reminders",
-  "Real-time dashboard with revenue insights",
-  "Discoverable on Sri Lanka's beauty marketplace",
+  "Customers book published times online",
+  "One calendar for staff and chairs",
+  "WhatsApp and email reminders from Trimma",
 ];
 
 const USE_CASES = [
   {
     id: "customers",
     label: "Customers",
-    stat: "10 sec",
-    statLabel: "Average booking time",
-    title: "Book Beauty & Wellness in Minutes",
+    title: "Book beauty and wellness without the back-and-forth",
     description:
-      "Discover top-rated salons, compare services and prices, and lock your appointment without picking up the phone.",
-    bullets: ["Instant confirmation", "Verified reviews", "Flexible rescheduling", "Zero booking fees"],
+      "Discover published salons, compare listed services and prices, and book when the business has online booking turned on.",
+    bullets: ["Confirmations by email and WhatsApp", "Reviews shown on listings", "Reschedule when salon rules allow"],
     cta: { label: "Find a Salon", href: "/" },
   },
   {
     id: "owners",
-    label: "Salon Owners",
-    stat: "3×",
-    statLabel: "Faster onboarding",
-    title: "Run Your Salon on Trimma OS",
+    label: "Salon owners",
+    title: "Run day-to-day operations in Trimma OS",
     description:
-      "Fill empty chairs, automate scheduling, track revenue, and reach thousands of customers actively searching for beauty services.",
-    bullets: ["Appointment automation", "Staff & service management", "Deals & promotions", "Revenue analytics"],
-    cta: { label: "List Your Salon", href: "/onboarding" },
+      "Manage appointments, staff, services, and promotions from the salon dashboard after you claim or list your business.",
+    bullets: ["Appointment calendar", "Staff and service setup", "Deals, reporting, and reminders"],
+    cta: { label: "Grow My Salon", href: "/onboarding" },
   },
   {
     id: "agents",
-    label: "Regional Partners",
-    stat: "500+",
-    statLabel: "Businesses connected",
-    title: "Grow Your Territory Network",
+    label: "Regional partners",
+    title: "Help local salons go live on Trimma",
     description:
-      "Onboard salons, manage leads, explore territories on the map, and help local businesses go digital with Trimma.",
-    bullets: ["Lead management", "Territory explorer", "Salon onboarding tools", "Commission tracking"],
+      "Onboard businesses, manage leads, and work a territory from the partner portal.",
+    bullets: ["Lead management", "Territory tools", "Salon onboarding"],
     cta: { label: "Partner Portal", href: "/agent/login" },
-  },
-];
-
-const WHY_CHOOSE = [
-  {
-    icon: Zap,
-    title: "From Discovery to Confirmation",
-    description: "Search, book, pay, and manage appointments in one seamless flow — no switching between tools.",
-  },
-  {
-    icon: LayoutDashboard,
-    title: "Built for Salon Operations",
-    description: "Trimma understands chairs, staff rosters, service menus, and the daily rhythm of running a salon.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Grow Without Heavy Software",
-    description: "No complicated setup. Onboard in hours, not weeks, with guided tools and regional support.",
-  },
-  {
-    icon: Globe,
-    title: "Sri Lanka First, Built to Scale",
-    description: "Designed for local districts, currencies, and beauty culture — ready for multi-city expansion.",
-  },
-  {
-    icon: MessageSquare,
-    title: "WhatsApp-Native Experience",
-    description: "Confirmations and reminders where your customers already are — fast, familiar, and reliable.",
-  },
-  {
-    icon: Store,
-    title: "Marketplace + Salon Engine",
-    description: "Customers discover you on Trimma; you run your business on Trimma OS. One platform, two powerful sides.",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Priya S.",
-    role: "Salon Owner, Colombo",
-    quote:
-      "Trimma cut our no-shows in half. Customers book online, we get instant notifications, and the dashboard shows exactly how each stylist is performing.",
-    rating: 5,
-  },
-  {
-    name: "Nimal R.",
-    role: "Customer, Kandy",
-    quote:
-      "I used to call three salons before finding an open slot. Now I book my haircut in under a minute and get a WhatsApp confirmation immediately.",
-    rating: 5,
-  },
-  {
-    name: "Dilani M.",
-    role: "Spa Manager, Galle",
-    quote:
-      "The promotions feature helped us fill weekday slots we used to leave empty. Setup was simple and our team picked it up the same day.",
-    rating: 5,
-  },
-  {
-    name: "Arjun T.",
-    role: "Barbershop Owner, Negombo",
-    quote:
-      "Staff scheduling used to be a nightmare on paper. Trimma syncs everyone's calendar and we haven't had a double-booking since we switched.",
-    rating: 5,
   },
 ];
 
@@ -442,20 +376,29 @@ function SectionBadge({
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const buttonId = useId();
   return (
-    <div className="border border-zinc-200 rounded-2xl overflow-hidden transition-all duration-200 bg-white">
+    <div className="border border-zinc-200 rounded-2xl overflow-hidden bg-white">
       <button
         type="button"
+        id={buttonId}
+        aria-expanded={open}
+        aria-controls={panelId}
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-zinc-50 transition-colors"
+        className="w-full min-h-11 flex items-center justify-between gap-4 px-6 py-4 text-left hover:bg-zinc-50 transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
       >
         <span className="font-semibold text-zinc-900 text-[15px] leading-snug">{q}</span>
         <ChevronDown
-          className={`w-5 h-5 text-zinc-400 shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          className={`w-5 h-5 text-zinc-400 shrink-0 motion-reduce:transition-none transition-transform duration-300 ${open ? "rotate-180" : ""}`}
         />
       </button>
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        hidden={!open}
+        className={open ? "block" : "hidden"}
       >
         <p className="px-6 pb-5 text-zinc-600 text-sm leading-relaxed">{a}</p>
       </div>
@@ -528,11 +471,13 @@ function StepVisual({ stepIndex }: { stepIndex: number }) {
                     key={shot.src}
                     type="button"
                     onClick={() => setActiveTab(index)}
-                    className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                    className={`flex-1 min-h-11 rounded-xl px-3 py-2 text-xs font-bold motion-reduce:transition-none transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 ${
                       activeTab === index
                         ? "bg-zinc-900 text-white shadow-md"
                         : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
                     }`}
+                    role="tab"
+                    aria-selected={activeTab === index}
                   >
                     {shot.tab}
                   </button>
@@ -555,15 +500,18 @@ function StepVisual({ stepIndex }: { stepIndex: number }) {
 export function FeaturesContent() {
   const [activeStep, setActiveStep] = useState(0);
   const [activeUseCase, setActiveUseCase] = useState(USE_CASES[0].id);
+  const [audience, setAudience] = useState<"customer" | "salon">("customer");
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
   const currentUseCase = USE_CASES.find((u) => u.id === activeUseCase) ?? USE_CASES[0];
+  const featureList = audience === "customer" ? CUSTOMER_FEATURES : SALON_FEATURES;
+  const visibleFeatures = showAllFeatures ? featureList : featureList.slice(0, 6);
 
   return (
     <div className="bg-white text-zinc-900 font-sans">
-      {/* ── Hero — full background image, copy on left 50% (landing style) ── */}
       <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
         <img
           src="/assets/featured-hero.webp"
-          alt=""
+          alt="Customers and salons using Trimma to find, book, and manage beauty appointments"
           width={1920}
           height={500}
           decoding="async"
@@ -576,7 +524,7 @@ export function FeaturesContent() {
         <div className="container relative z-10 mx-auto max-w-7xl">
           <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
             <div className="home-hero-top">
-              <SectionBadge hero>#1 Salon Booking Platform</SectionBadge>
+              <SectionBadge hero>Sri Lanka&apos;s Beauty &amp; Wellness Booking Platform</SectionBadge>
 
               <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
                 <span className="home-hero-title-line">Find. Book.</span>
@@ -586,20 +534,19 @@ export function FeaturesContent() {
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Sri Lanka&apos;s beauty &amp; wellness marketplace and salon operating system — discover top salons,
-                book instantly, and power your business with Trimma OS.
+                Book trusted beauty and wellness services across Sri Lanka—or manage and grow your salon with Trimma OS.
               </p>
             </div>
 
             <div className="home-hero-middle">
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/" className="hero-btn-primary px-8 py-4 rounded-2xl">
+                <Link href="/" className="hero-btn-primary min-h-11 px-8 py-4 rounded-2xl w-full sm:w-auto justify-center">
                   <Search className="w-4 h-4" />
-                  Explore Salons
+                  Find a Salon
                 </Link>
-                <Link href="/onboarding" className="hero-btn-secondary px-8 py-4 rounded-2xl">
+                <Link href="/onboarding" className="hero-btn-secondary min-h-11 px-8 py-4 rounded-2xl w-full sm:w-auto justify-center">
                   <Store className="w-4 h-4" />
-                  List Your Business
+                  Grow My Salon
                 </Link>
               </div>
             </div>
@@ -607,8 +554,61 @@ export function FeaturesContent() {
         </div>
       </section>
 
-      {/* ── How It Works ── */}
-      <section className="py-24 bg-zinc-50">
+      <div className="border-b border-zinc-200 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6">
+          <p className="text-center text-sm font-semibold text-zinc-500 mb-3">I want to…</p>
+          <div
+            role="tablist"
+            aria-label="Choose how you want to use Trimma"
+            className="mx-auto flex max-w-xl flex-col gap-2 sm:flex-row"
+          >
+            {(
+              [
+                { id: "customer" as const, label: "I want to book a salon" },
+                { id: "salon" as const, label: "I want to grow my salon" },
+              ] as const
+            ).map((tab) => {
+              const selected = audience === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  id={`features-tab-${tab.id}`}
+                  aria-selected={selected}
+                  aria-controls={`features-panel-${tab.id}`}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => {
+                    setAudience(tab.id);
+                    setShowAllFeatures(false);
+                    setActiveUseCase(tab.id === "customer" ? "customers" : "owners");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                    event.preventDefault();
+                    setAudience(tab.id === "customer" ? "salon" : "customer");
+                  }}
+                  className={`min-h-11 flex-1 rounded-2xl px-4 py-3 text-sm font-bold transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 ${
+                    selected
+                      ? "bg-[#ffde5a] text-black shadow-md"
+                      : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {audience === "customer" ? (
+      <section
+        id="features-panel-customer"
+        role="tabpanel"
+        aria-labelledby="features-tab-customer"
+        className="py-12 sm:py-16 bg-zinc-50"
+      >
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-14">
             <SectionBadge>How It Works</SectionBadge>
@@ -630,7 +630,8 @@ export function FeaturesContent() {
                     key={item.step}
                     type="button"
                     onClick={() => setActiveStep(index)}
-                    className={`w-full text-left rounded-2xl border p-5 transition-all duration-300 ${
+                    aria-pressed={isActive}
+                    className={`w-full min-h-11 text-left rounded-2xl border p-5 motion-reduce:transition-none transition-all duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 ${
                       isActive
                         ? "bg-white border-[#ffde5a]/40 shadow-lg shadow-[#ffde5a]/10"
                         : "bg-white/60 border-zinc-200 hover:border-zinc-300 hover:bg-white"
@@ -660,29 +661,31 @@ export function FeaturesContent() {
           </div>
         </div>
       </section>
+      ) : null}
 
-      {/* ── Features Grid ── */}
-      <section className="py-24">
+      <section className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-14">
-            <SectionBadge>Features</SectionBadge>
+          <div className="text-center mb-10">
+            <SectionBadge>{audience === "customer" ? "For customers" : "For salon owners"}</SectionBadge>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
-              Everything You Need in One Platform
+              {audience === "customer" ? "Book with more clarity" : "Run the salon from one dashboard"}
             </h2>
             <p className="text-zinc-500 text-lg max-w-2xl mx-auto">
-              A complete toolkit for customers who want seamless bookings and salon owners who want powerful growth tools.
+              {audience === "customer"
+                ? "Discovery, listed prices, availability, deposits, confirmations, and reviews — in one booking flow."
+                : "Appointments, staff, revenue, customers, reminders, and promotions in Trimma OS."}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURE_CARDS.map((feature) => {
+            {visibleFeatures.map((feature) => {
               const Icon = feature.icon;
               return (
                 <div
                   key={feature.title}
-                  className="group bg-white border border-zinc-200 hover:border-[#ffde5a]/40 rounded-3xl p-6 flex flex-col gap-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  className="bg-white border border-zinc-200 rounded-3xl p-6 flex flex-col gap-4 shadow-sm"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-[#ffde5a]/10 flex items-center justify-center group-hover:bg-[#ffde5a]/20 transition-colors">
-                    <Icon className="w-6 h-6 text-[#B8860B] group-hover:text-[#ffde5a] transition-colors" />
+                  <div className="w-12 h-12 rounded-2xl bg-[#ffde5a]/10 flex items-center justify-center">
+                    <Icon className="w-6 h-6 text-[#B8860B]" />
                   </div>
                   <div>
                     <h3 className="font-bold text-zinc-900 text-lg mb-2">{feature.title}</h3>
@@ -692,20 +695,29 @@ export function FeaturesContent() {
               );
             })}
           </div>
-          <div className="text-center mt-12">
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-2 text-sm font-bold text-zinc-900 hover:text-[#B8860B] transition-colors"
-            >
-              See Pricing Plans
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+          {featureList.length > 6 ? (
+            <div className="text-center mt-8">
+              <button
+                type="button"
+                aria-expanded={showAllFeatures}
+                onClick={() => setShowAllFeatures((open) => !open)}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-sm font-bold text-zinc-900 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+              >
+                {showAllFeatures ? "Show fewer features" : "View All Features"}
+                <ChevronDown className={`w-4 h-4 motion-reduce:transition-none transition-transform ${showAllFeatures ? "rotate-180" : ""}`} />
+              </button>
+            </div>
+          ) : null}
         </div>
       </section>
 
-      {/* ── Before vs After ── */}
-      <section className="py-24 bg-zinc-50">
+      {audience === "salon" ? (
+      <section
+        id="features-panel-salon"
+        role="tabpanel"
+        aria-labelledby="features-tab-salon"
+        className="py-12 sm:py-16 bg-zinc-50"
+      >
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-14">
             <SectionBadge>See the Difference</SectionBadge>
@@ -755,56 +767,29 @@ export function FeaturesContent() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── Dashboard Showcase ── */}
-      <section className="py-24 bg-zinc-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <SectionBadge>Salon Dashboard</SectionBadge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
-              Inside the Trimma OS Dashboard
+          <div className="mt-12 max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-zinc-950 mb-3 tracking-tight">
+              Inside the Trimma OS dashboard
             </h2>
-            <p className="text-zinc-500 text-lg leading-relaxed mb-6">
-              The salon owner dashboard at{" "}
-              <code className="rounded-md bg-white px-2 py-0.5 text-sm font-semibold text-zinc-800 border border-zinc-200">
-                /dashboard
-              </code>{" "}
-              brings bookings, staff, services, and revenue into one professional workspace.
+            <p className="text-zinc-500 leading-relaxed mb-6">
+              Bookings, staff, services, and revenue in one workspace after you sign in as a salon owner.
             </p>
             <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-sm font-bold text-zinc-900 hover:text-[#B8860B] transition-colors"
+              href="/onboarding"
+              className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-zinc-900 hover:text-[#B8860B] transition-colors"
             >
-              Open Salon Dashboard
+              Grow My Salon
               <ExternalLink className="w-4 h-4" />
             </Link>
           </div>
-
-          <SalonOwnerDashboardShowcase />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-            {[
-              { icon: CalendarClock, label: "Live Calendar" },
-              { icon: Users, label: "Staff Rosters" },
-              { icon: BarChart3, label: "Revenue Insights" },
-              { icon: Tag, label: "Deals & Promos" },
-            ].map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                className="flex items-center gap-3 bg-white border border-zinc-200 rounded-2xl px-4 py-3 shadow-sm"
-              >
-                <Icon className="w-5 h-5 text-[#ffde5a]" />
-                <span className="text-sm font-semibold text-zinc-800">{label}</span>
-              </div>
-            ))}
+          <div className="mt-8">
+            <SalonOwnerDashboardShowcase />
           </div>
         </div>
       </section>
+      ) : null}
 
-      {/* ── Use Cases ── */}
-      <section className="py-24 bg-zinc-50">
+      <section className="py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-12">
             <SectionBadge>Use Cases</SectionBadge>
@@ -814,13 +799,15 @@ export function FeaturesContent() {
             <p className="text-zinc-500 text-lg">No matter who you are, Trimma adapts to your workflow.</p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
+          <div className="flex flex-wrap justify-center gap-3 mb-10" role="tablist" aria-label="Trimma use cases">
             {USE_CASES.map((uc) => (
               <button
                 key={uc.id}
                 type="button"
+                role="tab"
+                aria-selected={activeUseCase === uc.id}
                 onClick={() => setActiveUseCase(uc.id)}
-                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
+                className={`min-h-11 px-6 py-2.5 rounded-full text-sm font-bold motion-reduce:transition-none transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 ${
                   activeUseCase === uc.id
                     ? "bg-[#ffde5a] text-black shadow-lg shadow-[#ffde5a]/25"
                     : "bg-white border border-zinc-200 text-zinc-600 hover:border-zinc-300"
@@ -831,111 +818,29 @@ export function FeaturesContent() {
             ))}
           </div>
 
-          <div className="bg-white border border-zinc-200 rounded-3xl p-8 lg:p-12 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
-            <div>
-              <div className="inline-flex items-baseline gap-2 mb-4">
-                <span className="text-4xl font-black text-[#ffde5a]">{currentUseCase.stat}</span>
-                <span className="text-sm font-semibold text-zinc-500">{currentUseCase.statLabel}</span>
-              </div>
-              <h3 className="text-2xl font-extrabold text-zinc-950 mb-3">{currentUseCase.title}</h3>
-              <p className="text-zinc-500 leading-relaxed mb-6 max-w-xl">{currentUseCase.description}</p>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
-                {currentUseCase.bullets.map((b) => (
-                  <li key={b} className="flex items-center gap-2 text-sm text-zinc-700 font-medium">
-                    <Check className="w-4 h-4 text-[#ffde5a] shrink-0" />
-                    {b}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href={currentUseCase.cta.href}
-                className="inline-flex items-center gap-2 bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold px-6 py-3 rounded-xl transition-all"
-              >
-                {currentUseCase.cta.label}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            <div className="hidden lg:flex flex-col gap-3 w-48">
-              {["Booking Flow", "Salon Profile", "Dashboard View", "Deals Page"].map((label, i) => (
-                <div
-                  key={label}
-                  className={`rounded-2xl px-4 py-3 text-sm font-semibold border ${
-                    i === 0
-                      ? "bg-[#ffde5a]/10 border-[#ffde5a]/30 text-[#B8860B]"
-                      : "bg-zinc-50 border-zinc-200 text-zinc-500"
-                  }`}
-                >
-                  {label}
-                </div>
+          <div className="bg-white border border-zinc-200 rounded-3xl p-8 lg:p-12 shadow-sm">
+            <h3 className="text-2xl font-extrabold text-zinc-950 mb-3">{currentUseCase.title}</h3>
+            <p className="text-zinc-500 leading-relaxed mb-6 max-w-xl">{currentUseCase.description}</p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-8">
+              {currentUseCase.bullets.map((b) => (
+                <li key={b} className="flex items-center gap-2 text-sm text-zinc-700 font-medium">
+                  <Check className="w-4 h-4 text-[#ffde5a] shrink-0" />
+                  {b}
+                </li>
               ))}
-            </div>
+            </ul>
+            <Link
+              href={currentUseCase.cta.href}
+              className="inline-flex min-h-11 items-center gap-2 bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold px-6 py-3 rounded-xl"
+            >
+              {currentUseCase.cta.label}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Why Choose ── */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-14">
-            <SectionBadge>Why Choose Us</SectionBadge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
-              Why Choose Trimma
-            </h2>
-            <p className="text-zinc-500 text-lg max-w-2xl mx-auto">
-              Discovery, booking, salon management, and growth — unified in one platform built for beauty professionals.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {WHY_CHOOSE.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="rounded-3xl border border-zinc-200 bg-white p-6 hover:shadow-md transition-shadow">
-                  <div className="w-11 h-11 rounded-xl bg-[#ffde5a]/10 flex items-center justify-center mb-4">
-                    <Icon className="w-5 h-5 text-[#ffde5a]" />
-                  </div>
-                  <h3 className="font-bold text-zinc-900 text-lg mb-2">{item.title}</h3>
-                  <p className="text-zinc-500 text-sm leading-relaxed">{item.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section className="py-24 bg-zinc-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-14">
-            <SectionBadge>Testimonials</SectionBadge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-zinc-950 mb-4 tracking-tight">
-              Loved by Salons &amp; Customers
-            </h2>
-            <p className="text-zinc-500 text-lg">Real results from real users across Sri Lanka.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div
-                key={t.name}
-                className="bg-white border border-zinc-200 rounded-3xl p-6 flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-[#ffde5a] text-[#ffde5a]" />
-                  ))}
-                </div>
-                <p className="text-zinc-600 text-sm leading-relaxed flex-1 mb-5">&ldquo;{t.quote}&rdquo;</p>
-                <div>
-                  <div className="font-bold text-zinc-900 text-sm">{t.name}</div>
-                  <div className="text-zinc-400 text-xs">{t.role}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <section className="py-24">
+      <section className="py-12 sm:py-16">
         <div className="max-w-3xl mx-auto px-6">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 bg-[#ffde5a]/10 border border-[#ffde5a]/30 text-[#B8860B] text-sm font-semibold px-4 py-2 rounded-full mb-5">

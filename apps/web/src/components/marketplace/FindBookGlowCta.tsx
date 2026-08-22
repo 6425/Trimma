@@ -15,29 +15,29 @@ export function FindBookGlowCta() {
           Ready to Find, Book &amp; Glow?
         </h2>
         <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          Join Sri Lanka&apos;s leading beauty marketplace — whether you&apos;re booking your next appointment or
-          growing your salon business.
+          Join Sri Lanka&apos;s beauty and wellness marketplace — book your next appointment or grow your salon
+          with Trimma OS.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/"
             className={cn(
               buttonVariants({ variant: "default", size: "xl" }),
-              "min-h-11 rounded-2xl px-10 py-4 font-bold hover:scale-[1.03] shadow-lg shadow-[#ffde5a]/20"
+              "min-h-11 rounded-2xl px-10 py-4 font-bold hover:scale-[1.03] shadow-lg shadow-[#ffde5a]/20 motion-reduce:hover:scale-100"
             )}
           >
             <Search className="w-4 h-4" />
-            Book a Salon
+            Find a Salon
           </Link>
           <Link
             href="/onboarding"
             className={cn(
               buttonVariants({ variant: "outline", size: "xl" }),
-              "min-h-11 rounded-2xl px-10 py-4 font-bold hover:scale-[1.03]"
+              "min-h-11 rounded-2xl px-10 py-4 font-bold hover:scale-[1.03] motion-reduce:hover:scale-100"
             )}
           >
             <Store className="w-4 h-4" />
-            List Your Salon
+            Grow My Salon
           </Link>
         </div>
       </div>

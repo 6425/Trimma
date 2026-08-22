@@ -68,7 +68,7 @@ export const PUBLIC_SITE_NAV_LINKS = [
     description: "How Trimma collects, uses, and protects personal data on the salon booking platform.",
   },
   {
-    name: "List Your Salon",
+    name: "Grow My Salon",
     path: "/onboarding",
     description: "Join Trimma and start accepting online salon bookings across Sri Lanka.",
   },

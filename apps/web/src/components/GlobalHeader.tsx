@@ -36,13 +36,6 @@ const navMobileClass = (active: boolean) =>
       : "text-zinc-700 hover:bg-zinc-100 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
   }`;
 
-const navCategoryPillClass = (active: boolean) =>
-  `flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-full transition-colors border whitespace-nowrap shrink-0 ${
-    active
-      ? "text-zinc-900 bg-zinc-100 border-zinc-200 dark:bg-[#ffde5a] dark:text-black dark:border-[#ffde5a]"
-      : "text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 border-transparent hover:border-zinc-200 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black dark:hover:border-[#ffde5a]"
-  }`;
-
 const navActionClass =
   "text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black";
 
@@ -54,6 +47,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   const [mobileLocationsOpen, setMobileLocationsOpen] = useState(false);
   const [mobileActiveProvince, setMobileActiveProvince] = useState<string | null>(null);
   const [locationsOpen, setLocationsOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -179,6 +173,62 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               <Link href="/about" className={navDesktopClass(isAboutActive)}>
                 About
               </Link>
+              {navCategories.length > 0 ? (
+              <div
+                className="relative"
+                onMouseEnter={() => setCategoriesOpen(true)}
+                onMouseLeave={() => setCategoriesOpen(false)}
+              >
+                <button
+                  type="button"
+                  aria-haspopup="true"
+                  aria-expanded={categoriesOpen}
+                  aria-controls="header-categories-menu"
+                  onClick={() => setCategoriesOpen((open) => !open)}
+                  className={`flex min-h-11 items-center gap-1.5 ${navDesktopClass(Boolean(activeCategorySlug) || categoriesOpen)}`}
+                >
+                  Categories
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${categoriesOpen ? "rotate-180" : ""}`} />
+                </button>
+                {categoriesOpen ? (
+                  <div
+                    id="header-categories-menu"
+                    role="menu"
+                    aria-label="Salon categories"
+                    className="absolute top-full left-0 z-50 pt-1"
+                  >
+                    <div className="min-w-[240px] rounded-xl border border-zinc-200 bg-white py-2 shadow-xl dark:border-[#ffde5a]/20 dark:bg-[#111111]">
+                      {navCategories.map((cat) => {
+                        const Icon = IconMap[cat.icon] || Tag;
+                        return (
+                          <Link
+                            key={cat.id}
+                            role="menuitem"
+                            href={buildCategoryHref(pathname, cat.slug)}
+                            prefetch
+                            onMouseEnter={() => prefetchCategory(cat.slug)}
+                            onFocus={() => prefetchCategory(cat.slug)}
+                            onClick={() => {
+                              setCategoriesOpen(false);
+                              trackEvent(AnalyticsEvent.CategoryFilterChanged, {
+                                source: "header_category_menu",
+                                category: cat.slug,
+                                category_name: cat.name,
+                                previous_path: pathname,
+                              });
+                            }}
+                            className="flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
+                          >
+                            <Icon className="w-4 h-4 shrink-0" />
+                            {cat.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              ) : null}
               <div
                 className="relative"
                 onMouseEnter={() => setLocationsOpen(true)}
@@ -263,8 +313,8 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             </div>
 
             <div className="hidden md:flex items-center gap-2">
-              <Link href="/onboarding" className={`${navActionClass} hidden lg:block`}>
-                List your salon
+              <Link href="/onboarding" className={`${navActionClass} hidden min-h-11 lg:inline-flex items-center`}>
+                Grow My Salon
               </Link>
             </div>
 
@@ -315,45 +365,6 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
         </div>
       </div>
 
-      {/* Desktop category icon + name row — PC/laptop only (lg+) */}
-      {navCategories.length > 0 && (
-            <div className="hidden lg:block bg-white dark:bg-[#0b0b0b] border-b border-zinc-100 dark:border-[#ffde5a]/15">
-          <div className="trimma-site-nav-categories w-full px-4 sm:px-6 lg:px-8 py-2">
-            <nav
-              className="flex items-center gap-2 overflow-x-auto hide-scrollbar"
-              aria-label="Browse by category"
-            >
-              {navCategories.map((cat) => {
-                const Icon = IconMap[cat.icon] || Tag;
-                const active = activeCategorySlug === cat.slug;
-                const href = buildCategoryHref(pathname, cat.slug);
-                return (
-                  <Link
-                    key={cat.id}
-                    href={href}
-                    prefetch
-                    onMouseEnter={() => prefetchCategory(cat.slug)}
-                    onFocus={() => prefetchCategory(cat.slug)}
-                    onClick={() => {
-                      trackEvent(AnalyticsEvent.CategoryFilterChanged, {
-                        source: "header_category_row",
-                        category: cat.slug,
-                        category_name: cat.name,
-                        previous_path: pathname,
-                      });
-                    }}
-                    className={navCategoryPillClass(active)}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{cat.name}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
-      )}
-
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-zinc-100 dark:border-[#ffde5a]/15 bg-white dark:bg-[#111111] pb-4 max-h-[70vh] overflow-y-auto">
           <nav className="px-4 pt-2 pb-4 flex flex-col gap-1" aria-label="Site navigation">
@@ -384,7 +395,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
             <button
               type="button"
               onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}
-              className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full ${navActionClass}`}
+              className={`flex min-h-11 items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full ${navActionClass}`}
               aria-expanded={mobileCategoriesOpen}
             >
               <span className="flex items-center gap-3">
@@ -412,7 +423,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
                         });
                         setMobileMenuOpen(false);
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-normal text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+                      className="flex min-h-11 items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-normal text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
                     >
                       <Icon className="w-3.5 h-3.5 shrink-0" />
                       {cat.name}
@@ -521,7 +532,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               className={navMobileClass(false)}
             >
               <Building2 className="w-4 h-4 shrink-0" />
-              List your salon
+              Grow My Salon
             </Link>
           </nav>
         </div>
