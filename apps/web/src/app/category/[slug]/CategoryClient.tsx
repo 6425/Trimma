@@ -193,10 +193,6 @@ export default function CategoryClient({
         if (cancelled) return;
         const message = err instanceof Error ? err.message : String(err);
         console.error("Failed to load category page listings:", message);
-        setListings([]);
-        setTopRated([]);
-        setFeatured([]);
-        setTotalCount(0);
         setHasMore(false);
         setLoadedFetchKey(key);
       }

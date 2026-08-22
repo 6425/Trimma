@@ -132,12 +132,6 @@ export default function ListingsClient({
         setHasMore(Boolean(data.hasMore));
       } catch (error) {
         console.error(error);
-        if (reset) {
-          setListings([]);
-          setTopRated([]);
-          setFeatured([]);
-          setTotalCount(0);
-        }
         setHasMore(false);
       } finally {
         setIsLoading(false);
@@ -170,6 +164,20 @@ export default function ListingsClient({
     },
     [categories, loadListings]
   );
+
+  useEffect(() => {
+    if (ssrSeeded) return;
+    void loadListings(
+      {
+        q: searchQuery.trim(),
+        location: selectedLocation,
+        category: urlCategory,
+      },
+      0,
+      true,
+      categories
+    );
+  }, [ssrSeeded]);
 
   useEffect(() => {
     const onPopState = () => {
@@ -283,11 +291,14 @@ export default function ListingsClient({
                   <SriLankaLocationSelect
                     value={selectedLocation}
                     onChange={(value) => {
-                      applyFilters({
-                        q: searchQuery.trim(),
-                        location: value,
-                        category: urlCategory,
-                      });
+                      applyFilters(
+                        {
+                          q: searchQuery.trim(),
+                          location: value,
+                          category: urlCategory,
+                        },
+                        { syncUrl: false }
+                      );
                     }}
                     anyLabel="Any location"
                     className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"

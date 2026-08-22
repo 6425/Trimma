@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useCallback, useMemo, useRef } from "rea
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Search, MapPin, Star, Sparkles, Loader2, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,8 +107,6 @@ export default function SalonsClient({
   variant = "directory",
 }: Props) {
   const isBooking = variant === "booking";
-  const basePath = isBooking ? "/bookings" : "/";
-  const router = useRouter();
   // Skip the first client fetch when the server already seeded results.
   const skipClientFetchRef = useRef(ssrSeeded);
   const seededSearchKeyRef = useRef(
@@ -263,12 +261,7 @@ export default function SalonsClient({
       sort: sortBy,
     });
     setSelectedLocation(location);
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (location) params.set("l", location);
-    if (urlCategory) params.set("category", urlCategory);
     setPage(0);
-    router.push(`${basePath}?${params.toString()}`);
   };
 
   const applyClientFilters = useCallback(
