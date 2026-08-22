@@ -1057,7 +1057,7 @@ export default function SalonPage({
       </div>
 
       <div className="container mx-auto px-4 max-w-6xl relative mt-10 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-x-12 lg:items-start">
-          <div className="order-2 min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
+          <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
             
             {/* 4. SERVICES SECTION */}
             <section id="services">
@@ -1308,8 +1308,8 @@ export default function SalonPage({
             </div>
           </div>
 
-          {/* RIGHT SIDEBAR — map pins at the top, then booking form */}
-          <StickyBookingSidebar className="order-1 mb-10 lg:mb-0 lg:col-start-2 lg:row-start-1">
+          {/* RIGHT SIDEBAR — starts after the hero, aligned with Services */}
+          <StickyBookingSidebar className="mt-10 lg:mt-0 lg:col-start-2 lg:row-start-1">
             <section
               id="find-us"
               className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 space-y-4 scroll-mt-24"

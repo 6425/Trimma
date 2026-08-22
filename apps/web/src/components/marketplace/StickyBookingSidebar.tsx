@@ -17,7 +17,7 @@ function headerBottomPx(): number {
   return 120;
 }
 
-/** Pins the salon map + booking column under the site header on desktop. */
+/** Pins the salon map + booking column under the header once it reaches Services. */
 export function StickyBookingSidebar({ children, className = "" }: Props) {
   const slotRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -50,6 +50,7 @@ export function StickyBookingSidebar({ children, className = "" }: Props) {
       panel.style.maxHeight = "";
       panel.style.overflowY = "";
       panel.style.zIndex = "";
+      slot.style.minHeight = "";
     };
 
     const update = () => {
@@ -60,6 +61,18 @@ export function StickyBookingSidebar({ children, className = "" }: Props) {
 
       const top = headerBottomPx() + 8;
       const slotRect = slot.getBoundingClientRect();
+
+      // Stay in document flow until this column reaches the header, so the
+      // sidebar starts after the hero, level with Services — not over the hero.
+      if (slotRect.top > top) {
+        resetPanel();
+        return;
+      }
+
+      if (panel.style.position !== "fixed") {
+        slot.style.minHeight = `${panel.offsetHeight}px`;
+      }
+
       const footer = document.querySelector("footer");
       const footerTop =
         footer instanceof HTMLElement ? footer.getBoundingClientRect().top : window.innerHeight;
