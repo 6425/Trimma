@@ -441,7 +441,7 @@ export default function SalonsClient({
                   />
                 </div>
                 <Button
-                  onClick={handleSearch}
+                  onClick={() => handleSearch()}
                   size="lg"
                   variant="hero"
                   className="h-12 px-8 rounded-xl hero-btn-compact font-bold border-none shadow-md w-full sm:w-auto shrink-0"

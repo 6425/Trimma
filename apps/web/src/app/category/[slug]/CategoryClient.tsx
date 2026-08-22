@@ -310,7 +310,7 @@ export default function CategoryClient({
                   </div>
 
                   <Button
-                    onClick={handleSearch}
+                    onClick={() => handleSearch()}
                     size="lg"
                     variant="hero"
                     className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:w-auto"
@@ -389,7 +389,7 @@ export default function CategoryClient({
                 />
               </div>
 
-              <Button onClick={handleSearch} size="lg" variant="hero" className="hero-btn-primary hero-btn-compact h-12 min-h-11 px-8 rounded-xl font-bold">
+              <Button onClick={() => handleSearch()} size="lg" variant="hero" className="hero-btn-primary hero-btn-compact h-12 min-h-11 px-8 rounded-xl font-bold">
                 Search
               </Button>
             </div>
