@@ -2289,17 +2289,25 @@ html.dark .trimma-marketplace-shell .home-hero-split {
   object-fit: cover;
   object-position: center;
 }
-/* Split-composition banners (beige left, photo right) — keep the left panel visible */
+/* Split-composition banner — icon pattern left, photo blob right, copy sits in the white middle */
 .home-hero-split.home-hero-split--business-listings .home-hero-bg-image {
-  object-position: left center;
+  object-fit: cover;
+  object-position: center right;
 }
 .home-hero-split.home-hero-split--business-listings .home-hero-left-overlay {
   background: linear-gradient(
     to right,
-    rgb(255 255 255 / 0.96) 0%,
-    rgb(255 255 255 / 0.88) 28%,
-    rgb(255 255 255 / 0.45) 48%,
-    rgb(255 255 255 / 0) 58%
+    rgb(255 255 255 / 0.35) 0%,
+    rgb(255 255 255 / 0.12) 32%,
+    rgb(255 255 255 / 0) 52%
+  );
+}
+.home-hero-split.home-hero-split--business-listings .home-hero-mobile-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0.72) 0%,
+    rgb(255 255 255 / 0.4) 48%,
+    rgb(255 255 255 / 0.08) 100%
   );
 }
 .home-hero-split .home-hero-left-overlay {
