@@ -1046,10 +1046,10 @@ export default function SalonPage({
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3 max-w-2xl">
               <Shield className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-amber-900 font-extrabold text-sm uppercase tracking-wide">
+                <h4 className="text-black font-extrabold text-sm uppercase tracking-wide">
                   {bookabilityMessage.title}
                 </h4>
-                <p className="text-amber-800 text-xs mt-1.5 font-medium leading-relaxed">
+                <p className="text-black text-xs mt-1.5 font-medium leading-relaxed">
                   {bookabilityMessage.body}
                 </p>
               </div>
