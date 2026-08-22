@@ -36,15 +36,15 @@ import { SriLankaLocationSelect } from "../../../components/locations/SriLankaLo
 import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
 
 const CATEGORY_HERO_IMAGES: Record<string, string> = {
-  "barber-salon": "/assets/category-barber-salon-hero.webp?v=2",
-  "bridal-beauty": "/assets/category-bridal-beauty-hero.webp?v=2",
-  "bridal-and-beauty": "/assets/category-bridal-beauty-hero.webp?v=2",
-  "mens-grooming": "/assets/category-mens-grooming-hero.webp?v=2",
-  "nail-studio": "/assets/category-nail-studio-hero.webp?v=2",
-  "skincare-clinics": "/assets/category-skincare-clinics-hero.webp?v=2",
-  "spa-wellness": "/assets/category-spa-wellness-hero.webp?v=2",
-  "tattoo-studio": "/assets/category-tattoo-studio-hero.webp?v=2",
-  "yoga-studio": "/assets/category-yoga-studio-hero.webp?v=2",
+  "barber-salon": "/assets/category-barber-salon-hero-2x.webp?v=3",
+  "bridal-beauty": "/assets/category-bridal-beauty-hero-2x.webp?v=3",
+  "bridal-and-beauty": "/assets/category-bridal-beauty-hero-2x.webp?v=3",
+  "mens-grooming": "/assets/category-mens-grooming-hero-2x.webp?v=3",
+  "nail-studio": "/assets/category-nail-studio-hero-2x.webp?v=3",
+  "skincare-clinics": "/assets/category-skincare-clinics-hero-2x.webp?v=3",
+  "spa-wellness": "/assets/category-spa-wellness-hero-2x.webp?v=3",
+  "tattoo-studio": "/assets/category-tattoo-studio-hero-2x.webp?v=3",
+  "yoga-studio": "/assets/category-yoga-studio-hero-2x.webp?v=3",
 };
 
 const DEFAULT_HERO_IMAGE =
