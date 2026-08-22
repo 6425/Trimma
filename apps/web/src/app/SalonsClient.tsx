@@ -253,17 +253,19 @@ export default function SalonsClient({
     filters.verifiedOnly,
   ]);
 
-  const handleSearch = () => {
+  const handleSearch = (nextLocation = selectedLocation) => {
+    const location = resolveLocationSearchValue(nextLocation);
     trackEvent(AnalyticsEvent.SalonSearch, {
       source: "search_submit",
       query: searchQuery.trim() || null,
-      location: selectedLocation.trim() || null,
+      location: location.trim() || null,
       category: urlCategory.trim() || null,
       sort: sortBy,
     });
+    setSelectedLocation(location);
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
-    if (selectedLocation) params.set("l", selectedLocation);
+    if (location) params.set("l", location);
     if (urlCategory) params.set("category", urlCategory);
     setPage(0);
     router.push(`${basePath}?${params.toString()}`);
@@ -433,10 +435,7 @@ export default function SalonsClient({
                   <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
                   <SriLankaLocationSelect
                     value={selectedLocation}
-                    onChange={(value) => {
-                      setSelectedLocation(value);
-                      setPage(0);
-                    }}
+                    onChange={(value) => handleSearch(value)}
                     anyLabel="Any Location"
                     className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
                   />

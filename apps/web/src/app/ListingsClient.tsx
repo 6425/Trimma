@@ -282,7 +282,13 @@ export default function ListingsClient({
                   <MapPin className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
                   <SriLankaLocationSelect
                     value={selectedLocation}
-                    onChange={setSelectedLocation}
+                    onChange={(value) => {
+                      applyFilters({
+                        q: searchQuery.trim(),
+                        location: value,
+                        category: urlCategory,
+                      });
+                    }}
                     anyLabel="Any location"
                     className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"
                   />

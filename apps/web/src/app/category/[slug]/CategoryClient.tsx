@@ -207,16 +207,18 @@ export default function CategoryClient({
     };
   }, [slugStr, categoryLabel, appliedSearch, appliedLocation, fetchKey]);
 
-  const handleSearch = () => {
+  const handleSearch = (nextLocation = selectedLocation) => {
+    const location = nextLocation.trim();
     trackEvent(AnalyticsEvent.SalonSearch, {
       source: "category_search_submit",
       category_slug: slugStr,
       category_name: categoryLabel,
       query: searchQuery.trim() || null,
-      location: selectedLocation.trim() || null,
+      location: location || null,
     });
+    setSelectedLocation(nextLocation);
     setAppliedSearch(searchQuery.trim());
-    setAppliedLocation(selectedLocation.trim());
+    setAppliedLocation(location);
   };
 
   const splitHeroImage = categoryHeroImage(slugStr);
@@ -300,7 +302,7 @@ export default function CategoryClient({
                     <MapPin className="w-5 h-5 text-brand-pink mr-3 shrink-0" />
                     <SriLankaLocationSelect
                       value={selectedLocation}
-                      onChange={setSelectedLocation}
+                      onChange={(value) => handleSearch(value)}
                       anyLabel="Any Location"
                       className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold min-w-0"
                       optionClassName="text-zinc-900"
@@ -380,7 +382,7 @@ export default function CategoryClient({
                 <MapPin className="w-5 h-5 text-brand-pink mr-3" />
                 <SriLankaLocationSelect
                   value={selectedLocation}
-                  onChange={setSelectedLocation}
+                  onChange={(value) => handleSearch(value)}
                   anyLabel="Any Location"
                   className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
                   optionClassName="text-zinc-900"
