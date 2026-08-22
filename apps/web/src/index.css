@@ -2292,7 +2292,12 @@ html.dark .trimma-marketplace-shell .home-hero-split {
 /* Split-composition banner — icon pattern left, photo blob right, copy sits in the white middle */
 .home-hero-split.home-hero-split--business-listings .home-hero-bg-image {
   object-fit: cover;
-  object-position: center right;
+  object-position: left center;
+}
+@media (min-width: 1024px) {
+  .home-hero-split.home-hero-split--business-listings .home-hero-bg-image {
+    object-position: center right;
+  }
 }
 .home-hero-split.home-hero-split--business-listings .home-hero-left-overlay {
   background: linear-gradient(
@@ -2302,13 +2307,18 @@ html.dark .trimma-marketplace-shell .home-hero-split {
     rgb(255 255 255 / 0) 52%
   );
 }
-.home-hero-split.home-hero-split--business-listings .home-hero-mobile-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgb(255 255 255 / 0.72) 0%,
-    rgb(255 255 255 / 0.4) 48%,
-    rgb(255 255 255 / 0.08) 100%
-  );
+@media (max-width: 1023px) {
+  .home-hero-split.home-hero-split--business-listings {
+    background: #f7f4ee !important;
+  }
+  .home-hero-split.home-hero-split--business-listings .home-hero-mobile-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgb(247 244 238 / 0.94) 0%,
+      rgb(247 244 238 / 0.9) 70%,
+      rgb(247 244 238 / 0.82) 100%
+    );
+  }
 }
 .home-hero-split .home-hero-left-overlay {
   background: linear-gradient(
