@@ -16,7 +16,7 @@ import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/s
 import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
 import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
 
-const HERO_IMAGE = "/assets/landing-hero-banner.png";
+const HERO_IMAGE = "/assets/landing-hero-banner.png?v=2";
 
 type InitialSearch = {
   q: string;
