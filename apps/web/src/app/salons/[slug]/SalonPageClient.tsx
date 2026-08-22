@@ -77,6 +77,14 @@ import {
 const salonServiceIconMap = { LayoutGrid, Scissors };
 const salonPromotionIconMap = { LayoutGrid, Gift, Tag };
 
+function OwnerWillUpdateNote({ topic }: { topic: string }) {
+  return (
+    <div className="p-8 text-center text-zinc-500">
+      The owner will update the {topic} once they claim this business.
+    </div>
+  );
+}
+
 const BookingSheet = dynamic(
   () => import("../../../components/BookingSheet").then((m) => m.BookingSheet),
   { ssr: false, loading: () => null }
@@ -897,7 +905,11 @@ export default function SalonPage({
                     </div>
                   )}
                 </>
-              ) : null}
+              ) : (
+                <div className="h-[220px] sm:h-[300px] md:h-[360px] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex items-center justify-center">
+                  <OwnerWillUpdateNote topic="photos" />
+                </div>
+              )}
             </div>
 
             <aside className="xl:w-[280px] shrink-0 space-y-3">
@@ -1131,15 +1143,13 @@ export default function SalonPage({
                       </div>
                     </div>
                   ))}
-                  {filteredServices.length === 0 && (
-                    <div className="p-8 text-center text-zinc-500">
-                      No services found.
-                    </div>
-                  )}
+                  {filteredServices.length === 0 ? (
+                    <OwnerWillUpdateNote topic="services" />
+                  ) : null}
                 </div>
               </div>
 
-              {promotionPackages.length > 0 && (
+              {promotionPackages.length > 0 ? (
                 <div className="mt-8">
                   <div className="flex items-center gap-2 mb-4">
                     <Gift className="w-5 h-5 text-brand" />
@@ -1232,12 +1242,22 @@ export default function SalonPage({
                     </div>
                   </div>
                 </div>
+              ) : (
+                <div className="mt-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Gift className="w-5 h-5 text-brand" />
+                    <h3 className="text-xl font-bold tracking-tight text-zinc-900">Deals & Promotions</h3>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                    <OwnerWillUpdateNote topic="promotions" />
+                  </div>
+                </div>
               )}
             </section>
 
-            {staff.length > 0 ? (
             <section id="staff">
                <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Professionals</h2>
+               {staff.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {staff.map(st => (
                    <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
@@ -1263,8 +1283,12 @@ export default function SalonPage({
                    </div>
                  ))}
                </div>
+               ) : (
+                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                   <OwnerWillUpdateNote topic="staff" />
+                 </div>
+               )}
             </section>
-            ) : null}
 
             {salonAbout ? (
             <section id="about">
