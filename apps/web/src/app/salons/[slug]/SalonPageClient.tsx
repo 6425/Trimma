@@ -69,6 +69,10 @@ import {
   getServiceDiscountLabel,
   isServiceDiscountActive,
 } from "@/lib/service-discount";
+import {
+  computeSalonListingAvailability,
+  formatSalonHoursForDisplay,
+} from "@/lib/salon-operating-hours";
 
 const salonServiceIconMap = { LayoutGrid, Scissors };
 const salonPromotionIconMap = { LayoutGrid, Gift, Tag };
@@ -663,89 +667,18 @@ export default function SalonPage({
   const ownerContactEmail = resolvePublicSalonOwnerEmail(salon.owner_email, salon.owner_gmail);
 
   // --- Dynamic Working Hours & Status Calculation ---
-  let parsedWorkingHours: Array<{ day: string; time: string }> = [];
-  let hasWorkingHours = false;
-  let currentStatus = "Hours not listed";
-
-  if (salon) {
-    try {
-      const hoursStr = salon.working_hours;
-      if (hoursStr) {
-        const parsed = typeof hoursStr === 'string' ? JSON.parse(hoursStr) : hoursStr;
-        if (parsed && !Array.isArray(parsed) && (parsed.monday || parsed.tuesday || parsed.sunday)) {
-          const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-          parsedWorkingHours = days.map(d => {
-            const dayKey = d.toLowerCase();
-            const schedule = parsed[dayKey];
-            if (schedule && schedule.isWorking) {
-               const startParts = schedule.start.split(":");
-               const endParts = schedule.end.split(":");
-               const formatAMPM = (h: number, m: string) => {
-                 const ampm = h >= 12 ? 'PM' : 'AM';
-                 const hours = h % 12 || 12;
-                 return `${hours.toString().padStart(2, '0')}:${m} ${ampm}`;
-               };
-               const startStr = formatAMPM(parseInt(startParts[0]), startParts[1]);
-               const endStr = formatAMPM(parseInt(endParts[0]), endParts[1]);
-               return { day: d, time: `${startStr} - ${endStr}` };
-            } else {
-               return { day: d, time: "Closed" };
-            }
-          });
-          // Rotate so Monday is first
-          const sunday = parsedWorkingHours.shift();
-          if(sunday) parsedWorkingHours.push(sunday);
-        } else if (Array.isArray(parsed) && parsed.length > 0) {
-          if (parsed[0].day && parsed[0].time) {
-            parsedWorkingHours = parsed;
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Error parsing working hours", e);
-    }
-
-    hasWorkingHours = parsedWorkingHours.length > 0;
-
-    if (!hasWorkingHours) {
-      currentStatus = "Hours not listed";
-    } else if (salon.status !== 'active') {
-      currentStatus = "Closed";
-    } else {
-      const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-      const todaySchedule = parsedWorkingHours.find((h: any) => h.day === todayStr);
-
-      if (!todaySchedule || todaySchedule.time.toLowerCase().includes('closed')) {
-        currentStatus = "Closed";
-      } else {
-        try {
-          const timeParts = todaySchedule.time.split(" - ");
-          if (timeParts.length === 2) {
-            const parseTime = (timeStr: string) => {
-               const [time, modifier] = timeStr.split(' ');
-               let [hours, minutes] = time.split(':');
-               let h = parseInt(hours, 10);
-               if (h === 12) h = 0;
-               if (modifier === 'PM') h += 12;
-               const d = new Date();
-               d.setHours(h, parseInt(minutes, 10), 0, 0);
-               return d;
-            };
-            const start = parseTime(timeParts[0]);
-            const end = parseTime(timeParts[1]);
-            const now = new Date();
-            if (now >= start && now <= end) {
-              currentStatus = "Open Now";
-            } else {
-              currentStatus = "Closed";
-            }
-          }
-        } catch(e) {
-          console.error("Error parsing time for status", e);
-        }
-      }
-    }
-  }
+  const parsedWorkingHours = salon ? formatSalonHoursForDisplay(salon.working_hours) : [];
+  const hasWorkingHours = parsedWorkingHours.length > 0;
+  const hoursAvailability = salon
+    ? computeSalonListingAvailability(null, salon.working_hours)
+    : null;
+  const currentStatus = !hasWorkingHours
+    ? "Hours not listed"
+    : salon.status !== "active"
+      ? "Closed"
+      : hoursAvailability?.status === "Open Now"
+        ? "Open Now"
+        : "Closed";
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 md:pb-12 font-sans trimma-salon-page">

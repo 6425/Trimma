@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { parseWorkingHoursToGooglePeriods } from "@/lib/salon-operating-hours";
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },
@@ -15,16 +16,7 @@ export function WorkingHoursEditor({ value, onChange }: { value: string, onChang
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      try {
-        const parsed = JSON.parse(value || "[]");
-        if (Array.isArray(parsed)) {
-          setPeriods(parsed);
-        } else {
-          setPeriods([]);
-        }
-      } catch {
-        setPeriods([]);
-      }
+      setPeriods(parseWorkingHoursToGooglePeriods(value));
     });
   }, [value]);
 

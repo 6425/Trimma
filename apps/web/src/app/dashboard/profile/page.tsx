@@ -28,6 +28,7 @@ import {
   parseSalonAmenityValue,
 } from "@/lib/salon-amenities";
 import { formatServerActionError } from "@/lib/salon-profile-save";
+import { normalizeSalonWeeklySchedule } from "@/lib/salon-operating-hours";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import {
   calculateOwnerProfileCompletionScore,
@@ -201,31 +202,8 @@ export default function SalonProfilePage() {
       setHeroUrl(salonData.hero_url || salonData.hero_image || "");
       setFeaturedImages(salonData.featured_images || []);
       if (salonData.working_hours) {
-        try {
-          const parsedHours = typeof salonData.working_hours === 'string' ? JSON.parse(salonData.working_hours) : salonData.working_hours;
-          if (!Array.isArray(parsedHours) && parsedHours.monday) {
-            setSalonSchedule(parsedHours);
-          } else if (Array.isArray(parsedHours) && parsedHours.length > 0 && parsedHours[0].open) {
-            const mapped = { ...defaultSchedule };
-            const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-            parsedHours.forEach((slot: any) => {
-              if (slot.open && slot.close) {
-                const dayName = days[slot.open.day];
-                if (dayName) {
-                  const formatTime = (t: string) => t.length === 4 ? `${t.substring(0, 2)}:${t.substring(2, 4)}` : t;
-                  mapped[dayName as keyof typeof defaultSchedule] = {
-                    isWorking: true,
-                    start: formatTime(slot.open.time),
-                    end: formatTime(slot.close.time)
-                  };
-                }
-              }
-            });
-            setSalonSchedule(mapped);
-          }
-        } catch (e) {
-          console.warn("Could not parse working hours", e);
-        }
+        const mapped = normalizeSalonWeeklySchedule(salonData.working_hours);
+        if (mapped) setSalonSchedule({ ...defaultSchedule, ...mapped });
       }
 
       // 2. Fetch Subscription Plan Details & Limits

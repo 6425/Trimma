@@ -4,7 +4,7 @@ import { CookieConsentBanner } from '../components/legal/CookieConsentBanner';
 import { PostHogConsentSync } from '@/components/analytics/PostHogConsentSync';
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from 'sonner';
-import { outfit, inter } from '../lib/fonts';
+import { inter } from '../lib/fonts';
 import { ThemeProvider } from '../providers/ThemeProvider';
 import { PublicSiteJsonLd } from '@/components/seo/PublicSiteJsonLd';
 import {
@@ -67,7 +67,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${outfit.variable} ${inter.variable}`}>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <script
           dangerouslySetInnerHTML={{

@@ -108,8 +108,12 @@ export function parseSalonScheduleFromWorkingHours(
 
   let parsed: unknown = workingHours;
   if (typeof workingHours === "string") {
+    const trimmed = workingHours.trim();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+      return {};
+    }
     try {
-      parsed = JSON.parse(workingHours);
+      parsed = JSON.parse(trimmed);
     } catch {
       return {};
     }

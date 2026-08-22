@@ -18,6 +18,7 @@ import { withTimeout } from "@/lib/promise-timeout";
 import { toast } from "sonner";
 import { buildStaffWorkingHoursPayload, findSalonServiceForAssignmentId, mapSalonServicesForStaffForm, parseStaffWorkingHours, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
 import { isActiveSalonStaff } from "@/lib/staff-allocation";
+import { normalizeSalonWeeklySchedule } from "@/lib/salon-operating-hours";
 import { AddProfessionalForm } from "../../../components/forms/AddProfessionalForm";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 
@@ -127,31 +128,8 @@ export default function DashboardStaff() {
       }
 
       if (salonData.working_hours) {
-        try {
-          const parsedHours = typeof salonData.working_hours === 'string' ? JSON.parse(salonData.working_hours) : salonData.working_hours;
-          if (!Array.isArray(parsedHours) && parsedHours.monday) {
-            setSalonWorkingHours(parsedHours);
-          } else if (Array.isArray(parsedHours) && parsedHours.length > 0 && parsedHours[0].open) {
-            const mapped = { ...defaultSchedule };
-            const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-            parsedHours.forEach((slot: any) => {
-              if (slot.open && slot.close) {
-                const dayName = days[slot.open.day];
-                if (dayName) {
-                  const formatTime = (t: string) => t.length === 4 ? `${t.substring(0, 2)}:${t.substring(2, 4)}` : t;
-                  mapped[dayName as keyof typeof defaultSchedule] = {
-                    isWorking: true,
-                    start: formatTime(slot.open.time),
-                    end: formatTime(slot.close.time)
-                  };
-                }
-              }
-            });
-            setSalonWorkingHours(mapped);
-          }
-        } catch (e) {
-          console.warn("Could not parse salon working hours", e);
-        }
+        const mapped = normalizeSalonWeeklySchedule(salonData.working_hours);
+        if (mapped) setSalonWorkingHours({ ...defaultSchedule, ...mapped });
       }
 
       const planData = staffResult.subscriptionPlan as any;

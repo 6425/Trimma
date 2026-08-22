@@ -29,6 +29,7 @@ import {
 import { withTimeout } from "@/lib/promise-timeout";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
 import { getSalonVerificationReadinessIssues } from "@/lib/salon-onboarding-progress";
+import { parseWorkingHoursToGooglePeriods } from "@/lib/salon-operating-hours";
 import { WorkingHoursEditor } from "../../../components/admin/WorkingHoursEditor";
 import { LeadTables } from "../../../components/admin/LeadTables";
 import { LeadEditorModal } from "../../../components/admin/LeadEditorModal";
@@ -572,12 +573,8 @@ function Leads() {
     try {
       setUpdating(true);
       
-      let parsedHours = [];
-      try {
-        parsedHours = JSON.parse(formData.working_hours || "[]");
-      } catch (e) {
-        parsedHours = formData.working_hours;
-      }
+      const parsedPeriods = parseWorkingHoursToGooglePeriods(formData.working_hours);
+      const parsedHours = parsedPeriods.length > 0 ? parsedPeriods : formData.working_hours || [];
 
       let newStatus = formData.onboarding_status;
       if (formData.assign_to && ["DISCOVERED", "AUTO_PROVISIONED", "DRAFT_REVIEW"].includes(newStatus)) {

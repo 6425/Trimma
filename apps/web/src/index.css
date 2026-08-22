@@ -164,7 +164,7 @@
     --radius: 0.75rem; /* Rounded-xl by default */
 
     /* ── Trimma Design System Tokens ── */
-    --font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-family: var(--font-inter), "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --space-xs: 0.25rem;
     --space-sm: 0.5rem;
     --space-md: 1rem;

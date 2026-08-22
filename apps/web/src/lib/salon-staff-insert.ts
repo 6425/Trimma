@@ -56,8 +56,10 @@ export function parseStaffWorkingHours(workingHours: unknown): {
 } | null {
   if (!workingHours) return null;
   if (typeof workingHours === "string") {
+    const trimmed = workingHours.trim();
+    if (!trimmed.startsWith("{")) return null;
     try {
-      const parsed = JSON.parse(workingHours);
+      const parsed = JSON.parse(trimmed);
       return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
         ? (parsed as ReturnType<typeof parseStaffWorkingHours>)
         : null;

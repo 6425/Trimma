@@ -39,13 +39,129 @@ const COLOMBO_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 function parseWorkingHoursJson(workingHours: unknown): unknown {
   if (!workingHours) return null;
   if (typeof workingHours === "string") {
-    try {
-      return JSON.parse(workingHours);
-    } catch {
-      return null;
+    const trimmed = workingHours.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return null;
+      }
     }
+    return null;
   }
   return workingHours;
+}
+
+function parseClockToHoursMinutes(token: string): string | null {
+  const cleaned = token.trim().replace(/\u202f/g, " ").replace(/\s+/g, " ");
+  const match = cleaned.match(/^(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?$/i);
+  if (!match) return null;
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] || "00";
+  const meridiem = (match[3] || "").toLowerCase().replace(/\./g, "");
+  if (meridiem.startsWith("p") && hours < 12) hours += 12;
+  if (meridiem.startsWith("a") && hours === 12) hours = 0;
+  if (hours > 23) return null;
+  return `${String(hours).padStart(2, "0")}:${minutes}`;
+}
+
+/** Google Places weekday_text, e.g. "Monday: 9:00 AM – 6:00 PM". */
+export function parseGoogleWeekdayHoursText(text: string): Record<string, SalonScheduleDay> | null {
+  const chunks = text
+    .split(/(?=\b(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\s*:)/i)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+
+  const mapped: Record<string, SalonScheduleDay> = {};
+  for (const line of chunks) {
+    const match = line.match(
+      /^(Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\s*:\s*(.+)$/i
+    );
+    if (!match) continue;
+    const dayName = match[1].toLowerCase();
+    const rest = match[2].trim();
+    if (/^closed\b/i.test(rest)) {
+      mapped[dayName] = { isWorking: false, start: "09:00", end: "17:00" };
+      continue;
+    }
+    const firstInterval = rest.split(",")[0].trim();
+    const parts = firstInterval.split(/\s*(?:–|—|−|-|to)\s*/i);
+    if (parts.length < 2) continue;
+    const start = parseClockToHoursMinutes(parts[0]);
+    const end = parseClockToHoursMinutes(parts[1]);
+    if (!start || !end) continue;
+    mapped[dayName] = { isWorking: true, start, end };
+  }
+
+  return Object.keys(mapped).length > 0 ? mapped : null;
+}
+
+function toGooglePlacesClock(time: string): string {
+  const compact = time.replace(":", "");
+  return compact.length >= 4 ? compact.slice(0, 4) : compact.padStart(4, "0");
+}
+
+export type GoogleWorkingPeriod = {
+  open: { day: number; time: string };
+  close: { day: number; time: string };
+};
+
+/** Google Places periods[] or weekday text → editor-friendly periods. */
+export function parseWorkingHoursToGooglePeriods(value: unknown): GoogleWorkingPeriod[] {
+  if (value == null || value === "") return [];
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        if (Array.isArray(parsed) && parsed.some((item) => item && typeof item === "object" && "open" in item)) {
+          return parsed as GoogleWorkingPeriod[];
+        }
+      } catch {
+        // weekday text such as "Monday: 9:00 AM – 6:00 PM"
+      }
+    }
+  } else if (Array.isArray(value) && value.some((item) => item && typeof item === "object" && "open" in item)) {
+    return value as GoogleWorkingPeriod[];
+  }
+
+  const schedule = normalizeSalonWeeklySchedule(value);
+  if (!schedule) return [];
+
+  const periods: GoogleWorkingPeriod[] = [];
+  SALON_DAY_NAMES.forEach((name, day) => {
+    const slot = schedule[name];
+    if (!slot?.isWorking) return;
+    periods.push({
+      open: { day, time: toGooglePlacesClock(slot.start) },
+      close: { day, time: toGooglePlacesClock(slot.end) },
+    });
+  });
+  return periods;
+}
+
+export function formatSalonHoursForDisplay(
+  workingHours: unknown
+): Array<{ day: string; time: string }> {
+  const schedule = normalizeSalonWeeklySchedule(workingHours);
+  if (!schedule) return [];
+
+  return ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(
+    (key) => {
+      const label = key.slice(0, 1).toUpperCase() + key.slice(1);
+      const day = schedule[key];
+      if (!day?.isWorking) return { day: label, time: "Closed" };
+      const startMinutes = parseTimeToMinutes(day.start);
+      const endMinutes = parseTimeToMinutes(day.end);
+      if (startMinutes == null || endMinutes == null) return { day: label, time: "Closed" };
+      return {
+        day: label,
+        time: `${formatDisplayTime(startMinutes)} - ${formatDisplayTime(endMinutes)}`,
+      };
+    }
+  );
 }
 
 function formatTimeForDb(time: string): string {
@@ -79,8 +195,17 @@ export function normalizeSalonWeeklySchedule(workingHours: unknown): Record<stri
     return trimma;
   }
 
+  if (typeof workingHours === "string") {
+    const fromGoogleText = parseGoogleWeekdayHoursText(workingHours);
+    if (fromGoogleText) return fromGoogleText;
+  }
+
   const parsed = parseWorkingHoursJson(workingHours);
   if (!parsed) return null;
+
+  if (Array.isArray(parsed) && parsed.every((item) => typeof item === "string")) {
+    return parseGoogleWeekdayHoursText(parsed.join("\n"));
+  }
 
   if (Array.isArray(parsed)) {
     const mapped: Record<string, SalonScheduleDay> = {};

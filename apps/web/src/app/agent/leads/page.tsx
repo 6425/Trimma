@@ -40,6 +40,7 @@ import {
   fetchAgentGlobalsClient,
 } from "@/lib/agent-client-data";
 import { parseSalonAmenityValue } from "@/lib/salon-amenities";
+import { parseWorkingHoursToGooglePeriods } from "@/lib/salon-operating-hours";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
 import { buildStaffWorkingHoursPayload, parseStaffWorkingHours, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
@@ -74,16 +75,7 @@ function WorkingHoursEditor({ value, onChange }: { value: string, onChange: (val
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      try {
-        const parsed = JSON.parse(value || "[]");
-        if (Array.isArray(parsed)) {
-          setPeriods(parsed);
-        } else {
-          setPeriods([]);
-        }
-      } catch {
-        setPeriods([]);
-      }
+      setPeriods(parseWorkingHoursToGooglePeriods(value));
     });
   }, [value]);
 
@@ -526,12 +518,8 @@ function AgentLeads() {
     try {
       setUpdating(true);
       
-      let parsedHours: any = [];
-      try {
-        parsedHours = JSON.parse(formData.working_hours || "[]");
-      } catch (e) {
-        parsedHours = formData.working_hours;
-      }
+      const parsedPeriods = parseWorkingHoursToGooglePeriods(formData.working_hours);
+      const parsedHours = parsedPeriods.length > 0 ? parsedPeriods : formData.working_hours || [];
 
       const updatePayload: any = {
         name: formData.name || selectedLead.name,
@@ -607,12 +595,8 @@ function AgentLeads() {
     try {
       setUpdating(true);
       
-      let parsedHours: any = [];
-      try {
-        parsedHours = JSON.parse(formData.working_hours || "[]");
-      } catch (e) {
-        parsedHours = formData.working_hours;
-      }
+      const parsedPeriods = parseWorkingHoursToGooglePeriods(formData.working_hours);
+      const parsedHours = parsedPeriods.length > 0 ? parsedPeriods : formData.working_hours || [];
 
       const updatePayload: any = {
         name: formData.name || selectedLead.name,
