@@ -17,12 +17,12 @@ function headerBottomPx(): number {
   return 120;
 }
 
-/** Pins the salon map + booking column under the header once it reaches Services. */
+/** Pins the salon map + booking column under the header while Services is in view. */
 export function StickyBookingSidebar({ children, className = "" }: Props) {
   const slotRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
 
-    useLayoutEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     const body = document.body;
     const slot = slotRef.current;
@@ -50,7 +50,6 @@ export function StickyBookingSidebar({ children, className = "" }: Props) {
       panel.style.maxHeight = "";
       panel.style.overflowY = "";
       panel.style.zIndex = "";
-      slot.style.minHeight = "";
     };
 
     const update = () => {
@@ -59,47 +58,24 @@ export function StickyBookingSidebar({ children, className = "" }: Props) {
         return;
       }
 
-      const top = headerBottomPx() + 8;
-      const slotRect = slot.getBoundingClientRect();
-
-      // Stay in document flow until this column reaches the header, so the
-      // sidebar starts after the hero, level with Services — not over the hero.
-      if (slotRect.top > top) {
-        resetPanel();
-        return;
-      }
-
-      if (panel.style.position !== "fixed") {
-        slot.style.minHeight = `${panel.offsetHeight}px`;
-      }
-
-      const footer = document.querySelector("footer");
-      const footerTop =
-        footer instanceof HTMLElement ? footer.getBoundingClientRect().top : window.innerHeight;
-      const maxHeight = Math.max(180, Math.min(window.innerHeight - top - 12, footerTop - top - 16));
-
-      panel.style.position = "fixed";
-      panel.style.top = `${top}px`;
-      panel.style.left = `${Math.round(slotRect.left)}px`;
-      panel.style.width = `${Math.round(slotRect.width)}px`;
-      panel.style.maxHeight = `${maxHeight}px`;
-      panel.style.overflowY = "auto";
+      // Sticky (not fixed + overflow clip) so leftover sidebar content
+      // scrolls into view at the end of Services, before the footer.
+      panel.style.position = "sticky";
+      panel.style.top = `${headerBottomPx() + 8}px`;
+      panel.style.left = "";
+      panel.style.width = "";
+      panel.style.maxHeight = "none";
+      panel.style.overflowY = "visible";
       panel.style.zIndex = "45";
     };
 
     update();
-    document.addEventListener("scroll", update, { capture: true, passive: true });
     window.addEventListener("resize", update);
     window.visualViewport?.addEventListener("resize", update);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
-    ro?.observe(panel);
-    ro?.observe(slot);
 
     return () => {
-      document.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("resize", update);
-      ro?.disconnect();
       resetPanel();
       root.classList.remove("trimma-salon-profile-active");
       root.style.overflowX = previous.htmlX;
@@ -112,7 +88,7 @@ export function StickyBookingSidebar({ children, className = "" }: Props) {
   return (
     <div
       ref={slotRef}
-      className={`w-full shrink-0 lg:w-[380px] ${className}`.trim()}
+      className={`w-full shrink-0 lg:w-[380px] lg:self-stretch ${className}`.trim()}
     >
       <aside ref={panelRef} id="booking-sidebar-card" className="trimma-salon-booking-sidebar">
         {children}

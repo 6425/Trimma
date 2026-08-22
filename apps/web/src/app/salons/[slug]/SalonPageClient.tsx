@@ -1057,7 +1057,7 @@ export default function SalonPage({
       </div>
 
       <div className="container mx-auto px-4 max-w-6xl relative mt-10 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-x-12 lg:items-start">
-          <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
             
             {/* 4. SERVICES SECTION */}
             <section id="services">
@@ -1240,72 +1240,6 @@ export default function SalonPage({
                 </div>
               )}
             </section>
-
-            {/* 6. STAFF SECTION */}
-            <section id="staff">
-               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Professionals</h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {staff.map(st => (
-                   <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
-                     <StaffPortrait
-                       name={st.name}
-                       avatarUrl={st.avatar_url}
-                       widthClass="w-20"
-                       className={SALON_PAGE_STAFF_IMAGE_CLASS}
-                     />
-                     <div className="flex-1">
-                       <div className="flex justify-between items-start mb-1">
-                         <h3 className="font-bold text-zinc-900">{st.name}</h3>
-                         <div className="flex items-center text-sm font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md">
-                           <Star className="w-3.5 h-3.5 mr-1 fill-amber-500 text-amber-500" />
-                           {st.reviewCount > 0 ? st.rating.toFixed(1) : "New"}
-                         </div>
-                       </div>
-                       <p className="text-sm text-zinc-500 font-medium mb-2">
-                         {st.role} • {st.experience}
-                         {st.reviewCount > 0 ? ` • ${st.reviewCount} review${st.reviewCount === 1 ? "" : "s"}` : ""}
-                       </p>
-                     </div>
-                   </div>
-                 ))}
-                 {staff.length === 0 && <p className="text-zinc-500">No staff registered.</p>}
-               </div>
-            </section>
-
-            {/* 9. ABOUT */}
-            <section id="about">
-               <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">About {salon.name}</h2>
-                  {salonAbout ? (
-                    <p className="text-zinc-600 leading-relaxed text-sm md:text-base whitespace-pre-wrap">{salonAbout}</p>
-                  ) : (
-                    <p className="text-zinc-400 text-sm md:text-base italic">
-                      This salon has not added an about section yet.
-                    </p>
-                  )}
-               </div>
-            </section>
-
-            {/* Verified reviews */}
-            {reviewsLoading ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-zinc-500">
-                Reviews will appear here shortly.
-              </div>
-            ) : showGoogleReviews ? (
-              <GooglePlacesReviewsSection
-                reviews={googlePlaceReviews}
-                averageRating={displayRating}
-                totalReviews={displayReviewCount}
-              />
-            ) : (
-              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
-            )}
-
-            <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
-
-            <div className="lg:hidden">
-              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} variant="sidebar" />
-            </div>
           </div>
 
           {/* RIGHT SIDEBAR — starts after the hero, aligned with Services */}
@@ -1539,6 +1473,74 @@ export default function SalonPage({
                />
             </div>
           </StickyBookingSidebar>
+      </div>
+
+      <div className="container mx-auto px-4 max-w-6xl relative mt-12 space-y-12">
+            {/* 6. STAFF SECTION */}
+            <section id="staff">
+               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Professionals</h2>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {staff.map(st => (
+                   <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
+                     <StaffPortrait
+                       name={st.name}
+                       avatarUrl={st.avatar_url}
+                       widthClass="w-20"
+                       className={SALON_PAGE_STAFF_IMAGE_CLASS}
+                     />
+                     <div className="flex-1">
+                       <div className="flex justify-between items-start mb-1">
+                         <h3 className="font-bold text-zinc-900">{st.name}</h3>
+                         <div className="flex items-center text-sm font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md">
+                           <Star className="w-3.5 h-3.5 mr-1 fill-amber-500 text-amber-500" />
+                           {st.reviewCount > 0 ? st.rating.toFixed(1) : "New"}
+                         </div>
+                       </div>
+                       <p className="text-sm text-zinc-500 font-medium mb-2">
+                         {st.role} • {st.experience}
+                         {st.reviewCount > 0 ? ` • ${st.reviewCount} review${st.reviewCount === 1 ? "" : "s"}` : ""}
+                       </p>
+                     </div>
+                   </div>
+                 ))}
+                 {staff.length === 0 && <p className="text-zinc-500">No staff registered.</p>}
+               </div>
+            </section>
+
+            {/* 9. ABOUT */}
+            <section id="about">
+               <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">About {salon.name}</h2>
+                  {salonAbout ? (
+                    <p className="text-zinc-600 leading-relaxed text-sm md:text-base whitespace-pre-wrap">{salonAbout}</p>
+                  ) : (
+                    <p className="text-zinc-400 text-sm md:text-base italic">
+                      This salon has not added an about section yet.
+                    </p>
+                  )}
+               </div>
+            </section>
+
+            {/* Verified reviews */}
+            {reviewsLoading ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-zinc-500">
+                Reviews will appear here shortly.
+              </div>
+            ) : showGoogleReviews ? (
+              <GooglePlacesReviewsSection
+                reviews={googlePlaceReviews}
+                averageRating={displayRating}
+                totalReviews={displayReviewCount}
+              />
+            ) : (
+              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
+            )}
+
+            <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
+
+            <div className="lg:hidden">
+              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} variant="sidebar" />
+            </div>
       </div>
 
       {/* MOBILE STICKY BOTTOM BAR */}

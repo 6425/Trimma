@@ -1776,11 +1776,6 @@ html:has(.trimma-salon-page) body {
   .trimma-salon-booking-sidebar {
     width: 380px;
     padding-bottom: 0.5rem;
-    scrollbar-width: none;
-  }
-
-  .trimma-salon-booking-sidebar::-webkit-scrollbar {
-    display: none;
   }
 
   .trimma-salon-booking-sidebar > * + * {
