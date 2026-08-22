@@ -800,11 +800,21 @@ export default function SalonPage({
             <div className="flex-1 min-w-0 space-y-2">
               {galleryImages.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-3 grid-rows-2 gap-2 h-[220px] sm:h-[300px] md:h-[360px]">
+                  <div
+                    className={
+                      galleryImages.length === 1
+                        ? "relative h-[220px] sm:h-[300px] md:h-[360px] overflow-hidden rounded-xl border border-slate-200 bg-slate-100"
+                        : "grid grid-cols-3 grid-rows-2 gap-2 h-[220px] sm:h-[300px] md:h-[360px]"
+                    }
+                  >
                     <button
                       type="button"
                       onClick={() => setGalleryLightboxIndex(0)}
-                      className="relative col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                      className={
+                        galleryImages.length === 1
+                          ? "absolute inset-0 cursor-pointer"
+                          : "relative col-span-2 row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                      }
                     >
                       <Image
                         src={galleryImages[0]}
@@ -819,7 +829,11 @@ export default function SalonPage({
                       <button
                         type="button"
                         onClick={() => setGalleryLightboxIndex(1)}
-                        className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                        className={
+                          galleryImages.length === 2
+                            ? "relative row-span-2 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                            : "relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100 cursor-pointer"
+                        }
                       >
                         <Image
                           src={galleryImages[1]}
@@ -829,9 +843,7 @@ export default function SalonPage({
                           className="object-cover"
                         />
                       </button>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50" />
-                    )}
+                    ) : null}
                     {galleryImages[2] ? (
                       <button
                         type="button"
@@ -846,9 +858,7 @@ export default function SalonPage({
                           className="object-cover"
                         />
                       </button>
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50" />
-                    )}
+                    ) : null}
                   </div>
 
                   {(heroThumbImages.length > 0 || extraGalleryCount > 0) && (
@@ -884,26 +894,10 @@ export default function SalonPage({
                           </button>
                         );
                       })}
-                      {heroThumbImages.length === 0 && extraGalleryCount > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => setGalleryLightboxIndex(HERO_MOSAIC_IMAGE_COUNT)}
-                          className={`col-span-3 relative overflow-hidden rounded-lg border border-slate-200 bg-slate-900 flex items-center justify-center ${SALON_HERO_IMAGE_ASPECT_CLASS}`}
-                        >
-                          <span className="text-sm font-bold text-white">
-                            +{extraGalleryCount} photo{extraGalleryCount === 1 ? "" : "s"}
-                          </span>
-                        </button>
-                      ) : null}
                     </div>
                   )}
                 </>
-              ) : (
-                <div className="h-[220px] sm:h-[300px] md:h-[360px] rounded-xl border border-dashed border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col items-center justify-center gap-3">
-                  <Scissors className="w-8 h-8 text-slate-400" />
-                  <p className="text-sm font-medium text-zinc-500">No photos uploaded yet</p>
-                </div>
-              )}
+              ) : null}
             </div>
 
             <aside className="xl:w-[280px] shrink-0 space-y-3">
@@ -1057,7 +1051,7 @@ export default function SalonPage({
       </div>
 
       <div className="container mx-auto px-4 max-w-6xl relative mt-10 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-x-12 lg:items-start">
-          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <div className="min-w-0 space-y-12 lg:col-start-1 lg:row-start-1">
             
             {/* 4. SERVICES SECTION */}
             <section id="services">
@@ -1240,6 +1234,62 @@ export default function SalonPage({
                 </div>
               )}
             </section>
+
+            {staff.length > 0 ? (
+            <section id="staff">
+               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Professionals</h2>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {staff.map(st => (
+                   <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
+                     <StaffPortrait
+                       name={st.name}
+                       avatarUrl={st.avatar_url}
+                       widthClass="w-20"
+                       className={SALON_PAGE_STAFF_IMAGE_CLASS}
+                     />
+                     <div className="flex-1">
+                       <div className="flex justify-between items-start mb-1">
+                         <h3 className="font-bold text-zinc-900">{st.name}</h3>
+                         <div className="flex items-center text-sm font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md">
+                           <Star className="w-3.5 h-3.5 mr-1 fill-amber-500 text-amber-500" />
+                           {st.reviewCount > 0 ? st.rating.toFixed(1) : "New"}
+                         </div>
+                       </div>
+                       <p className="text-sm text-zinc-500 font-medium mb-2">
+                         {st.role} • {st.experience}
+                         {st.reviewCount > 0 ? ` • ${st.reviewCount} review${st.reviewCount === 1 ? "" : "s"}` : ""}
+                       </p>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </section>
+            ) : null}
+
+            {salonAbout ? (
+            <section id="about">
+               <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">About {salon.name}</h2>
+                  <p className="text-zinc-600 leading-relaxed text-sm md:text-base whitespace-pre-wrap">{salonAbout}</p>
+               </div>
+            </section>
+            ) : null}
+
+            {!reviewsLoading && showGoogleReviews && googlePlaceReviews.length > 0 ? (
+              <GooglePlacesReviewsSection
+                reviews={googlePlaceReviews}
+                averageRating={displayRating}
+                totalReviews={displayReviewCount}
+              />
+            ) : !reviewsLoading && !showGoogleReviews && salonReviews.length > 0 ? (
+              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
+            ) : null}
+
+            <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
+
+            <div className="lg:hidden">
+              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} variant="sidebar" />
+            </div>
           </div>
 
           {/* RIGHT SIDEBAR — starts after the hero, aligned with Services */}
@@ -1473,74 +1523,6 @@ export default function SalonPage({
                />
             </div>
           </StickyBookingSidebar>
-      </div>
-
-      <div className="container mx-auto px-4 max-w-6xl relative mt-12 space-y-12">
-            {/* 6. STAFF SECTION */}
-            <section id="staff">
-               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Professionals</h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {staff.map(st => (
-                   <div key={st.id} className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-start sm:items-center shadow-sm hover:shadow-md transition-shadow">
-                     <StaffPortrait
-                       name={st.name}
-                       avatarUrl={st.avatar_url}
-                       widthClass="w-20"
-                       className={SALON_PAGE_STAFF_IMAGE_CLASS}
-                     />
-                     <div className="flex-1">
-                       <div className="flex justify-between items-start mb-1">
-                         <h3 className="font-bold text-zinc-900">{st.name}</h3>
-                         <div className="flex items-center text-sm font-semibold text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-md">
-                           <Star className="w-3.5 h-3.5 mr-1 fill-amber-500 text-amber-500" />
-                           {st.reviewCount > 0 ? st.rating.toFixed(1) : "New"}
-                         </div>
-                       </div>
-                       <p className="text-sm text-zinc-500 font-medium mb-2">
-                         {st.role} • {st.experience}
-                         {st.reviewCount > 0 ? ` • ${st.reviewCount} review${st.reviewCount === 1 ? "" : "s"}` : ""}
-                       </p>
-                     </div>
-                   </div>
-                 ))}
-                 {staff.length === 0 && <p className="text-zinc-500">No staff registered.</p>}
-               </div>
-            </section>
-
-            {/* 9. ABOUT */}
-            <section id="about">
-               <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-4">About {salon.name}</h2>
-                  {salonAbout ? (
-                    <p className="text-zinc-600 leading-relaxed text-sm md:text-base whitespace-pre-wrap">{salonAbout}</p>
-                  ) : (
-                    <p className="text-zinc-400 text-sm md:text-base italic">
-                      This salon has not added an about section yet.
-                    </p>
-                  )}
-               </div>
-            </section>
-
-            {/* Verified reviews */}
-            {reviewsLoading ? (
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-zinc-500">
-                Reviews will appear here shortly.
-              </div>
-            ) : showGoogleReviews ? (
-              <GooglePlacesReviewsSection
-                reviews={googlePlaceReviews}
-                averageRating={displayRating}
-                totalReviews={displayReviewCount}
-              />
-            ) : (
-              <SalonReviewsSection reviews={salonReviews} summary={reviewSummary} />
-            )}
-
-            <SimilarBusinessesSection listings={similarListings} city={salon.city} embedded />
-
-            <div className="lg:hidden">
-              <SalonPublicQrSection salonName={salon.name || "Salon"} slug={slug} variant="sidebar" />
-            </div>
       </div>
 
       {/* MOBILE STICKY BOTTOM BAR */}
