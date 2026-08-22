@@ -7,7 +7,7 @@ import Link from "next/link";
 import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
-import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -1067,7 +1067,10 @@ export default function SalonPage({
             
             {/* 4. SERVICES SECTION */}
             <section id="services">
-              <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Services</h2>
+              <div className="flex items-center gap-2 mb-6">
+                <Scissors className="w-5 h-5 text-brand" />
+                <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Services</h2>
+              </div>
               
               <div className="flex overflow-x-auto gap-2 pb-4 hide-scrollbar snap-x mb-2">
                 {serviceCategories.map(cat => (
@@ -1151,7 +1154,10 @@ export default function SalonPage({
             </section>
 
             <section id="staff">
-               <h2 className="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Staff</h2>
+               <div className="flex items-center gap-2 mb-6">
+                 <Users className="w-5 h-5 text-brand" />
+                 <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Staff</h2>
+               </div>
                {staff.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {staff.map(st => (
