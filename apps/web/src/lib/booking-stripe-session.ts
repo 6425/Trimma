@@ -15,14 +15,8 @@ export function buildBookingStripePayload(input: {
   customer: BookingStripeCustomer;
   reservationFee: number;
   serviceTotal: number;
-  rates: { platform: number; salon: number; agent: number };
-  salon: Record<string, unknown>;
-  services: Record<string, unknown>[];
-  staffMemberId: string | null;
-  totalDuration: number;
 }) {
-  const { draft, customer, salon, services, staffMemberId, reservationFee, serviceTotal, rates, totalDuration } =
-    input;
+  const { draft, customer, reservationFee, serviceTotal } = input;
 
   return {
     draft: {
@@ -39,14 +33,5 @@ export function buildBookingStripePayload(input: {
     customer,
     reservationFee,
     serviceTotal,
-    rates,
-    salon: {
-      id: salon.id,
-      onboarding_agent_email: salon.onboarding_agent_email,
-      assign_to: salon.assign_to,
-    },
-    services,
-    staffMemberId,
-    totalDuration,
   };
 }

@@ -6,6 +6,7 @@ import { getClientIp } from "@/lib/email/rate-limit";
 import {
   loadStripePendingCheckout,
   markStripePendingCompleted,
+  StripeCheckoutInProgressError,
 } from "@/lib/stripe-checkout";
 import {
   assertValidStripePaymentIntentId,
@@ -71,7 +72,6 @@ export async function POST(request: Request) {
           paymentId: paymentIntent.id,
           environment,
         },
-        payhereEnvironment: environment,
         clientIp: getClientIp(request),
       });
 
@@ -117,7 +117,6 @@ export async function POST(request: Request) {
           paymentId: paymentIntent.id,
           environment,
         },
-        payhereEnvironment: environment,
       });
 
       await markStripePendingCompleted(pending.id, {
@@ -152,7 +151,7 @@ export async function POST(request: Request) {
     );
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to complete Stripe checkout." },
-      { status: 500 }
+      { status: error instanceof StripeCheckoutInProgressError ? 409 : 500 }
     );
   }
 }

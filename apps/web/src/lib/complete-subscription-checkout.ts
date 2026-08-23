@@ -1,10 +1,8 @@
-import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { requireSalonOwnerFromCookies } from "@/lib/server-salon-auth";
 import { resolveAgentCommissionAttribution } from "@/lib/agent-hierarchy";
 import { validateSubscriptionCheckoutPrice } from "@/lib/checkout-price-validation";
 import { runSubscriptionCheckoutNotifications } from "@/lib/subscription-checkout-notifications";
-import type { CardType } from "@/lib/card-payment";
 
 export type CompleteSubscriptionCheckoutInput = {
   planName: string;
@@ -16,18 +14,10 @@ export type CompleteSubscriptionCheckoutInput = {
     email: string;
     phone: string;
   };
-  card?: {
-    cardType: CardType;
-    cardNumber: string;
-    expiry: string;
-    cvv: string;
-    cardholderName: string;
-  };
-  stripePayment?: {
+  stripePayment: {
     paymentId: string;
     environment: string;
   };
-  payhereEnvironment: string;
 };
 
 function createSubscriptionOrderId() {
@@ -129,7 +119,7 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     .from("payments")
     .insert({
       salon_id: auth.salonId,
-      provider: input.stripePayment ? "stripe" : "payhere",
+      provider: "stripe",
       amount: chargeAmount,
       currency: "LKR",
       status: "pending",
@@ -147,24 +137,13 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
     throw new Error(paymentInsertError?.message || "Failed to create payment record.");
   }
 
-  const paymentResult = input.stripePayment
-    ? {
-        success: true,
-        paymentId: input.stripePayment.paymentId,
-        last4: null as string | null,
-        provider: "stripe" as const,
-        amount: Number(chargeAmount.toFixed(2)),
-      }
-    : await processBookingCardPayment({
-        cardType: input.card!.cardType,
-        cardNumber: input.card!.cardNumber,
-        expiry: input.card!.expiry,
-        cvv: input.card!.cvv,
-        cardholderName: input.card!.cardholderName,
-        amount: chargeAmount,
-        bookingNo: orderId,
-        environment: input.payhereEnvironment,
-      });
+  const paymentResult = {
+    success: true,
+    paymentId: input.stripePayment.paymentId,
+    last4: null as string | null,
+    provider: "stripe" as const,
+    amount: Number(chargeAmount.toFixed(2)),
+  };
 
   const { error: paymentUpdateError } = await supabase
     .from("payments")
@@ -179,9 +158,9 @@ export async function completeSubscriptionCheckout(input: CompleteSubscriptionCh
         order_id: orderId,
         provider: paymentResult.provider,
         last4: paymentResult.last4,
-        card_type: input.card?.cardType || null,
-        environment: input.stripePayment?.environment || input.payhereEnvironment,
-        stripe_session_id: input.stripePayment?.paymentId || null,
+        card_type: null,
+        environment: input.stripePayment.environment,
+        stripe_session_id: input.stripePayment.paymentId,
       },
     })
     .eq("id", paymentRow.id);

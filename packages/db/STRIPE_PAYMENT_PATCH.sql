@@ -18,13 +18,17 @@ CREATE TABLE IF NOT EXISTS public.stripe_checkout_pending (
   checkout_type TEXT NOT NULL CHECK (checkout_type IN ('booking', 'subscription')),
   payload JSONB NOT NULL,
   stripe_session_id TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'expired')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'expired')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   completed_at TIMESTAMPTZ
 );
 
 CREATE INDEX IF NOT EXISTS idx_stripe_checkout_pending_session
   ON public.stripe_checkout_pending (stripe_session_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS unique_stripe_checkout_pending_session
+  ON public.stripe_checkout_pending (stripe_session_id)
+  WHERE stripe_session_id IS NOT NULL;
 
 ALTER TABLE public.stripe_checkout_pending ENABLE ROW LEVEL SECURITY;
 

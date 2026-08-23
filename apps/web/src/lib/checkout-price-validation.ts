@@ -21,6 +21,11 @@ export type BookingCheckoutPriceDraft = {
 };
 
 export type ValidatedBookingCheckoutPrices = {
+  salon: {
+    id: string;
+    onboarding_agent_email?: string | null;
+    assign_to?: string | null;
+  };
   serviceTotal: number;
   reservationFee: number;
   depositPercent: number;
@@ -216,6 +221,11 @@ export async function validateBookingCheckoutPrices(input: {
   assertPriceMatch("Reservation fee", input.reservationFee, reservationFee);
 
   return {
+    salon: {
+      id: String(salon.id),
+      onboarding_agent_email: salon.onboarding_agent_email ?? null,
+      assign_to: salon.assign_to ?? null,
+    },
     serviceTotal,
     reservationFee,
     depositPercent,

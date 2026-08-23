@@ -212,12 +212,6 @@ export async function fetchBookingCheckoutData(
     const stripeEnvironment = await resolveActiveStripeEnvironment();
     const stripeEnabled = paymentSettings?.stripe_enabled !== false;
     const stripeKeys = resolveStripeKeys(stripeEnvironment, paymentSettings || undefined);
-    const totalDuration =
-      services.reduce(
-        (sum, service) => sum + parseInt(String(service.duration || service.duration_min || "30"), 10),
-        0
-      ) || 30;
-
     let stripeClientSecret: string | null = null;
     let stripePendingId: string | null = null;
     let stripePendingToken: string | null = null;
@@ -260,11 +254,6 @@ export async function fetchBookingCheckoutData(
           customer,
           reservationFee,
           serviceTotal,
-          rates,
-          salon: salon as Record<string, unknown>,
-          services,
-          staffMemberId: (staffMember?.id as string | null) || null,
-          totalDuration,
         });
 
         const stripeSession = await createStripePaymentIntent({

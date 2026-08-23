@@ -21,17 +21,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const {
-      customer,
-      reservationFee,
-      salon,
-      services,
-      draft,
-      rates,
-      serviceTotal,
-      staffMemberId,
-      totalDuration,
-    } = body;
+    const { customer, reservationFee, services, draft, rates, serviceTotal } = body;
 
     if (!customer?.email || !draft?.salonId || !reservationFee) {
       return NextResponse.json({ error: "Incomplete checkout details." }, { status: 400 });
@@ -60,15 +50,22 @@ export async function POST(request: Request) {
       description: `Trimma booking deposit — ${serviceLabel}`,
       customerEmail: customer.email,
       payload: {
-        draft,
+        draft: {
+          salonId: String(draft.salonId),
+          serviceIds: Array.isArray(draft.serviceIds) ? draft.serviceIds.map(String) : [],
+          staffId: String(draft.staffId || "any"),
+          bookingDate: String(draft.bookingDate || ""),
+          timeSlot: String(draft.timeSlot || ""),
+          promotionPackageId: draft.promotionPackageId
+            ? String(draft.promotionPackageId)
+            : undefined,
+          promotionPackageName: draft.promotionPackageName
+            ? String(draft.promotionPackageName)
+            : undefined,
+        },
         customer,
         reservationFee: validatedPrices.reservationFee,
         serviceTotal: validatedPrices.serviceTotal,
-        rates: validatedPrices.rates,
-        salon,
-        services: validatedPrices.services,
-        staffMemberId,
-        totalDuration,
       },
     });
 

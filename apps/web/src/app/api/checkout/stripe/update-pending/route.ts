@@ -7,21 +7,10 @@ import { updateStripePendingPayload } from "@/lib/stripe-checkout";
 import { verifyStripePendingToken } from "@/lib/stripe-pending-token";
 
 const BOOKING_PENDING_KEYS = new Set([
-  "draft",
   "customer",
-  "reservationFee",
-  "serviceTotal",
-  "rates",
-  "salon",
-  "services",
-  "staffMemberId",
-  "totalDuration",
 ]);
 
 const SUBSCRIPTION_PENDING_KEYS = new Set([
-  "planName",
-  "billingCycle",
-  "chargeAmount",
   "customer",
 ]);
 

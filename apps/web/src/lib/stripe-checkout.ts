@@ -5,6 +5,13 @@ import { createStripePendingToken } from "@/lib/stripe-pending-token";
 
 export type StripeCheckoutType = "booking" | "subscription";
 
+export class StripeCheckoutInProgressError extends Error {
+  constructor() {
+    super("Checkout completion is already in progress.");
+    this.name = "StripeCheckoutInProgressError";
+  }
+}
+
 export async function createStripePaymentIntent(input: {
   checkoutType: StripeCheckoutType;
   amount: number;
@@ -101,7 +108,8 @@ export async function updateStripePendingPayload(
   const { error } = await supabase
     .from("stripe_checkout_pending")
     .update({ payload: mergedPayload })
-    .eq("id", pendingId);
+    .eq("id", pendingId)
+    .eq("status", "pending");
 
   if (error) throw new Error(error.message);
 }
@@ -148,8 +156,44 @@ export async function loadStripePendingCheckout(paymentIntentId: string) {
   if (pending.status === "completed") {
     return { paymentIntent, pending, alreadyCompleted: true as const };
   }
+  if (pending.status === "processing") {
+    throw new StripeCheckoutInProgressError();
+  }
+  if (pending.status !== "pending") {
+    throw new Error("Checkout session expired or not found.");
+  }
 
-  return { paymentIntent, pending, alreadyCompleted: false as const };
+  const { data: claimed, error: claimError } = await supabase
+    .from("stripe_checkout_pending")
+    .update({ status: "processing" })
+    .eq("id", pending.id)
+    .eq("status", "pending")
+    .select("*")
+    .maybeSingle();
+
+  if (claimError) {
+    if (claimError.message.toLowerCase().includes("check constraint")) {
+      throw new Error(
+        "Stripe checkout processing state is not installed. Apply the latest database migration."
+      );
+    }
+    throw new Error(claimError.message);
+  }
+
+  if (!claimed) {
+    const { data: current, error: currentError } = await supabase
+      .from("stripe_checkout_pending")
+      .select("*")
+      .eq("id", pending.id)
+      .maybeSingle();
+    if (currentError) throw new Error(currentError.message);
+    if (current?.status === "completed") {
+      return { paymentIntent, pending: current, alreadyCompleted: true as const };
+    }
+    throw new StripeCheckoutInProgressError();
+  }
+
+  return { paymentIntent, pending: claimed, alreadyCompleted: false as const };
 }
 
 export async function markStripePendingCompleted(
@@ -168,12 +212,18 @@ export async function markStripePendingCompleted(
     ...(resultPayload || {}),
   };
 
-  await supabase
+  const { data: completed, error } = await supabase
     .from("stripe_checkout_pending")
     .update({
       status: "completed",
       completed_at: new Date().toISOString(),
       payload: mergedPayload,
     })
-    .eq("id", pendingId);
+    .eq("id", pendingId)
+    .eq("status", "processing")
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!completed) throw new Error("Checkout completion state was lost.");
 }

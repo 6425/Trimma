@@ -1,4 +1,3 @@
-import { processBookingCardPayment } from "@/app/actions/booking-checkout";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { insertBookingRecord, updateBookingAfterPayment } from "@/lib/booking-insert";
 import { runBookingCheckoutNotifications } from "@/lib/booking-checkout-notifications";
@@ -19,7 +18,6 @@ import { computeAgentCommissionSnapshot } from "@/lib/booking-commission-snapsho
 import { normalizeEmail } from "@/lib/normalize-email";
 import { sanitizeText } from "@/lib/sanitize-input";
 import { validateBookingCheckoutPrices } from "@/lib/checkout-price-validation";
-import type { CardType } from "@/lib/card-payment";
 
 export type CompleteBookingCheckoutInput = {
   draft: {
@@ -39,39 +37,12 @@ export type CompleteBookingCheckoutInput = {
     email: string;
     phone: string;
   };
-  card?: {
-    cardType: CardType;
-    cardNumber: string;
-    expiry: string;
-    cvv: string;
-    cardholderName: string;
-  };
-  stripePayment?: {
+  stripePayment: {
     paymentId: string;
     environment: string;
   };
-  payhereEnvironment: string;
   reservationFee: number;
   serviceTotal: number;
-  rates: {
-    platform: number;
-    salon: number;
-    agent: number;
-  };
-  salon: {
-    id: string;
-    onboarding_agent_email?: string | null;
-    assign_to?: string | null;
-  };
-  services: Array<{
-    id: string;
-    name?: string | null;
-    price?: number | string | null;
-    duration?: number | string | null;
-    duration_min?: number | string | null;
-  }>;
-  staffMemberId: string | null;
-  totalDuration: number;
   clientIp?: string;
 };
 
@@ -101,7 +72,7 @@ function validateCheckoutInput(input: CompleteBookingCheckoutInput) {
   if (!input.customer.phone?.trim()) {
     throw new Error("Phone number is required for WhatsApp booking alerts.");
   }
-  if (!input.salon?.id?.trim()) {
+  if (!input.draft?.salonId?.trim()) {
     throw new Error("Salon is required.");
   }
   if (!input.draft?.bookingDate || !input.draft?.timeSlot) {
@@ -113,12 +84,12 @@ function validateCheckoutInput(input: CompleteBookingCheckoutInput) {
   if (!Number.isFinite(input.serviceTotal) || input.serviceTotal <= 0) {
     throw new Error("Invalid service total.");
   }
-  if (!input.stripePayment && !input.card) {
-    throw new Error("Payment details are missing.");
+  if (!input.stripePayment?.paymentId) {
+    throw new Error("A verified Stripe payment is required.");
   }
 }
 
-async function upsertCheckoutCustomer(
+async function ensureCheckoutCustomer(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   customerEmail: string,
   customerName: string,
@@ -140,15 +111,9 @@ async function upsertCheckoutCustomer(
       phone: safePhone,
       global_role: "customer",
     });
-    if (error) throw new Error(error.message);
+    if (error && error.code !== "23505") throw new Error(error.message);
     return;
   }
-
-  const { error } = await supabase
-    .from("users")
-    .update({ full_name: safeName, phone: safePhone })
-    .eq("email", customerEmail);
-  if (error) throw new Error(error.message);
 }
 
 export async function completeBookingCheckout(
@@ -164,27 +129,25 @@ export async function completeBookingCheckout(
     },
     serviceTotal: input.serviceTotal,
     reservationFee: input.reservationFee,
-    rates: input.rates,
-    services: input.services,
   });
 
   const supabase = createSupabaseAdminClient();
   const {
     draft,
     customer,
-    card,
     stripePayment,
-    payhereEnvironment,
-    salon,
-    staffMemberId,
-    totalDuration,
     clientIp,
   } = input;
 
+  const salon = validatedPrices.salon;
   const serviceTotal = validatedPrices.serviceTotal;
   const inputReservationFee = validatedPrices.reservationFee;
   const rates = validatedPrices.rates;
   const services = validatedPrices.services;
+  const totalDuration = services.reduce((sum, service) => {
+    const duration = parseInt(String(service.duration || service.duration_min || "30"), 10);
+    return sum + (Number.isFinite(duration) && duration > 0 ? duration : 30);
+  }, 0);
 
   const { hh, mm, formattedTime } = parseTimeSlot(draft.timeSlot);
   const bookingNo = `TRM-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -217,7 +180,7 @@ export async function completeBookingCheckout(
     { data: salonResources },
     fallbackServicesResult,
   ] = await Promise.all([
-    upsertCheckoutCustomer(supabase, customerEmail, customerName, customer.phone?.trim() || ""),
+    ensureCheckoutCustomer(supabase, customerEmail, customerName, customer.phone?.trim() || ""),
     supabase.from("salon_staff").select("id, working_hours").eq("salon_id", salon.id),
     supabase
       .from("bookings")
@@ -258,7 +221,7 @@ export async function completeBookingCheckout(
   const resolvedStaffId = resolveStaffForBookingSlot({
     bookings,
     staffIds,
-    preferredStaffId: draft.staffId && draft.staffId !== "any" ? draft.staffId : staffMemberId,
+    preferredStaffId: draft.staffId && draft.staffId !== "any" ? draft.staffId : null,
     formattedTime,
     proposedDurationMinutes: totalDuration,
   });
@@ -391,7 +354,7 @@ export async function completeBookingCheckout(
     .insert({
       booking_id: newBooking.id,
       salon_id: salon.id,
-      provider: stripePayment ? "stripe" : "payhere",
+      provider: "stripe",
       amount: resolvedReservationFee,
       currency: "LKR",
       status: "pending",
@@ -403,24 +366,13 @@ export async function completeBookingCheckout(
     throw new Error(paymentInsertError?.message || "Failed to create payment record.");
   }
 
-  const paymentResult = stripePayment
-    ? {
-        success: true,
-        paymentId: stripePayment.paymentId,
-        last4: null as string | null,
-        provider: "stripe" as const,
-        amount: Number(resolvedReservationFee.toFixed(2)),
-      }
-    : await processBookingCardPayment({
-        cardType: card!.cardType,
-        cardNumber: card!.cardNumber,
-        expiry: card!.expiry,
-        cvv: card!.cvv,
-        cardholderName: card!.cardholderName,
-        amount: resolvedReservationFee,
-        bookingNo,
-        environment: payhereEnvironment,
-      });
+  const paymentResult = {
+    success: true,
+    paymentId: stripePayment.paymentId,
+    last4: null as string | null,
+    provider: "stripe" as const,
+    amount: Number(resolvedReservationFee.toFixed(2)),
+  };
 
   await Promise.all([
     (async () => {
@@ -433,9 +385,9 @@ export async function completeBookingCheckout(
           raw_response: {
             provider: paymentResult.provider,
             last4: paymentResult.last4,
-            card_type: card?.cardType || null,
-            environment: stripePayment?.environment || payhereEnvironment,
-            stripe_session_id: stripePayment?.paymentId || null,
+            card_type: null,
+            environment: stripePayment.environment,
+            stripe_session_id: stripePayment.paymentId,
           },
         })
         .eq("id", paymentRow.id);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState, Suspense } from "react";
+import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import {
@@ -181,21 +181,16 @@ function BookingCheckoutForm() {
     );
   }, [checkoutData]);
 
-  const buildStripeSessionBody = (
-    data: LoadedBookingCheckout,
-    customer: typeof customerDetails
-  ) =>
-    buildBookingStripePayload({
-      draft: data.draft,
-      customer,
-      reservationFee: data.reservationFee,
-      serviceTotal: data.serviceTotal,
-      rates: data.rates,
-      salon: data.salon,
-      services: data.services,
-      staffMemberId: data.staffMember?.id || null,
-      totalDuration,
-    });
+  const buildStripeSessionBody = useCallback(
+    (data: LoadedBookingCheckout, customer: typeof customerDetails) =>
+      buildBookingStripePayload({
+        draft: data.draft,
+        customer,
+        reservationFee: data.reservationFee,
+        serviceTotal: data.serviceTotal,
+      }),
+    []
+  );
 
   const syncPendingCheckout = async () => {
     if (!stripePendingId || !stripePendingToken || !checkoutData) return;
@@ -232,7 +227,7 @@ function BookingCheckoutForm() {
     }, 400);
 
     return () => window.clearTimeout(timer);
-  }, [customerDetails, stripePendingId, stripePendingToken, checkoutData, totalDuration]);
+  }, [customerDetails, stripePendingId, stripePendingToken, checkoutData, buildStripeSessionBody]);
 
   if (loading) {
     return (
