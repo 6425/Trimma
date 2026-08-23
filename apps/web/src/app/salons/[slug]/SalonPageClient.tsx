@@ -238,14 +238,7 @@ export default function SalonPage({
     if (params.get("action") !== "book") return;
 
     void Promise.resolve().then(() => {
-      if (window.innerWidth < 1024) {
-        setIsBookingOpen(true);
-      } else {
-        const sidebarElement = document.getElementById("booking-sidebar-card");
-        if (sidebarElement) {
-          sidebarElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }
+      setIsBookingOpen(true);
 
       params.delete("action");
       const query = params.toString();
@@ -573,16 +566,7 @@ export default function SalonPage({
         setSelectedServiceId(match.id);
         setSelectedTimeSlot(null);
         setInitialBookingService(match.name);
-        
-        if (typeof window !== "undefined" && window.innerWidth < 1024) {
-          setIsBookingOpen(true);
-        } else {
-          // Scroll directly to the sidebar booking card for desktop
-          const sidebarElement = document.getElementById("booking-sidebar-card");
-          if (sidebarElement) {
-            sidebarElement.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
-        }
+        setIsBookingOpen(true);
       }
     } else {
       setInitialBookingService(undefined);
