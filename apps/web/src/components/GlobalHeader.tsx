@@ -1,26 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LogOut, Menu, X, Scissors, MapPin, Tag, Building2, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, CreditCard, ChevronDown, Gift, Mail, Calendar } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LogOut, Menu, X, Scissors, Building2, Sparkles, CreditCard, Gift, Mail, Calendar } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { supabase, signOutTrimmaSession } from "@/config/supabase";
-import type { PublicCategory } from "@/lib/public-categories";
-import { buildCategoryHref, resolveActiveCategorySlug } from "@/lib/public-categories";
 import Logo from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { SALON_OWNER_ONBOARDING_FLAG_KEY } from "@/lib/salon-owner-oauth-intent";
-import { AnalyticsEvent, trackEvent } from "@/lib/analytics";
-import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
-
-const IconMap: Record<string, any> = {
-  Scissors, Sparkles, Heart, Droplet, Flower2, Activity, Users, PenTool, Paintbrush, LayoutGrid, Tag
-};
-
-const PROVINCES = SRI_LANKA_PROVINCES.map((province) => ({
-  name: province.name,
-  districts: province.districts.map((district) => district.name),
-}));
 
 const navDesktopClass = (active: boolean) =>
   `text-sm font-semibold px-3 py-2 rounded-xl transition-colors ${
@@ -39,32 +26,15 @@ const navMobileClass = (active: boolean) =>
 const navActionClass =
   "text-sm font-semibold text-zinc-700 hover:bg-zinc-100 px-3 py-2 rounded-xl transition-colors dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black";
 
-export default function GlobalHeader({ navCategories }: { navCategories: PublicCategory[] }) {
+export default function GlobalHeader() {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string>("customer");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
-  const [mobileLocationsOpen, setMobileLocationsOpen] = useState(false);
-  const [mobileActiveProvince, setMobileActiveProvince] = useState<string | null>(null);
-  const [locationsOpen, setLocationsOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [activeProvince, setActiveProvince] = useState<string | null>(null);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const activeCategorySlug = resolveActiveCategorySlug(
-    pathname,
-    searchParams.get("category")
-  );
-
-  const prefetchCategory = (slug: string) => {
-    router.prefetch(`/category/${slug}`);
-  };
 
   const isFeaturesActive = pathname === "/features" || pathname?.startsWith("/features/");
   const isPricingActive = pathname === "/pricing" || pathname?.startsWith("/pricing/");
   const isAboutActive = pathname === "/about" || pathname?.startsWith("/about/");
-  const isLocationsActive = pathname === "/locations" || pathname?.startsWith("/locations/");
   const isDealsActive = pathname === "/deals";
   const isBookingActive = pathname === "/bookings" || pathname?.startsWith("/bookings/");
   const isStylesActive = pathname === "/styles";
@@ -81,7 +51,6 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
   useEffect(() => {
     void Promise.resolve().then(() => {
       setMobileMenuOpen(false);
-      setMobileCategoriesOpen(false);
     });
   }, [pathname]);
 
@@ -162,7 +131,7 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            {/* Main nav — Categories submenus live here only */}
+            {/* Main navigation */}
             <div className="hidden lg:flex items-center gap-1">
               <Link href="/features" className={navDesktopClass(isFeaturesActive)}>
                 Features
@@ -173,131 +142,6 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               <Link href="/about" className={navDesktopClass(isAboutActive)}>
                 About
               </Link>
-              {navCategories.length > 0 ? (
-              <div
-                className="relative"
-                onMouseEnter={() => setCategoriesOpen(true)}
-                onMouseLeave={() => setCategoriesOpen(false)}
-              >
-                <button
-                  type="button"
-                  aria-haspopup="true"
-                  aria-expanded={categoriesOpen}
-                  aria-controls="header-categories-menu"
-                  onClick={() => setCategoriesOpen((open) => !open)}
-                  className={`flex min-h-11 items-center gap-1.5 ${navDesktopClass(Boolean(activeCategorySlug) || categoriesOpen)}`}
-                >
-                  Categories
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${categoriesOpen ? "rotate-180" : ""}`} />
-                </button>
-                {categoriesOpen ? (
-                  <div
-                    id="header-categories-menu"
-                    role="menu"
-                    aria-label="Salon categories"
-                    className="absolute top-full left-0 z-50 pt-1"
-                  >
-                    <div className="min-w-[240px] rounded-xl border border-zinc-200 bg-white py-2 shadow-xl dark:border-[#ffde5a]/20 dark:bg-[#111111]">
-                      {navCategories.map((cat) => {
-                        const Icon = IconMap[cat.icon] || Tag;
-                        return (
-                          <Link
-                            key={cat.id}
-                            role="menuitem"
-                            href={buildCategoryHref(pathname, cat.slug)}
-                            prefetch
-                            onMouseEnter={() => prefetchCategory(cat.slug)}
-                            onFocus={() => prefetchCategory(cat.slug)}
-                            onClick={() => {
-                              setCategoriesOpen(false);
-                              trackEvent(AnalyticsEvent.CategoryFilterChanged, {
-                                source: "header_category_menu",
-                                category: cat.slug,
-                                category_name: cat.name,
-                                previous_path: pathname,
-                              });
-                            }}
-                            className="flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-[#ffde5a] dark:hover:bg-[#ffde5a] dark:hover:text-black"
-                          >
-                            <Icon className="w-4 h-4 shrink-0" />
-                            {cat.name}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-              ) : null}
-              <div
-                className="relative"
-                onMouseEnter={() => setLocationsOpen(true)}
-                onMouseLeave={() => {
-                  setLocationsOpen(false);
-                  setActiveProvince(null);
-                }}
-              >
-                <Link
-                  href="/locations"
-                  aria-haspopup="true"
-                  aria-expanded={locationsOpen}
-                  className={`flex items-center gap-1.5 ${navDesktopClass(isLocationsActive || locationsOpen)}`}
-                >
-                  Locations
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${locationsOpen ? 'rotate-180' : ''}`} />
-                </Link>
-
-                {locationsOpen && (
-                  <div className="absolute top-full left-0 pt-1 z-50">
-                    <div className="flex bg-white rounded-xl border border-zinc-200 shadow-xl overflow-hidden max-h-[400px]">
-                      {/* Provinces Column */}
-                      <div className="w-[200px] overflow-y-auto bg-zinc-50/50 py-2 border-r border-zinc-100">
-                        <Link
-                          href="/locations"
-                          className="block px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 hover:bg-white/60 transition-colors border-b border-zinc-100 mb-1"
-                        >
-                          All locations
-                        </Link>
-                        {PROVINCES.map((prov) => (
-                          <Link
-                            key={prov.name}
-                            href={`/?l=${encodeURIComponent(prov.name)}`}
-                            onMouseEnter={() => setActiveProvince(prov.name)}
-                            className={`flex items-center justify-between px-4 py-2.5 text-sm font-medium transition-colors ${
-                              activeProvince === prov.name 
-                                ? 'bg-white text-[#ffde5a] font-bold shadow-[inset_2px_0_0_#ffde5a]' 
-                                : 'text-zinc-600 hover:text-zinc-900 hover:bg-white/60'
-                            }`}
-                          >
-                            <span className="truncate">{prov.name.replace(" Province", "")}</span>
-                            {activeProvince === prov.name && <span className="text-[#ffde5a] text-[10px] shrink-0">▶</span>}
-                          </Link>
-                        ))}
-                      </div>
-
-                      {/* Districts Flyout */}
-                      <div className="w-[180px] overflow-y-auto py-2 bg-white">
-                        {activeProvince ? (
-                          PROVINCES.find((p) => p.name === activeProvince)?.districts.map((dist) => (
-                            <Link
-                              key={dist}
-                              href={`/?l=${encodeURIComponent(dist)}`}
-                              className="block px-5 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 hover:text-[#ffde5a] transition-colors"
-                            >
-                              {dist}
-                            </Link>
-                          ))
-                        ) : (
-                          <div className="px-5 py-6 text-xs font-medium text-zinc-400 italic text-center leading-relaxed">
-                            Hover a province to view districts.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               <Link href="/styles" className={navDesktopClass(isStylesActive)}>
                 Styles
               </Link>
@@ -392,107 +236,6 @@ export default function GlobalHeader({ navCategories }: { navCategories: PublicC
               <Building2 className="w-4 h-4 shrink-0" />
               About
             </Link>
-            <button
-              type="button"
-              onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}
-              className={`flex min-h-11 items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full ${navActionClass}`}
-              aria-expanded={mobileCategoriesOpen}
-            >
-              <span className="flex items-center gap-3">
-                <LayoutGrid className="w-4 h-4 shrink-0" />
-                Categories
-              </span>
-              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${mobileCategoriesOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {mobileCategoriesOpen && (
-              <div className="ml-4 pl-3 border-l border-zinc-100 flex flex-col gap-0.5 mb-1">
-                {navCategories.map((cat) => {
-                  const Icon = IconMap[cat.icon] || Tag;
-                  return (
-                    <Link
-                      key={cat.id}
-                      href={buildCategoryHref(pathname, cat.slug)}
-                      prefetch
-                      onMouseEnter={() => prefetchCategory(cat.slug)}
-                      onFocus={() => prefetchCategory(cat.slug)}
-                      onClick={() => {
-                        trackEvent(AnalyticsEvent.CategoryFilterChanged, {
-                          source: "header_mobile",
-                          category: cat.slug,
-                          category_name: cat.name,
-                        });
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex min-h-11 items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-normal text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
-                    >
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
-                      {cat.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <Link
-                  href="/locations"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex-1 ${navMobileClass(isLocationsActive)}`}
-                >
-                  <MapPin className="w-4 h-4 shrink-0" />
-                  Locations
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setMobileLocationsOpen(!mobileLocationsOpen)}
-                  className={`flex items-center justify-center p-3 rounded-lg transition-colors ${navActionClass}`}
-                  aria-label={mobileLocationsOpen ? "Collapse locations" : "Expand locations"}
-                  aria-expanded={mobileLocationsOpen}
-                >
-                  <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${mobileLocationsOpen ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-              {mobileLocationsOpen && (
-                <div className="ml-4 pl-3 border-l border-zinc-100 flex flex-col gap-1 mb-1">
-                  {PROVINCES.map((prov) => (
-                    <div key={prov.name} className="flex flex-col">
-                      <div className="flex items-center gap-1">
-                        <Link
-                          href={`/?l=${encodeURIComponent(prov.name)}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex-1 py-2 pr-2 text-sm font-medium text-zinc-700 hover:text-zinc-900"
-                        >
-                          {prov.name}
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setMobileActiveProvince(mobileActiveProvince === prov.name ? null : prov.name)}
-                          className="p-2 text-zinc-500"
-                          aria-label={`Toggle ${prov.name} districts`}
-                        >
-                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mobileActiveProvince === prov.name ? 'rotate-180' : ''}`} />
-                        </button>
-                      </div>
-                      {mobileActiveProvince === prov.name && (
-                        <div className="pl-3 border-l border-zinc-100 flex flex-col gap-0.5 mt-1 mb-2">
-                          {prov.districts.map((dist) => (
-                            <Link
-                              key={dist}
-                              href={`/?l=${encodeURIComponent(dist)}`}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className="py-1.5 text-sm font-normal text-zinc-500 hover:text-zinc-900"
-                            >
-                              {dist}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <Link
               href="/styles"
               onClick={() => setMobileMenuOpen(false)}

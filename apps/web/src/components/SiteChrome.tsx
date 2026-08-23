@@ -7,14 +7,11 @@ import GlobalFooter from "./GlobalFooter";
 import { SalonFavoritesProvider } from "@/hooks/useSalonFavorites";
 import { SavedStylesProvider } from "@/hooks/useSavedStyles";
 import { AuthProvider } from "@/providers/AuthProvider";
-import type { PublicCategory } from "@/lib/public-categories";
 
 export default function SiteChrome({
   children,
-  navCategories,
 }: {
   children: React.ReactNode;
-  navCategories: PublicCategory[];
 }) {
   const pathname = usePathname();
   const isCheckout = pathname?.startsWith("/checkout");
@@ -58,7 +55,7 @@ export default function SiteChrome({
     return withProviders(
       <div className="trimma-portal-with-site-nav min-h-screen flex flex-col bg-white trimma-light-context w-full">
         <Suspense fallback={null}>
-          <GlobalHeader navCategories={navCategories} />
+          <GlobalHeader />
         </Suspense>
         <main className="flex-1 min-h-0 flex flex-col w-full min-w-0">{children}</main>
       </div>
@@ -72,7 +69,7 @@ export default function SiteChrome({
   return withProviders(
       <div className="trimma-marketplace-shell trimma-light-context min-h-screen flex flex-col bg-white text-zinc-900 dark:bg-[#0b0b0b] dark:text-white">
       <Suspense fallback={null}>
-        <GlobalHeader navCategories={navCategories} />
+        <GlobalHeader />
       </Suspense>
       <main className="flex-1">{children}</main>
       <GlobalFooter />
