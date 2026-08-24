@@ -4,12 +4,77 @@ import { isMissingDbSchemaError } from "@/lib/with-admin-db";
 import { fetchAllByIdCursor } from "@/lib/supabase-fetch-all";
 import {
   BOOKING_ONBOARDING_ENTRY_STATUS,
+  LISTING_CAPTURE_SALON_DEFAULTS,
   LISTING_ONBOARDING_STATUS,
   LISTING_PUBLISH_SALON_UPDATES,
   isListingPipelineSalon,
 } from "@/lib/salon-listing-pipeline";
 import { isValidFeaturedPeriod, parseFeaturedDate } from "@/lib/listing-featured";
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
+import { slugifySalonName } from "@/lib/google-place-profile";
+import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+
+export type ManualListingCaptureInput = {
+  name: string;
+  category: string;
+  province: string;
+  district: string;
+  city?: string | null;
+  address: string;
+  phone?: string | null;
+  website?: string | null;
+  mapUrl?: string | null;
+  placeId?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  description?: string | null;
+  logoUrl?: string | null;
+  heroUrl?: string | null;
+};
+
+function cleanManualListingText(value: unknown, maxLength: number): string {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, maxLength);
+}
+
+function cleanManualListingLongText(value: unknown, maxLength: number): string {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function cleanManualListingUrl(value: unknown, label: string): string | null {
+  const raw = cleanManualListingText(value, 2_000);
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error();
+    return url.toString();
+  } catch {
+    throw new Error(`${label} must be a valid http or https URL.`);
+  }
+}
+
+function cleanManualCoordinate(
+  value: number | null | undefined,
+  label: string,
+  min: number,
+  max: number
+): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+    throw new Error(`${label} must be between ${min} and ${max}.`);
+  }
+  return parsed;
+}
+
+function validateManualListingLocation(province: string, district: string, city: string): void {
+  const provinceRow = SRI_LANKA_PROVINCES.find((item) => item.name === province);
+  if (!provinceRow) throw new Error("Select a valid province.");
+  const districtRow = provinceRow.districts.find((item) => item.name === district);
+  if (!districtRow) throw new Error("Select a district within the chosen province.");
+  if (city && !districtRow.cities.includes(city)) {
+    throw new Error("Select a city within the chosen district.");
+  }
+}
 
 async function tryInsertOnboardingLog(
   supabase: SupabaseClient,
@@ -43,6 +108,141 @@ async function updateSalonWithOptionalColumns(
     result = await supabase.from("salons").update(fallback).eq("id", salonId);
   }
   if (result.error) throw new Error(result.error.message);
+}
+
+async function createUniqueManualListingSlug(
+  supabase: SupabaseClient,
+  businessName: string
+): Promise<string> {
+  const base = slugifySalonName(businessName) || "manual-listing";
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const candidate = `${base}-${suffix}`;
+    const { data, error } = await supabase
+      .from("salons")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data?.id) return candidate;
+  }
+  throw new Error("Could not generate a unique listing URL. Please try again.");
+}
+
+export async function createManualListingSalonRecord(
+  supabase: SupabaseClient,
+  input: ManualListingCaptureInput
+): Promise<{ salonId: string; name: string }> {
+  const name = cleanManualListingText(input.name, 200);
+  const category = cleanManualListingText(input.category, 120);
+  const province = cleanManualListingText(input.province, 120);
+  const district = cleanManualListingText(input.district, 120);
+  const city = cleanManualListingText(input.city, 120);
+  const address = cleanManualListingLongText(input.address, 500);
+  const phone = cleanManualListingText(input.phone, 50) || null;
+  const placeId = cleanManualListingText(input.placeId, 255) || null;
+  const description = cleanManualListingLongText(input.description, 4_000) || null;
+  const website = cleanManualListingUrl(input.website, "Website");
+  const suppliedMapUrl = cleanManualListingUrl(input.mapUrl, "Google Maps URL");
+  const logoUrl = cleanManualListingUrl(input.logoUrl, "Logo URL");
+  const heroUrl = cleanManualListingUrl(input.heroUrl, "Hero image URL");
+  const latitude = cleanManualCoordinate(input.latitude, "Latitude", -90, 90);
+  const longitude = cleanManualCoordinate(input.longitude, "Longitude", -180, 180);
+
+  if (!name) throw new Error("Business name is required.");
+  if (!category) throw new Error("Trimma category is required.");
+  if (!address) throw new Error("Full address is required.");
+  if ((latitude === null) !== (longitude === null)) {
+    throw new Error("Enter both latitude and longitude, or leave both empty.");
+  }
+  validateManualListingLocation(province, district, city);
+
+  if (placeId) {
+    const { data: samePlace, error } = await supabase
+      .from("salons")
+      .select("id, name")
+      .eq("place_id", placeId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (samePlace?.id) {
+      throw new Error(`This Google Place is already saved as ${samePlace.name || "an existing listing"}.`);
+    }
+  }
+
+  const { data: nearbyRows, error: nearbyError } = await supabase
+    .from("salons")
+    .select("id, name, address")
+    .eq("district", district)
+    .limit(300);
+  if (nearbyError) throw new Error(nearbyError.message);
+
+  const normalizedName = name.toLocaleLowerCase();
+  const normalizedAddress = address.toLocaleLowerCase();
+  const duplicate = (nearbyRows || []).find((row) => {
+    const sameName = String(row.name || "").trim().toLocaleLowerCase() === normalizedName;
+    const sameAddress = String(row.address || "").trim().toLocaleLowerCase() === normalizedAddress;
+    return sameName && sameAddress;
+  });
+  if (duplicate?.id) {
+    throw new Error(`A listing with this name and address already exists: ${duplicate.name || name}.`);
+  }
+
+  const slug = await createUniqueManualListingSlug(supabase, name);
+  const capturedAt = new Date().toISOString();
+  const mapUrl =
+    suppliedMapUrl ||
+    (placeId
+      ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`
+      : null);
+  const businessInfoExtended: Record<string, unknown> = {
+    trimma_categories: [category],
+    listing_capture_category: category,
+    listing_captured_at: capturedAt,
+    manual_capture: true,
+  };
+  if (placeId) businessInfoExtended.google_place_id = placeId;
+  if (mapUrl) businessInfoExtended.google_maps_url = mapUrl;
+
+  const { data: created, error: insertError } = await supabase
+    .from("salons")
+    .insert({
+      name,
+      slug,
+      category,
+      province,
+      district,
+      city: city || null,
+      address,
+      phone,
+      website,
+      map_url: mapUrl,
+      place_id: placeId,
+      latitude,
+      longitude,
+      description,
+      summary: description,
+      logo_url: logoUrl,
+      hero_url: heroUrl,
+      cover_url: heroUrl,
+      owner_email: null,
+      owner_gmail: null,
+      subscription_plan_id: null,
+      ...LISTING_CAPTURE_SALON_DEFAULTS,
+      business_info_extended: businessInfoExtended,
+    })
+    .select("id, name")
+    .single();
+
+  if (insertError) throw new Error(insertError.message);
+  if (!created?.id) throw new Error("The listing was saved but no listing ID was returned.");
+
+  await tryInsertOnboardingLog(supabase, {
+    salon_id: String(created.id),
+    action: "LISTING_CAPTURED_MANUALLY",
+    notes: `Manually added to the Pending listing queue (${category} · ${city || district}).`,
+  });
+
+  return { salonId: String(created.id), name: String(created.name || name) };
 }
 
 export async function publishListingSalonRecord(
