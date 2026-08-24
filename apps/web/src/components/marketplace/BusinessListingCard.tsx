@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Star, Phone, MapPin, Globe, Facebook, Instagram } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
@@ -10,6 +11,60 @@ import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
+
+function normalizeListingImageUrl(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return FALLBACK_IMAGE;
+  if (trimmed.startsWith("/")) return trimmed;
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : FALLBACK_IMAGE;
+  } catch {
+    return FALLBACK_IMAGE;
+  }
+}
+
+function toOriginalSupabaseUrl(url: string): string | null {
+  const match = url.match(
+    /^(https:\/\/[^/]+\.supabase\.co)\/storage\/v1\/render\/image\/public\/([^?]+)/i
+  );
+  if (!match) return null;
+  return `${match[1]}/storage/v1/object/public/${match[2]}`;
+}
+
+function ResilientBusinessListingImage({
+  source,
+  alt,
+  priority,
+}: {
+  source: string;
+  alt: string;
+  priority: boolean;
+}) {
+  const [imageSrc, setImageSrc] = useState(source);
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      priority={priority}
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+      className="object-cover transition-transform duration-500 hover:scale-[1.03]"
+      onError={() => {
+        const original = toOriginalSupabaseUrl(imageSrc);
+        if (original && imageSrc.includes("/render/image/")) {
+          setImageSrc(original);
+          return;
+        }
+        if (imageSrc !== FALLBACK_IMAGE) setImageSrc(FALLBACK_IMAGE);
+      }}
+    />
+  );
+}
 
 type Props = {
   listing: BusinessListingCardData;
@@ -22,17 +77,16 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
   const claimUrl = buildSalonClaimLoginUrl(listing.id);
   const profileUrl = buildSalonPublicPath(listing);
   const showFeaturedBatch = featuredBatch || listing.isFeatured;
+  const imageUrl = normalizeListingImageUrl(listing.image);
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
       <Link href={profileUrl} className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
-        <Image
-          src={listing.image || FALLBACK_IMAGE}
+        <ResilientBusinessListingImage
+          key={imageUrl}
+          source={imageUrl}
           alt={listing.name}
-          fill
           priority={priority}
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 hover:scale-[1.03]"
         />
         {showFeaturedBatch ? (
           <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-black shadow-sm">
