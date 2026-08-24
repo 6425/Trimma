@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { fetchAdminAgentsPage } from "@/app/actions/admin-list-data";
 import { syncAgentTerritories } from "@/app/actions/agent-territories";
 import { withTimeout } from "@/lib/promise-timeout";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 export default function AdminAgentManagement() {
   const navigate = useRouter();
@@ -22,6 +23,7 @@ export default function AdminAgentManagement() {
   const [territories, setTerritories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [gridPage, setGridPage] = useState(1);
   
   // Manual Password Update states
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -152,6 +154,7 @@ export default function AdminAgentManagement() {
     (a.users?.full_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
     (a.agent_territories?.some((at: any) => at.territories?.name?.toLowerCase().includes(searchTerm.toLowerCase())))
   );
+  const pagedAgents = paginateGridRows(filteredAgents, gridPage);
 
   const handleEditAgent = (agent: any) => {
     setEditingAgent(agent);
@@ -264,7 +267,7 @@ export default function AdminAgentManagement() {
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
                   <Input 
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
                     placeholder="Search agents..." 
                     className="pl-10 h-10 border-slate-200 bg-white rounded-xl text-xs font-semibold focus:ring-2 focus:ring-brand/20 w-[200px]" 
                   />
@@ -300,7 +303,7 @@ export default function AdminAgentManagement() {
                       </td>
                     </tr>
                   ) : (
-                    filteredAgents.map((agent: any) => (
+                    pagedAgents.map((agent: any) => (
                       <tr key={agent.id} className="hover:bg-slate-50/50 transition-colors h-14">
                         <td className="px-6 py-2">
                            <div className="flex items-center gap-3">
@@ -373,6 +376,7 @@ export default function AdminAgentManagement() {
                </tbody>
             </table>
          </div>
+         <GridPagination page={gridPage} total={filteredAgents.length} onPageChange={setGridPage} loading={loading} />
       </div>
 
       {/* POPUP MODAL: MANUAL PASSWORD OVERWRITE */}

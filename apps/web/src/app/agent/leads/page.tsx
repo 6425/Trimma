@@ -46,6 +46,7 @@ import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/sal
 import { buildStaffWorkingHoursPayload, parseStaffWorkingHours, type SalonServiceAssignmentRow } from "@/lib/salon-staff-insert";
 import { useAgentPortal } from "@/lib/agent-portal-provider";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
+import { GRID_PAGE_SIZE, GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 import {
   getServicePriceBelowMinimumError,
   MIN_SERVICE_PRICE_LKR,
@@ -171,6 +172,8 @@ function AgentLeads() {
   const [agentEmail, setAgentEmail] = useState("");
   const [agentName, setAgentName] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'assigned' | 'invited'>('all');
+  const [gridPage, setGridPage] = useState(1);
+  const [manualGridPage, setManualGridPage] = useState(1);
   const openedSalonRef = useRef<string | null>(null);
 
   const [manualLeads, setManualLeads] = useState<any[]>([]);
@@ -777,6 +780,10 @@ function AgentLeads() {
     (l.category && l.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (l.address && l.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+  const effectiveGridPage = Math.min(gridPage, Math.max(1, Math.ceil(filteredLeads.length / GRID_PAGE_SIZE)));
+  const effectiveManualPage = Math.min(manualGridPage, Math.max(1, Math.ceil(manualLeads.length / GRID_PAGE_SIZE)));
+  const pagedLeads = paginateGridRows(filteredLeads, effectiveGridPage);
+  const pagedManualLeads = paginateGridRows(manualLeads, effectiveManualPage);
 
   const handleExportExcel = () => {
     const exportRows = [...filteredLeads, ...manualLeads];
@@ -869,7 +876,7 @@ function AgentLeads() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
             placeholder="Search salons..."
             className="w-full h-full min-h-[72px] pl-12 pr-4 bg-white border-none shadow-sm rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/20 font-medium text-sm"
           />
@@ -878,7 +885,7 @@ function AgentLeads() {
 
       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
         <button
-          onClick={() => setMainTab("google")}
+          onClick={() => { setGridPage(1); setMainTab("google"); }}
           className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
             mainTab === "google" ? "bg-[#1A1C29] text-white shadow-md" : "bg-white text-zinc-500 hover:text-zinc-900 border border-zinc-200"
           }`}
@@ -886,7 +893,7 @@ function AgentLeads() {
           Google Leads
         </button>
         <button
-          onClick={() => setMainTab("manual")}
+          onClick={() => { setManualGridPage(1); setMainTab("manual"); }}
           className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
             mainTab === "manual" ? "bg-[#1A1C29] text-white shadow-md" : "bg-white text-zinc-500 hover:text-zinc-900 border border-zinc-200"
           }`}
@@ -908,7 +915,7 @@ function AgentLeads() {
               </div>
               <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl w-full lg:w-auto overflow-x-auto scrollbar-none shrink-0">
                 <button
-                  onClick={() => setActiveTab("assigned")}
+                  onClick={() => { setGridPage(1); setActiveTab("assigned"); }}
                   className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
                     activeTab === "assigned" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
                   }`}
@@ -916,7 +923,7 @@ function AgentLeads() {
                   Assigned ({leads.filter(l => l.onboarding_status === "ASSIGNED_TO_AGENT").length})
                 </button>
                 <button
-                  onClick={() => setActiveTab("invited")}
+                  onClick={() => { setGridPage(1); setActiveTab("invited"); }}
                   className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0 ${
                     activeTab === "invited" ? "bg-white text-brand shadow-sm" : "text-zinc-500 hover:text-zinc-950"
                   }`}
@@ -940,7 +947,7 @@ function AgentLeads() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredLeads.map((lead) => {
+                  {pagedLeads.map((lead) => {
                     const score = completionScore(lead);
                     return (
                       <div
@@ -1016,6 +1023,7 @@ function AgentLeads() {
                   })}
                 </div>
               )}
+              <GridPagination page={effectiveGridPage} total={filteredLeads.length} onPageChange={setGridPage} loading={loading} />
             </div>
           </>
         ) : (
@@ -1044,7 +1052,7 @@ function AgentLeads() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100">
-                    {manualLeads.map(lead => (
+                    {pagedManualLeads.map(lead => (
                       <tr key={lead.id} className="hover:bg-zinc-50/50 transition-colors bg-white">
                         <td className="px-4 py-4 font-medium text-zinc-900">{lead.name}</td>
                         <td className="px-4 py-4">
@@ -1067,6 +1075,7 @@ function AgentLeads() {
                     ))}
                   </tbody>
                 </table>
+                <GridPagination page={effectiveManualPage} total={manualLeads.length} onPageChange={setManualGridPage} loading={loading} />
               </div>
             )}
           </div>

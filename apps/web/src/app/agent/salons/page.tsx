@@ -25,6 +25,7 @@ import {
   isAgentSalonLive,
 } from "@/lib/agent-salons";
 import { useRouter } from "next/navigation";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 type SubscriptionPlanInfo = {
   name?: string | null;
@@ -77,6 +78,7 @@ export default function AgentSalons() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [gridPage, setGridPage] = useState(1);
   const [agentEmail, setAgentEmail] = useState("");
 
   const fetchSalons = async () => {
@@ -135,6 +137,7 @@ export default function AgentSalons() {
       return matchesTab && matchesSearch;
     });
   }, [salons, activeTab, searchTerm]);
+  const pagedSalons = paginateGridRows(filteredSalons, gridPage);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 min-w-0">
@@ -185,7 +188,7 @@ export default function AgentSalons() {
               <button
                 key={key}
                 type="button"
-                onClick={() => setActiveTab(key)}
+                onClick={() => { setGridPage(1); setActiveTab(key); }}
                 className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
                   activeTab === key
                     ? "bg-[#ffde5a] text-black shadow-sm"
@@ -202,7 +205,7 @@ export default function AgentSalons() {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
               placeholder="Search by name, phone, Gmail..."
               className="w-full h-10 pl-10 pr-3 rounded-xl bg-zinc-50 border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#ffde5a]/30"
             />
@@ -239,7 +242,7 @@ export default function AgentSalons() {
                 </tr>
               </thead>
               <tbody>
-                {filteredSalons.map((salon) => (
+                {pagedSalons.map((salon) => (
                   <tr key={salon.id} className="border-b border-zinc-50 hover:bg-zinc-50/60">
                     <td className="px-5 py-4 align-top">
                       <div className="font-bold text-zinc-900">{salon.name}</div>
@@ -326,6 +329,7 @@ export default function AgentSalons() {
                 ))}
               </tbody>
             </table>
+            <GridPagination page={gridPage} total={filteredSalons.length} onPageChange={setGridPage} loading={loading} />
           </div>
         )}
       </Card>

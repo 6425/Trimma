@@ -46,6 +46,7 @@ import {
   isProtectedAdminRole,
   normalizePlatformRoleValue,
 } from "@/lib/platform-role-options";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 function AdminUserList() {
   const navigate = useRouter();
@@ -54,6 +55,7 @@ function AdminUserList() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [gridPage, setGridPage] = useState(1);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -178,6 +180,7 @@ function AdminUserList() {
       : true;
     return matchesSearch && matchesRole;
   });
+  const pagedUsers = paginateGridRows(filteredUsers, gridPage);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -211,7 +214,7 @@ function AdminUserList() {
               placeholder="Search by name, email, or mobile..." 
               className="pl-10 h-11 bg-zinc-50 border-transparent focus:bg-white focus:border-zinc-200 transition-all rounded-xl"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
             />
           </div>
           <Button variant="outline" className="h-11 rounded-xl gap-2 border-zinc-200 text-zinc-600">
@@ -255,7 +258,7 @@ function AdminUserList() {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                pagedUsers.map((user) => (
                   <tr key={user.email} className="hover:bg-zinc-50/50 transition-colors group">
                     <td className="px-6 py-4"></td>
                     <td className="px-6 py-4">
@@ -340,6 +343,7 @@ function AdminUserList() {
             </tbody>
           </table>
         </div>
+        <GridPagination page={gridPage} total={filteredUsers.length} onPageChange={setGridPage} loading={loading} />
       </div>
 
       {/* Edit Dialog */}

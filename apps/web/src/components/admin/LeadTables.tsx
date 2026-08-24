@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Loader2, Zap, Trash2, Send, CheckCircle2, AlertCircle, Shield, Star, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 import {
   getOnboardingPathLabel,
   onboardingPathFromSourceType,
@@ -44,6 +45,8 @@ export function LeadTables({
   handleSendToAgent, handleVerifySalon, setRejectTarget, setShowRejectModal,
   verifying
 }: LeadTablesProps) {
+  const [gridPage, setGridPage] = useState(1);
+  const pagedLeads = paginateGridRows(filteredLeads, gridPage);
 
   return (
     <Card className="border-none shadow-sm rounded-2xl bg-white overflow-hidden">
@@ -61,7 +64,7 @@ export function LeadTables({
         
         <div className="flex flex-wrap items-center gap-1.5 bg-zinc-100/80 p-1.5 rounded-2xl shrink-0 self-start xl:self-auto">
           <button
-            onClick={() => setActiveTab("discovery")}
+            onClick={() => { setGridPage(1); setActiveTab("discovery"); }}
             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
               activeTab === "discovery" 
                 ? "bg-white text-brand shadow-sm" 
@@ -71,7 +74,7 @@ export function LeadTables({
             1. Discovery ({leads.filter(l => (l.onboarding_status || "DISCOVERED") === "DISCOVERED").length})
           </button>
           <button
-            onClick={() => setActiveTab("draft")}
+            onClick={() => { setGridPage(1); setActiveTab("draft"); }}
             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
               activeTab === "draft" 
                 ? "bg-white text-brand shadow-sm" 
@@ -81,7 +84,7 @@ export function LeadTables({
             2. Draft Queue ({leads.filter(l => ["AUTO_PROVISIONED", "DRAFT_REVIEW"].includes(l.onboarding_status || "DISCOVERED")).length})
           </button>
           <button
-            onClick={() => setActiveTab("pipeline")}
+            onClick={() => { setGridPage(1); setActiveTab("pipeline"); }}
             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
               activeTab === "pipeline" 
                 ? "bg-white text-brand shadow-sm" 
@@ -91,7 +94,7 @@ export function LeadTables({
             3. Pipeline ({leads.filter(l => ["ASSIGNED_TO_AGENT", "AGENT_VERIFIED", "OWNER_INVITED", "OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION"].includes(l.onboarding_status || "DISCOVERED")).length})
           </button>
           <button
-            onClick={() => setActiveTab("archived")}
+            onClick={() => { setGridPage(1); setActiveTab("archived"); }}
             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
               activeTab === "archived" 
                 ? "bg-white text-brand shadow-sm" 
@@ -101,7 +104,7 @@ export function LeadTables({
             4. Verified / Archived ({leads.filter(l => ["VERIFIED", "REJECTED", "ON_HOLD"].includes(l.onboarding_status || "DISCOVERED")).length})
           </button>
           <button
-            onClick={() => setActiveTab("salon-requests")}
+            onClick={() => { setGridPage(1); setActiveTab("salon-requests"); }}
             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
               activeTab === "salon-requests"
                 ? "bg-white text-brand shadow-sm"
@@ -116,6 +119,7 @@ export function LeadTables({
       {activeTab === "salon-requests" ? (
         salonRequestPanel
       ) : (
+      <>
       <div className="overflow-x-auto w-full max-h-[600px] border-t border-zinc-50">
         <table className="w-full text-left border-collapse min-w-[2400px] text-xs">
           <thead className="bg-zinc-50/50 sticky top-0 backdrop-blur-md border-b border-zinc-100 z-10">
@@ -159,7 +163,7 @@ export function LeadTables({
                 </td>
               </tr>
             ) : (
-              filteredLeads.map((lead) => {
+              pagedLeads.map((lead) => {
                 const completionScore = (() => {
                   let score = 0;
                   if (lead.owner_email && !lead.owner_email.startsWith("draft-")) score += 15;
@@ -747,6 +751,8 @@ export function LeadTables({
           </tbody>
         </table>
       </div>
+      <GridPagination page={gridPage} total={filteredLeads.length} onPageChange={setGridPage} loading={loading} />
+      </>
       )}
     </Card>
   );

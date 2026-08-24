@@ -6,6 +6,7 @@ import { Users, Search, Plus, Mail, Star, Loader2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSalonCustomersPage } from "@/app/actions/salon-dashboard-data";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 type SalonCustomer = {
   name: string;
@@ -62,6 +63,7 @@ function buildGmailHref(email: string, customerName: string): string | null {
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [customerFilter, setCustomerFilter] = useState<CustomerFilter>("all");
+  const [gridPage, setGridPage] = useState(1);
   const [customers, setCustomers] = useState<SalonCustomer[]>([]);
   const [reviewSummary, setReviewSummary] = useState<ReviewSummary>({ averageRating: 0, totalReviews: 0 });
   const [vipMinVisits, setVipMinVisits] = useState<number | null>(null);
@@ -91,6 +93,7 @@ export default function CustomersPage() {
       return true;
     });
   }, [customers, searchTerm, customerFilter]);
+  const pagedCustomers = paginateGridRows(filteredCustomers, gridPage);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4">
@@ -168,7 +171,7 @@ export default function CustomersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <Input
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
               placeholder="Search clients by name, email, or phone number..."
               className="pl-10 h-11 bg-white rounded-xl border-zinc-200"
             />
@@ -177,7 +180,7 @@ export default function CustomersPage() {
             <span className="sr-only">Filter clients</span>
             <select
               value={customerFilter}
-              onChange={(e) => setCustomerFilter(e.target.value as CustomerFilter)}
+              onChange={(e) => { setGridPage(1); setCustomerFilter(e.target.value as CustomerFilter); }}
               className="w-full h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 outline-none focus:ring-2 focus:ring-brand/30"
             >
               <option value="all">All clients</option>
@@ -216,7 +219,7 @@ export default function CustomersPage() {
                   </td>
                 </tr>
               ) : (
-                filteredCustomers.map((c) => {
+                pagedCustomers.map((c) => {
                   const whatsappHref = buildWhatsAppHref(c.phone, c.name);
                   const gmailHref = buildGmailHref(c.email, c.name);
 
@@ -308,6 +311,7 @@ export default function CustomersPage() {
             </tbody>
           </table>
         </div>
+        <GridPagination page={gridPage} total={filteredCustomers.length} onPageChange={setGridPage} loading={loading} />
       </div>
     </div>
   );

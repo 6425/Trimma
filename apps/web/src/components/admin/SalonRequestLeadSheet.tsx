@@ -5,6 +5,7 @@ import { Loader2, Mail, MessageSquare, Phone, Store, UserPlus } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { SalonRequestRow } from "@/app/actions/salon-requests";
+import { GRID_PAGE_SIZE, GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 const STATUS_STYLES: Record<SalonRequestRow["status"], string> = {
   new: "bg-amber-100 text-amber-800",
@@ -66,6 +67,7 @@ export function SalonRequestLeadSheet({
   const [assignDrafts, setAssignDrafts] = useState<Record<string, string>>({});
   const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [gridPage, setGridPage] = useState(1);
 
   const assignees = useMemo(
     () =>
@@ -88,6 +90,8 @@ export function SalonRequestLeadSheet({
         (row.assign_to || "").toLowerCase().includes(q)
     );
   }, [requests, searchTerm]);
+  const effectivePage = Math.min(gridPage, Math.max(1, Math.ceil(filtered.length / GRID_PAGE_SIZE)));
+  const pagedRequests = paginateGridRows(filtered, effectivePage);
 
   async function handleAssign(row: SalonRequestRow) {
     const assignToEmail = assignDrafts[row.id] || row.assign_to || "";
@@ -142,7 +146,7 @@ export function SalonRequestLeadSheet({
                 </td>
               </tr>
             ) : (
-              filtered.map((row) => (
+              pagedRequests.map((row) => (
                 <tr key={`${row.origin}-${row.id}`} className="hover:bg-zinc-50/50 transition-colors align-top">
                   <td className="px-4 py-4 pl-6">
                     <div className="font-bold text-zinc-900">{row.full_name}</div>
@@ -243,6 +247,7 @@ export function SalonRequestLeadSheet({
           </tbody>
         </table>
       </div>
+      <GridPagination page={effectivePage} total={filtered.length} onPageChange={setGridPage} loading={loading} />
     </div>
   );
 }

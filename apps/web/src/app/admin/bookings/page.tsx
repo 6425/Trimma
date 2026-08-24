@@ -11,6 +11,7 @@ import { sendWhatsAppNotification, sendWhatsAppCancellationNotification, sendWha
 import { sendBookingCancelledEmail, sendBookingRescheduledEmail } from "../../actions/email-settings";
 import { fetchAdminBookings } from "@/app/actions/admin-list-data";
 import { updateAdminBookingStatus, rescheduleAdminBooking } from "@/app/actions/admin-operations";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 import {
   DEFAULT_BOOKING_PLATFORM_PERCENT,
   DEFAULT_BOOKING_SALON_PERCENT,
@@ -21,6 +22,7 @@ export default function AdminBookings() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [gridPage, setGridPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<"all" | "confirmed" | "pending" | "reschedule">("all");
   const [actioningId, setActioningId] = useState<string | null>(null);
 
@@ -134,6 +136,7 @@ export default function AdminBookings() {
 
     return true;
   });
+  const pagedBookings = paginateGridRows(filteredBookings, gridPage);
 
   // Calculate high-end KPI stats
   const totalBookingsCount = bookings.length;
@@ -212,7 +215,7 @@ export default function AdminBookings() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <Input 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
             placeholder="Search by ID, customer email, or salon name..." 
             className="pl-10 h-11 bg-zinc-50 border-transparent focus:bg-white focus:border-rose-100 transition-all rounded-xl" 
           />
@@ -220,7 +223,7 @@ export default function AdminBookings() {
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
           <Badge 
             variant="outline" 
-            onClick={() => setStatusFilter("all")}
+            onClick={() => { setGridPage(1); setStatusFilter("all"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
               statusFilter === "all" ? "bg-white text-zinc-900 border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
@@ -229,7 +232,7 @@ export default function AdminBookings() {
           </Badge>
           <Badge 
             variant="outline" 
-            onClick={() => setStatusFilter("confirmed")}
+            onClick={() => { setGridPage(1); setStatusFilter("confirmed"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
               statusFilter === "confirmed" ? "bg-white text-zinc-900 border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
@@ -238,7 +241,7 @@ export default function AdminBookings() {
           </Badge>
           <Badge 
             variant="outline" 
-            onClick={() => setStatusFilter("pending")}
+            onClick={() => { setGridPage(1); setStatusFilter("pending"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
               statusFilter === "pending" ? "bg-white text-zinc-900 border-zinc-950" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
@@ -247,7 +250,7 @@ export default function AdminBookings() {
           </Badge>
           <Badge 
             variant="outline" 
-            onClick={() => setStatusFilter("reschedule")}
+            onClick={() => { setGridPage(1); setStatusFilter("reschedule"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer transition-all shrink-0 ${
               statusFilter === "reschedule" ? "bg-rose-600 text-zinc-900 border-rose-600" : "bg-white text-zinc-600 hover:bg-zinc-50"
             }`}
@@ -288,7 +291,7 @@ export default function AdminBookings() {
                   </td>
                 </tr>
               ) : (
-                filteredBookings.map((b) => (
+                pagedBookings.map((b) => (
                   <tr key={b.id} className="hover:bg-zinc-50/50 transition-colors group">
                     <td className="px-8 py-6 text-sm font-mono font-bold text-zinc-950">
                       {b.booking_no}
@@ -382,6 +385,7 @@ export default function AdminBookings() {
             </tbody>
           </table>
         </div>
+        <GridPagination page={gridPage} total={filteredBookings.length} onPageChange={setGridPage} loading={loading} />
       </div>
 
       {/* Intelligence Dashboard Card */}

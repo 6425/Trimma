@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
-import { searchListingGenerationQueue } from "@/lib/listing-generation-queue";
+import { loadListingGenerationQueuePage } from "@/lib/listing-generation-queue";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,15 +14,16 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const tab = url.searchParams.get("tab") === "pending" ? "pending" : "listed";
-    const rows = await searchListingGenerationQueue({
+    const result = await loadListingGenerationQueuePage({
       tab,
+      page: Number(url.searchParams.get("page") || 1),
       q: url.searchParams.get("q") || "",
       district: url.searchParams.get("district") || "",
       category: url.searchParams.get("category") || "",
     });
 
     return NextResponse.json(
-      { rows },
+      result,
       {
         headers: {
           "Cache-Control": "private, no-store, max-age=0",

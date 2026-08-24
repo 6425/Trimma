@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { fetchAdminFinancePage } from "@/app/actions/admin-list-data";
 import { saveAdminFinanceBookingRates } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 import {
   calculateEffectivePlatformRate,
   calculatePlatformNetCommission,
@@ -133,6 +134,7 @@ export default function FinanceDashboard() {
   const [subscriptionLedger, setSubscriptionLedger] = useState<SubscriptionLedgerRow[]>([]);
   const [statusTab, setStatusTab] = useState<"settled" | "pending">("settled");
   const [offsetWeeks, setOffsetWeeks] = useState(0);
+  const [gridPage, setGridPage] = useState(1);
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [globalRates, setGlobalRates] = useState({
@@ -343,6 +345,7 @@ export default function FinanceDashboard() {
     rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return rows;
   }, [bookings, subscriptionLedger, week, statusTab, globalRates]);
+  const pagedGridRows = paginateGridRows(gridRows, gridPage);
 
   const columnSums = useMemo(
     () =>
@@ -431,7 +434,7 @@ export default function FinanceDashboard() {
         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
           <button
             type="button"
-            onClick={() => setOffsetWeeks((w) => w + 1)}
+            onClick={() => { setGridPage(1); setOffsetWeeks((w) => w + 1); }}
             className="p-2 rounded-lg hover:bg-slate-100 text-zinc-600"
             aria-label="Previous week"
           >
@@ -443,7 +446,7 @@ export default function FinanceDashboard() {
           </div>
           <button
             type="button"
-            onClick={() => setOffsetWeeks((w) => Math.max(0, w - 1))}
+            onClick={() => { setGridPage(1); setOffsetWeeks((w) => Math.max(0, w - 1)); }}
             disabled={offsetWeeks === 0}
             className="p-2 rounded-lg hover:bg-slate-100 text-zinc-600 disabled:opacity-40"
             aria-label="Next week"
@@ -456,7 +459,7 @@ export default function FinanceDashboard() {
           {(["settled", "pending"] as const).map((tab) => (
             <Button
               key={tab}
-              onClick={() => setStatusTab(tab)}
+              onClick={() => { setGridPage(1); setStatusTab(tab); }}
               className={`h-8 px-4 text-xs font-bold rounded-xl transition-all shadow-none border-none capitalize ${
                 statusTab === tab ? "bg-white text-zinc-950" : "bg-transparent text-zinc-500 hover:text-zinc-900"
               }`}
@@ -553,7 +556,7 @@ export default function FinanceDashboard() {
                   </td>
                 </tr>
               ) : (
-                gridRows.map((row) => (
+                pagedGridRows.map((row) => (
                   <tr key={row.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
@@ -616,6 +619,7 @@ export default function FinanceDashboard() {
             ) : null}
           </table>
         </div>
+        <GridPagination page={gridPage} total={gridRows.length} onPageChange={setGridPage} loading={loading} />
       </div>
 
       {isAdmin ? (

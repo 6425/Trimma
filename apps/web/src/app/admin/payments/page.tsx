@@ -28,6 +28,7 @@ import {
 } from "@/app/actions/admin-operations";
 import { STRIPE_ENV_DOCS } from "@/lib/stripe-env";
 import { withTimeout } from "@/lib/promise-timeout";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 type StripeConnection = Awaited<ReturnType<typeof fetchStripeConnectionStatus>>["connection"];
 
@@ -45,6 +46,8 @@ export default function AdminPayments() {
   const [connection, setConnection] = useState<StripeConnection | null>(null);
   const [realPayments, setRealPayments] = useState<any[]>([]);
   const [loadingRealPayments, setLoadingRealPayments] = useState(false);
+  const [gridPage, setGridPage] = useState(1);
+  const pagedPayments = paginateGridRows(realPayments, gridPage);
 
   const activeConnection =
     stripeEnvironment === "live" ? connection?.live : connection?.sandbox;
@@ -524,7 +527,7 @@ export default function AdminPayments() {
                     </td>
                   </tr>
                 ) : (
-                  realPayments.map((p) => (
+                  pagedPayments.map((p) => (
                     <tr key={p.id} className="hover:bg-zinc-50/40 transition-colors group">
                       <td className="px-8 py-5 font-mono text-xs font-bold text-zinc-900">
                         {p.provider_payment_id || p.id.substring(0, 8).toUpperCase()}
@@ -554,6 +557,7 @@ export default function AdminPayments() {
               </tbody>
             </table>
           </div>
+          <GridPagination page={gridPage} total={realPayments.length} onPageChange={setGridPage} loading={loadingRealPayments} />
         </div>
       )}
     </div>

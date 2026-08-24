@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, RefreshCw, UserCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 const STATUS_STYLES: Record<AgentRequestRow["status"], string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -79,6 +80,7 @@ export default function AdminAgentRequestsPage() {
   const [saving, setSaving] = useState(false);
   const [provisioning, setProvisioning] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [gridPage, setGridPage] = useState(1);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -110,6 +112,7 @@ export default function AdminAgentRequestsPage() {
     if (statusFilter === "all") return requests;
     return requests.filter((r) => r.status === statusFilter);
   }, [requests, statusFilter]);
+  const pagedRequests = paginateGridRows(filtered, gridPage);
 
   const headEmailById = useMemo(() => {
     const map = new Map<string, string>();
@@ -217,7 +220,7 @@ export default function AdminAgentRequestsPage() {
           <button
             key={status}
             type="button"
-            onClick={() => setStatusFilter(status)}
+            onClick={() => { setGridPage(1); setStatusFilter(status); }}
             className={`px-3 py-1.5 rounded-full text-xs font-bold capitalize transition-colors ${
               statusFilter === status
                 ? "bg-[#ffde5a] text-black"
@@ -253,7 +256,7 @@ export default function AdminAgentRequestsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
+                {pagedRequests.map((row) => (
                   <tr key={row.id} className="border-b border-zinc-100 hover:bg-zinc-50/80">
                     <td className="px-4 py-4">
                       <div className="font-bold text-zinc-900">
@@ -289,6 +292,7 @@ export default function AdminAgentRequestsPage() {
               </tbody>
             </table>
           </div>
+          <GridPagination page={gridPage} total={filtered.length} onPageChange={setGridPage} loading={loading} />
         </div>
       )}
 

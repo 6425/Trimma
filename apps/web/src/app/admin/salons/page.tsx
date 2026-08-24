@@ -30,12 +30,14 @@ import {
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 export default function Salons() {
   const navigate = useRouter();
   const [salons, setSalons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [gridPage, setGridPage] = useState(1);
   const [filterMode, setFilterMode] = useState<"all" | "pending" | "verification">("all");
   const [agents, setAgents] = useState<any[]>([]);
 
@@ -433,6 +435,7 @@ export default function Salons() {
     }
     return matchesSearch; // for "all"
   });
+  const pagedSalons = paginateGridRows(filteredSalons, gridPage);
 
   const handleExportDirectory = () => {
     if (filteredSalons.length === 0) {
@@ -475,7 +478,7 @@ export default function Salons() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
           <Input 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
             placeholder="Search by name or location..." 
             className="pl-10 h-11 bg-zinc-50 border-transparent focus:bg-white focus:border-rose-100 transition-all rounded-xl" 
           />
@@ -483,21 +486,21 @@ export default function Salons() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
           <Badge 
             variant="outline" 
-            onClick={() => setFilterMode("all")}
+            onClick={() => { setGridPage(1); setFilterMode("all"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'all' ? 'bg-slate-50 text-zinc-900' : 'bg-white text-zinc-600 hover:bg-zinc-50'}`}
           >
             All Salons
           </Badge>
           <Badge 
             variant="outline" 
-            onClick={() => setFilterMode("pending")}
+            onClick={() => { setGridPage(1); setFilterMode("pending"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'pending' ? 'bg-amber-500 text-zinc-900 border-amber-500' : 'bg-white text-amber-600 hover:bg-amber-50'}`}
           >
             Pending Approval (New Leads)
           </Badge>
           <Badge 
             variant="outline" 
-            onClick={() => setFilterMode("verification")}
+            onClick={() => { setGridPage(1); setFilterMode("verification"); }}
             className={`h-9 px-4 rounded-full border-zinc-200 font-bold cursor-pointer whitespace-nowrap transition-colors ${filterMode === 'verification' ? 'bg-brand text-black border-brand' : 'bg-white text-brand hover:bg-brand/10'}`}
           >
             Pending Verification (Agent Approved)
@@ -534,7 +537,7 @@ export default function Salons() {
                   </td>
                 </tr>
               ) : (
-                filteredSalons.map((salon) => (
+                pagedSalons.map((salon) => (
                   <tr key={salon.id} className="hover:bg-zinc-50/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
@@ -675,6 +678,7 @@ export default function Salons() {
             </tbody>
           </table>
         </div>
+        <GridPagination page={gridPage} total={filteredSalons.length} onPageChange={setGridPage} loading={loading} />
       </div>
 
       {/* Comprehensive Salon Onboarding Form Modal */}

@@ -42,12 +42,18 @@ export type ListingQueuePayload = {
   listedCount: number;
 };
 
+export type ListingQueuePagePayload = {
+  rows: ListingQueueRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 const QUEUE_SELECT_BASE =
   "id,name,slug,category,province,district,city,address,phone,website,map_url,place_id,latitude,longitude,logo_url,hero_url,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
 const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
-const QUEUE_PAGE_SIZE = 400;
-const QUEUE_SEARCH_LIMIT = 200;
+export const LISTING_QUEUE_PAGE_SIZE = 30;
 
 function sanitizeIlikeTerm(value: string): string {
   return value.replace(/[%_,.()"'\\]/g, " ").replace(/\s+/g, " ").trim();
@@ -137,60 +143,82 @@ async function restGet(path: string): Promise<unknown> {
   return text ? JSON.parse(text) : [];
 }
 
-async function restCount(status: string): Promise<number | null> {
+function queueTabScope(tab: "pending" | "listed"): string {
+  if (tab === "listed") {
+    return `onboarding_status=eq.${encodeURIComponent(LISTING_ONBOARDING_STATUS.PUBLISHED)}`;
+  }
+  const pendingScope = `(onboarding_status.eq.${LISTING_ONBOARDING_STATUS.CAPTURED},and(source_type.eq.LISTING_GENERATION,onboarding_status.eq.DISCOVERED))`;
+  return `or=${encodeURIComponent(pendingScope)}`;
+}
+
+function queueSearchFilter(input: { q?: string; district?: string; category?: string }): string | null {
+  const q = sanitizeIlikeTerm(input.q || "");
+  const district = sanitizeIlikeTerm(districtSearchLabel(input.district || ""));
+  const category = sanitizeIlikeTerm(input.category || "");
+  const clauses: string[] = [];
+  if (q) {
+    clauses.push(`or(name.ilike.%${q}%,slug.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,address.ilike.%${q}%)`);
+  }
+  if (district) {
+    clauses.push(`or(district.ilike.%${district}%,city.ilike.%${district}%,address.ilike.%${district}%)`);
+  }
+  if (category) clauses.push(`category.ilike.%${category}%`);
+  return clauses.length ? `(${clauses.join(",")})` : null;
+}
+
+async function restCountForQueuePage(
+  tab: "pending" | "listed",
+  filter: string | null
+): Promise<number> {
   const { url, serviceRoleKey } = getSupabaseServerEnv();
-  const response = await fetch(
-    `${url}/rest/v1/salons?select=id&onboarding_status=eq.${encodeURIComponent(status)}`,
-    {
-      method: "HEAD",
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-        Prefer: "count=exact",
-      },
-      cache: "no-store",
-    }
-  );
-  const range = response.headers.get("content-range") || "";
-  const total = range.split("/")[1];
-  if (!total || total === "*") return null;
-  const count = Number(total);
-  return Number.isFinite(count) ? count : null;
+  const query = ["select=id", queueTabScope(tab), filter ? `and=${encodeURIComponent(filter)}` : null]
+    .filter(Boolean)
+    .join("&");
+  const response = await fetch(`${url}/rest/v1/salons?${query}`, {
+    method: "HEAD",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      Prefer: "count=exact",
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`REST ${response.status}: listing count failed`);
+  const total = Number((response.headers.get("content-range") || "").split("/")[1]);
+  return Number.isFinite(total) ? total : 0;
 }
 
-async function loadRowsByStatus(status: string, select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
-  const qs = [
-    `select=${encodeURIComponent(select)}`,
-    `onboarding_status=eq.${encodeURIComponent(status)}`,
-    "order=created_at.desc",
-    `limit=${QUEUE_PAGE_SIZE}`,
-  ];
-  try {
-    return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
-  } catch (error) {
-    if (select !== QUEUE_SELECT_BASE) {
-      return loadRowsByStatus(status, QUEUE_SELECT_BASE);
-    }
-    throw error;
-  }
-}
+export async function loadListingGenerationQueuePage(input: {
+  tab: "pending" | "listed";
+  page?: number;
+  q?: string;
+  district?: string;
+  category?: string;
+}): Promise<ListingQueuePagePayload> {
+  const page = Math.max(1, Math.floor(Number(input.page) || 1));
+  const offset = (page - 1) * LISTING_QUEUE_PAGE_SIZE;
+  const filter = queueSearchFilter(input);
 
-async function loadListingGenerationDiscovered(select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
-  const qs = [
-    `select=${encodeURIComponent(select)}`,
-    "source_type=eq.LISTING_GENERATION",
-    "onboarding_status=eq.DISCOVERED",
-    "order=created_at.desc",
-    `limit=${QUEUE_PAGE_SIZE}`,
-  ];
-  try {
-    return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
-  } catch (error) {
-    if (select !== QUEUE_SELECT_BASE) {
-      return loadListingGenerationDiscovered(QUEUE_SELECT_BASE);
-    }
-    throw error;
-  }
+  const loadPage = async (select: string): Promise<ListingQueueRow[]> => {
+    const query = [
+      `select=${encodeURIComponent(select)}`,
+      queueTabScope(input.tab),
+      filter ? `and=${encodeURIComponent(filter)}` : null,
+      "order=created_at.desc",
+      `limit=${LISTING_QUEUE_PAGE_SIZE}`,
+      `offset=${offset}`,
+    ]
+      .filter(Boolean)
+      .join("&");
+    return mapQueueRows(asRecordArray(await restGet(`salons?${query}`)));
+  };
+
+  const [rows, total] = await Promise.all([
+    loadPage(QUEUE_SELECT).catch(() => loadPage(QUEUE_SELECT_BASE)),
+    restCountForQueuePage(input.tab, filter),
+  ]);
+
+  return { rows, total, page, pageSize: LISTING_QUEUE_PAGE_SIZE };
 }
 
 export async function searchListingGenerationQueue(input: {
@@ -199,58 +227,8 @@ export async function searchListingGenerationQueue(input: {
   district?: string;
   category?: string;
 }): Promise<ListingQueueRow[]> {
-  const q = sanitizeIlikeTerm(input.q || "");
-  const district = sanitizeIlikeTerm(districtSearchLabel(input.district || ""));
-  const category = sanitizeIlikeTerm(input.category || "");
-  if (!q && !district && !category) return [];
-
-  const clauses: string[] = [];
-  if (q) {
-    clauses.push(`or(name.ilike.%${q}%,slug.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,address.ilike.%${q}%)`);
-  }
-  if (district) {
-    clauses.push(`or(district.ilike.%${district}%,city.ilike.%${district}%,address.ilike.%${district}%)`);
-  }
-  if (category) {
-    clauses.push(`category.ilike.%${category}%`);
-  }
-
-  const andFilter = `(${clauses.join(",")})`;
-  const select = encodeURIComponent(QUEUE_SELECT);
-
-  const searchByStatus = async (status: string, extra: string[] = []) => {
-    const qs = [
-      `select=${select}`,
-      `onboarding_status=eq.${encodeURIComponent(status)}`,
-      ...extra,
-      `and=${encodeURIComponent(andFilter)}`,
-      "order=created_at.desc",
-      `limit=${QUEUE_SEARCH_LIMIT}`,
-    ];
-    try {
-      return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
-    } catch (error) {
-      const fallbackQs = qs.map((part) =>
-        part.startsWith("select=") ? `select=${encodeURIComponent(QUEUE_SELECT_BASE)}` : part
-      );
-      if (select !== encodeURIComponent(QUEUE_SELECT_BASE)) {
-        return mapQueueRows(asRecordArray(await restGet(`salons?${fallbackQs.join("&")}`)));
-      }
-      throw error;
-    }
-  };
-
-  if (input.tab === "listed") {
-    return searchByStatus(LISTING_ONBOARDING_STATUS.PUBLISHED);
-  }
-
-  const [captured, discovered] = await Promise.all([
-    searchByStatus(LISTING_ONBOARDING_STATUS.CAPTURED),
-    searchByStatus("DISCOVERED", ["source_type=eq.LISTING_GENERATION"]),
-  ]);
-  const byId = new Map<string, ListingQueueRow>();
-  for (const row of [...captured, ...discovered]) byId.set(row.id, row);
-  return [...byId.values()];
+  const pageResult = await loadListingGenerationQueuePage(input);
+  return pageResult.rows;
 }
 
 async function loadFeaturedListedRows(select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
@@ -259,7 +237,7 @@ async function loadFeaturedListedRows(select = QUEUE_SELECT): Promise<ListingQue
     `onboarding_status=eq.${encodeURIComponent(LISTING_ONBOARDING_STATUS.PUBLISHED)}`,
     "is_featured=eq.true",
     "order=name.asc",
-    "limit=200",
+    `limit=${LISTING_QUEUE_PAGE_SIZE}`,
   ];
   try {
     return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
@@ -274,26 +252,17 @@ async function loadFeaturedListedRows(select = QUEUE_SELECT): Promise<ListingQue
 export async function loadListingGenerationQueue(
   _supabase?: SupabaseClient
 ): Promise<ListingQueuePayload> {
-  const [pendingCaptured, pendingDiscovered, listedRows, featuredRows, pendingCount, listedCount] = await Promise.all([
-    loadRowsByStatus(LISTING_ONBOARDING_STATUS.CAPTURED),
-    loadListingGenerationDiscovered(),
-    loadRowsByStatus(LISTING_ONBOARDING_STATUS.PUBLISHED),
+  const [pendingPage, listedPage, featuredRows] = await Promise.all([
+    loadListingGenerationQueuePage({ tab: "pending", page: 1 }),
+    loadListingGenerationQueuePage({ tab: "listed", page: 1 }),
     loadFeaturedListedRows(),
-    restCount(LISTING_ONBOARDING_STATUS.CAPTURED),
-    restCount(LISTING_ONBOARDING_STATUS.PUBLISHED),
   ]);
 
-  const pendingById = new Map<string, ListingQueueRow>();
-  for (const row of [...pendingCaptured, ...pendingDiscovered]) {
-    pendingById.set(row.id, row);
-  }
-  const pendingRows = [...pendingById.values()];
-
   return {
-    rows: sortQueueRowsNewestFirst([...pendingRows, ...listedRows]),
+    rows: sortQueueRowsNewestFirst([...pendingPage.rows, ...listedPage.rows]),
     featuredRows,
-    pendingCount: Math.max(pendingCount ?? 0, pendingRows.length),
-    listedCount: listedCount ?? listedRows.length,
+    pendingCount: pendingPage.total,
+    listedCount: listedPage.total,
   };
 }
 

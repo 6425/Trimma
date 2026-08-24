@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { DashboardModal } from "../../../components/dashboard/DashboardModal";
 import { AddBookingModal } from "../../../components/modals/AddBookingModal";
 import { toDateInputValue } from "@/lib/promotion-package-dates";
+import { GridPagination, paginateGridRows } from "@/components/ui/GridPagination";
 
 function toTimeInputValue(time: string | null | undefined): string {
   if (!time) return "";
@@ -230,6 +231,7 @@ function DashboardBookings() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [gridPage, setGridPage] = useState(1);
   const [reschedulingBooking, setReschedulingBooking] = useState<any | null>(null);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("12:00");
@@ -322,6 +324,7 @@ function DashboardBookings() {
   }, [tabParam]);
 
   const handleStatusTabChange = (tab: BookingStatusTab) => {
+    setGridPage(1);
     router.replace(`/dashboard/bookings?tab=${tab}`, { scroll: false });
   };
 
@@ -515,6 +518,7 @@ function DashboardBookings() {
         ),
     [searchedBookings, statusTab]
   );
+  const pagedBookings = paginateGridRows(filteredBookings, gridPage);
 
   const tabCounts = BOOKING_STATUS_TABS.reduce(
     (acc, tab) => {
@@ -562,7 +566,7 @@ function DashboardBookings() {
             <Input 
               placeholder="Search by ID or email..." 
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setGridPage(1); setSearchTerm(e.target.value); }}
               className="pl-9.5 h-10 rounded-xl"
             />
           </div>
@@ -679,7 +683,7 @@ function DashboardBookings() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {filteredBookings.map((b) => {
+                {pagedBookings.map((b) => {
                   const financials = resolveBookingFinancialBreakdown(b);
                   const paymentStatus = (b.payment_status || "unpaid").toLowerCase();
                   const reservationPaid = isReservationDepositPaid(b);
@@ -824,6 +828,7 @@ function DashboardBookings() {
                 })}
               </tbody>
             </table>
+            <GridPagination page={gridPage} total={filteredBookings.length} onPageChange={setGridPage} loading={loading} />
           </div>
         )}
       </div>

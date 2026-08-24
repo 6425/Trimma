@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import {
   todayInFeaturedTimezone,
 } from "@/lib/listing-featured";
 import { Input } from "@/components/ui/input";
+import { GRID_PAGE_SIZE } from "@/components/ui/GridPagination";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 import { ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS } from "@/lib/admin-lead-categories";
 import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generation-queue";
@@ -94,19 +95,27 @@ function ListingQueueContent({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [rows, setRows] = useState<ListingQueueRow[]>(initialQueue.rows);
+  const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
+  const [pageRows, setPageRows] = useState<ListingQueueRow[]>(() =>
+    initialQueue.rows.filter((row) =>
+      activeTab === "listed"
+        ? row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED
+        : isPendingQueueRow(row)
+    )
+  );
   const [featuredRows, setFeaturedRows] = useState<ListingQueueRow[]>(initialQueue.featuredRows || []);
   const [pendingCount, setPendingCount] = useState(initialQueue.pendingCount);
   const [listedCount, setListedCount] = useState(initialQueue.listedCount);
+  const [page, setPage] = useState(1);
+  const [pageTotal, setPageTotal] = useState(
+    activeTab === "listed" ? initialQueue.listedCount : initialQueue.pendingCount
+  );
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
-  const [loading, setLoading] = useState(initialQueue.rows.length === 0);
+  const [loading, setLoading] = useState(pageRows.length === 0);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [districtSlug, setDistrictSlug] = useState("");
   const [categoryName, setCategoryName] = useState("");
-  const [searchRows, setSearchRows] = useState<ListingQueueRow[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [searchTick, setSearchTick] = useState(0);
   const [featureEditor, setFeatureEditor] = useState<{
     salonId: string;
     name: string;
@@ -116,28 +125,6 @@ function ListingQueueContent({
   } | null>(null);
   const [listingEditor, setListingEditor] = useState<ListingQueueRow | null>(null);
   const [batchDraft, setBatchDraft] = useState<{ start: string; end: string } | null>(null);
-  const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
-
-  const pendingRows = useMemo(
-    () => rows.filter(isPendingQueueRow),
-    [rows]
-  );
-  const listedRows = useMemo(
-    () =>
-      rows
-        .filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED)
-        .sort((a, b) => {
-          const aLive = featuredListingStatus(a) === "live" ? 1 : 0;
-          const bLive = featuredListingStatus(b) === "live" ? 1 : 0;
-          if (aLive !== bLive) return bLive - aLive;
-          if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
-          const byCaptured = String(b.captured_at || "").localeCompare(String(a.captured_at || ""));
-          if (byCaptured) return byCaptured;
-          return String(b.created_at || "").localeCompare(String(a.created_at || ""));
-        }),
-    [rows]
-  );
-  const tabRows = activeTab === "listed" ? listedRows : pendingRows;
   const categoryOptions = useMemo(
     () =>
       categories.length
@@ -146,8 +133,9 @@ function ListingQueueContent({
     [categories]
   );
   const hasActiveFilters = Boolean(searchQuery.trim() || districtSlug || categoryName);
-  const visibleRows = hasActiveFilters ? searchRows || [] : tabRows;
-  const tableLoading = loading || (hasActiveFilters && searching && searchRows === null);
+  const visibleRows = pageRows;
+  const pageCount = Math.max(1, Math.ceil(pageTotal / GRID_PAGE_SIZE));
+  const tableLoading = loading;
   const featuredBatch = useMemo(() => {
     return [...featuredRows]
       .filter((row) => row.is_featured)
@@ -179,113 +167,99 @@ function ListingQueueContent({
   const batchEnd = batchDraft?.end || sharedBatchPeriod.end;
   const featuredCount = featuredLiveCount;
 
-  const load = useCallback(async (options?: { showLoading?: boolean }) => {
+  const loadPage = useCallback(async (options?: { showLoading?: boolean; signal?: AbortSignal; page?: number }) => {
     const showLoading = options?.showLoading !== false;
+    const requestedPage = options?.page ?? page;
     try {
       if (showLoading) setLoading(true);
 
-      const [queueRes, requestResult] = await Promise.all([
-        fetch(`/api/admin/listing-generation/queue?t=${Date.now()}`, {
-          cache: "no-store",
-          credentials: "same-origin",
-        }),
-        fetchAdminSalonRequests().catch(() => ({ success: false as const, error: "Salon requests unavailable." })),
-      ]);
-
-      const queuePayload = (await queueRes.json()) as {
+      const params = new URLSearchParams({
+        tab: activeTab,
+        page: String(requestedPage),
+        q: searchQuery.trim(),
+        district: districtSlug,
+        category: categoryName,
+      });
+      const response = await fetch(`/api/admin/listing-generation/queue/search?${params}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: options?.signal,
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
         rows?: ListingQueueRow[];
-        featuredRows?: ListingQueueRow[];
-        pendingCount?: number;
-        listedCount?: number;
+        total?: number;
+        page?: number;
+        pageSize?: number;
         error?: string;
       };
-      if (!queueRes.ok) {
-        throw new Error(queuePayload.error || `Listing queue failed (${queueRes.status}).`);
+      if (!response.ok) {
+        throw new Error(payload.error || `Listing queue failed (${response.status}).`);
       }
-
-      const nextRows = queuePayload.rows || [];
-      setRows(nextRows);
-      setFeaturedRows(queuePayload.featuredRows || []);
-      setBatchDraft(null);
-      setPendingCount(
-        typeof queuePayload.pendingCount === "number"
-          ? queuePayload.pendingCount
-          : nextRows.filter(isPendingQueueRow).length
-      );
-      setListedCount(
-        typeof queuePayload.listedCount === "number"
-          ? queuePayload.listedCount
-          : nextRows.filter((row) => row.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED).length
-      );
-
-      if (requestResult.success === false) {
-        setRequests([]);
-      } else {
-        setRequests(
-          requestResult.requests.filter(
-            (r) => (r.status === "new" || r.status === "reviewing") && !r.salon_id
-          )
-        );
+      setPageRows(payload.rows || []);
+      const total = typeof payload.total === "number" ? payload.total : 0;
+      setPageTotal(total);
+      const lastPage = Math.max(1, Math.ceil(total / GRID_PAGE_SIZE));
+      if (requestedPage > lastPage) setPage(lastPage);
+      if (!hasActiveFilters) {
+        if (activeTab === "listed") setListedCount(total);
+        else setPendingCount(total);
       }
     } catch (error: unknown) {
+      if (options?.signal?.aborted) return;
       const message = error instanceof Error ? error.message : "Failed to load listing queue.";
       toast.error(message);
     } finally {
-      setLoading(false);
+      if (!options?.signal?.aborted) setLoading(false);
     }
+  }, [activeTab, categoryName, districtSlug, hasActiveFilters, page, searchQuery]);
+
+  const refreshQueueMetadata = useCallback(async () => {
+    const response = await fetch(`/api/admin/listing-generation/queue?t=${Date.now()}`, {
+      cache: "no-store",
+      credentials: "same-origin",
+    });
+    const payload = (await response.json().catch(() => ({}))) as Partial<ListingQueuePayload> & { error?: string };
+    if (!response.ok) {
+      throw new Error(payload.error || `Listing summary failed (${response.status}).`);
+    }
+    setFeaturedRows(payload.featuredRows || []);
+    setPendingCount(payload.pendingCount ?? 0);
+    setListedCount(payload.listedCount ?? 0);
+    setBatchDraft(null);
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- mount fetch populates admin queue table */
   useEffect(() => {
-    void load({ showLoading: false });
-  }, [load]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+    void fetchAdminSalonRequests()
+      .then((result) => {
+        if (result.success === false) return setRequests([]);
+        setRequests(
+          result.requests.filter(
+            (request) =>
+              (request.status === "new" || request.status === "reviewing") && !request.salon_id
+          )
+        );
+      })
+      .catch(() => setRequests([]));
+  }, []);
 
   useEffect(() => {
-    if (!hasActiveFilters) return;
-
     const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      try {
-        setSearching(true);
-        const params = new URLSearchParams({
-          tab: activeTab,
-          q: searchQuery.trim(),
-          district: districtSlug,
-          category: categoryName,
-        });
-        const response = await fetch(`/api/admin/listing-generation/queue/search?${params}`, {
-          cache: "no-store",
-          credentials: "same-origin",
-          signal: controller.signal,
-        });
-        const data = (await response.json().catch(() => ({}))) as { rows?: ListingQueueRow[]; error?: string };
-        if (!response.ok) {
-          throw new Error(data.error || `Search failed (${response.status}).`);
-        }
-        setSearchRows(data.rows || []);
-      } catch (error: unknown) {
-        if (controller.signal.aborted) return;
-        toast.error(error instanceof Error ? error.message : "Failed to search listed salons.");
-        setSearchRows([]);
-      } finally {
-        if (!controller.signal.aborted) setSearching(false);
-      }
-    }, 250);
+    const timer = window.setTimeout(() => {
+      void loadPage({ showLoading: true, signal: controller.signal });
+    }, hasActiveFilters ? 250 : 0);
 
     return () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [hasActiveFilters, searchQuery, districtSlug, categoryName, activeTab, searchTick]);
+  }, [hasActiveFilters, loadPage]);
 
   const runAction = async (salonId: string, action: () => Promise<{ success: boolean; error?: string }>) => {
     try {
       setBusyId(salonId);
       const result = await action();
       if (result.success === false) throw new Error(result.error);
-      await load();
-      setSearchTick((current) => current + 1);
+      await Promise.all([loadPage(), refreshQueueMetadata()]);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Action failed.");
     } finally {
@@ -311,7 +285,8 @@ function ListingQueueContent({
       toast.success(
         count === 0 ? "No pending listings were left to publish." : `Published ${count} listing${count === 1 ? "" : "s"}.`
       );
-      await load();
+      setPage(1);
+      await Promise.all([loadPage({ page: 1 }), refreshQueueMetadata()]);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Publish all failed.");
     } finally {
@@ -353,6 +328,7 @@ function ListingQueueContent({
             type="button"
             className={cn(trimmaFilterTabClass(activeTab === "pending"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
             onClick={() => {
+              setPage(1);
               router.replace("/admin/listing-generation/queue?tab=pending");
             }}
           >
@@ -363,6 +339,7 @@ function ListingQueueContent({
             type="button"
             className={cn(trimmaFilterTabClass(activeTab === "listed"), "trimma-filter-tab px-4 py-2 text-sm font-bold")}
             onClick={() => {
+              setPage(1);
               router.replace("/admin/listing-generation/queue?tab=listed");
             }}
           >
@@ -535,13 +512,22 @@ function ListingQueueContent({
       ) : null}
 
       <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
-        <div className="border-b border-zinc-100 p-2.5">
+        <div className="border-b border-zinc-100 p-3">
+          <div className="mb-2">
+            <h2 className="text-sm font-bold text-zinc-900">
+              {activeTab === "listed" ? "Find a listed business" : "Find a pending business"}
+            </h2>
+            <p className="text-[11px] text-zinc-500">Search the complete listing database. Results are returned 30 at a time.</p>
+          </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_12rem]">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
               <Input
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => {
+                  setPage(1);
+                  setSearchQuery(event.target.value);
+                }}
                 placeholder={
                   activeTab === "listed"
                     ? "Search listed salons by name or address…"
@@ -556,7 +542,10 @@ function ListingQueueContent({
             <select
               id="queue-district-filter"
               value={districtSlug}
-              onChange={(event) => setDistrictSlug(event.target.value)}
+              onChange={(event) => {
+                setPage(1);
+                setDistrictSlug(event.target.value);
+              }}
               className={FILTER_SELECT_CLASS}
             >
               <option value="">Any district</option>
@@ -572,7 +561,10 @@ function ListingQueueContent({
             <select
               id="queue-category-filter"
               value={categoryName}
-              onChange={(event) => setCategoryName(event.target.value)}
+              onChange={(event) => {
+                setPage(1);
+                setCategoryName(event.target.value);
+              }}
               className={FILTER_SELECT_CLASS}
             >
               <option value="">Any category</option>
@@ -605,7 +597,7 @@ function ListingQueueContent({
             ) : visibleRows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-2 py-12 text-center text-zinc-500">
-                  {tabRows.length > 0 && hasActiveFilters ? (
+                  {hasActiveFilters ? (
                     <>No {activeTab === "listed" ? "listed" : "pending"} salons match these filters.</>
                   ) : activeTab === "pending" ? (
                     <>
@@ -802,14 +794,24 @@ function ListingQueueContent({
             )}
           </tbody>
         </table>
-        <p className="border-t border-zinc-100 px-2.5 py-1.5 text-[11px] text-zinc-500">
-          Showing {visibleRows.length}
-          {hasActiveFilters
-            ? ` match${visibleRows.length === 1 ? "" : "es"} across all ${activeTab}`
-            : ` ${activeTab === "listed" ? "listed" : "pending"}`}{" "}
-          · Pending {pendingCount} · Listed {listedCount}
-          {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
-        </p>
+        <div className="flex flex-col gap-2 border-t border-zinc-100 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] text-zinc-500">
+            {pageTotal > 0
+              ? `Showing ${(page - 1) * GRID_PAGE_SIZE + 1}–${Math.min(page * GRID_PAGE_SIZE, pageTotal)} of ${pageTotal}`
+              : "Showing 0 results"}
+            {hasActiveFilters ? ` matching ${activeTab}` : ` ${activeTab}`} · Pending {pendingCount} · Listed {listedCount}
+            {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={loading || page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="h-9 min-h-9">
+              <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+            </Button>
+            <span className="min-w-20 text-center text-xs font-semibold text-zinc-600">Page {page} of {pageCount}</span>
+            <Button type="button" variant="outline" size="sm" disabled={loading || page >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="h-9 min-h-9">
+              Next <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
       {featureEditor ? (
