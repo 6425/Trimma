@@ -13,7 +13,14 @@ export type ListingQueueRow = {
   district: string | null;
   city: string | null;
   address: string | null;
+  phone: string | null;
+  website: string | null;
+  map_url: string | null;
   place_id: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  logo_url: string | null;
+  hero_url: string | null;
   rating: number | null;
   review_count: number | null;
   onboarding_status: string | null;
@@ -36,7 +43,7 @@ export type ListingQueuePayload = {
 };
 
 const QUEUE_SELECT_BASE =
-  "id,name,slug,category,province,district,city,address,place_id,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
+  "id,name,slug,category,province,district,city,address,phone,website,map_url,place_id,latitude,longitude,logo_url,hero_url,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
 const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
 const QUEUE_PAGE_SIZE = 400;
@@ -61,7 +68,14 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     district: (row.district as string | null) ?? null,
     city: (row.city as string | null) ?? null,
     address: (row.address as string | null) ?? null,
+    phone: (row.phone as string | null) ?? null,
+    website: (row.website as string | null) ?? null,
+    map_url: (row.map_url as string | null) ?? null,
     place_id: (row.place_id as string | null) ?? null,
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
+    logo_url: (row.logo_url as string | null) ?? null,
+    hero_url: (row.hero_url as string | null) ?? null,
     rating: row.rating == null ? null : Number(row.rating),
     review_count: row.review_count == null ? null : Number(row.review_count),
     onboarding_status: (row.onboarding_status as string | null) ?? null,

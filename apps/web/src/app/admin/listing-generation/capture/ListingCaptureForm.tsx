@@ -25,6 +25,8 @@ type ManualListingFormState = {
   city: string;
   address: string;
   phone: string;
+  rating: string;
+  reviewCount: string;
   website: string;
   mapUrl: string;
   placeId: string;
@@ -44,6 +46,8 @@ function emptyManualListing(categoryId = ""): ManualListingFormState {
     city: "",
     address: "",
     phone: "",
+    rating: "",
+    reviewCount: "",
     website: "",
     mapUrl: "",
     placeId: "",
@@ -189,6 +193,17 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
     }
     if (Boolean(manualListing.latitude) !== Boolean(manualListing.longitude)) {
       toast.error("Enter both latitude and longitude, or leave both empty.");
+      return;
+    }
+    if (manualListing.rating && (Number(manualListing.rating) < 0 || Number(manualListing.rating) > 5)) {
+      toast.error("Google rating must be between 0 and 5.");
+      return;
+    }
+    if (
+      manualListing.reviewCount &&
+      (!Number.isSafeInteger(Number(manualListing.reviewCount)) || Number(manualListing.reviewCount) < 0)
+    ) {
+      toast.error("Google reviews must be a non-negative whole number.");
       return;
     }
 
@@ -522,6 +537,39 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
               maxLength={50}
               onChange={(event) => updateManualListing({ phone: event.target.value })}
               placeholder="+94…"
+              className="h-11 rounded-xl border-zinc-200 bg-zinc-50 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="manual-rating" className="text-[9px] font-bold uppercase tracking-wide text-zinc-500">
+              Google rating
+            </label>
+            <Input
+              id="manual-rating"
+              type="number"
+              min={0}
+              max={5}
+              step={0.1}
+              value={manualListing.rating}
+              onChange={(event) => updateManualListing({ rating: event.target.value })}
+              placeholder="4.8"
+              className="h-11 rounded-xl border-zinc-200 bg-zinc-50 text-xs"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="manual-review-count" className="text-[9px] font-bold uppercase tracking-wide text-zinc-500">
+              Google reviews
+            </label>
+            <Input
+              id="manual-review-count"
+              type="number"
+              min={0}
+              step={1}
+              value={manualListing.reviewCount}
+              onChange={(event) => updateManualListing({ reviewCount: event.target.value })}
+              placeholder="125"
               className="h-11 rounded-xl border-zinc-200 bg-zinc-50 text-xs"
             />
           </div>

@@ -22,6 +22,8 @@ export type ManualListingCaptureInput = {
   city?: string | null;
   address: string;
   phone?: string | null;
+  rating?: number | null;
+  reviewCount?: number | null;
   website?: string | null;
   mapUrl?: string | null;
   placeId?: string | null;
@@ -62,6 +64,24 @@ function cleanManualCoordinate(
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
     throw new Error(`${label} must be between ${min} and ${max}.`);
+  }
+  return parsed;
+}
+
+function cleanManualRating(value: number | null | undefined): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 5) {
+    throw new Error("Google rating must be between 0 and 5.");
+  }
+  return Math.round(parsed * 10) / 10;
+}
+
+function cleanManualReviewCount(value: number | null | undefined): number | null {
+  if (value == null) return null;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) {
+    throw new Error("Google reviews must be a non-negative whole number.");
   }
   return parsed;
 }
@@ -140,6 +160,8 @@ export async function createManualListingSalonRecord(
   const city = cleanManualListingText(input.city, 120);
   const address = cleanManualListingLongText(input.address, 500);
   const phone = cleanManualListingText(input.phone, 50) || null;
+  const rating = cleanManualRating(input.rating);
+  const reviewCount = cleanManualReviewCount(input.reviewCount);
   const placeId = cleanManualListingText(input.placeId, 255) || null;
   const description = cleanManualListingLongText(input.description, 4_000) || null;
   const website = cleanManualListingUrl(input.website, "Website");
@@ -214,6 +236,8 @@ export async function createManualListingSalonRecord(
       city: city || null,
       address,
       phone,
+      rating,
+      review_count: reviewCount,
       website,
       map_url: mapUrl,
       place_id: placeId,
@@ -243,6 +267,147 @@ export async function createManualListingSalonRecord(
   });
 
   return { salonId: String(created.id), name: String(created.name || name) };
+}
+
+export async function updateListingSalonRecord(
+  supabase: SupabaseClient,
+  salonId: string,
+  input: ManualListingCaptureInput
+): Promise<{ salonId: string; name: string }> {
+  const { data: salon, error: fetchError } = await supabase
+    .from("salons")
+    .select("id, name, category, source_type, onboarding_status, business_info_extended")
+    .eq("id", salonId)
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!salon?.id) throw new Error("Salon not found.");
+  if (!isListingPipelineSalon(salon)) {
+    throw new Error("This salon is not in the listing generation pipeline.");
+  }
+  if (salon.onboarding_status !== LISTING_ONBOARDING_STATUS.PUBLISHED) {
+    throw new Error("Publish the listing before editing its public details.");
+  }
+
+  const name = cleanManualListingText(input.name, 200);
+  const category = cleanManualListingText(input.category, 120);
+  const province = cleanManualListingText(input.province, 120);
+  const district = cleanManualListingText(input.district, 120);
+  const city = cleanManualListingText(input.city, 120);
+  const address = cleanManualListingLongText(input.address, 500);
+  const phone = cleanManualListingText(input.phone, 50) || null;
+  const rating = cleanManualRating(input.rating);
+  const reviewCount = cleanManualReviewCount(input.reviewCount);
+  const placeId = cleanManualListingText(input.placeId, 255) || null;
+  const description = cleanManualListingLongText(input.description, 4_000) || null;
+  const website = cleanManualListingUrl(input.website, "Website");
+  const suppliedMapUrl = cleanManualListingUrl(input.mapUrl, "Google Maps URL");
+  const logoUrl = cleanManualListingUrl(input.logoUrl, "Logo URL");
+  const heroUrl = cleanManualListingUrl(input.heroUrl, "Hero image URL");
+  const latitude = cleanManualCoordinate(input.latitude, "Latitude", -90, 90);
+  const longitude = cleanManualCoordinate(input.longitude, "Longitude", -180, 180);
+
+  if (!name) throw new Error("Business name is required.");
+  if (!category) throw new Error("Trimma category is required.");
+  if (!address) throw new Error("Full address is required.");
+  if ((latitude === null) !== (longitude === null)) {
+    throw new Error("Enter both latitude and longitude, or leave both empty.");
+  }
+  validateManualListingLocation(province, district, city);
+
+  if (placeId) {
+    const { data: samePlace, error } = await supabase
+      .from("salons")
+      .select("id, name")
+      .eq("place_id", placeId)
+      .neq("id", salonId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (samePlace?.id) {
+      throw new Error(`This Google Place is already saved as ${samePlace.name || "an existing listing"}.`);
+    }
+  }
+
+  const { data: nearbyRows, error: nearbyError } = await supabase
+    .from("salons")
+    .select("id, name, address")
+    .eq("district", district)
+    .neq("id", salonId)
+    .limit(300);
+  if (nearbyError) throw new Error(nearbyError.message);
+
+  const normalizedName = name.toLocaleLowerCase();
+  const normalizedAddress = address.toLocaleLowerCase();
+  const duplicate = (nearbyRows || []).find((row) => {
+    const sameName = String(row.name || "").trim().toLocaleLowerCase() === normalizedName;
+    const sameAddress = String(row.address || "").trim().toLocaleLowerCase() === normalizedAddress;
+    return sameName && sameAddress;
+  });
+  if (duplicate?.id) {
+    throw new Error(`A listing with this name and address already exists: ${duplicate.name || name}.`);
+  }
+
+  const mapUrl =
+    suppliedMapUrl ||
+    (placeId
+      ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`
+      : null);
+  const existingExt =
+    salon.business_info_extended &&
+    typeof salon.business_info_extended === "object" &&
+    !Array.isArray(salon.business_info_extended)
+      ? (salon.business_info_extended as Record<string, unknown>)
+      : {};
+  const previousCategory = String(salon.category || "").trim();
+  const existingCategories = Array.isArray(existingExt.trimma_categories)
+    ? existingExt.trimma_categories.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+  const categoryTags = [
+    ...new Set([
+      category,
+      ...existingCategories.map((item) => (item === previousCategory ? category : item)),
+    ]),
+  ];
+  const nextExt: Record<string, unknown> = {
+    ...existingExt,
+    trimma_categories: categoryTags,
+    listing_capture_category: category,
+  };
+  if (placeId) nextExt.google_place_id = placeId;
+  else delete nextExt.google_place_id;
+  if (mapUrl) nextExt.google_maps_url = mapUrl;
+  else delete nextExt.google_maps_url;
+
+  await updateSalonWithOptionalColumns(supabase, salonId, {
+    name,
+    category,
+    province,
+    district,
+    city: city || null,
+    address,
+    phone,
+    rating,
+    review_count: reviewCount,
+    website,
+    map_url: mapUrl,
+    place_id: placeId,
+    latitude,
+    longitude,
+    description,
+    summary: description,
+    logo_url: logoUrl,
+    hero_url: heroUrl,
+    cover_url: heroUrl,
+    business_info_extended: nextExt,
+  });
+
+  await tryInsertOnboardingLog(supabase, {
+    salon_id: salonId,
+    action: "LISTING_DETAILS_UPDATED",
+    notes: `Updated the complete public business listing (${category} · ${city || district}).`,
+  });
+
+  return { salonId, name };
 }
 
 export async function publishListingSalonRecord(

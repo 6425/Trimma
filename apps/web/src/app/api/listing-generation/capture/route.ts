@@ -59,6 +59,8 @@ export async function POST(req: Request) {
         city: String(city || ""),
         address: String(body.address || ""),
         phone: String(body.phone || ""),
+        rating: body.rating === "" || body.rating == null ? null : Number(body.rating),
+        reviewCount: body.reviewCount === "" || body.reviewCount == null ? null : Number(body.reviewCount),
         website: String(body.website || ""),
         mapUrl: String(body.mapUrl || ""),
         placeId: String(body.placeId || ""),

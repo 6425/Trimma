@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, FileText } from "lucide-react";
+import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generat
 import type { PublicCategory } from "@/lib/public-categories";
 import { getDistrictFilterOptions } from "@/lib/sri-lanka-locations";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
+import { ListingEditDialog, type ListingEditValues } from "./ListingEditDialog";
 
 const DISTRICT_OPTIONS = getDistrictFilterOptions();
 
@@ -34,10 +35,6 @@ function addIsoDays(iso: string, days: number): string {
 
 const FILTER_SELECT_CLASS =
   "h-11 min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800";
-
-function listingAboutText(row: Pick<ListingQueueRow, "description" | "summary">): string {
-  return row.description || row.summary || "";
-}
 
 type QueueTab = "pending" | "listed";
 
@@ -117,11 +114,7 @@ function ListingQueueContent({
     end: string;
     isFeatured: boolean;
   } | null>(null);
-  const [aboutEditor, setAboutEditor] = useState<{
-    salonId: string;
-    name: string;
-    about: string;
-  } | null>(null);
+  const [listingEditor, setListingEditor] = useState<ListingQueueRow | null>(null);
   const [batchDraft, setBatchDraft] = useState<{ start: string; end: string } | null>(null);
   const activeTab: QueueTab = searchParams.get("tab") === "listed" ? "listed" : "pending";
 
@@ -714,16 +707,10 @@ function ListingQueueContent({
                               size="sm"
                               className="h-7 min-h-7 px-2 text-[10px] font-bold"
                               disabled={busyId !== null}
-                              onClick={() =>
-                                setAboutEditor({
-                                  salonId: row.id,
-                                  name: row.name,
-                                  about: listingAboutText(row),
-                                })
-                              }
+                              onClick={() => setListingEditor(row)}
                             >
-                              <FileText className="mr-0.5 h-3 w-3" />
-                              About
+                              <Pencil className="mr-0.5 h-3 w-3" />
+                              Edit
                             </Button>
                             <Link
                               href={buildSalonPublicPath(row)}
@@ -925,62 +912,27 @@ function ListingQueueContent({
         </div>
       ) : null}
 
-      {aboutEditor ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl">
-            <h2 className="text-lg font-bold text-zinc-900">About {aboutEditor.name}</h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              This text appears in the About the salon section on the public listing page.
-            </p>
-            <label className="mt-4 block text-xs font-bold uppercase tracking-widest text-zinc-500">
-              About the salon
-              <textarea
-                className="mt-1 min-h-32 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-800 outline-none focus:ring-2 focus:ring-brand/20"
-                maxLength={4000}
-                value={aboutEditor.about}
-                onChange={(event) =>
-                  setAboutEditor((current) =>
-                    current ? { ...current, about: event.target.value } : current
-                  )
-                }
-                placeholder="Describe the salon, services, and what guests can expect."
-              />
-            </label>
-            <p className="mt-1 text-right text-[11px] text-zinc-400">{aboutEditor.about.length} / 4000</p>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 min-h-11 w-full font-bold sm:w-auto"
-                disabled={busyId !== null}
-                onClick={() => setAboutEditor(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="default"
-                className="h-11 min-h-11 w-full font-bold sm:w-auto"
-                disabled={busyId !== null}
-                onClick={() =>
-                  void runAction(aboutEditor.salonId, async () => {
-                    const result = await postListingAction("/api/admin/listing-generation/about", {
-                      salonId: aboutEditor.salonId,
-                      about: aboutEditor.about,
-                    });
-                    if (result.success) {
-                      toast.success("About the salon updated.");
-                      setAboutEditor(null);
-                    }
-                    return result;
-                  })
-                }
-              >
-                Save about
-              </Button>
-            </div>
-          </div>
-        </div>
+      {listingEditor ? (
+        <ListingEditDialog
+          key={listingEditor.id}
+          row={listingEditor}
+          categories={categories}
+          saving={busyId === listingEditor.id}
+          onCancel={() => setListingEditor(null)}
+          onSave={(values: ListingEditValues) =>
+            runAction(listingEditor.id, async () => {
+              const result = await postListingAction("/api/admin/listing-generation/edit", {
+                salonId: listingEditor.id,
+                ...values,
+              });
+              if (result.success) {
+                toast.success("Business listing updated.");
+                setListingEditor(null);
+              }
+              return result;
+            })
+          }
+        />
       ) : null}
     </div>
   );
