@@ -105,6 +105,9 @@ function ListingQueueContent({
   );
   const [featuredRows, setFeaturedRows] = useState<ListingQueueRow[]>(initialQueue.featuredRows || []);
   const [featuredTotal, setFeaturedTotal] = useState(initialQueue.featuredCount ?? initialQueue.featuredRows.length);
+  const [featuredResultTotal, setFeaturedResultTotal] = useState(
+    initialQueue.featuredCount ?? initialQueue.featuredRows.length
+  );
   const [featuredSearchQuery, setFeaturedSearchQuery] = useState("");
   const [featuredDistrictSlug, setFeaturedDistrictSlug] = useState("");
   const [featuredCategoryName, setFeaturedCategoryName] = useState("");
@@ -158,7 +161,10 @@ function ListingQueueContent({
         return a.name.localeCompare(b.name);
       });
   }, [featuredRows]);
-  const featuredLiveCount = featuredBatch.filter((row) => featuredListingStatus(row) === "live").length;
+  const featuredDisplayRows = hasFeaturedFilters ? featuredRows : featuredBatch;
+  const featuredLiveCount = featuredDisplayRows.filter(
+    (row) => row.is_featured && featuredListingStatus(row) === "live"
+  ).length;
   const sharedBatchPeriod = useMemo(() => {
     const today = todayInFeaturedTimezone();
     const fallback = { start: today, end: addIsoDays(today, 13) };
@@ -203,14 +209,16 @@ function ListingQueueContent({
         nextRows.forEach((row) => byId.set(row.id, row));
         return [...byId.values()];
       });
-      setFeaturedTotal(typeof payload.total === "number" ? payload.total : nextRows.length);
+      const total = typeof payload.total === "number" ? payload.total : nextRows.length;
+      setFeaturedResultTotal(total);
+      if (!hasFeaturedFilters) setFeaturedTotal(total);
     } catch (error: unknown) {
       if (options?.signal?.aborted) return;
       toast.error(error instanceof Error ? error.message : "Failed to load featured salons.");
     } finally {
       if (!options?.signal?.aborted) setFeaturedLoading(false);
     }
-  }, [featuredCategoryName, featuredDistrictSlug, featuredSearchQuery]);
+  }, [featuredCategoryName, featuredDistrictSlug, featuredSearchQuery, hasFeaturedFilters]);
 
   const loadPage = useCallback(async (options?: { showLoading?: boolean; signal?: AbortSignal; page?: number; append?: boolean }) => {
     const showLoading = options?.showLoading !== false;
@@ -443,11 +451,11 @@ function ListingQueueContent({
             <div>
               <h2 className="text-sm font-bold text-zinc-900">Featured Batch</h2>
               <p className="mt-0.5 text-xs text-zinc-600">
-                All featured listed salons. Save batch dates to apply one period to every salon in this
-                list. Public Featured Beauty Business shows this live batch.
+                Search any listed salon here to add or edit it. With no search, this shows the complete
+                featured batch. Public Featured Beauty Business shows the live batch.
               </p>
               <p className="mt-1 text-[11px] font-medium text-zinc-500">
-                {featuredTotal} in batch · {featuredBatch.length} shown · {featuredLiveCount} live shown
+                {featuredTotal} in batch · {hasFeaturedFilters ? `${featuredResultTotal} search results` : `${featuredDisplayRows.length} shown`} · {featuredLiveCount} live shown
                 {formatFeaturedDateRange(batchStart, batchEnd) ? ` · ${formatFeaturedDateRange(batchStart, batchEnd)}` : ""}
               </p>
             </div>
@@ -541,15 +549,15 @@ function ListingQueueContent({
               ))}
             </select>
           </div>
-          {featuredLoading && featuredBatch.length === 0 ? (
+          {featuredLoading && featuredDisplayRows.length === 0 ? (
             <div className="px-3 py-8 text-center text-xs text-zinc-500">
               <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin text-brand" />
               Loading featured salons…
             </div>
-          ) : featuredBatch.length === 0 ? (
+          ) : featuredDisplayRows.length === 0 ? (
             <p className="px-3 py-6 text-center text-xs text-zinc-500">
               {hasFeaturedFilters
-                ? "No featured salons match this search."
+                ? "No listed salons match this search."
                 : "No featured salons yet. Search listed salons below and click Feature to add them to this batch."}
             </p>
           ) : (
@@ -565,7 +573,7 @@ function ListingQueueContent({
                 </tr>
               </thead>
               <tbody>
-                {featuredBatch.map((row) => {
+                {featuredDisplayRows.map((row) => {
                   const location = [row.city, row.district].filter(Boolean).join(", ") || row.province || "—";
                   const status = featuredListingStatus(row);
                   return (
@@ -582,8 +590,14 @@ function ListingQueueContent({
                               : "border-none bg-zinc-200 text-zinc-800"
                           )}
                         >
-                          {status === "live" ? "Featured" : status === "scheduled" ? "Scheduled" : "Expired"}
-                          {formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)
+                          {!row.is_featured
+                            ? "Not featured"
+                            : status === "live"
+                              ? "Featured"
+                              : status === "scheduled"
+                                ? "Scheduled"
+                                : "Expired"}
+                          {row.is_featured && formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)
                             ? ` · ${formatFeaturedDateRange(row.featured_starts_at, row.featured_ends_at)}`
                             : ""}
                         </Badge>
@@ -601,25 +615,48 @@ function ListingQueueContent({
                             <Pencil className="mr-0.5 h-3 w-3" />
                             Edit
                           </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 min-h-7 px-2 text-[10px]"
-                            disabled={busyId !== null}
-                            onClick={() =>
-                              void runAction(row.id, async () => {
-                                const result = await postListingAction("/api/admin/listing-generation/feature", {
+                          {row.is_featured ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 min-h-7 px-2 text-[10px]"
+                              disabled={busyId !== null}
+                              onClick={() =>
+                                void runAction(row.id, async () => {
+                                  const result = await postListingAction("/api/admin/listing-generation/feature", {
+                                    salonId: row.id,
+                                    featured: false,
+                                  });
+                                  if (result.success) toast.success(`Removed ${row.name} from the featured batch.`);
+                                  return result;
+                                })
+                              }
+                            >
+                              Remove
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 min-h-7 px-2 text-[10px] font-bold"
+                              disabled={busyId !== null}
+                              onClick={() => {
+                                const today = todayInFeaturedTimezone();
+                                setFeatureEditor({
                                   salonId: row.id,
-                                  featured: false,
+                                  name: row.name,
+                                  start: batchStart || today,
+                                  end: batchEnd || addIsoDays(today, 13),
+                                  isFeatured: false,
                                 });
-                                if (result.success) toast.success(`Removed ${row.name} from the featured batch.`);
-                                return result;
-                              })
-                            }
-                          >
-                            Remove
-                          </Button>
+                              }}
+                            >
+                              <Star className="mr-0.5 h-3 w-3" />
+                              Feature
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -629,9 +666,10 @@ function ListingQueueContent({
             </table>
             <div className="flex flex-col gap-2 border-t border-amber-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[11px] font-medium text-zinc-500">
-                Showing {featuredBatch.length} of {featuredTotal} featured salons
+                Showing {featuredDisplayRows.length} of {featuredResultTotal}{" "}
+                {hasFeaturedFilters ? "matching listed salons" : "featured salons"}
               </p>
-              {featuredBatch.length < featuredTotal ? (
+              {featuredDisplayRows.length < featuredResultTotal ? (
                 <Button
                   type="button"
                   variant="outline"

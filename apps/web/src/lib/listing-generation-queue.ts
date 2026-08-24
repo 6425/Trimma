@@ -269,9 +269,12 @@ export async function loadFeaturedListingGenerationPage(input: {
 }): Promise<{ rows: ListingQueueRow[]; total: number; offset: number; pageSize: number }> {
   const offset = Math.max(0, Math.floor(Number(input.offset) || 0));
   const filter = queueSearchFilter(input);
+  const isFindingListedSalon = Boolean(
+    input.q?.trim() || input.district?.trim() || input.category?.trim()
+  );
   const baseParts = [
     `onboarding_status=eq.${encodeURIComponent(LISTING_ONBOARDING_STATUS.PUBLISHED)}`,
-    "is_featured=eq.true",
+    isFindingListedSalon ? null : "is_featured=eq.true",
     filter ? `and=${encodeURIComponent(filter)}` : null,
   ].filter(Boolean);
   const loadRows = async (select: string) => {
