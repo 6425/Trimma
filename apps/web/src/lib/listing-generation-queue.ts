@@ -61,6 +61,36 @@ function sanitizeIlikeTerm(value: string): string {
   return value.replace(/[%_,.()"'\\]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function queueTextSearchClause(value: string): string | null {
+  const q = sanitizeIlikeTerm(value);
+  if (!q) return null;
+
+  const fields = ["name", "slug", "category", "city", "district", "province", "address"];
+  const patterns = new Set([q]);
+  const words = q.split(/\s+/).filter(Boolean);
+  if (words.length > 1) patterns.add(words.join("%"));
+
+  const slug = q
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const comparisons = [...patterns].flatMap((pattern) =>
+    fields.map((field) => `${field}.ilike.%${pattern}%`)
+  );
+  if (slug && slug !== q) comparisons.push(`slug.ilike.%${slug}%`);
+
+  // For longer searches, also tolerate punctuation inside a word (for example
+  // "Shangrila" versus "Shangri-La") while keeping the match name-specific.
+  const compact = q.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (compact.length >= 8) {
+    const punctuationFlexible = compact.split("").join("%");
+    comparisons.push(`name.ilike.%${punctuationFlexible}%`, `slug.ilike.%${punctuationFlexible}%`);
+  }
+
+  return `or(${comparisons.join(",")})`;
+}
+
 function districtSearchLabel(districtSlug: string): string {
   const match = getDistrictFilterOptions().find((district) => district.value === districtSlug);
   return match?.label || districtSlug.replace(/-/g, " ");
@@ -154,13 +184,11 @@ function queueTabScope(tab: "pending" | "listed"): string {
 }
 
 function queueSearchFilter(input: { q?: string; district?: string; category?: string }): string | null {
-  const q = sanitizeIlikeTerm(input.q || "");
+  const textSearch = queueTextSearchClause(input.q || "");
   const district = sanitizeIlikeTerm(districtSearchLabel(input.district || ""));
   const category = sanitizeIlikeTerm(input.category || "");
   const clauses: string[] = [];
-  if (q) {
-    clauses.push(`or(name.ilike.%${q}%,slug.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%,address.ilike.%${q}%)`);
-  }
+  if (textSearch) clauses.push(textSearch);
   if (district) {
     clauses.push(`or(district.ilike.%${district}%,city.ilike.%${district}%,address.ilike.%${district}%)`);
   }
