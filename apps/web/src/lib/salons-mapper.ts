@@ -2,6 +2,7 @@ import { optimizeListingImageUrl } from "@/lib/optimize-image-url";
 import { isListingFeaturedNow } from "@/lib/listing-featured";
 import { computeSalonListingAvailability } from "@/lib/salon-operating-hours";
 import { isSalonClaimable } from "@/lib/salon-public-listing";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 
 export function mapVerifiedSalonListingStats(salon: {
   rating?: number | string | null;
@@ -28,12 +29,12 @@ export function getSalonListingImage(
   fallback: string
 ): string {
   const featured = Array.isArray(salon.featured_images)
-    ? salon.featured_images.filter(
-        (item): item is string => typeof item === "string" && item.trim().length > 0
-      )
+    ? salon.featured_images
+        .map(normalizePublicImageUrl)
+        .filter((item): item is string => Boolean(item))
     : [];
-  const cover = (salon.cover_url || "").trim();
-  const hero = (salon.hero_url || "").trim();
+  const cover = normalizePublicImageUrl(salon.cover_url) || "";
+  const hero = normalizePublicImageUrl(salon.hero_url) || "";
 
   if (!cover && !hero && featured[0]) return featured[0];
   if (!cover && !hero) return fallback;

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ListingQueueRow } from "@/lib/listing-generation-queue";
 import type { PublicCategory } from "@/lib/public-categories";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 export type ListingEditValues = {
@@ -58,13 +59,7 @@ const SELECT_CLASS =
 
 function isValidPublicImageUrl(value: string): boolean {
   if (!value.trim()) return true;
-
-  try {
-    const parsed = new URL(value.trim());
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
+  return normalizePublicImageUrl(value) !== null;
 }
 
 export function ListingEditDialog({

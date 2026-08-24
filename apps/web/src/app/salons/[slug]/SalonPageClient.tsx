@@ -53,6 +53,7 @@ import { SalonPublicQrSection } from "../../../components/marketplace/SalonPubli
 import { SimilarBusinessesSection } from "../../../components/marketplace/SimilarBusinessesSection";
 import { StickyBookingSidebar } from "../../../components/marketplace/StickyBookingSidebar";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 import { PromotionPackageIncludes } from "../../../components/marketplace/PromotionPackageIncludes";
 import { buildSalonCatalogShareUrl, buildSalonPublicPageUrl, readSalonSocialLinks } from "@/lib/salon-public-social";
 import { SALON_HERO_IMAGE_ASPECT_CLASS } from "@/lib/salon-hero-image";
@@ -606,29 +607,14 @@ export default function SalonPage({
 
 
 
-  const normalizeGalleryImageUrl = (value: unknown): string | null => {
-    if (typeof value !== "string") return null;
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    if (trimmed.startsWith("/")) return trimmed;
-
-    try {
-      const parsed = new URL(trimmed);
-      return parsed.protocol === "http:" || parsed.protocol === "https:"
-        ? parsed.toString()
-        : null;
-    } catch {
-      return null;
-    }
-  };
   const featuredImages = Array.isArray(salon.featured_images)
     ? salon.featured_images
-        .map(normalizeGalleryImageUrl)
+        .map(normalizePublicImageUrl)
         .filter((item: string | null): item is string => Boolean(item))
     : [];
   const heroImageUrl =
-    normalizeGalleryImageUrl(salon.hero_url) ||
-    normalizeGalleryImageUrl(salon.cover_url) ||
+    normalizePublicImageUrl(salon.hero_url) ||
+    normalizePublicImageUrl(salon.cover_url) ||
     null;
   const logoImage =
     typeof salon.logo_url === "string" && salon.logo_url.trim() ? salon.logo_url.trim() : null;

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { SalonFavoriteButton } from "./SalonFavoriteButton";
 import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 
 export interface SalonCardInternalProps {
   key?: string;
@@ -42,18 +43,7 @@ function toOriginalSupabaseUrl(url: string): string | null {
 }
 
 function normalizeSalonImageUrl(value: string | null | undefined): string {
-  const trimmed = value?.trim();
-  if (!trimmed) return FALLBACK_SALON_IMAGE;
-  if (trimmed.startsWith("/")) return trimmed;
-
-  try {
-    const parsed = new URL(trimmed);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.toString()
-      : FALLBACK_SALON_IMAGE;
-  } catch {
-    return FALLBACK_SALON_IMAGE;
-  }
+  return normalizePublicImageUrl(value) || FALLBACK_SALON_IMAGE;
 }
 
 function ResilientSalonCardImage({

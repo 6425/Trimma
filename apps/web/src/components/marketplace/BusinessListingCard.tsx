@@ -7,24 +7,14 @@ import { Star, Phone, MapPin, Globe, Facebook, Instagram } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
 
 function normalizeListingImageUrl(value: string | null | undefined): string {
-  const trimmed = value?.trim();
-  if (!trimmed) return FALLBACK_IMAGE;
-  if (trimmed.startsWith("/")) return trimmed;
-
-  try {
-    const parsed = new URL(trimmed);
-    return parsed.protocol === "http:" || parsed.protocol === "https:"
-      ? parsed.toString()
-      : FALLBACK_IMAGE;
-  } catch {
-    return FALLBACK_IMAGE;
-  }
+  return normalizePublicImageUrl(value) || FALLBACK_IMAGE;
 }
 
 function toOriginalSupabaseUrl(url: string): string | null {
