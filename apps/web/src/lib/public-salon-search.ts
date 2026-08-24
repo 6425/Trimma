@@ -296,6 +296,10 @@ function filterBusinessListingRows(
       .filter(isLeadGenerationSource);
   }
 
+  if (params.q?.trim()) {
+    rows = rows.filter((row) => listingRowMatchesQuery(row, params.q || ""));
+  }
+
   const category = params.category || "";
   const categoryName = params.categoryName || "";
   if (category.replace(/-/g, " ").trim()) {
@@ -357,18 +361,60 @@ function sanitizeIlikeNeedle(value: string): string {
   return value.replace(/[%_,()"]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function normalizeSearchWords(value: unknown): string {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizeSearchCompact(value: unknown): string {
+  return normalizeSearchWords(value).replace(/\s+/g, "");
+}
+
+function textMatchesNormalizedQuery(haystack: string, q: string): boolean {
+  const queryWords = normalizeSearchWords(q).split(" ").filter(Boolean);
+  if (!queryWords.length) return false;
+
+  const normalizedHaystack = normalizeSearchWords(haystack);
+  const compactHaystack = normalizeSearchCompact(haystack);
+  const compactQuery = queryWords.join("");
+  return (
+    compactHaystack.includes(compactQuery) ||
+    queryWords.every((word) => normalizedHaystack.includes(word))
+  );
+}
+
 function textSearchOrFilter(q: string): string {
   const safe = sanitizeIlikeNeedle(q);
   if (!safe) return "";
-  return `name.ilike.%${safe}%,slug.ilike.%${safe}%,category.ilike.%${safe}%`;
+  const words = normalizeSearchWords(safe).split(" ").filter(Boolean);
+  const slugNeedle = words.join("-");
+  const anchor = words[0]?.slice(0, 5) || "";
+  const filters = new Set([
+    `name.ilike.%${safe}%`,
+    `slug.ilike.%${safe}%`,
+    `category.ilike.%${safe}%`,
+  ]);
+  if (slugNeedle) filters.add(`slug.ilike.%${slugNeedle}%`);
+  if (anchor.length >= 3) {
+    filters.add(`name.ilike.%${anchor}%`);
+    filters.add(`slug.ilike.%${anchor}%`);
+    filters.add(`category.ilike.%${anchor}%`);
+  }
+  return [...filters].join(",");
 }
 
 function listingNameMatchesQuery(row: Record<string, unknown>, q: string): boolean {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return false;
-  const name = String(row.name || "").toLowerCase();
-  const slug = String(row.slug || "").replace(/-/g, " ").toLowerCase();
-  return name.includes(needle) || slug.includes(needle);
+  return textMatchesNormalizedQuery(`${row.name || ""} ${row.slug || ""}`, q);
+}
+
+function listingRowMatchesQuery(row: Record<string, unknown>, q: string): boolean {
+  return textMatchesNormalizedQuery(
+    `${row.name || ""} ${row.slug || ""} ${row.category || ""}`,
+    q
+  );
 }
 
 function rowAllowedForLocationSearch(
