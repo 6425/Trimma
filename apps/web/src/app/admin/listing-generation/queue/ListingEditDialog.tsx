@@ -56,6 +56,17 @@ const INPUT_CLASS = "h-11 rounded-xl border-zinc-200 bg-zinc-50 text-xs";
 const SELECT_CLASS =
   "h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs font-medium text-zinc-800 disabled:opacity-40";
 
+function isValidPublicImageUrl(value: string): boolean {
+  if (!value.trim()) return true;
+
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function ListingEditDialog({
   row,
   categories,
@@ -109,6 +120,10 @@ export function ListingEditDialog({
     }
     if (values.reviewCount && (!Number.isSafeInteger(Number(values.reviewCount)) || Number(values.reviewCount) < 0)) {
       toast.error("Google reviews must be a non-negative whole number.");
+      return;
+    }
+    if (!isValidPublicImageUrl(values.logoUrl) || !isValidPublicImageUrl(values.heroUrl)) {
+      toast.error("Logo and hero images must use a complete http:// or https:// image URL.");
       return;
     }
     void onSave(values);
@@ -251,6 +266,7 @@ export function ListingEditDialog({
             <div className="space-y-1.5 md:col-span-2">
               <label htmlFor="listing-edit-hero" className={LABEL_CLASS}>Hero image URL</label>
               <Input id="listing-edit-hero" type="url" value={values.heroUrl} onChange={(event) => update({ heroUrl: event.target.value })} placeholder="https://…" className={INPUT_CLASS} />
+              <p className="text-[11px] text-zinc-400">Use a direct, publicly accessible image URL—not a webpage or private share link.</p>
             </div>
 
             <div className="space-y-1.5 md:col-span-3">

@@ -41,6 +41,54 @@ function toOriginalSupabaseUrl(url: string): string | null {
   return `${match[1]}/storage/v1/object/public/${match[2]}`;
 }
 
+function normalizeSalonImageUrl(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return FALLBACK_SALON_IMAGE;
+  if (trimmed.startsWith("/")) return trimmed;
+
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : FALLBACK_SALON_IMAGE;
+  } catch {
+    return FALLBACK_SALON_IMAGE;
+  }
+}
+
+function ResilientSalonCardImage({
+  source,
+  alt,
+  priority,
+}: {
+  source: string;
+  alt: string;
+  priority: boolean;
+}) {
+  const [imageSrc, setImageSrc] = useState(source);
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      fill
+      priority={priority}
+      sizes="(max-width: 1024px) 50vw, (max-width: 1200px) 33vw, 25vw"
+      className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
+      onError={() => {
+        const original = toOriginalSupabaseUrl(imageSrc);
+        if (original && imageSrc.includes("/render/image/")) {
+          setImageSrc(original);
+          return;
+        }
+        if (imageSrc !== FALLBACK_SALON_IMAGE) {
+          setImageSrc(FALLBACK_SALON_IMAGE);
+        }
+      }}
+    />
+  );
+}
+
 export function SalonCard(props: SalonCardInternalProps) {
   const { salon, priority = false } = props;
   const router = useRouter();
@@ -48,8 +96,7 @@ export function SalonCard(props: SalonCardInternalProps) {
   const isVerified = isSalonVerified(salon.isVerified);
   const showClaimCta = Boolean(salon.isClaimable && !isVerified);
   const claimUrl = buildSalonClaimLoginUrl(salon.id);
-  const originalImage = salon.image || FALLBACK_SALON_IMAGE;
-  const [imageSrc, setImageSrc] = useState(originalImage);
+  const originalImage = normalizeSalonImageUrl(salon.image);
 
   const prefetchSalon = () => {
     router.prefetch(linkTarget);
@@ -67,23 +114,11 @@ export function SalonCard(props: SalonCardInternalProps) {
     >
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100">
         <Link href={linkTarget} prefetch aria-label={salon.name} className="absolute inset-0 z-0" onFocus={prefetchSalon}>
-          <Image
-            src={imageSrc}
+          <ResilientSalonCardImage
+            key={originalImage}
+            source={originalImage}
             alt={salon.name}
-            fill
             priority={priority}
-            sizes="(max-width: 1024px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
-            onError={() => {
-              const original = toOriginalSupabaseUrl(imageSrc);
-              if (original && imageSrc.includes("/render/image/")) {
-                setImageSrc(original);
-                return;
-              }
-              if (imageSrc !== FALLBACK_SALON_IMAGE) {
-                setImageSrc(FALLBACK_SALON_IMAGE);
-              }
-            }}
           />
         </Link>
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 to-transparent pointer-events-none" />

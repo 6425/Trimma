@@ -173,6 +173,7 @@ export default function SalonPage({
   const [initialBookingService, setInitialBookingService] = useState<string | undefined>();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [galleryLightboxIndex, setGalleryLightboxIndex] = useState<number | null>(null);
+  const [failedGalleryImageUrls, setFailedGalleryImageUrls] = useState<string[]>([]);
 
   // INLINE SCHEDULER STATES
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -605,12 +606,29 @@ export default function SalonPage({
 
 
 
+  const normalizeGalleryImageUrl = (value: unknown): string | null => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("/")) return trimmed;
+
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === "http:" || parsed.protocol === "https:"
+        ? parsed.toString()
+        : null;
+    } catch {
+      return null;
+    }
+  };
   const featuredImages = Array.isArray(salon.featured_images)
-    ? salon.featured_images.filter((item: unknown) => typeof item === "string" && item.trim())
+    ? salon.featured_images
+        .map(normalizeGalleryImageUrl)
+        .filter((item: string | null): item is string => Boolean(item))
     : [];
   const heroImageUrl =
-    (typeof salon.hero_url === "string" && salon.hero_url.trim()) ||
-    (typeof salon.cover_url === "string" && salon.cover_url.trim()) ||
+    normalizeGalleryImageUrl(salon.hero_url) ||
+    normalizeGalleryImageUrl(salon.cover_url) ||
     null;
   const logoImage =
     typeof salon.logo_url === "string" && salon.logo_url.trim() ? salon.logo_url.trim() : null;
@@ -633,9 +651,14 @@ export default function SalonPage({
       [
         ...(heroImageUrl ? [heroImageUrl] : []),
         ...featuredImages,
-      ].filter((url): url is string => Boolean(url && url.trim()))
+      ].filter((url): url is string => Boolean(url) && !failedGalleryImageUrls.includes(url))
     ),
   ];
+  const markGalleryImageFailed = (imageUrl: string) => {
+    setFailedGalleryImageUrls((current) =>
+      current.includes(imageUrl) ? current : [...current, imageUrl]
+    );
+  };
   const HERO_MOSAIC_IMAGE_COUNT = 6;
   const heroThumbImages = galleryImages.slice(3, HERO_MOSAIC_IMAGE_COUNT);
   const extraGalleryCount = Math.max(0, galleryImages.length - HERO_MOSAIC_IMAGE_COUNT);
@@ -815,6 +838,7 @@ export default function SalonPage({
                         priority
                         sizes="(max-width: 1280px) 66vw, 720px"
                         className="object-cover"
+                        onError={() => markGalleryImageFailed(galleryImages[0])}
                       />
                     </button>
                     {galleryImages[1] ? (
@@ -833,6 +857,7 @@ export default function SalonPage({
                           fill
                           sizes="(max-width: 1280px) 33vw, 360px"
                           className="object-cover"
+                          onError={() => markGalleryImageFailed(galleryImages[1])}
                         />
                       </button>
                     ) : null}
@@ -848,6 +873,7 @@ export default function SalonPage({
                           fill
                           sizes="(max-width: 1280px) 33vw, 360px"
                           className="object-cover"
+                          onError={() => markGalleryImageFailed(galleryImages[2])}
                         />
                       </button>
                     ) : null}
@@ -875,6 +901,7 @@ export default function SalonPage({
                               fill
                               sizes="(max-width: 1280px) 33vw, 240px"
                               className="object-cover"
+                              onError={() => markGalleryImageFailed(imgUrl)}
                             />
                             {isLast ? (
                               <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
@@ -1668,6 +1695,10 @@ export default function SalonPage({
             height={1200}
             className="max-h-[85vh] max-w-full w-auto h-auto object-contain rounded-lg"
             onClick={(event) => event.stopPropagation()}
+            onError={() => {
+              markGalleryImageFailed(galleryImages[galleryLightboxIndex]);
+              setGalleryLightboxIndex(null);
+            }}
           />
 
           {galleryLightboxIndex < galleryImages.length - 1 ? (
