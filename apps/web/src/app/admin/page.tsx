@@ -31,7 +31,6 @@ export default function AdminDashboard() {
   });
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authorized] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [diagResults, setDiagResults] = useState<any[]>([]);
@@ -39,19 +38,27 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
+      setLoading(true);
       setLoadWarning(null);
       let result: Awaited<ReturnType<typeof fetchAdminDashboard>> | Awaited<
         ReturnType<typeof fetchAdminDashboardClient>
       >;
 
+      const loadClientDashboard = () =>
+        withTimeout(
+          fetchAdminDashboardClient(),
+          8000,
+          "Dashboard data fallback timed out."
+        );
+
       try {
         result = await withTimeout(
           fetchAdminDashboard(),
-          12000,
+          8000,
           "Server dashboard load timed out."
         );
       } catch {
-        result = await fetchAdminDashboardClient();
+        result = await loadClientDashboard();
         setLoadWarning(
           "Loaded in limited mode (server actions unavailable). Add SUPABASE_SERVICE_ROLE_KEY on Vercel for full admin data."
         );
@@ -67,7 +74,7 @@ export default function AdminDashboard() {
           // Stay on the admin page — a slow/failed server check must not force re-login.
         }
 
-        result = await fetchAdminDashboardClient();
+        result = await loadClientDashboard();
         setLoadWarning(
           authLike
             ? "Loaded in limited mode (server admin API unavailable). Add SUPABASE_SERVICE_ROLE_KEY on Vercel preview."
@@ -153,6 +160,9 @@ export default function AdminDashboard() {
       setActivity(feed.slice(0, 8));
     } catch (err) {
       console.error("Error fetching stats:", err);
+      setLoadWarning(
+        "Dashboard metrics could not be refreshed. The admin tools are still available; select Retry to load the metrics again."
+      );
       toast.error(err instanceof Error ? err.message : "Failed to load dashboard");
     } finally {
       setLoading(false);
@@ -372,20 +382,28 @@ export default function AdminDashboard() {
   };
 
 
-  if (loading || !authorized) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh]">
-         <Loader2 className="w-10 h-10 animate-spin text-brand mb-4" />
-         <p className="text-zinc-500 font-medium">Verifying administrator credentials…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-screen-2xl mx-auto">
+      {loading ? (
+        <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+          <span>Admin tools are ready. Updating dashboard metrics in the background…</span>
+        </div>
+      ) : null}
       {loadWarning ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-          {loadWarning}
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 sm:flex-row sm:items-center sm:justify-between">
+          <span>{loadWarning}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            onClick={() => void fetchStats()}
+            className="shrink-0 border-amber-300 bg-white text-amber-900 hover:bg-amber-100"
+          >
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            Retry
+          </Button>
         </div>
       ) : null}
       {/* HEADER */}
@@ -396,7 +414,8 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <Badge className="bg-amber-100 text-amber-700 border-none px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Systems Operational
+            <span className={`w-2 h-2 rounded-full ${loading ? "bg-blue-500 animate-pulse" : "bg-emerald-500"}`}></span>
+            {loading ? "Updating Metrics" : "Systems Operational"}
           </Badge>
         </div>
       </div>
@@ -410,11 +429,13 @@ export default function AdminDashboard() {
               <Globe className="w-6 h-6" />
             </div>
             <Badge className="bg-emerald-50 text-emerald-600 border-none">
-              {stats.users.toLocaleString()} users
+              {loading ? "…" : `${stats.users.toLocaleString()} users`}
             </Badge>
           </div>
           <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Platform MRR</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">LKR {formatLkr(stats.platformMrr)}</p>
+          <p className={`relative z-10 text-3xl font-black ${loading ? "animate-pulse text-zinc-300" : "text-zinc-900"}`}>
+            {loading ? "—" : `LKR ${formatLkr(stats.platformMrr)}`}
+          </p>
         </div>
 
         <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
@@ -424,11 +445,13 @@ export default function AdminDashboard() {
               <Building2 className="w-6 h-6" />
             </div>
             <Badge className="bg-emerald-50 text-emerald-600 border-none">
-              +{stats.salonsThisWeek} this week
+              {loading ? "…" : `+${stats.salonsThisWeek} this week`}
             </Badge>
           </div>
           <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Active Fleet</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">{stats.salons.toLocaleString()}</p>
+          <p className={`relative z-10 text-3xl font-black ${loading ? "animate-pulse text-zinc-300" : "text-zinc-900"}`}>
+            {loading ? "—" : stats.salons.toLocaleString()}
+          </p>
         </div>
 
         <div className="bg-white rounded-3xl p-6 border border-zinc-100 shadow-sm flex flex-col relative overflow-hidden group">
@@ -438,11 +461,13 @@ export default function AdminDashboard() {
               <Activity className="w-6 h-6" />
             </div>
             <Badge className="bg-zinc-100 text-zinc-600 border-none">
-              {stats.bookings.toLocaleString()} bookings
+              {loading ? "…" : `${stats.bookings.toLocaleString()} bookings`}
             </Badge>
           </div>
           <h3 className="text-zinc-500 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Booking GMV</h3>
-          <p className="text-3xl font-black text-zinc-900 relative z-10">LKR {formatLkr(stats.bookingGmv)}</p>
+          <p className={`relative z-10 text-3xl font-black ${loading ? "animate-pulse text-zinc-300" : "text-zinc-900"}`}>
+            {loading ? "—" : `LKR ${formatLkr(stats.bookingGmv)}`}
+          </p>
         </div>
 
         <div className="bg-gradient-to-br from-[#1A1C29] to-[#0A0B10] rounded-3xl p-6 text-white shadow-2xl relative overflow-hidden group trimma-dark-surface">
@@ -451,14 +476,16 @@ export default function AdminDashboard() {
             <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
               <CreditCard className="w-6 h-6" />
             </div>
-            {stats.pendingApprovals > 0 ? (
+            {!loading && stats.pendingApprovals > 0 ? (
               <Badge className="bg-amber-500 text-amber-950 font-black border-none px-2 py-0.5 text-[10px] uppercase tracking-widest">
                 Action Req
               </Badge>
             ) : null}
           </div>
           <h3 className="text-zinc-400 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Pending Approvals</h3>
-          <p className="text-3xl font-black text-white relative z-10">{stats.pendingApprovals.toLocaleString()}</p>
+          <p className={`relative z-10 text-3xl font-black ${loading ? "animate-pulse text-zinc-500" : "text-white"}`}>
+            {loading ? "—" : stats.pendingApprovals.toLocaleString()}
+          </p>
         </div>
       </div>
 
@@ -569,7 +596,19 @@ export default function AdminDashboard() {
             </div>
 
             <div className="relative z-10 space-y-5">
-              {activity.length === 0 ? (
+              {loading ? (
+                <div className="space-y-4" aria-label="Loading recent platform activity">
+                  {[0, 1, 2].map((item) => (
+                    <div key={item} className="flex animate-pulse gap-4">
+                      <div className="h-8 w-8 shrink-0 rounded-full bg-zinc-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-1/2 rounded bg-zinc-200" />
+                        <div className="h-2.5 w-full rounded bg-zinc-100" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : activity.length === 0 ? (
                 <p className="text-sm text-zinc-500">No recent platform activity yet.</p>
               ) : (
                 activity.map((item) => (
