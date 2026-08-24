@@ -38,6 +38,7 @@ export type ListingQueueRow = {
 export type ListingQueuePayload = {
   rows: ListingQueueRow[];
   featuredRows: ListingQueueRow[];
+  featuredCount: number;
   pendingCount: number;
   listedCount: number;
 };
@@ -53,7 +54,8 @@ const QUEUE_SELECT_BASE =
   "id,name,slug,category,province,district,city,address,phone,website,map_url,place_id,latitude,longitude,logo_url,hero_url,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
 const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
-export const LISTING_QUEUE_PAGE_SIZE = 30;
+export const LISTING_QUEUE_PAGE_SIZE = 40;
+export const FEATURED_LISTING_PAGE_SIZE = 40;
 
 function sanitizeIlikeTerm(value: string): string {
   return value.replace(/[%_,.()"'\\]/g, " ").replace(/\s+/g, " ").trim();
@@ -157,7 +159,7 @@ function queueSearchFilter(input: { q?: string; district?: string; category?: st
   const category = sanitizeIlikeTerm(input.category || "");
   const clauses: string[] = [];
   if (q) {
-    clauses.push(`or(name.ilike.%${q}%,slug.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,address.ilike.%${q}%)`);
+    clauses.push(`or(name.ilike.%${q}%,slug.ilike.%${q}%,category.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%,province.ilike.%${q}%,address.ilike.%${q}%)`);
   }
   if (district) {
     clauses.push(`or(district.ilike.%${district}%,city.ilike.%${district}%,address.ilike.%${district}%)`);
@@ -231,36 +233,66 @@ export async function searchListingGenerationQueue(input: {
   return pageResult.rows;
 }
 
-async function loadFeaturedListedRows(select = QUEUE_SELECT): Promise<ListingQueueRow[]> {
-  const qs = [
-    `select=${encodeURIComponent(select)}`,
+export async function loadFeaturedListingGenerationPage(input: {
+  offset?: number;
+  q?: string;
+  district?: string;
+  category?: string;
+}): Promise<{ rows: ListingQueueRow[]; total: number; offset: number; pageSize: number }> {
+  const offset = Math.max(0, Math.floor(Number(input.offset) || 0));
+  const filter = queueSearchFilter(input);
+  const baseParts = [
     `onboarding_status=eq.${encodeURIComponent(LISTING_ONBOARDING_STATUS.PUBLISHED)}`,
     "is_featured=eq.true",
-    "order=name.asc",
-    `limit=${LISTING_QUEUE_PAGE_SIZE}`,
-  ];
-  try {
-    return mapQueueRows(asRecordArray(await restGet(`salons?${qs.join("&")}`)));
-  } catch (error) {
-    if (select !== QUEUE_SELECT_BASE) {
-      return loadFeaturedListedRows(QUEUE_SELECT_BASE);
-    }
-    throw error;
-  }
+    filter ? `and=${encodeURIComponent(filter)}` : null,
+  ].filter(Boolean);
+  const loadRows = async (select: string) => {
+    const query = [
+      `select=${encodeURIComponent(select)}`,
+      ...baseParts,
+      "order=name.asc",
+      `limit=${FEATURED_LISTING_PAGE_SIZE}`,
+      `offset=${offset}`,
+    ].join("&");
+    return mapQueueRows(asRecordArray(await restGet(`salons?${query}`)));
+  };
+  const { url, serviceRoleKey } = getSupabaseServerEnv();
+  const countQuery = ["select=id", ...baseParts].join("&");
+  const [rows, countResponse] = await Promise.all([
+    loadRows(QUEUE_SELECT).catch(() => loadRows(QUEUE_SELECT_BASE)),
+    fetch(`${url}/rest/v1/salons?${countQuery}`, {
+      method: "HEAD",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        Prefer: "count=exact",
+      },
+      cache: "no-store",
+    }),
+  ]);
+  if (!countResponse.ok) throw new Error(`REST ${countResponse.status}: featured listing count failed`);
+  const total = Number((countResponse.headers.get("content-range") || "").split("/")[1]);
+  return {
+    rows,
+    total: Number.isFinite(total) ? total : 0,
+    offset,
+    pageSize: FEATURED_LISTING_PAGE_SIZE,
+  };
 }
 
 export async function loadListingGenerationQueue(
   _supabase?: SupabaseClient
 ): Promise<ListingQueuePayload> {
-  const [pendingPage, listedPage, featuredRows] = await Promise.all([
+  const [pendingPage, listedPage, featuredPage] = await Promise.all([
     loadListingGenerationQueuePage({ tab: "pending", page: 1 }),
     loadListingGenerationQueuePage({ tab: "listed", page: 1 }),
-    loadFeaturedListedRows(),
+    loadFeaturedListingGenerationPage({ offset: 0 }),
   ]);
 
   return {
     rows: sortQueueRowsNewestFirst([...pendingPage.rows, ...listedPage.rows]),
-    featuredRows,
+    featuredRows: featuredPage.rows,
+    featuredCount: featuredPage.total,
     pendingCount: pendingPage.total,
     listedCount: listedPage.total,
   };

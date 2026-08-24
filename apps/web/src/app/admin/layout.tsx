@@ -16,24 +16,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-function readRoleFromCookie(): string | null {
-  if (typeof document === "undefined") return null;
-  const roleFromCookie = document.cookie.match(/(?:^|;\s*)user-role=([^;]+)/)?.[1];
-  if (!roleFromCookie) return null;
-  try {
-    return decodeURIComponent(roleFromCookie);
-  } catch {
-    return roleFromCookie;
-  }
-}
-
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const navigate = useRouter();
-  const [role] = useState<string | null>(() => readRoleFromCookie() || "admin");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [salonName, setSalonName] = useState<string>("My Salon");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -404,17 +391,17 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
             {/* Profile */}
             <Link
-              href={role === 'admin' ? '/admin/profile' : '/dashboard/profile'}
+              href="/admin/profile"
               className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
             >
               <div className="hidden lg:block text-right">
-                <div className="trimma-salon-name text-sm font-semibold text-zinc-900">{role === 'admin' ? 'Platform Admin' : salonName}</div>
-                <div className="text-xs text-zinc-500">{role === 'admin' ? 'Master Access' : 'Business Plan'}</div>
+                <div className="trimma-salon-name text-sm font-semibold text-zinc-900">Platform Admin</div>
+                <div className="text-xs text-zinc-500">Master Access</div>
               </div>
               <Avatar className="h-8 w-8 border-2 border-[#ffde5a]/30">
-                <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'admin' ? 'Admin' : 'Salon'}`} />
+                <AvatarImage src={avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin"} />
                 <AvatarFallback className="bg-[#ffde5a] text-black text-xs font-bold">
-                  {role === 'admin' ? 'AD' : 'SA'}
+                  AD
                 </AvatarFallback>
               </Avatar>
             </Link>

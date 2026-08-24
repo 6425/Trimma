@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, ChevronRight, Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil } from "lucide-react";
+import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -17,7 +17,6 @@ import {
   todayInFeaturedTimezone,
 } from "@/lib/listing-featured";
 import { Input } from "@/components/ui/input";
-import { GRID_PAGE_SIZE } from "@/components/ui/GridPagination";
 import { fetchAdminSalonRequests, type SalonRequestRow } from "@/app/actions/salon-requests";
 import { ADMIN_LEAD_DISCOVERY_CATEGORY_FALLBACKS } from "@/lib/admin-lead-categories";
 import type { ListingQueuePayload, ListingQueueRow } from "@/lib/listing-generation-queue";
@@ -27,6 +26,7 @@ import { buildSalonPublicPath } from "@/lib/salon-public-path";
 import { ListingEditDialog, type ListingEditValues } from "./ListingEditDialog";
 
 const DISTRICT_OPTIONS = getDistrictFilterOptions();
+const LISTING_DISPLAY_SIZE = 40;
 
 function addIsoDays(iso: string, days: number): string {
   const date = new Date(`${iso}T12:00:00`);
@@ -104,6 +104,11 @@ function ListingQueueContent({
     )
   );
   const [featuredRows, setFeaturedRows] = useState<ListingQueueRow[]>(initialQueue.featuredRows || []);
+  const [featuredTotal, setFeaturedTotal] = useState(initialQueue.featuredCount ?? initialQueue.featuredRows.length);
+  const [featuredSearchQuery, setFeaturedSearchQuery] = useState("");
+  const [featuredDistrictSlug, setFeaturedDistrictSlug] = useState("");
+  const [featuredCategoryName, setFeaturedCategoryName] = useState("");
+  const [featuredLoading, setFeaturedLoading] = useState(false);
   const [pendingCount, setPendingCount] = useState(initialQueue.pendingCount);
   const [listedCount, setListedCount] = useState(initialQueue.listedCount);
   const [page, setPage] = useState(1);
@@ -133,8 +138,11 @@ function ListingQueueContent({
     [categories]
   );
   const hasActiveFilters = Boolean(searchQuery.trim() || districtSlug || categoryName);
+  const hasFeaturedFilters = Boolean(
+    featuredSearchQuery.trim() || featuredDistrictSlug || featuredCategoryName
+  );
   const visibleRows = pageRows;
-  const pageCount = Math.max(1, Math.ceil(pageTotal / GRID_PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(pageTotal / LISTING_DISPLAY_SIZE));
   const tableLoading = loading;
   const featuredBatch = useMemo(() => {
     return [...featuredRows]
@@ -167,9 +175,46 @@ function ListingQueueContent({
   const batchEnd = batchDraft?.end || sharedBatchPeriod.end;
   const featuredCount = featuredLiveCount;
 
-  const loadPage = useCallback(async (options?: { showLoading?: boolean; signal?: AbortSignal; page?: number }) => {
+  const loadFeatured = useCallback(async (options?: { offset?: number; append?: boolean; signal?: AbortSignal }) => {
+    const offset = Math.max(0, options?.offset || 0);
+    try {
+      setFeaturedLoading(true);
+      const params = new URLSearchParams({
+        offset: String(offset),
+        q: featuredSearchQuery.trim(),
+        district: featuredDistrictSlug,
+        category: featuredCategoryName,
+      });
+      const response = await fetch(`/api/admin/listing-generation/queue/featured?${params}`, {
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: options?.signal,
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        rows?: ListingQueueRow[];
+        total?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error || `Featured salons failed (${response.status}).`);
+      const nextRows = payload.rows || [];
+      setFeaturedRows((current) => {
+        if (!options?.append) return nextRows;
+        const byId = new Map(current.map((row) => [row.id, row]));
+        nextRows.forEach((row) => byId.set(row.id, row));
+        return [...byId.values()];
+      });
+      setFeaturedTotal(typeof payload.total === "number" ? payload.total : nextRows.length);
+    } catch (error: unknown) {
+      if (options?.signal?.aborted) return;
+      toast.error(error instanceof Error ? error.message : "Failed to load featured salons.");
+    } finally {
+      if (!options?.signal?.aborted) setFeaturedLoading(false);
+    }
+  }, [featuredCategoryName, featuredDistrictSlug, featuredSearchQuery]);
+
+  const loadPage = useCallback(async (options?: { showLoading?: boolean; signal?: AbortSignal; page?: number; append?: boolean }) => {
     const showLoading = options?.showLoading !== false;
-    const requestedPage = options?.page ?? page;
+    const requestedPage = options?.page ?? 1;
     try {
       if (showLoading) setLoading(true);
 
@@ -195,10 +240,17 @@ function ListingQueueContent({
       if (!response.ok) {
         throw new Error(payload.error || `Listing queue failed (${response.status}).`);
       }
-      setPageRows(payload.rows || []);
+      const nextRows = payload.rows || [];
+      setPageRows((current) => {
+        if (!options?.append) return nextRows;
+        const byId = new Map(current.map((row) => [row.id, row]));
+        nextRows.forEach((row) => byId.set(row.id, row));
+        return [...byId.values()];
+      });
+      setPage(requestedPage);
       const total = typeof payload.total === "number" ? payload.total : 0;
       setPageTotal(total);
-      const lastPage = Math.max(1, Math.ceil(total / GRID_PAGE_SIZE));
+      const lastPage = Math.max(1, Math.ceil(total / LISTING_DISPLAY_SIZE));
       if (requestedPage > lastPage) setPage(lastPage);
       if (!hasActiveFilters) {
         if (activeTab === "listed") setListedCount(total);
@@ -211,7 +263,7 @@ function ListingQueueContent({
     } finally {
       if (!options?.signal?.aborted) setLoading(false);
     }
-  }, [activeTab, categoryName, districtSlug, hasActiveFilters, page, searchQuery]);
+  }, [activeTab, categoryName, districtSlug, hasActiveFilters, searchQuery]);
 
   const refreshQueueMetadata = useCallback(async () => {
     const response = await fetch(`/api/admin/listing-generation/queue?t=${Date.now()}`, {
@@ -222,7 +274,7 @@ function ListingQueueContent({
     if (!response.ok) {
       throw new Error(payload.error || `Listing summary failed (${response.status}).`);
     }
-    setFeaturedRows(payload.featuredRows || []);
+    setFeaturedTotal(payload.featuredCount ?? payload.featuredRows?.length ?? 0);
     setPendingCount(payload.pendingCount ?? 0);
     setListedCount(payload.listedCount ?? 0);
     setBatchDraft(null);
@@ -254,12 +306,24 @@ function ListingQueueContent({
     };
   }, [hasActiveFilters, loadPage]);
 
+  useEffect(() => {
+    if (activeTab !== "listed") return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void loadFeatured({ offset: 0, signal: controller.signal });
+    }, featuredSearchQuery.trim() || featuredDistrictSlug || featuredCategoryName ? 250 : 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [activeTab, featuredCategoryName, featuredDistrictSlug, featuredSearchQuery, loadFeatured]);
+
   const runAction = async (salonId: string, action: () => Promise<{ success: boolean; error?: string }>) => {
     try {
       setBusyId(salonId);
       const result = await action();
       if (result.success === false) throw new Error(result.error);
-      await Promise.all([loadPage(), refreshQueueMetadata()]);
+      await Promise.all([loadPage(), refreshQueueMetadata(), loadFeatured({ offset: 0 })]);
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Action failed.");
     } finally {
@@ -383,7 +447,7 @@ function ListingQueueContent({
                 list. Public Featured Beauty Business shows this live batch.
               </p>
               <p className="mt-1 text-[11px] font-medium text-zinc-500">
-                {featuredBatch.length} in batch · {featuredLiveCount} live
+                {featuredTotal} in batch · {featuredBatch.length} shown · {featuredLiveCount} live shown
                 {formatFeaturedDateRange(batchStart, batchEnd) ? ` · ${formatFeaturedDateRange(batchStart, batchEnd)}` : ""}
               </p>
             </div>
@@ -415,7 +479,7 @@ function ListingQueueContent({
                 type="button"
                 variant="default"
                 className="h-11 min-h-11 font-bold"
-                disabled={busyId !== null || featuredBatch.length === 0}
+                disabled={busyId !== null || featuredTotal === 0}
                 onClick={() =>
                   void runAction("__batch__", async () => {
                     if (!isValidFeaturedPeriod(batchStart, batchEnd)) {
@@ -427,8 +491,8 @@ function ListingQueueContent({
                     });
                     if (result.success) {
                       toast.success(
-                        `Featured batch dates saved for ${result.updatedCount ?? featuredBatch.length} salon${
-                          (result.updatedCount ?? featuredBatch.length) === 1 ? "" : "s"
+                        `Featured batch dates saved for ${result.updatedCount ?? featuredTotal} salon${
+                          (result.updatedCount ?? featuredTotal) === 1 ? "" : "s"
                         }.`
                       );
                     }
@@ -440,11 +504,56 @@ function ListingQueueContent({
               </Button>
             </div>
           </div>
-          {featuredBatch.length === 0 ? (
+          <div className="grid gap-2 border-b border-amber-200 bg-white/70 p-3 sm:grid-cols-[minmax(0,1fr)_11rem_12rem]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Input
+                value={featuredSearchQuery}
+                onChange={(event) => setFeaturedSearchQuery(event.target.value)}
+                placeholder="Search by salon name, category, district or town…"
+                className="h-11 min-h-11 rounded-xl bg-white pl-10 text-sm"
+              />
+            </div>
+            <select
+              aria-label="Featured salon district"
+              value={featuredDistrictSlug}
+              onChange={(event) => setFeaturedDistrictSlug(event.target.value)}
+              className={FILTER_SELECT_CLASS}
+            >
+              <option value="">Any district</option>
+              {DISTRICT_OPTIONS.map((district) => (
+                <option key={district.value} value={district.value}>
+                  {district.label}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Featured salon category"
+              value={featuredCategoryName}
+              onChange={(event) => setFeaturedCategoryName(event.target.value)}
+              className={FILTER_SELECT_CLASS}
+            >
+              <option value="">Any category</option>
+              {categoryOptions.map((category) => (
+                <option key={category.slug || category.name} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {featuredLoading && featuredBatch.length === 0 ? (
+            <div className="px-3 py-8 text-center text-xs text-zinc-500">
+              <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin text-brand" />
+              Loading featured salons…
+            </div>
+          ) : featuredBatch.length === 0 ? (
             <p className="px-3 py-6 text-center text-xs text-zinc-500">
-              No featured salons yet. Search listed salons below and click Feature to add them to this batch.
+              {hasFeaturedFilters
+                ? "No featured salons match this search."
+                : "No featured salons yet. Search listed salons below and click Feature to add them to this batch."}
             </p>
           ) : (
+            <>
             <table className="w-full table-fixed text-[11px] leading-tight">
               <thead className="border-b border-amber-200 bg-amber-50 text-left text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                 <tr>
@@ -485,6 +594,17 @@ function ListingQueueContent({
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="h-7 min-h-7 px-2 text-[10px] font-bold"
+                            disabled={busyId !== null}
+                            onClick={() => setListingEditor(row)}
+                          >
+                            <Pencil className="mr-0.5 h-3 w-3" />
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
                             className="h-7 min-h-7 px-2 text-[10px]"
                             disabled={busyId !== null}
                             onClick={() =>
@@ -507,6 +627,24 @@ function ListingQueueContent({
                 })}
               </tbody>
             </table>
+            <div className="flex flex-col gap-2 border-t border-amber-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[11px] font-medium text-zinc-500">
+                Showing {featuredBatch.length} of {featuredTotal} featured salons
+              </p>
+              {featuredBatch.length < featuredTotal ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 min-h-10 font-bold"
+                  disabled={featuredLoading || busyId !== null}
+                  onClick={() => void loadFeatured({ offset: featuredRows.length, append: true })}
+                >
+                  {featuredLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Load 40 more
+                </Button>
+              ) : null}
+            </div>
+            </>
           )}
         </div>
       ) : null}
@@ -517,7 +655,7 @@ function ListingQueueContent({
             <h2 className="text-sm font-bold text-zinc-900">
               {activeTab === "listed" ? "Find a listed business" : "Find a pending business"}
             </h2>
-            <p className="text-[11px] text-zinc-500">Search the complete listing database. Results are returned 30 at a time.</p>
+            <p className="text-[11px] text-zinc-500">Search the complete listing database. Results are returned 40 at a time.</p>
           </div>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_12rem]">
             <div className="relative">
@@ -530,7 +668,7 @@ function ListingQueueContent({
                 }}
                 placeholder={
                   activeTab === "listed"
-                    ? "Search listed salons by name or address…"
+                    ? "Search listed salons by name, category, district or town…"
                     : "Search pending salons by name or address…"
                 }
                 className="h-11 min-h-11 rounded-xl pl-10 text-sm"
@@ -797,20 +935,24 @@ function ListingQueueContent({
         <div className="flex flex-col gap-2 border-t border-zinc-100 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[11px] text-zinc-500">
             {pageTotal > 0
-              ? `Showing ${(page - 1) * GRID_PAGE_SIZE + 1}–${Math.min(page * GRID_PAGE_SIZE, pageTotal)} of ${pageTotal}`
+              ? `Showing ${visibleRows.length} of ${pageTotal}`
               : "Showing 0 results"}
             {hasActiveFilters ? ` matching ${activeTab}` : ` ${activeTab}`} · Pending {pendingCount} · Listed {listedCount}
             {activeTab === "listed" ? ` · Featured live ${featuredCount}` : ""}
           </p>
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" size="sm" disabled={loading || page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="h-9 min-h-9">
-              <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+          {visibleRows.length < pageTotal ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={loading || page >= pageCount}
+              onClick={() => void loadPage({ page: page + 1, append: true })}
+              className="h-9 min-h-9 font-bold"
+            >
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Load 40 more
             </Button>
-            <span className="min-w-20 text-center text-xs font-semibold text-zinc-600">Page {page} of {pageCount}</span>
-            <Button type="button" variant="outline" size="sm" disabled={loading || page >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="h-9 min-h-9">
-              Next <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
+          ) : null}
         </div>
       </div>
 

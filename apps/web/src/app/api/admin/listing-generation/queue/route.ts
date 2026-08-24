@@ -20,6 +20,7 @@ export async function GET() {
       {
         rows: payload.rows,
         featuredRows: payload.featuredRows,
+        featuredCount: payload.featuredCount,
         pendingCount: payload.pendingCount,
         listedCount: payload.listedCount,
       },
