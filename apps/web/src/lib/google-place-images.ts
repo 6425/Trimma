@@ -1,4 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import sharp from "sharp";
+import {
+  SALON_HERO_IMAGE_HEIGHT,
+  SALON_HERO_IMAGE_WIDTH,
+} from "@/lib/salon-hero-image";
 
 /** Public listing gallery cap for Google-sourced discovery photos. */
 export const GOOGLE_PLACE_LISTING_IMAGE_LIMIT = 9;
@@ -56,7 +61,15 @@ export async function downloadGooglePlacePhoto(
     throw new Error(`Failed to download Google photo (${res.status})`);
   }
 
-  return Buffer.from(await res.arrayBuffer());
+  const source = Buffer.from(await res.arrayBuffer());
+  return sharp(source)
+    .rotate()
+    .resize(SALON_HERO_IMAGE_WIDTH, SALON_HERO_IMAGE_HEIGHT, {
+      fit: "cover",
+      position: "attention",
+    })
+    .jpeg({ quality: 86, mozjpeg: true })
+    .toBuffer();
 }
 
 export async function uploadSalonImageBuffer(

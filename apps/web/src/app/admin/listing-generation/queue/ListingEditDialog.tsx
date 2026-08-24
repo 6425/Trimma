@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import type { ListingQueueRow } from "@/lib/listing-generation-queue";
 import type { PublicCategory } from "@/lib/public-categories";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
+import { SALON_HERO_IMAGE_RESOLUTION_LABEL } from "@/lib/salon-hero-image";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 
 export type ListingEditValues = {
@@ -259,9 +260,9 @@ export function ListingEditDialog({
             </div>
 
             <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="listing-edit-hero" className={LABEL_CLASS}>Hero image URL</label>
+              <label htmlFor="listing-edit-hero" className={LABEL_CLASS}>Hero image URL ({SALON_HERO_IMAGE_RESOLUTION_LABEL}, 4:3)</label>
               <Input id="listing-edit-hero" type="url" value={values.heroUrl} onChange={(event) => update({ heroUrl: event.target.value })} placeholder="https://…" className={INPUT_CLASS} />
-              <p className="text-[11px] text-zinc-400">Use a public image URL or a full Google Maps photo URL. Private share links are not supported.</p>
+              <p className="text-[11px] text-zinc-400">Google and uploaded hero photos use the same 800×600 crop as claimed business profiles.</p>
             </div>
 
             <div className="space-y-1.5 md:col-span-3">

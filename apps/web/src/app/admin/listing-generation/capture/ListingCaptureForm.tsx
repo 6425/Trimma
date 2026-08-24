@@ -11,6 +11,7 @@ import type { PublicCategory } from "@/lib/public-categories";
 import type { GlobalServiceSummary } from "@/lib/listing-generation-categories";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { searchListingPlacesInBrowser } from "@/lib/google-places-browser";
+import { SALON_HERO_IMAGE_RESOLUTION_LABEL } from "@/lib/salon-hero-image";
 
 type Props = {
   categories: PublicCategory[];
@@ -666,7 +667,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
 
           <div className="space-y-1.5 md:col-span-2">
             <label htmlFor="manual-hero-url" className="text-[9px] font-bold uppercase tracking-wide text-zinc-500">
-              Hero image URL
+              Hero image URL ({SALON_HERO_IMAGE_RESOLUTION_LABEL}, 4:3)
             </label>
             <Input
               id="manual-hero-url"
@@ -676,6 +677,7 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
               placeholder="https://…"
               className="h-11 rounded-xl border-zinc-200 bg-zinc-50 text-xs"
             />
+            <p className="text-[11px] text-zinc-400">Google hero photos are cropped to the same 800×600 size used after a business is claimed.</p>
           </div>
 
           <div className="space-y-1.5 md:col-span-3">
