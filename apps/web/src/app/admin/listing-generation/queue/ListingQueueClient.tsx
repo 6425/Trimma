@@ -657,6 +657,29 @@ function ListingQueueContent({
                               Feature
                             </Button>
                           )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 min-h-7 px-2 text-[10px]"
+                            disabled={busyId !== null}
+                            onClick={() =>
+                              void runAction(row.id, () =>
+                                postListingAction("/api/admin/listing-generation/unpublish", {
+                                  salonId: row.id,
+                                })
+                              )
+                            }
+                          >
+                            {busyId === row.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <>
+                                <PauseCircle className="mr-0.5 h-3 w-3" />
+                                Unpub
+                              </>
+                            )}
+                          </Button>
                         </div>
                       </td>
                     </tr>

@@ -492,16 +492,22 @@ export async function unpublishListingSalonRecord(
   supabase: SupabaseClient,
   salonId: string
 ): Promise<void> {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("salons")
     .update({
       onboarding_status: LISTING_ONBOARDING_STATUS.CAPTURED,
       public_visibility: "hidden",
+      is_featured: false,
+      featured_starts_at: null,
+      featured_ends_at: null,
     })
     .eq("id", salonId)
-    .eq("source_type", "LISTING_GENERATION");
+    .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED)
+    .select("id")
+    .maybeSingle();
 
   if (error) throw new Error(error.message);
+  if (!data?.id) throw new Error("Published listing not found or it was already unpublished.");
 
   await tryInsertOnboardingLog(supabase, {
     salon_id: salonId,
