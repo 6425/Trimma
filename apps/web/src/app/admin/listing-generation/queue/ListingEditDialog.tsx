@@ -118,7 +118,7 @@ export function ListingEditDialog({
       return;
     }
     if (!isValidPublicImageUrl(values.logoUrl) || !isValidPublicImageUrl(values.heroUrl)) {
-      toast.error("Logo and hero images must use a complete http:// or https:// image URL.");
+      toast.error("Use a public image URL or a full Google Maps photo URL.");
       return;
     }
     void onSave(values);
@@ -261,7 +261,7 @@ export function ListingEditDialog({
             <div className="space-y-1.5 md:col-span-2">
               <label htmlFor="listing-edit-hero" className={LABEL_CLASS}>Hero image URL</label>
               <Input id="listing-edit-hero" type="url" value={values.heroUrl} onChange={(event) => update({ heroUrl: event.target.value })} placeholder="https://…" className={INPUT_CLASS} />
-              <p className="text-[11px] text-zinc-400">Use a direct, publicly accessible image URL—not a webpage or private share link.</p>
+              <p className="text-[11px] text-zinc-400">Use a public image URL or a full Google Maps photo URL. Private share links are not supported.</p>
             </div>
 
             <div className="space-y-1.5 md:col-span-3">
