@@ -20,6 +20,19 @@ function salonImageTimestamp(url: string): number {
   return match ? Number(match[1]) : 0;
 }
 
+const STOCK_SALON_IMAGE_IDS = [
+  "photo-1560066984-138dadb4c035",
+  "photo-1585747860715-2ba37e788b70",
+  "photo-1521590832167-7bcbfaa6381f",
+  "photo-1621605815971-fbc98d665033",
+  "photo-1600948836101-f9ffdb5965eb",
+  "photo-1503951914875-452162b0f3f1",
+];
+
+function isStockSalonImage(url: string): boolean {
+  return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId));
+}
+
 export function getSalonListingImage(
   salon: {
     cover_url?: string | null;
@@ -36,18 +49,25 @@ export function getSalonListingImage(
   const cover = normalizePublicImageUrl(salon.cover_url) || "";
   const hero = normalizePublicImageUrl(salon.hero_url) || "";
 
-  if (!cover && !hero && featured[0]) return featured[0];
-  if (!cover && !hero) return fallback;
-  if (!cover) return hero;
-  if (!hero) return cover;
+  const candidates = [hero, cover, ...featured].filter(Boolean);
+  const realCandidates = candidates.filter((url) => !isStockSalonImage(url));
+  const usableCandidates = realCandidates.length > 0 ? realCandidates : candidates;
 
-  const coverTs = salonImageTimestamp(cover);
-  const heroTs = salonImageTimestamp(hero);
-  if (coverTs !== heroTs) {
-    return heroTs > coverTs ? hero : cover;
+  if (usableCandidates.length === 0) return fallback;
+  if (usableCandidates.length === 1) return usableCandidates[0];
+
+  const usableHero = hero && usableCandidates.includes(hero) ? hero : "";
+  const usableCover = cover && usableCandidates.includes(cover) ? cover : "";
+  if (usableHero && usableCover) {
+    const heroTs = salonImageTimestamp(usableHero);
+    const coverTs = salonImageTimestamp(usableCover);
+    if (heroTs > 0 && coverTs > 0 && heroTs !== coverTs) {
+      return heroTs > coverTs ? usableHero : usableCover;
+    }
   }
 
-  return cover;
+  // The public profile and Admin UI both define hero_url as the primary image.
+  return usableCandidates[0];
 }
 
 export function mapSalonRowToUI(s: any, idx: number) {

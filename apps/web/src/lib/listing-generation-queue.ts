@@ -21,6 +21,7 @@ export type ListingQueueRow = {
   longitude: number | null;
   logo_url: string | null;
   hero_url: string | null;
+  cover_url: string | null;
   rating: number | null;
   review_count: number | null;
   onboarding_status: string | null;
@@ -51,7 +52,7 @@ export type ListingQueuePagePayload = {
 };
 
 const QUEUE_SELECT_BASE =
-  "id,name,slug,category,province,district,city,address,phone,website,map_url,place_id,latitude,longitude,logo_url,hero_url,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
+  "id,name,slug,category,province,district,city,address,phone,website,map_url,place_id,latitude,longitude,logo_url,hero_url,cover_url,rating,review_count,onboarding_status,public_visibility,source_type,is_featured,description,summary,created_at";
 const QUEUE_SELECT = `${QUEUE_SELECT_BASE.replace(",created_at", "")},featured_starts_at,featured_ends_at,created_at`;
 
 export const LISTING_QUEUE_PAGE_SIZE = 40;
@@ -114,6 +115,7 @@ function mapQueueRows(data: Array<Record<string, unknown>>): ListingQueueRow[] {
     longitude: row.longitude == null ? null : Number(row.longitude),
     logo_url: (row.logo_url as string | null) ?? null,
     hero_url: (row.hero_url as string | null) ?? null,
+    cover_url: (row.cover_url as string | null) ?? null,
     rating: row.rating == null ? null : Number(row.rating),
     review_count: row.review_count == null ? null : Number(row.review_count),
     onboarding_status: (row.onboarding_status as string | null) ?? null,

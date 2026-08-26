@@ -54,7 +54,7 @@ function initialValues(row: ListingQueueRow): ListingEditValues {
     longitude: row.longitude == null ? "" : String(row.longitude),
     description: row.description || row.summary || "",
     logoUrl: row.logo_url || "",
-    heroUrl: row.hero_url || "",
+    heroUrl: row.hero_url || row.cover_url || "",
   };
 }
 

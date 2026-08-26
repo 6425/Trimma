@@ -73,6 +73,15 @@ export function applyAdminEmailOverride(raw: Record<string, unknown>): Record<st
 
 export function sanitizeAdminSalonPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const raw = applyAdminEmailOverride(payload);
+
+  // Admin screens expose one public hero image. Keep both legacy columns in sync
+  // even when a caller sends only one of them.
+  if ("hero_url" in raw && !("cover_url" in raw)) {
+    raw.cover_url = raw.hero_url;
+  } else if ("cover_url" in raw && !("hero_url" in raw)) {
+    raw.hero_url = raw.cover_url;
+  }
+
   const sanitized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(raw)) {
@@ -170,6 +179,7 @@ export function buildAdminSalonFormPayload(input: {
     rating: parseOptionalFloat(input.rating),
     logo_url: input.logo_url?.trim() || null,
     cover_url: cover,
+    hero_url: cover,
     status,
     ...(input.onboarding_status
       ? { onboarding_status: input.onboarding_status.trim() }
