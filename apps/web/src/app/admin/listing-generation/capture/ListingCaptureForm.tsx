@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import type { PublicCategory } from "@/lib/public-categories";
 import type { GlobalServiceSummary } from "@/lib/listing-generation-categories";
-import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { useGeographyCatalog } from "@/lib/use-geography-catalog";
 import { searchListingPlacesInBrowser } from "@/lib/google-places-browser";
 import { SALON_HERO_IMAGE_RESOLUTION_LABEL } from "@/lib/salon-hero-image";
 
@@ -61,6 +61,8 @@ function emptyManualListing(categoryId = ""): ManualListingFormState {
 }
 
 export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) {
+  const geography = useGeographyCatalog();
+  const SRI_LANKA_PROVINCES = geography;
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -84,8 +86,8 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
 
   const districts = useMemo(() => {
     if (!selectedProvince) return [];
-    return SRI_LANKA_PROVINCES.find((province) => province.name === selectedProvince)?.districts || [];
-  }, [selectedProvince]);
+    return geography.find((province) => province.name === selectedProvince)?.districts || [];
+  }, [geography, selectedProvince]);
 
   const cities = useMemo(() => {
     if (!selectedDistrict) return [];
@@ -95,9 +97,9 @@ export function ListingCaptureForm({ categories, servicesByCategoryId }: Props) 
   const manualDistricts = useMemo(() => {
     if (!manualListing.province) return [];
     return (
-      SRI_LANKA_PROVINCES.find((province) => province.name === manualListing.province)?.districts || []
+      geography.find((province) => province.name === manualListing.province)?.districts || []
     );
-  }, [manualListing.province]);
+  }, [geography, manualListing.province]);
 
   const manualCities = useMemo(() => {
     if (!manualListing.district) return [];

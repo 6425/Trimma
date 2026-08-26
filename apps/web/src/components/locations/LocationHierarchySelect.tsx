@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import {
-  getCitiesForDistrict,
-  SRI_LANKA_PROVINCES,
-} from "@/lib/sri-lanka-locations";
+import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { useGeographyCatalog } from "@/lib/use-geography-catalog";
 
 type LocationHierarchySelectProps = {
   province: string;
@@ -39,28 +37,32 @@ export function LocationHierarchySelect({
   districtLabel = "District",
   cityLabel = "City",
 }: LocationHierarchySelectProps) {
+  const geography = useGeographyCatalog();
   
   const allProvinces = useMemo(() => {
     if (!availableDistricts || availableDistricts.length === 0) {
-      return SRI_LANKA_PROVINCES;
+      return geography;
     }
-    return SRI_LANKA_PROVINCES.filter(p => 
+    return geography.filter(p =>
       p.districts.some(d => availableDistricts.includes(d.slug))
     );
-  }, [availableDistricts]);
+  }, [availableDistricts, geography]);
 
   const allProvinceNames = useMemo(() => allProvinces.map(p => p.name), [allProvinces]);
 
   const districts = useMemo(() => {
-    const p = allProvinces.find(p => p.name === province) || SRI_LANKA_PROVINCES.find(p => p.name === province);
+    const p = allProvinces.find(p => p.name === province) || geography.find(p => p.name === province);
     let dists = p?.districts || [];
     if (availableDistricts && availableDistricts.length > 0) {
       dists = dists.filter(d => availableDistricts.includes(d.slug));
     }
     return dists;
-  }, [province, availableDistricts, allProvinces]);
+  }, [province, availableDistricts, allProvinces, geography]);
 
-  const cities = useMemo(() => getCitiesForDistrict(province, district), [province, district]);
+  const cities = useMemo(
+    () => geography.find((entry) => entry.name === province)?.districts.find((entry) => entry.name === district)?.cities || [],
+    [geography, province, district]
+  );
 
   useEffect(() => {
     if (allProvinceNames.length > 0 && !allProvinceNames.includes(province)) {

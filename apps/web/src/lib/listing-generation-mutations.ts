@@ -86,14 +86,68 @@ function cleanManualReviewCount(value: number | null | undefined): number | null
   return parsed;
 }
 
-function validateManualListingLocation(province: string, district: string, city: string): void {
+async function validateManualListingLocation(
+  supabase: SupabaseClient,
+  province: string,
+  district: string,
+  city: string
+): Promise<{ provinceId: string | null; districtId: string | null; cityId: string | null }> {
   const provinceRow = SRI_LANKA_PROVINCES.find((item) => item.name === province);
-  if (!provinceRow) throw new Error("Select a valid province.");
-  const districtRow = provinceRow.districts.find((item) => item.name === district);
-  if (!districtRow) throw new Error("Select a district within the chosen province.");
-  if (city && !districtRow.cities.includes(city)) {
+  const districtRow = provinceRow?.districts.find((item) => item.name === district);
+  const isStaticCity = Boolean(districtRow && (!city || districtRow.cities.includes(city)));
+
+  const { data: databaseProvince, error: provinceError } = await supabase
+    .from("provinces")
+    .select("id")
+    .eq("name", province)
+    .limit(1)
+    .maybeSingle();
+  if (provinceError) throw new Error(provinceError.message);
+  if (!databaseProvince?.id) {
+    if (districtRow && isStaticCity) {
+      return { provinceId: null, districtId: null, cityId: null };
+    }
+    throw new Error("Select a valid province.");
+  }
+
+  const { data: databaseDistrict, error: districtError } = await supabase
+    .from("districts")
+    .select("id")
+    .eq("province_id", databaseProvince.id)
+    .eq("name", district)
+    .limit(1)
+    .maybeSingle();
+  if (districtError) throw new Error(districtError.message);
+  if (!databaseDistrict?.id) {
+    if (districtRow && isStaticCity) {
+      return { provinceId: databaseProvince.id, districtId: null, cityId: null };
+    }
+    throw new Error("Select a district within the chosen province.");
+  }
+  if (!city) {
+    return {
+      provinceId: databaseProvince.id,
+      districtId: databaseDistrict.id,
+      cityId: null,
+    };
+  }
+
+  const { data: databaseCity, error: cityError } = await supabase
+    .from("cities")
+    .select("id")
+    .eq("district_id", databaseDistrict.id)
+    .eq("name", city)
+    .limit(1)
+    .maybeSingle();
+  if (cityError) throw new Error(cityError.message);
+  if (!databaseCity?.id && !isStaticCity) {
     throw new Error("Select a city within the chosen district.");
   }
+  return {
+    provinceId: databaseProvince.id,
+    districtId: databaseDistrict.id,
+    cityId: databaseCity?.id || null,
+  };
 }
 
 async function tryInsertOnboardingLog(
@@ -177,7 +231,7 @@ export async function createManualListingSalonRecord(
   if ((latitude === null) !== (longitude === null)) {
     throw new Error("Enter both latitude and longitude, or leave both empty.");
   }
-  validateManualListingLocation(province, district, city);
+  const locationIds = await validateManualListingLocation(supabase, province, district, city);
 
   if (placeId) {
     const { data: samePlace, error } = await supabase
@@ -232,8 +286,11 @@ export async function createManualListingSalonRecord(
       slug,
       category,
       province,
+      province_id: locationIds.provinceId,
       district,
+      district_id: locationIds.districtId,
       city: city || null,
+      city_id: locationIds.cityId,
       address,
       phone,
       rating,
@@ -313,7 +370,7 @@ export async function updateListingSalonRecord(
   if ((latitude === null) !== (longitude === null)) {
     throw new Error("Enter both latitude and longitude, or leave both empty.");
   }
-  validateManualListingLocation(province, district, city);
+  const locationIds = await validateManualListingLocation(supabase, province, district, city);
 
   if (placeId) {
     const { data: samePlace, error } = await supabase
@@ -382,8 +439,11 @@ export async function updateListingSalonRecord(
     name,
     category,
     province,
+    province_id: locationIds.provinceId,
     district,
+    district_id: locationIds.districtId,
     city: city || null,
+    city_id: locationIds.cityId,
     address,
     phone,
     rating,

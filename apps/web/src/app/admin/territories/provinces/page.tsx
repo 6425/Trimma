@@ -15,6 +15,7 @@ import {
   saveProvince,
 } from "@/app/actions/admin-territories";
 import { withTimeout } from "@/lib/promise-timeout";
+import { notifyGeographyCatalogChanged } from "@/lib/use-geography-catalog";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
@@ -179,6 +180,7 @@ export default function ProvinceManagement() {
       });
 
       toast.success(editId ? "Province updated successfully" : "Province created successfully");
+      notifyGeographyCatalogChanged();
       setFormData({ name: "", slug: "", image_url: "" });
       setEditId(null);
     } catch (error: any) {
@@ -201,6 +203,7 @@ export default function ProvinceManagement() {
 
       setProvinces((prev) => prev.filter((row) => row.id !== id));
       toast.success("Province deleted");
+      notifyGeographyCatalogChanged();
     } catch (error: any) {
       toast.error("Error deleting province: " + (error.message || "Unknown error"));
     }

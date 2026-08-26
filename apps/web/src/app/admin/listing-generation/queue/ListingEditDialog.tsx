@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, Pencil, Save, X } from "lucide-react";
+import { Loader2, Pencil, Plus, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,11 @@ import type { ListingQueueRow } from "@/lib/listing-generation-queue";
 import type { PublicCategory } from "@/lib/public-categories";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
 import { SALON_HERO_IMAGE_RESOLUTION_LABEL } from "@/lib/salon-hero-image";
-import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { saveCity } from "@/app/actions/admin-territories";
+import {
+  notifyGeographyCatalogChanged,
+  useGeographyCatalog,
+} from "@/lib/use-geography-catalog";
 
 export type ListingEditValues = {
   name: string;
@@ -77,23 +81,56 @@ export function ListingEditDialog({
   onSave: (values: ListingEditValues) => void | Promise<void>;
 }) {
   const [values, setValues] = useState<ListingEditValues>(() => initialValues(row));
+  const [showNewCity, setShowNewCity] = useState(false);
+  const [newCityName, setNewCityName] = useState("");
+  const [addingCity, setAddingCity] = useState(false);
+  const [localCities, setLocalCities] = useState<Record<string, string[]>>({});
+  const geography = useGeographyCatalog();
 
   const update = (updates: Partial<ListingEditValues>) => {
     setValues((current) => ({ ...current, ...updates }));
   };
 
   const districts = useMemo(
-    () => SRI_LANKA_PROVINCES.find((province) => province.name === values.province)?.districts || [],
-    [values.province]
+    () => geography.find((province) => province.name === values.province)?.districts || [],
+    [geography, values.province]
   );
-  const cities = useMemo(
-    () => districts.find((district) => district.name === values.district)?.cities || [],
-    [districts, values.district]
-  );
+  const selectedDistrict = districts.find((district) => district.name === values.district);
+  const cities = [
+    ...(selectedDistrict?.cities || []),
+    ...(selectedDistrict?.id ? localCities[selectedDistrict.id] || [] : []),
+  ].filter((city, index, list) => list.indexOf(city) === index);
   const categoryNames = useMemo(() => new Set(categories.map((category) => category.name)), [categories]);
-  const knownProvince = SRI_LANKA_PROVINCES.some((province) => province.name === values.province);
+  const knownProvince = geography.some((province) => province.name === values.province);
   const knownDistrict = districts.some((district) => district.name === values.district);
   const knownCity = cities.includes(values.city);
+
+  const addCity = async () => {
+    const name = newCityName.trim();
+    if (!name || !selectedDistrict?.id) {
+      toast.error("Choose a database-backed district and enter the new city name.");
+      return;
+    }
+    try {
+      setAddingCity(true);
+      const result = await saveCity({ name, district_id: selectedDistrict.id });
+      if (result.success === false) throw new Error(result.error);
+      const savedName = result.city.name as string;
+      setLocalCities((current) => ({
+        ...current,
+        [selectedDistrict.id as string]: [...(current[selectedDistrict.id as string] || []), savedName],
+      }));
+      update({ city: savedName });
+      setNewCityName("");
+      setShowNewCity(false);
+      notifyGeographyCatalogChanged();
+      toast.success(`${savedName} added to City Management and all location dropdowns.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to add city.");
+    } finally {
+      setAddingCity(false);
+    }
+  };
 
   const submit = () => {
     if (
@@ -181,7 +218,7 @@ export function ListingEditDialog({
               >
                 {!knownProvince && values.province ? <option value={values.province}>{values.province} (select a standard province)</option> : null}
                 <option value="">Choose…</option>
-                {SRI_LANKA_PROVINCES.map((province) => <option key={province.slug} value={province.name}>{province.name}</option>)}
+                {geography.map((province) => <option key={province.slug} value={province.name}>{province.name}</option>)}
               </select>
             </div>
 
@@ -201,12 +238,42 @@ export function ListingEditDialog({
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="listing-edit-city" className={LABEL_CLASS}>City</label>
+              <div className="flex items-center justify-between gap-2">
+                <label htmlFor="listing-edit-city" className={LABEL_CLASS}>City</label>
+                <button
+                  type="button"
+                  className="inline-flex items-center text-[10px] font-bold text-zinc-700 hover:text-black disabled:opacity-40"
+                  disabled={!selectedDistrict?.id || saving}
+                  onClick={() => setShowNewCity((current) => !current)}
+                >
+                  <Plus className="mr-1 h-3 w-3" /> Add new city
+                </button>
+              </div>
               <select id="listing-edit-city" value={values.city} disabled={!values.district} onChange={(event) => update({ city: event.target.value })} className={SELECT_CLASS}>
                 {!knownCity && values.city ? <option value={values.city}>{values.city} (select a standard city)</option> : null}
                 <option value="">Choose…</option>
                 {cities.map((city) => <option key={city} value={city}>{city}</option>)}
               </select>
+              {showNewCity ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newCityName}
+                    maxLength={120}
+                    placeholder={`New city in ${values.district}`}
+                    onChange={(event) => setNewCityName(event.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={addingCity || !newCityName.trim()}
+                    onClick={() => void addCity()}
+                    className="h-11 min-h-11 shrink-0 font-bold"
+                  >
+                    {addingCity ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                  </Button>
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-1.5 md:col-span-2">

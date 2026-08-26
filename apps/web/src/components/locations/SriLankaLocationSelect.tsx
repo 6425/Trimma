@@ -1,6 +1,6 @@
 "use client";
 
-import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { useGeographyCatalog } from "@/lib/use-geography-catalog";
 
 type SriLankaLocationSelectProps = {
   value: string;
@@ -17,19 +17,20 @@ export function SriLankaLocationSelect({
   anyLabel = "Any location",
   optionClassName,
 }: SriLankaLocationSelectProps) {
+  const provinces = useGeographyCatalog();
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)} className={className}>
       <option value="" className={optionClassName}>
         {anyLabel}
       </option>
       <optgroup label="Provinces">
-        {SRI_LANKA_PROVINCES.map((province) => (
+        {provinces.map((province) => (
           <option key={`province-${province.slug}`} value={province.name} className={optionClassName}>
             {province.name}
           </option>
         ))}
       </optgroup>
-      {SRI_LANKA_PROVINCES.map((province) => (
+      {provinces.map((province) => (
         <optgroup key={`districts-${province.slug}`} label={`${province.shortName} — Districts`}>
           {province.districts.map((district) => (
             <option
@@ -42,7 +43,7 @@ export function SriLankaLocationSelect({
           ))}
         </optgroup>
       ))}
-      {SRI_LANKA_PROVINCES.map((province) => (
+      {provinces.map((province) => (
         <optgroup key={`cities-${province.slug}`} label={`${province.shortName} — Cities`}>
           {province.districts.flatMap((district) =>
             district.cities.map((city) => (

@@ -52,8 +52,7 @@ import {
 } from "@/lib/salon-hero-image";
 import { normalizeAdminLeadCategoryOptions } from "@/lib/admin-lead-categories";
 import { buildSriLankaGeographyRecord } from "@/lib/sri-lanka-locations";
-
-const SRI_LANKA_GEOGRAPHY = buildSriLankaGeographyRecord();
+import { useGeographyCatalog } from "@/lib/use-geography-catalog";
 
 export default function LeadsPage() {
   return (
@@ -71,6 +70,11 @@ export default function LeadsPage() {
 }
 
 function Leads() {
+  const geography = useGeographyCatalog();
+  const SRI_LANKA_GEOGRAPHY = React.useMemo(
+    () => buildSriLankaGeographyRecord(geography),
+    [geography]
+  );
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();

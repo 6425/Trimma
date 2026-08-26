@@ -1,10 +1,12 @@
 export type SriLankaDistrict = {
+  id?: string;
   slug: string;
   name: string;
   cities: string[];
 };
 
 export type SriLankaProvince = {
+  id?: string;
   slug: string;
   dbSlug: string;
   name: string;
@@ -351,9 +353,11 @@ export const SRI_LANKA_PROVINCES: SriLankaProvince[] = [
 ];
 
 /** Province → district → cities map for admin discovery dropdowns. */
-export function buildSriLankaGeographyRecord(): Record<string, Record<string, string[]>> {
+export function buildSriLankaGeographyRecord(
+  provinces: SriLankaProvince[] = SRI_LANKA_PROVINCES
+): Record<string, Record<string, string[]>> {
   const record: Record<string, Record<string, string[]>> = {};
-  for (const province of SRI_LANKA_PROVINCES) {
+  for (const province of provinces) {
     record[province.name] = {};
     for (const district of province.districts) {
       record[province.name][district.name] = [...district.cities];

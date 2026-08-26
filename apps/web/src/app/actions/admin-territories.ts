@@ -1,6 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
+import { slugifyLocation } from "@/lib/sri-lanka-locations";
 
 type TerritoryPayload = {
   name: string;
@@ -9,6 +12,33 @@ type TerritoryPayload = {
   province_id?: string;
   district_id?: string;
 };
+
+async function syncTerritoryMirror(
+  supabase: SupabaseClient,
+  input: { name: string; slug: string; type: "province" | "district" | "city"; parentSlug?: string }
+) {
+  let parentId: string | null = null;
+  if (input.parentSlug) {
+    const { data: parent, error: parentError } = await supabase
+      .from("territories")
+      .select("id")
+      .eq("slug", input.parentSlug)
+      .maybeSingle();
+    if (parentError) throw new Error(parentError.message);
+    if (!parent?.id) throw new Error(`Parent territory ${input.parentSlug} is not synchronized.`);
+    parentId = parent.id;
+  }
+  const { error } = await supabase.from("territories").upsert(
+    {
+      name: input.name,
+      slug: input.slug,
+      type: input.type,
+      parent_id: parentId,
+    },
+    { onConflict: "slug" }
+  );
+  if (error) throw new Error(error.message);
+}
 
 export async function fetchProvincesCatalog() {
   const result = await withAdminDb(async (supabase) => {
@@ -42,11 +72,12 @@ export async function saveProvince(input: { id?: string; name: string; slug?: st
 
   const payload: TerritoryPayload = {
     name: input.name.trim(),
-    slug: (input.slug || input.name).toLowerCase().replace(/\s+/g, "-"),
+    slug: slugifyLocation(input.slug || input.name),
     image_url: input.image_url || null,
   };
 
   const result = await withAdminDb(async (supabase) => {
+    let saved;
     if (input.id) {
       const { data, error } = await supabase
         .from("provinces")
@@ -56,14 +87,22 @@ export async function saveProvince(input: { id?: string; name: string; slug?: st
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) throw new Error("Update did not apply.");
-      return data;
+      saved = data;
+    } else {
+      const { data, error } = await supabase.from("provinces").insert([payload]).select("*").single();
+      if (error) throw new Error(error.message);
+      saved = data;
     }
-    const { data, error } = await supabase.from("provinces").insert([payload]).select("*").single();
-    if (error) throw new Error(error.message);
-    return data;
+    await syncTerritoryMirror(supabase, {
+      name: saved.name,
+      slug: saved.slug,
+      type: "province",
+    });
+    return saved;
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/", "layout");
   return { success: true as const, province: result.data };
 }
 
@@ -73,6 +112,7 @@ export async function deleteProvince(id: string) {
     if (error) throw new Error(error.message);
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/", "layout");
   return { success: true as const };
 }
 
@@ -122,12 +162,13 @@ export async function saveDistrict(input: {
 
   const payload = {
     name: input.name.trim(),
-    slug: (input.slug || input.name).toLowerCase().replace(/\s+/g, "-"),
+    slug: slugifyLocation(input.slug || input.name),
     province_id: input.province_id,
     image_url: input.image_url || null,
   };
 
   const result = await withAdminDb(async (supabase) => {
+    let saved;
     if (input.id) {
       const { data, error } = await supabase
         .from("districts")
@@ -137,14 +178,30 @@ export async function saveDistrict(input: {
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) throw new Error("Update did not apply.");
-      return data;
+      saved = data;
+    } else {
+      const { data, error } = await supabase.from("districts").insert([payload]).select("*").single();
+      if (error) throw new Error(error.message);
+      saved = data;
     }
-    const { data, error } = await supabase.from("districts").insert([payload]).select("*").single();
-    if (error) throw new Error(error.message);
-    return data;
+    const { data: province, error: provinceError } = await supabase
+      .from("provinces")
+      .select("slug")
+      .eq("id", saved.province_id)
+      .maybeSingle();
+    if (provinceError) throw new Error(provinceError.message);
+    if (!province?.slug) throw new Error("Parent province was not found.");
+    await syncTerritoryMirror(supabase, {
+      name: saved.name,
+      slug: saved.slug,
+      type: "district",
+      parentSlug: province.slug,
+    });
+    return saved;
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/", "layout");
   return { success: true as const, district: result.data };
 }
 
@@ -154,6 +211,7 @@ export async function deleteDistrict(id: string) {
     if (error) throw new Error(error.message);
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/", "layout");
   return { success: true as const };
 }
 
@@ -203,11 +261,12 @@ export async function saveCity(input: {
 
   const payload = {
     name: input.name.trim(),
-    slug: (input.slug || input.name).toLowerCase().replace(/\s+/g, "-"),
+    slug: slugifyLocation(input.slug || input.name),
     district_id: input.district_id,
   };
 
   const result = await withAdminDb(async (supabase) => {
+    let saved;
     if (input.id) {
       const { data, error } = await supabase
         .from("cities")
@@ -217,14 +276,30 @@ export async function saveCity(input: {
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (!data) throw new Error("Update did not apply.");
-      return data;
+      saved = data;
+    } else {
+      const { data, error } = await supabase.from("cities").insert([payload]).select("*").single();
+      if (error) throw new Error(error.message);
+      saved = data;
     }
-    const { data, error } = await supabase.from("cities").insert([payload]).select("*").single();
-    if (error) throw new Error(error.message);
-    return data;
+    const { data: district, error: districtError } = await supabase
+      .from("districts")
+      .select("slug")
+      .eq("id", saved.district_id)
+      .maybeSingle();
+    if (districtError) throw new Error(districtError.message);
+    if (!district?.slug) throw new Error("Parent district was not found.");
+    await syncTerritoryMirror(supabase, {
+      name: saved.name,
+      slug: saved.slug,
+      type: "city",
+      parentSlug: district.slug,
+    });
+    return saved;
   });
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/", "layout");
   return { success: true as const, city: result.data };
 }
 
@@ -234,5 +309,6 @@ export async function deleteCity(id: string) {
     if (error) throw new Error(error.message);
   });
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  revalidatePath("/", "layout");
   return { success: true as const };
 }

@@ -25,6 +25,7 @@ import {
   saveDistrict,
 } from "@/app/actions/admin-territories";
 import { withTimeout } from "@/lib/promise-timeout";
+import { notifyGeographyCatalogChanged } from "@/lib/use-geography-catalog";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import Image from "next/image";
@@ -196,6 +197,7 @@ export default function DistrictManagement() {
       });
 
       toast.success(editId ? "District updated successfully" : "District created successfully");
+      notifyGeographyCatalogChanged();
       setFormData({ name: "", slug: "", province_id: "", image_url: "" });
       setEditId(null);
     } catch (error: any) {
@@ -218,6 +220,7 @@ export default function DistrictManagement() {
 
       setDistricts((prev) => prev.filter((row) => row.id !== id));
       toast.success("District deleted");
+      notifyGeographyCatalogChanged();
     } catch (error: any) {
       toast.error("Error deleting district: " + (error.message || "Unknown error"));
     }

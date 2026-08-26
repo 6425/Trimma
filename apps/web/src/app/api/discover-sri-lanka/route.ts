@@ -7,7 +7,7 @@ import {
   discoverGooglePlacesInContext,
   sleep,
 } from "@/lib/google-places-discovery";
-import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { loadGeographyCatalog } from "@/lib/geography-catalog-server";
 
 function getRouteErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -45,10 +45,11 @@ export async function POST(req: Request) {
     const dryRun = Boolean(body.dryRun);
 
     const supabase = createSupabaseAdminClient();
+    const geography = await loadGeographyCatalog(supabase);
     const jobs: SriLankaDiscoveryJob[] = [];
     let totalCount = 0;
 
-    for (const province of SRI_LANKA_PROVINCES) {
+    for (const province of geography) {
       for (const district of province.districts) {
         for (const city of district.cities) {
           for (const category of categoryFilter) {

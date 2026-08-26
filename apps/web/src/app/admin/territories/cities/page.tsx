@@ -21,6 +21,7 @@ import {
   saveCity,
 } from "@/app/actions/admin-territories";
 import { withTimeout } from "@/lib/promise-timeout";
+import { notifyGeographyCatalogChanged } from "@/lib/use-geography-catalog";
 
 export default function CityManagement() {
   const [cities, setCities] = useState<any[]>([]);
@@ -95,6 +96,7 @@ export default function CityManagement() {
       });
 
       toast.success(editId ? "City updated successfully" : "City created successfully");
+      notifyGeographyCatalogChanged();
       setFormData({ name: "", slug: "", district_id: "" });
       setEditId(null);
     } catch (error: any) {
@@ -116,6 +118,7 @@ export default function CityManagement() {
       if (result.success === false) throw new Error(result.error);
 
       setCities((prev) => prev.filter((row) => row.id !== id));
+      notifyGeographyCatalogChanged();
       toast.success("City deleted");
     } catch (error: any) {
       toast.error("Error deleting city: " + (error.message || "Unknown error"));
