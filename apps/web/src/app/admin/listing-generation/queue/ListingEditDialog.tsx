@@ -164,16 +164,17 @@ export function ListingEditDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-stretch justify-center overflow-hidden bg-black/45 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="listing-edit-title"
     >
-      <div className="flex max-h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:max-h-[92vh] sm:rounded-3xl">
-        <div className="flex items-start justify-between gap-4 border-b border-zinc-100 px-5 py-4 sm:px-7">
-          <div>
-            <h2 id="listing-edit-title" className="flex items-center gap-2 text-lg font-bold text-zinc-900">
-              <Pencil className="h-4 w-4 text-brand" /> Edit {row.name}
+      <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full max-w-5xl flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:rounded-3xl">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-100 px-5 py-4 sm:px-7">
+          <div className="min-w-0">
+            <h2 id="listing-edit-title" className="flex min-w-0 items-start gap-2 text-lg font-bold text-zinc-900">
+              <Pencil className="mt-1 h-4 w-4 shrink-0 text-brand" />
+              <span className="min-w-0 break-words">Edit {row.name}</span>
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
               Update the complete public business listing. Publication and booking settings are unchanged.
@@ -192,7 +193,7 @@ export function ListingEditDialog({
           </Button>
         </div>
 
-        <div className="overflow-y-auto px-5 py-5 sm:px-7">
+        <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-gutter:stable] sm:px-7">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-1.5 md:col-span-2">
               <label htmlFor="listing-edit-name" className={LABEL_CLASS}>Business name *</label>
@@ -347,7 +348,7 @@ export function ListingEditDialog({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-zinc-100 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
+        <div className="flex shrink-0 flex-col gap-2 border-t border-zinc-100 bg-white px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:flex-row sm:justify-end sm:px-7 sm:pb-4">
           <Button type="button" variant="outline" disabled={saving} onClick={onCancel} className="h-11 min-h-11 w-full font-bold sm:w-auto">Cancel</Button>
           <Button type="button" variant="dark" disabled={saving} onClick={submit} className="h-11 min-h-11 w-full px-6 font-bold sm:w-auto">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
