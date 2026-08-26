@@ -86,13 +86,11 @@ export function ListingEditDialog({
   const [newCityName, setNewCityName] = useState("");
   const [addingCity, setAddingCity] = useState(false);
   const [localCities, setLocalCities] = useState<Record<string, string[]>>({});
-  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const geography = useGeographyCatalog();
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow;
     const previousDocumentOverflow = document.documentElement.style.overflow;
-    setPortalRoot(document.body);
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
@@ -178,7 +176,7 @@ export function ListingEditDialog({
     void onSave(values);
   };
 
-  if (!portalRoot) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <div
@@ -375,6 +373,6 @@ export function ListingEditDialog({
         </div>
       </div>
     </div>,
-    portalRoot
+    document.body
   );
 }
