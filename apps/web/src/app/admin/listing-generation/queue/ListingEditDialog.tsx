@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Loader2, Pencil, Plus, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -85,7 +86,22 @@ export function ListingEditDialog({
   const [newCityName, setNewCityName] = useState("");
   const [addingCity, setAddingCity] = useState(false);
   const [localCities, setLocalCities] = useState<Record<string, string[]>>({});
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const geography = useGeographyCatalog();
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    setPortalRoot(document.body);
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+    };
+  }, []);
 
   const update = (updates: Partial<ListingEditValues>) => {
     setValues((current) => ({ ...current, ...updates }));
@@ -162,9 +178,11 @@ export function ListingEditDialog({
     void onSave(values);
   };
 
-  return (
+  if (!portalRoot) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-stretch justify-center overflow-hidden bg-black/45 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[1000] flex items-stretch justify-center overflow-hidden bg-black/45 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="listing-edit-title"
@@ -356,6 +374,7 @@ export function ListingEditDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    portalRoot
   );
 }
