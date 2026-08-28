@@ -47,11 +47,11 @@ const buttonVariants = cva(
 
         // ── Outline: readable on light dashboards; yellow on dark panels via CSS ──
         outline:
-          "bg-transparent text-zinc-800 border-zinc-300 hover:bg-zinc-100 hover:!text-zinc-900 hover:border-zinc-400",
+          "bg-transparent text-zinc-800 border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 hover:border-zinc-400",
 
         // ── Ghost: explicit readable gray on light dashboards ──
         ghost:
-          "bg-transparent text-zinc-600 border-transparent hover:bg-zinc-100 hover:!text-zinc-900",
+          "bg-transparent text-zinc-600 border-transparent hover:bg-zinc-100 hover:text-zinc-900",
 
         // ── Destructive: Red danger actions ──
         destructive:

@@ -77,7 +77,7 @@ function SignupForm() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#121212]">
-      <div className="relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:h-[100dvh] lg:w-1/2 lg:fixed lg:top-0 lg:left-0 overflow-hidden">
+      <div className="trimma-light-context relative flex flex-col items-center justify-center px-6 py-12 sm:px-10 sm:py-16 lg:px-14 lg:py-20 min-h-[42vh] sm:min-h-[48vh] lg:h-[100dvh] lg:w-1/2 lg:fixed lg:top-0 lg:left-0 overflow-hidden">
         <div className="absolute inset-0 bg-[#ffde5a]" aria-hidden="true">
           <img
             src={SIGNUP_HERO_IMAGE}
@@ -162,7 +162,7 @@ function SignupForm() {
               type="button"
               variant="outline"
               disabled={loading}
-              className="h-12 w-full border-zinc-700 bg-[#1a1a1a] text-white hover:bg-[#252525] hover:text-white font-semibold"
+              className="trimma-dark-surface h-12 w-full border-zinc-700 bg-[#1a1a1a] !text-white hover:bg-[#252525] hover:!text-white font-semibold"
               onClick={handleGoogleSignup}
             >
               <GoogleIcon />
