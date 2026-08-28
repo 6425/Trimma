@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   SRI_LANKA_PROVINCES,
+  findDistrictForCity,
   slugifyLocation,
   type SriLankaDistrict,
   type SriLankaProvince,
@@ -10,11 +11,20 @@ type ProvinceRow = { id: string; name: string; slug: string; image_url?: string 
 type DistrictRow = { id: string; province_id: string; name: string; slug: string };
 type CityRow = { id: string; district_id: string; name: string; slug: string };
 
-function mergeCityNames(staticNames: string[], databaseRows: CityRow[]): string[] {
-  const databaseBySlug = new Map(databaseRows.map((city) => [city.slug, city.name]));
+function mergeCityNames(
+  staticNames: string[],
+  databaseRows: CityRow[],
+  districtSlug: string
+): string[] {
+  const validDatabaseRows = databaseRows.filter((city) => {
+    const canonicalParent =
+      findDistrictForCity(city.name) || findDistrictForCity(city.slug);
+    return !canonicalParent || canonicalParent.districtSlug === districtSlug;
+  });
+  const databaseBySlug = new Map(validDatabaseRows.map((city) => [city.slug, city.name]));
   const names = staticNames.map((name) => databaseBySlug.get(slugifyLocation(name)) || name);
   const seen = new Set(names.map((name) => name.toLocaleLowerCase()));
-  for (const city of databaseRows) {
+  for (const city of validDatabaseRows) {
     const key = city.name.toLocaleLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -61,7 +71,8 @@ export async function loadGeographyCatalog(supabase: SupabaseClient): Promise<Sr
         name: districtRow.name,
         cities: mergeCityNames(
           staticDistrict?.cities || [],
-          cityRows.filter((city) => city.district_id === districtRow.id)
+          cityRows.filter((city) => city.district_id === districtRow.id),
+          districtRow.slug
         ),
       };
     });

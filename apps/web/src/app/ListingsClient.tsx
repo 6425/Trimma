@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, MapPin, Loader2, Sparkles } from "lucide-react";
+import { Search, Loader2, Sparkles } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { BusinessListingsMap } from "../components/marketplace/BusinessListingsMap";
 import { ListingBrowseToolbar } from "../components/marketplace/ListingBrowseToolbar";
@@ -13,7 +13,7 @@ import {
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import type { PublicCategory } from "@/lib/public-categories";
 import { resolveLocationDisplayLabel, resolveLocationSearchValue } from "@/lib/sri-lanka-locations";
-import { SriLankaLocationSelect } from "../components/locations/SriLankaLocationSelect";
+import { DistrictCitySearchSelect } from "../components/locations/DistrictCitySearchSelect";
 import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
 
 const HERO_IMAGE = "/assets/landing-hero-banner.webp?v=4";
@@ -273,8 +273,8 @@ export default function ListingsClient({
                 <span className="uppercase tracking-wider">All provinces · districts · cities</span>
               </div>
 
-              <div className="trimma-hero-search bg-white p-2 rounded-2xl shadow-xl flex flex-col sm:flex-row gap-2 border border-slate-100 w-full">
-                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
+              <div className="trimma-hero-search grid w-full grid-cols-1 gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-4 sm:col-span-2 lg:col-span-3">
                   <Search className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
                   <input
                     type="text"
@@ -285,29 +285,24 @@ export default function ListingsClient({
                     className="h-12 w-full bg-transparent text-sm font-semibold text-zinc-900 placeholder:text-zinc-400 outline-none min-w-0"
                   />
                 </div>
-                <div className="flex-1 flex items-center px-4 bg-zinc-50 rounded-xl min-w-0">
-                  <MapPin className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
-                  <SriLankaLocationSelect
-                    value={selectedLocation}
-                    onChange={(value) => {
-                      applyFilters(
-                        {
-                          q: searchQuery.trim(),
-                          location: value,
-                          category: urlCategory,
-                        },
-                        { syncUrl: false }
-                      );
-                    }}
-                    anyLabel="Any location"
-                    className="h-12 w-full cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none min-w-0"
-                  />
-                </div>
+                <DistrictCitySearchSelect
+                  value={selectedLocation}
+                  onChange={(value) => {
+                    applyFilters(
+                      {
+                        q: searchQuery.trim(),
+                        location: value,
+                        category: urlCategory,
+                      },
+                      { syncUrl: false }
+                    );
+                  }}
+                />
                 <Button
                   onClick={handleSearch}
                   size="lg"
                   variant="hero"
-                  className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:w-auto"
+                  className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:col-span-2 lg:col-span-1 lg:w-auto"
                 >
                   Search
                 </Button>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { adminDbFailure, isAdminDbSuccess, withAdminDb } from "@/lib/with-admin-db";
-import { slugifyLocation } from "@/lib/sri-lanka-locations";
+import { findDistrictForCity, slugifyLocation } from "@/lib/sri-lanka-locations";
 
 type TerritoryPayload = {
   name: string;
@@ -266,6 +266,21 @@ export async function saveCity(input: {
   };
 
   const result = await withAdminDb(async (supabase) => {
+    const { data: selectedDistrict, error: selectedDistrictError } = await supabase
+      .from("districts")
+      .select("slug,name")
+      .eq("id", input.district_id)
+      .maybeSingle();
+    if (selectedDistrictError) throw new Error(selectedDistrictError.message);
+    if (!selectedDistrict) throw new Error("Parent district was not found.");
+
+    const canonicalParent = findDistrictForCity(payload.slug);
+    if (canonicalParent && canonicalParent.districtSlug !== selectedDistrict.slug) {
+      throw new Error(
+        `${payload.name} belongs to ${canonicalParent.districtSlug.replace(/-/g, " ")} District, not ${selectedDistrict.name}.`
+      );
+    }
+
     let saved;
     if (input.id) {
       const { data, error } = await supabase
@@ -282,18 +297,11 @@ export async function saveCity(input: {
       if (error) throw new Error(error.message);
       saved = data;
     }
-    const { data: district, error: districtError } = await supabase
-      .from("districts")
-      .select("slug")
-      .eq("id", saved.district_id)
-      .maybeSingle();
-    if (districtError) throw new Error(districtError.message);
-    if (!district?.slug) throw new Error("Parent district was not found.");
     await syncTerritoryMirror(supabase, {
       name: saved.name,
       slug: saved.slug,
       type: "city",
-      parentSlug: district.slug,
+      parentSlug: selectedDistrict.slug,
     });
     return saved;
   });
