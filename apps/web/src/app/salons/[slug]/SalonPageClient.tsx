@@ -724,7 +724,7 @@ export default function SalonPage({
                     {salon.is_verified ? (
                       <VerifiedSalonBadge size="xs" />
                     ) : (
-                      <Badge className="bg-zinc-600 text-white border-zinc-600 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full">
+                      <Badge className="trimma-unverified-badge bg-zinc-600 text-white border-zinc-600 font-bold text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full">
                         Not Verified
                       </Badge>
                     )}

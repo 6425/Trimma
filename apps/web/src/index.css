@@ -1830,6 +1830,14 @@ html:has(.trimma-salon-page) body {
   stroke: #0a0a0a !important;
 }
 
+/* Unverified salon badge — dark neutral surface with a readable white label. */
+.trimma-salon-page .trimma-unverified-badge.trimma-unverified-badge,
+.trimma-salon-page .trimma-unverified-badge.trimma-unverified-badge:hover {
+  background-color: #52525b !important;
+  color: #ffffff !important;
+  border-color: #52525b !important;
+}
+
 /* ── Dark mode (html.dark) — public marketplace + customer shell ── */
 html.dark {
   color-scheme: dark;
@@ -2804,11 +2812,11 @@ h6,
 @scope (
   :is(
     .trimma-dark-surface, .trimma-dark-context,
-    .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
-    .bg-slate-800, .bg-slate-900, .bg-slate-950,
-    .bg-gray-800, .bg-gray-900, .bg-gray-950,
-    .bg-neutral-800, .bg-neutral-900, .bg-neutral-950,
-    .bg-stone-800, .bg-stone-900, .bg-stone-950,
+    .bg-black, .bg-zinc-600, .bg-zinc-700, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
+    .bg-slate-600, .bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-slate-950,
+    .bg-gray-600, .bg-gray-700, .bg-gray-800, .bg-gray-900, .bg-gray-950,
+    .bg-neutral-600, .bg-neutral-700, .bg-neutral-800, .bg-neutral-900, .bg-neutral-950,
+    .bg-stone-600, .bg-stone-700, .bg-stone-800, .bg-stone-900, .bg-stone-950,
     .bg-\[\#0B0B0B\], .bg-\[\#0b0b0b\], .bg-\[\#0A0B10\],
     .bg-\[\#111111\], .bg-\[\#121212\], .bg-\[\#151515\],
     .bg-\[\#1A1A1A\], .bg-\[\#1a1a1a\], .bg-\[\#1A1C29\], .bg-\[\#252525\],
@@ -2818,11 +2826,11 @@ h6,
     [class*="bg-gradient"][class*="to-[#0A0B10]"],
     [class*="bg-gradient"][class*="to-[#151515]"],
     [class*="hover:bg-black"]:hover,
-    [class*="hover:bg-zinc-8"]:hover, [class*="hover:bg-zinc-9"]:hover,
-    [class*="hover:bg-slate-8"]:hover, [class*="hover:bg-slate-9"]:hover,
-    [class*="hover:bg-gray-8"]:hover, [class*="hover:bg-gray-9"]:hover,
-    [class*="hover:bg-neutral-8"]:hover, [class*="hover:bg-neutral-9"]:hover,
-    [class*="hover:bg-stone-8"]:hover, [class*="hover:bg-stone-9"]:hover,
+    [class*="hover:bg-zinc-6"]:hover, [class*="hover:bg-zinc-7"]:hover, [class*="hover:bg-zinc-8"]:hover, [class*="hover:bg-zinc-9"]:hover,
+    [class*="hover:bg-slate-6"]:hover, [class*="hover:bg-slate-7"]:hover, [class*="hover:bg-slate-8"]:hover, [class*="hover:bg-slate-9"]:hover,
+    [class*="hover:bg-gray-6"]:hover, [class*="hover:bg-gray-7"]:hover, [class*="hover:bg-gray-8"]:hover, [class*="hover:bg-gray-9"]:hover,
+    [class*="hover:bg-neutral-6"]:hover, [class*="hover:bg-neutral-7"]:hover, [class*="hover:bg-neutral-8"]:hover, [class*="hover:bg-neutral-9"]:hover,
+    [class*="hover:bg-stone-6"]:hover, [class*="hover:bg-stone-7"]:hover, [class*="hover:bg-stone-8"]:hover, [class*="hover:bg-stone-9"]:hover,
     [class*="hover:bg-[#0B0B0B]"]:hover, [class*="hover:bg-[#0b0b0b]"]:hover,
     [class*="hover:bg-[#111111]"]:hover, [class*="hover:bg-[#121212]"]:hover,
     [class*="hover:bg-[#151515]"]:hover, [class*="hover:bg-[#1a1a1a]"]:hover,
@@ -2913,11 +2921,11 @@ h6,
 ) to (
   :is(
     .trimma-dark-surface, .trimma-dark-context,
-    .bg-black, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
-    .bg-slate-800, .bg-slate-900, .bg-slate-950,
-    .bg-gray-800, .bg-gray-900, .bg-gray-950,
-    .bg-neutral-800, .bg-neutral-900, .bg-neutral-950,
-    .bg-stone-800, .bg-stone-900, .bg-stone-950,
+    .bg-black, .bg-zinc-600, .bg-zinc-700, .bg-zinc-800, .bg-zinc-900, .bg-zinc-950,
+    .bg-slate-600, .bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-slate-950,
+    .bg-gray-600, .bg-gray-700, .bg-gray-800, .bg-gray-900, .bg-gray-950,
+    .bg-neutral-600, .bg-neutral-700, .bg-neutral-800, .bg-neutral-900, .bg-neutral-950,
+    .bg-stone-600, .bg-stone-700, .bg-stone-800, .bg-stone-900, .bg-stone-950,
     .bg-\[\#0B0B0B\], .bg-\[\#0b0b0b\], .bg-\[\#0A0B10\],
     .bg-\[\#111111\], .bg-\[\#121212\], .bg-\[\#151515\],
     .bg-\[\#1A1A1A\], .bg-\[\#1a1a1a\], .bg-\[\#1A1C29\], .bg-\[\#252525\],
