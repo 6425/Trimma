@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import {
+  buildScopedCitySearchValue,
   getDistrictBySlugs,
   normalizeProvinceSlug,
   slugifyLocation,
@@ -36,6 +37,7 @@ export default function CityDetailPage() {
   const cityName =
     districtMeta.cities.find((entry) => slugifyLocation(entry) === slugifyLocation(citySlug)) ||
     citySlug.replace(/-/g, " ");
+  const scopedCityLocation = buildScopedCitySearchValue(cityName, districtMeta.name);
 
   const data = useMemo(
     () => ({
@@ -62,7 +64,7 @@ export default function CityDetailPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(scopedCityLocation);
   const [listings, setListings] = useState<BusinessListingCardData[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,7 @@ export default function CityDetailPage() {
       try {
         setLoading(true);
         const params = new URLSearchParams({
-          location: String(cityName),
+          location: scopedCityLocation,
           publishedOnly: "true",
           limit: "0",
         });
@@ -128,7 +130,7 @@ export default function CityDetailPage() {
       cancelled = true;
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [cityName]);
+  }, [scopedCityLocation]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 md:pb-0 relative">
@@ -193,9 +195,13 @@ export default function CityDetailPage() {
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
                   >
-                    <option value="" className="text-zinc-900">Any City</option>
-                    {cityOptions.map((entry) => (
-                      <option key={entry} value={slugifyLocation(entry)} className="text-zinc-900">
+                    <option value={scopedCityLocation} className="text-zinc-900">{cityName}</option>
+                    {cityOptions.filter((entry) => entry !== cityName).map((entry) => (
+                      <option
+                        key={entry}
+                        value={buildScopedCitySearchValue(entry, districtMeta.name)}
+                        className="text-zinc-900"
+                      >
                         {entry}
                       </option>
                     ))}

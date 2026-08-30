@@ -1,6 +1,7 @@
 "use client";
 
 import { useGeographyCatalog } from "@/lib/use-geography-catalog";
+import { buildScopedCitySearchValue } from "@/lib/sri-lanka-locations";
 
 type SriLankaLocationSelectProps = {
   value: string;
@@ -49,7 +50,7 @@ export function SriLankaLocationSelect({
             district.cities.map((city) => (
               <option
                 key={`city-${province.slug}-${district.slug}-${city}`}
-                value={city}
+                value={buildScopedCitySearchValue(city, district.name)}
                 className={optionClassName}
               >
                 {city} ({district.name})

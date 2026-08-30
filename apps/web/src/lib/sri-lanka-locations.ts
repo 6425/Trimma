@@ -422,6 +422,11 @@ export function resolveLocationDisplayLabel(location: string): string {
   const trimmed = location.trim();
   if (!trimmed) return "Sri Lanka";
 
+  const scope = resolveLocationSearchScope(trimmed);
+  if (scope?.kind === "province") return scope.province.name;
+  if (scope?.kind === "district") return scope.district.name;
+  if (scope?.kind === "city") return `${scope.city}, ${scope.district.name}`;
+
   const province = resolveProvinceForLocationQuery(trimmed);
   if (province) return province.name;
 
@@ -512,6 +517,24 @@ function resolveDistrictScope(value: string): Extract<LocationSearchScope, { kin
 }
 
 function resolveCityScope(value: string): Extract<LocationSearchScope, { kind: "city" }> | undefined {
+  const scopedParts = value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (scopedParts.length >= 2) {
+    const cityValue = scopedParts[0];
+    const districtValue = scopedParts[scopedParts.length - 1];
+    const districtScope = resolveDistrictScope(districtValue);
+    if (districtScope && cityValue) {
+      return {
+        kind: "city",
+        province: districtScope.province,
+        district: districtScope.district,
+        city: matchCityInDistrict(districtScope.district, cityValue) || cityValue,
+      };
+    }
+  }
+
   for (const province of SRI_LANKA_PROVINCES) {
     for (const district of province.districts) {
       const city = matchCityInDistrict(district, value);
@@ -680,7 +703,20 @@ export function salonBelongsToRequestedLocation(
   if (scope.kind === "district") {
     return geo.district?.slug === scope.district.slug;
   }
-  return Boolean(geo.city && placeNamesMatch(geo.city, scope.city));
+  return Boolean(
+    geo.district?.slug === scope.district.slug &&
+      geo.city &&
+      placeNamesMatch(geo.city, scope.city)
+  );
+}
+
+/** Canonical city search value that preserves its district for strict filtering. */
+export function buildScopedCitySearchValue(city: string, district: string): string {
+  const cityName = city.trim();
+  const districtName = district.trim();
+  if (!cityName) return districtName;
+  if (!districtName) return cityName;
+  return `${cityName}, ${districtName}`;
 }
 
 export function getDistrictBySlugs(

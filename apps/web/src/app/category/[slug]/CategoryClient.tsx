@@ -439,11 +439,11 @@ export default function CategoryClient({
             isLoadingMore={isLoadingMore}
             onLoadMore={handleLoadMore}
             gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
-            moreTitle={searchQuery.trim() ? "Search results" : undefined}
+            moreTitle={searchQuery.trim() ? "Search results" : `${categoryName} businesses`}
             moreDescription={
               searchQuery.trim()
                 ? "Businesses matching the name you searched."
-                : undefined
+                : "Businesses with contact numbers first, then highest rating and strongest review count."
             }
           />
         )}

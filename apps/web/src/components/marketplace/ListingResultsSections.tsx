@@ -35,7 +35,7 @@ export function ListingResultsSections({
   onLoadMore,
   gridClassName,
   moreTitle = "You may also like",
-  moreDescription = "The rest of the published listings, sorted from the highest Google reviews and ratings to the lowest.",
+  moreDescription = "Contactable businesses first, followed by the highest ratings and strongest review counts.",
 }: Props) {
   return (
     <div className="space-y-12">
@@ -62,7 +62,7 @@ export function ListingResultsSections({
         <section>
           <SectionHeading
             title="Top Rated"
-            description="Highest Google review counts and ratings among published businesses that list a contact number, so you can call or message them straight away."
+            description="Businesses with contact numbers first, then ordered by highest rating and strongest review count."
           />
           <div className={gridClassName}>
             {topRated.slice(0, 4).map((listing) => (

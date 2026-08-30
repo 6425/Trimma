@@ -14,6 +14,7 @@ import {
   FEATURED_BATCH_PUBLIC_LIMIT,
   TOP_RATED_LISTING_COUNT,
   YOU_MAY_ALSO_LIKE_COUNT,
+  compareListingPopularity,
   pinTopReviewedListingsWithPhone,
   splitMarketplaceListingSections,
 } from "@/lib/listing-marketplace-rank";
@@ -145,7 +146,7 @@ export async function fetchPublicSalons(
       const textFilter = textSearchOrFilter(q);
       if (textFilter) query = query.or(textFilter);
     }
-    if (location && !q) {
+    if (location) {
       const locationFilter = buildSalonLocationOrFilter(location);
       if (locationFilter) query = query.or(locationFilter);
     }
@@ -227,7 +228,7 @@ export async function fetchPublicSalons(
     rows = rows.filter((row) => salonMatchesCategory(row, category, categoryName));
   }
   if (location.trim()) {
-    rows = rows.filter((row) => rowAllowedForLocationSearch(row, q, location));
+    rows = rows.filter((row) => rowAllowedForLocationSearch(row, location));
   }
 
   const needsMemoryPage = postFilterActive || (approvedDirectoryQuery && categoryFilterActive);
@@ -307,7 +308,7 @@ function filterBusinessListingRows(
   }
   if (params.location?.trim()) {
     rows = rows.filter((row) =>
-      rowAllowedForLocationSearch(row, params.q || "", params.location || "")
+      rowAllowedForLocationSearch(row, params.location || "")
     );
   }
 
@@ -322,7 +323,7 @@ function sortBusinessListingRows(
     return [...rows].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
   }
   if (sort === "rating") {
-    return [...rows].sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+    return [...rows].sort(compareListingPopularity);
   }
   return pinTopReviewedListingsWithPhone(
     rows.map((row) => ({
@@ -419,11 +420,9 @@ function listingRowMatchesQuery(row: Record<string, unknown>, q: string): boolea
 
 function rowAllowedForLocationSearch(
   row: Record<string, unknown>,
-  q: string,
   location: string
 ): boolean {
   if (!location.trim()) return true;
-  if (listingNameMatchesQuery(row, q)) return true;
   return salonBelongsToRequestedLocation(row, location);
 }
 
@@ -446,8 +445,7 @@ function applyPublishedListingFilters(
   if (textFilter) {
     next = next.or(textFilter);
   }
-  // Name search must not AND a location, or a matching salon in another province is hidden.
-  if (params.location.trim() && !q) {
+  if (params.location.trim()) {
     const locationFilter = buildSalonLocationOrFilter(params.location);
     if (locationFilter) next = next.or(locationFilter);
   }
@@ -559,8 +557,8 @@ async function loadPublishedMarketplaceWindow(
     const searchLimit = Math.min(400, Math.max(windowSize, params.offset + Math.max(params.limit, 1) + 20));
     const searchQuery = runListingQuery(
       applyPublishedListingFilters(client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown, filters)
-        .order("review_count", { ascending: false })
         .order("rating", { ascending: false })
+        .order("review_count", { ascending: false })
         .limit(searchLimit)
     );
     let [searchRes, totalCount] = await Promise.all([
@@ -571,8 +569,8 @@ async function loadPublishedMarketplaceWindow(
       const fallbackSelect = withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT);
       searchRes = await runListingQuery(
         applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
-          .order("review_count", { ascending: false })
           .order("rating", { ascending: false })
+          .order("review_count", { ascending: false })
           .limit(searchLimit)
       );
     }
@@ -598,8 +596,8 @@ async function loadPublishedMarketplaceWindow(
   );
   const popularQuery = runListingQuery(
     applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, filters)
-      .order("review_count", { ascending: false })
       .order("rating", { ascending: false })
+      .order("review_count", { ascending: false })
       .limit(windowSize)
   );
 
@@ -623,8 +621,8 @@ async function loadPublishedMarketplaceWindow(
       ),
       runListingQuery(
         applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
-          .order("review_count", { ascending: false })
           .order("rating", { ascending: false })
+          .order("review_count", { ascending: false })
           .limit(windowSize)
       ),
     ]);
@@ -726,7 +724,7 @@ export async function fetchBusinessListingCards(
         const textFilter = textSearchOrFilter(q);
         if (textFilter) query = query.or(textFilter);
       }
-      if (location && !q) {
+      if (location) {
         const locationFilter = buildSalonLocationOrFilter(location);
         if (locationFilter) query = query.or(locationFilter);
       }
@@ -752,25 +750,24 @@ export async function fetchBusinessListingCards(
 
   if (q.trim()) {
     const ranked = [...filtered].sort((a, b) => {
-      const aHere = location.trim() && salonBelongsToRequestedLocation(a, location) ? 0 : 1;
-      const bHere = location.trim() && salonBelongsToRequestedLocation(b, location) ? 0 : 1;
-      if (aHere !== bHere) return aHere - bHere;
       const aName = listingNameMatchesQuery(a, q) ? 0 : 1;
       const bName = listingNameMatchesQuery(b, q) ? 0 : 1;
       if (aName !== bName) return aName - bName;
-      return Number(b.review_count || 0) - Number(a.review_count || 0);
+      return compareListingPopularity(a, b);
     });
     const pagedRows = !limit || limit <= 0 ? ranked.slice(offset) : ranked.slice(offset, offset + limit);
+    const totalCount = countedTotal ?? ranked.length;
     return {
       listings: toCards(pagedRows, offset),
       topRated: [],
       featured: [],
-      hasMore: Boolean(limit && limit > 0 && offset + pagedRows.length < ranked.length),
-      totalCount: ranked.length,
+      hasMore: Boolean(limit && limit > 0 && offset + pagedRows.length < totalCount),
+      totalCount,
     };
   }
 
-  if (sort === "name" || sort === "rating") {
+  const directorySearchActive = Boolean(location.trim() || categoryActive);
+  if (sort === "name" || sort === "rating" || directorySearchActive) {
     const rows = sortBusinessListingRows(filtered, sort);
     const pagedRows = !limit || limit <= 0 ? rows.slice(offset) : rows.slice(offset, offset + limit);
     const listings = toCards(pagedRows, offset);

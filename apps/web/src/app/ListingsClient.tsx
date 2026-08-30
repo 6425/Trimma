@@ -366,11 +366,19 @@ export default function ListingsClient({
                 isLoadingMore={isLoadingMore}
                 onLoadMore={handleLoadMore}
                 gridClassName="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                moreTitle={searchQuery.trim() ? "Search results" : undefined}
+                moreTitle={
+                  searchQuery.trim()
+                    ? "Search results"
+                    : selectedLocation || activeCategory
+                      ? "Business listings"
+                      : undefined
+                }
                 moreDescription={
                   searchQuery.trim()
                     ? "Businesses matching the name you searched."
-                    : undefined
+                    : selectedLocation || activeCategory
+                      ? "Businesses with contact numbers first, then highest rating and strongest review count."
+                      : undefined
                 }
               />
             )}

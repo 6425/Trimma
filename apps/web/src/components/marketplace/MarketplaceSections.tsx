@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SalonCard } from "./SalonCard";
 import { VerifiedSalonBadge, isSalonVerified } from "./VerifiedSalonBadge";
-import { pickAdminFeaturedListings } from "@/lib/listing-marketplace-rank";
+import { compareListingPopularity, pickAdminFeaturedListings } from "@/lib/listing-marketplace-rank";
 
 interface Salon {
   id: string;
@@ -163,7 +163,7 @@ export function PopularSalonsSection({ salons, contextName }: MarketplaceSection
   const featuredIds = new Set(pickAdminFeaturedListings(salons).map((salon) => salon.id));
   const popular = [...salons]
     .filter((salon) => !featuredIds.has(salon.id))
-    .sort((a, b) => b.reviews - a.reviews || b.rating - a.rating)
+    .sort(compareListingPopularity)
     .slice(0, 8);
 
   if (popular.length === 0) return null;

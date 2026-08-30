@@ -19,6 +19,7 @@ import { saveBookingCheckoutDraft } from "@/lib/booking-checkout";
 import { fetchAvailableBookingSlots, validateBookingSlotSelection } from "@/app/actions/booking-slots";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { getSalonDirectionsUrl, getSalonFullAddress } from "@/lib/salon-map";
+import { buildScopedCitySearchValue } from "@/lib/sri-lanka-locations";
 import {
   type SalonPromotionPackage,
 } from "@/lib/deals";
@@ -320,7 +321,7 @@ export default function SalonPage({
       try {
         const params = new URLSearchParams({
           similarSalonId: String(salon.id),
-          location: city,
+          location: buildScopedCitySearchValue(city, String(salon.district || "")),
           categoryName: category,
         });
         const res = await fetch(`/api/business-listings/search?${params.toString()}`, {
@@ -339,7 +340,7 @@ export default function SalonPage({
     return () => {
       cancelled = true;
     };
-  }, [salon?.id, salon?.city, salon?.category, initialSimilarListings.length]);
+  }, [salon?.id, salon?.city, salon?.district, salon?.category, initialSimilarListings.length]);
 
   useEffect(() => {
     if (loading || !salon) return;

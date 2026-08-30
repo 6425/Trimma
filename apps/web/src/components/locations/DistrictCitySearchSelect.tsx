@@ -3,6 +3,7 @@
 import { Building2, MapPin } from "lucide-react";
 import { useMemo } from "react";
 import {
+  buildScopedCitySearchValue,
   normalizePlaceName,
   resolveLocationSearchScope,
   slugifyLocation,
@@ -121,7 +122,11 @@ export function DistrictCitySearchSelect({ value, onChange }: Props) {
           value={selection.city}
           disabled={!selection.district}
           onChange={(event) =>
-            onChange(event.target.value || selection.district)
+            onChange(
+              event.target.value
+                ? buildScopedCitySearchValue(event.target.value, selection.district)
+                : selection.district
+            )
           }
           className={selectClassName}
         >

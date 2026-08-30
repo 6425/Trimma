@@ -44,25 +44,23 @@ export function listingRatingValue(listing: RankableListing): number {
 }
 
 export function compareListingPopularity(a: RankableListing, b: RankableListing): number {
+  const phoneDelta = Number(hasListingPhone(b.phone)) - Number(hasListingPhone(a.phone));
+  if (phoneDelta) return phoneDelta;
+  const ratingDelta = listingRatingValue(b) - listingRatingValue(a);
+  if (ratingDelta) return ratingDelta;
   const reviewDelta = listingReviewCount(b) - listingReviewCount(a);
   if (reviewDelta) return reviewDelta;
-  return listingRatingValue(b) - listingRatingValue(a);
+  return String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+    sensitivity: "base",
+  });
 }
 
-/** Put the top reviewed, rated businesses with a phone number first. */
+/** Contactable businesses first, then highest rating, then strongest review count. */
 export function pinTopReviewedListingsWithPhone<T extends RankableListing>(
   items: T[],
-  featuredCount = FEATURED_LISTING_COUNT
+  _featuredCount = FEATURED_LISTING_COUNT
 ): T[] {
-  const eligible = [...items]
-    .filter((item) => hasListingPhone(item.phone))
-    .sort(compareListingPopularity);
-  const featured = eligible.slice(0, featuredCount);
-  const featuredIds = new Set(featured.map((item) => String(item.id || "")));
-  const rest = items
-    .filter((item) => !featuredIds.has(String(item.id || "")))
-    .sort(compareListingPopularity);
-  return [...featured, ...rest];
+  return [...items].sort(compareListingPopularity);
 }
 
 export function compareFeaturedBatchOrder(a: RankableListing, b: RankableListing): number {
@@ -95,7 +93,7 @@ export function splitMarketplaceListingSections<T extends RankableListing>(
   const popularity = [...items].sort(compareListingPopularity);
 
   const topRated = popularity
-    .filter((item) => !taken.has(listingId(item)) && hasListingPhone(item.phone))
+    .filter((item) => !taken.has(listingId(item)))
     .slice(0, topCount);
   for (const item of topRated) taken.add(listingId(item));
 

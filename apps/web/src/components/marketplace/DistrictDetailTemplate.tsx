@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { BusinessListingsMap } from "./BusinessListingsMap";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { ProvinceNavLinks } from "../locations/ProvinceNavLinks";
-import { slugifyLocation } from "@/lib/sri-lanka-locations";
+import { buildScopedCitySearchValue, slugifyLocation } from "@/lib/sri-lanka-locations";
 import { 
   FeaturedSalonsSection, 
   PopularSalonsSection, 
@@ -68,7 +68,7 @@ export function DistrictDetailTemplate({ data, loading = false, listings = [] }:
   const [isScrolled, setIsScrolled] = useState(false);
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(data.name);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -143,9 +143,13 @@ export function DistrictDetailTemplate({ data, loading = false, listings = [] }:
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="w-full h-12 bg-transparent text-zinc-900 outline-none appearance-none cursor-pointer text-sm font-bold"
                   >
-                    <option value="" className="text-zinc-900">Any City</option>
+                    <option value={data.name} className="text-zinc-900">All cities in {data.name}</option>
                     {data.cities.map((city) => (
-                      <option key={city.slug || city.name} value={city.slug || slugifyLocation(city.name)} className="text-zinc-900">
+                      <option
+                        key={city.slug || city.name}
+                        value={buildScopedCitySearchValue(city.name, data.name)}
+                        className="text-zinc-900"
+                      >
                         {city.name}
                       </option>
                     ))}
