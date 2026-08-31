@@ -644,33 +644,60 @@ type SalonLocationFields = {
 function identifySalonGeography(
   salon: SalonLocationFields
 ): { province: SriLankaProvince; district?: SriLankaDistrict; city?: string } | null {
-  const parts = [salon.city, salon.district, salon.province, salon.location]
-    .map((value) => String(value || "").trim())
+  const cityValue = String(salon.city || "").trim();
+  const districtValue = String(salon.district || "").trim();
+  const provinceValue = String(salon.province || "").trim();
+  const locationValue = String(salon.location || "").trim();
+  const locationPieces = locationValue
+    .split(/[,/|]/)
+    .map((value) => value.trim())
     .filter(Boolean);
 
-  for (const part of parts) {
-    const city = resolveCityScope(part);
-    if (city) return { province: city.province, district: city.district, city: city.city };
-  }
-  for (const part of parts) {
-    const district = resolveDistrictScope(part);
-    if (district) return { province: district.province, district: district.district };
-  }
-  for (const part of parts) {
-    const province = matchProvinceName(part);
-    if (province) return { province };
+  // A known city is authoritative. This also repairs inconsistent legacy rows,
+  // such as Ja-Ela records that were incorrectly saved with Puttalam district.
+  if (cityValue) {
+    const knownCity = resolveCityScope(cityValue);
+    if (knownCity) {
+      return {
+        province: knownCity.province,
+        district: knownCity.district,
+        city: knownCity.city,
+      };
+    }
   }
 
-  const blob = parts.join(", ");
-  if (blob) {
-    for (const piece of blob.split(/[,/|]/).map((value) => value.trim()).filter(Boolean)) {
+  if (!cityValue) {
+    for (const piece of locationPieces) {
       const city = resolveCityScope(piece);
-      if (city) return { province: city.province, district: city.district, city: city.city };
-      const district = resolveDistrictScope(piece);
-      if (district) return { province: district.province, district: district.district };
-      const province = matchProvinceName(piece);
-      if (province) return { province };
+      if (city) {
+        return { province: city.province, district: city.district, city: city.city };
+      }
     }
+  }
+
+  // Google Places and admin discovery can introduce legitimate city/locality
+  // names that are not yet in the static selector (for example
+  // "Colombo 03 - Colpetty"). Preserve that exact city when its district is
+  // known so strict city searches return the matching businesses without
+  // allowing results from another district.
+  const explicitDistrict = [districtValue, ...locationPieces]
+    .map((value) => resolveDistrictScope(value))
+    .find(Boolean);
+  if (cityValue && explicitDistrict) {
+    return {
+      province: explicitDistrict.province,
+      district: explicitDistrict.district,
+      city: cityValue,
+    };
+  }
+
+  if (explicitDistrict) {
+    return { province: explicitDistrict.province, district: explicitDistrict.district };
+  }
+
+  for (const value of [provinceValue, ...locationPieces]) {
+    const province = matchProvinceName(value);
+    if (province) return { province };
   }
 
   return null;

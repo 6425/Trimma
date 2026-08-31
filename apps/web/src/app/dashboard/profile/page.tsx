@@ -17,6 +17,7 @@ import {
   uploadSalonProfileImage,
   saveOwnerVerificationData,
   updateSalonStaff,
+  updateSalonService,
   uploadSalonStaffAvatar,
 } from "@/app/actions/salon-operations";
 import { buildStaffWorkingHoursPayload, mapSalonServicesForStaffForm, parseStaffWorkingHours, resolveEffectiveStaffRoles } from "@/lib/salon-staff-insert";
@@ -60,6 +61,15 @@ import {
   SALON_HERO_IMAGE_WIDTH,
 } from "@/lib/salon-hero-image";
 import { blobToBase64, cropImageFile } from "@/lib/crop-image-file";
+import {
+  MIN_SERVICE_FEE_MESSAGE,
+  MIN_SERVICE_PRICE_LKR,
+} from "@/lib/service-pricing";
+import {
+  GlobalServiceIconUpload,
+  SERVICE_IMAGE_DIMENSION_LABEL,
+} from "../../../components/admin/GlobalServiceIconUpload";
+import { uploadSalonServiceImage } from "@/app/actions/style-images";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -154,6 +164,18 @@ export default function SalonProfilePage() {
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [editingStaffIndex, setEditingStaffIndex] = useState<number | null>(null);
   const [savingStaff, setSavingStaff] = useState(false);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [savingService, setSavingService] = useState(false);
+  const [serviceEditForm, setServiceEditForm] = useState({
+    name: "",
+    category: "",
+    price: "",
+    duration_min: "",
+    description: "",
+    status: "active",
+    image_url: "",
+  });
 
   // Hidden File Inputs Refs
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -500,7 +522,93 @@ export default function SalonProfilePage() {
     }
   };
 
-  const profileSalonServices = mapSalonServicesForStaffForm(existingSalonServices, globalServices);
+  const profileServiceRows = existingSalonServices.filter(
+    (service) => String(service.status || "").toLowerCase() !== "deleted"
+  );
+  const profileSalonServices = mapSalonServicesForStaffForm(profileServiceRows, globalServices);
+  const serviceCategoryOptions = Array.from(
+    new Set(
+      [...profileServiceRows, ...globalServices]
+        .map((service) => String(service.category || service.categories?.name || "").trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  const openServiceEditModal = (service: any) => {
+    setEditingServiceId(String(service.id));
+    setServiceEditForm({
+      name: String(service.name || ""),
+      category: String(service.category || ""),
+      price: String(service.price ?? ""),
+      duration_min: String(service.duration_min ?? 30),
+      description: String(service.description || ""),
+      status: String(service.status || "active"),
+      image_url: String(service.image_url || ""),
+    });
+    setIsServiceModalOpen(true);
+  };
+
+  const closeServiceEditModal = () => {
+    if (savingService) return;
+    setIsServiceModalOpen(false);
+    setEditingServiceId(null);
+  };
+
+  const handleServiceEditSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingServiceId) return;
+
+    const price = Number(serviceEditForm.price);
+    const duration = Number.parseInt(serviceEditForm.duration_min, 10);
+    if (!serviceEditForm.name.trim()) {
+      toast.error("Service name is required.");
+      return;
+    }
+    if (!serviceEditForm.category.trim()) {
+      toast.error("Service category is required.");
+      return;
+    }
+    if (!Number.isFinite(price) || price < MIN_SERVICE_PRICE_LKR) {
+      toast.error(MIN_SERVICE_FEE_MESSAGE);
+      return;
+    }
+    if (!Number.isFinite(duration) || duration < 1) {
+      toast.error("Enter a valid service duration.");
+      return;
+    }
+
+    const payload = {
+      name: serviceEditForm.name.trim(),
+      category: serviceEditForm.category.trim(),
+      price,
+      duration_min: duration,
+      description: serviceEditForm.description.trim(),
+      status: serviceEditForm.status,
+      image_url: serviceEditForm.image_url.trim() || null,
+    };
+
+    try {
+      setSavingService(true);
+      const result = await updateSalonService(editingServiceId, payload);
+      if (result.success === false) throw new Error(result.error);
+
+      setExistingSalonServices((current) =>
+        current.map((service) =>
+          String(service.id) === editingServiceId ? { ...service, ...payload } : service
+        )
+      );
+      toast.success("Service updated successfully.");
+      setIsServiceModalOpen(false);
+      setEditingServiceId(null);
+    } catch (error) {
+      toast.error(
+        "Failed to update service: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
+    } finally {
+      setSavingService(false);
+    }
+  };
 
   const closeStaffModal = () => {
     setIsStaffModalOpen(false);
@@ -593,7 +701,8 @@ export default function SalonProfilePage() {
 
       let avatarUrl: string | null = st.avatar_url || null;
       if (st.avatarBlob instanceof Blob) {
-        const fileName = `${salonId}-${Date.now()}-${prepared.length}.jpg`;
+        const staffFileKey = st.id || `new-${prepared.length}`;
+        const fileName = `${salonId}-${staffFileKey}-${st.avatarBlob.size}.jpg`;
         const { error: uploadError } = await supabase.storage
           .from("staff-avatars")
           .upload(fileName, st.avatarBlob, { contentType: "image/jpeg", upsert: true });
@@ -1186,27 +1295,72 @@ export default function SalonProfilePage() {
               </div>
               
               <div className="space-y-3 pt-2">
-                <h4 className="font-extrabold uppercase tracking-widest text-brand text-[10px] border-b border-rose-100 pb-1 flex items-center gap-1.5">
-                  <Scissors className="w-3.5 h-3.5" /> Service Catalog
-                </h4>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 border-b border-rose-100 pb-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs font-bold text-zinc-800">
-                      {existingSalonServices.length > 0
-                        ? `${existingSalonServices.length} service${existingSalonServices.length === 1 ? "" : "s"} in your catalog`
-                        : "No services added yet"}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 mt-1 max-w-md">
-                      Import from the master catalog or add custom services on the Services page. Assign each service to staff in the Staff section below.
+                    <h4 className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-brand">
+                      <Scissors className="h-3.5 w-3.5" /> Service Catalog
+                    </h4>
+                    <p className="mt-1 text-[10px] text-zinc-500">
+                      Edit pricing, duration, category, description, image and availability here.
                     </p>
                   </div>
                   <Link
                     href="/dashboard/services"
-                    className="inline-flex items-center justify-center h-9 px-4 rounded-xl bg-brand hover:bg-brand-hover text-black text-xs font-bold whitespace-nowrap"
+                    className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-xl bg-brand px-4 text-xs font-bold text-black hover:bg-brand-hover hover:text-black"
                   >
-                    Manage Services
+                    Add or Import Services
                   </Link>
                 </div>
+
+                {profileServiceRows.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-5 text-center">
+                    <p className="text-xs font-bold text-zinc-800">No services added yet</p>
+                    <p className="mt-1 text-[10px] text-zinc-500">
+                      Add a custom service or import one from the master catalog first.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    {profileServiceRows.map((service) => {
+                      const active = String(service.status || "").toLowerCase() === "active";
+                      const price = Number(service.price) || 0;
+                      const duration = Number(service.duration_min) || 0;
+                      return (
+                        <div
+                          key={service.id}
+                          className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="truncate text-sm font-bold text-zinc-900">{service.name}</p>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  active
+                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border-zinc-200 bg-zinc-100 text-zinc-600"
+                                }
+                              >
+                                {active ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+                            <p className="mt-1 text-[11px] text-zinc-500">
+                              {service.category || "General"} · LKR {price.toLocaleString("en-LK")} · {duration} min
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => openServiceEditModal(service)}
+                            className="h-9 shrink-0 rounded-xl border-zinc-300 bg-white px-4 text-xs font-bold text-zinc-900 hover:bg-zinc-100 hover:text-zinc-900"
+                          >
+                            <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit Service
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
               
               <div className="space-y-3 pt-2">
@@ -1438,6 +1592,162 @@ export default function SalonProfilePage() {
             </div>
           </div>
         </div>
+
+        <DashboardModal
+          open={isServiceModalOpen}
+          onClose={closeServiceEditModal}
+          size="lg"
+          title="Edit Service"
+          description="Update this service without leaving Salon Profile."
+          footer={
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeServiceEditModal}
+                disabled={savingService}
+                className="h-11 rounded-xl font-bold"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="profile-edit-service-form"
+                disabled={savingService}
+                className="h-11 rounded-xl bg-brand px-6 font-bold text-black hover:bg-brand-hover hover:text-black"
+              >
+                {savingService ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Save Service
+              </Button>
+            </div>
+          }
+        >
+          <form id="profile-edit-service-form" onSubmit={handleServiceEditSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                Service Image ({SERVICE_IMAGE_DIMENSION_LABEL})
+              </Label>
+              <GlobalServiceIconUpload
+                value={serviceEditForm.image_url}
+                onChange={(imageUrl) =>
+                  setServiceEditForm((current) => ({ ...current, image_url: imageUrl }))
+                }
+                onClear={() =>
+                  setServiceEditForm((current) => ({ ...current, image_url: "" }))
+                }
+                uploadAction={(formData) => uploadSalonServiceImage(formData, salon?.id || "")}
+                uploadContextLabel="salon service catalog"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-service-name" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                Service Name
+              </Label>
+              <Input
+                id="profile-service-name"
+                required
+                value={serviceEditForm.name}
+                onChange={(event) =>
+                  setServiceEditForm((current) => ({ ...current, name: event.target.value }))
+                }
+                className="h-11 rounded-xl border-zinc-200 text-zinc-900"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-service-price" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  Price (LKR) — minimum {MIN_SERVICE_PRICE_LKR.toFixed(2)}
+                </Label>
+                <Input
+                  id="profile-service-price"
+                  type="number"
+                  required
+                  min={MIN_SERVICE_PRICE_LKR}
+                  step="0.01"
+                  value={serviceEditForm.price}
+                  onChange={(event) =>
+                    setServiceEditForm((current) => ({ ...current, price: event.target.value }))
+                  }
+                  className="h-11 rounded-xl border-zinc-200 text-zinc-900"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-service-duration" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  Duration (minutes)
+                </Label>
+                <Input
+                  id="profile-service-duration"
+                  type="number"
+                  required
+                  min="1"
+                  value={serviceEditForm.duration_min}
+                  onChange={(event) =>
+                    setServiceEditForm((current) => ({ ...current, duration_min: event.target.value }))
+                  }
+                  className="h-11 rounded-xl border-zinc-200 text-zinc-900"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-service-category" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  Category
+                </Label>
+                <select
+                  id="profile-service-category"
+                  required
+                  value={serviceEditForm.category}
+                  onChange={(event) =>
+                    setServiceEditForm((current) => ({ ...current, category: event.target.value }))
+                  }
+                  className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+                >
+                  {serviceCategoryOptions.map((categoryName) => (
+                    <option key={categoryName} value={categoryName}>{categoryName}</option>
+                  ))}
+                  {serviceEditForm.category && !serviceCategoryOptions.includes(serviceEditForm.category) ? (
+                    <option value={serviceEditForm.category}>{serviceEditForm.category}</option>
+                  ) : null}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-service-status" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                  Status
+                </Label>
+                <select
+                  id="profile-service-status"
+                  value={serviceEditForm.status}
+                  onChange={(event) =>
+                    setServiceEditForm((current) => ({ ...current, status: event.target.value }))
+                  }
+                  className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+                >
+                  <option value="active">Active and bookable</option>
+                  <option value="inactive">Inactive / paused</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-service-description" className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                Description
+              </Label>
+              <textarea
+                id="profile-service-description"
+                rows={4}
+                value={serviceEditForm.description}
+                onChange={(event) =>
+                  setServiceEditForm((current) => ({ ...current, description: event.target.value }))
+                }
+                placeholder="Tell customers about this service..."
+                className="w-full rounded-xl border border-zinc-200 bg-white p-3 text-sm text-zinc-900 outline-none focus:border-brand"
+              />
+            </div>
+          </form>
+        </DashboardModal>
 
         <DashboardModal
           open={isStaffModalOpen}

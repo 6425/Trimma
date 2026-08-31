@@ -1,8 +1,10 @@
 -- ==============================================================================
--- TRIMMA: INVENTORY — APPLY ALL (Phase 1 + Phase 2)
+-- TRIMMA: INVENTORY — APPLY ALL (Phase 1 + Phase 2, LIVE-SAFE)
 -- ==============================================================================
 -- Run this ENTIRE file once in Supabase SQL Editor.
 -- Safe to re-run on the same project (uses IF NOT EXISTS / DROP IF EXISTS).
+-- Inventory writes are performed by authenticated Trimma server actions.
+-- No anonymous checkout policy can read or mutate salon stock or ledger rows.
 -- ==============================================================================
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -246,20 +248,9 @@ CREATE POLICY "Platform admins manage salon_inventory_transactions"
   USING (public.is_platform_admin()) WITH CHECK (public.is_platform_admin());
 
 DROP POLICY IF EXISTS "Checkout can view salon inventory items" ON public.salon_inventory_items;
-CREATE POLICY "Checkout can view salon inventory items"
-  ON public.salon_inventory_items FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Checkout can update salon inventory items" ON public.salon_inventory_items;
-CREATE POLICY "Checkout can update salon inventory items"
-  ON public.salon_inventory_items FOR UPDATE USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Checkout can view salon inventory transactions" ON public.salon_inventory_transactions;
-CREATE POLICY "Checkout can view salon inventory transactions"
-  ON public.salon_inventory_transactions FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Checkout can insert salon inventory transactions" ON public.salon_inventory_transactions;
-CREATE POLICY "Checkout can insert salon inventory transactions"
-  ON public.salon_inventory_transactions FOR INSERT WITH CHECK (true);
 
 COMMIT;
 
@@ -625,8 +616,11 @@ CREATE TRIGGER trg_salon_inventory_transactions_apply_ledger
   FOR EACH ROW
   EXECUTE FUNCTION public.trg_apply_inventory_ledger();
 
-GRANT EXECUTE ON FUNCTION public.ensure_salon_inventory_defaults(UUID) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.apply_inventory_ledger(UUID) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.ensure_salon_inventory_defaults(UUID) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.apply_inventory_ledger(UUID) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.trg_apply_inventory_ledger() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ensure_salon_inventory_defaults(UUID) TO service_role;
+GRANT EXECUTE ON FUNCTION public.apply_inventory_ledger(UUID) TO service_role;
 
 ALTER TABLE public.salon_inventory_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.salon_inventory_location_balances ENABLE ROW LEVEL SECURITY;
@@ -695,16 +689,8 @@ CREATE POLICY "Platform admins manage salon_inventory_location_balances"
   USING (public.is_platform_admin()) WITH CHECK (public.is_platform_admin());
 
 DROP POLICY IF EXISTS "Checkout can view salon inventory locations" ON public.salon_inventory_locations;
-CREATE POLICY "Checkout can view salon inventory locations"
-  ON public.salon_inventory_locations FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Checkout can view salon inventory location balances" ON public.salon_inventory_location_balances;
-CREATE POLICY "Checkout can view salon inventory location balances"
-  ON public.salon_inventory_location_balances FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Checkout can upsert salon inventory location balances" ON public.salon_inventory_location_balances;
-CREATE POLICY "Checkout can upsert salon inventory location balances"
-  ON public.salon_inventory_location_balances FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Salon owners view their service inventory recipes" ON public.service_inventory_consumption;
 CREATE POLICY "Salon owners view their service inventory recipes"
@@ -755,8 +741,6 @@ CREATE POLICY "Platform admins manage service_inventory_consumption"
   USING (public.is_platform_admin()) WITH CHECK (public.is_platform_admin());
 
 DROP POLICY IF EXISTS "Checkout can view service inventory recipes" ON public.service_inventory_consumption;
-CREATE POLICY "Checkout can view service inventory recipes"
-  ON public.service_inventory_consumption FOR SELECT USING (true);
 
 COMMIT;
 
