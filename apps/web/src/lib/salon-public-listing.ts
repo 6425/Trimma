@@ -69,6 +69,9 @@ export function isSalonPublicBrowseListing(salon: {
   onboarding_status?: string | null;
 }): boolean {
   if (isSalonApprovedForBookings(salon)) return false;
+  // Preview listings are intentionally direct-link only while an owner or agent
+  // reviews them. They must not leak into marketplace discovery.
+  if (normalizePublicVisibility(salon.public_visibility) === "preview") return false;
   return isSalonPubliclyListable(salon);
 }
 
@@ -117,6 +120,14 @@ export function resolvePublicSalonRatingDisplay(
 }
 
 export function buildSalonClaimLoginUrl(salonId: string, redirectTo = "/dashboard/profile"): string {
+  const params = new URLSearchParams();
+  if (redirectTo !== "/dashboard/profile") params.set("redirectTo", redirectTo);
+  const query = params.toString();
+  return `/claim/${encodeURIComponent(salonId)}${query ? `?${query}` : ""}`;
+}
+
+/** Private owner invitation destination used after Trimma has verified the claimant. */
+export function buildSalonClaimAuthUrl(salonId: string, redirectTo = "/dashboard/profile"): string {
   const params = new URLSearchParams({
     intent: "salon-owner",
     salon: salonId,

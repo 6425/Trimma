@@ -38,11 +38,17 @@ export function isSalonPubliclyBookable(salon: {
   phone?: string | null;
   owner_email?: string | null;
   owner_gmail?: string | null;
+  owner_contact_available?: boolean | null;
+  is_verified?: boolean | null;
+  onboarding_status?: string | null;
+  status?: string | null;
 }): boolean {
   return Boolean(
     salon.booking_enabled &&
+      isSalonApprovedForBookings(salon) &&
       hasSalonWhatsAppPhone(salon.phone) &&
-      hasValidSalonOwnerEmail(salon.owner_email, salon.owner_gmail)
+      (salon.owner_contact_available ||
+        hasValidSalonOwnerEmail(salon.owner_email, salon.owner_gmail))
   );
 }
 
@@ -53,7 +59,7 @@ export function isSalonApprovedForBookings(salon: {
   status?: string | null;
 }): boolean {
   const status = String(salon.status || "").toLowerCase();
-  if (status === "inactive" || status === "rejected") return false;
+  if (status && status !== "active") return false;
   if (salon.is_verified === true) return true;
   return String(salon.onboarding_status || "") === "VERIFIED";
 }
@@ -66,17 +72,22 @@ export function getSalonBookabilityMessage(salon: {
   booking_disabled_message?: string | null;
   is_verified?: boolean | null;
   onboarding_status?: string | null;
+  status?: string | null;
+  owner_contact_available?: boolean | null;
+  claim_available?: boolean | null;
 }): { title: string; body: string } | null {
   if (isSalonPubliclyBookable(salon)) return null;
 
   if (!salon.booking_enabled) {
     if (
-      isSalonClaimable({
-        owner_email: salon.owner_email,
-        owner_gmail: salon.owner_gmail,
-        is_verified: salon.is_verified,
-        onboarding_status: salon.onboarding_status,
-      })
+      salon.claim_available === true ||
+      (salon.claim_available == null &&
+        isSalonClaimable({
+          owner_email: salon.owner_email,
+          owner_gmail: salon.owner_gmail,
+          is_verified: salon.is_verified,
+          onboarding_status: salon.onboarding_status,
+        }))
     ) {
       return {
         title: "Online booking not activated",
@@ -94,8 +105,20 @@ export function getSalonBookabilityMessage(salon: {
     };
   }
 
+  if (!isSalonApprovedForBookings(salon)) {
+    return {
+      title: "Verification in Progress",
+      body:
+        salon.booking_disabled_message ||
+        "Online bookings open only after Trimma completes the final business verification.",
+    };
+  }
+
   const missingPhone = !hasSalonWhatsAppPhone(salon.phone);
-  const missingEmail = !hasValidSalonOwnerEmail(salon.owner_email, salon.owner_gmail);
+  const missingEmail = !(
+    salon.owner_contact_available ||
+    hasValidSalonOwnerEmail(salon.owner_email, salon.owner_gmail)
+  );
 
   if (missingPhone && missingEmail) {
     return {
@@ -122,13 +145,24 @@ export function getSalonBookingBlockedToast(salon: {
   phone?: string | null;
   owner_email?: string | null;
   owner_gmail?: string | null;
+  owner_contact_available?: boolean | null;
+  is_verified?: boolean | null;
+  onboarding_status?: string | null;
+  status?: string | null;
 }): string {
+  if (!isSalonApprovedForBookings(salon)) {
+    return "This salon is awaiting final Trimma verification. Online bookings are not open yet.";
+  }
+
   if (!salon.booking_enabled) {
     return "This salon is currently under verification. Bookings are temporarily unavailable until owner activation is completed.";
   }
 
   const missingPhone = !hasSalonWhatsAppPhone(salon.phone);
-  const missingEmail = !hasValidSalonOwnerEmail(salon.owner_email, salon.owner_gmail);
+  const missingEmail = !(
+    salon.owner_contact_available ||
+    hasValidSalonOwnerEmail(salon.owner_email, salon.owner_gmail)
+  );
 
   if (missingPhone && missingEmail) {
     return "Booking is unavailable because the salon has not provided a valid email address and WhatsApp number.";

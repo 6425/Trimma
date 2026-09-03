@@ -8,6 +8,7 @@ export function buildSelfServeSalonInsertRow(params: {
   displayName: string;
   slug: string;
   normalizedEmail: string;
+  ownerId?: string | null;
   freePlanId: string | null;
   assignTo?: string | null;
 }) {
@@ -18,6 +19,7 @@ export function buildSelfServeSalonInsertRow(params: {
     slug: params.slug,
     owner_email: params.normalizedEmail,
     owner_gmail: params.normalizedEmail,
+    owner_id: params.ownerId || null,
     email: params.normalizedEmail,
     status: SALON_RECORD_STATUS_PENDING,
     onboarding_status: SALON_ONBOARDING_OWNER_INVITED,

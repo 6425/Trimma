@@ -28,6 +28,10 @@ import { parseFeatureFlags } from "@/lib/parse-feature-flags";
 import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
 import { deleteSalonRecordCascade } from "@/lib/admin-salon-delete-core";
 import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
+import {
+  getSalonNotReadyMessage,
+  getSalonVerificationReadiness,
+} from "@/lib/salon-verification-readiness";
 
 const PAYMENT_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 const BRANDING_SETTINGS_ID = "00000000-0000-0000-0000-000000000002";
@@ -62,6 +66,15 @@ export async function rescheduleAdminBooking(bookingId: string, bookingDate: str
 
 export async function updateAdminSalon(salonId: string, payload: Record<string, unknown>) {
   const result = await withAdminDb(async (supabase) => {
+    const opensBookings =
+      payload.is_verified === true ||
+      payload.onboarding_status === "VERIFIED" ||
+      payload.booking_enabled === true;
+    if (opensBookings) {
+      const readiness = await getSalonVerificationReadiness(supabase, salonId);
+      if (!readiness.ready) throw new Error(getSalonNotReadyMessage(readiness.missing));
+    }
+
     const saveResult = await saveAdminSalonRecord(supabase, salonId, payload);
     if (saveResult.success === false) throw new Error(saveResult.error);
   });

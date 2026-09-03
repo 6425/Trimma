@@ -33,6 +33,7 @@ import { normalizeSalonWeeklySchedule } from "@/lib/salon-operating-hours";
 import { needsOwnerActivationWizard } from "@/lib/salon-onboarding";
 import {
   calculateOwnerProfileCompletionScore,
+  canSubmitForBookingApproval,
   getOwnerProfileMissingSections,
   type SalonOnboardingSnapshot,
 } from "@/lib/salon-onboarding-progress";
@@ -70,6 +71,7 @@ import {
   SERVICE_IMAGE_DIMENSION_LABEL,
 } from "../../../components/admin/GlobalServiceIconUpload";
 import { uploadSalonServiceImage } from "@/app/actions/style-images";
+import { isSalonSetupComplete } from "@/lib/salon-setup-progress";
 
 // Recommended sizing placeholders for image cards
 const SIZING_INFO = {
@@ -525,6 +527,16 @@ export default function SalonProfilePage() {
   const profileServiceRows = existingSalonServices.filter(
     (service) => String(service.status || "").toLowerCase() !== "deleted"
   );
+
+  const setupComplete = useMemo(
+    () => isSalonSetupComplete(existingSalonServices, staffToAdd),
+    [existingSalonServices, staffToAdd]
+  );
+
+  const canSubmitForApproval = useMemo(
+    () => canSubmitForBookingApproval(onboardingSnapshot) && setupComplete,
+    [onboardingSnapshot, setupComplete]
+  );
   const profileSalonServices = mapSalonServicesForStaffForm(profileServiceRows, globalServices);
   const serviceCategoryOptions = Array.from(
     new Set(
@@ -865,6 +877,11 @@ export default function SalonProfilePage() {
               ))}
             </div>
           )}
+          {!setupComplete && (
+            <p className="mt-2 max-w-xl rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <span className="font-bold">Booking setup:</span> add an active service and staff member, then assign the service to that staff member before submitting.
+            </p>
+          )}
         </div>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
@@ -872,7 +889,8 @@ export default function SalonProfilePage() {
           {activeTab === "operations" && (
             <Button 
               onClick={handleSave} 
-              disabled={saving}
+          disabled={saving || !canSubmitForApproval}
+          title={canSubmitForApproval ? undefined : "Complete the booking essentials shown above first."}
               className="bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black shadow-md shadow-[#ffde5a]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
             >
               {saving ? (

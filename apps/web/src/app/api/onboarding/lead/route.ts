@@ -8,12 +8,46 @@ import {
 } from "@/lib/onboarding-lead-insert";
 import { mirrorOnboardingLeadToSalonRequests } from "@/lib/salon-request-insert";
 import { APP_BASE_URL } from "@/lib/email/config";
+import { isSalonClaimable, isSalonPubliclyListable } from "@/lib/salon-public-listing";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as OnboardingLeadFormInput;
+    let body = (await request.json()) as OnboardingLeadFormInput;
 
     const supabase = createSupabaseAdminClient();
+    if (body.claimSalonId) {
+      const claimSalonId = body.claimSalonId.trim();
+      const { data: listing, error: listingError } = await supabase
+        .from("salons")
+        .select("id, name, address, city, district, province, latitude, longitude, owner_email, owner_gmail, is_verified, onboarding_status, status, public_visibility, booking_enabled, source_type")
+        .eq("id", claimSalonId)
+        .maybeSingle();
+
+      if (
+        listingError ||
+        !listing ||
+        !isSalonPubliclyListable(listing) ||
+        !isSalonClaimable(listing)
+      ) {
+        return NextResponse.json(
+          { success: false, error: "This listing is not available to claim." },
+          { status: 409 }
+        );
+      }
+
+      body = {
+        ...body,
+        claimSalonId,
+        businessName: listing.name || body.businessName,
+        address: listing.address || body.address,
+        city: listing.city || body.city,
+        district: listing.district || body.district,
+        province: listing.province || body.province,
+        latitude: listing.latitude ?? body.latitude,
+        longitude: listing.longitude ?? body.longitude,
+      };
+    }
+
     const { id: leadId, assignedAgent, isWaitingList } = await insertOnboardingSalonLead(
       supabase,
       body

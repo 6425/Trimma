@@ -38,7 +38,14 @@ import {
 } from "@/lib/salon-onboarding-progress";
 import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
 import { notifyOwnerSubmittedForBookingApproval } from "@/lib/agent-lead-notifications";
-import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
+import {
+  isSelfServeSalon,
+  resolveOnboardingAgentForSalon,
+} from "@/lib/salon-onboarding-paths";
+import {
+  getSalonNotReadyMessage,
+  getSalonVerificationReadiness,
+} from "@/lib/salon-verification-readiness";
 import {
   syncFacebookPromotionChange,
   syncFacebookServiceChange,
@@ -78,7 +85,7 @@ async function runFacebookPromotionSyncs(jobs: PendingPromotionSync[]) {
 }
 
 const SALON_ONBOARDING_SELECT =
-  "id, name, description, phone, address, city, assign_to, source_type, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status, latitude, longitude, logo_url, cover_url, hero_url, hero_image";
+  "id, name, description, phone, address, city, district, assign_to, source_type, owner_email, owner_gmail, working_hours, business_info_extended, bank_info, is_verified, onboarding_status, latitude, longitude, logo_url, cover_url, hero_url, hero_image";
 
 async function refreshSalonOnboardingScore(
   supabase: Parameters<Parameters<typeof withSalonDb>[0]>[0],
@@ -1047,9 +1054,15 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       throw new Error(`Add ${missing.join(", ")} before submitting for booking approval.`);
     }
 
+    const readiness = await getSalonVerificationReadiness(supabase, ctx.salonId);
+    if (!readiness.ready) {
+      throw new Error(getSalonNotReadyMessage(readiness.missing));
+    }
+
     let assignTo = (salon.assign_to as string | null) || null;
-    if (!assignTo) {
+    if (!assignTo || isSelfServeSalon(salon.source_type as string | null)) {
       assignTo = await resolveOnboardingAgentForSalon(supabase, {
+        district: salon.district as string | null,
         city: salon.city as string | null,
         address: salon.address as string | null,
       });

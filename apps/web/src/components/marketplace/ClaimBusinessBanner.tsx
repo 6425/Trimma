@@ -55,7 +55,7 @@ export function ClaimBusinessBanner({
           </div>
           <div className="flex items-start gap-2 text-xs font-medium text-zinc-600">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-zinc-800" />
-            <span>Free to claim. Sign in with Google, complete your salon profile, and pass Trimma agent + admin verification to go live with bookings.</span>
+            <span>Free to claim. Submit your business contact details; Trimma verifies ownership before sending a private dashboard invitation.</span>
           </div>
         </div>
         <Button asChild variant="default" size="lg" className="h-12 min-h-12 w-full shrink-0 px-8 text-base font-extrabold lg:w-auto">

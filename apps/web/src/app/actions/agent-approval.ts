@@ -7,10 +7,15 @@ import { normalizeEmail } from "@/lib/normalize-email";
 import { ownerResubmitStatusAfterRejection } from "@/lib/salon-onboarding-paths";
 import { notifyOwnerSubmissionRejected } from "@/app/actions/salon-onboarding-notifications";
 import { isMissingRejectionReasonColumnError } from "@/lib/with-admin-db";
+import { requireAgentFromCookies } from "@/lib/server-agent-auth";
+import { canAgentAccessSalonAssignee } from "@/lib/agent-hierarchy";
 
 /** Return owner to field editing after agent rejects their submitted profile (Field Editor only). */
 export async function rejectSalonOwnerSubmission(salonId: string, reason: string) {
   try {
+    const auth = await requireAgentFromCookies();
+    if ("error" in auth) return { success: false as const, error: auth.error };
+
     const supabase = createSupabaseAdminClient();
     const trimmedReason = reason.trim();
     if (!trimmedReason) {
@@ -19,12 +24,24 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
 
     const { data: existing, error: readError } = await supabase
       .from("salons")
-      .select("source_type")
+      .select("source_type, assign_to")
       .eq("id", salonId)
       .single();
 
     if (readError || !existing) {
       return { success: false as const, error: readError?.message || "Salon not found." };
+    }
+
+    if (
+      auth.role !== "admin" &&
+      !(await canAgentAccessSalonAssignee(
+        supabase,
+        auth.email,
+        auth.userId,
+        existing.assign_to
+      ))
+    ) {
+      return { success: false as const, error: "You do not have access to this salon lead." };
     }
 
     const resubmitStatus = ownerResubmitStatusAfterRejection(existing.source_type);
@@ -83,7 +100,7 @@ export async function rejectSalonOwnerSubmission(salonId: string, reason: string
 
     await supabase.from("onboarding_logs").insert({
       salon_id: salonId,
-      actor_email: salon?.assign_to || "agent@trimma.io",
+      actor_email: auth.email,
       action: "OWNER_SUBMISSION_REJECTED",
       notes: trimmedReason,
     });

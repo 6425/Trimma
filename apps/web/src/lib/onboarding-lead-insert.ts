@@ -7,6 +7,7 @@ import { resolveOnboardingAgentEmail } from "@/lib/salon-onboarding-paths";
 export { resolveOnboardingAgentEmail } from "@/lib/salon-onboarding-paths";
 
 export type OnboardingLeadFormInput = {
+  claimSalonId?: string;
   businessName: string;
   ownerName: string;
   email: string;
@@ -96,7 +97,7 @@ export async function insertOnboardingSalonLead(
     status: isWaitingList ? "new" : "assigned",
     lead_status: isWaitingList ? "NEW" : "ASSIGNED_TO_AGENT",
     onboarding_stage: "NOT_STARTED",
-    lead_source: "onboarding_web",
+    lead_source: formData.claimSalonId ? "listing_claim" : "onboarding_web",
     role: "salon_owner",
   };
 

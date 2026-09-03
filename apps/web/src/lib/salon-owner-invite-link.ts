@@ -1,7 +1,7 @@
 import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
 
-/** Shareable login link for salon owner onboarding (works with or without a pre-set owner Gmail). */
+/** Shareable login link for an owner whose Gmail has already been verified and saved. */
 export function buildSalonOwnerInviteLoginLink(options: {
   salonId: string;
   ownerEmail?: string | null;

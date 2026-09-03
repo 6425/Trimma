@@ -2,9 +2,12 @@ export const SALON_OWNER_OAUTH_INTENT_KEY = "trimma-oauth-intent";
 export const SALON_OWNER_OAUTH_NEXT_KEY = "trimma-oauth-next";
 export const SALON_OWNER_ONBOARDING_FLAG_KEY = "trimma-onboarding-salon-owner";
 export const SALON_OWNER_INVITE_SALON_KEY = "trimma-oauth-invite-salon";
+const SALON_OWNER_OAUTH_CREATED_AT_KEY = "trimma-oauth-created-at";
+const SALON_OWNER_OAUTH_TTL_MS = 30 * 60 * 1000;
 
 export function markOnboardingSalonOwnerIntent(nextPath = "/dashboard/profile") {
   if (typeof window === "undefined") return;
+  sessionStorage.removeItem(SALON_OWNER_INVITE_SALON_KEY);
   localStorage.setItem(SALON_OWNER_ONBOARDING_FLAG_KEY, nextPath);
   persistSalonOwnerOAuthIntent(nextPath);
 }
@@ -14,6 +17,7 @@ export function persistSalonOwnerOAuthIntent(nextPath = "/dashboard/profile") {
   sessionStorage.setItem(SALON_OWNER_OAUTH_INTENT_KEY, "salon-owner");
   sessionStorage.setItem(SALON_OWNER_OAUTH_NEXT_KEY, nextPath);
   localStorage.setItem(SALON_OWNER_ONBOARDING_FLAG_KEY, nextPath);
+  sessionStorage.setItem(SALON_OWNER_OAUTH_CREATED_AT_KEY, String(Date.now()));
 }
 
 export function persistSalonOwnerInviteSalon(salonId: string) {
@@ -38,6 +42,13 @@ export function readSalonOwnerOAuthIntent(): {
 
   const onboardingFlag = localStorage.getItem(SALON_OWNER_ONBOARDING_FLAG_KEY);
   const sessionIntent = sessionStorage.getItem(SALON_OWNER_OAUTH_INTENT_KEY) === "salon-owner";
+  const createdAt = Number(sessionStorage.getItem(SALON_OWNER_OAUTH_CREATED_AT_KEY) || 0);
+  const expired = !createdAt || Date.now() - createdAt > SALON_OWNER_OAUTH_TTL_MS;
+
+  if (expired && (sessionIntent || onboardingFlag)) {
+    clearSalonOwnerOAuthIntent();
+    return { salonOwnerIntent: false, nextPath: null };
+  }
 
   return {
     salonOwnerIntent: sessionIntent || Boolean(onboardingFlag),
@@ -53,5 +64,6 @@ export function clearSalonOwnerOAuthIntent() {
   sessionStorage.removeItem(SALON_OWNER_OAUTH_INTENT_KEY);
   sessionStorage.removeItem(SALON_OWNER_OAUTH_NEXT_KEY);
   sessionStorage.removeItem(SALON_OWNER_INVITE_SALON_KEY);
+  sessionStorage.removeItem(SALON_OWNER_OAUTH_CREATED_AT_KEY);
   localStorage.removeItem(SALON_OWNER_ONBOARDING_FLAG_KEY);
 }

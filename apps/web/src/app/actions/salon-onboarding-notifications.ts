@@ -64,7 +64,7 @@ export async function notifySalonVerifiedByAdmin(params: {
   return { success: true as const };
 }
 
-/** Agent enables booking → PENDING_ADMIN_VERIFICATION. */
+/** Agent completes field review → PENDING_ADMIN_VERIFICATION. */
 export async function notifyAgentApprovedSalonForAdmin(params: {
   salonId: string;
   salonName: string;

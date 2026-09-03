@@ -7,7 +7,7 @@ import Link from "next/link";
 import { SalonReviewsSection } from "../../../components/reviews/SalonReviewsSection";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
-import { MapPin, Star, Clock, Phone, MessageCircle, Mail, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Star, Clock, Phone, MessageCircle, Navigation2, CheckCircle2, ShieldCheck, Wifi, Coffee, Car, CreditCard, Scissors, Loader2, Wind, Armchair, Sofa, Shield, Sun, CheckCircle, Smartphone, LayoutGrid, Gift, Tag, Users, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,7 +34,6 @@ import {
   getSalonBookabilityMessage,
   getSalonBookingBlockedToast,
   isSalonPubliclyBookable,
-  resolvePublicSalonOwnerEmail,
 } from "@/lib/salon-bookability";
 import {
   isSalonClaimable,
@@ -629,7 +628,7 @@ export default function SalonPage({
   const displayRating = displayRatingInfo.averageRating;
   const displayReviewCount = displayRatingInfo.totalReviews;
   const googlePlaceReviews = readGooglePlaceReviews(salon.business_info_extended);
-  const showClaimBanner = isSalonClaimable(salon);
+  const showClaimBanner = salon.claim_available ?? isSalonClaimable(salon);
   const showGoogleReviews =
     displayRatingInfo.source === "google" || (salonReviews.length === 0 && googlePlaceReviews.length > 0);
   const fullAddress = getSalonFullAddress(salon);
@@ -666,7 +665,6 @@ export default function SalonPage({
 
   const isBookable = isSalonPubliclyBookable(salon);
   const bookabilityMessage = getSalonBookabilityMessage(salon);
-  const ownerContactEmail = resolvePublicSalonOwnerEmail(salon.owner_email, salon.owner_gmail);
 
   // --- Dynamic Working Hours & Status Calculation ---
   const parsedWorkingHours = salon ? formatSalonHoursForDisplay(salon.working_hours) : [];
@@ -1336,12 +1334,6 @@ export default function SalonPage({
                   <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-brand shrink-0" />
                     <span className="text-sm text-zinc-700">{salon.phone}</span>
-                  </div>
-                )}
-                {ownerContactEmail && (
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-4 h-4 text-brand shrink-0" />
-                    <span className="text-sm text-zinc-700">{ownerContactEmail}</span>
                   </div>
                 )}
               </div>

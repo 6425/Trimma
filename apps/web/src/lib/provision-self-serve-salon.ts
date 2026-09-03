@@ -3,11 +3,6 @@ import { normalizeEmail } from "@/lib/normalize-email";
 import { ensureSalonSubscriptionPlan } from "@/lib/salon-subscription-plan";
 import { buildSelfServeSalonInsertRow } from "@/lib/salon-insert-defaults";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
-import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
-import {
-  DEFAULT_SELF_SERVE_DISTRICT,
-  resolveOnboardingAgentForSalon,
-} from "@/lib/salon-onboarding-paths";
 
 function slugifySalonName(name: string): string {
   return name
@@ -81,6 +76,7 @@ export async function provisionSelfServeSalonOwner(
 
   const { error: userUpsertError } = await supabase.from("users").upsert(
     {
+      id: authUserId,
       email: normalizedEmail,
       full_name: displayName,
       global_role: "salon_owner",
@@ -94,10 +90,6 @@ export async function provisionSelfServeSalonOwner(
 
   await syncUserRolesForGlobalRole(supabase, normalizedEmail, "salon_owner", authUserId);
 
-  const assignedAgent = await resolveOnboardingAgentForSalon(supabase, {
-    district: DEFAULT_SELF_SERVE_DISTRICT,
-  });
-
   const { data: salon, error } = await supabase
     .from("salons")
     .insert(
@@ -105,8 +97,9 @@ export async function provisionSelfServeSalonOwner(
         displayName,
         slug,
         normalizedEmail,
+        ownerId: authUserId,
         freePlanId: (freePlan?.id as string | null | undefined) ?? null,
-        assignTo: assignedAgent,
+        assignTo: null,
       })
     )
     .select("id, name, address")
@@ -126,20 +119,8 @@ export async function provisionSelfServeSalonOwner(
     salon_id: salon.id,
     actor_email: normalizedEmail,
     action: "SELF_SERVE_OWNER_SIGNUP",
-    notes: assignedAgent
-      ? `Salon owner started self onboarding via Google. Assigned to ${assignedAgent}.`
-      : "Salon owner started self onboarding via Google. No field agent matched — admin pipeline only.",
+    notes: "Salon owner started self onboarding via Google. Agent assignment is deferred until the owner saves their location and submits.",
   });
-
-  if (assignedAgent) {
-    void notifyAgentLeadAssigned(supabase, {
-      salonId: String(salon.id),
-      salonName: String(salon.name || displayName),
-      salonAddress: salon.address || "Self onboarding — owner completing profile",
-      assignToEmail: assignedAgent,
-      onboardingStatus: "OWNER_INVITED",
-    }).catch((err) => console.error("Self-serve agent assignment notification failed:", err));
-  }
 
   return { salonId: String(salon.id), created: true };
 }

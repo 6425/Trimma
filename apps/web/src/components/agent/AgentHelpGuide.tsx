@@ -93,7 +93,7 @@ const PIPELINE_STEPS = [
   { status: "Field verified", code: "AGENT_VERIFIED", desc: "You complete the Field Editor with accurate salon data." },
   { status: "Owner invited", code: "OWNER_INVITED", desc: "Invitation email and WhatsApp sent to the owner Gmail." },
   { status: "Owner activated", code: "OWNER_ACTIVATED", desc: "Owner finishes their profile inside the salon dashboard." },
-  { status: "Pending admin review", code: "PENDING_ADMIN_VERIFICATION", desc: "You enable booking and submit to Trimma admin." },
+  { status: "Pending admin review", code: "PENDING_ADMIN_VERIFICATION", desc: "You submit the completed review to Trimma admin; bookings remain closed." },
   { status: "Live / Verified", code: "VERIFIED", desc: "Admin approved — salon is public on the marketplace and can take bookings." },
 ];
 
@@ -323,8 +323,8 @@ const AGENT_FAQS = [
     a: `After you complete the Field Editor with owner Gmail (e.g. ${SALON.ownerGmail}), WhatsApp number, address, services, and hero image. Use Send to Salon Owner for Review or Send Invitation depending on the salon's current status.`,
   },
   {
-    q: "What does Enable Booking & Send to Admin do?",
-    a: `When the owner has activated their account (${SALON.name} status Owner activated), you review their profile and submit to Trimma admin. Booking is enabled and the salon moves to Pending admin verification until admin approves the public listing.`,
+    q: "What does Complete Review & Send to Admin do?",
+    a: `When the owner has activated their account (${SALON.name} status Owner activated), you review the profile and submit it to Trimma admin. Bookings remain closed until admin completes final verification.`,
   },
   {
     q: "How do I earn booking commissions?",
@@ -512,7 +512,7 @@ export function AgentHelpGuide() {
             <p className="text-sm text-zinc-600 leading-relaxed">
               {isRegionalHead
                 ? "Your Regional Head Portal extends the agent workspace with team management. Onboard salons directly, coach sub-agents, set commission splits, and monitor territory performance — all from one workspace. Sign in at trimma.io/agent/login with your regional head credentials."
-                : "Your Agent Portal is the sales operating system for Trimma field agents. Sign in at trimma.io/agent/login with your agent email and password. Discover salons in your territory, verify business details, invite owners, enable bookings, and track referral commissions — all from one workspace."}
+                : "Your Agent Portal is the sales operating system for Trimma field agents. Sign in at trimma.io/agent/login with your agent email and password. Discover salons in your territory, verify business details, invite owners, submit completed profiles, and track referral commissions — all from one workspace."}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
@@ -549,7 +549,7 @@ export function AgentHelpGuide() {
                     "Set commission split % per sub-agent on My Team (0–100)",
                     "Onboard salons directly — Territory Explorer, Manual Lead, Field Editor",
                     "Monitor team pipeline — ensure no salon stalls at Owner invited or activated",
-                    "Approve owner submissions in Field Editor — Enable Booking & Send to Admin",
+                    "Review owner submissions in Field Editor — Complete Review & Send to Admin",
                     "Earn personal referral commissions plus oversight of team activity",
                     "Escalate territory, commission, or admin approval issues to agents@trimma.com",
                   ]
@@ -560,7 +560,7 @@ export function AgentHelpGuide() {
                     "Verify business data on site using the 5-section Field Editor",
                     "Invite owners via their real Gmail — salon owners sign in with Google only",
                     "Follow up until owner activates their Trimma salon dashboard",
-                    "Enable booking and submit complete profiles to Trimma admin",
+                    "Submit complete profiles to Trimma admin for final verification",
                     "Track weekly booking + subscription commissions on the Commissions page",
                   ]
               ).map((item) => (
@@ -706,7 +706,7 @@ export function AgentHelpGuide() {
             ]}
             tips={[
               "Always set owner Gmail before sending invitations — invites go to that address.",
-              "When the owner activates their dashboard, use Enable Booking & Send to Admin in Field Editor.",
+              "When the owner activates their dashboard, use Complete Review & Send to Admin in Field Editor.",
             ]}
           />
 
@@ -746,7 +746,7 @@ export function AgentHelpGuide() {
               "Save — stores draft without changing status",
               "Send to Salon Owner for Review — requires phone + owner Gmail; sends email + WhatsApp invite",
               "Resend Invitation — when owner has not yet activated",
-              "Enable Booking & Send to Admin — when owner activated; enables booking and queues admin review",
+              "Complete Review & Send to Admin — checks readiness and queues final admin verification",
               "Return to Owner for Edits — when owner profile needs corrections before admin submission",
             ]}
             tips={[
