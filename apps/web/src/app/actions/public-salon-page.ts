@@ -9,6 +9,8 @@ import {
   syncStaffServiceAssignmentsForSalon,
 } from "@/lib/salon-staff-service-sync";
 import { fetchStaffReviewStatsByStaffIds } from "@/lib/staff-review-stats";
+import { hasValidSalonOwnerEmail } from "@/lib/salon-bookability";
+import { isSalonClaimable, isSalonPubliclyListable } from "@/lib/salon-public-listing";
 
 const SALON_COLUMNS =
   "id, slug, name, city, district, province, address, phone, owner_email, owner_gmail, place_id, map_url, latitude, longitude, location, cover_url, hero_url, featured_images, logo_url, is_verified, category, rating, review_count, is_featured, status, public_visibility, booking_enabled, working_hours, business_info_extended, description, summary, onboarding_status, source_type";
@@ -111,6 +113,21 @@ export async function fetchPublicSalonPage(slug: string): Promise<
     if (!salonData || isDummySalonRecord(salonData as { id?: string | null; name?: string | null; slug?: string | null })) {
       return { success: false, error: "Salon not found." };
     }
+
+    if (!isSalonPubliclyListable(salonData)) {
+      return { success: false, error: "Salon not found." };
+    }
+
+    const publicSalonData: Record<string, unknown> = {
+      ...salonData,
+      claim_available: isSalonClaimable(salonData),
+      owner_contact_available: hasValidSalonOwnerEmail(
+        salonData.owner_email as string | null,
+        salonData.owner_gmail as string | null
+      ),
+    };
+    delete publicSalonData.owner_email;
+    delete publicSalonData.owner_gmail;
 
     const salonId = String(salonData.id);
 
@@ -228,7 +245,7 @@ export async function fetchPublicSalonPage(slug: string): Promise<
 
     return {
       success: true,
-      salon: salonData,
+      salon: publicSalonData,
       services,
       staff: staffWithRatings,
       amenities,

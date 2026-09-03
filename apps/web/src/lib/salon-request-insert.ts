@@ -21,13 +21,19 @@ export function buildOnboardingSalonRequestMessage(
   leadId?: string
 ): string {
   const lines = [
-    "Salon onboarding request submitted from trimma.io/onboarding.",
+    formData.claimSalonId
+      ? "Business ownership claim submitted from a Trimma listing."
+      : "Salon onboarding request submitted from trimma.io/onboarding.",
     "",
     `Business: ${formData.businessName.trim()}`,
     `Owner: ${formData.ownerName.trim()}`,
     `WhatsApp: ${formData.whatsapp.trim()}`,
     `Location: ${[formData.address, formData.city, formData.district, formData.province].filter(Boolean).join(", ")}`,
   ];
+
+  if (formData.claimSalonId) {
+    lines.splice(2, 0, `Trimma listing ID: ${formData.claimSalonId}`);
+  }
 
   if (formData.latitude != null && formData.longitude != null) {
     lines.push(`Coordinates: ${formData.latitude}, ${formData.longitude}`);
@@ -52,9 +58,9 @@ export function buildOnboardingSalonRequest(
     phone: formData.whatsapp.trim(),
     business_name: formData.businessName.trim(),
     business_type: "Salon / Beauty Business",
-    inquiry_type: "Salon Onboarding Request",
+    inquiry_type: formData.claimSalonId ? "Business Listing Claim" : "Salon Onboarding Request",
     message: buildOnboardingSalonRequestMessage(formData, leadId),
-    source: "onboarding_form",
+    source: formData.claimSalonId ? "listing_claim" : "onboarding_form",
     status: "new",
     admin_notes: leadId ? `salon_leads:${leadId}` : null,
   };

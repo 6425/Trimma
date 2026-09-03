@@ -11,23 +11,43 @@ import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
 import { LocationHierarchySelect } from "../../components/locations/LocationHierarchySelect";
 import type { OnboardingLeadFormInput } from "@/lib/onboarding-lead-insert";
 
-export default function OnboardingClient() {
+type OnboardingClientProps = {
+  claimSalonId?: string;
+  initialBusinessName?: string;
+  initialProvince?: string;
+  initialDistrict?: string;
+  initialCity?: string;
+  initialAddress?: string;
+  initialLatitude?: number | null;
+  initialLongitude?: number | null;
+};
+
+export default function OnboardingClient({
+  claimSalonId,
+  initialBusinessName = "",
+  initialProvince = "Western Province",
+  initialDistrict = "Colombo",
+  initialCity = "",
+  initialAddress = "",
+  initialLatitude = null,
+  initialLongitude = null,
+}: OnboardingClientProps = {}) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form State
-  const [businessName, setBusinessName] = useState("");
+  const [businessName, setBusinessName] = useState(initialBusinessName);
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [province, setProvince] = useState("Western Province");
-  const [district, setDistrict] = useState("Colombo");
-  const [city, setCity] = useState("");
-  const [address, setAddress] = useState("");
-  const [latitude, setLatitude] = useState<string>("");
-  const [longitude, setLongitude] = useState<string>("");
+  const [province, setProvince] = useState(initialProvince);
+  const [district, setDistrict] = useState(initialDistrict);
+  const [city, setCity] = useState(initialCity);
+  const [address, setAddress] = useState(initialAddress);
+  const [latitude, setLatitude] = useState<string>(initialLatitude == null ? "" : String(initialLatitude));
+  const [longitude, setLongitude] = useState<string>(initialLongitude == null ? "" : String(initialLongitude));
   const [notes, setNotes] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +57,7 @@ export default function OnboardingClient() {
 
     try {
       const payload: OnboardingLeadFormInput = {
+        claimSalonId,
         businessName,
         ownerName,
         email,
@@ -77,16 +98,20 @@ export default function OnboardingClient() {
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 className="w-10 h-10 text-green-600" />
         </div>
-        <h3 className="text-2xl font-bold text-zinc-900 mb-4">Thank You!</h3>
+        <h3 className="text-2xl font-bold text-zinc-900 mb-4">
+          {claimSalonId ? "Claim request received" : "Thank You!"}
+        </h3>
         <p className="text-zinc-500 max-w-md mx-auto mb-8 text-lg">
-          Your onboarding request has been received successfully.
+          {claimSalonId
+            ? "Trimma will verify your connection to this business before dashboard access is granted."
+            : "Your onboarding request has been received successfully."}
         </p>
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 max-w-md mx-auto mb-8 text-left">
           <p className="text-sm text-zinc-600 mb-4">
-            A Trimma regional onboarding specialist will contact you soon to assist with listing your salon on the platform.
+            A Trimma regional onboarding specialist will contact you using the details provided. Once verified, you will receive a private Google sign-in invitation for this salon.
           </p>
           <p className="text-sm font-semibold text-zinc-800">
-            We look forward to helping your business grow with Trimma!
+            Never share verification codes or account passwords with anyone.
           </p>
         </div>
         <Button 
@@ -117,7 +142,7 @@ export default function OnboardingClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-2 md:col-span-2">
             <Label className="text-xs font-bold text-zinc-500">Business Name <span className="text-red-500">*</span></Label>
-            <Input required value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Royal Beauty Salon" className="h-12 rounded-xl bg-slate-50/50" />
+            <Input required readOnly={Boolean(claimSalonId)} value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. Royal Beauty Salon" className="h-12 rounded-xl bg-slate-50/50 read-only:bg-slate-100 read-only:text-zinc-600" />
           </div>
           
           <div className="space-y-2">
@@ -210,7 +235,7 @@ export default function OnboardingClient() {
         disabled={submitting}
         className="w-full h-14 text-base font-bold rounded-xl bg-brand hover:bg-brand-hover text-black shadow-lg shadow-brand-pink/20 transition-all"
       >
-        {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : "Request Onboarding"}
+        {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : claimSalonId ? "Submit ownership claim" : "Request Onboarding"}
       </Button>
     </form>
   );

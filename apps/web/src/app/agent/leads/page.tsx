@@ -732,7 +732,7 @@ function AgentLeads() {
       
       const updatePayload: any = {
         onboarding_status: "PENDING_ADMIN_VERIFICATION",
-        booking_enabled: true
+        booking_enabled: false
       };
 
       const { success, error } = await saveAgentLeadData(
@@ -754,7 +754,7 @@ function AgentLeads() {
           formData.owner_gmail || selectedLead.owner_email || selectedLead.owner_gmail || selectedLead.email,
       });
       
-      toast.success("Salon approved and sent to Admin for Verification! (Booking enabled)");
+      toast.success("Salon sent to Admin for final verification. Bookings remain closed until approval.");
       setIsModalOpen(false);
       setSelectedLead(null);
       fetchLeads();
@@ -1569,7 +1569,7 @@ function AgentLeads() {
                         disabled={updating}
                         className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-10 px-4 text-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                       >
-                        <CheckCircle2 className="w-4 h-4" /> Enable Booking & Send to Admin
+                        <CheckCircle2 className="w-4 h-4" /> Complete Review & Send to Admin
                       </Button>
                       <Button
                         onClick={handleRejectOwnerSubmission}
@@ -1598,7 +1598,13 @@ function AgentLeads() {
                     </div>
                   )}
 
-                  {["PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(formData.onboarding_status) && (
+                  {formData.onboarding_status === "PENDING_ADMIN_VERIFICATION" && (
+                    <Badge className="bg-indigo-50 text-indigo-600 border border-indigo-200 font-bold text-[10px] px-3 py-2 justify-center w-full sm:w-auto">
+                      ⏳ Awaiting Admin Verification
+                    </Badge>
+                  )}
+
+                  {formData.onboarding_status === "VERIFIED" && (
                     <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold text-[10px] px-3 py-2 justify-center w-full sm:w-auto">
                       ✅ Booking Enabled
                     </Badge>

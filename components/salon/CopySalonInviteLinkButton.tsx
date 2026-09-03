@@ -22,6 +22,11 @@ export function CopySalonInviteLinkButton({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    const normalizedOwnerEmail = ownerEmail?.trim().toLowerCase() || "";
+    if (!normalizedOwnerEmail || normalizedOwnerEmail.endsWith("@trimma.io")) {
+      toast.error("Add and save the verified owner Gmail before copying an invitation link.");
+      return;
+    }
     const link = buildSalonOwnerInviteLoginLink({ salonId, ownerEmail });
     try {
       await navigator.clipboard.writeText(link);
@@ -55,9 +60,8 @@ export function CopySalonInviteLinkButton({
 export function SalonInviteLinkHint() {
   return (
     <p className="text-[10px] text-zinc-500 leading-relaxed">
-      Share the invitation link on WhatsApp when you are offline. The owner signs in with Google and their Gmail is saved
-      to this salon automatically. Automated Send Invitation (email + WhatsApp) still works as before when owner Gmail
-      is set.
+      Verify and save the owner Gmail first, then share this link on WhatsApp. Only that Google account can accept the
+      invitation and access the salon dashboard.
     </p>
   );
 }

@@ -8,6 +8,11 @@ import { normalizeEmail } from "@/lib/normalize-email";
 import { syncSalonAmenitiesForSalon } from "@/lib/salon-amenities";
 import { syncStaffServiceAssignmentsForSalon } from "@/lib/salon-staff-service-sync";
 import { getServicePriceBelowMinimumError } from "@/lib/service-pricing";
+import { canAgentAccessSalonAssignee } from "@/lib/agent-hierarchy";
+import {
+  getSalonNotReadyMessage,
+  getSalonVerificationReadiness,
+} from "@/lib/salon-verification-readiness";
 
 function assertServicesMeetMinPrice(svcsToAdd: Array<{ price?: unknown }> | null | undefined) {
   if (!svcsToAdd?.length) return;
@@ -25,7 +30,7 @@ export async function saveAgentLeadData(
     svcsToRemoveIds: string[];
   } | null,
   staffToAdd: any[] | null,
-  agentEmail: string,
+  _agentEmail: string,
   newStatus: string | null,
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null = null,
   actionType: "DRAFT" | "REVIEW" = "DRAFT",
@@ -37,7 +42,31 @@ export async function saveAgentLeadData(
   const supabaseAdmin = createSupabaseAdminClient();
 
   try {
+    const { data: assignedSalon, error: assignedSalonError } = await supabaseAdmin
+      .from("salons")
+      .select("id, assign_to")
+      .eq("id", salonId)
+      .maybeSingle();
+    if (assignedSalonError || !assignedSalon) {
+      throw new Error(assignedSalonError?.message || "Salon not found.");
+    }
+    if (
+      auth.role !== "admin" &&
+      !(await canAgentAccessSalonAssignee(
+        supabaseAdmin,
+        auth.email,
+        auth.userId,
+        assignedSalon.assign_to
+      ))
+    ) {
+      throw new Error("You do not have access to this salon lead.");
+    }
+
     const finalPayload = { ...updatePayload };
+    delete finalPayload.owner_id;
+    delete finalPayload.assign_to;
+    delete finalPayload.is_verified;
+    delete finalPayload.verified_at;
     const enablesBooking = newStatus === "PENDING_ADMIN_VERIFICATION";
 
     if (!enablesBooking) {
@@ -54,7 +83,8 @@ export async function saveAgentLeadData(
       finalPayload.onboarding_status = newStatus;
 
       if (newStatus === "PENDING_ADMIN_VERIFICATION") {
-        finalPayload.booking_enabled = true;
+        delete finalPayload.onboarding_status;
+        finalPayload.booking_enabled = false;
         finalPayload.public_visibility = "preview";
       }
     } else if (actionType === "DRAFT") {
@@ -169,10 +199,26 @@ export async function saveAgentLeadData(
       await syncSalonAmenitiesForSalon(supabaseAdmin, salonId, amenitiesData);
     }
 
+    if (newStatus === "PENDING_ADMIN_VERIFICATION") {
+      const readiness = await getSalonVerificationReadiness(supabaseAdmin, salonId);
+      if (!readiness.ready) throw new Error(getSalonNotReadyMessage(readiness.missing));
+
+      const { error: reviewStatusError } = await supabaseAdmin
+        .from("salons")
+        .update({
+          onboarding_status: "PENDING_ADMIN_VERIFICATION",
+          booking_enabled: false,
+          public_visibility: "preview",
+          activation_status: "INACTIVE",
+        })
+        .eq("id", salonId);
+      if (reviewStatusError) throw reviewStatusError;
+    }
+
     // 5. Log Activity
     await supabaseAdmin.from("onboarding_logs").insert({
       salon_id: salonId,
-      actor_email: agentEmail,
+      actor_email: auth.email,
       action:
         newStatus === "PENDING_ADMIN_VERIFICATION"
           ? "PENDING_ADMIN_VERIFICATION"
@@ -183,7 +229,7 @@ export async function saveAgentLeadData(
               : "LEAD_UPDATED",
       notes:
         newStatus === "PENDING_ADMIN_VERIFICATION"
-          ? "Agent enabled bookings and sent salon to admin for verification."
+          ? "Agent completed the field review and sent the salon to admin. Bookings remain closed until final verification."
           : finalPayload.onboarding_status === "AGENT_VERIFIED"
             ? "Agent completed field verification in the editor."
             : actionType === "REVIEW"
@@ -203,7 +249,7 @@ export async function createAgentLeadData(
   servicesData: { svcsToAdd: any[] } | null,
   staffToAdd: any[] | null,
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null,
-  agentEmail: string,
+  _agentEmail: string,
   actionType: "DRAFT" | "REVIEW" = "DRAFT"
 ) {
   const auth = await requireAgentFromCookies();
@@ -217,7 +263,7 @@ export async function createAgentLeadData(
       .from("salons")
       .insert({
         ...payload,
-        assign_to: agentEmail,
+        assign_to: auth.email,
         onboarding_status: "ASSIGNED_TO_AGENT",
         activation_status: "INACTIVE",
         public_visibility: false,
@@ -258,7 +304,7 @@ export async function createAgentLeadData(
     // 5. Log Activity
     await supabaseAdmin.from("onboarding_logs").insert({
       salon_id: salonId,
-      actor_email: agentEmail,
+      actor_email: auth.email,
       action: "LEAD_CREATED",
       notes: "Agent created a new manual lead from the field."
     });
@@ -305,7 +351,7 @@ export async function convertManualLeadToSalon(
   servicesData: { svcsToAdd: any[] } | null,
   staffToAdd: any[] | null,
   amenitiesData: Record<string, { has_amenity: boolean; quantity: number | null }> | null,
-  agentEmail: string,
+  _agentEmail: string,
   actionType: "DRAFT" | "REVIEW" = "DRAFT"
 ) {
   const auth = await requireAgentFromCookies();
@@ -314,6 +360,24 @@ export async function convertManualLeadToSalon(
   const supabaseAdmin = createSupabaseAdminClient();
 
   try {
+    const { data: lead, error: leadError } = await supabaseAdmin
+      .from("salon_leads")
+      .select("id, assign_to")
+      .eq("id", leadId)
+      .maybeSingle();
+    if (leadError || !lead) throw new Error(leadError?.message || "Lead not found.");
+    if (
+      auth.role !== "admin" &&
+      !(await canAgentAccessSalonAssignee(
+        supabaseAdmin,
+        auth.email,
+        auth.userId,
+        lead.assign_to
+      ))
+    ) {
+      throw new Error("You do not have access to this lead.");
+    }
+
     // 1. Generate a slug
     const slug = (payload.name || "salon")
       .toLowerCase()
@@ -327,7 +391,7 @@ export async function convertManualLeadToSalon(
       .from("salons")
       .insert({
         ...payload,
-        assign_to: agentEmail,
+        assign_to: auth.email,
         onboarding_status: "ASSIGNED_TO_AGENT",
         activation_status: "INACTIVE",
         public_visibility: false,
@@ -385,7 +449,7 @@ export async function convertManualLeadToSalon(
     // 6. Log Activity
     await supabaseAdmin.from("onboarding_logs").insert({
       salon_id: salonId,
-      actor_email: agentEmail,
+      actor_email: auth.email,
       action: "LEAD_CREATED",
       notes: "Agent converted a manual lead from onboarding form to a Salon."
     });
