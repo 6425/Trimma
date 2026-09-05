@@ -138,6 +138,7 @@ export type OwnerSubmissionNotificationInput = {
   assignToEmail: string | null;
   ownerEmail?: string | null;
   sourceType?: string | null;
+  reviewTarget?: "agent" | "admin";
 };
 
 /** Fired when an owner submits their profile for booking approval (OWNER_ACTIVATED). */
@@ -182,6 +183,7 @@ export async function notifyOwnerSubmittedForBookingApproval(
       salonId: input.salonId,
       salonName: input.salonName,
       ownerEmail,
+      reviewTarget: input.reviewTarget || (assignTo ? "agent" : "admin"),
     }).catch((err) => console.error("Owner submission acknowledgement failed:", err));
   }
 }

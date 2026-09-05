@@ -1063,12 +1063,20 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       });
     }
 
+    const routesDirectlyToAdmin = !assignTo;
+    const onboardingStatus = routesDirectlyToAdmin
+      ? "PENDING_ADMIN_VERIFICATION"
+      : "OWNER_ACTIVATED";
     const updatePayload: Record<string, unknown> = {
-      onboarding_status: "OWNER_ACTIVATED",
+      onboarding_status: onboardingStatus,
       owner_activated_at: new Date().toISOString(),
       owner_email: approvalEmail,
       booking_enabled: false,
     };
+    if (routesDirectlyToAdmin) {
+      updatePayload.public_visibility = "preview";
+      updatePayload.activation_status = "INACTIVE";
+    }
     if (assignTo && assignTo !== salon.assign_to) {
       updatePayload.assign_to = assignTo;
     }
@@ -1081,10 +1089,10 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
     await supabase.from("onboarding_logs").insert({
       salon_id: ctx.salonId,
       actor_email: approvalEmail,
-      action: "OWNER_ACTIVATED",
+      action: onboardingStatus,
       notes: assignTo
         ? `Owner submitted for booking approval. Assigned agent: ${assignTo}.`
-        : "Owner submitted for booking approval. No field agent assigned — admin review required.",
+        : "Owner submitted for booking approval. No field agent assigned — routed directly to admin verification.",
     });
 
     return {
@@ -1094,6 +1102,7 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       assignTo,
       ownerEmail: approvalEmail,
       sourceType: (salon.source_type as string | null) || null,
+      reviewTarget: routesDirectlyToAdmin ? ("admin" as const) : ("agent" as const),
     };
   });
 
@@ -1106,9 +1115,10 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
     assignToEmail: result.data.assignTo,
     ownerEmail: result.data.ownerEmail,
     sourceType: result.data.sourceType,
+    reviewTarget: result.data.reviewTarget,
   }).catch((err) => console.error("Owner submission notification failed:", err));
 
-  return { success: true as const };
+  return { success: true as const, reviewTarget: result.data.reviewTarget };
 }
 
 export async function saveOwnerVerificationData(

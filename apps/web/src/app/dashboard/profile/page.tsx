@@ -829,8 +829,13 @@ export default function SalonProfilePage() {
 
       const result = await completeSalonOwnerOnboarding(undefined);
       if (result.success === false) throw new Error(result.error);
-      toast.success("Submitted for booking approval! Your Trimma agent will review your profile.");
-      setOnboardingStatus("OWNER_ACTIVATED");
+      const sentToAdmin = result.reviewTarget === "admin";
+      toast.success(
+        sentToAdmin
+          ? "Submitted directly to Trimma admin for booking approval."
+          : "Submitted for booking approval! Your Trimma agent will review your profile."
+      );
+      setOnboardingStatus(sentToAdmin ? "PENDING_ADMIN_VERIFICATION" : "OWNER_ACTIVATED");
     } catch (err: any) {
       toast.error("Failed to activate: " + err.message);
     } finally {
