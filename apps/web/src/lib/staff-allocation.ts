@@ -20,7 +20,7 @@ export type SalonStaffForAllocation = {
 };
 
 export const STAFF_REQUIRED_BEFORE_SERVICES_MSG =
-  "Add at least one staff member in the Staff menu before adding or publishing services.";
+  "Add at least one active staff member in the Staff menu before setting services to Active.";
 
 export const SERVICE_NEEDS_STAFF_MSG =
   "Assign this service to at least one staff member in the Staff menu before setting it to Active.";

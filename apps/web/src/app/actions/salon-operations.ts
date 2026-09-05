@@ -631,11 +631,6 @@ export async function insertSalonServices(payloads: Record<string, unknown>[]) {
   }
 
   const result = await withSalonDb(async (supabase, ctx) => {
-    const staff = await loadSalonStaffForCoverage(supabase, ctx.salonId);
-    if (!salonHasActiveStaff(staff)) {
-      throw new Error(STAFF_REQUIRED_BEFORE_SERVICES_MSG);
-    }
-
     const globalIds = payloads
       .map((row) => row.global_service_id)
       .filter((id): id is string => typeof id === "string" && id.length > 0);
