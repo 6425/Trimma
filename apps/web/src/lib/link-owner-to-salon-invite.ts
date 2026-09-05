@@ -60,7 +60,6 @@ export async function linkOwnerEmailToSalonInvite(
 
   const { error: userError } = await supabase.from("users").upsert(
     {
-      ...(authUserId ? { id: authUserId } : {}),
       email: normalized,
       global_role: "salon_owner",
       full_name: displayName,

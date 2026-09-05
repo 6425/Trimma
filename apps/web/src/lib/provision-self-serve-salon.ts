@@ -76,7 +76,6 @@ export async function provisionSelfServeSalonOwner(
 
   const { error: userUpsertError } = await supabase.from("users").upsert(
     {
-      id: authUserId,
       email: normalizedEmail,
       full_name: displayName,
       global_role: "salon_owner",
