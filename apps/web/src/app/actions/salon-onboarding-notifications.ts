@@ -100,13 +100,15 @@ export async function notifyOwnerSubmissionAcknowledged(params: {
   salonId: string;
   salonName: string;
   ownerEmail: string;
+  reviewTarget?: "agent" | "admin";
 }) {
+  const reviewer = params.reviewTarget === "admin" ? "Trimma admin" : "your Trimma agent";
   void insertSalonOwnerInAppNotification(
     params.salonId,
     params.ownerEmail,
     "OWNER_SUBMITTED",
     "Profile submitted for review",
-    `We received your booking profile for ${params.salonName || "your salon"}. Your Trimma agent will review it shortly.`
+    `We received your booking profile for ${params.salonName || "your salon"}. ${reviewer} will review it shortly.`
   );
 
   return { success: true as const };
