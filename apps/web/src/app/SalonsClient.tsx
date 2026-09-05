@@ -217,7 +217,7 @@ export default function SalonsClient({
         setIsLoading(false);
       }
     },
-    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly, isBooking, trackSearchResults]
+    [searchQuery, selectedLocation, urlCategory, page, sortBy, filters.minRating, filters.verifiedOnly, isBooking, LIMIT, trackSearchResults]
   );
 
   useEffect(() => {
@@ -285,11 +285,17 @@ export default function SalonsClient({
       }
 
       if (sortBy === "price_low") {
-        rows.sort((a, b) => a.startingPrice - b.startingPrice);
+        rows.sort(
+          (a, b) => Number(b.featured) - Number(a.featured) || a.startingPrice - b.startingPrice
+        );
       } else if (sortBy === "price_high") {
-        rows.sort((a, b) => b.startingPrice - a.startingPrice);
+        rows.sort(
+          (a, b) => Number(b.featured) - Number(a.featured) || b.startingPrice - a.startingPrice
+        );
       } else if (sortBy === "rating") {
-        rows.sort((a, b) => b.rating - a.rating);
+        rows.sort((a, b) => Number(b.featured) - Number(a.featured) || b.rating - a.rating);
+      } else {
+        rows.sort((a, b) => Number(b.featured) - Number(a.featured));
       }
 
       return rows;

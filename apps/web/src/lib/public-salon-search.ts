@@ -14,6 +14,8 @@ import {
   FEATURED_BATCH_PUBLIC_LIMIT,
   TOP_RATED_LISTING_COUNT,
   YOU_MAY_ALSO_LIKE_COUNT,
+  compareListingFeaturedPriority,
+  compareListingMarketplaceOrder,
   compareListingPopularity,
   pinTopReviewedListingsWithPhone,
   splitMarketplaceListingSections,
@@ -159,9 +161,9 @@ export async function fetchPublicSalons(
         .not("status", "in", "(inactive,rejected)");
     }
     if (withDisplayOrder) {
-      if (sort === "rating") query = query.order("rating", { ascending: false });
-      else if (sort === "name") query = query.order("name", { ascending: true });
-      else query = query.order("is_featured", { ascending: false }).order("rating", { ascending: false });
+      query = query.order("is_featured", { ascending: false });
+      if (sort === "name") query = query.order("name", { ascending: true });
+      else query = query.order("rating", { ascending: false }).order("review_count", { ascending: false });
     }
     return query;
   };
@@ -233,6 +235,18 @@ export async function fetchPublicSalons(
   }
 
   const needsMemoryPage = postFilterActive || (approvedDirectoryQuery && categoryFilterActive);
+  if (needsMemoryPage) {
+    rows = [...rows].sort((a, b) => {
+      const featuredDelta = compareListingFeaturedPriority(a, b);
+      if (featuredDelta) return featuredDelta;
+      if (sort === "name") {
+        return String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+          sensitivity: "base",
+        });
+      }
+      return compareListingPopularity(a, b);
+    });
+  }
   const pagedRows = needsMemoryPage ? rows.slice(offset, offset + limit) : rows.slice(0, limit);
   const salons = pagedRows.map((row, idx) => mapSalonRowToUI(row, idx + offset));
 
@@ -321,17 +335,20 @@ function sortBusinessListingRows(
   sort: string
 ): Array<Record<string, unknown>> {
   if (sort === "name") {
-    return [...rows].sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-  }
-  if (sort === "rating") {
-    return [...rows].sort(compareListingPopularity);
+    return [...rows].sort((a, b) => {
+      const featuredDelta = compareListingFeaturedPriority(a, b);
+      if (featuredDelta) return featuredDelta;
+      return String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+        sensitivity: "base",
+      });
+    });
   }
   return pinTopReviewedListingsWithPhone(
     rows.map((row) => ({
       ...row,
       reviews: Number(row.review_count || 0),
     }))
-  );
+  ).sort(compareListingMarketplaceOrder);
 }
 
 function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
@@ -803,6 +820,8 @@ export async function fetchBusinessListingCards(
 
   if (q.trim()) {
     const ranked = [...filtered].sort((a, b) => {
+      const featuredDelta = compareListingFeaturedPriority(a, b);
+      if (featuredDelta) return featuredDelta;
       const aName = listingNameMatchesQuery(a, q) ? 0 : 1;
       const bName = listingNameMatchesQuery(b, q) ? 0 : 1;
       if (aName !== bName) return aName - bName;
@@ -910,7 +929,10 @@ export async function fetchSimilarBusinessListingsForSalon(
       .select(columns)
       .not("status", "in", "(inactive,rejected)");
     if (locationFilter) query = query.or(locationFilter);
-    const { data, error } = await query.order("rating", { ascending: false }).limit(80);
+    const { data, error } = await query
+      .order("is_featured", { ascending: false })
+      .order("rating", { ascending: false })
+      .limit(80);
     if (error) throw new Error(error.message);
     return asSalonRows(data);
   };
@@ -930,6 +952,7 @@ export async function fetchSimilarBusinessListingsForSalon(
     .filter((row) => String(row.id) !== params.salonId)
     .filter((row) => salonBelongsToRequestedLocation(row, city))
     .filter((row) => salonMatchesCategory(row, category, category))
+    .sort(compareListingMarketplaceOrder)
     .slice(0, 3)
     .map((row, idx) => mapSalonRowToBusinessListing(row, idx));
 }

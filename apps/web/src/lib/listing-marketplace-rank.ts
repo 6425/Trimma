@@ -35,6 +35,14 @@ function isAdminFeatured(item: RankableListing): boolean {
   return isListingFeaturedNow(item);
 }
 
+/** Live admin-featured listings always rank ahead of ordinary listings. */
+export function compareListingFeaturedPriority(
+  a: RankableListing,
+  b: RankableListing
+): number {
+  return Number(isAdminFeatured(b)) - Number(isAdminFeatured(a));
+}
+
 export function listingReviewCount(listing: RankableListing): number {
   return Math.max(0, Number(listing.reviews ?? listing.review_count ?? 0) || 0);
 }
@@ -55,12 +63,20 @@ export function compareListingPopularity(a: RankableListing, b: RankableListing)
   });
 }
 
+/** Marketplace default: live featured first, then contact/rating/review strength. */
+export function compareListingMarketplaceOrder(
+  a: RankableListing,
+  b: RankableListing
+): number {
+  return compareListingFeaturedPriority(a, b) || compareListingPopularity(a, b);
+}
+
 /** Contactable businesses first, then highest rating, then strongest review count. */
 export function pinTopReviewedListingsWithPhone<T extends RankableListing>(
   items: T[],
   _featuredCount = FEATURED_LISTING_COUNT
 ): T[] {
-  return [...items].sort(compareListingPopularity);
+  return [...items].sort(compareListingMarketplaceOrder);
 }
 
 export function compareFeaturedBatchOrder(a: RankableListing, b: RankableListing): number {
