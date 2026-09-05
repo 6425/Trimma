@@ -172,10 +172,6 @@ export default function DashboardServices() {
   );
 
   const openImportModal = () => {
-    if (!hasActiveStaff) {
-      toast.error("Add at least one staff member in the Staff menu before importing services.");
-      return;
-    }
     setShowImportModal(true);
   };
 
@@ -234,10 +230,6 @@ export default function DashboardServices() {
     const selectedIds = Object.keys(selectedServices).filter(id => selectedServices[id].checked);
     if (selectedIds.length === 0) {
       return toast.error("Please select at least one service to import.");
-    }
-
-    if (!hasActiveStaff) {
-      return toast.error("Add at least one staff member in the Staff menu before importing services.");
     }
 
     // Double-check thresholds before submitting to database
@@ -329,10 +321,6 @@ export default function DashboardServices() {
   };
 
   const openCustomModal = () => {
-    if (!hasActiveStaff) {
-      toast.error("Add at least one staff member before adding services.");
-      return;
-    }
     const defaultCategory = allowedCategories[0]?.name || "";
     setCustomForm({
       name: "",
@@ -346,11 +334,6 @@ export default function DashboardServices() {
 
   const handleAddCustomService = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!hasActiveStaff) {
-      toast.error("Add at least one staff member in the Staff menu before adding services.");
-      return;
-    }
 
     const parsedPrice = parseFloat(customForm.price) || 0;
     if (parsedPrice < MIN_SERVICE_PRICE_LKR) {
@@ -508,9 +491,9 @@ export default function DashboardServices() {
           <div className="flex items-start gap-3">
             <Users className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-900 text-sm">Add staff before services</p>
+              <p className="font-bold text-amber-900 text-sm">Add services now, assign staff before activation</p>
               <p className="text-xs text-amber-700 mt-0.5">
-                Services cannot be published until you have staff. Add your team first, map services to each stylist, then activate services here.
+                You can build and edit your service catalogue now. Add your team and map each service before making it active for customer bookings.
               </p>
             </div>
           </div>
@@ -532,17 +515,15 @@ export default function DashboardServices() {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <Button 
             onClick={openImportModal}
-            disabled={!hasActiveStaff}
             variant="dark"
-            className="flex-1 md:flex-none rounded-xl font-bold px-6 h-11 transition-all disabled:opacity-50"
+            className="flex-1 md:flex-none rounded-xl font-bold px-6 h-11 transition-all"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Import Master Catalog
           </Button>
           <Button
             onClick={openCustomModal}
-            disabled={!hasActiveStaff}
-            className="flex-1 md:flex-none bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11 disabled:opacity-50"
+            className="flex-1 md:flex-none bg-brand text-black hover:bg-brand-hover rounded-xl font-bold px-6 h-11"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Custom Service
@@ -590,9 +571,8 @@ export default function DashboardServices() {
             </p>
             <Button 
               onClick={openImportModal}
-              disabled={!hasActiveStaff}
               variant="dark"
-              className="rounded-xl font-bold disabled:opacity-50"
+              className="rounded-xl font-bold"
             >
               <Sparkles className="w-4 h-4 mr-2" /> Import from Master Catalog
             </Button>
@@ -751,7 +731,7 @@ export default function DashboardServices() {
                 className="bg-brand hover:bg-brand-hover text-black rounded-xl font-bold h-11 px-6 shadow-lg shadow-brand/20"
               >
                 {importing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-                Publish Selected Services
+                Add Selected Services
               </Button>
             </div>
           </div>
