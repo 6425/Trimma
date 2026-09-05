@@ -46,16 +46,11 @@ async function persistSalonOwnerUser(
       global_role: "salon_owner" as const,
     };
 
-    const { error: upsertWithIdError } = await admin.from("users").upsert(
-      { ...baseRow, id: authUserId },
-      { onConflict: "email" }
-    );
-
-    if (upsertWithIdError) {
-      const { error: upsertError } = await admin.from("users").upsert(baseRow, { onConflict: "email" });
-      if (upsertError) {
-        throw new Error(upsertError.message);
-      }
+    const { error: upsertError } = await admin
+      .from("users")
+      .upsert(baseRow, { onConflict: "email" });
+    if (upsertError) {
+      throw new Error(upsertError.message);
     }
   }
 
