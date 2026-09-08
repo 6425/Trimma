@@ -163,7 +163,9 @@ export async function fetchPublicSalons(
     if (withDisplayOrder) {
       query = query.order("is_featured", { ascending: false });
       if (sort === "name") query = query.order("name", { ascending: true });
-      else query = query.order("rating", { ascending: false }).order("review_count", { ascending: false });
+      else if (sort === "rating") query = query.order("rating", { ascending: false, nullsFirst: false }).order("review_count", { ascending: false, nullsFirst: false });
+      else query = query.order("review_count", { ascending: false, nullsFirst: false }).order("rating", { ascending: false, nullsFirst: false });
+      query = query.order("id", { ascending: true });
     }
     return query;
   };
@@ -460,7 +462,7 @@ type LooseListingQuery = {
   gt: (column: string, value: unknown) => LooseListingQuery;
   lte: (column: string, value: unknown) => LooseListingQuery;
   gte: (column: string, value: unknown) => LooseListingQuery;
-  order: (column: string, options?: { ascending?: boolean }) => LooseListingQuery;
+  order: (column: string, options?: { ascending?: boolean; nullsFirst?: boolean }) => LooseListingQuery;
   limit: (count: number) => LooseListingQuery;
   range: (from: number, to: number) => LooseListingQuery;
 };
@@ -723,16 +725,18 @@ async function loadPublishedMarketplaceWindow(
         client.from("salons").select(BUSINESS_LISTING_CARD_SELECT) as unknown,
         filters
       )
-        .order("rating", { ascending: false })
-        .order("review_count", { ascending: false })
+        .order("review_count", { ascending: false, nullsFirst: false })
+        .order("rating", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: true })
         .limit(searchLimit)
     );
     if (searchRes.error && isMissingDbSchemaError(searchRes.error.message)) {
       const fallbackSelect = withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT);
       searchRes = await runListingQuery(
         applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
-          .order("rating", { ascending: false })
-          .order("review_count", { ascending: false })
+          .order("review_count", { ascending: false, nullsFirst: false })
+          .order("rating", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true })
           .limit(searchLimit)
       );
     }
@@ -758,8 +762,9 @@ async function loadPublishedMarketplaceWindow(
   );
   const popularQuery = runListingQuery(
     applyPublishedListingFilters(client.from("salons").select(featuredSelect) as unknown, filters)
-      .order("rating", { ascending: false })
-      .order("review_count", { ascending: false })
+      .order("review_count", { ascending: false, nullsFirst: false })
+      .order("rating", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true })
       .limit(windowSize)
   );
 
@@ -783,8 +788,9 @@ async function loadPublishedMarketplaceWindow(
       ),
       runListingQuery(
         applyPublishedListingFilters(client.from("salons").select(fallbackSelect) as unknown, filters)
-          .order("rating", { ascending: false })
-          .order("review_count", { ascending: false })
+          .order("review_count", { ascending: false, nullsFirst: false })
+          .order("rating", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true })
           .limit(windowSize)
       ),
     ]);
@@ -1016,7 +1022,9 @@ export async function fetchSimilarBusinessListingsForSalon(
     if (locationFilter) query = query.or(locationFilter);
     const { data, error } = await query
       .order("is_featured", { ascending: false })
-      .order("rating", { ascending: false })
+      .order("review_count", { ascending: false, nullsFirst: false })
+      .order("rating", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true })
       .limit(80);
     if (error) throw new Error(error.message);
     return asSalonRows(data);

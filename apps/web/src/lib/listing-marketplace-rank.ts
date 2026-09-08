@@ -52,18 +52,18 @@ export function listingRatingValue(listing: RankableListing): number {
 }
 
 export function compareListingPopularity(a: RankableListing, b: RankableListing): number {
-  const phoneDelta = Number(hasListingPhone(b.phone)) - Number(hasListingPhone(a.phone));
-  if (phoneDelta) return phoneDelta;
-  const ratingDelta = listingRatingValue(b) - listingRatingValue(a);
-  if (ratingDelta) return ratingDelta;
   const reviewDelta = listingReviewCount(b) - listingReviewCount(a);
   if (reviewDelta) return reviewDelta;
+  const ratingDelta = listingRatingValue(b) - listingRatingValue(a);
+  if (ratingDelta) return ratingDelta;
+  const phoneDelta = Number(hasListingPhone(b.phone)) - Number(hasListingPhone(a.phone));
+  if (phoneDelta) return phoneDelta;
   return String(a.name || "").localeCompare(String(b.name || ""), undefined, {
     sensitivity: "base",
   }) || listingId(a).localeCompare(listingId(b));
 }
 
-/** Marketplace default: live featured first, then contact/rating/review strength. */
+/** Marketplace default: live featured first, then review count and rating. */
 export function compareListingMarketplaceOrder(
   a: RankableListing,
   b: RankableListing
@@ -71,7 +71,7 @@ export function compareListingMarketplaceOrder(
   return compareListingFeaturedPriority(a, b) || compareListingPopularity(a, b);
 }
 
-/** Contactable businesses first, then highest rating, then strongest review count. */
+/** Most reviews first, then highest rating; contact availability only breaks ties. */
 export function pinTopReviewedListingsWithPhone<T extends RankableListing>(
   items: T[],
   _featuredCount = FEATURED_LISTING_COUNT
