@@ -60,7 +60,7 @@ export function compareListingPopularity(a: RankableListing, b: RankableListing)
   if (reviewDelta) return reviewDelta;
   return String(a.name || "").localeCompare(String(b.name || ""), undefined, {
     sensitivity: "base",
-  });
+  }) || listingId(a).localeCompare(listingId(b));
 }
 
 /** Marketplace default: live featured first, then contact/rating/review strength. */
@@ -80,7 +80,8 @@ export function pinTopReviewedListingsWithPhone<T extends RankableListing>(
 }
 
 export function compareFeaturedBatchOrder(a: RankableListing, b: RankableListing): number {
-  return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" });
+  return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" })
+    || listingId(a).localeCompare(listingId(b));
 }
 
 export function pickFeaturedListingsWithPhone<T extends RankableListing>(
