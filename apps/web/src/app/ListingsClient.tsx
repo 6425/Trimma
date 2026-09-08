@@ -369,9 +369,7 @@ export default function ListingsClient({
                 moreTitle={
                   searchQuery.trim()
                     ? "Search results"
-                    : selectedLocation || activeCategory
-                      ? "Business listings"
-                      : undefined
+                    : undefined
                 }
                 moreDescription={
                   searchQuery.trim()

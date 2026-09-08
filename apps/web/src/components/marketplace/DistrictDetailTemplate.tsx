@@ -8,12 +8,11 @@ import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Store
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BusinessListingsMap } from "./BusinessListingsMap";
+import { ListingResultsSections, mergeListingSectionCards } from "./ListingResultsSections";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { ProvinceNavLinks } from "../locations/ProvinceNavLinks";
 import { buildScopedCitySearchValue, slugifyLocation } from "@/lib/sri-lanka-locations";
-import { 
-  FeaturedSalonsSection, 
-  PopularSalonsSection, 
+import {
   DiscountsOffersSection, 
   WhyTrimmaSection, 
 } from "./MarketplaceSections";
@@ -37,38 +36,26 @@ export interface DistrictData {
     peakHours: string;
     topCategory: string;
   };
-  salons: any[];
-}
-
-function listingToSectionSalon(listing: BusinessListingCardData) {
-  return {
-    id: listing.id,
-    slug: listing.slug,
-    name: listing.name,
-    image: listing.image,
-    status: "Open Now",
-    rating: listing.rating,
-    reviews: listing.reviews,
-    city: listing.city || listing.location,
-    categories: [listing.category].filter(Boolean),
-    nextAvailable: "Hours not listed",
-    priceFrom: 1500,
-    featured: listing.isFeatured,
-    phone: listing.phone,
-  };
 }
 
 interface DistrictDetailTemplateProps {
   data: DistrictData;
   loading?: boolean;
-  listings?: BusinessListingCardData[];
+  listings: BusinessListingCardData[];
+  featured: BusinessListingCardData[];
+  topRated: BusinessListingCardData[];
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+  error?: string;
 }
 
-export function DistrictDetailTemplate({ data, loading = false, listings = [] }: DistrictDetailTemplateProps) {
+export function DistrictDetailTemplate({ data, loading = false, listings, featured, topRated, hasMore, isLoadingMore, onLoadMore, error }: DistrictDetailTemplateProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mapView, setMapView] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(data.name);
+  const allListings = mergeListingSectionCards(topRated, featured, listings);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -245,52 +232,43 @@ export function DistrictDetailTemplate({ data, loading = false, listings = [] }:
           </div>
         </section>
 
-        {(() => {
-          const mappedSalons = listings.length
-            ? listings.map(listingToSectionSalon)
-            : (data.salons || []).map((s: any) => ({
-            id: s.id,
-            slug: s.slug || s.id,
-            name: s.name,
-            image: s.image,
-            logo: s.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${s.slug || s.name}&backgroundColor=18181b`,
-            status: s.status || (s.openNow ? "Open Now" : "Closed"),
-            rating: s.rating,
-            reviews: s.reviews,
-            city: s.city || 'Colombo',
-            categories: s.categories || s.tags || ["Grooming"],
-            nextAvailable: s.nextAvailable || s.nextSlot || "Hours not listed",
-            priceFrom: s.priceFrom || 1500,
-            featured: s.featured,
-            phone: s.phone || null,
-          }));
-
-          if (mapView) {
-            return listings.length > 0 ? (
-              <BusinessListingsMap listings={listings} searchLocation={data.name} />
-            ) : (
-              <p className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-zinc-500">
-                No mapped listings in this district yet.
-              </p>
-            );
-          }
-
-          return (
-            <>
-              {/* Featured Salons Section */}
-              <FeaturedSalonsSection salons={mappedSalons} contextName={data.name} />
-              
-              {/* Most Popular Salons Section */}
-              <PopularSalonsSection salons={mappedSalons} contextName={data.name} />
-              
-              {/* Discounts & Offers Section */}
+        {error ? <p role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p> : null}
+        {loading ? (
+          <div className="flex items-center justify-center gap-3 rounded-3xl border border-slate-200 bg-white py-20 text-sm text-zinc-600">
+            <Icons.Loader2 className="h-5 w-5 animate-spin" /> Loading businesses in {data.name}...
+          </div>
+        ) : allListings.length === 0 ? (
+          <p className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-semibold text-zinc-500">
+            {error ? "Businesses are temporarily unavailable." : `No published listings in ${data.name} yet.`}
+          </p>
+        ) : mapView ? (
+          <>
+            <BusinessListingsMap listings={allListings} searchLocation={data.name} />
+            {hasMore ? (
+              <div className="flex justify-center pt-8">
+                <Button variant="outline" disabled={isLoadingMore} onClick={onLoadMore}>
+                  {isLoadingMore ? <Icons.Loader2 className="h-5 w-5 animate-spin" /> : "Load more"}
+                </Button>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <ListingResultsSections
+              featured={featured}
+              topRated={topRated}
+              more={listings}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={onLoadMore}
+              gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
+            />
+            <div className="mt-16">
               <DiscountsOffersSection />
-              
-              {/* Why Trimma Section */}
               <WhyTrimmaSection />
-            </>
-          );
-        })()}
+            </div>
+          </>
+        )}
       </div>
 
       <FindBookGlowCta />

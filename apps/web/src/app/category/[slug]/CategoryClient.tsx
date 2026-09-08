@@ -439,7 +439,7 @@ export default function CategoryClient({
             isLoadingMore={isLoadingMore}
             onLoadMore={handleLoadMore}
             gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
-            moreTitle={searchQuery.trim() ? "Search results" : `${categoryName} businesses`}
+            moreTitle={appliedSearch ? "Search results" : undefined}
             moreDescription={
               searchQuery.trim()
                 ? "Businesses matching the name you searched."

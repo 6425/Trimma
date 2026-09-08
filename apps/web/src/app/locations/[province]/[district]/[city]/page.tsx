@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +9,8 @@ import { MapPin, Star, Scissors, Filter, Map, Clock, ChevronRight, Search, Store
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
+import { YOU_MAY_ALSO_LIKE_COUNT } from "@/lib/listing-marketplace-rank";
+import { ListingResultsSections, mergeListingSectionCards } from "../../../../../components/marketplace/ListingResultsSections";
 import {
   buildScopedCitySearchValue,
   getDistrictBySlugs,
@@ -18,19 +20,31 @@ import {
 } from "@/lib/sri-lanka-locations";
 import { ProvinceNavLinks } from "../../../../../components/locations/ProvinceNavLinks";
 import {
-  FeaturedSalonsSection,
-  PopularSalonsSection,
   DiscountsOffersSection,
   WhyTrimmaSection,
 } from "../../../../../components/marketplace/MarketplaceSections";
 import { FindBookGlowCta } from "../../../../../components/marketplace/FindBookGlowCta";
 import { BusinessListingsMap } from "../../../../../components/marketplace/BusinessListingsMap";
 
+type ListingSearchResponse = {
+  listings?: BusinessListingCardData[];
+  featured?: BusinessListingCardData[];
+  topRated?: BusinessListingCardData[];
+  hasMore?: boolean;
+  totalCount?: number;
+  error?: string;
+};
+
 export default function CityDetailPage() {
   const { province, district, city } = useParams();
   const provinceSlug = normalizeProvinceSlug(String(province || "western"));
   const districtSlug = String(district || "colombo");
   const citySlug = String(city || "colombo");
+
+  return <CityListingsPage key={`${provinceSlug}/${districtSlug}/${citySlug}`} provinceSlug={provinceSlug} districtSlug={districtSlug} citySlug={citySlug} />;
+}
+
+function CityListingsPage({ provinceSlug, districtSlug, citySlug }: { provinceSlug: string; districtSlug: string; citySlug: string }) {
   const match = getDistrictBySlugs(provinceSlug, districtSlug);
   const provinceMeta = match?.province || SRI_LANKA_PROVINCES[0];
   const districtMeta = match?.district || provinceMeta.districts[0];
@@ -66,27 +80,20 @@ export default function CityDetailPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(scopedCityLocation);
   const [listings, setListings] = useState<BusinessListingCardData[]>([]);
+  const [featured, setFeatured] = useState<BusinessListingCardData[]>([]);
+  const [topRated, setTopRated] = useState<BusinessListingCardData[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState("");
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const nextOffset = useRef(0);
+  const loadMoreController = useRef<AbortController | null>(null);
   const cityOptions = districtMeta.cities;
-
-  const filteredSalons = listings.map((listing) => ({
-    id: listing.id,
-    slug: listing.slug,
-    name: listing.name,
-    image: listing.image,
-    status: "Open Now",
-    rating: listing.rating,
-    reviews: listing.reviews,
-    city: listing.city || listing.location,
-    categories: [listing.category].filter(Boolean),
-    nextAvailable: "Hours not listed",
-    priceFrom: 1500,
-    phone: listing.phone,
-  }));
+  const allListings = mergeListingSectionCards(topRated, featured, listings);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function fetchLiveSalons() {
       try {
@@ -94,29 +101,28 @@ export default function CityDetailPage() {
         const params = new URLSearchParams({
           location: scopedCityLocation,
           publishedOnly: "true",
-          limit: "0",
+          limit: String(YOU_MAY_ALSO_LIKE_COUNT),
         });
-        const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store" });
-        const payload = (await res.json()) as {
-          listings?: BusinessListingCardData[];
-          totalCount?: number;
-          error?: string;
-        };
+        const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store", signal: controller.signal });
+        const payload = (await res.json()) as ListingSearchResponse;
         if (!res.ok) throw new Error(payload.error || "Failed to load city listings.");
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setListings(payload.listings || []);
+          setFeatured(payload.featured || []);
+          setTopRated(payload.topRated || []);
+          setHasMore(Boolean(payload.hasMore));
+          nextOffset.current = payload.listings?.length || 0;
           setTotalCount(
-            typeof payload.totalCount === "number" ? payload.totalCount : payload.listings?.length || 0
+            typeof payload.totalCount === "number" ? payload.totalCount : mergeListingSectionCards(payload.topRated || [], payload.featured || [], payload.listings || []).length
           );
         }
       } catch (err) {
-        console.error("Failed to load live salons for city page:", err);
-        if (!cancelled) {
-          setListings([]);
-          setTotalCount(0);
+        if (!controller.signal.aborted) {
+          console.error("Failed to load live salons for city page:", err);
+          setError("We couldn't load the businesses in this city. Please refresh to try again.");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
@@ -127,10 +133,47 @@ export default function CityDetailPage() {
     fetchLiveSalons();
     window.addEventListener("scroll", handleScroll);
     return () => {
-      cancelled = true;
+      controller.abort();
+      loadMoreController.current?.abort();
       window.removeEventListener("scroll", handleScroll);
     };
   }, [scopedCityLocation]);
+
+  async function loadMore() {
+    if (loading || !hasMore || loadMoreController.current) return;
+    const controller = new AbortController();
+    loadMoreController.current = controller;
+    setIsLoadingMore(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({
+        location: scopedCityLocation,
+        publishedOnly: "true",
+        limit: String(YOU_MAY_ALSO_LIKE_COUNT),
+        offset: String(nextOffset.current),
+      });
+      const res = await fetch(`/api/business-listings/search?${params.toString()}`, { cache: "no-store", signal: controller.signal });
+      const payload = (await res.json()) as ListingSearchResponse;
+      if (!res.ok) throw new Error(payload.error || "Failed to load more city listings.");
+      if (!controller.signal.aborted) {
+        const next = payload.listings || [];
+        setListings((current) => mergeListingSectionCards([], [], [...current, ...next]));
+        nextOffset.current += next.length;
+        setHasMore(Boolean(payload.hasMore));
+        if (typeof payload.totalCount === "number") setTotalCount(payload.totalCount);
+      }
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        console.error("Failed to load more city listings:", err);
+        setError("We couldn't load more businesses. Please try Load more again.");
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        loadMoreController.current = null;
+        setIsLoadingMore(false);
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 md:pb-0 relative">
@@ -269,32 +312,44 @@ export default function CityDetailPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {error ? <p role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p> : null}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
             <Icons.Loader2 className="w-10 h-10 text-zinc-900 animate-spin mb-4" />
-            <p className="text-zinc-500 font-bold text-sm">Querying active luxury salons...</p>
+            <p className="text-zinc-500 font-bold text-sm">Loading businesses in {data.name}...</p>
           </div>
-        ) : filteredSalons.length === 0 ? (
+        ) : allListings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-slate-200/60 shadow-sm">
             <Scissors className="w-12 h-12 text-zinc-300 mb-4" />
-            <p className="text-zinc-800 font-black text-lg">No active salons found in {data.name}</p>
+            <p className="text-zinc-800 font-black text-lg">{error ? "Businesses are temporarily unavailable." : `No published listings found in ${data.name}`}</p>
             <p className="text-zinc-400 text-xs mt-1">Try resetting your location search or refreshing the results.</p>
           </div>
         ) : mapView ? (
-          <BusinessListingsMap listings={listings} searchLocation={String(cityName)} />
+          <>
+            <BusinessListingsMap listings={allListings} searchLocation={scopedCityLocation} />
+            {hasMore ? (
+              <div className="flex justify-center pt-8">
+                <Button variant="outline" disabled={isLoadingMore} onClick={loadMore}>
+                  {isLoadingMore ? <Icons.Loader2 className="h-5 w-5 animate-spin" /> : "Load more"}
+                </Button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <>
-            {/* Featured Salons Section */}
-            <FeaturedSalonsSection salons={filteredSalons} contextName={data.name} />
-            
-            {/* Most Popular Salons Section */}
-            <PopularSalonsSection salons={filteredSalons} contextName={data.name} />
-            
-            {/* Discounts & Offers Section */}
-            <DiscountsOffersSection />
-            
-            {/* Why Trimma Section */}
-            <WhyTrimmaSection />
+            <ListingResultsSections
+              featured={featured}
+              topRated={topRated}
+              more={listings}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore}
+              gridClassName="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6"
+            />
+            <div className="mt-16">
+              <DiscountsOffersSection />
+              <WhyTrimmaSection />
+            </div>
           </>
         )}
       </div>

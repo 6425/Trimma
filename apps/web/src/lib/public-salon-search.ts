@@ -348,7 +348,99 @@ function sortBusinessListingRows(
       ...row,
       reviews: Number(row.review_count || 0),
     }))
-  ).sort(compareListingMarketplaceOrder);
+  );
+}
+
+// Rank the complete matching set using small rows; fetch images and profile
+// details only for the cards in this response. Pagination must follow ranking.
+const LISTING_RANK_SELECT = `
+  id, name, slug, phone, rating, review_count, city, district, province, category,
+  status, onboarding_status, is_verified, featured_starts_at, featured_ends_at, is_featured
+`;
+
+type PublishedListingFilters = {
+  q: string;
+  location: string;
+  category?: string;
+  categoryName?: string;
+  minRating: number;
+  verifiedOnly: boolean;
+};
+
+async function loadPublishedListingRankRows(
+  supabase: SupabaseClient,
+  filters: PublishedListingFilters,
+  select = LISTING_RANK_SELECT
+): Promise<Array<Record<string, unknown>>> {
+  const client = publishedListingsClient(supabase);
+  const query = (withCount = false) => applyPublishedListingFilters(
+    client.from("salons").select(select, withCount ? { count: "exact" } : undefined), filters
+  ).order("id", { ascending: true });
+  const first = await runListingQuery(query(true).range(0, 499));
+  if (first.error) {
+    const fallbackSelect = withoutFeaturedPeriodSelect(select);
+    if (fallbackSelect !== select && isMissingDbSchemaError(first.error.message)) {
+      return loadPublishedListingRankRows(supabase, filters, fallbackSelect);
+    }
+    throw new Error(first.error.message);
+  }
+  const rows = asSalonRows(first.data);
+  if (!rows.length) return rows;
+  const totalCount = first.count ?? rows.length;
+  // Respect a smaller PostgREST row cap without skipping any records.
+  const pageSize = rows.length;
+  let nextOffset = pageSize;
+  await Promise.all(Array.from({ length: Math.min(4, Math.ceil(totalCount / pageSize) - 1) }, async () => {
+    while (nextOffset < totalCount) {
+      const start = nextOffset;
+      nextOffset += pageSize;
+      const page = await runListingQuery(query().range(start, start + pageSize - 1));
+      if (page.error) throw new Error(page.error.message);
+      rows.push(...asSalonRows(page.data));
+    }
+  }));
+  return [...new Map(rows.map((row) => [String(row.id), row])).values()];
+}
+
+async function fetchPublishedListingSections(
+  supabase: SupabaseClient,
+  params: PublishedListingFilters & { limit: number; offset: number; sort: string }
+) {
+  const candidates = await loadPublishedListingRankRows(supabase, params);
+  const matchingRows = filterBusinessListingRows(candidates, { ...params, publishedOnly: true });
+  const { featured, topRated, rest } = splitMarketplaceListingSections(matchingRows);
+  const orderedRest = params.sort === "name" ? sortBusinessListingRows(rest, "name") : rest;
+  const pagedRest = params.limit > 0
+    ? orderedRest.slice(params.offset, params.offset + params.limit)
+    : orderedRest.slice(params.offset);
+  const selected = [...featured, ...topRated, ...pagedRest];
+  const client = publishedListingsClient(supabase);
+  const detailsById = new Map<string, Record<string, unknown>>();
+  for (let start = 0; start < selected.length; start += 100) {
+    const ids = selected.slice(start, start + 100).map((row) => String(row.id));
+    const readDetails = (columns: string) => runListingQuery(applyPublishedListingFilters(
+      client.from("salons").select(columns).in("id", ids), params
+    ));
+    let page = await readDetails(BUSINESS_LISTING_CARD_SELECT);
+    if (page.error && isMissingDbSchemaError(page.error.message)) {
+      page = await readDetails(withoutFeaturedPeriodSelect(BUSINESS_LISTING_CARD_SELECT));
+    }
+    if (page.error) throw new Error(page.error.message);
+    for (const row of filterBusinessListingRows(asSalonRows(page.data), { ...params, publishedOnly: true })) {
+      detailsById.set(String(row.id), row);
+    }
+  }
+  const cards = (rows: Array<Record<string, unknown>>) => rows.flatMap((row, index) => {
+    const detail = detailsById.get(String(row.id));
+    return detail ? [mapSalonRowToBusinessListing(detail, index)] : [];
+  });
+  return {
+    featured: cards(featured),
+    topRated: cards(topRated),
+    listings: cards(pagedRest),
+    totalCount: matchingRows.length,
+    hasMore: params.limit > 0 && params.offset + pagedRest.length < orderedRest.length,
+  };
 }
 
 function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
@@ -359,7 +451,7 @@ function publishedListingsClient(fallback: SupabaseClient): SupabaseClient {
   }
 }
 
-type ListingQueryResult = { data: unknown; error: { message: string } | null };
+type ListingQueryResult = { data: unknown; count?: number | null; error: { message: string } | null };
 
 type LooseListingQuery = {
   eq: (column: string, value: unknown) => LooseListingQuery;
@@ -370,6 +462,7 @@ type LooseListingQuery = {
   gte: (column: string, value: unknown) => LooseListingQuery;
   order: (column: string, options?: { ascending?: boolean }) => LooseListingQuery;
   limit: (count: number) => LooseListingQuery;
+  range: (from: number, to: number) => LooseListingQuery;
 };
 
 function runListingQuery(query: LooseListingQuery): Promise<ListingQueryResult> {
@@ -764,6 +857,13 @@ export async function fetchBusinessListingCards(
 
   const categoryActive = category.replace(/-/g, " ").trim().length > 0;
 
+  if (publishedOnly && !q.trim()) {
+    return fetchPublishedListingSections(supabase, {
+      q, location, category, categoryName, minRating, verifiedOnly,
+      limit: Math.max(0, limit), offset: Math.max(0, offset), sort,
+    });
+  }
+
   let data: Array<Record<string, unknown>>;
   let countedTotal: number | null = null;
   let windowHasMore: boolean | null = null;
@@ -834,21 +934,6 @@ export async function fetchBusinessListingCards(
       topRated: [],
       featured: [],
       hasMore: Boolean(limit && limit > 0 && offset + pagedRows.length < totalCount),
-      totalCount,
-    };
-  }
-
-  const directorySearchActive = Boolean(location.trim() || categoryActive);
-  if (sort === "name" || sort === "rating" || directorySearchActive) {
-    const rows = sortBusinessListingRows(filtered, sort);
-    const pagedRows = !limit || limit <= 0 ? rows.slice(offset) : rows.slice(offset, offset + limit);
-    const listings = toCards(pagedRows, offset);
-    const totalCount = countedTotal ?? rows.length;
-    return {
-      listings,
-      topRated: [],
-      featured: [],
-      hasMore: Boolean(limit && limit > 0 && offset + listings.length < totalCount),
       totalCount,
     };
   }
