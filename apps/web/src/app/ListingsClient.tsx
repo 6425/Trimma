@@ -375,7 +375,7 @@ export default function ListingsClient({
                   searchQuery.trim()
                     ? "Businesses matching the name you searched."
                     : selectedLocation || activeCategory
-                      ? "Businesses with contact numbers first, then highest rating and strongest review count."
+                      ? "Ordered by most reviews first, then highest rating when review counts are equal."
                       : undefined
                 }
               />

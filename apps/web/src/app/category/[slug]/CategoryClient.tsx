@@ -443,7 +443,7 @@ export default function CategoryClient({
             moreDescription={
               searchQuery.trim()
                 ? "Businesses matching the name you searched."
-                : "Businesses with contact numbers first, then highest rating and strongest review count."
+                : "Ordered by most reviews first, then highest rating when review counts are equal."
             }
           />
         )}

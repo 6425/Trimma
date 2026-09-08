@@ -134,6 +134,14 @@ async function main() {
   type CardsResult = Awaited<ReturnType<typeof fetchBusinessListingCards>>;
   const ids = (cards: Array<{ id: string }>) => cards.map((card) => card.id);
   const sectionIds = (result: CardsResult) => ids([...result.featured, ...result.topRated, ...result.listings]);
+  const assertReviewOrder = (cards: Array<{ reviews: number; rating: number }>) => {
+    for (let index = 1; index < cards.length; index += 1) {
+      const previous = cards[index - 1];
+      const current = cards[index];
+      assert.ok(previous.reviews > current.reviews || (previous.reviews === current.reviews && previous.rating >= current.rating),
+        `Review count must rank first, then rating: ${JSON.stringify(previous)} before ${JSON.stringify(current)}`);
+    }
+  };
   const scope = { publishedOnly: true, location: "Gampaha", category: "barber-salon", categoryName: "Barber Salon", limit: 8 };
   let checks = 0;
 
@@ -145,6 +153,7 @@ async function main() {
     const client = fakeClient(rows);
     const first = await fetchBusinessListingCards(client, { ...scope, ...params, offset: 0 });
     const collected = sectionIds(first);
+    const rankedCards = [...first.topRated, ...first.listings];
     assert.equal(new Set(collected).size, collected.length, "First page sections must be disjoint");
     let page = first;
     let offset = first.listings.length;
@@ -156,12 +165,14 @@ async function main() {
       assert.ok(page.listings.length > 0, "Load more must not advertise an empty next page");
       for (const id of ids(page.listings)) assert.ok(!collected.includes(id), `Duplicate listing across pages: ${id}`);
       collected.push(...ids(page.listings));
+      rankedCards.push(...page.listings);
       offset += page.listings.length;
     }
     const pastEnd = await fetchBusinessListingCards(client, { ...scope, ...params, offset });
     assert.equal(pastEnd.hasMore, false);
     assert.equal(pastEnd.listings.length, 0, "No rows should repeat after the last page");
-    return { first, collected };
+    assertReviewOrder(rankedCards);
+    return { first, collected, rankedCards };
   }
 
   await check("Location/category sections include only matching published businesses", async () => {
@@ -210,6 +221,27 @@ async function main() {
     }
   });
 
+  await check("Top Rated and every later page rank by reviews, then rating, then contactability", async () => {
+    const rows = [
+      salon(0, { ...activePeriod, rating: 1, review_count: 1 }),
+      salon(1, { rating: 3.1, review_count: 1000, phone: null }),
+      salon(2, { rating: 4.9, review_count: 900, phone: null }),
+      salon(3, { rating: 4.2, review_count: 900, phone: "0771234567" }),
+      salon(4, { rating: 4, review_count: 800, phone: "0771234567", name: "Zeta with contact" }),
+      salon(5, { rating: 4, review_count: 800, phone: null, name: "Alpha without contact" }),
+      ...Array.from({ length: 25 }, (_, index) => salon(index + 6, {
+        rating: index % 2 ? 5 : 2, review_count: 790 - index * 10,
+        phone: index % 2 ? "0771234567" : null,
+      })),
+      salon(31, { rating: 5, review_count: 1 }),
+      salon(32, { rating: null, review_count: null, phone: null }),
+    ];
+    const { first, rankedCards } = await collectAll([...rows].reverse());
+    assert.deepEqual(ids(first.featured), [rows[0].id], "Active Featured stays separate even with few reviews");
+    assert.deepEqual(ids(first.topRated), rows.slice(1, 5).map((row) => row.id), "Most-reviewed businesses must fill Top Rated before 5-star low-review businesses");
+    assert.deepEqual(ids(rankedCards), rows.slice(1).map((row) => row.id), "Rating and contactability must never override a larger review count");
+  });
+
   await check("More than 400 matches paginate without loss, duplicates or moving Top Rated rows", async () => {
     const rows = Array.from({ length: 527 }, (_, index) => salon(index, {
       ...(index < 7 ? activePeriod : {}),
@@ -251,7 +283,10 @@ async function main() {
 
   await check("A smaller database row cap cannot hide high-ranking businesses on later database pages", async () => {
     const rows = Array.from({ length: 530 }, (_, index) => salon(index, {
-      ...(index === 529 ? activePeriod : {}), rating: index === 528 ? 5 : 4,
+      ...(index === 529 ? activePeriod : {}),
+      rating: index === 528 ? 3 : 5,
+      review_count: index === 528 ? 1000 : 10,
+      phone: index === 528 ? null : "0771234567",
     }));
     const result = await fetchBusinessListingCards(fakeClient(rows, 100), scope);
     assert.equal(result.totalCount, 530);
