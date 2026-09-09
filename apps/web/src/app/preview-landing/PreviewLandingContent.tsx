@@ -44,14 +44,7 @@ import {
   Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DEFAULT_SUBSCRIPTION_PLANS,
-  getDisplayMonthlyPrice,
-  getListMonthlyPrice,
-  getDiscountPercentage,
-  getAnnualTotal,
-  formatLkr,
-} from "@/lib/subscription-pricing";
+import { DEFAULT_SUBSCRIPTION_PLANS } from "@/lib/subscription-pricing";
 
 const trustStats = [
   { icon: Store, value: "200+", label: "Salons" },
@@ -646,20 +639,17 @@ export function PreviewLandingContent() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-black tracking-tight">
-              Simple Pricing. No Hidden Fees.
+              Choose Your Package Free for 365 Days
             </h2>
             <p className="mt-4 text-zinc-600">
-              Introductory rates on monthly billing. Start free, upgrade anytime.
+              Every Trimma subscription package is LKR 0 for your first 365 days. Choose the
+              features and limits that suit your salon with no subscription charge today.
             </p>
           </div>
 
           <div className="mt-12 grid md:grid-cols-3 gap-6 items-stretch">
             {pricingPlans.map((plan) => {
               const isPro = plan.name.toLowerCase() === "pro";
-              const displayMonthly = getDisplayMonthlyPrice(plan, "monthly");
-              const listMonthly = getListMonthlyPrice(plan);
-              const discount = getDiscountPercentage(plan);
-              const annualTotal = getAnnualTotal(plan);
               const displayName =
                 plan.name === "Pro"
                   ? "Professional"
@@ -673,7 +663,7 @@ export function PreviewLandingContent() {
                   key={plan.id}
                   className={`rounded-3xl p-8 flex flex-col relative transition-all duration-300 ${
                     isPro
-                      ? "bg-[#0B0B0B] text-white shadow-2xl scale-[1.03]"
+                      ? "trimma-dark-surface bg-[#0B0B0B] text-white shadow-2xl scale-[1.03]"
                       : "bg-white text-zinc-900 ring-1 ring-zinc-100 shadow-sm"
                   }`}
                 >
@@ -684,41 +674,38 @@ export function PreviewLandingContent() {
                   )}
                   <h3
                     className={`text-sm font-bold uppercase tracking-widest ${
-                      isPro ? "text-[#ffde5a]" : "text-zinc-500"
+                      isPro ? "text-white" : "text-zinc-500"
                     }`}
                   >
                     {displayName}
                   </h3>
-                  {discount > 0 && (
-                    <p className={`text-sm line-through mt-3 ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>
-                      {formatLkr(listMonthly)}
-                    </p>
-                  )}
-                  <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-4xl font-black">{formatLkr(displayMonthly)}</span>
-                    <span className={`text-xs font-semibold ${isPro ? "text-zinc-400" : "text-zinc-400"}`}>
-                      /month
+                  <div className="flex items-baseline gap-2 mt-4">
+                    <span className={`text-4xl font-black ${isPro ? "text-white" : "text-zinc-900"}`}>
+                      LKR 0
+                    </span>
+                    <span className={`text-xs font-semibold ${isPro ? "text-white" : "text-zinc-500"}`}>
+                      for 365 days
                     </span>
                   </div>
-                  <p className={`text-xs mt-2 ${isPro ? "text-zinc-400" : "text-zinc-500"}`}>
-                    or {formatLkr(annualTotal)} billed annually
+                  <p className={`text-xs mt-2 ${isPro ? "text-white" : "text-zinc-500"}`}>
+                    No subscription payment is required during your free-access period.
                   </p>
 
                   <ul className="mt-6 space-y-3 flex-1">
-                    <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}>
+                    <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-white" : "text-zinc-700"}`}>
                       <Check className="w-4 h-4 text-[#ffde5a] shrink-0" /> Up to {plan.max_staff} staff
                     </li>
-                    <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}>
+                    <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-white" : "text-zinc-700"}`}>
                       <Check className="w-4 h-4 text-[#ffde5a] shrink-0" />{" "}
                       {plan.max_services >= 9999 ? "Unlimited" : plan.max_services} services
                     </li>
-                    <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}>
+                    <li className={`flex items-center gap-2.5 text-sm ${isPro ? "text-white" : "text-zinc-700"}`}>
                       <Check className="w-4 h-4 text-[#ffde5a] shrink-0" /> {plan.max_images} gallery images
                     </li>
                     {features.map((feat) => (
                       <li
                         key={feat}
-                        className={`flex items-center gap-2.5 text-sm ${isPro ? "text-zinc-200" : "text-zinc-700"}`}
+                        className={`flex items-center gap-2.5 text-sm ${isPro ? "text-white" : "text-zinc-700"}`}
                       >
                         <Check className="w-4 h-4 text-[#ffde5a] shrink-0" /> {feat}
                       </li>
@@ -726,15 +713,15 @@ export function PreviewLandingContent() {
                   </ul>
 
                   <Link
-                    href={`/checkout/subscription?plan=${encodeURIComponent(plan.name.toLowerCase())}&cycle=monthly`}
+                    href="/onboarding#salon-owner-signup"
                     className="mt-8 w-full"
                   >
                     <Button
                       variant={isPro ? "default" : "dark"}
                       size="lg"
-                      className="w-full rounded-xl"
+                      className={`w-full rounded-xl ${isPro ? "!text-black hover:!text-black" : ""}`}
                     >
-                      Start Free
+                      Choose Free Package
                     </Button>
                   </Link>
                 </div>

@@ -14,13 +14,7 @@ import {
   seedAdminSubscriptionPlans,
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
-import { DEFAULT_SUBSCRIPTION_PLANS, formatPromotionPackageLimit } from "@/lib/subscription-pricing";
-import {
-  DEFAULT_PRICING_COPY_ANNUAL,
-  DEFAULT_PRICING_COPY_MONTHLY,
-  PRICING_COPY_TOKENS,
-  renderPricingCopy,
-} from "@/lib/subscription-pricing-copy";
+import { formatPromotionPackageLimit } from "@/lib/subscription-pricing";
 
 export default function SubscriptionPlanManagement() {
   const [plans, setPlans] = useState<any[]>([]);
@@ -31,32 +25,22 @@ export default function SubscriptionPlanManagement() {
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ 
     name: "", 
-    list_monthly_price: "",
-    discount_percentage: "",
-    annual_monthly_price: "",
     max_staff: "",
     max_services: "",
     max_images: "",
     max_promotion_packages: "",
     allowed_categories_limit: "",
     features: "",
-    pricing_copy_monthly: "",
-    pricing_copy_annual: "",
   });
 
   const emptyFormData = {
     name: "",
-    list_monthly_price: "",
-    discount_percentage: "",
-    annual_monthly_price: "",
     max_staff: "",
     max_services: "",
     max_images: "",
     max_promotion_packages: "",
     allowed_categories_limit: "",
     features: "",
-    pricing_copy_monthly: "",
-    pricing_copy_annual: "",
   };
 
   const seedDefaultPlans = async () => {
@@ -128,7 +112,7 @@ export default function SubscriptionPlanManagement() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || formData.list_monthly_price === "") return toast.error("Name and Base Price are required");
+    if (!formData.name) return toast.error("Plan name is required");
     
     // Parse features from comma separated string
     const featuresArray = formData.features
@@ -136,24 +120,16 @@ export default function SubscriptionPlanManagement() {
       .map(f => f.trim())
       .filter(f => f);
       
-    const basePrice = parseFloat(formData.list_monthly_price);
-    const discount = formData.discount_percentage ? parseFloat(formData.discount_percentage) : 0;
-    const calculatedMonthlyPrice = Math.round(basePrice * (1 - discount / 100));
-    const annualMonthly = formData.annual_monthly_price
-      ? parseFloat(formData.annual_monthly_price)
-      : Math.round(calculatedMonthlyPrice * 0.8);
-    const annualPrice = Math.round(annualMonthly * 12);
-    
     try {
       setSaving(true);
       const payload = {
         id: editId || undefined,
         name: formData.name,
-        list_monthly_price: basePrice,
-        discount_percentage: discount,
-        monthly_price: calculatedMonthlyPrice,
-        intro_monthly_price: calculatedMonthlyPrice,
-        annual_price: annualPrice,
+        list_monthly_price: 0,
+        discount_percentage: 0,
+        monthly_price: 0,
+        intro_monthly_price: 0,
+        annual_price: 0,
         max_staff: formData.max_staff ? parseInt(formData.max_staff) : 2,
         max_services: formData.max_services ? parseInt(formData.max_services) : 6,
         max_images: formData.max_images ? parseInt(formData.max_images) : 4,
@@ -163,12 +139,6 @@ export default function SubscriptionPlanManagement() {
         feature_flags: {
           allowed_categories_limit: formData.allowed_categories_limit ? parseInt(formData.allowed_categories_limit) : 2,
           features: featuresArray,
-          ...(formData.pricing_copy_monthly.trim()
-            ? { pricing_copy_monthly: formData.pricing_copy_monthly.trim() }
-            : {}),
-          ...(formData.pricing_copy_annual.trim()
-            ? { pricing_copy_annual: formData.pricing_copy_annual.trim() }
-            : {}),
         }
       };
 
@@ -201,64 +171,24 @@ export default function SubscriptionPlanManagement() {
   const handleEdit = (plan: any) => {
     setEditId(plan.id);
     const flags = plan.feature_flags || {};
-    const annualMonthly =
-      plan.annual_price && Number(plan.annual_price) > 0
-        ? Math.round(Number(plan.annual_price) / 12)
-        : "";
     setFormData({ 
       name: plan.name, 
-      list_monthly_price: (plan.list_monthly_price || plan.monthly_price).toString(), 
-      discount_percentage: plan.discount_percentage?.toString() || "0",
-      annual_monthly_price: annualMonthly ? String(annualMonthly) : "",
       max_staff: plan.max_staff?.toString() || "2",
       max_services: plan.max_services?.toString() || "6",
       max_images: plan.max_images?.toString() || "4",
       max_promotion_packages: plan.max_promotion_packages?.toString() || "2",
       allowed_categories_limit: flags.allowed_categories_limit?.toString() || "2",
       features: Array.isArray(flags.features) ? flags.features.join(", ") : "",
-      pricing_copy_monthly: flags.pricing_copy_monthly || "",
-      pricing_copy_annual: flags.pricing_copy_annual || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
-  const previewPlan = {
-    name: formData.name || "Plan",
-    list_monthly_price: parseFloat(formData.list_monthly_price || "0"),
-    discount_percentage: parseFloat(formData.discount_percentage || "0"),
-    monthly_price: Math.round(parseFloat(formData.list_monthly_price || "0") * (1 - parseFloat(formData.discount_percentage || "0") / 100)),
-    intro_monthly_price: Math.round(parseFloat(formData.list_monthly_price || "0") * (1 - parseFloat(formData.discount_percentage || "0") / 100)),
-    annual_price: Math.round(
-      (formData.annual_monthly_price
-        ? parseFloat(formData.annual_monthly_price)
-        : Math.round(parseFloat(formData.list_monthly_price || "0") * (1 - parseFloat(formData.discount_percentage || "0") / 100) * 0.8)) * 12
-    ),
-    max_staff: formData.max_staff ? parseInt(formData.max_staff) : 0,
-    max_services: formData.max_services ? parseInt(formData.max_services) : 0,
-    max_images: formData.max_images ? parseInt(formData.max_images) : 0,
-    max_promotion_packages: formData.max_promotion_packages ? parseInt(formData.max_promotion_packages) : 0,
-    feature_flags: {
-      allowed_categories_limit: formData.allowed_categories_limit ? parseInt(formData.allowed_categories_limit) : 0,
-      pricing_copy_monthly: formData.pricing_copy_monthly,
-      pricing_copy_annual: formData.pricing_copy_annual,
-    },
-  };
-
-  const monthlyCopyPreview = renderPricingCopy(
-    formData.pricing_copy_monthly.trim() || DEFAULT_PRICING_COPY_MONTHLY,
-    previewPlan
-  );
-  const annualCopyPreview = renderPricingCopy(
-    formData.pricing_copy_annual.trim() || DEFAULT_PRICING_COPY_ANNUAL,
-    previewPlan
-  );
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">SaaS Subscription Plans</h1>
-          <p className="text-zinc-500 mt-1">Configure pricing tiers, features, and limits for salon owners.</p>
+          <h1 className="text-3xl font-extrabold text-[#1A1C29] tracking-tight">Subscription Packages</h1>
+          <p className="text-zinc-500 mt-1">All packages cost LKR 0 during the 365-day free-access program. Configure features and limits only.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button 
@@ -332,20 +262,13 @@ export default function SubscriptionPlanManagement() {
                       <h3 className="text-xl font-bold text-[#1A1C29]">{plan.name}</h3>
                       <div className="flex items-baseline gap-1 mt-1">
                           <span className="text-2xl font-bold text-brand">
-                            {plan.monthly_price === 0 ? "FREE" : `LKR ${plan.monthly_price.toLocaleString()}`}
+                            LKR 0
                           </span>
-                          {plan.monthly_price > 0 && <span className="text-zinc-500 text-xs font-medium">/ month</span>}
+                          <span className="text-zinc-500 text-xs font-medium">for 365 days</span>
                       </div>
-                      {(plan.discount_percentage > 0) && (
-                        <div className="mt-2">
-                          <Badge className="bg-emerald-50 text-emerald-600 border border-emerald-200">
-                            {plan.discount_percentage}% OFF
-                          </Badge>
-                          <span className="text-xs text-zinc-400 line-through ml-2">
-                            LKR {(plan.list_monthly_price || plan.monthly_price).toLocaleString()}
-                          </span>
-                        </div>
-                      )}
+                      <Badge className="mt-2 bg-emerald-50 text-emerald-600 border border-emerald-200">
+                        FREE-ACCESS PROGRAM
+                      </Badge>
                     </div>
 
                     {/* Numeric Specifications & Limits */}
@@ -406,7 +329,7 @@ export default function SubscriptionPlanManagement() {
           <Card className={`border-none shadow-sm p-8 rounded-3xl text-zinc-900 relative overflow-hidden transition-all duration-300 ${editId ? 'bg-brand' : 'bg-slate-50'}`}>
             <Package className="absolute -right-8 -bottom-8 w-40 h-40 text-zinc-900/5 rotate-12" />
             <h3 className="text-xl font-bold mb-2">{editId ? 'Update Specifications' : 'Create Tier'}</h3>
-            <p className="text-zinc-500 text-sm mb-6">Modify platform package restrictions.</p>
+            <p className="text-zinc-500 text-sm mb-6">Modify package features and limits. The current subscription cost is locked at LKR 0.</p>
             
             <form onSubmit={handleSave} className="space-y-4 relative z-10">
               <div className="space-y-2">
@@ -419,52 +342,11 @@ export default function SubscriptionPlanManagement() {
                    required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Base Monthly Price (LKR)</label>
-                  <Input 
-                    type="number" 
-                    value={formData.list_monthly_price}
-                    onChange={(e) => setFormData({ ...formData, list_monthly_price: e.target.value })}
-                    className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
-                    placeholder="5000" 
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Discount %</label>
-                  <Input 
-                    type="number" 
-                    value={formData.discount_percentage}
-                    onChange={(e) => setFormData({ ...formData, discount_percentage: e.target.value })}
-                    className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20" 
-                    placeholder="25" 
-                  />
-                </div>
-              </div>
-
-              <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 flex justify-between items-center">
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Final Monthly Cost</span>
-                <span className="text-lg font-black text-brand">
-                  {formData.list_monthly_price 
-                    ? `LKR ${Math.round(parseFloat(formData.list_monthly_price || "0") * (1 - parseFloat(formData.discount_percentage || "0") / 100)).toLocaleString()}`
-                    : "LKR 0"}
-                </span>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
-                  Annual Monthly Equivalent (LKR)
-                </label>
-                <Input
-                  type="number"
-                  value={formData.annual_monthly_price}
-                  onChange={(e) => setFormData({ ...formData, annual_monthly_price: e.target.value })}
-                  className="bg-slate-100 border-slate-200 text-zinc-900 h-12 rounded-xl focus:ring-white/20"
-                  placeholder="e.g. 3000"
-                />
-                <p className="text-[10px] text-zinc-500 leading-relaxed pl-1">
-                  Used for annual billing on the public pricing page. Yearly total = this value × 12.
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-widest">Current Package Cost</span>
+                <div className="text-lg font-black text-emerald-700 mt-1">LKR 0 for 365 days</div>
+                <p className="text-[10px] text-emerald-700 mt-1 leading-relaxed">
+                  Saving any package keeps all current price fields at zero. No subscription payment is collected during free access.
                 </p>
               </div>
               
@@ -533,41 +415,6 @@ export default function SubscriptionPlanManagement() {
                   placeholder="Staff Management, FB/WA Integration, Free Gmail..."
                   rows={4}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
-                  Pricing Page Copy — Monthly (mail merge)
-                </label>
-                <textarea
-                  value={formData.pricing_copy_monthly}
-                  onChange={(e) => setFormData({ ...formData, pricing_copy_monthly: e.target.value })}
-                  className="w-full bg-slate-100 border-slate-200 text-zinc-900 p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
-                  placeholder={DEFAULT_PRICING_COPY_MONTHLY}
-                  rows={3}
-                />
-                <p className="text-[10px] text-zinc-500 leading-relaxed pl-1">
-                  Tokens: {PRICING_COPY_TOKENS.join(", ")}. Leave blank to use the default template.
-                </p>
-                <div className="rounded-xl border border-zinc-200 bg-white p-3 text-xs text-zinc-600 leading-relaxed">
-                  <span className="font-bold text-zinc-800">Live preview:</span> {monthlyCopyPreview}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">
-                  Pricing Page Copy — Annual (mail merge)
-                </label>
-                <textarea
-                  value={formData.pricing_copy_annual}
-                  onChange={(e) => setFormData({ ...formData, pricing_copy_annual: e.target.value })}
-                  className="w-full bg-slate-100 border-slate-200 text-zinc-900 p-4 rounded-xl font-sans text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
-                  placeholder={DEFAULT_PRICING_COPY_ANNUAL}
-                  rows={3}
-                />
-                <div className="rounded-xl border border-zinc-200 bg-white p-3 text-xs text-zinc-600 leading-relaxed">
-                  <span className="font-bold text-zinc-800">Live preview:</span> {annualCopyPreview}
-                </div>
               </div>
 
               <div className="flex gap-2 pt-4">

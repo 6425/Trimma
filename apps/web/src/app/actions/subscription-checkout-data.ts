@@ -2,7 +2,6 @@
 
 import { cookies } from "next/headers";
 import { resolveActiveStripeEnvironment } from "@/lib/stripe-env";
-import { generatePayhereHash } from "@/app/actions/payhere";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import {
   DEFAULT_SUBSCRIPTION_PLANS,
@@ -17,7 +16,7 @@ const DEFAULT_PLANS: Record<string, (typeof DEFAULT_SUBSCRIPTION_PLANS)[number]>
 
 function resolvePlan(planParam: string, row: Record<string, unknown> | null) {
   const key = planParam.toLowerCase();
-  // Legacy ?plan=free links resolve to Beginner (paid entry tier).
+  // Legacy ?plan=free links resolve to the Beginner entry tier.
   const aliasKey = key === "free" ? "beginner" : key;
   if (row) {
     return normalizePublicSubscriptionPlan(
@@ -62,7 +61,7 @@ async function readCustomerPrefill() {
 
 export async function fetchSubscriptionCheckoutPage(planParam: string) {
   const rawPlan = (planParam || "pro").toLowerCase();
-  // Legacy Free slug → Beginner (paid entry tier).
+  // Legacy Free slug → Beginner entry tier.
   const normalizedPlan = rawPlan === "free" ? "beginner" : rawPlan;
 
   try {
@@ -111,10 +110,6 @@ export async function fetchSubscriptionCheckoutPage(planParam: string) {
   }
 }
 
-function createSubscriptionOrderId() {
-  return `SUB-${Math.floor(100000 + Math.random() * 900000)}`;
-}
-
 export async function initSubscriptionPayhereCheckout(input: {
   planName: string;
   billingCycle: "monthly" | "annual";
@@ -130,61 +125,10 @@ export async function initSubscriptionPayhereCheckout(input: {
   origin: string;
   cancelUrl: string;
 }) {
-  try {
-    const supabase = createSupabaseAdminClient();
-    const { data: paymentSettings, error } = await supabase
-      .from("global_payment_settings")
-      .select("payhere_merchant_id, payhere_merchant_secret, environment, payhere_enabled")
-      .eq("id", SETTINGS_ID)
-      .maybeSingle();
-
-    if (error) throw new Error(error.message);
-    if (paymentSettings?.payhere_enabled === false) {
-      return { success: false as const, error: "PayHere payments are disabled." };
-    }
-
-    const merchantId = paymentSettings?.payhere_merchant_id || "1211149";
-    const merchantSecret = paymentSettings?.payhere_merchant_secret || "4a5s6d7f8g9h";
-    const environment = (paymentSettings?.environment as string) || "sandbox";
-    const orderId = createSubscriptionOrderId();
-    const amount = input.chargeAmount.toFixed(2);
-    const cycleLabel = input.billingCycle === "annual" ? "Annual" : "Monthly";
-
-    const secureHash = await generatePayhereHash(
-      merchantId,
-      orderId,
-      amount,
-      "LKR",
-      merchantSecret
-    );
-
-    return {
-      success: true as const,
-      environment,
-      payload: {
-        merchant_id: merchantId,
-        return_url: `${input.origin}/dashboard/billing?payment_success=true&sub_order=${orderId}&plan=${input.planName}`,
-        cancel_url: input.cancelUrl,
-        notify_url: "https://whxmyfjlrvyjqbmqhnzd.supabase.co/functions/v1/payhere-webhook",
-        order_id: orderId,
-        items: `Trimma ${input.planName} Plan (${cycleLabel})`,
-        custom_1: `Trimma ${input.planName} (${cycleLabel})`,
-        currency: "LKR",
-        amount,
-        first_name: input.customerDetails.firstName || "Guest",
-        last_name: input.customerDetails.lastName || "User",
-        email: input.customerDetails.email || "guest@trimma.com",
-        phone: input.customerDetails.phone || "0000000000",
-        address: input.customerDetails.address,
-        city: input.customerDetails.city,
-        country: "Sri Lanka",
-        hash: secureHash,
-      },
-    };
-  } catch (err) {
-    return {
-      success: false as const,
-      error: err instanceof Error ? err.message : "Failed to initialize PayHere checkout.",
-    };
-  }
+  void input;
+  return {
+    success: false as const,
+    error:
+      "Subscription payments are disabled. Select any package free for 365 days from Subscription & Billing.",
+  };
 }

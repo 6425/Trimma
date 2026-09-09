@@ -1,8 +1,10 @@
 /**
- * Trimma subscription pricing model:
- * - list_monthly_price: standard monthly rate before intro discount
- * - monthly_price: intro monthly rate (25% off list)
- * - annual_price: total billed once per year (annual_monthly_rate × 12)
+ * Trimma subscription pricing model.
+ *
+ * All salon packages are free during the one-year access programme. The
+ * normalizer below is deliberately the final authority for anything shown to
+ * or charged to a salon owner, so a stale paid database row cannot reach a
+ * checkout while the programme is active.
  */
 
 export type SubscriptionPlanPricing = {
@@ -15,6 +17,8 @@ export type SubscriptionPlanPricing = {
 };
 
 export const INTRO_DISCOUNT_PERCENT = 25;
+export const FREE_SUBSCRIPTION_TERM_DAYS = 365;
+export const SUBSCRIPTION_PACKAGES_ARE_FREE = true;
 
 export function toNumber(value: number | string | null | undefined): number {
   if (value === null || value === undefined || value === "") return 0;
@@ -104,11 +108,11 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
   {
     id: DEFAULT_ENTRY_PLAN_ID,
     name: DEFAULT_ENTRY_PLAN_NAME,
-    list_monthly_price: 3000,
-    intro_monthly_price: 2250,
-    monthly_price: 2250,
-    annual_price: 21600,
-    discount_percentage: 25,
+    list_monthly_price: 0,
+    intro_monthly_price: 0,
+    monthly_price: 0,
+    annual_price: 0,
+    discount_percentage: 0,
     max_staff: 2,
     max_services: 6,
     max_images: 3,
@@ -129,11 +133,11 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
   {
     id: "f0000000-0000-0000-0000-000000000002",
     name: "Starter",
-    list_monthly_price: 5000,
-    intro_monthly_price: 3750,
-    monthly_price: 3750,
-    annual_price: 36000,
-    discount_percentage: 25,
+    list_monthly_price: 0,
+    intro_monthly_price: 0,
+    monthly_price: 0,
+    annual_price: 0,
+    discount_percentage: 0,
     max_staff: 5,
     max_services: 12,
     max_images: 6,
@@ -154,11 +158,11 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
   {
     id: "f0000000-0000-0000-0000-000000000003",
     name: "Pro",
-    list_monthly_price: 10000,
-    intro_monthly_price: 7500,
-    monthly_price: 7500,
-    annual_price: 60000,
-    discount_percentage: 25,
+    list_monthly_price: 0,
+    intro_monthly_price: 0,
+    monthly_price: 0,
+    annual_price: 0,
+    discount_percentage: 0,
     max_staff: 10,
     max_services: 20,
     max_images: 10,
@@ -179,11 +183,11 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
   {
     id: "f0000000-0000-0000-0000-000000000004",
     name: "Elite",
-    list_monthly_price: 10000,
-    intro_monthly_price: 7500,
-    monthly_price: 7500,
-    annual_price: 60000,
-    discount_percentage: 25,
+    list_monthly_price: 0,
+    intro_monthly_price: 0,
+    monthly_price: 0,
+    annual_price: 0,
+    discount_percentage: 0,
     max_staff: 30,
     max_services: 9999,
     max_images: 30,
@@ -204,8 +208,8 @@ export const DEFAULT_SUBSCRIPTION_PLANS = [
 ];
 
 /**
- * Stale production rows may still be named Free (or Beginner/entry id at LKR 0).
- * Pricing UI should show Beginner @ 2250 / 25% even before SQL is applied.
+ * Stale production rows may still use the old Free name. Keep its canonical
+ * entry-tier identity while the public free-access policy is applied.
  */
 export function needsEntryPlanDisplayOverride(
   plan: SubscriptionPlanPricing & { id?: string | null; name?: string | null }
@@ -213,29 +217,27 @@ export function needsEntryPlanDisplayOverride(
   const name = (plan.name || "").trim().toLowerCase();
   if (name === "free") return true;
 
-  const zeroPrices = getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
-  if (!zeroPrices) return false;
-
   const id = plan.id || "";
   return id === DEFAULT_ENTRY_PLAN_ID || name === "beginner" || name === "";
 }
 
-/** Overlay canonical Beginner pricing onto a stale Free / zero-price entry row. */
+/**
+ * Make the current free-access policy authoritative even if a deployment sees
+ * stale paid plan rows before its database migration has completed.
+ */
 export function normalizePublicSubscriptionPlan<
   T extends SubscriptionPlanPricing & { id?: string | null; name?: string | null },
 >(plan: T): T {
-  if (!needsEntryPlanDisplayOverride(plan)) return plan;
-
   const beginner = DEFAULT_SUBSCRIPTION_PLANS[0];
   return {
     ...plan,
     id: plan.id || beginner.id,
-    name: DEFAULT_ENTRY_PLAN_NAME,
-    list_monthly_price: beginner.list_monthly_price,
-    intro_monthly_price: beginner.intro_monthly_price,
-    monthly_price: beginner.monthly_price,
-    annual_price: beginner.annual_price,
-    discount_percentage: beginner.discount_percentage,
+    name: needsEntryPlanDisplayOverride(plan) ? DEFAULT_ENTRY_PLAN_NAME : plan.name,
+    list_monthly_price: 0,
+    intro_monthly_price: 0,
+    monthly_price: 0,
+    annual_price: 0,
+    discount_percentage: 0,
   };
 }
 

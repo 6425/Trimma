@@ -246,7 +246,7 @@ export async function validateSubscriptionCheckoutPrice(input: {
   if (!rawPlanName) {
     throw new Error("Subscription plan is required.");
   }
-  // Legacy Free slug → Beginner (paid entry tier).
+  // Legacy Free slug → Beginner entry tier.
   const planName = rawPlanName.toLowerCase() === "free" ? "Beginner" : rawPlanName;
 
   const supabase = createSupabaseAdminClient();
@@ -281,7 +281,7 @@ export async function validateSubscriptionCheckoutPrice(input: {
   const expectedAmount = roundMoney(getCheckoutAmount(plan, input.billingCycle));
 
   if (expectedAmount <= 0) {
-    throw new Error("This plan cannot be purchased online.");
+    throw new Error("Subscription packages are free for 365 days and cannot be charged online.");
   }
 
   assertPriceMatch("Subscription charge", input.chargeAmount, expectedAmount);

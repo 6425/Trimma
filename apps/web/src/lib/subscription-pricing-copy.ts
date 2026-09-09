@@ -2,12 +2,14 @@ import type { PublicSubscriptionPlan } from "@/app/actions/subscription-plans";
 import {
   formatLkr,
   formatPromotionPackageLimit,
+  FREE_SUBSCRIPTION_TERM_DAYS,
   getAnnualMonthlyRate,
   getAnnualSavingsPercent,
   getAnnualTotal,
   getDiscountPercentage,
   getIntroMonthlyPrice,
   getListMonthlyPrice,
+  SUBSCRIPTION_PACKAGES_ARE_FREE,
   type SubscriptionPlanPricing,
 } from "@/lib/subscription-pricing";
 
@@ -27,13 +29,13 @@ export const PRICING_COPY_TOKENS = [
 ] as const;
 
 export const DEFAULT_PRICING_COPY_MONTHLY =
-  "Introduction monthly rate. Standard rate {{list_monthly_price}}/mo.";
+  `LKR 0 for ${FREE_SUBSCRIPTION_TERM_DAYS} days. No card or subscription payment is required.`;
 
 export const DEFAULT_PRICING_COPY_ANNUAL =
-  "{{annual_monthly_rate}}/mo equivalent when paid yearly. Billed as {{annual_total}} annually.";
+  `LKR 0 for ${FREE_SUBSCRIPTION_TERM_DAYS} days. No automatic charge is created.`;
 
 export const DEFAULT_PRICING_COPY_FREE_MONTHLY =
-  "Perfect for independent stylists starting out. Standard value {{list_monthly_price}}/mo — introductory access at {{intro_monthly_price}}/mo.";
+  `Free for ${FREE_SUBSCRIPTION_TERM_DAYS} days. Choose the package that fits your salon.`;
 
 type PricingCopyPlan = SubscriptionPlanPricing & {
   name?: string | null;
@@ -97,6 +99,10 @@ export function getPlanPricingCopy(
   plan: PublicSubscriptionPlan,
   billingCycle: "monthly" | "annual"
 ): string {
+  if (SUBSCRIPTION_PACKAGES_ARE_FREE) {
+    return DEFAULT_PRICING_COPY_FREE_MONTHLY;
+  }
+
   const listMonthly = getListMonthlyPrice(plan);
   const introMonthly = getIntroMonthlyPrice(plan);
   const isFree = listMonthly === 0 && introMonthly === 0;
@@ -118,6 +124,27 @@ export function getPlanPricingCopy(
 }
 
 export function buildPricingPageFaqs(plans: PublicSubscriptionPlan[]) {
+  if (SUBSCRIPTION_PACKAGES_ARE_FREE) {
+    return [
+      {
+        q: "Are all Trimma packages free?",
+        a: `Yes. Beginner, Starter, Pro and Elite each cost LKR 0 for the ${FREE_SUBSCRIPTION_TERM_DAYS}-day free-access term. No card is required and no subscription payment is taken.`,
+      },
+      {
+        q: "Can I choose the package that fits my salon?",
+        a: "Yes. Salon owners can select any package. The package limits and included features still apply, even though the current charge is LKR 0.",
+      },
+      {
+        q: "Can I switch packages during the free term?",
+        a: "Yes. Switching changes the available features immediately, but it does not restart or extend the original 365-day free-access term.",
+      },
+      {
+        q: "What happens after 365 days?",
+        a: "The free-access term ends and renewal is required. Trimma will present the available renewal terms before activation; no payment is taken automatically without the salon owner's approval.",
+      },
+    ];
+  }
+
   const paidPlans = plans.filter((plan) => getIntroMonthlyPrice(plan) > 0);
   const examplePlan =
     paidPlans.find((plan) => plan.name.toLowerCase() === "starter") || paidPlans[0];
