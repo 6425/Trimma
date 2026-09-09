@@ -913,7 +913,7 @@ export async function updateSalonMediaFields(payload: {
 
 export async function saveSalonProfile(input: {
   profile: Record<string, unknown>;
-  amenityRows: Record<string, unknown>[];
+  amenityRows?: Record<string, unknown>[] | null;
 }) {
   try {
     const result = await withSalonDb(async (supabase, ctx) => {
@@ -992,24 +992,28 @@ export async function saveSalonProfile(input: {
         }
       }
 
-      const { error: deleteAmenitiesError } = await supabase
-        .from("salon_amenities")
-        .delete()
-        .eq("salon_id", ctx.salonId);
+      // Business and bank forms do not own amenities. Only replace amenity
+      // rows when the caller explicitly supplies a new amenity collection.
+      if (input.amenityRows != null) {
+        const { error: deleteAmenitiesError } = await supabase
+          .from("salon_amenities")
+          .delete()
+          .eq("salon_id", ctx.salonId);
 
-      if (deleteAmenitiesError) {
-        const lower = deleteAmenitiesError.message.toLowerCase();
-        if (!lower.includes("does not exist") && !lower.includes("schema cache")) {
-          throw new Error(deleteAmenitiesError.message);
+        if (deleteAmenitiesError) {
+          const lower = deleteAmenitiesError.message.toLowerCase();
+          if (!lower.includes("does not exist") && !lower.includes("schema cache")) {
+            throw new Error(deleteAmenitiesError.message);
+          }
+        } else if (input.amenityRows.length > 0) {
+          const rows = input.amenityRows.map((row) => ({
+            amenity_id: row.amenity_id,
+            value: row.value,
+            salon_id: ctx.salonId,
+          }));
+          const { error: insertAmenitiesError } = await supabase.from("salon_amenities").insert(rows);
+          if (insertAmenitiesError) throw new Error(insertAmenitiesError.message);
         }
-      } else if (input.amenityRows.length > 0) {
-        const rows = input.amenityRows.map((row) => ({
-          amenity_id: row.amenity_id,
-          value: row.value,
-          salon_id: ctx.salonId,
-        }));
-        const { error: insertAmenitiesError } = await supabase.from("salon_amenities").insert(rows);
-        if (insertAmenitiesError) throw new Error(insertAmenitiesError.message);
       }
 
       await refreshSalonOnboardingScore(supabase, ctx.salonId);

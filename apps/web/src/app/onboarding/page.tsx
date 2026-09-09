@@ -42,14 +42,14 @@ export default async function OnboardingPage() {
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
                 Sign in with Google to open your salon owner dashboard, complete your profile, and submit for booking approval.
-                Trimma assigns a field agent in your area to review your submission before you go live.
+                Trimma routes your submission to a field agent in your area, or directly to admin when no local agent is available.
               </p>
 
               <ol className="text-sm max-w-lg text-left space-y-2 list-decimal list-inside font-medium">
                 <li>Google sign-in → your salon draft is created</li>
                 <li>Complete profile in the owner dashboard</li>
                 <li>Submit for booking approval</li>
-                <li>Your Trimma agent reviews → admin verifies → live on Trimma</li>
+                <li>Your assigned reviewer checks it → admin verifies → live on Trimma</li>
               </ol>
             </div>
 
@@ -85,7 +85,7 @@ export default async function OnboardingPage() {
               { title: "Staff Management", desc: "Manage staff availability and optimize appointment scheduling." },
               { title: "Marketing & Promos", desc: "Promote special offers, discounts, and seasonal campaigns." },
               { title: "Business Insights", desc: "Track bookings, customer trends, and performance metrics." },
-              { title: "Dedicated Support", desc: "Get help from your Trimma agent after you submit your salon profile from the owner dashboard." }
+              { title: "Dedicated Support", desc: "Get help from your assigned Trimma reviewer after you submit your salon profile from the owner dashboard." }
             ].map((feature, i) => (
               <div key={i} className="bg-slate-50 border border-slate-100 rounded-2xl p-6 hover:shadow-xl hover:border-brand-pink/30 transition-all group">
                 <div className="w-12 h-12 rounded-xl bg-brand-pink/10 flex items-center justify-center text-brand-pink font-black text-xl mb-4 group-hover:scale-110 transition-transform">
@@ -119,7 +119,7 @@ export default async function OnboardingPage() {
           </div>
 
           <div className="bg-[#ffde5a]/10 border border-[#ffde5a]/30 text-[#8a7600] p-4 rounded-xl text-sm max-w-3xl mx-auto">
-            <strong>Notice:</strong> Regional onboarding agents verify every listing so customers see accurate services, pricing, and availability before bookings open.
+            <strong>Notice:</strong> A regional onboarding agent, or Trimma admin where no agent is available, reviews every listing before bookings open.
           </div>
         </div>
       </section>
@@ -139,7 +139,7 @@ export default async function OnboardingPage() {
           <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-6">Verified Salon Listings</h2>
           <p className="text-lg text-zinc-400 mb-10 leading-relaxed">
             Every salon on Trimma completes a guided onboarding flow: you build your profile in the owner dashboard,
-            your regional agent verifies the details, and Trimma admin gives final approval before bookings open.
+            an assigned agent reviews the details when available, and Trimma admin gives final approval before bookings open.
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left max-w-2xl mx-auto">
@@ -164,7 +164,7 @@ export default async function OnboardingPage() {
             <div className="mb-10 text-center">
               <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Start Salon Owner Onboarding</h2>
               <p className="text-zinc-500">
-                Sign in with Google, complete your salon profile in the owner dashboard, and submit for agent review and booking approval.
+                Sign in with Google, complete your salon profile and booking setup, then submit for agent or admin review.
               </p>
             </div>
             

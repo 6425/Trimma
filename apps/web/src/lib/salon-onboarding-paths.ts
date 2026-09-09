@@ -29,8 +29,6 @@ export const SALON_SOURCE_TYPE = {
   LISTING_GENERATION: "LISTING_GENERATION",
 } as const;
 
-export const DEFAULT_SELF_SERVE_DISTRICT = "Colombo";
-
 const DISTRICT_AGENT_FALLBACK: Record<string, string> = {
   colombo: "agent-colombo@trimma.io",
   gampaha: "agent-gampaha@trimma.io",
@@ -94,7 +92,7 @@ export async function resolveOnboardingAgentEmail(
   return null;
 }
 
-/** Resolve a field agent from salon location; falls back to Colombo district agent. */
+/** Resolve a field agent from the salon's actual location. No match routes to admin. */
 export async function resolveOnboardingAgentForSalon(
   supabase: SupabaseClient,
   location: { district?: string | null; city?: string | null; address?: string | null }
@@ -102,7 +100,6 @@ export async function resolveOnboardingAgentForSalon(
   const candidates = [
     location.district?.trim(),
     location.city?.trim(),
-    DEFAULT_SELF_SERVE_DISTRICT,
   ].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
