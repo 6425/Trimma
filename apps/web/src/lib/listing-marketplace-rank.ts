@@ -79,9 +79,9 @@ export function pinTopReviewedListingsWithPhone<T extends RankableListing>(
   return [...items].sort(compareListingMarketplaceOrder);
 }
 
+/** Featured remains the first section, but its cards still follow review popularity. */
 export function compareFeaturedBatchOrder(a: RankableListing, b: RankableListing): number {
-  return String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" })
-    || listingId(a).localeCompare(listingId(b));
+  return compareListingPopularity(a, b);
 }
 
 export function pickFeaturedListingsWithPhone<T extends RankableListing>(
@@ -91,7 +91,7 @@ export function pickFeaturedListingsWithPhone<T extends RankableListing>(
   return pickAdminFeaturedListings(items, featuredCount);
 }
 
-/** Homepage / district Featured = live admin batch, in the same name order as Featured Batch. */
+/** Homepage / district Featured = live admin batch, ordered by reviews then rating. */
 export function pickAdminFeaturedListings<T extends RankableListing>(
   items: T[],
   featuredCount = FEATURED_BATCH_PUBLIC_LIMIT

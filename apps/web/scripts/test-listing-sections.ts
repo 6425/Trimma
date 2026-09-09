@@ -155,6 +155,7 @@ async function main() {
     const collected = sectionIds(first);
     const rankedCards = [...first.topRated, ...first.listings];
     assert.equal(new Set(collected).size, collected.length, "First page sections must be disjoint");
+    assertReviewOrder(first.featured);
     let page = first;
     let offset = first.listings.length;
     for (let pageNumber = 1; page.hasMore; pageNumber += 1) {
@@ -255,9 +256,14 @@ async function main() {
   });
 
   await check("The featured batch limit does not remove additional active businesses", async () => {
-    const rows = Array.from({ length: 69 }, (_, index) => salon(index, index < 45 ? activePeriod : {}));
+    const rows = Array.from({ length: 69 }, (_, index) => salon(index, index < 45 ? {
+      ...activePeriod,
+      rating: 4 + (index % 5) / 10,
+      review_count: 1000 - index,
+    } : {}));
     const { first, collected } = await collectAll(rows);
     assert.equal(first.featured.length, 40);
+    assert.deepEqual(ids(first.featured), rows.slice(0, 40).map((row) => row.id));
     assert.equal(collected.length, rows.length);
   });
 
