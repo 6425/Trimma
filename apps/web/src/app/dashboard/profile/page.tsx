@@ -352,20 +352,31 @@ export default function SalonProfilePage() {
 
   const renderApprovalAction = () => (
     <div className="flex items-center gap-3">
-      {(needsOwnerActivationWizard(onboardingStatus) || onboardingStatus === "OWNER_ACTIVATED") && (
+      {needsOwnerActivationWizard(onboardingStatus) && (
         <Button
           onClick={handleCompleteOnboarding}
-          disabled={saving}
+          disabled={saving || !canSubmitForApproval}
+          title={
+            canSubmitForApproval
+              ? undefined
+              : "Complete the booking essentials, active services, staff, and service assignments first."
+          }
           className="bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black shadow-md shadow-[#ffde5a]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
         >
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} 
-          {onboardingStatus === "OWNER_ACTIVATED" ? "Resubmit Booking Approval" : "Submit for Booking Approval"}
+          Submit for Booking Approval
         </Button>
       )}
       {onboardingStatus === "OWNER_ACTIVATED" && !isVerified && (
         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 h-auto text-xs font-bold uppercase tracking-widest gap-1.5">
           <Clock className="w-3.5 h-3.5" />
-          Awaiting Verification
+          Awaiting Agent Review
+        </Badge>
+      )}
+      {onboardingStatus === "PENDING_ADMIN_VERIFICATION" && !isVerified && (
+        <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-3 py-1.5 h-auto text-xs font-bold uppercase tracking-widest gap-1.5">
+          <Clock className="w-3.5 h-3.5" />
+          Awaiting Admin Verification
         </Badge>
       )}
     </div>
@@ -528,15 +539,14 @@ export default function SalonProfilePage() {
     (service) => String(service.status || "").toLowerCase() !== "deleted"
   );
 
-  const setupComplete = useMemo(
-    () => isSalonSetupComplete(existingSalonServices, staffToAdd),
-    [existingSalonServices, staffToAdd]
+  const approvalServiceRows = profileServiceRows.filter(
+    (service) => String(service.status || "active").toLowerCase() === "active"
   );
 
-  const canSubmitForApproval = useMemo(
-    () => canSubmitForBookingApproval(onboardingSnapshot) && setupComplete,
-    [onboardingSnapshot, setupComplete]
-  );
+  const setupComplete = isSalonSetupComplete(approvalServiceRows, staffToAdd);
+
+  const canSubmitForApproval =
+    canSubmitForBookingApproval(onboardingSnapshot) && setupComplete;
   const profileSalonServices = mapSalonServicesForStaffForm(profileServiceRows, globalServices);
   const serviceCategoryOptions = Array.from(
     new Set(
@@ -894,8 +904,8 @@ export default function SalonProfilePage() {
           {activeTab === "operations" && (
             <Button 
               onClick={handleSave} 
-          disabled={saving || !canSubmitForApproval}
-          title={canSubmitForApproval ? undefined : "Complete the booking essentials shown above first."}
+              disabled={saving}
+              title="Save your current salon operations as a draft."
               className="bg-[#ffde5a] hover:bg-[#ffde5a]/90 text-black shadow-md shadow-[#ffde5a]/20 h-11 px-6 rounded-xl font-bold transition-all w-full sm:w-auto"
             >
               {saving ? (
@@ -940,7 +950,7 @@ export default function SalonProfilePage() {
             salon={salon} 
             onSave={async (payload) => {
               try {
-                const res = await saveSalonProfile({ profile: payload, amenityRows: [] });
+                const res = await saveSalonProfile({ profile: payload });
                 if (res.success) {
                   toast.success("Business info saved successfully!");
                   await fetchSalonProfile();
@@ -961,7 +971,7 @@ export default function SalonProfilePage() {
             salon={salon} 
             onSave={async (payload) => {
               try {
-                const res = await saveSalonProfile({ profile: payload, amenityRows: [] });
+                const res = await saveSalonProfile({ profile: payload });
                 if (res.success) {
                   toast.success("Bank info saved successfully!");
                   await fetchSalonProfile();

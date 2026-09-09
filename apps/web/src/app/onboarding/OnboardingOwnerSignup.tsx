@@ -91,7 +91,7 @@ export default function OnboardingOwnerSignup() {
         <h3 className="text-2xl font-extrabold text-zinc-900">Start with Google</h3>
         <p className="text-zinc-600 max-w-xl mx-auto leading-relaxed">
           Sign in with Google to open your salon owner dashboard. Complete operational details, business information,
-          and bank verification documents, then submit for your Trimma agent to review before bookings go live.
+          services, staff assignments, and verification details, then submit for Trimma review before bookings go live.
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export default function OnboardingOwnerSignup() {
         {[
           { step: "1", title: "Booking essentials", body: "Business name, address, map pin, hero image, and contact — submit for booking approval." },
           { step: "2", title: "Business & bank info", body: "Legal details, settlement account, NIC/BR documents." },
-          { step: "3", title: "Agent & admin review", body: "Your agent checks the setup, then Trimma admin completes verification and opens bookings." },
+          { step: "3", title: "Reviewer & admin approval", body: "An available local agent reviews the setup; otherwise it goes directly to Trimma admin for final verification." },
         ].map((item) => (
           <div key={item.step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div className="text-xs font-black uppercase tracking-wider text-brand-pink mb-2">Step {item.step}</div>

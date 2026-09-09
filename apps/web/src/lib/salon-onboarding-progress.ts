@@ -304,7 +304,7 @@ export function getOwnerOnboardingBannerMessage(salon: SalonOnboardingSnapshot):
   }
 
   if (!isOperationsComplete(salon)) {
-    return "Add your business name, address, map pin, hero image, and a mobile number or email, then submit for booking approval.";
+    return "Add your business name, address, map pin, hero image, and contact details. Then add an active service and staff member, map the service to that staff member, and submit for booking approval.";
   }
 
   if (!isBusinessInfoComplete(salon) || !isBankInfoComplete(salon)) {
