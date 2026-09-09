@@ -308,6 +308,14 @@ export type SalonBillingInvoiceRow = {
   status: string;
 };
 
+export type SalonSubscriptionTerm = {
+  status: string;
+  startDate: string;
+  endDate: string;
+  daysRemaining: number;
+  requiresRenewal: boolean;
+};
+
 function isSubscriptionPayment(raw: unknown): raw is Record<string, unknown> {
   return Boolean(raw && typeof raw === "object" && (raw as Record<string, unknown>).type === "subscription");
 }
@@ -380,6 +388,28 @@ function computeNextInvoiceDate(
   });
 }
 
+function mapSubscriptionTerm(row: {
+  status?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+} | null): SalonSubscriptionTerm | null {
+  if (!row?.start_date || !row.end_date) return null;
+
+  const endMs = new Date(row.end_date).getTime();
+  if (!Number.isFinite(endMs)) return null;
+
+  const daysRemaining = Math.max(0, Math.ceil((endMs - Date.now()) / 86_400_000));
+  const requiresRenewal = endMs <= Date.now();
+
+  return {
+    status: requiresRenewal ? "expired" : row.status || "active",
+    startDate: row.start_date,
+    endDate: row.end_date,
+    daysRemaining,
+    requiresRenewal,
+  };
+}
+
 export async function fetchSalonBillingPage() {
   const [billingResult, plansResult] = await Promise.all([
     withSalonDb(async (supabase, ctx) => {
@@ -389,13 +419,25 @@ export async function fetchSalonBillingPage() {
         ctx.salon.subscription_plan_id as string | null | undefined
       );
 
-      const { data: payments, error: paymentsError } = await supabase
-        .from("payments")
-        .select("id, amount, currency, status, created_at, raw_response")
-        .eq("salon_id", ctx.salonId)
-        .eq("status", "success")
-        .order("created_at", { ascending: false })
-        .limit(48);
+      const [paymentsResult, freeTermResult] = await Promise.all([
+        supabase
+          .from("payments")
+          .select("id, amount, currency, status, created_at, raw_response")
+          .eq("salon_id", ctx.salonId)
+          .eq("status", "success")
+          .order("created_at", { ascending: false })
+          .limit(48),
+        supabase
+          .from("subscriptions")
+          .select("status, start_date, end_date")
+          .eq("salon_id", ctx.salonId)
+          .eq("activation_source", "free_365")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      const { data: payments, error: paymentsError } = paymentsResult;
 
       if (paymentsError) throw new Error(paymentsError.message);
 
@@ -404,8 +446,14 @@ export async function fetchSalonBillingPage() {
       );
       const invoices = subscriptionPayments.map(mapSubscriptionPaymentToInvoice);
       const nextInvoiceDate = computeNextInvoiceDate(subscriptionPayments[0] ?? null, plan);
+      // The subscription table gains activation_source in the free-year
+      // migration. Keep the page available during a staggered code/DB deploy;
+      // once the migration is present this contains the authoritative term.
+      const subscriptionTerm = freeTermResult.error
+        ? null
+        : mapSubscriptionTerm(freeTermResult.data);
 
-      return { activePlan: plan, invoices, nextInvoiceDate };
+      return { activePlan: plan, invoices, nextInvoiceDate, subscriptionTerm };
     }),
     getPublicSubscriptionPlans(),
   ]);

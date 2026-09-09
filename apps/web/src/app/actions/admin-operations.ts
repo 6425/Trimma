@@ -108,16 +108,19 @@ export async function saveAdminSubscriptionPlan(input: {
 }) {
   const payload = {
     name: input.name,
-    monthly_price: input.monthly_price,
-    annual_price: input.annual_price ?? input.monthly_price * 10,
+    // Current salon packages are free for the fixed 365-day programme. Keep
+    // this rule on the trusted server boundary so a modified browser request
+    // cannot reintroduce a subscription charge.
+    monthly_price: 0,
+    annual_price: 0,
     max_staff: input.max_staff ?? 2,
     max_services: input.max_services ?? 6,
     max_images: input.max_images ?? 4,
     max_promotion_packages: input.max_promotion_packages ?? 2,
     feature_flags: input.feature_flags ?? {},
-    ...(input.list_monthly_price != null ? { list_monthly_price: input.list_monthly_price } : {}),
-    ...(input.intro_monthly_price != null ? { intro_monthly_price: input.intro_monthly_price } : {}),
-    ...(input.discount_percentage != null ? { discount_percentage: input.discount_percentage } : {}),
+    list_monthly_price: 0,
+    intro_monthly_price: 0,
+    discount_percentage: 0,
   };
 
   const result = await withAdminDb(async (supabase) => {

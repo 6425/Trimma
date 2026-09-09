@@ -1,25 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Check, Scissors, Users, ShieldCheck, HelpCircle, Image as ImageIcon, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import {
-  getAnnualSavingsPercent,
-  getAnnualTotal,
-  getDisplayMonthlyPrice,
-  getIntroMonthlyPrice,
-  getListMonthlyPrice,
+  FREE_SUBSCRIPTION_TERM_DAYS,
   formatLkr,
   formatPromotionPackageLimit,
-  getDiscountPercentage,
 } from "@/lib/subscription-pricing";
 import {
   buildPricingPageFaqs,
   getPlanPricingCopy,
-  getStrikethroughMonthlyPrice,
 } from "@/lib/subscription-pricing-copy";
 import type { PublicSubscriptionPlan } from "../actions/subscription-plans";
 import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
@@ -36,15 +29,7 @@ export function PricingContent({
   loadError,
   showFindBookGlowCta = true,
 }: PricingContentProps) {
-  const [isAnnual, setIsAnnual] = useState(false);
   const plans = initialPlans;
-
-  const maxAnnualSavings = useMemo(() => {
-    return plans.reduce((max, plan) => {
-      const savings = getAnnualSavingsPercent(plan);
-      return savings > max ? savings : max;
-    }, 0);
-  }, [plans]);
 
   const pricingFaqs = useMemo(() => buildPricingPageFaqs(plans), [plans]);
 
@@ -52,7 +37,7 @@ export function PricingContent({
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-rose-500 selection:text-white">
       <section className="page-hero-shell home-hero home-hero-split relative min-h-[500px]">
         <img
-          src="/assets/pricing-hero.webp"
+          src="/assets/featured-hero.webp"
           alt=""
           width={1920}
           height={500}
@@ -67,7 +52,7 @@ export function PricingContent({
           <div className="home-hero-content-col home-hero-content hero-ink text-left w-full lg:w-1/2 flex flex-col justify-center p-[3%]">
             <div className="home-hero-top">
               <div className="hero-badge hero-eyebrow inline-flex items-center gap-2 px-4 py-1.5 mb-6">
-                <Scissors className="w-3.5 h-3.5 animate-spin-slow" /> Introductory Discounts Available Now
+                <Scissors className="w-3.5 h-3.5 animate-spin-slow" /> All Packages Free for One Year
               </div>
 
               <h1 className="home-hero-title text-3xl sm:text-4xl md:text-5xl xl:text-5xl font-black tracking-tight">
@@ -78,39 +63,15 @@ export function PricingContent({
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Introduction rates apply to monthly billing. Annual plans use a lower monthly equivalent billed once per year.
+                Choose the package that fits your salon. Every tier is LKR 0 for 365 days, with no card and no subscription charge.
               </p>
             </div>
 
             <div className="home-hero-middle">
               <div className="flex flex-wrap items-center justify-start gap-3">
-                <Button
-                  type="button"
-                  variant="dark"
-                  onClick={() => setIsAnnual(false)}
-                  className={cn(
-                    "rounded-full h-11 px-5 text-sm font-bold",
-                    !isAnnual && "ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30"
-                  )}
-                >
-                  Billed Monthly
-                </Button>
-                <Button
-                  type="button"
-                  variant="dark"
-                  onClick={() => setIsAnnual(true)}
-                  className={cn(
-                    "rounded-full h-11 px-5 text-sm font-bold gap-2",
-                    isAnnual && "ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30"
-                  )}
-                >
-                  <span>Billed Annually</span>
-                  {maxAnnualSavings > 0 ? (
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider">
-                      Save up to {maxAnnualSavings}%
-                    </span>
-                  ) : null}
-                </Button>
+                <div className="trimma-dark-surface inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-bold text-white ring-2 ring-[#ffde5a] ring-offset-2 ring-offset-[#ffde5a]/30">
+                  LKR 0 · {FREE_SUBSCRIPTION_TERM_DAYS} days · No card required
+                </div>
               </div>
             </div>
           </div>
@@ -120,7 +81,7 @@ export function PricingContent({
       <section className="max-w-7xl mx-auto px-4 mt-10 pt-6 relative z-20">
         {loadError && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Showing default pricing — live plans could not be loaded ({loadError}).
+            Showing safe default packages — live package details could not be loaded ({loadError}).
           </div>
         )}
 
@@ -131,79 +92,49 @@ export function PricingContent({
             const catLimit = flags.allowed_categories_limit ?? 0;
             const maxServices = plan.max_services ?? 0;
 
-            const displayMonthly = getDisplayMonthlyPrice(plan, isAnnual ? "annual" : "monthly");
-            const discountPercent = getDiscountPercentage(plan);
-            const annualTotal = getAnnualTotal(plan);
-            const isFree = getListMonthlyPrice(plan) === 0 && getIntroMonthlyPrice(plan) === 0;
-            const strikethroughMonthly = !isAnnual ? getStrikethroughMonthlyPrice(plan) : null;
-            const pricingDescription = getPlanPricingCopy(
-              plan,
-              isAnnual ? "annual" : "monthly"
-            );
+            const pricingDescription = getPlanPricingCopy(plan, "monthly");
             const isPro = plan.name.toLowerCase() === "pro";
-            const checkoutHref = isFree
-              ? "/signup"
-              : `/checkout/subscription?plan=${encodeURIComponent(plan.name.toLowerCase())}&cycle=${isAnnual ? "annual" : "monthly"}`;
+            const signupHref = "/onboarding#salon-owner-signup";
 
             return (
               <div
                 key={plan.id}
-                className={`bg-white rounded-3xl p-7 sm:p-8 shadow-xl border flex flex-col relative transition-all duration-300 hover:scale-[1.02] min-h-[520px] ${
+                className={`rounded-3xl p-7 sm:p-8 shadow-xl border flex flex-col relative transition-all duration-300 hover:scale-[1.02] min-h-[520px] ${
                   isPro
-                    ? "border-zinc-900 bg-zinc-950 text-white shadow-rose-950/20"
-                    : "border-slate-100 hover:border-rose-100 bg-white text-zinc-900"
+                    ? "trimma-dark-surface border-zinc-900 bg-zinc-950 text-white shadow-zinc-950/20"
+                    : "trimma-light-context border-slate-100 hover:border-rose-100 bg-white text-zinc-900"
                 }`}
               >
                 {isPro && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-rose-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/30">
+                  <div className="trimma-light-context absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-brand text-black px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/20">
                     Most Popular
                   </div>
                 )}
 
                 <div className="mb-6">
-                  <h3 className={`text-xl font-bold uppercase tracking-widest ${isPro ? "text-rose-400" : "text-zinc-800"}`}>
+                  <h3 className={`text-xl font-bold uppercase tracking-widest ${isPro ? "text-white" : "text-zinc-800"}`}>
                     {plan.name} Tier
                   </h3>
 
-                  {strikethroughMonthly ? (
-                    <p className={`text-sm line-through mt-3 ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>
-                      {strikethroughMonthly}
-                    </p>
-                  ) : null}
-
                   <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-3xl font-black">
-                      {isFree ? "Free" : formatLkr(displayMonthly)}
+                    <span className={`text-3xl font-black ${isPro ? "text-white" : "text-zinc-900"}`}>
+                      {formatLkr(0)}
                     </span>
-                    <span className={`text-xs font-semibold ${isPro ? "text-zinc-500" : "text-zinc-400"}`}>/month</span>
+                    <span className={`text-xs font-semibold ${isPro ? "text-white" : "text-zinc-500"}`}>/365 days</span>
                   </div>
 
-                  {!isFree && !isAnnual && discountPercent > 0 && (
-                    <Badge className="mt-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold text-[9px] uppercase tracking-wider">
-                      Intro price — {discountPercent}% off
-                    </Badge>
-                  )}
+                  <Badge className={`mt-2 border font-bold text-[9px] uppercase tracking-wider ${isPro ? "border-white/25 bg-white/10 text-white" : "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"}`}>
+                    Free access · No payment
+                  </Badge>
 
-                  {isFree && !isAnnual && (
-                    <Badge className="mt-2 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-bold text-[9px] uppercase tracking-wider">
-                      Standard value — 100% off
-                    </Badge>
-                  )}
-
-                  {!isFree && isAnnual && (
-                    <p className={`text-xs mt-2 font-semibold ${isPro ? "text-zinc-400" : "text-zinc-500"}`}>
-                      {formatLkr(annualTotal, 2)} billed annually
-                    </p>
-                  )}
-
-                  <p className={`text-xs mt-2 font-medium leading-relaxed ${isPro ? "text-zinc-400" : "text-zinc-500"}`}>
+                  <p className={`text-xs mt-2 font-medium leading-relaxed ${isPro ? "text-white" : "text-zinc-500"}`}>
                     {pricingDescription}
                   </p>
                 </div>
 
                 <div
                   className={`mb-6 rounded-2xl px-3.5 py-3 space-y-2.5 text-[11px] font-normal ${
-                    isPro ? "bg-white/5" : "bg-slate-50"
+                    isPro ? "bg-white/10 text-white" : "bg-slate-50"
                   }`}
                 >
                   {[
@@ -222,41 +153,38 @@ export function PricingContent({
                   ].map(({ icon: Icon, label, value }) => (
                     <div key={label} className="flex items-center gap-2 leading-none">
                       <Icon
-                        className={`w-3.5 h-3.5 shrink-0 ${isPro ? "text-rose-400" : "text-zinc-400"}`}
+                        className={`w-3.5 h-3.5 shrink-0 ${isPro ? "text-white" : "text-zinc-400"}`}
                       />
                       <span
-                        className={`whitespace-nowrap ${isPro ? "text-zinc-400" : "text-zinc-600"}`}
+                        className={`whitespace-nowrap ${isPro ? "text-white" : "text-zinc-600"}`}
                       >
                         {label}:{" "}
-                        <span className={isPro ? "text-zinc-200" : "text-zinc-800"}>{value}</span>
+                        <span className={isPro ? "text-white" : "text-zinc-800"}>{value}</span>
                       </span>
                     </div>
                   ))}
                 </div>
 
                 <div className="space-y-3.5 flex-1 mb-8 px-1">
-                  <div className={`flex items-center gap-2 text-xs font-extrabold ${isPro ? "text-zinc-300" : "text-zinc-700"}`}>
-                    <ShieldCheck className="w-4 h-4 text-rose-500" />
+                  <div className={`flex items-center gap-2 text-xs font-extrabold ${isPro ? "text-white" : "text-zinc-700"}`}>
+                    <ShieldCheck className={`w-4 h-4 ${isPro ? "text-white" : "text-rose-500"}`} />
                     <span>Categories: {catLimit >= 999 ? "All Categories" : `${catLimit} Allowed`}</span>
                   </div>
                   <div className="h-px bg-zinc-100 my-2 opacity-10"></div>
                   {features.map((feature: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-2.5 text-xs">
-                      <Check className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                      <span className={`font-medium ${isPro ? "text-zinc-300" : "text-zinc-600"}`}>{feature}</span>
+                      <Check className={`w-4 h-4 shrink-0 mt-0.5 ${isPro ? "text-white" : "text-rose-500"}`} />
+                      <span className={`font-medium ${isPro ? "text-white" : "text-zinc-600"}`}>{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                <Link href={checkoutHref} className="block w-full">
+                <Link href={signupHref} className="block w-full">
                   <Button
-                    className={`w-full h-12 rounded-xl font-bold text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md ${
-                      isPro
-                        ? "bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20"
-                        : "bg-zinc-900 hover:bg-zinc-800 text-white shadow-zinc-900/10"
-                    }`}
+                    variant={isPro ? "default" : "dark"}
+                    className="w-full h-12 rounded-xl font-bold text-xs tracking-wider uppercase transition-transform active:scale-95 shadow-md"
                   >
-                    {isFree ? "Register Free Account" : isAnnual ? "Subscribe Annually" : "Subscribe Monthly"}
+                    Start Free
                   </Button>
                 </Link>
               </div>
@@ -270,8 +198,8 @@ export function PricingContent({
           <Badge className="bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest font-black text-[10px] mb-3 px-3 py-1">
             FAQ
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C29] mb-4">Platform Pricing Questions</h2>
-          <p className="text-zinc-500">Everything you need to know about introduction pricing and annual billing.</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A1C29] mb-4">Free Package Questions</h2>
+          <p className="text-zinc-500">Everything you need to know about the 365-day free-access programme.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

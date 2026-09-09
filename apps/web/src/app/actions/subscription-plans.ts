@@ -27,20 +27,34 @@ export type PublicSubscriptionPlan = {
   } | null;
 };
 
+const PLAN_ORDER = ["beginner", "starter", "pro", "elite"];
+
+function sortSubscriptionPlans(plans: PublicSubscriptionPlan[]): PublicSubscriptionPlan[] {
+  return [...plans].sort((left, right) => {
+    const leftRank = PLAN_ORDER.indexOf(left.name.toLowerCase());
+    const rightRank = PLAN_ORDER.indexOf(right.name.toLowerCase());
+    const safeLeftRank = leftRank === -1 ? PLAN_ORDER.length : leftRank;
+    const safeRightRank = rightRank === -1 ? PLAN_ORDER.length : rightRank;
+
+    if (safeLeftRank !== safeRightRank) return safeLeftRank - safeRightRank;
+    return left.name.localeCompare(right.name);
+  });
+}
+
 export async function getPublicSubscriptionPlans() {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from("subscription_plans")
       .select("*")
-      .order("monthly_price", { ascending: true });
+      .order("name", { ascending: true });
 
     if (error) {
       return {
         success: false as const,
         error: error.message,
-        plans: normalizePublicSubscriptionPlans(
-          DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]
+        plans: sortSubscriptionPlans(
+          normalizePublicSubscriptionPlans(DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[])
         ),
       };
     }
@@ -50,16 +64,17 @@ export async function getPublicSubscriptionPlans() {
         ? (data as PublicSubscriptionPlan[])
         : (DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]);
 
-    // Safety net: rename Free / zero-price entry tier → Beginner @ 2250 even if DB is stale.
-    const plans = normalizePublicSubscriptionPlans(rawPlans);
+    // The public policy is authoritative: stale database prices must never
+    // expose a charge while all packages are in the free-access programme.
+    const plans = sortSubscriptionPlans(normalizePublicSubscriptionPlans(rawPlans));
 
     return { success: true as const, error: null, plans };
   } catch (err) {
     return {
       success: false as const,
       error: err instanceof Error ? err.message : "Could not load subscription plans.",
-      plans: normalizePublicSubscriptionPlans(
-        DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[]
+      plans: sortSubscriptionPlans(
+        normalizePublicSubscriptionPlans(DEFAULT_SUBSCRIPTION_PLANS as PublicSubscriptionPlan[])
       ),
     };
   }

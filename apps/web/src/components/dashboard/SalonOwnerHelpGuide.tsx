@@ -944,12 +944,12 @@ export function SalonOwnerHelpGuide() {
             path="/dashboard/billing"
             description="Your Trimma membership — limits for staff, services, images, and promotions."
             features={[
-              "Active plan card: tier name, limits, next invoice date",
-              "Monthly / Annual billing toggle",
-              "Compare Free, Starter, Pro, Elite plans",
+              "Active plan card: tier name, limits, and free-access end date",
+              "Every package costs LKR 0 for the fixed 365-day free-access term",
+              "Compare Beginner, Starter, Pro, and Elite packages",
               "Per-plan: staff slots, services, gallery images, promotion packages",
-              "Upgrade via checkout when on a lower tier",
-              "Invoice history with reference numbers and payment status",
+              "Switch packages without payment or extending the original end date",
+              "No card is stored and no subscription charge is taken automatically",
             ]}
           />
 

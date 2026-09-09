@@ -1875,12 +1875,33 @@ html.dark .trimma-marketplace-shell :is(
   .text-[#1A1C29],
   .dark\:text-zinc-100,
   .text-zinc-100
-):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#ffde5a]"]):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-primary"]):not(.text-white) {
+):not(:is(.page-hero-shell *, .page-hero-light *)):not([class*="bg-[#ffde5a]"]):not(:is([class*="bg-[#ffde5a]"] *)):not([class*="bg-brand"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-primary"]):not(.text-white) {
   color: #ffffff !important;
 }
 
-html.dark .trimma-marketplace-shell :is(.text-zinc-500, .text-zinc-400, .text-zinc-300, .text-slate-300):not(:is(.page-hero-shell *, .page-hero-light *)) {
+html.dark .trimma-marketplace-shell :is(.text-zinc-500, .text-zinc-400, .text-zinc-300, .text-slate-300):not(:is(.page-hero-shell *, .page-hero-light *)):not(:is([class*="bg-[#ffde5a]"] *, [class*="bg-[#ffde5a]"])) {
   color: #a1a1aa !important;
+}
+
+/* Solid yellow surfaces (deals filter + package cards) — black copy, not dark-mode white */
+html.dark .trimma-marketplace-shell [class*="bg-[#ffde5a]"]:not([class*="bg-[#ffde5a]/"]) {
+  color: #0a0a0a !important;
+}
+
+html.dark .trimma-marketplace-shell [class*="bg-[#ffde5a]"]:not([class*="bg-[#ffde5a]/"]) :is(
+  .text-zinc-900,
+  .text-zinc-800,
+  .text-zinc-700,
+  .text-zinc-600,
+  .text-zinc-500,
+  .text-zinc-400,
+  .text-zinc-950,
+  .text-black,
+  .text-[#1A1C29],
+  .text-zinc-100,
+  .dark\:text-zinc-100
+):not(:is(.bg-white, .bg-zinc-50, .bg-black, .bg-zinc-900, .bg-zinc-950, .text-white)) {
+  color: #0a0a0a !important;
 }
 
 html.dark .trimma-marketplace-shell :is(.border-zinc-200, .border-zinc-100, .border-slate-200, .border-slate-100, .border-black\/10) {
