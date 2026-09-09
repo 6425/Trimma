@@ -45,6 +45,7 @@ for (const params of [
   const ids = cards.map((card) => card.id);
   assert.equal(new Set(ids).size, ids.length, "Sections must not duplicate businesses");
   assert.ok(first.featured.every((card) => card.isFeatured), "Featured cards must have an active promotion");
+  assertReviewOrder(first.featured);
   if (first.totalCount > first.featured.length) assert.ok(first.topRated.length > 0, "Top Rated section is missing");
   if ("location" in params) {
     assert.ok(cards.every((card) => salonBelongsToRequestedLocation(card, params.location)), "Business outside selected geography");
