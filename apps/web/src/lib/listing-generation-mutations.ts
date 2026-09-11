@@ -576,6 +576,88 @@ export async function unpublishListingSalonRecord(
   });
 }
 
+export async function rejectListingSalonRecord(
+  supabase: SupabaseClient,
+  salonId: string,
+  rejectionReason: string
+): Promise<void> {
+  const reason = cleanManualListingLongText(rejectionReason, 1_000);
+  if (!reason) throw new Error("A rejection reason is required.");
+
+  const { data: salon, error: fetchError } = await supabase
+    .from("salons")
+    .select("id, name, source_type, onboarding_status, business_info_extended")
+    .eq("id", salonId)
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!salon?.id) throw new Error("Salon not found.");
+  if (!isListingPipelineSalon(salon)) {
+    throw new Error("This salon is not in the listing generation pipeline.");
+  }
+
+  const currentStatus = String(salon.onboarding_status || "");
+  const canReject =
+    currentStatus === LISTING_ONBOARDING_STATUS.CAPTURED ||
+    (salon.source_type === "LISTING_GENERATION" && currentStatus === "DISCOVERED");
+  if (!canReject) {
+    throw new Error("Only businesses in the Pending listing queue can be rejected.");
+  }
+
+  const existingExtended =
+    salon.business_info_extended &&
+    typeof salon.business_info_extended === "object" &&
+    !Array.isArray(salon.business_info_extended)
+      ? (salon.business_info_extended as Record<string, unknown>)
+      : {};
+  const rejectedAt = new Date().toISOString();
+  const rejectedBy = await getAdminActorEmail();
+  const updates: Record<string, unknown> = {
+    onboarding_status: LISTING_ONBOARDING_STATUS.REJECTED,
+    activation_status: "INACTIVE",
+    public_visibility: "hidden",
+    booking_enabled: false,
+    is_featured: false,
+    featured_starts_at: null,
+    featured_ends_at: null,
+    business_info_extended: {
+      ...existingExtended,
+      listing_rejection_reason: reason,
+      listing_rejected_at: rejectedAt,
+      listing_rejected_by: rejectedBy,
+    },
+  };
+
+  let result = await supabase
+    .from("salons")
+    .update(updates)
+    .eq("id", salonId)
+    .eq("onboarding_status", currentStatus)
+    .select("id")
+    .maybeSingle();
+  if (result.error && isMissingDbSchemaError(result.error.message)) {
+    const fallback = { ...updates };
+    delete fallback.booking_enabled;
+    result = await supabase
+      .from("salons")
+      .update(fallback)
+      .eq("id", salonId)
+      .eq("onboarding_status", currentStatus)
+      .select("id")
+      .maybeSingle();
+  }
+  if (result.error) throw new Error(result.error.message);
+  if (!result.data?.id) {
+    throw new Error("The listing changed while it was being rejected. Refresh the queue and try again.");
+  }
+
+  await tryInsertOnboardingLog(supabase, {
+    salon_id: salonId,
+    action: "LISTING_REJECTED",
+    notes: `Rejected ${salon.name || "listing"} from the listing generation queue. Reason: ${reason}`,
+  });
+}
+
 export async function startBookingOnboardingFromListingRecord(
   supabase: SupabaseClient,
   input: {

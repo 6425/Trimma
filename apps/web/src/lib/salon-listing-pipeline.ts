@@ -10,6 +10,8 @@ export const LISTING_ONBOARDING_STATUS = {
   CAPTURED: "LISTING_CAPTURED",
   /** Live on Trimma browse/search by category + location; booking off. */
   PUBLISHED: "LISTING_PUBLISHED",
+  /** Declined by an admin; retained for audit but excluded from the active queue. */
+  REJECTED: "LISTING_REJECTED",
 } as const;
 
 export type ListingOnboardingStatus =
@@ -19,6 +21,7 @@ export type ListingOnboardingStatus =
 export const LISTING_PIPELINE_STATUSES = new Set<string>([
   LISTING_ONBOARDING_STATUS.CAPTURED,
   LISTING_ONBOARDING_STATUS.PUBLISHED,
+  LISTING_ONBOARDING_STATUS.REJECTED,
 ]);
 
 /** Shared booking activation path — both listing claim and salon requests enter here. */
@@ -47,6 +50,8 @@ export function listingPipelineLabel(status: string | null | undefined): string 
       return "Captured — not published";
     case LISTING_ONBOARDING_STATUS.PUBLISHED:
       return "Published on marketplace";
+    case LISTING_ONBOARDING_STATUS.REJECTED:
+      return "Rejected";
     default:
       return status?.replace(/_/g, " ") || "Unknown";
   }
@@ -71,8 +76,9 @@ export const LISTING_PUBLISH_SALON_UPDATES = {
   status: "active",
 } as const;
 
-/** Statuses already in booking onboarding — do not downgrade on re-capture. */
+/** Statuses that must not be reset when Google discovery sees the business again. */
 const BOOKING_PIPELINE_LOCK_STATUSES = new Set([
+  LISTING_ONBOARDING_STATUS.REJECTED,
   "OWNER_INVITED",
   "ASSIGNED_TO_AGENT",
   "OWNER_ACTIVATED",
