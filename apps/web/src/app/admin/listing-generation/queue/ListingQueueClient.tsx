@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil } from "lucide-react";
+import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil, XCircle } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -132,6 +132,8 @@ function ListingQueueContent({
     isFeatured: boolean;
   } | null>(null);
   const [listingEditor, setListingEditor] = useState<ListingQueueRow | null>(null);
+  const [rejectEditor, setRejectEditor] = useState<{ salonId: string; name: string } | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [batchDraft, setBatchDraft] = useState<{ start: string; end: string } | null>(null);
   const categoryOptions = useMemo(
     () =>
@@ -936,29 +938,45 @@ function ListingQueueContent({
                             </Button>
                           </>
                         ) : (
-                          <Button
-                            type="button"
-                            variant="default"
-                            size="sm"
-                            className="h-7 min-h-7 px-2 text-[10px] font-bold"
-                            disabled={busyId !== null}
-                            onClick={() =>
-                              void runAction(row.id, () =>
-                                postListingAction("/api/admin/listing-generation/publish", {
-                                  salonId: row.id,
-                                })
-                              )
-                            }
-                          >
-                            {busyId === row.id ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <>
-                                <Rocket className="mr-0.5 h-3 w-3" />
-                                Publish
-                              </>
-                            )}
-                          </Button>
+                          <>
+                            <Button
+                              type="button"
+                              variant="default"
+                              size="sm"
+                              className="h-7 min-h-7 px-2 text-[10px] font-bold"
+                              disabled={busyId !== null}
+                              onClick={() =>
+                                void runAction(row.id, () =>
+                                  postListingAction("/api/admin/listing-generation/publish", {
+                                    salonId: row.id,
+                                  })
+                                )
+                              }
+                            >
+                              {busyId === row.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Rocket className="mr-0.5 h-3 w-3" />
+                                  Publish
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 min-h-7 border-rose-200 px-2 text-[10px] font-bold text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+                              disabled={busyId !== null}
+                              onClick={() => {
+                                setRejectionReason("");
+                                setRejectEditor({ salonId: row.id, name: row.name });
+                              }}
+                            >
+                              <XCircle className="mr-0.5 h-3 w-3" />
+                              Reject
+                            </Button>
+                          </>
                         )}
 
                         <Button
@@ -1138,6 +1156,70 @@ function ListingQueueContent({
             })
           }
         />
+      ) : null}
+
+      {rejectEditor ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            <h2 className="text-lg font-bold text-zinc-900">Reject {rejectEditor.name}</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              The business will be removed from the Pending queue. Its data will be retained for audit purposes.
+            </p>
+            <label className="mt-4 block text-xs font-bold uppercase tracking-widest text-zinc-500">
+              Rejection reason
+              <textarea
+                autoFocus
+                maxLength={1_000}
+                rows={4}
+                value={rejectionReason}
+                onChange={(event) => setRejectionReason(event.target.value)}
+                placeholder="Explain why this listing is being rejected…"
+                className="mt-1 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
+              />
+            </label>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 min-h-11 w-full font-bold sm:w-auto"
+                disabled={busyId !== null}
+                onClick={() => {
+                  setRejectEditor(null);
+                  setRejectionReason("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                className="h-11 min-h-11 w-full font-bold sm:w-auto"
+                disabled={busyId !== null || !rejectionReason.trim()}
+                onClick={() =>
+                  void runAction(rejectEditor.salonId, async () => {
+                    const result = await postListingAction("/api/admin/listing-generation/reject", {
+                      salonId: rejectEditor.salonId,
+                      reason: rejectionReason.trim(),
+                    });
+                    if (result.success) {
+                      toast.success(`${rejectEditor.name} was rejected and removed from the Pending queue.`);
+                      setRejectEditor(null);
+                      setRejectionReason("");
+                    }
+                    return result;
+                  })
+                }
+              >
+                {busyId === rejectEditor.salonId ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <XCircle className="mr-2 h-4 w-4" />
+                )}
+                Confirm rejection
+              </Button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );
