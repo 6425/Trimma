@@ -682,7 +682,7 @@
     span:not(.hero-badge):not(.hero-eyebrow):not([class*="hero-badge"]):not([class*="hero-eyebrow"]),
     label,
     a:not([class*="hero-btn"])
-  ) {
+  ):not(:is(button, a[class*="hero-btn"], [role="button"], [data-slot="button"]) *) {
     color: #0a0a0a !important;
   }
   :is(.page-hero-shell, .page-hero-light) .hero-ink :is(
