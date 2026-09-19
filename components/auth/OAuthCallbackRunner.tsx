@@ -8,7 +8,11 @@ import { sanitizeNextPath } from "@/lib/auth-routes";
 import { resolveAuthenticatedDestination } from "@/lib/post-auth";
 import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
 import { pickHighestRole } from "@/lib/trimma-role-core";
-import { completeOAuthLogin, claimSalonOwnerFromOnboarding } from "@/app/actions/login-session";
+import {
+  completeOAuthLogin,
+  claimSalonOwnerFromOnboarding,
+  resolveLoginRole,
+} from "@/app/actions/login-session";
 import {
   clearSalonOwnerOAuthIntent,
   readSalonOwnerOAuthIntent,
@@ -18,11 +22,13 @@ import {
 type OAuthCallbackRunnerProps = {
   forcedSalonOwner?: boolean;
   defaultNextPath?: string;
+  deferSalonProvisioning?: boolean;
 };
 
 function OAuthCallbackRunner({
   forcedSalonOwner = false,
   defaultNextPath = "/dashboard/profile",
+  deferSalonProvisioning = false,
 }: OAuthCallbackRunnerProps) {
   const searchParams = useSearchParams();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -92,9 +98,13 @@ function OAuthCallbackRunner({
           return;
         }
 
-        const result = salonOwnerIntent
-          ? await claimSalonOwnerFromOnboarding(session.access_token, { invitedSalonId })
-          : await completeOAuthLogin(session.access_token, { salonOwnerIntent, invitedSalonId });
+        const shouldDeferSalonProvisioning =
+          deferSalonProvisioning && salonOwnerIntent && !invitedSalonId;
+        const result = shouldDeferSalonProvisioning
+          ? await resolveLoginRole(session.access_token)
+          : salonOwnerIntent
+            ? await claimSalonOwnerFromOnboarding(session.access_token, { invitedSalonId })
+            : await completeOAuthLogin(session.access_token, { salonOwnerIntent, invitedSalonId });
         if (cancelled) return;
 
         if (result.success) {
@@ -122,12 +132,28 @@ function OAuthCallbackRunner({
 
           const effectiveRole =
             pickHighestRole(result.role, sessionResult.role) ?? sessionResult.role;
+          const onboardingStatus =
+            "onboardingStatus" in result ? result.onboardingStatus : null;
+
+          if (shouldDeferSalonProvisioning && effectiveRole === "customer") {
+            redirectAfterAuth(
+              nextPath.startsWith("/onboarding")
+                ? nextPath
+                : "/onboarding?step=business-search#salon-owner-signup"
+            );
+            return;
+          }
+
+          if (shouldDeferSalonProvisioning && effectiveRole === "salon_owner") {
+            redirectAfterAuth("/dashboard/profile");
+            return;
+          }
 
           redirectAfterAuth(
             resolveAuthenticatedDestination({
               role: effectiveRole,
               nextPath,
-              onboardingStatus: result.onboardingStatus,
+              onboardingStatus,
               salonOwnerIntent,
             })
           );
@@ -164,7 +190,7 @@ function OAuthCallbackRunner({
     return () => {
       cancelled = true;
     };
-  }, [defaultNextPath, forcedSalonOwner, searchParams]);
+  }, [defaultNextPath, deferSalonProvisioning, forcedSalonOwner, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative z-50">
@@ -181,6 +207,7 @@ function OAuthCallbackRunner({
 export function OAuthCallbackPage({
   forcedSalonOwner = false,
   defaultNextPath,
+  deferSalonProvisioning = false,
 }: OAuthCallbackRunnerProps) {
   return (
     <Suspense
@@ -190,7 +217,11 @@ export function OAuthCallbackPage({
         </div>
       }
     >
-      <OAuthCallbackRunner forcedSalonOwner={forcedSalonOwner} defaultNextPath={defaultNextPath} />
+      <OAuthCallbackRunner
+        forcedSalonOwner={forcedSalonOwner}
+        defaultNextPath={defaultNextPath}
+        deferSalonProvisioning={deferSalonProvisioning}
+      />
     </Suspense>
   );
 }

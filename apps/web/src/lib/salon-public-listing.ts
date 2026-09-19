@@ -121,9 +121,10 @@ export function resolvePublicSalonRatingDisplay(
 
 export function buildSalonClaimLoginUrl(salonId: string, redirectTo = "/dashboard/profile"): string {
   const params = new URLSearchParams();
+  params.set("claim", salonId);
   if (redirectTo !== "/dashboard/profile") params.set("redirectTo", redirectTo);
   const query = params.toString();
-  return `/claim/${encodeURIComponent(salonId)}${query ? `?${query}` : ""}`;
+  return `/onboarding?${query}#salon-owner-signup`;
 }
 
 /** Private owner invitation destination used after Trimma has verified the claimant. */
