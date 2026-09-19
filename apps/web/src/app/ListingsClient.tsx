@@ -326,10 +326,10 @@ export default function ListingsClient({
                     size="lg"
                     variant="hero"
                     aria-label="Search salons"
-                    className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-12 shrink-0 rounded-xl px-0 font-bold sm:w-auto sm:px-8"
+                    className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-auto min-w-[88px] shrink-0 rounded-xl px-3 font-bold sm:px-8"
                   >
-                    <Search className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                    <span className="hidden sm:inline">Search</span>
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                    <span className="trimma-button-label">Search</span>
                   </Button>
                 </div>
               </div>
