@@ -121,6 +121,21 @@ function OAuthCallbackRunner({
             return;
           }
 
+          // The universal onboarding search is public and authenticates its
+          // server actions with the verified Google access token. Do not make
+          // Step 2 depend on the secondary Trimma cookie exchange; a delayed
+          // cookie write must not send a successfully signed-in owner back to
+          // the Google button.
+          if (shouldDeferSalonProvisioning && result.role === "customer") {
+            clearSalonOwnerOAuthIntent();
+            redirectAfterAuth(
+              nextPath.startsWith("/onboarding")
+                ? nextPath
+                : "/onboarding?step=business-search#salon-owner-signup"
+            );
+            return;
+          }
+
           clearSalonOwnerOAuthIntent();
 
           const sessionResult = await syncTrimmaSecureSession(session.access_token);

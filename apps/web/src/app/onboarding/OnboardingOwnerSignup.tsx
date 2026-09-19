@@ -48,6 +48,12 @@ function locationLabel(match: OnboardingBusinessResult) {
   return [match.city, match.district, match.province].filter(Boolean).join(", ") || "Location not yet listed";
 }
 
+function buildBusinessSearchReturnPath() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("step", "business-search");
+  return `${url.pathname}${url.search}#salon-owner-signup`;
+}
+
 export default function OnboardingOwnerSignup() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -72,14 +78,26 @@ export default function OnboardingOwnerSignup() {
     let cancelled = false;
     const url = new URL(window.location.href);
     const claimSalonId = url.searchParams.get("claim")?.trim() || "";
-    const nextPath = `${url.pathname}${url.search}#salon-owner-signup`;
+    const returningFromGoogle = url.searchParams.get("step") === "business-search";
+    const nextPath = buildBusinessSearchReturnPath();
     markOnboardingSalonOwnerIntent(nextPath || SALON_OWNER_DISCOVERY_REDIRECT);
 
     async function prepareSession() {
       try {
-        const { data } = await supabase.auth.getSession();
-        const session = data.session;
-        if (!session?.access_token) return;
+        let session = null;
+        const maxAttempts = returningFromGoogle ? 20 : 1;
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+          const { data } = await supabase.auth.getSession();
+          session = data.session;
+          if (session?.access_token || cancelled) break;
+          await new Promise((resolve) => window.setTimeout(resolve, 200));
+        }
+        if (!session?.access_token) {
+          if (returningFromGoogle) {
+            setError("Google sign-in did not finish correctly. Please select Continue with Google once more.");
+          }
+          return;
+        }
 
         const roleResult = await resolveLoginRole(session.access_token);
         if (!roleResult.success) throw new Error(roleResult.error);
@@ -99,13 +117,20 @@ export default function OnboardingOwnerSignup() {
           return;
         }
 
-        const secureSession = await syncTrimmaSecureSession(session.access_token);
-        if ("error" in secureSession) throw new Error(secureSession.error);
         if (cancelled) return;
 
         setAccessToken(session.access_token);
         setSignedInEmail(session.user.email || "");
         clearSalonOwnerOAuthIntent();
+
+        // Step 2 uses token-verified server actions and does not require the
+        // middleware cookie. Establish it in the background for subsequent
+        // navigation, without blocking the business-search UI.
+        void syncTrimmaSecureSession(session.access_token).then((secureSession) => {
+          if ("error" in secureSession) {
+            console.warn("Deferred Trimma session setup:", secureSession.error);
+          }
+        });
 
         if (claimSalonId) {
           setLoading(true);
@@ -142,8 +167,7 @@ export default function OnboardingOwnerSignup() {
   const handleGoogleSignup = async () => {
     setLoading(true);
     setError(null);
-    const url = new URL(window.location.href);
-    const nextPath = `${url.pathname}${url.search}#salon-owner-signup`;
+    const nextPath = buildBusinessSearchReturnPath();
     const result = await startSalonOwnerGoogleOAuth(nextPath);
     if (!result.ok) {
       setError(result.error || "Google sign-in failed.");
