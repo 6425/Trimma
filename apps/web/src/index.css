@@ -3002,10 +3002,13 @@ h6,
  */
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary,
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary :is(svg, span, .trimma-button-label) {
+  --trimma-surface-foreground: #ffde5a;
+  --trimma-surface-muted: #ffe680;
   color: #ffde5a !important;
 }
 
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:is(:hover, :focus-visible, :active),
 :is(button, a, [role="button"], [data-slot="button"]).hero-btn-primary:is(:hover, :focus-visible, :active) :is(svg, span, .trimma-button-label) {
+  --trimma-surface-foreground: #ffe680;
   color: #ffe680 !important;
 }
