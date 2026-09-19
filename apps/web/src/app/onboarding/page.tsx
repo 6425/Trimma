@@ -41,15 +41,15 @@ export default async function OnboardingPage() {
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Sign in with Google to open your salon owner dashboard, complete your profile, and submit for booking approval.
-                Trimma routes your submission to a field agent in your area, or directly to admin when no local agent is available.
+                Sign in with Google and find your business on Trimma first. Claim an existing listing or create a new,
+                unpublished business draft when no match exists.
               </p>
 
               <ol className="text-sm max-w-lg text-left space-y-2 list-decimal list-inside font-medium">
-                <li>Google sign-in → your salon draft is created</li>
-                <li>Complete profile in the owner dashboard</li>
-                <li>Submit for booking approval</li>
-                <li>Your assigned reviewer checks it → admin verifies → live on Trimma</li>
+                <li>Sign in securely with Google</li>
+                <li>Search by business name, phone and town</li>
+                <li>Claim the existing listing or add a new business</li>
+                <li>Complete onboarding → reviewer checks it → admin verifies → live on Trimma</li>
               </ol>
             </div>
 
@@ -164,7 +164,7 @@ export default async function OnboardingPage() {
             <div className="mb-10 text-center">
               <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Start Salon Owner Onboarding</h2>
               <p className="text-zinc-500">
-                Sign in with Google, complete your salon profile and booking setup, then submit for agent or admin review.
+                One secure journey for both claiming an existing listing and adding a new business.
               </p>
             </div>
             

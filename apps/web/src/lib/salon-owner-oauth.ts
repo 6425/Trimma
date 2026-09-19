@@ -12,6 +12,8 @@ import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
 import { pickHighestRole } from "@/lib/trimma-role-core";
 
 export const SALON_OWNER_LOGIN_REDIRECT = "/dashboard/profile";
+export const SALON_OWNER_DISCOVERY_REDIRECT =
+  "/onboarding?step=business-search#salon-owner-signup";
 
 export function buildSalonOwnerOAuthRedirectUrl(origin: string = window.location.origin): string {
   return `${origin}/auth/callback/salon-owner`;
@@ -70,9 +72,11 @@ export async function completeSalonOwnerGoogleSession(session: Session): Promise
   return { ok: true };
 }
 
-export async function startSalonOwnerGoogleOAuth(): Promise<{ ok: boolean; error?: string }> {
-  markOnboardingSalonOwnerIntent(SALON_OWNER_LOGIN_REDIRECT);
-  persistSalonOwnerOAuthIntent(SALON_OWNER_LOGIN_REDIRECT);
+export async function startSalonOwnerGoogleOAuth(
+  nextPath = SALON_OWNER_DISCOVERY_REDIRECT
+): Promise<{ ok: boolean; error?: string }> {
+  markOnboardingSalonOwnerIntent(nextPath);
+  persistSalonOwnerOAuthIntent(nextPath);
   const redirectTo = buildSalonOwnerOAuthRedirectUrl();
 
   const { error } = await supabase.auth.signInWithOAuth({
