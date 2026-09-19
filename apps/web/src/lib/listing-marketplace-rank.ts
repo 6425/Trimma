@@ -1,9 +1,10 @@
 import { isListingFeaturedNow } from "@/lib/listing-featured";
 
-export const TOP_RATED_LISTING_COUNT = 4;
-/** Public Featured Beauty Business shows the live admin batch, not a review-ranked subset. */
-export const FEATURED_LISTING_COUNT = 4;
-export const FEATURED_BATCH_PUBLIC_LIMIT = 40;
+/** Each marketplace section contributes at most eight cards to the initial 24-card view. */
+export const TOP_RATED_LISTING_COUNT = 8;
+/** Public Featured Beauty Business shows only matching businesses from the live admin batch. */
+export const FEATURED_LISTING_COUNT = 8;
+export const FEATURED_BATCH_PUBLIC_LIMIT = FEATURED_LISTING_COUNT;
 /** First "You may also like" page, and each Load more page, on landing + category. */
 export const YOU_MAY_ALSO_LIKE_COUNT = 8;
 
@@ -103,7 +104,7 @@ export function pickAdminFeaturedListings<T extends RankableListing>(
 export function splitMarketplaceListingSections<T extends RankableListing>(
   items: T[],
   topCount = TOP_RATED_LISTING_COUNT,
-  featuredCount = FEATURED_BATCH_PUBLIC_LIMIT
+  featuredCount = FEATURED_LISTING_COUNT
 ): { topRated: T[]; featured: T[]; rest: T[] } {
   const featured = pickAdminFeaturedListings(items, featuredCount);
   const taken = new Set(featured.map(listingId).filter(Boolean));
