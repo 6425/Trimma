@@ -329,7 +329,7 @@ export default function ListingsClient({
                     className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-auto min-w-[88px] shrink-0 rounded-xl px-3 font-bold sm:px-8"
                   >
                     <Search className="h-4 w-4" aria-hidden="true" />
-                    <span className="trimma-button-label">Search</span>
+                    Search
                   </Button>
                 </div>
               </div>
