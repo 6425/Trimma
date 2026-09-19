@@ -76,9 +76,9 @@ function resolveSelection(
 }
 
 const fieldClassName =
-  "flex min-w-0 items-center rounded-xl bg-zinc-50 px-4";
+  "flex min-w-0 items-center rounded-xl bg-zinc-50 px-2 sm:px-4";
 const selectClassName =
-  "h-12 w-full min-w-0 cursor-pointer appearance-none bg-transparent text-sm font-bold text-zinc-900 outline-none disabled:cursor-not-allowed disabled:text-zinc-400";
+  "h-12 w-full min-w-0 cursor-pointer appearance-none bg-transparent text-xs font-bold text-zinc-900 outline-none disabled:cursor-not-allowed disabled:text-zinc-400 sm:text-sm";
 
 export function DistrictCitySearchSelect({ value, onChange }: Props) {
   const provinces = useGeographyCatalog();
@@ -95,14 +95,14 @@ export function DistrictCitySearchSelect({ value, onChange }: Props) {
   return (
     <>
       <div className={fieldClassName}>
-        <MapPin className="mr-3 h-5 w-5 shrink-0 text-brand-pink" />
+        <MapPin className="mr-2 h-4 w-4 shrink-0 text-brand-pink sm:mr-3 sm:h-5 sm:w-5" />
         <select
           aria-label="District"
           value={selection.district}
           onChange={(event) => onChange(event.target.value)}
           className={selectClassName}
         >
-          <option value="">Any district</option>
+          <option value="">Any District</option>
           {provinces.map((province) => (
             <optgroup key={province.slug} label={province.name}>
               {province.districts.map((district) => (
@@ -116,9 +116,9 @@ export function DistrictCitySearchSelect({ value, onChange }: Props) {
       </div>
 
       <div className={fieldClassName}>
-        <Building2 className="mr-3 h-5 w-5 shrink-0 text-brand-pink" />
+        <Building2 className="mr-2 h-4 w-4 shrink-0 text-brand-pink sm:mr-3 sm:h-5 sm:w-5" />
         <select
-          aria-label="City (optional)"
+          aria-label="City"
           value={selection.city}
           disabled={!selection.district}
           onChange={(event) =>
@@ -130,9 +130,7 @@ export function DistrictCitySearchSelect({ value, onChange }: Props) {
           }
           className={selectClassName}
         >
-          <option value="">
-            {selection.district ? "Any city" : "Select district first"}
-          </option>
+          <option value="">Any City</option>
           {cities.map((city) => (
             <option key={city} value={city}>
               {city}

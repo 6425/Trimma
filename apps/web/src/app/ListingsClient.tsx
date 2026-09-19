@@ -273,58 +273,65 @@ export default function ListingsClient({
                 <span className="uppercase tracking-wider">All provinces · districts · cities</span>
               </div>
 
-              <div className="trimma-hero-search grid w-full grid-cols-1 gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl sm:grid-cols-2 lg:grid-cols-[minmax(210px,1.2fr)_minmax(170px,0.8fr)_minmax(210px,1fr)_auto]">
-                <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-4">
-                  <Search className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
-                  <label htmlFor="listing-salon-name" className="sr-only">Salon name</label>
-                  <input
-                    id="listing-salon-name"
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    placeholder="Salon name"
-                    className="h-12 w-full bg-transparent text-sm font-semibold text-zinc-900 placeholder:text-zinc-400 outline-none min-w-0"
+              <div className="trimma-hero-search flex w-full flex-col gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl">
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+                  <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-3 sm:px-4">
+                    <Search className="mr-2 h-4 w-4 shrink-0 text-brand-pink sm:mr-3 sm:h-5 sm:w-5" />
+                    <label htmlFor="listing-salon-name" className="sr-only">Salon name</label>
+                    <input
+                      id="listing-salon-name"
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      placeholder="Salon Name"
+                      className="h-12 w-full min-w-0 bg-transparent text-xs font-semibold text-zinc-900 outline-none placeholder:text-zinc-400 sm:text-sm"
+                    />
+                  </div>
+                  <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-3 sm:px-4">
+                    <Tags className="mr-2 h-4 w-4 shrink-0 text-brand-pink sm:mr-3 sm:h-5 sm:w-5" aria-hidden="true" />
+                    <label htmlFor="listing-category" className="sr-only">Business category</label>
+                    <select
+                      id="listing-category"
+                      value={urlCategory}
+                      onChange={(event) => setUrlCategory(event.target.value)}
+                      className="h-12 min-w-0 w-full cursor-pointer bg-transparent text-xs font-semibold text-zinc-900 outline-none sm:text-sm"
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.slug}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
+                  <DistrictCitySearchSelect
+                    value={selectedLocation}
+                    onChange={(value) => {
+                      applyFilters(
+                        {
+                          q: searchQuery.trim(),
+                          location: value,
+                          category: urlCategory,
+                        },
+                        { syncUrl: false }
+                      );
+                    }}
                   />
-                </div>
-                <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-4">
-                  <Tags className="mr-3 h-5 w-5 shrink-0 text-brand-pink" aria-hidden="true" />
-                  <label htmlFor="listing-category" className="sr-only">Business category</label>
-                  <select
-                    id="listing-category"
-                    value={urlCategory}
-                    onChange={(event) => setUrlCategory(event.target.value)}
-                    className="h-12 min-w-0 w-full cursor-pointer bg-transparent text-sm font-semibold text-zinc-900 outline-none"
+                  <Button
+                    onClick={handleSearch}
+                    size="lg"
+                    variant="hero"
+                    aria-label="Search salons"
+                    className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-auto min-w-[88px] shrink-0 rounded-xl px-3 font-bold sm:px-8"
                   >
-                    <option value="">All categories</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.slug}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                    <span className="trimma-button-label">Search</span>
+                  </Button>
                 </div>
-                <DistrictCitySearchSelect
-                  value={selectedLocation}
-                  onChange={(value) => {
-                    applyFilters(
-                      {
-                        q: searchQuery.trim(),
-                        location: value,
-                        category: urlCategory,
-                      },
-                      { syncUrl: false }
-                    );
-                  }}
-                />
-                <Button
-                  onClick={handleSearch}
-                  size="lg"
-                  variant="hero"
-                  className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold lg:w-auto"
-                >
-                  <span className="trimma-button-label">Search</span>
-                </Button>
               </div>
             </div>
           </div>
