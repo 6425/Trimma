@@ -5,6 +5,14 @@ import { getAdminActorEmail, requirePlatformAdminFromCookies } from "@/lib/serve
 import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { APP_BASE_URL } from "@/lib/email/config";
+import { isSalonClaimable } from "@/lib/salon-public-listing";
+import {
+  buildSalonOwnerDraftPreviewLink,
+  buildSalonOwnerInviteLoginLink,
+} from "@/lib/salon-owner-invite-link";
+import { sendTriggeredEmail } from "@/app/actions/email-settings";
+import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
+import { assignSalonOwnerRoleByAdminClient } from "@/app/actions/admin-operations";
 
 export type SalonRequestOrigin = "salon_requests" | "salon_leads";
 
@@ -68,6 +76,11 @@ function mapRequestStatusToLeadStatus(status: SalonRequestRow["status"]): string
 function extractLinkedLeadId(adminNotes: string | null | undefined): string | null {
   if (!adminNotes) return null;
   return adminNotes.match(/salon_leads:([0-9a-f-]{36})/i)?.[1] || null;
+}
+
+function extractClaimListingId(message: string | null | undefined): string | null {
+  if (!message) return null;
+  return message.match(/Trimma listing ID:\s*([0-9a-f-]{36})/i)?.[1] || null;
 }
 
 function mapSalonLeadToRequestRow(lead: Record<string, unknown>): SalonRequestRow {
@@ -334,4 +347,142 @@ export async function assignAdminSalonRequest(input: {
 
   if (!isAdminDbSuccess(result)) return adminDbFailure(result);
   return { success: true as const };
+}
+
+/** Admin completes an ownership claim by linking the existing listing and sending the private invite. */
+export async function approveAdminBusinessClaim(requestId: string) {
+  const result = await withAdminDb(async (supabase) => {
+    const auth = await requirePlatformAdminFromCookies();
+    if ("error" in auth) throw new Error(auth.error);
+
+    const { data: requestRow, error: requestError } = await supabase
+      .from("salon_requests")
+      .select("id, full_name, email, phone, business_name, inquiry_type, message, admin_notes, status")
+      .eq("id", requestId)
+      .maybeSingle();
+    if (requestError || !requestRow) {
+      throw new Error(requestError?.message || "Ownership claim request was not found.");
+    }
+    if (requestRow.inquiry_type !== "Business Listing Claim") {
+      throw new Error("Only business listing claims can be approved here.");
+    }
+    if (requestRow.status === "converted") {
+      return { alreadyApproved: true as const, salon: null };
+    }
+
+    const salonId = extractClaimListingId(requestRow.message);
+    if (!salonId) throw new Error("This claim does not contain a valid Trimma listing ID.");
+
+    const { data: salon, error: salonError } = await supabase
+      .from("salons")
+      .select("id, name, slug, phone, owner_email, owner_gmail, is_verified, onboarding_status")
+      .eq("id", salonId)
+      .maybeSingle();
+    if (salonError || !salon) throw new Error(salonError?.message || "Claimed salon was not found.");
+    if (!isSalonClaimable(salon)) {
+      throw new Error("This salon is already managed or is no longer claimable.");
+    }
+
+    const ownerEmail = normalizeEmail(requestRow.email);
+    if (!ownerEmail) throw new Error("The claimant email is invalid.");
+    const ownerPhone = String(requestRow.phone || salon.phone || "").trim();
+
+    await assignSalonOwnerRoleByAdminClient(
+      supabase,
+      ownerEmail,
+      requestRow.full_name || `${salon.name || "Salon"} Owner`,
+      ownerPhone
+    );
+
+    const now = new Date().toISOString();
+    const { error: salonUpdateError } = await supabase
+      .from("salons")
+      .update({
+        owner_email: ownerEmail,
+        owner_gmail: ownerEmail,
+        onboarding_status: "OWNER_INVITED",
+        owner_invited_at: now,
+        activation_status: "INACTIVE",
+        booking_enabled: false,
+        is_verified: false,
+      })
+      .eq("id", salonId);
+    if (salonUpdateError) throw new Error(salonUpdateError.message);
+
+    const reviewedBy = await getAdminActorEmail();
+    const { error: requestUpdateError } = await supabase
+      .from("salon_requests")
+      .update({
+        status: "converted",
+        reviewed_by: reviewedBy,
+        reviewed_at: now,
+        admin_notes: requestRow.admin_notes || `Approved ownership claim for salon:${salonId}`,
+      })
+      .eq("id", requestId);
+    if (requestUpdateError) throw new Error(requestUpdateError.message);
+
+    const linkedLeadId = extractLinkedLeadId(requestRow.admin_notes);
+    if (linkedLeadId) {
+      await supabase
+        .from("salon_leads")
+        .update({ status: "converted", lead_status: "CONVERTED" })
+        .eq("id", linkedLeadId);
+    }
+
+    await supabase.from("onboarding_logs").insert({
+      salon_id: salonId,
+      actor_email: reviewedBy,
+      action: "BUSINESS_CLAIM_APPROVED",
+      notes: `Ownership verified for ${ownerEmail}; private salon-owner invitation issued.`,
+    });
+
+    return {
+      alreadyApproved: false as const,
+      salon: {
+        id: salonId,
+        name: salon.name || requestRow.business_name || "Salon",
+        slug: salon.slug,
+        phone: ownerPhone,
+        ownerEmail,
+      },
+    };
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+  if (result.data.alreadyApproved || !result.data.salon) {
+    return { success: true as const, alreadyApproved: true as const };
+  }
+
+  const salon = result.data.salon;
+  const loginLink = buildSalonOwnerInviteLoginLink({
+    salonId: salon.id,
+    ownerEmail: salon.ownerEmail,
+  });
+  const draftLink = buildSalonOwnerDraftPreviewLink(salon.slug, salon.id);
+
+  await Promise.allSettled([
+    sendTriggeredEmail({
+      triggerId: "onboarding",
+      to: salon.ownerEmail,
+      variables: {
+        salon_name: salon.name,
+        owner_gmail: salon.ownerEmail,
+        login_link: loginLink,
+        draft_link: draftLink,
+      },
+      rateLimitKey: `approved-claim:${salon.id}:${salon.ownerEmail}`,
+      idempotencyKey: `approved-claim/${salon.id}/${salon.ownerEmail}`,
+    }),
+    salon.phone
+      ? sendOnboardingInviteAlert(
+          salon.id,
+          salon.phone,
+          salon.ownerEmail,
+          salon.name,
+          salon.slug
+        )
+      : Promise.resolve(),
+  ]);
+
+  return { success: true as const, salonId: salon.id, alreadyApproved: false as const };
 }

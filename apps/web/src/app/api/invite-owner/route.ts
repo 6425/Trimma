@@ -9,6 +9,7 @@ import { buildEmailRateLimitKey, getClientIp } from "@/lib/email/rate-limit";
 import { requireAgentFromRequest } from "@/lib/server-agent-auth";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { canAgentAccessSalonAssignee } from "@/lib/agent-hierarchy";
+import { buildSalonOwnerInviteLoginLink } from "@/lib/salon-owner-invite-link";
 
 export async function POST(request: Request) {
   try {
@@ -67,7 +68,10 @@ export async function POST(request: Request) {
     const actorEmail = auth.email;
     const ip = getClientIp(request);
     const rateLimitKey = buildEmailRateLimitKey(ip, actorEmail);
-    const loginLink = `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedOwnerEmail)}&next=${encodeURIComponent("/dashboard/profile")}`;
+    const loginLink = buildSalonOwnerInviteLoginLink({
+      salonId,
+      ownerEmail: normalizedOwnerEmail,
+    });
 
     const draftLink = `${APP_BASE_URL}/salons/${salon.slug || salonId}?preview=true`;
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, Mail, MessageSquare, Phone, Store, UserPlus } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, MessageSquare, Phone, Store, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { SalonRequestRow } from "@/app/actions/salon-requests";
@@ -34,6 +34,7 @@ type SalonRequestLeadSheetProps = {
   }) => Promise<void>;
   onRefresh: () => void;
   searchTerm: string;
+  onApproveClaim: (requestId: string) => Promise<void>;
 };
 
 function formatDate(value: string) {
@@ -63,6 +64,7 @@ export function SalonRequestLeadSheet({
   onAssign,
   onRefresh,
   searchTerm,
+  onApproveClaim,
 }: SalonRequestLeadSheetProps) {
   const [assignDrafts, setAssignDrafts] = useState<Record<string, string>>({});
   const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
@@ -105,6 +107,15 @@ export function SalonRequestLeadSheet({
         assignToEmail,
         adminNotes: notesDrafts[row.id] ?? row.admin_notes,
       });
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleApproveClaim(row: SalonRequestRow) {
+    setSavingId(row.id);
+    try {
+      await onApproveClaim(row.id);
     } finally {
       setSavingId(null);
     }
@@ -225,21 +236,40 @@ export function SalonRequestLeadSheet({
                     {formatDate(row.created_at)}
                   </td>
                   <td className="px-4 py-4 pr-6 text-center">
-                    <Button
-                      size="sm"
-                      className="bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold h-8"
-                      disabled={savingId === row.id}
-                      onClick={() => void handleAssign(row)}
-                    >
-                      {savingId === row.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <>
-                          <UserPlus className="w-3.5 h-3.5 mr-1" />
-                          Assign
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex flex-col items-stretch gap-2">
+                      {row.inquiry_type === "Business Listing Claim" && row.status !== "converted" ? (
+                        <Button
+                          size="sm"
+                          className="h-8 bg-emerald-600 font-bold text-white hover:bg-emerald-700"
+                          disabled={savingId === row.id}
+                          onClick={() => void handleApproveClaim(row)}
+                        >
+                          {savingId === row.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                              Approve claim
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        className="bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold h-8"
+                        disabled={savingId === row.id}
+                        onClick={() => void handleAssign(row)}
+                      >
+                        {savingId === row.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <UserPlus className="w-3.5 h-3.5 mr-1" />
+                            Assign
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))

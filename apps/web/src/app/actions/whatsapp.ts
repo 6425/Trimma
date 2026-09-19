@@ -3,6 +3,7 @@
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { normalizeEmail } from "@/lib/normalize-email";
+import { buildSalonOwnerInviteLoginLink } from "@/lib/salon-owner-invite-link";
 import { preAssignSalonOwnerRole, assignSalonOwnerRoleByAdminClient } from "./admin-operations";
 import { cleanEnvValue } from "@/lib/supabase-server-env";
 import { resolveRoundedReservationAmounts } from "@/lib/booking-pricing";
@@ -1587,7 +1588,7 @@ export async function sendOnboardingInviteAlert(salonId: string, phone: string, 
 
   try {
     const loginLink = normalizedGmail
-      ? `${APP_BASE_URL}/login?email=${encodeURIComponent(normalizedGmail)}&next=${encodeURIComponent("/dashboard/profile")}`
+      ? buildSalonOwnerInviteLoginLink({ salonId, ownerEmail: normalizedGmail })
       : `${APP_BASE_URL}/login?next=${encodeURIComponent("/onboarding")}`;
       
     const draftLink = `${APP_BASE_URL}/salons/${slug || salonId}?preview=true`;
