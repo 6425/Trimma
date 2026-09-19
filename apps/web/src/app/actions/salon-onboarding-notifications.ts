@@ -1,7 +1,12 @@
 "use server";
 
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { sendAdminApprovalEmail, sendAgentApprovalEmail, sendOwnerSubmissionRejectedEmail } from "@/app/actions/email-settings";
+import {
+  sendAdminApprovalEmail,
+  sendAgentApprovalEmail,
+  sendOwnerSubmissionRejectedEmail,
+  sendTriggeredEmail,
+} from "@/app/actions/email-settings";
 import { sendAdminApprovalAlerts, sendAgentApprovalAlerts, sendOwnerSubmissionRejectedAlert } from "@/app/actions/whatsapp";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
@@ -17,6 +22,18 @@ async function insertSalonOwnerInAppNotification(
   if (!email) return;
 
   const supabase = createSupabaseAdminClient();
+  const { data: existing } = await supabase
+    .from("salon_owner_notifications")
+    .select("id")
+    .eq("salon_id", salonId)
+    .eq("user_email", email)
+    .eq("notification_type", notificationType)
+    .is("read_at", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.id) return;
+
   const { error } = await supabase.from("salon_owner_notifications").insert({
     salon_id: salonId,
     user_email: email,
@@ -41,25 +58,19 @@ export async function notifySalonVerifiedByAdmin(params: {
   const salonName = params.salonName || "Your salon";
   const ownerEmail = normalizeEmail(params.ownerEmail || "") || null;
 
-  if (params.ownerPhone) {
-    void sendAdminApprovalAlerts(params.salonId, params.ownerPhone, salonName).catch((err) =>
-      console.error("Admin verify WhatsApp failed:", err)
-    );
-  }
-
-  if (ownerEmail) {
-    void sendAdminApprovalEmail(salonName, ownerEmail).catch((err) =>
-      console.error("Admin verify owner email failed:", err)
-    );
-  }
-
-  void insertSalonOwnerInAppNotification(
-    params.salonId,
-    ownerEmail,
-    "SALON_VERIFIED",
-    "Your salon is live on Trimma",
-    `${salonName} is verified. Customers can now find and book you on the Trimma marketplace.`
-  );
+  await Promise.allSettled([
+    params.ownerPhone
+      ? sendAdminApprovalAlerts(params.salonId, params.ownerPhone, salonName)
+      : Promise.resolve(),
+    ownerEmail ? sendAdminApprovalEmail(salonName, ownerEmail) : Promise.resolve(),
+    insertSalonOwnerInAppNotification(
+      params.salonId,
+      ownerEmail,
+      "SALON_VERIFIED",
+      "Your salon is live on Trimma",
+      `${salonName} is verified. Customers can now find and book you on the Trimma marketplace.`
+    ),
+  ]);
 
   return { success: true as const };
 }
@@ -74,23 +85,19 @@ export async function notifyAgentApprovedSalonForAdmin(params: {
   const salonName = params.salonName || "Your salon";
   const ownerEmail = normalizeEmail(params.ownerEmail || "") || null;
 
-  if (params.ownerPhone) {
-    void sendAgentApprovalAlerts(params.salonId, params.ownerPhone, salonName).catch((err) =>
-      console.error("Agent approval WhatsApp failed:", err)
-    );
-  }
-
-  void sendAgentApprovalEmail(salonName, ownerEmail || "").catch((err) =>
-    console.error("Agent approval email failed:", err)
-  );
-
-  void insertSalonOwnerInAppNotification(
-    params.salonId,
-    ownerEmail,
-    "AGENT_APPROVED",
-    "Profile approved by your Trimma agent",
-    `${salonName} was approved by your Trimma agent and sent to Trimma admin for final verification.`
-  );
+  await Promise.allSettled([
+    params.ownerPhone
+      ? sendAgentApprovalAlerts(params.salonId, params.ownerPhone, salonName)
+      : Promise.resolve(),
+    sendAgentApprovalEmail(salonName, ownerEmail || ""),
+    insertSalonOwnerInAppNotification(
+      params.salonId,
+      ownerEmail,
+      "AGENT_APPROVED",
+      "Profile approved by your Trimma agent",
+      `${salonName} was approved by your Trimma agent and sent to Trimma admin for final verification.`
+    ),
+  ]);
 
   return { success: true as const };
 }
@@ -103,13 +110,29 @@ export async function notifyOwnerSubmissionAcknowledged(params: {
   reviewTarget?: "agent" | "admin";
 }) {
   const reviewer = params.reviewTarget === "admin" ? "Trimma admin" : "your Trimma agent";
-  void insertSalonOwnerInAppNotification(
-    params.salonId,
-    params.ownerEmail,
-    "OWNER_SUBMITTED",
-    "Profile submitted for review",
-    `We received your booking profile for ${params.salonName || "your salon"}. ${reviewer} will review it shortly.`
-  );
+  const ownerEmail = normalizeEmail(params.ownerEmail);
+  await Promise.allSettled([
+    insertSalonOwnerInAppNotification(
+      params.salonId,
+      ownerEmail,
+      "OWNER_SUBMITTED",
+      "Profile submitted for review",
+      `We received your booking profile for ${params.salonName || "your salon"}. ${reviewer} will review it shortly.`
+    ),
+    ownerEmail
+      ? sendTriggeredEmail({
+          triggerId: "partner-lead-received",
+          to: ownerEmail,
+          variables: {
+            owner_name: ownerEmail.split("@")[0],
+            salon_name: params.salonName || "Your salon",
+            salon_address: `Submitted to ${reviewer} for booking approval`,
+          },
+          rateLimitKey: `owner-submit:${params.salonId}:${ownerEmail}`,
+          idempotencyKey: `owner-submit/${params.salonId}/${ownerEmail}`,
+        })
+      : Promise.resolve(),
+  ]);
 
   return { success: true as const };
 }
@@ -118,17 +141,32 @@ export async function notifyOwnerSubmissionAcknowledged(params: {
 export async function notifyAdminRejectedSalon(params: {
   salonId: string;
   salonName: string;
+  ownerPhone?: string | null;
   ownerEmail?: string | null;
   reason: string;
 }) {
   const reason = params.reason.trim() || "Please contact Trimma support for details.";
-  void insertSalonOwnerInAppNotification(
-    params.salonId,
-    params.ownerEmail,
-    "SALON_REJECTED",
-    "Salon application requires attention",
-    `${params.salonName || "Your salon"} was not approved. Reason: ${reason}`
-  );
+  const ownerEmail = normalizeEmail(params.ownerEmail || "") || null;
+  await Promise.allSettled([
+    params.ownerPhone
+      ? sendOwnerSubmissionRejectedAlert(
+          params.salonId,
+          params.ownerPhone,
+          params.salonName || "Your salon",
+          reason
+        )
+      : Promise.resolve(),
+    ownerEmail
+      ? sendOwnerSubmissionRejectedEmail(params.salonName || "Your salon", ownerEmail, reason)
+      : Promise.resolve(),
+    insertSalonOwnerInAppNotification(
+      params.salonId,
+      ownerEmail,
+      "SALON_REJECTED",
+      "Salon application requires attention",
+      `${params.salonName || "Your salon"} was not approved. Reason: ${reason}`
+    ),
+  ]);
 
   return { success: true as const };
 }
@@ -145,28 +183,56 @@ export async function notifyOwnerSubmissionRejected(params: {
   const ownerEmail = normalizeEmail(params.ownerEmail || "") || null;
   const reason = params.reason.trim() || "Please update your salon profile and resubmit.";
 
-  if (params.ownerPhone) {
-    void sendOwnerSubmissionRejectedAlert(
+  await Promise.allSettled([
+    params.ownerPhone
+      ? sendOwnerSubmissionRejectedAlert(params.salonId, params.ownerPhone, salonName, reason)
+      : Promise.resolve(),
+    ownerEmail
+      ? sendOwnerSubmissionRejectedEmail(salonName, ownerEmail, reason)
+      : Promise.resolve(),
+    insertSalonOwnerInAppNotification(
       params.salonId,
-      params.ownerPhone,
-      salonName,
-      reason
-    ).catch((err) => console.error("Owner rejection WhatsApp failed:", err));
-  }
+      ownerEmail,
+      "SALON_REJECTED",
+      "Action required: Salon profile",
+      `${salonName} requires updates before approval. Reason: ${reason}`
+    ),
+  ]);
 
-  if (ownerEmail) {
-    void sendOwnerSubmissionRejectedEmail(salonName, ownerEmail, reason).catch((err) =>
-      console.error("Owner rejection email failed:", err)
-    );
-  }
+  return { success: true as const };
+}
 
-  void insertSalonOwnerInAppNotification(
-    params.salonId,
-    ownerEmail,
-    "SALON_REJECTED",
-    "Action required: Salon profile",
-    `${salonName} requires updates before approval. Reason: ${reason}`
-  );
+/** Fresh self-serve draft created after the duplicate check. */
+export async function notifyOwnerDraftCreated(params: {
+  salonId: string;
+  salonName: string;
+  salonAddress: string;
+  ownerEmail: string;
+  ownerName?: string | null;
+}) {
+  const ownerEmail = normalizeEmail(params.ownerEmail);
+  if (!ownerEmail) return { success: false as const, error: "Owner email is missing." };
+
+  await Promise.allSettled([
+    insertSalonOwnerInAppNotification(
+      params.salonId,
+      ownerEmail,
+      "ONBOARDING_STARTED",
+      "Complete your Trimma salon profile",
+      `${params.salonName} was created as a private draft. Add services, staff, images and booking details, then submit it for review.`
+    ),
+    sendTriggeredEmail({
+      triggerId: "partner-lead-received",
+      to: ownerEmail,
+      variables: {
+        owner_name: params.ownerName || ownerEmail.split("@")[0],
+        salon_name: params.salonName,
+        salon_address: params.salonAddress,
+      },
+      rateLimitKey: `owner-draft:${params.salonId}:${ownerEmail}`,
+      idempotencyKey: `owner-draft/${params.salonId}/${ownerEmail}`,
+    }),
+  ]);
 
   return { success: true as const };
 }

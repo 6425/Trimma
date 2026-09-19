@@ -84,21 +84,169 @@ export async function updateAdminSalon(salonId: string, payload: Record<string, 
 }
 
 export async function approveAdminSalon(salonId: string) {
-  return updateAdminSalon(salonId, { status: "active", is_verified: false });
+  const result = await withAdminDb(async (supabase) => {
+    const { data: existing, error: readError } = await supabase
+      .from("salons")
+      .select("id, name, slug, phone, owner_email, owner_gmail, onboarding_status")
+      .eq("id", salonId)
+      .maybeSingle();
+    if (readError || !existing) throw new Error(readError?.message || "Salon not found.");
+
+    const ownerEmail = normalizeEmail(existing.owner_email || existing.owner_gmail || "");
+    const hasRealOwner = Boolean(ownerEmail) && !ownerEmail.startsWith("draft-");
+    const saveResult = await saveAdminSalonRecord(supabase, salonId, {
+      status: "active",
+      is_verified: false,
+      ...(hasRealOwner && !["OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(
+        String(existing.onboarding_status || "")
+      )
+        ? { onboarding_status: "OWNER_INVITED", owner_invited_at: new Date().toISOString() }
+        : {}),
+    });
+    if (saveResult.success === false) throw new Error(saveResult.error);
+
+    await supabase.from("onboarding_logs").insert({
+      salon_id: salonId,
+      actor_email: await getAdminActorEmail(),
+      action: hasRealOwner ? "OWNER_INVITED" : "SALON_ENTRY_APPROVED",
+      notes: hasRealOwner
+        ? `Salon entry approved and owner invitation triggered for ${ownerEmail}.`
+        : "Salon entry approved without an owner email; no invitation was sent.",
+    });
+
+    return { salon: existing, ownerEmail: hasRealOwner ? ownerEmail : null };
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+
+  const { salon, ownerEmail } = result.data;
+  if (ownerEmail) {
+    const [{ sendTriggeredEmail }, { sendOnboardingInviteAlert }] = await Promise.all([
+      import("@/app/actions/email-settings"),
+      import("@/app/actions/whatsapp"),
+    ]);
+    const { buildSalonOwnerDraftPreviewLink, buildSalonOwnerInviteLoginLink } = await import(
+      "@/lib/salon-owner-invite-link"
+    );
+    await Promise.allSettled([
+      sendTriggeredEmail({
+        triggerId: "onboarding",
+        to: ownerEmail,
+        variables: {
+          salon_name: salon.name || "your salon",
+          owner_gmail: ownerEmail,
+          login_link: buildSalonOwnerInviteLoginLink({ salonId, ownerEmail }),
+          draft_link: buildSalonOwnerDraftPreviewLink(salon.slug, salonId),
+        },
+        rateLimitKey: `admin-owner-invite:${salonId}:${ownerEmail}`,
+        idempotencyKey: `admin-owner-invite/${salonId}/${ownerEmail}`,
+      }),
+      salon.phone
+        ? sendOnboardingInviteAlert(
+            salonId,
+            salon.phone,
+            ownerEmail,
+            salon.name || "your salon",
+            salon.slug
+          )
+        : Promise.resolve(),
+    ]);
+  }
+
+  return { success: true as const, ownerInvited: Boolean(ownerEmail) };
 }
 
 export async function verifyAdminSalon(salonId: string) {
-  return updateAdminSalon(salonId, { status: "active", is_verified: true, verified_at: new Date().toISOString() });
+  const result = await withAdminDb(async (supabase) => {
+    const readiness = await getSalonVerificationReadiness(supabase, salonId);
+    if (!readiness.ready) throw new Error(getSalonNotReadyMessage(readiness.missing));
+
+    const verifiedAt = new Date().toISOString();
+    const saveResult = await saveAdminSalonRecord(supabase, salonId, {
+      onboarding_status: "VERIFIED",
+      activation_status: "ACTIVE",
+      status: "active",
+      is_verified: true,
+      booking_enabled: true,
+      public_visibility: "public",
+      verified_at: verifiedAt,
+    });
+    if (saveResult.success === false) throw new Error(saveResult.error);
+
+    const { data: salon, error } = await supabase
+      .from("salons")
+      .select("id, name, phone, owner_email, owner_gmail")
+      .eq("id", salonId)
+      .maybeSingle();
+    if (error || !salon) throw new Error(error?.message || "Salon not found after verification.");
+
+    await supabase.from("onboarding_logs").insert({
+      salon_id: salonId,
+      actor_email: await getAdminActorEmail(),
+      action: "SALON_VERIFIED",
+      notes: "Salon verified and activated by Trimma admin. Customer bookings are now enabled.",
+    });
+
+    return { salon };
+  });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+
+  const { notifySalonVerifiedByAdmin } = await import("@/app/actions/salon-onboarding-notifications");
+  await notifySalonVerifiedByAdmin({
+    salonId,
+    salonName: result.data.salon.name || "Salon",
+    ownerPhone: result.data.salon.phone,
+    ownerEmail: result.data.salon.owner_email || result.data.salon.owner_gmail,
+  });
+
+  return { success: true as const };
 }
 
 export async function rejectAdminSalon(salonId: string, rejectionReason: string) {
-  return updateAdminSalon(salonId, {
-    // salons.status CHECK only allows active | inactive | pending
-    status: "inactive",
-    onboarding_status: "REJECTED",
-    is_verified: false,
-    rejection_reason: rejectionReason,
+  const reason = rejectionReason.trim();
+  if (!reason) return { success: false as const, error: "A rejection reason is required." };
+
+  const result = await withAdminDb(async (supabase) => {
+    const saveResult = await saveAdminSalonRecord(supabase, salonId, {
+      // salons.status CHECK only allows active | inactive | pending
+      status: "inactive",
+      onboarding_status: "REJECTED",
+      activation_status: "INACTIVE",
+      booking_enabled: false,
+      is_verified: false,
+      rejection_reason: reason,
+    });
+    if (saveResult.success === false) throw new Error(saveResult.error);
+
+    const { data: salon, error } = await supabase
+      .from("salons")
+      .select("id, name, phone, owner_email, owner_gmail")
+      .eq("id", salonId)
+      .maybeSingle();
+    if (error || !salon) throw new Error(error?.message || "Salon not found after rejection.");
+
+    await supabase.from("onboarding_logs").insert({
+      salon_id: salonId,
+      actor_email: await getAdminActorEmail(),
+      action: "SALON_REJECTED",
+      notes: reason,
+    });
+    return { salon };
   });
+
+  if (!isAdminDbSuccess(result)) return adminDbFailure(result);
+
+  const { notifyAdminRejectedSalon } = await import("@/app/actions/salon-onboarding-notifications");
+  await notifyAdminRejectedSalon({
+    salonId,
+    salonName: result.data.salon.name || "Salon",
+    ownerPhone: result.data.salon.phone,
+    ownerEmail: result.data.salon.owner_email || result.data.salon.owner_gmail,
+    reason,
+  });
+
+  return { success: true as const };
 }
 
 import { revalidatePath } from "next/cache";

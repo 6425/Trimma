@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/config/supabase";
 import { toast } from "sonner";
-import { notifyAgentApprovedSalonForAdmin } from "../../actions/salon-onboarding-notifications";
 import { normalizeEmail } from "@/lib/normalize-email";
 import { cropImageFile } from "@/lib/crop-image-file";
 import {
@@ -746,14 +745,6 @@ function AgentLeads() {
       );
       if (!success) throw new Error(error || "Failed to save via Server Action");
 
-      await notifyAgentApprovedSalonForAdmin({
-        salonId: selectedLead.id,
-        salonName: formData.name || selectedLead.name,
-        ownerPhone: formData.phone || selectedLead.phone,
-        ownerEmail:
-          formData.owner_gmail || selectedLead.owner_email || selectedLead.owner_gmail || selectedLead.email,
-      });
-      
       toast.success("Salon sent to Admin for final verification. Bookings remain closed until approval.");
       setIsModalOpen(false);
       setSelectedLead(null);

@@ -25,6 +25,8 @@ import {
   publishAdminLead,
   fetchAdminActorEmail,
   createAdminSalonDraft,
+  rejectAdminSalon,
+  verifyAdminSalon,
 } from "@/app/actions/admin-operations";
 import { withTimeout } from "@/lib/promise-timeout";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
@@ -35,15 +37,12 @@ import { LeadTables } from "../../../components/admin/LeadTables";
 import { LeadEditorModal } from "../../../components/admin/LeadEditorModal";
 import { SalonRequestLeadSheet } from "../../../components/admin/SalonRequestLeadSheet";
 import {
+  approveAdminBusinessClaim,
   assignAdminSalonRequest,
   fetchAdminSalonRequests,
   type SalonRequestRow,
 } from "@/app/actions/salon-requests";
-import {
-  notifyAdminRejectedSalon,
-  notifyAgentOfSalonAssignment,
-  notifySalonVerifiedByAdmin,
-} from "@/app/actions/salon-onboarding-notifications";
+import { notifyAgentOfSalonAssignment } from "@/app/actions/salon-onboarding-notifications";
 
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
 import {
@@ -192,6 +191,20 @@ function Leads() {
     }
     toast.success("Salon request assigned successfully.");
     await fetchSalonRequests();
+  };
+
+  const handleApproveBusinessClaim = async (requestId: string) => {
+    const result = await approveAdminBusinessClaim(requestId);
+    if (result.success === false) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      result.alreadyApproved
+        ? "This ownership claim was already approved."
+        : "Ownership claim approved. The existing listing is linked and the private owner invitation was sent."
+    );
+    await Promise.all([fetchSalonRequests(), fetchLeads()]);
   };
 
   const applyLeadsFromSalons = (allSalons: any[], limit?: number) => {
@@ -970,21 +983,8 @@ function Leads() {
       setVerifying(true);
       toast.loading(`Verifying "${lead.name}"...`, { id: "verify_salon" });
 
-      const result = await updateAdminSalon(lead.id, {
-          onboarding_status: "VERIFIED",
-          activation_status: "ACTIVE",
-          is_verified: true,
-          booking_enabled: true,
-          verified_at: new Date().toISOString()
-        });
+      const result = await verifyAdminSalon(lead.id);
       if (result.success === false) throw new Error(result.error);
-
-      await notifySalonVerifiedByAdmin({
-        salonId: lead.id,
-        salonName: lead.name,
-        ownerPhone: lead.phone,
-        ownerEmail: lead.owner_email || lead.owner_gmail || lead.email,
-      });
 
       await logActivity(lead.id, "SALON_VERIFIED", "Salon verified and activated by Admin. Now live on the platform.");
       toast.success(`"${lead.name}" is now VERIFIED and LIVE! ✓`, { id: "verify_salon" });
@@ -1001,18 +1001,8 @@ function Leads() {
     try {
       toast.loading(`Rejecting "${rejectTarget.name}"...`, { id: "reject_salon" });
 
-      const result = await updateAdminSalon(rejectTarget.id, {
-          onboarding_status: "REJECTED",
-          rejection_reason: rejectReason
-        });
+      const result = await rejectAdminSalon(rejectTarget.id, rejectReason);
       if (result.success === false) throw new Error(result.error);
-
-      await notifyAdminRejectedSalon({
-        salonId: rejectTarget.id,
-        salonName: rejectTarget.name,
-        ownerEmail: rejectTarget.owner_email || rejectTarget.owner_gmail || rejectTarget.email,
-        reason: rejectReason,
-      });
 
       await logActivity(rejectTarget.id, "SALON_REJECTED", `Salon rejected by Admin. Reason: ${rejectReason}`);
       toast.success(`"${rejectTarget.name}" has been rejected.`, { id: "reject_salon" });
@@ -1298,6 +1288,7 @@ function Leads() {
             onAssign={handleAssignSalonRequest}
             onRefresh={() => void fetchSalonRequests()}
             searchTerm={searchTerm}
+            onApproveClaim={handleApproveBusinessClaim}
           />
         }
         editingCell={editingCell}

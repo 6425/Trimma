@@ -1047,6 +1047,21 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
 
     if (readError) throw new Error(readError.message);
 
+    const currentStatus = String(salon.onboarding_status || "");
+    if (["OWNER_ACTIVATED", "PENDING_ADMIN_VERIFICATION", "VERIFIED"].includes(currentStatus)) {
+      return {
+        salonId: ctx.salonId,
+        salonName: String(salon.name || "Salon"),
+        salonAddress: (salon.address as string | null) || null,
+        assignTo: (salon.assign_to as string | null) || null,
+        ownerEmail: ownerEmail || ctx.email,
+        sourceType: (salon.source_type as string | null) || null,
+        reviewTarget:
+          currentStatus === "OWNER_ACTIVATED" ? ("agent" as const) : ("admin" as const),
+        alreadySubmitted: true,
+      };
+    }
+
     const approvalEmail = ownerEmail || ctx.email;
     if (!canSubmitForBookingApproval(salon as SalonOnboardingSnapshot, approvalEmail)) {
       const missing = getBookingApprovalMissingFields(salon as SalonOnboardingSnapshot, approvalEmail);
@@ -1107,22 +1122,29 @@ export async function completeSalonOwnerOnboarding(ownerEmail: string | null | u
       ownerEmail: approvalEmail,
       sourceType: (salon.source_type as string | null) || null,
       reviewTarget: routesDirectlyToAdmin ? ("admin" as const) : ("agent" as const),
+      alreadySubmitted: false,
     };
   });
 
   if (!isSalonDbSuccess(result)) return salonDbFailure(result);
 
-  void notifyOwnerSubmittedForBookingApproval(createSupabaseAdminClient(), {
-    salonId: result.data.salonId,
-    salonName: result.data.salonName,
-    salonAddress: result.data.salonAddress,
-    assignToEmail: result.data.assignTo,
-    ownerEmail: result.data.ownerEmail,
-    sourceType: result.data.sourceType,
-    reviewTarget: result.data.reviewTarget,
-  }).catch((err) => console.error("Owner submission notification failed:", err));
+  if (!result.data.alreadySubmitted) {
+    await notifyOwnerSubmittedForBookingApproval(createSupabaseAdminClient(), {
+      salonId: result.data.salonId,
+      salonName: result.data.salonName,
+      salonAddress: result.data.salonAddress,
+      assignToEmail: result.data.assignTo,
+      ownerEmail: result.data.ownerEmail,
+      sourceType: result.data.sourceType,
+      reviewTarget: result.data.reviewTarget,
+    }).catch((err) => console.error("Owner submission notification failed:", err));
+  }
 
-  return { success: true as const, reviewTarget: result.data.reviewTarget };
+  return {
+    success: true as const,
+    reviewTarget: result.data.reviewTarget,
+    alreadySubmitted: result.data.alreadySubmitted,
+  };
 }
 
 export async function saveOwnerVerificationData(

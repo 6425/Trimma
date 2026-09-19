@@ -13,6 +13,7 @@ import {
   getSalonNotReadyMessage,
   getSalonVerificationReadiness,
 } from "@/lib/salon-verification-readiness";
+import { notifyAgentApprovedSalonForAdmin } from "@/app/actions/salon-onboarding-notifications";
 
 function assertServicesMeetMinPrice(svcsToAdd: Array<{ price?: unknown }> | null | undefined) {
   if (!svcsToAdd?.length) return;
@@ -44,7 +45,7 @@ export async function saveAgentLeadData(
   try {
     const { data: assignedSalon, error: assignedSalonError } = await supabaseAdmin
       .from("salons")
-      .select("id, assign_to")
+      .select("id, assign_to, onboarding_status")
       .eq("id", salonId)
       .maybeSingle();
     if (assignedSalonError || !assignedSalon) {
@@ -236,6 +237,26 @@ export async function saveAgentLeadData(
               ? "Agent saved salon details before owner invitation."
               : "Agent updated salon details in field editor.",
     });
+
+    if (
+      newStatus === "PENDING_ADMIN_VERIFICATION" &&
+      assignedSalon.onboarding_status !== "PENDING_ADMIN_VERIFICATION"
+    ) {
+      const { data: notificationSalon } = await supabaseAdmin
+        .from("salons")
+        .select("id, name, phone, owner_email, owner_gmail")
+        .eq("id", salonId)
+        .maybeSingle();
+
+      if (notificationSalon) {
+        await notifyAgentApprovedSalonForAdmin({
+          salonId,
+          salonName: notificationSalon.name || "Salon",
+          ownerPhone: notificationSalon.phone,
+          ownerEmail: notificationSalon.owner_email || notificationSalon.owner_gmail,
+        });
+      }
+    }
 
     return { success: true as const };
   } catch (err: any) {

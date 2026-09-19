@@ -40,6 +40,7 @@ export const ADMIN_SALON_UPDATE_FIELDS = new Set([
   "subscription_plan_id",
   "verification_notes",
   "verified_at",
+  "owner_invited_at",
   "rejection_reason",
 ]);
 

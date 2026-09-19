@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { fetchAdminSalons, fetchAdminUsers } from "@/app/actions/admin-list-data";
-import { approveAdminSalon, deleteAdminSalon, updateAdminSalon } from "@/app/actions/admin-operations";
+import {
+  approveAdminSalon,
+  deleteAdminSalon,
+  rejectAdminSalon,
+  updateAdminSalon,
+  verifyAdminSalon,
+} from "@/app/actions/admin-operations";
 import { refreshSalonGooglePlaceImages } from "@/app/actions/salon-google-images";
 import { patchAdminSalonViaApi } from "@/lib/admin-salon-api-client";
 import { autoCropAndUpload } from "@/lib/auto-crop-upload";
@@ -23,10 +29,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Textarea } from "@/components/ui/textarea";
 import { sendOnboardingInviteAlert } from "@/app/actions/whatsapp";
 import { LkPhoneInput } from "@/components/ui/LkPhoneInput";
-import {
-  notifyAdminRejectedSalon,
-  notifySalonVerifiedByAdmin,
-} from "@/app/actions/salon-onboarding-notifications";
 import { SalonOnboardingReviewPanel } from "@/components/salon/SalonOnboardingReviewPanel";
 import { CopySalonInviteLinkButton, SalonInviteLinkHint } from "@/components/salon/CopySalonInviteLinkButton";
 import { exportDiscoveryLeadsToExcel, mapSalonToDiscoveryExport } from "@/lib/export-discovery-leads";
@@ -254,28 +256,11 @@ export default function Salons() {
   };
 
   const handleVerify = async (salonId: string) => {
-    const salon = salons.find((s) => s.id === salonId);
     try {
       toast.loading("Verifying salon...", { id: "verify_salon" });
 
-      const result = await updateAdminSalon(salonId, {
-        onboarding_status: "VERIFIED",
-        activation_status: "ACTIVE",
-        status: "active",
-        is_verified: true,
-        booking_enabled: true,
-        verified_at: new Date().toISOString(),
-      });
+      const result = await verifyAdminSalon(salonId);
       if (result.success === false) throw new Error(result.error);
-
-      if (salon) {
-        await notifySalonVerifiedByAdmin({
-          salonId,
-          salonName: salon.name,
-          ownerPhone: salon.phone,
-          ownerEmail: salon.owner_email || salon.owner_gmail || salon.email,
-        });
-      }
 
       toast.success("Salon is now verified and live on Trimma!", { id: "verify_salon" });
       fetchSalons();
@@ -381,21 +366,8 @@ export default function Salons() {
     try {
       setIsProcessing(true);
       toast.loading("Rejecting salon...");
-      const result = await updateAdminSalon(salonToReject.id, {
-        // salons.status CHECK only allows active | inactive | pending (not "rejected")
-        onboarding_status: "REJECTED",
-        status: "inactive",
-        is_verified: false,
-        rejection_reason: rejectionReason,
-      });
+      const result = await rejectAdminSalon(salonToReject.id, rejectionReason);
       if (result.success === false) throw new Error(result.error);
-
-      await notifyAdminRejectedSalon({
-        salonId: salonToReject.id,
-        salonName: salonToReject.name,
-        ownerEmail: salonToReject.owner_email || salonToReject.owner_gmail || salonToReject.email,
-        reason: rejectionReason,
-      });
 
       toast.dismiss();
       toast.success("Salon has been rejected.");

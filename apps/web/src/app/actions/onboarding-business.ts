@@ -18,6 +18,10 @@ import { notifyAgentLeadAssigned } from "@/lib/agent-lead-notifications";
 import { APP_BASE_URL } from "@/lib/email/config";
 import { sendTriggeredEmail } from "@/app/actions/email-settings";
 import type { SalonDuplicateRow } from "@/lib/salon-discovery-dedup";
+import { isRealGooglePlaceId } from "@/lib/salon-discovery-dedup";
+import { applySalonSlugOnNameChange } from "@/lib/salon-profile-save";
+import { sanitizeText } from "@/lib/sanitize-input";
+import { notifyOwnerDraftCreated } from "@/app/actions/salon-onboarding-notifications";
 
 const SEARCH_COLUMNS =
   "id,name,slug,category,city,district,province,address,phone,place_id,business_info_extended,owner_email,owner_gmail,is_verified,onboarding_status,status,public_visibility,booking_enabled,source_type,latitude,longitude";
@@ -245,6 +249,15 @@ export async function beginOnboardingBusinessClaim(
     );
     await mirrorOnboardingLeadToSalonRequests(supabase, formData, leadId);
 
+    await supabase.from("onboarding_logs").insert({
+      salon_id: salonId,
+      actor_email: verified.email,
+      action: "BUSINESS_CLAIM_REQUESTED",
+      notes: assignedAgent
+        ? `Ownership claim submitted and routed to ${assignedAgent}.`
+        : "Ownership claim submitted without a matching field agent; Trimma admin review is required.",
+    });
+
     const salonAddress = [address, city, district, province].filter(Boolean).join(", ");
     await Promise.allSettled([
       sendTriggeredEmail({
@@ -295,8 +308,21 @@ export async function createNewOnboardingBusiness(
       return { success: true as const, salonId: null, alreadyOwner: true };
     }
 
-    const rows = await loadSearchRows(input);
-    const likelyDuplicates = rankOnboardingBusinessMatches(rows, input)
+    const businessName = cleanSearchText(input.businessName);
+    const phone = cleanSearchText(input.phone, 40);
+    const town = cleanSearchText(input.town);
+    const placeId = cleanSearchText(input.placeId, 180);
+    if (businessName.length < 2) throw new Error("Enter the business name before continuing.");
+    if (phone.replace(/\D/g, "").length < 9) throw new Error("Enter a valid business phone number.");
+    if (town.length < 2) throw new Error("Enter the business town or location.");
+
+    const rows = await loadSearchRows({ businessName, phone, town, placeId });
+    const likelyDuplicates = rankOnboardingBusinessMatches(rows, {
+      businessName,
+      phone,
+      town,
+      placeId,
+    })
       .filter((match) => match.likelyDuplicate)
       .slice(0, 5)
       .map(toPublicResult);
@@ -318,6 +344,60 @@ export async function createNewOnboardingBusiness(
       verified.userMetadata?.full_name || verified.userMetadata?.first_name,
       verified.userMetadata?.avatar_url
     );
+
+    const { data: draft, error: draftError } = await supabase
+      .from("salons")
+      .select("id, business_info_extended")
+      .eq("id", upgraded.salonId)
+      .maybeSingle();
+    if (draftError || !draft) {
+      throw new Error(draftError?.message || "Could not load your new salon draft.");
+    }
+
+    const existingExtended =
+      draft.business_info_extended &&
+      typeof draft.business_info_extended === "object" &&
+      !Array.isArray(draft.business_info_extended)
+        ? (draft.business_info_extended as Record<string, unknown>)
+        : {};
+    const updatePayload = await applySalonSlugOnNameChange(supabase, upgraded.salonId, {
+      name: sanitizeText(businessName),
+      phone: sanitizeText(phone),
+      city: sanitizeText(town),
+      address: sanitizeText(town),
+      ...(isRealGooglePlaceId(placeId) ? { place_id: placeId } : {}),
+      business_info_extended: {
+        ...existingExtended,
+        onboarding_business_name: sanitizeText(businessName),
+        onboarding_phone: sanitizeText(phone),
+        onboarding_town: sanitizeText(town),
+        ...(isRealGooglePlaceId(placeId) ? { google_place_id: placeId } : {}),
+      },
+    });
+
+    const { error: updateError } = await supabase
+      .from("salons")
+      .update(updatePayload)
+      .eq("id", upgraded.salonId);
+    if (updateError) throw new Error(updateError.message);
+
+    await supabase.from("onboarding_logs").insert({
+      salon_id: upgraded.salonId,
+      actor_email: verified.email,
+      action: "SELF_SERVE_BUSINESS_CREATED",
+      notes: `Private salon draft created after duplicate search: ${businessName}, ${town}.`,
+    });
+
+    await notifyOwnerDraftCreated({
+      salonId: upgraded.salonId,
+      salonName: businessName,
+      salonAddress: town,
+      ownerEmail: verified.email,
+      ownerName:
+        verified.userMetadata?.full_name ||
+        verified.userMetadata?.first_name ||
+        verified.email.split("@")[0],
+    });
 
     return {
       success: true as const,
