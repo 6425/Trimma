@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Search, Loader2, Sparkles } from "lucide-react";
+import { Search, Loader2, Sparkles, Tags } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { BusinessListingsMap } from "../components/marketplace/BusinessListingsMap";
 import { ListingBrowseToolbar } from "../components/marketplace/ListingBrowseToolbar";
@@ -273,17 +273,36 @@ export default function ListingsClient({
                 <span className="uppercase tracking-wider">All provinces · districts · cities</span>
               </div>
 
-              <div className="trimma-hero-search grid w-full grid-cols-1 gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-4 sm:col-span-2 lg:col-span-3">
+              <div className="trimma-hero-search grid w-full grid-cols-1 gap-2 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl sm:grid-cols-2 lg:grid-cols-[minmax(210px,1.2fr)_minmax(170px,0.8fr)_minmax(210px,1fr)_auto]">
+                <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-4">
                   <Search className="h-5 w-5 text-brand-pink mr-3 shrink-0" />
+                  <label htmlFor="listing-salon-name" className="sr-only">Salon name</label>
                   <input
+                    id="listing-salon-name"
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    placeholder="Salon name or category"
+                    placeholder="Salon name"
                     className="h-12 w-full bg-transparent text-sm font-semibold text-zinc-900 placeholder:text-zinc-400 outline-none min-w-0"
                   />
+                </div>
+                <div className="flex min-w-0 items-center rounded-xl bg-zinc-50 px-4">
+                  <Tags className="mr-3 h-5 w-5 shrink-0 text-brand-pink" aria-hidden="true" />
+                  <label htmlFor="listing-category" className="sr-only">Business category</label>
+                  <select
+                    id="listing-category"
+                    value={urlCategory}
+                    onChange={(event) => setUrlCategory(event.target.value)}
+                    className="h-12 min-w-0 w-full cursor-pointer bg-transparent text-sm font-semibold text-zinc-900 outline-none"
+                  >
+                    <option value="">All categories</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.slug}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <DistrictCitySearchSelect
                   value={selectedLocation}
@@ -302,7 +321,7 @@ export default function ListingsClient({
                   onClick={handleSearch}
                   size="lg"
                   variant="hero"
-                  className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:col-span-2 lg:col-span-1 lg:w-auto"
+                  className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold lg:w-auto"
                 >
                   Search
                 </Button>
