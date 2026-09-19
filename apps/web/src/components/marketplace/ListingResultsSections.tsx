@@ -4,6 +4,10 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BusinessListingCard } from "./BusinessListingCard";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
+import {
+  FEATURED_LISTING_COUNT,
+  TOP_RATED_LISTING_COUNT,
+} from "@/lib/listing-marketplace-rank";
 
 type Props = {
   topRated: BusinessListingCardData[];
@@ -46,7 +50,7 @@ export function ListingResultsSections({
             description="Businesses Trimma admin selected for a live featured period, ordered by most reviews first."
           />
           <div className={gridClassName}>
-            {featured.map((listing, index) => (
+            {featured.slice(0, FEATURED_LISTING_COUNT).map((listing, index) => (
               <BusinessListingCard
                 key={listing.id}
                 listing={listing}
@@ -65,7 +69,7 @@ export function ListingResultsSections({
             description="Businesses with the most reviews, ranked highest to lowest. Higher ratings break ties."
           />
           <div className={gridClassName}>
-            {topRated.slice(0, 4).map((listing) => (
+            {topRated.slice(0, TOP_RATED_LISTING_COUNT).map((listing) => (
               <BusinessListingCard
                 key={listing.id}
                 listing={listing}
