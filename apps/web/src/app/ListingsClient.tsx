@@ -304,7 +304,7 @@ export default function ListingsClient({
                   variant="hero"
                   className="hero-btn-primary hero-btn-compact h-12 min-h-11 w-full shrink-0 rounded-xl px-8 font-bold sm:col-span-2 lg:col-span-1 lg:w-auto"
                 >
-                  Search
+                  <span className="trimma-button-label">Search</span>
                 </Button>
               </div>
             </div>

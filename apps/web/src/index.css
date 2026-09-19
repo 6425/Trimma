@@ -1662,6 +1662,19 @@
 }
 
 /*
+ * Global button-label contract: action text must remain rendered on every
+ * device size. Responsive layouts may compact padding/icons, but must never
+ * hide the action label itself.
+ */
+:is(button, a, [role="button"], [data-slot="button"]) .trimma-button-label {
+  display: inline-flex !important;
+  align-items: center;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: inherit;
+}
+
+/*
  * Light dashboard hard contract — wins over dark-shell token leaks on mobile.
  * Applies to all portal body columns; sidebar menus are not targeted.
  */
