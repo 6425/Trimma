@@ -5,9 +5,13 @@ import { FindBookGlowCta } from "../../components/marketplace/FindBookGlowCta";
 import OnboardingOwnerSignup from "./OnboardingOwnerSignup";
 import { OnboardingHeroCta } from "./OnboardingHeroCta";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { fetchPublicCategories } from "@/lib/public-categories";
 
 export default async function OnboardingPage() {
-  const result = await getPublicSubscriptionPlans();
+  const [result, categories] = await Promise.all([
+    getPublicSubscriptionPlans(),
+    fetchPublicCategories(),
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -168,7 +172,7 @@ export default async function OnboardingPage() {
               </p>
             </div>
             
-            <OnboardingOwnerSignup />
+            <OnboardingOwnerSignup categories={categories} />
           </div>
         </div>
       </section>
