@@ -86,7 +86,7 @@ function cleanManualReviewCount(value: number | null | undefined): number | null
   return parsed;
 }
 
-async function validateManualListingLocation(
+export async function validateManualListingLocation(
   supabase: SupabaseClient,
   province: string,
   district: string,

@@ -32,6 +32,12 @@ import {
   markOnboardingSalonOwnerIntent,
 } from "@/lib/salon-owner-oauth-intent";
 import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
+import type { PublicCategory } from "@/lib/public-categories";
+import {
+  BusinessListingDetailsFields,
+  emptyBusinessListingForm,
+  type BusinessListingFormState,
+} from "@/components/listing/BusinessListingDetailsFields";
 
 function GoogleIcon() {
   return (
@@ -54,7 +60,7 @@ function buildBusinessSearchReturnPath() {
   return `${url.pathname}${url.search}#salon-owner-signup`;
 }
 
-export default function OnboardingOwnerSignup() {
+export default function OnboardingOwnerSignup({ categories }: { categories: PublicCategory[] }) {
   const [checkingSession, setCheckingSession] = useState(true);
   const [loading, setLoading] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -68,11 +74,25 @@ export default function OnboardingOwnerSignup() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [claimComplete, setClaimComplete] = useState<string | null>(null);
+  const [newBusiness, setNewBusiness] = useState<BusinessListingFormState>(() =>
+    emptyBusinessListingForm()
+  );
 
   const visibleMatches = useMemo(
     () => matches.filter((match) => !dismissedIds.includes(match.id)),
     [dismissedIds, matches]
   );
+
+  useEffect(() => {
+    if (!searched || visibleMatches.length > 0) return;
+    setNewBusiness((current) => ({
+      ...current,
+      name: current.name || businessName,
+      phone: current.phone || phone,
+      address: current.address || town,
+      placeId: current.placeId || placeId,
+    }));
+  }, [businessName, phone, placeId, searched, town, visibleMatches.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,8 +235,19 @@ export default function OnboardingOwnerSignup() {
 
   const handleCreate = async () => {
     if (!accessToken) return;
-    if (businessName.trim().length < 2 || phone.replace(/\D/g, "").length < 9 || town.trim().length < 2) {
-      setError("Enter the business name, a valid phone number, and town before adding a new business.");
+    if (
+      newBusiness.name.trim().length < 2 ||
+      newBusiness.phone.replace(/\D/g, "").length < 9 ||
+      !newBusiness.categoryId ||
+      !newBusiness.province ||
+      !newBusiness.district ||
+      newBusiness.address.trim().length < 2
+    ) {
+      setError("Complete the business name, category, province, district, address, and phone number.");
+      return;
+    }
+    if (Boolean(newBusiness.latitude) !== Boolean(newBusiness.longitude)) {
+      setError("Enter both latitude and longitude, or leave both empty.");
       return;
     }
 
@@ -224,10 +255,22 @@ export default function OnboardingOwnerSignup() {
     setError(null);
     try {
       const result = await createNewOnboardingBusiness(accessToken, {
-        businessName,
-        phone,
-        town,
-        placeId,
+        businessName: newBusiness.name,
+        phone: newBusiness.phone,
+        town: newBusiness.city || newBusiness.district,
+        categoryId: newBusiness.categoryId,
+        province: newBusiness.province,
+        district: newBusiness.district,
+        city: newBusiness.city,
+        address: newBusiness.address,
+        website: newBusiness.website,
+        mapUrl: newBusiness.mapUrl,
+        placeId: newBusiness.placeId,
+        latitude: newBusiness.latitude,
+        longitude: newBusiness.longitude,
+        description: newBusiness.description,
+        logoUrl: newBusiness.logoUrl,
+        heroUrl: newBusiness.heroUrl,
       });
       if (!result.success) {
         if ("matches" in result && result.matches) {
@@ -396,14 +439,27 @@ export default function OnboardingOwnerSignup() {
       )}
 
       {searched && visibleMatches.length === 0 && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-          <h4 className="text-lg font-extrabold text-zinc-900">We couldn’t find your business. Add it to Trimma.</h4>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-600">
-            We will check once more before creating a hidden draft. The new business stays unpublished until agent or admin verification.
-          </p>
-          <Button type="button" disabled={loading} onClick={handleCreate} className="mt-5 rounded-xl bg-zinc-900 px-6 font-bold text-white hover:bg-zinc-800">
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Continue with a new business"}
-          </Button>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 md:p-6">
+          <div className="mb-5 text-center">
+            <h4 className="text-lg font-extrabold text-zinc-900">We couldn’t find your business. Add it to Trimma.</h4>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-600">
+              Complete the listing details below. Trimma checks for duplicates again and keeps the new business private until verification.
+            </p>
+          </div>
+          <BusinessListingDetailsFields
+            value={newBusiness}
+            onChange={(updates) => setNewBusiness((current) => ({ ...current, ...updates }))}
+            categories={categories}
+            idPrefix="owner-new-business"
+          />
+          <div className="mt-5 border-t border-emerald-200 pt-5">
+            <p className="mb-4 text-xs leading-relaxed text-zinc-600">
+              Google rating and review totals are verified by Trimma and cannot be entered by the business owner. You can add services, staff, opening hours and upload images from your private dashboard after this step.
+            </p>
+            <Button type="button" disabled={loading} onClick={handleCreate} className="h-12 w-full rounded-xl bg-zinc-900 px-6 font-bold text-white hover:bg-zinc-800">
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create my private business draft"}
+            </Button>
+          </div>
         </div>
       )}
     </div>

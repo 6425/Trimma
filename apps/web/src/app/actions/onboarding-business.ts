@@ -22,6 +22,7 @@ import { isRealGooglePlaceId } from "@/lib/salon-discovery-dedup";
 import { applySalonSlugOnNameChange } from "@/lib/salon-profile-save";
 import { sanitizeText } from "@/lib/sanitize-input";
 import { notifyOwnerDraftCreated } from "@/app/actions/salon-onboarding-notifications";
+import { validateManualListingLocation } from "@/lib/listing-generation-mutations";
 
 const SEARCH_COLUMNS =
   "id,name,slug,category,city,district,province,address,phone,place_id,business_info_extended,owner_email,owner_gmail,is_verified,onboarding_status,status,public_visibility,booking_enabled,source_type,latitude,longitude";
@@ -41,12 +42,58 @@ export type OnboardingBusinessResult = {
   alreadyManaged: boolean;
 };
 
+export type OnboardingNewBusinessInput = OnboardingBusinessSearchInput & {
+  categoryId: string;
+  province: string;
+  district: string;
+  city?: string;
+  address: string;
+  website?: string;
+  mapUrl?: string;
+  latitude?: string;
+  longitude?: string;
+  description?: string;
+  logoUrl?: string;
+  heroUrl?: string;
+};
+
 function cleanSearchText(value: string | undefined, maxLength = 100): string {
   return String(value || "")
     .replace(/[%,()_*]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
+}
+
+function cleanLongText(value: string | undefined, maxLength: number): string {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function cleanOptionalUrl(value: string | undefined, label: string): string | null {
+  const raw = String(value || "").trim().slice(0, 2_000);
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error();
+    return url.toString();
+  } catch {
+    throw new Error(`${label} must be a valid http or https URL.`);
+  }
+}
+
+function cleanOptionalCoordinate(
+  value: string | undefined,
+  label: string,
+  min: number,
+  max: number
+): number | null {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+    throw new Error(`${label} must be between ${min} and ${max}.`);
+  }
+  return parsed;
 }
 
 function phoneHint(value: unknown): string | null {
@@ -300,7 +347,7 @@ export async function beginOnboardingBusinessClaim(
 
 export async function createNewOnboardingBusiness(
   accessToken: string,
-  input: OnboardingBusinessSearchInput
+  input: OnboardingNewBusinessInput
 ) {
   try {
     const { verified, role } = await verifyOnboardingUser(accessToken);
@@ -312,9 +359,30 @@ export async function createNewOnboardingBusiness(
     const phone = cleanSearchText(input.phone, 40);
     const town = cleanSearchText(input.town);
     const placeId = cleanSearchText(input.placeId, 180);
+    const categoryId = cleanSearchText(input.categoryId, 80);
+    const province = cleanSearchText(input.province, 120);
+    const district = cleanSearchText(input.district, 120);
+    const city = cleanSearchText(input.city, 120);
+    const address = cleanLongText(input.address, 500);
+    const description = cleanLongText(input.description, 4_000) || null;
+    const website = cleanOptionalUrl(input.website, "Website");
+    const suppliedMapUrl = cleanOptionalUrl(input.mapUrl, "Google Maps URL");
+    const logoUrl = cleanOptionalUrl(input.logoUrl, "Logo URL");
+    const heroUrl = cleanOptionalUrl(input.heroUrl, "Hero image URL");
+    const latitude = cleanOptionalCoordinate(input.latitude, "Latitude", -90, 90);
+    const longitude = cleanOptionalCoordinate(input.longitude, "Longitude", -180, 180);
     if (businessName.length < 2) throw new Error("Enter the business name before continuing.");
     if (phone.replace(/\D/g, "").length < 9) throw new Error("Enter a valid business phone number.");
     if (town.length < 2) throw new Error("Enter the business town or location.");
+    if (!categoryId) throw new Error("Select a Trimma category.");
+    if (!province || !district) throw new Error("Select the business province and district.");
+    if (address.length < 2) throw new Error("Enter the full business address.");
+    if ((latitude === null) !== (longitude === null)) {
+      throw new Error("Enter both latitude and longitude, or leave both empty.");
+    }
+    if (placeId && !isRealGooglePlaceId(placeId)) {
+      throw new Error("Enter a valid Google Place ID, or leave it empty.");
+    }
 
     const rows = await loadSearchRows({ businessName, phone, town, placeId });
     const likelyDuplicates = rankOnboardingBusinessMatches(rows, {
@@ -337,6 +405,26 @@ export async function createNewOnboardingBusiness(
     }
 
     const supabase = createSupabaseAdminClient();
+    const { data: selectedCategory, error: categoryError } = await supabase
+      .from("categories")
+      .select("id, name")
+      .eq("id", categoryId)
+      .maybeSingle();
+    if (categoryError) throw new Error(categoryError.message);
+    if (!selectedCategory?.id || !selectedCategory.name) {
+      throw new Error("Select a valid Trimma category.");
+    }
+    const locationIds = await validateManualListingLocation(
+      supabase,
+      province,
+      district,
+      city
+    );
+    const mapUrl =
+      suppliedMapUrl ||
+      (placeId
+        ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`
+        : null);
     const upgraded = await forceSalonOwnerUpgrade(
       supabase,
       verified.userId,
@@ -363,15 +451,33 @@ export async function createNewOnboardingBusiness(
     const updatePayload = await applySalonSlugOnNameChange(supabase, upgraded.salonId, {
       name: sanitizeText(businessName),
       phone: sanitizeText(phone),
-      city: sanitizeText(town),
-      address: sanitizeText(town),
-      ...(isRealGooglePlaceId(placeId) ? { place_id: placeId } : {}),
+      category: sanitizeText(String(selectedCategory.name)),
+      province: sanitizeText(province),
+      province_id: locationIds.provinceId,
+      district: sanitizeText(district),
+      district_id: locationIds.districtId,
+      city: city ? sanitizeText(city) : null,
+      city_id: locationIds.cityId,
+      address: sanitizeText(address),
+      website,
+      map_url: mapUrl,
+      place_id: placeId || null,
+      latitude,
+      longitude,
+      description,
+      summary: description,
+      logo_url: logoUrl,
+      hero_url: heroUrl,
+      cover_url: heroUrl,
       business_info_extended: {
         ...existingExtended,
         onboarding_business_name: sanitizeText(businessName),
         onboarding_phone: sanitizeText(phone),
-        onboarding_town: sanitizeText(town),
-        ...(isRealGooglePlaceId(placeId) ? { google_place_id: placeId } : {}),
+        onboarding_town: sanitizeText(city || district),
+        trimma_categories: [String(selectedCategory.name)],
+        self_serve_listing_form: true,
+        ...(placeId ? { google_place_id: placeId } : {}),
+        ...(mapUrl ? { google_maps_url: mapUrl } : {}),
       },
     });
 
@@ -385,13 +491,13 @@ export async function createNewOnboardingBusiness(
       salon_id: upgraded.salonId,
       actor_email: verified.email,
       action: "SELF_SERVE_BUSINESS_CREATED",
-      notes: `Private salon draft created after duplicate search: ${businessName}, ${town}.`,
+      notes: `Private salon draft created after duplicate search: ${businessName}, ${city || district}.`,
     });
 
     await notifyOwnerDraftCreated({
       salonId: upgraded.salonId,
       salonName: businessName,
-      salonAddress: town,
+      salonAddress: [address, city, district, province].filter(Boolean).join(", "),
       ownerEmail: verified.email,
       ownerName:
         verified.userMetadata?.full_name ||
