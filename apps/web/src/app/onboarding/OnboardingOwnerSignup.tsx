@@ -84,17 +84,6 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
   );
 
   useEffect(() => {
-    if (!searched || visibleMatches.length > 0) return;
-    setNewBusiness((current) => ({
-      ...current,
-      name: current.name || businessName,
-      phone: current.phone || phone,
-      address: current.address || town,
-      placeId: current.placeId || placeId,
-    }));
-  }, [businessName, phone, placeId, searched, town, visibleMatches.length]);
-
-  useEffect(() => {
     let cancelled = false;
     const url = new URL(window.location.href);
     const claimSalonId = url.searchParams.get("claim")?.trim() || "";
@@ -211,6 +200,15 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
       if (!result.success) throw new Error(result.error);
       setMatches(result.matches);
       setSearched(true);
+      if (result.matches.length === 0) {
+        setNewBusiness((current) => ({
+          ...current,
+          name: current.name || businessName,
+          phone: current.phone || phone,
+          address: current.address || town,
+          placeId: current.placeId || placeId,
+        }));
+      }
     } catch (searchError) {
       setError(searchError instanceof Error ? searchError.message : "Could not search Trimma listings.");
     } finally {
@@ -231,6 +229,18 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDismissMatch = (salonId: string) => {
+    setDismissedIds((ids) => [...ids, salonId]);
+    if (visibleMatches.filter((match) => match.id !== salonId).length > 0) return;
+    setNewBusiness((current) => ({
+      ...current,
+      name: current.name || businessName,
+      phone: current.phone || phone,
+      address: current.address || town,
+      placeId: current.placeId || placeId,
+    }));
   };
 
   const handleCreate = async () => {
@@ -424,7 +434,7 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
                   <Button type="button" disabled={loading} onClick={() => handleClaim(match.id)} className="rounded-xl bg-zinc-900 font-bold text-white hover:bg-zinc-800">
                     Yes, claim and continue
                   </Button>
-                  <Button type="button" variant="outline" disabled={loading} onClick={() => setDismissedIds((ids) => [...ids, match.id])} className="rounded-xl bg-white font-bold text-zinc-800">
+                  <Button type="button" variant="outline" disabled={loading} onClick={() => handleDismissMatch(match.id)} className="rounded-xl bg-white font-bold text-zinc-800">
                     This is not my business
                   </Button>
                 </div>
