@@ -45,14 +45,15 @@ export default async function OnboardingPage() {
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
-                Sign in with Google and find your business on Trimma first. Claim an existing listing or create a new,
-                unpublished business draft when no match exists.
+                Search Trimma before signing in. Select your existing listing to claim it, or register with Google and
+                create a new unpublished business draft when no match exists.
               </p>
 
               <ol className="text-sm max-w-lg text-left space-y-2 list-decimal list-inside font-medium">
-                <li>Sign in securely with Google</li>
                 <li>Search by business name, phone and town</li>
-                <li>Claim the existing listing or add a new business</li>
+                <li>Select the exact listing or confirm the business is missing</li>
+                <li>Sign in securely with Google</li>
+                <li>Claim the existing listing or complete the new-business form</li>
                 <li>Complete onboarding → reviewer checks it → admin verifies → live on Trimma</li>
               </ol>
             </div>
@@ -168,7 +169,7 @@ export default async function OnboardingPage() {
             <div className="mb-10 text-center">
               <h2 className="text-3xl font-extrabold text-zinc-900 mb-2">Start Salon Owner Onboarding</h2>
               <p className="text-zinc-500">
-                One secure journey for both claiming an existing listing and adding a new business.
+                Search first, then securely claim an existing listing or add a new business.
               </p>
             </div>
             

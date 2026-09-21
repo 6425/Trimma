@@ -2,6 +2,7 @@ export const SALON_OWNER_OAUTH_INTENT_KEY = "trimma-oauth-intent";
 export const SALON_OWNER_OAUTH_NEXT_KEY = "trimma-oauth-next";
 export const SALON_OWNER_ONBOARDING_FLAG_KEY = "trimma-onboarding-salon-owner";
 export const SALON_OWNER_INVITE_SALON_KEY = "trimma-oauth-invite-salon";
+const SALON_OWNER_DISCOVERY_KEY = "trimma-onboarding-business-discovery";
 const SALON_OWNER_OAUTH_CREATED_AT_KEY = "trimma-oauth-created-at";
 const SALON_OWNER_OAUTH_TTL_MS = 30 * 60 * 1000;
 
@@ -30,6 +31,41 @@ export function persistSalonOwnerInviteSalon(salonId: string) {
 export function readSalonOwnerInviteSalonId(): string | null {
   if (typeof window === "undefined") return null;
   return sessionStorage.getItem(SALON_OWNER_INVITE_SALON_KEY);
+}
+
+export type SalonOwnerBusinessDiscovery = {
+  businessName: string;
+  phone: string;
+  town: string;
+  placeId: string;
+};
+
+export function persistSalonOwnerBusinessDiscovery(input: SalonOwnerBusinessDiscovery) {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(SALON_OWNER_DISCOVERY_KEY, JSON.stringify(input));
+}
+
+export function readSalonOwnerBusinessDiscovery(): SalonOwnerBusinessDiscovery | null {
+  if (typeof window === "undefined") return null;
+  const raw = sessionStorage.getItem(SALON_OWNER_DISCOVERY_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<SalonOwnerBusinessDiscovery>;
+    return {
+      businessName: String(parsed.businessName || ""),
+      phone: String(parsed.phone || ""),
+      town: String(parsed.town || ""),
+      placeId: String(parsed.placeId || ""),
+    };
+  } catch {
+    sessionStorage.removeItem(SALON_OWNER_DISCOVERY_KEY);
+    return null;
+  }
+}
+
+export function clearSalonOwnerBusinessDiscovery() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(SALON_OWNER_DISCOVERY_KEY);
 }
 
 export function readSalonOwnerOAuthIntent(): {

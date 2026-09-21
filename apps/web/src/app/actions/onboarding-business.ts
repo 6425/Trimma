@@ -191,24 +191,42 @@ async function verifyOnboardingUser(accessToken: string) {
   return { verified, role };
 }
 
+function validateBusinessSearchInput(input: OnboardingBusinessSearchInput): string | null {
+  const hasDirectListing = Boolean(cleanSearchText(input.listingId, 80));
+  const hasPlaceId = Boolean(cleanSearchText(input.placeId, 180));
+  const name = cleanSearchText(input.businessName);
+  const town = cleanSearchText(input.town);
+  const phone = String(input.phone || "").replace(/\D/g, "");
+  if (!hasDirectListing && !hasPlaceId && name.length < 2 && phone.length < 7 && town.length < 2) {
+    return "Enter a business name, phone number, or town to search.";
+  }
+  return null;
+}
+
+/** Public, sanitized discovery used before Google sign-in. */
+export async function searchPublicOnboardingBusinesses(input: OnboardingBusinessSearchInput) {
+  try {
+    const validationError = validateBusinessSearchInput(input);
+    if (validationError) return { success: false as const, error: validationError };
+    const rows = await loadSearchRows(input);
+    const matches = rankOnboardingBusinessMatches(rows, input).slice(0, 8).map(toPublicResult);
+    return { success: true as const, matches };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Could not search Trimma listings.",
+    };
+  }
+}
+
 export async function searchOnboardingBusinesses(
   accessToken: string,
   input: OnboardingBusinessSearchInput
 ) {
   try {
     await verifyOnboardingUser(accessToken);
-    const hasDirectListing = Boolean(cleanSearchText(input.listingId, 80));
-    const hasPlaceId = Boolean(cleanSearchText(input.placeId, 180));
-    const name = cleanSearchText(input.businessName);
-    const town = cleanSearchText(input.town);
-    const phone = String(input.phone || "").replace(/\D/g, "");
-
-    if (!hasDirectListing && !hasPlaceId && name.length < 2 && phone.length < 7 && town.length < 2) {
-      return {
-        success: false as const,
-        error: "Enter a business name, phone number, or town to search.",
-      };
-    }
+    const validationError = validateBusinessSearchInput(input);
+    if (validationError) return { success: false as const, error: validationError };
 
     const rows = await loadSearchRows(input);
     const matches = rankOnboardingBusinessMatches(rows, input).slice(0, 8).map(toPublicResult);
