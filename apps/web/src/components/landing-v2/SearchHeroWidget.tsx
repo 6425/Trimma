@@ -93,7 +93,7 @@ export function SearchHeroWidget() {
                 Book Now
               </Link>
               <Link
-                href="/signup"
+                href="/onboarding?intent=list#salon-owner-signup"
                 className="hero-btn-secondary min-h-[56px] h-14 px-8 rounded-xl text-lg"
               >
                 List Your Business

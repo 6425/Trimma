@@ -20,7 +20,7 @@ export function B2BCTA() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link 
-              href="/onboarding"
+              href="/onboarding?intent=list#salon-owner-signup"
               className="bg-white text-zinc-900 hover:bg-zinc-100 font-bold px-8 py-3.5 rounded-md text-center transition-colors"
             >
               List Your Salon
