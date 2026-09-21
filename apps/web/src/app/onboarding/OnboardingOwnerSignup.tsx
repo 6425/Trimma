@@ -20,16 +20,18 @@ import { resolveLoginRole } from "@/app/actions/login-session";
 import {
   beginOnboardingBusinessClaim,
   createNewOnboardingBusiness,
+  searchPublicOnboardingBusinesses,
   searchOnboardingBusinesses,
   type OnboardingBusinessResult,
 } from "@/app/actions/onboarding-business";
 import {
-  SALON_OWNER_DISCOVERY_REDIRECT,
   startSalonOwnerGoogleOAuth,
 } from "@/lib/salon-owner-oauth";
 import {
+  clearSalonOwnerBusinessDiscovery,
   clearSalonOwnerOAuthIntent,
-  markOnboardingSalonOwnerIntent,
+  persistSalonOwnerBusinessDiscovery,
+  readSalonOwnerBusinessDiscovery,
 } from "@/lib/salon-owner-oauth-intent";
 import { redirectAfterAuth, syncTrimmaSecureSession } from "@/lib/trimma-role";
 import type { PublicCategory } from "@/lib/public-categories";
@@ -38,6 +40,13 @@ import {
   emptyBusinessListingForm,
   type BusinessListingFormState,
 } from "@/components/listing/BusinessListingDetailsFields";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function GoogleIcon() {
   return (
@@ -54,9 +63,20 @@ function locationLabel(match: OnboardingBusinessResult) {
   return [match.city, match.district, match.province].filter(Boolean).join(", ") || "Location not yet listed";
 }
 
-function buildBusinessSearchReturnPath() {
+function buildBusinessSearchReturnPath(input?: {
+  intent?: "claim" | "list";
+  salonId?: string | null;
+}) {
   const url = new URL(window.location.href);
   url.searchParams.set("step", "business-search");
+  if (input?.intent) url.searchParams.set("intent", input.intent);
+  if (input?.salonId) {
+    url.searchParams.set("claim", input.salonId);
+    url.searchParams.delete("new");
+  } else if (input?.intent === "list") {
+    url.searchParams.delete("claim");
+    url.searchParams.set("new", "1");
+  }
   return `${url.pathname}${url.search}#salon-owner-signup`;
 }
 
@@ -87,9 +107,8 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
     let cancelled = false;
     const url = new URL(window.location.href);
     const claimSalonId = url.searchParams.get("claim")?.trim() || "";
+    const continueWithNewBusiness = url.searchParams.get("new") === "1";
     const returningFromGoogle = url.searchParams.get("step") === "business-search";
-    const nextPath = buildBusinessSearchReturnPath();
-    markOnboardingSalonOwnerIntent(nextPath || SALON_OWNER_DISCOVERY_REDIRECT);
 
     async function prepareSession() {
       try {
@@ -102,6 +121,17 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
           await new Promise((resolve) => window.setTimeout(resolve, 200));
         }
         if (!session?.access_token) {
+          if (claimSalonId) {
+            const result = await searchPublicOnboardingBusinesses({ listingId: claimSalonId });
+            if (!result.success) throw new Error(result.error);
+            if (cancelled) return;
+            setMatches(result.matches);
+            setSearched(true);
+            if (result.matches[0]) {
+              setBusinessName(result.matches[0].name);
+              setTown(result.matches[0].city || result.matches[0].district || "");
+            }
+          }
           if (returningFromGoogle) {
             setError("Google sign-in did not finish correctly. Please select Continue with Google once more.");
           }
@@ -131,6 +161,13 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
         setAccessToken(session.access_token);
         setSignedInEmail(session.user.email || "");
         clearSalonOwnerOAuthIntent();
+        const savedDiscovery = readSalonOwnerBusinessDiscovery();
+        if (savedDiscovery) {
+          setBusinessName(savedDiscovery.businessName);
+          setPhone(savedDiscovery.phone);
+          setTown(savedDiscovery.town);
+          setPlaceId(savedDiscovery.placeId);
+        }
 
         // Step 2 uses token-verified server actions and does not require the
         // middleware cookie. Establish it in the background for subsequent
@@ -154,7 +191,18 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
             setBusinessName(result.matches[0].name);
             setTown(result.matches[0].city || result.matches[0].district || "");
           }
+        } else if (continueWithNewBusiness && savedDiscovery) {
+          setMatches([]);
+          setSearched(true);
+          setNewBusiness((current) => ({
+            ...current,
+            name: savedDiscovery.businessName,
+            phone: savedDiscovery.phone,
+            address: savedDiscovery.town,
+            placeId: savedDiscovery.placeId,
+          }));
         }
+        clearSalonOwnerBusinessDiscovery();
       } catch (sessionError) {
         if (!cancelled) {
           setError(sessionError instanceof Error ? sessionError.message : "Could not verify your Google account.");
@@ -173,13 +221,39 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
     };
   }, []);
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleSignup = async (input: {
+    intent: "claim" | "list";
+    salonId?: string;
+  }) => {
     setLoading(true);
     setError(null);
-    const nextPath = buildBusinessSearchReturnPath();
+    persistSalonOwnerBusinessDiscovery({ businessName, phone, town, placeId });
+    const nextPath = buildBusinessSearchReturnPath(input);
     const result = await startSalonOwnerGoogleOAuth(nextPath);
     if (!result.ok) {
       setError(result.error || "Google sign-in failed.");
+      setLoading(false);
+    }
+  };
+
+  const handlePublicSearch = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    setDismissedIds([]);
+    try {
+      const result = await searchPublicOnboardingBusinesses({
+        businessName,
+        phone,
+        town,
+        placeId,
+      });
+      if (!result.success) throw new Error(result.error);
+      setMatches(result.matches);
+      setSearched(true);
+    } catch (searchError) {
+      setError(searchError instanceof Error ? searchError.message : "Could not search Trimma listings.");
+    } finally {
       setLoading(false);
     }
   };
@@ -312,49 +386,122 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
 
   if (!accessToken) {
     return (
-      <div className="space-y-7 text-center">
-        <div className="space-y-3">
-          <h3 className="text-2xl font-extrabold text-zinc-900">List or claim your business</h3>
-          <p className="mx-auto max-w-xl leading-relaxed text-zinc-600">
-            Sign in with Google first. Trimma will check existing listings before creating anything, so your business is not duplicated.
-          </p>
-        </div>
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (!open) {
+            if (window.history.length > 1) window.history.back();
+            else window.location.assign("/");
+          }
+        }}
+      >
+        <DialogContent className="trimma-light-context max-h-[92vh] overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-5 text-zinc-900 shadow-2xl sm:max-w-3xl md:p-7">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-2xl font-extrabold text-zinc-900">
+              Find your business on Trimma
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed text-zinc-600">
+              Search before signing in. If your business exists, select the exact listing to claim it. If it is not listed, continue to register as a business owner and create a private listing.
+            </DialogDescription>
+          </DialogHeader>
 
-        {error && <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">{error}</div>}
-
-        <Button
-          type="button"
-          disabled={loading}
-          onClick={handleGoogleSignup}
-          className="mx-auto h-14 w-full max-w-md rounded-2xl bg-zinc-900 text-base font-bold text-white shadow-lg hover:bg-zinc-800"
-        >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><GoogleIcon />Continue with Google</>}
-        </Button>
-
-        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-3 text-left sm:grid-cols-3">
-          {[
-            { step: "1", title: "Sign in securely", body: "Use the Google account you want linked to the business." },
-            { step: "2", title: "Find your business", body: "Search by name, phone, town, or Google Place ID." },
-            { step: "3", title: "Claim or add", body: "Claim a match, or create a hidden draft when no match exists." },
-          ].map((item) => (
-            <div key={item.step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="mb-2 text-xs font-black uppercase tracking-wider text-brand-pink">Step {item.step}</div>
-              <p className="mb-1 text-sm font-bold text-zinc-900">{item.title}</p>
-              <p className="text-xs leading-relaxed text-zinc-500">{item.body}</p>
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+              {error}
             </div>
-          ))}
-        </div>
+          )}
 
-        <p className="text-xs text-zinc-500">
-          Already invited by Trimma?{" "}
-          <Link href="/login?redirectTo=/dashboard/profile&intent=salon-owner" className="font-semibold text-zinc-800 underline">
-            Use your private salon-owner invitation
-          </Link>
-        </p>
-      </div>
+          <form onSubmit={handlePublicSearch} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="public-business-name" className="text-xs font-bold text-zinc-600">Business name</Label>
+                <Input id="public-business-name" value={businessName} onChange={(event) => setBusinessName(event.target.value)} placeholder="e.g. Salon ABC" className="h-12 rounded-xl bg-white" autoFocus />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-zinc-600">Phone or WhatsApp number</Label>
+                <LkPhoneInput theme="light" value={phone} onChange={setPhone} className="h-12" inputClassName="h-12" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="public-business-town" className="text-xs font-bold text-zinc-600">Town or location</Label>
+                <Input id="public-business-town" value={town} onChange={(event) => setTown(event.target.value)} placeholder="e.g. Kadawatha" className="h-12 rounded-xl bg-white" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="public-place-id" className="text-xs font-bold text-zinc-600">Google Place ID <span className="font-normal text-zinc-400">(optional)</span></Label>
+                <Input id="public-place-id" value={placeId} onChange={(event) => setPlaceId(event.target.value)} placeholder="Strongest exact match" className="h-12 rounded-xl bg-white" />
+              </div>
+            </div>
+            <Button type="submit" disabled={loading} className="h-12 w-full rounded-xl bg-zinc-900 font-bold text-white hover:bg-zinc-800 hover:text-white">
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Search className="mr-2 h-4 w-4" />Check Trimma businesses</>}
+            </Button>
+          </form>
+
+          {visibleMatches.length > 0 && (
+            <div className="space-y-3">
+              <div>
+                <h4 className="font-extrabold text-zinc-900">Is one of these your business?</h4>
+                <p className="text-xs text-zinc-500">Choose the exact listing before Google sign-in.</p>
+              </div>
+              {visibleMatches.map((match) => (
+                <div key={match.id} className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="font-extrabold text-zinc-900">{match.name}</p>
+                      <p className="mt-1 flex items-center gap-2 text-sm text-zinc-600"><MapPin className="h-4 w-4" />{locationLabel(match)}</p>
+                      {match.phoneHint && <p className="mt-1 flex items-center gap-2 text-sm text-zinc-600"><Phone className="h-4 w-4" />{match.phoneHint}</p>}
+                    </div>
+                    {match.slug && <Link href={`/salons/${match.slug}`} target="_blank" className="text-sm font-bold text-zinc-700 underline">View listing</Link>}
+                  </div>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    {match.claimable ? (
+                      <Button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => void handleGoogleSignup({ intent: "claim", salonId: match.id })}
+                        className="rounded-xl bg-zinc-900 font-bold text-white hover:bg-zinc-800 hover:text-white"
+                      >
+                        <GoogleIcon />This is my business — Sign in
+                      </Button>
+                    ) : (
+                      <div className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-zinc-600">
+                        This listing is already managed. Contact Trimma if ownership has changed.
+                      </div>
+                    )}
+                    <Button type="button" variant="outline" disabled={loading} onClick={() => handleDismissMatch(match.id)} className="rounded-xl bg-white font-bold text-zinc-800">
+                      This is not my business
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {searched && visibleMatches.length === 0 && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+              <h4 className="text-lg font-extrabold text-zinc-900">Business not found on Trimma</h4>
+              <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-600">
+                Continue with Google to register as a business owner and complete the new-business listing form.
+              </p>
+              <Button
+                type="button"
+                disabled={loading}
+                onClick={() => void handleGoogleSignup({ intent: "list" })}
+                className="mt-4 h-12 w-full rounded-xl bg-zinc-900 font-bold text-white hover:bg-zinc-800 hover:text-white sm:w-auto"
+              >
+                <GoogleIcon />Register and list this business
+              </Button>
+            </div>
+          )}
+
+          <p className="text-center text-xs text-zinc-500">
+            Already invited by Trimma?{" "}
+            <Link href="/login?redirectTo=/dashboard/profile&intent=salon-owner" className="font-semibold text-zinc-800 underline">
+              Use your private salon-owner invitation
+            </Link>
+          </p>
+        </DialogContent>
+      </Dialog>
     );
   }
-
   if (claimComplete) {
     return (
       <div className="py-8 text-center">
