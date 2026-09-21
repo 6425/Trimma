@@ -228,6 +228,12 @@ export default function CategoryClient({
     size: "lg",
     className: "hero-btn-primary hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 font-bold sm:w-auto",
   });
+  const listCtaClass = buttonVariants({
+    variant: "outline",
+    size: "lg",
+    className:
+      "h-12 min-h-11 w-full rounded-xl border-2 border-zinc-900 bg-white px-8 font-bold !text-zinc-900 hover:bg-zinc-100 hover:!text-zinc-900 sm:w-auto",
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -267,9 +273,14 @@ export default function CategoryClient({
                 <p className="text-sm sm:text-base md:text-lg font-medium max-w-lg leading-relaxed">
                   {heroCopy.description}
                 </p>
-                <Link href="/onboarding" className={claimCtaClass}>
-                  Claim Your Business — It&apos;s Free
-                </Link>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <Link href="/onboarding?intent=claim#salon-owner-signup" className={claimCtaClass}>
+                    Claim Your Business
+                  </Link>
+                  <Link href="/onboarding?intent=list#salon-owner-signup" className={listCtaClass}>
+                    List Your Business
+                  </Link>
+                </div>
               </div>
 
               <div className="home-hero-middle">
@@ -348,9 +359,12 @@ export default function CategoryClient({
             <p className="text-base md:text-lg text-zinc-700 mb-6 max-w-xl mx-auto font-medium">
               {heroCopy.description}
             </p>
-            <div className="mb-6 flex justify-center">
-              <Link href="/onboarding" className={claimCtaClass}>
-                Claim Your Business — It&apos;s Free
+            <div className="mb-6 flex flex-col justify-center gap-2 sm:flex-row">
+              <Link href="/onboarding?intent=claim#salon-owner-signup" className={claimCtaClass}>
+                Claim Your Business
+              </Link>
+              <Link href="/onboarding?intent=list#salon-owner-signup" className={listCtaClass}>
+                List Your Business
               </Link>
             </div>
 

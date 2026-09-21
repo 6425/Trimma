@@ -157,8 +157,8 @@ export default function GlobalHeader() {
             </div>
 
             <div className="hidden md:flex items-center gap-2">
-              <Link href="/onboarding" className={`${navActionClass} hidden min-h-11 lg:inline-flex items-center`}>
-                Grow My Salon
+              <Link href="/onboarding?intent=list#salon-owner-signup" className={`${navActionClass} hidden min-h-11 lg:inline-flex items-center`}>
+                List Your Business
               </Link>
             </div>
 
@@ -270,12 +270,12 @@ export default function GlobalHeader() {
             </Link>
             <div className="h-px bg-zinc-100 my-2" />
             <Link
-              href="/onboarding"
+              href="/onboarding?intent=list#salon-owner-signup"
               onClick={() => setMobileMenuOpen(false)}
               className={navMobileClass(false)}
             >
               <Building2 className="w-4 h-4 shrink-0" />
-              Grow My Salon
+              List Your Business
             </Link>
           </nav>
         </div>

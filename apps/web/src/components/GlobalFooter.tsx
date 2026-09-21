@@ -73,7 +73,7 @@ export default function GlobalFooter() {
                 For Businesses
               </h2>
               <ul className="mt-3 space-y-1">
-                <li><Link href="/onboarding" className={footerLinkClass}>List Your Business</Link></li>
+                <li><Link href="/onboarding?intent=list#salon-owner-signup" className={footerLinkClass}>List Your Business</Link></li>
                 <li><Link href="/agent/login" className={footerLinkClass}>Partner Portal</Link></li>
                 <li><Link href="/about" className={footerLinkClass}>About Trimma</Link></li>
                 <li><Link href="/careers" className={footerLinkClass}>Careers</Link></li>

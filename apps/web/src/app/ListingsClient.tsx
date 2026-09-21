@@ -249,17 +249,30 @@ export default function ListingsClient({
 
             <div className="home-hero-middle">
               <div className="flex flex-col items-start gap-3">
-                <Link
-                  href="/onboarding"
-                  className={buttonVariants({
-                    variant: "hero",
-                    size: "lg",
-                    className:
-                      "hero-btn-primary hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 font-bold sm:w-auto",
-                  })}
-                >
-                  Claim Your Business — It&apos;s Free
-                </Link>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <Link
+                    href="/onboarding?intent=claim#salon-owner-signup"
+                    className={buttonVariants({
+                      variant: "hero",
+                      size: "lg",
+                      className:
+                        "hero-btn-primary hero-btn-compact h-12 min-h-11 w-full rounded-xl px-8 font-bold sm:w-auto",
+                    })}
+                  >
+                    Claim Your Business
+                  </Link>
+                  <Link
+                    href="/onboarding?intent=list#salon-owner-signup"
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "lg",
+                      className:
+                        "h-12 min-h-11 w-full rounded-xl border-2 border-zinc-900 bg-white px-8 font-bold !text-zinc-900 hover:bg-zinc-100 hover:!text-zinc-900 sm:w-auto",
+                    })}
+                  >
+                    List Your Business
+                  </Link>
+                </div>
                 <p className="max-w-lg text-sm font-medium leading-relaxed text-zinc-800">
                   Get discovered. Manage bookings. Grow your business with Trimma.
                 </p>

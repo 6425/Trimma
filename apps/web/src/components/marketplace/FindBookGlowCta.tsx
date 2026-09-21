@@ -30,14 +30,14 @@ export function FindBookGlowCta() {
             Find a Salon
           </Link>
           <Link
-            href="/onboarding"
+            href="/onboarding?intent=list#salon-owner-signup"
             className={cn(
               buttonVariants({ variant: "outline", size: "xl" }),
               "min-h-11 rounded-2xl px-10 py-4 font-bold hover:scale-[1.03] motion-reduce:hover:scale-100"
             )}
           >
             <Store className="w-4 h-4" />
-            Grow My Salon
+            List Your Business
           </Link>
         </div>
       </div>
