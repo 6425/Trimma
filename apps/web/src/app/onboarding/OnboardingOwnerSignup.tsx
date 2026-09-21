@@ -395,15 +395,17 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
           }
         }}
       >
-        <DialogContent className="trimma-light-context max-h-[92vh] overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-5 text-zinc-900 shadow-2xl sm:max-w-3xl md:p-7">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-2xl font-extrabold text-zinc-900">
+        <DialogContent className="trimma-light-context !left-0 !top-0 flex !h-[100dvh] !max-h-[100dvh] !w-full !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden !rounded-none border-0 bg-white !p-0 text-zinc-900 shadow-2xl sm:!left-1/2 sm:!top-1/2 sm:!h-auto sm:!max-h-[calc(100dvh-2rem)] sm:!w-[min(56rem,calc(100vw-2rem))] sm:!max-w-4xl sm:!-translate-x-1/2 sm:!-translate-y-1/2 sm:!rounded-3xl sm:border sm:border-zinc-200">
+          <DialogHeader className="shrink-0 border-b border-zinc-200 bg-white px-4 py-4 pr-12 text-left sm:px-6 sm:py-5 sm:pr-14">
+            <DialogTitle className="text-xl font-extrabold leading-tight text-zinc-900 sm:text-2xl">
               Find your business on Trimma
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-600">
+            <DialogDescription className="text-xs leading-relaxed text-zinc-600 sm:text-sm">
               Search before signing in. If your business exists, select the exact listing to claim it. If it is not listed, continue to register as a business owner and create a private listing.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
 
           {error && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
@@ -411,26 +413,26 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
             </div>
           )}
 
-          <form onSubmit={handlePublicSearch} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+          <form onSubmit={handlePublicSearch} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="public-business-name" className="text-xs font-bold text-zinc-600">Business name</Label>
-                <Input id="public-business-name" value={businessName} onChange={(event) => setBusinessName(event.target.value)} placeholder="e.g. Salon ABC" className="h-12 rounded-xl bg-white" autoFocus />
+                <Input id="public-business-name" value={businessName} onChange={(event) => setBusinessName(event.target.value)} placeholder="e.g. Salon ABC" className="h-11 rounded-xl bg-white" autoFocus />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-zinc-600">Phone or WhatsApp number</Label>
-                <LkPhoneInput theme="light" value={phone} onChange={setPhone} className="h-12" inputClassName="h-12" />
+                <LkPhoneInput theme="light" value={phone} onChange={setPhone} className="h-11" inputClassName="h-11" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="public-business-town" className="text-xs font-bold text-zinc-600">Town or location</Label>
-                <Input id="public-business-town" value={town} onChange={(event) => setTown(event.target.value)} placeholder="e.g. Kadawatha" className="h-12 rounded-xl bg-white" />
+                <Input id="public-business-town" value={town} onChange={(event) => setTown(event.target.value)} placeholder="e.g. Kadawatha" className="h-11 rounded-xl bg-white" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="public-place-id" className="text-xs font-bold text-zinc-600">Google Place ID <span className="font-normal text-zinc-400">(optional)</span></Label>
-                <Input id="public-place-id" value={placeId} onChange={(event) => setPlaceId(event.target.value)} placeholder="Strongest exact match" className="h-12 rounded-xl bg-white" />
+                <Input id="public-place-id" value={placeId} onChange={(event) => setPlaceId(event.target.value)} placeholder="Strongest exact match" className="h-11 rounded-xl bg-white" />
               </div>
             </div>
-            <Button type="submit" disabled={loading} className="h-12 w-full rounded-xl bg-zinc-900 font-bold text-white hover:bg-zinc-800 hover:text-white">
+            <Button type="submit" disabled={loading} className="h-11 w-full rounded-xl bg-zinc-900 font-bold text-white hover:bg-zinc-800 hover:text-white">
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Search className="mr-2 h-4 w-4" />Check Trimma businesses</>}
             </Button>
           </form>
@@ -498,6 +500,7 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
               Use your private salon-owner invitation
             </Link>
           </p>
+          </div>
         </DialogContent>
       </Dialog>
     );
