@@ -195,11 +195,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar (Desktop fixed | Mobile sliding drawer) ── */}
-      <aside className={`trimma-dashboard-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#0B0B0B] border-r border-white/8 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.6)]' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`trimma-dashboard-sidebar trimma-salon-owner-sidebar trimma-portal-sidebar fixed inset-y-0 left-0 z-50 w-72 lg:w-64 bg-[#ffde5a] text-black border-r border-black/10 flex flex-col h-dvh overflow-hidden transition-transform duration-300 lg:relative lg:inset-auto lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0 shadow-[4px_0_40px_rgba(0,0,0,0.25)]' : '-translate-x-full lg:translate-x-0'}`}>
         
         <div className="trimma-dashboard-sidebar-head shrink-0">
           {/* Sidebar Header */}
-          <div className="h-20 flex items-center justify-between px-6 border-b border-white/8 py-4">
+          <div className="h-20 flex items-center justify-between px-6 border-b border-black/10 py-4">
             <Link href="/" className="hover:opacity-90 transition-opacity">
               <Logo variant="dark" iconSize={36} title="Trimma" tagline={isAd ? "Admin Engine" : "Workspace"} />
             </Link>
@@ -252,7 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </div>
                       <ChevronDown className={`w-3 h-3 transition-transform ${pathname?.startsWith(item.href) ? '' : '-rotate-90'}`} />
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-0.5 pl-4 ml-3 border-l border-white/8 mt-0.5">
+                    <CollapsibleContent className="space-y-0.5 pl-4 ml-3 border-l border-black/10 mt-0.5">
                       {item.children.map((child: any) => (
                         <Link key={child.name}
                           href={child.href}
@@ -297,7 +297,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         
         {/* Sidebar Footer */}
-        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-white/8 space-y-0.5 bg-[#ffde5a]">
+        <div className="trimma-dashboard-sidebar-footer shrink-0 p-3 border-t border-black/10 space-y-0.5 bg-[#ffde5a] text-black">
           <Link href="/dashboard/settings"
             className={`trimma-sidebar-nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
               pathname === "/dashboard/settings"
@@ -402,14 +402,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Global Activation Banner */}
         {role === "salon_owner" && needsOwnerActivationWizard(onboardingStatus) && (
-          <div className="bg-emerald-600 text-white px-4 py-3 flex flex-col sm:flex-row items-center justify-between text-sm shadow-md z-30 relative">
+          <div className="border-y border-black/10 bg-[#ffde5a] px-4 py-3 text-zinc-950 shadow-sm z-30 relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span className="font-medium">
                 Welcome! Complete your Salon Profile, add an active service and staff member, assign the service to that staff member, then submit for booking approval.
               </span>
             </div>
-            <Link href="/dashboard/profile" className="mt-2 sm:mt-0 font-bold underline hover:text-emerald-100 whitespace-nowrap">
+            <Link href="/dashboard/profile" className="rounded-md px-2 py-1 font-bold text-zinc-950 underline decoration-black/40 underline-offset-4 whitespace-nowrap transition-colors hover:bg-black/10 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/70">
               Go to Salon Profile &rarr;
             </Link>
           </div>
