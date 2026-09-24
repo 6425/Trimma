@@ -4,7 +4,10 @@ import type { TrimmaUserRole } from "@/lib/auth-routes";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
 import { linkInvitedOwnerAccount } from "@/lib/link-owner-account";
-import { forceSalonOwnerUpgrade } from "@/lib/force-salon-owner-upgrade";
+import {
+  forceSalonOwnerUpgrade,
+  persistSalonOwnerRole,
+} from "@/lib/force-salon-owner-upgrade";
 import { linkOwnerEmailToSalonInvite } from "@/lib/link-owner-to-salon-invite";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendWelcomeCustomerWhatsApp } from "@/app/actions/whatsapp";
@@ -32,6 +35,54 @@ export async function resolveLoginRole(accessToken: string) {
     return { success: true as const, role, userId: verified.userId };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not verify your account.";
+    return { success: false as const, error: message };
+  }
+}
+
+/**
+ * Record an authenticated onboarding user as a salon owner without creating a
+ * placeholder salon. The salon is provisioned only after the owner submits the
+ * new-business form, preventing customer profiles and empty salon drafts.
+ */
+export async function registerSalonOwnerFromOnboarding(accessToken: string) {
+  if (!accessToken?.trim()) {
+    return { success: false as const, error: "Missing session token. Please sign in again." };
+  }
+
+  try {
+    const verified = await verifyAccessToken(accessToken);
+    if (!verified) {
+      return { success: false as const, error: "Invalid or expired session. Please sign in again." };
+    }
+
+    const existingRole =
+      (await resolveTrimmaUserRoleServer(verified.userId, verified.email)) ?? "customer";
+    if (existingRole === "admin" || existingRole === "agent" || existingRole === "regional_head") {
+      return {
+        success: true as const,
+        role: existingRole,
+        onboardingStatus: null,
+        salonId: null,
+      };
+    }
+
+    const admin = createSupabaseAdminClient();
+    await persistSalonOwnerRole(
+      admin,
+      verified.userId,
+      verified.email,
+      verified.userMetadata?.full_name || verified.userMetadata?.first_name,
+      verified.userMetadata?.avatar_url
+    );
+
+    return {
+      success: true as const,
+      role: "salon_owner" as const,
+      onboardingStatus: null,
+      salonId: null,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not create your salon owner profile.";
     return { success: false as const, error: message };
   }
 }
