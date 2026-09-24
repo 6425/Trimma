@@ -4,7 +4,7 @@ import { normalizeEmail } from "@/lib/normalize-email";
 import { provisionSelfServeSalonOwner } from "@/lib/provision-self-serve-salon";
 import { syncUserRolesForGlobalRole } from "@/lib/sync-user-role";
 
-async function persistSalonOwnerUser(
+export async function persistSalonOwnerRole(
   admin: SupabaseClient,
   authUserId: string,
   normalizedEmail: string,
@@ -70,7 +70,7 @@ export async function forceSalonOwnerUpgrade(
     throw new Error("A valid Google email is required to start salon onboarding.");
   }
 
-  await persistSalonOwnerUser(admin, authUserId, normalizedEmail, fullName, avatarUrl);
+  await persistSalonOwnerRole(admin, authUserId, normalizedEmail, fullName, avatarUrl);
 
   let { salonId } = await ensureSalonOwnerAccess(admin, normalizedEmail);
 

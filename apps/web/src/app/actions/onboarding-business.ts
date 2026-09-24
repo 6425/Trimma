@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { verifyAccessToken } from "@/lib/auth/verify-access-token";
 import { resolveTrimmaUserRoleServer } from "@/lib/trimma-role-server";
@@ -368,10 +369,7 @@ export async function createNewOnboardingBusiness(
   input: OnboardingNewBusinessInput
 ) {
   try {
-    const { verified, role } = await verifyOnboardingUser(accessToken);
-    if (role === "salon_owner") {
-      return { success: true as const, salonId: null, alreadyOwner: true };
-    }
+    const { verified } = await verifyOnboardingUser(accessToken);
 
     const businessName = cleanSearchText(input.businessName);
     const phone = cleanSearchText(input.phone, 40);
@@ -487,6 +485,10 @@ export async function createNewOnboardingBusiness(
       logo_url: logoUrl,
       hero_url: heroUrl,
       cover_url: heroUrl,
+      status: "active",
+      public_visibility: "public",
+      booking_enabled: false,
+      is_verified: false,
       business_info_extended: {
         ...existingExtended,
         onboarding_business_name: sanitizeText(businessName),
@@ -494,6 +496,7 @@ export async function createNewOnboardingBusiness(
         onboarding_town: sanitizeText(city || district),
         trimma_categories: [String(selectedCategory.name)],
         self_serve_listing_form: true,
+        listing_published_at: new Date().toISOString(),
         ...(placeId ? { google_place_id: placeId } : {}),
         ...(mapUrl ? { google_maps_url: mapUrl } : {}),
       },
@@ -504,6 +507,12 @@ export async function createNewOnboardingBusiness(
       .update(updatePayload)
       .eq("id", upgraded.salonId);
     if (updateError) throw new Error(updateError.message);
+
+    revalidatePath("/");
+    revalidatePath("/listings");
+    if (typeof updatePayload.slug === "string" && updatePayload.slug) {
+      revalidatePath(`/salons/${updatePayload.slug}`);
+    }
 
     await supabase.from("onboarding_logs").insert({
       salon_id: upgraded.salonId,
@@ -526,7 +535,7 @@ export async function createNewOnboardingBusiness(
     return {
       success: true as const,
       salonId: upgraded.salonId,
-      alreadyOwner: false,
+      listed: true as const,
     };
   } catch (error) {
     return {

@@ -11,7 +11,7 @@ import { pickHighestRole } from "@/lib/trimma-role-core";
 import {
   completeOAuthLogin,
   claimSalonOwnerFromOnboarding,
-  resolveLoginRole,
+  registerSalonOwnerFromOnboarding,
 } from "@/app/actions/login-session";
 import {
   clearSalonOwnerOAuthIntent,
@@ -101,7 +101,7 @@ function OAuthCallbackRunner({
         const shouldDeferSalonProvisioning =
           deferSalonProvisioning && salonOwnerIntent && !invitedSalonId;
         const result = shouldDeferSalonProvisioning
-          ? await resolveLoginRole(session.access_token)
+          ? await registerSalonOwnerFromOnboarding(session.access_token)
           : salonOwnerIntent
             ? await claimSalonOwnerFromOnboarding(session.access_token, { invitedSalonId })
             : await completeOAuthLogin(session.access_token, { salonOwnerIntent, invitedSalonId });
@@ -160,7 +160,11 @@ function OAuthCallbackRunner({
           }
 
           if (shouldDeferSalonProvisioning && effectiveRole === "salon_owner") {
-            redirectAfterAuth("/dashboard/profile");
+            redirectAfterAuth(
+              nextPath.startsWith("/onboarding")
+                ? nextPath
+                : "/onboarding?step=business-search#salon-owner-signup"
+            );
             return;
           }
 

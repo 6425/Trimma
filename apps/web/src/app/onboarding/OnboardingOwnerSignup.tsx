@@ -109,6 +109,13 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
     const claimSalonId = url.searchParams.get("claim")?.trim() || "";
     const continueWithNewBusiness = url.searchParams.get("new") === "1";
     const returningFromGoogle = url.searchParams.get("step") === "business-search";
+    const onboardingIntent = url.searchParams.get("intent");
+    const continuingOwnerOnboarding =
+      returningFromGoogle ||
+      Boolean(claimSalonId) ||
+      continueWithNewBusiness ||
+      onboardingIntent === "claim" ||
+      onboardingIntent === "list";
 
     async function prepareSession() {
       try {
@@ -148,7 +155,7 @@ export default function OnboardingOwnerSignup({ categories }: { categories: Publ
           await supabase.auth.signOut();
           throw new Error("Partners must use the Partner portal sign-in page.");
         }
-        if (roleResult.role === "salon_owner") {
+        if (roleResult.role === "salon_owner" && !continuingOwnerOnboarding) {
           const secureSession = await syncTrimmaSecureSession(session.access_token);
           if ("error" in secureSession) throw new Error(secureSession.error);
           clearSalonOwnerOAuthIntent();
