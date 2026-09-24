@@ -37,7 +37,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-bold mb-4">For Partners</h4>
             <ul className="space-y-3 text-sm font-medium">
-              <li><Link href="/signup" className="hover:text-emerald-400 transition-colors">Claim Your Salon</Link></li>
+              <li><Link href="/onboarding?intent=claim#salon-owner-signup" className="hover:text-emerald-400 transition-colors">Claim Your Salon</Link></li>
               <li><Link href="/dashboard" className="hover:text-emerald-400 transition-colors">Partner Dashboard</Link></li>
               <li><Link href="/pricing" className="hover:text-emerald-400 transition-colors">Pricing Plans</Link></li>
               <li><Link href="/admin/login" className="hover:text-emerald-400 transition-colors">Admin Login</Link></li>

@@ -223,7 +223,7 @@ export default function SalonProfilePage() {
 
       // Set visual assets — prefer dedicated URL columns, fall back to Google Places hero_image
       setLogoUrl(salonData.logo_url || "");
-      setHeroUrl(salonData.hero_url || salonData.hero_image || "");
+      setHeroUrl(salonData.hero_url || salonData.cover_url || salonData.hero_image || "");
       setFeaturedImages(salonData.featured_images || []);
       if (salonData.working_hours) {
         const mapped = normalizeSalonWeeklySchedule(salonData.working_hours);
@@ -396,14 +396,16 @@ export default function SalonProfilePage() {
       setUploadingType(type);
 
       let base64: string;
+      let uploadContentType = file.type || "image/jpeg";
       if (type === "hero" || type === "gallery") {
         const cropped = await cropImageFile(file, SALON_HERO_IMAGE_WIDTH, SALON_HERO_IMAGE_HEIGHT);
         base64 = await blobToBase64(cropped);
+        uploadContentType = cropped.type || "image/jpeg";
       } else {
         base64 = await fileToBase64(file);
       }
 
-      const uploadResult = await uploadSalonProfileImage(type, base64, file.type || "image/jpeg");
+      const uploadResult = await uploadSalonProfileImage(type, base64, uploadContentType);
       if (uploadResult.success === false) {
         // Never fall back to storing a base64 data URI: multi-MB strings in the
         // salons table make the public page query so large it times out.
@@ -458,6 +460,7 @@ export default function SalonProfilePage() {
     try {
       const saveResult = await updateSalonMediaFields({
           logo_url: updatedLogo,
+          cover_url: updatedHero,
           hero_url: updatedHero,
           featured_images: updatedGallery,
         });
@@ -495,6 +498,7 @@ export default function SalonProfilePage() {
     try {
       const saveResult = await updateSalonMediaFields({
           logo_url: updatedLogo,
+          cover_url: updatedHero,
           hero_url: updatedHero,
         });
 
@@ -538,7 +542,6 @@ export default function SalonProfilePage() {
   const profileServiceRows = existingSalonServices.filter(
     (service) => String(service.status || "").toLowerCase() !== "deleted"
   );
-
   const approvalServiceRows = profileServiceRows.filter(
     (service) => String(service.status || "active").toLowerCase() === "active"
   );

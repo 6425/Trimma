@@ -296,7 +296,7 @@ export function PreviewLandingContent() {
               repeat customers, and grow your revenue — all from one platform.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
-              <Link href="/onboarding" className="w-full sm:w-auto">
+              <Link href="/onboarding?intent=list#salon-owner-signup" className="w-full sm:w-auto">
                 <Button variant="default" size="xl" className="w-full sm:w-auto rounded-xl">
                   Start Free <ArrowRight className="w-4 h-4" />
                 </Button>
@@ -780,7 +780,7 @@ export function PreviewLandingContent() {
               </span>
             </div>
           </div>
-          <Link href="/onboarding" className="w-full lg:w-auto shrink-0">
+          <Link href="/onboarding?intent=list#salon-owner-signup" className="w-full lg:w-auto shrink-0">
             <Button variant="default" size="xl" className="w-full lg:w-auto rounded-xl">
               Start Free Today <ArrowRight className="w-4 h-4" />
             </Button>

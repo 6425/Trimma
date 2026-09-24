@@ -183,6 +183,7 @@ export async function applySalonGoogleImageSync(
     .update({
       cover_url: images.cover_url,
       hero_url: images.hero_url,
+      hero_image: images.hero_url,
       featured_images: images.featured_images,
       place_id: existingPlaceId?.trim() || images.place_id,
     })

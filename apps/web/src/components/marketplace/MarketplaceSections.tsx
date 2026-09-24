@@ -345,7 +345,7 @@ export function SalonOnboardingCTA() {
           
           <div className="flex flex-wrap gap-4">
             <Link 
-              href="/signup?role=salon_owner"
+              href="/onboarding?intent=list#salon-owner-signup"
               className="inline-flex items-center justify-center rounded-xl bg-brand hover:bg-brand-hover text-black font-extrabold text-sm h-11 px-6 shadow-lg shadow-brand-pink/20 transition-all border-none"
             >
               List Your Salon Now <ArrowRight className="w-4 h-4 ml-2" />

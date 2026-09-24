@@ -388,9 +388,19 @@ export default function ListingsClient({
         ) : allVisibleListings.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white px-6 py-20 text-center">
             <p className="text-lg font-black text-[#1A1C29]">No listings found</p>
-            <p className="mt-2 text-sm text-zinc-500">
-              Try another city or run Google Places discovery from Admin → Lead Management.
+            <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-500">
+              Try another business name or location. If this is your salon and it is not on Trimma yet, start the verified listing process now.
             </p>
+            <Link
+              href="/onboarding?intent=list#salon-owner-signup"
+              className={buttonVariants({
+                variant: "default",
+                size: "lg",
+                className: "mt-5 h-12 min-h-11 rounded-xl px-7 font-bold",
+              })}
+            >
+              List Your Salon
+            </Link>
           </div>
         ) : (
           <>

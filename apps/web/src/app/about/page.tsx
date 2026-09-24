@@ -98,7 +98,7 @@ export default function AboutPage() {
             <div className="home-hero-middle">
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  href="/onboarding"
+                  href="/onboarding?intent=list#salon-owner-signup"
                   className="hero-btn-primary px-8 py-4 rounded-2xl"
                 >
                   <Building2 className="w-4 h-4" />
@@ -265,7 +265,7 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/onboarding"
+              href="/onboarding?intent=list#salon-owner-signup"
               className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-500 text-black font-bold px-10 py-4 rounded-2xl transition-all shadow-lg shadow-amber-100 hover:scale-[1.03]"
             >
               Become a Partner

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import sharp from "sharp";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { sendBookingConfirmedEmail, sendBookingReminderEmail, sendBookingRescheduledEmail } from "@/app/actions/email-settings";
 import { sendBookingReviewRequests } from "@/app/actions/review-notifications";
@@ -852,12 +853,33 @@ export async function uploadSalonProfileImage(
   contentType = "image/jpeg"
 ) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const ext = contentType.includes("png") ? "png" : "jpg";
-    const fileName = `${ctx.salonId}/${imageType}_${Date.now()}.${ext}`;
     const buffer = Buffer.from(base64Data, "base64");
+    const metadata = await sharp(buffer, { animated: true }).metadata();
+    const detectedFormat = metadata.format;
+    const imageFormat =
+      detectedFormat === "png"
+        ? { ext: "png", contentType: "image/png" }
+        : detectedFormat === "webp"
+          ? { ext: "webp", contentType: "image/webp" }
+          : detectedFormat === "gif"
+            ? { ext: "gif", contentType: "image/gif" }
+            : detectedFormat === "jpeg"
+              ? { ext: "jpg", contentType: "image/jpeg" }
+              : null;
+
+    if (!imageFormat) {
+      throw new Error(`Unsupported image format${contentType ? ` (${contentType})` : ""}.`);
+    }
+
+    const { ext, contentType: detectedContentType } = imageFormat;
+    const fileName = `${ctx.salonId}/${imageType}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage
       .from("salon-images")
-      .upload(fileName, buffer, { cacheControl: "3600", upsert: true, contentType });
+      .upload(fileName, buffer, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: detectedContentType,
+      });
     if (error) throw new Error(error.message);
 
     const { data } = supabase.storage.from("salon-images").getPublicUrl(fileName);
@@ -910,7 +932,15 @@ export async function updateSalonMediaFields(payload: {
   featured_images?: string[];
 }) {
   const result = await withSalonDb(async (supabase, ctx) => {
-    const { error } = await supabase.from("salons").update(payload).eq("id", ctx.salonId);
+    const synchronizedPayload = { ...payload };
+    if (Object.prototype.hasOwnProperty.call(synchronizedPayload, "hero_url")) {
+      synchronizedPayload.cover_url = synchronizedPayload.hero_url;
+    }
+
+    const { error } = await supabase
+      .from("salons")
+      .update(synchronizedPayload)
+      .eq("id", ctx.salonId);
     if (error) throw new Error(error.message);
     revalidateOwnerSalonPage(ctx.salon);
   });
