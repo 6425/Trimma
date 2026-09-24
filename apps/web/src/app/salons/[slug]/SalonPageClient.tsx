@@ -615,6 +615,7 @@ export default function SalonPage({
   const heroImageUrl =
     normalizePublicImageUrl(salon.hero_url) ||
     normalizePublicImageUrl(salon.cover_url) ||
+    normalizePublicImageUrl(salon.hero_image) ||
     null;
   const logoImage =
     typeof salon.logo_url === "string" && salon.logo_url.trim() ? salon.logo_url.trim() : null;

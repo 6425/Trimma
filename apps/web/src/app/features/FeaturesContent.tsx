@@ -544,7 +544,7 @@ export function FeaturesContent() {
                   <Search className="w-4 h-4" />
                   Find a Salon
                 </Link>
-                <Link href="/onboarding" className="hero-btn-secondary min-h-11 px-8 py-4 rounded-2xl w-full sm:w-auto justify-center">
+                <Link href="/onboarding?intent=list#salon-owner-signup" className="hero-btn-secondary min-h-11 px-8 py-4 rounded-2xl w-full sm:w-auto justify-center">
                   <Store className="w-4 h-4" />
                   Grow My Salon
                 </Link>
@@ -775,7 +775,7 @@ export function FeaturesContent() {
               Bookings, staff, services, and revenue in one workspace after you sign in as a salon owner.
             </p>
             <Link
-              href="/onboarding"
+              href="/onboarding?intent=list#salon-owner-signup"
               className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-zinc-900 hover:text-[#B8860B] transition-colors"
             >
               Grow My Salon

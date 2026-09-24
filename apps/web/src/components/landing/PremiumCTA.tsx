@@ -55,7 +55,7 @@ export function PremiumCTA() {
                 Book Appointment
               </Button>
             </Link>
-            <Link href="/onboarding" className="w-full sm:w-auto">
+            <Link href="/onboarding?intent=list#salon-owner-signup" className="w-full sm:w-auto">
               <Button size="lg" variant="outline" className="w-full h-14 px-8 rounded-xl border-[#ffde5a]/50 bg-[#ffde5a]/10 text-[#ffde5a] hover:bg-[#ffde5a]/20 hover:border-[#ffde5a] hover:text-[#ffe680] hover:scale-105 transition-all font-bold text-base gap-2 backdrop-blur-sm">
                 Register Your Salon <ArrowRight className="w-4 h-4" />
               </Button>

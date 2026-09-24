@@ -659,7 +659,7 @@ export default function ContactPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/onboarding"
+              href="/onboarding?intent=list#salon-owner-signup"
               className="inline-flex items-center justify-center gap-2 bg-[#ffde5a] hover:bg-[#ffe680] text-black font-bold px-10 py-4 rounded-2xl transition-all hover:scale-[1.03] shadow-lg shadow-[#ffde5a]/20"
             >
               <Users className="w-4 h-4" />

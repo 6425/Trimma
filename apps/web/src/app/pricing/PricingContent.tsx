@@ -94,7 +94,7 @@ export function PricingContent({
 
             const pricingDescription = getPlanPricingCopy(plan, "monthly");
             const isPro = plan.name.toLowerCase() === "pro";
-            const signupHref = "/onboarding#salon-owner-signup";
+            const signupHref = "/onboarding?intent=list#salon-owner-signup";
 
             return (
               <div

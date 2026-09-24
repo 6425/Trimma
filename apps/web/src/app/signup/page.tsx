@@ -7,6 +7,10 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Logo from "../../components/Logo";
 import { supabase } from "../../config/supabase";
+import {
+  SALON_OWNER_DISCOVERY_REDIRECT,
+  startSalonOwnerGoogleOAuth,
+} from "@/lib/salon-owner-oauth";
 
 const SIGNUP_HERO_IMAGE =
   "https://images.unsplash.com/photo-1522337660859-02fbefca4702?q=80&w=2400&auto=format&fit=crop";
@@ -57,7 +61,16 @@ function SignupForm() {
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    const nextPath = activeTab === "salon" ? "/onboarding" : "/customer";
+    if (activeTab === "salon") {
+      const result = await startSalonOwnerGoogleOAuth(SALON_OWNER_DISCOVERY_REDIRECT);
+      if (!result.ok) {
+        setLoading(false);
+        alert("Google sign-up failed: " + (result.error || "Unknown error"));
+      }
+      return;
+    }
+
+    const nextPath = "/customer";
     const oauthRedirect = `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`;
 
     const { error } = await supabase.auth.signInWithOAuth({
