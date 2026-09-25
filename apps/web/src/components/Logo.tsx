@@ -115,7 +115,7 @@ export default function Logo({
   const logoHeight = Math.max(iconSize * 1.2, 32);
   const logoSrc =
     variant === "dark"
-      ? "/logo-dark.svg"
+      ? "/logo-light.svg"
       : variant === "light"
         ? "/logo-light.svg"
         : variant === "yellow"
