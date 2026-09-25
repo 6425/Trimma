@@ -27,12 +27,10 @@ function toOriginalSupabaseUrl(url: string): string | null {
 
 function ResilientBusinessListingImage({
   source,
-  listingId,
   alt,
   priority,
 }: {
   source: string;
-  listingId: string;
   alt: string;
   priority: boolean;
 }) {
@@ -50,11 +48,6 @@ function ResilientBusinessListingImage({
         const original = toOriginalSupabaseUrl(imageSrc);
         if (original && imageSrc.includes("/render/image/")) {
           setImageSrc(original);
-          return;
-        }
-        const proxyUrl = `/api/listing-image/${encodeURIComponent(listingId)}`;
-        if (imageSrc !== proxyUrl && imageSrc !== FALLBACK_IMAGE) {
-          setImageSrc(proxyUrl);
           return;
         }
         if (imageSrc !== FALLBACK_IMAGE) setImageSrc(FALLBACK_IMAGE);
@@ -82,7 +75,6 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
         <ResilientBusinessListingImage
           key={imageUrl}
           source={imageUrl}
-          listingId={listing.id}
           alt={listing.name}
           priority={priority}
         />
