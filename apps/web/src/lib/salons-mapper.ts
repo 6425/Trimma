@@ -37,6 +37,7 @@ export function getSalonListingImage(
   salon: {
     cover_url?: string | null;
     hero_url?: string | null;
+    hero_image?: string | null;
     featured_images?: unknown;
   },
   fallback: string
@@ -48,8 +49,9 @@ export function getSalonListingImage(
     : [];
   const cover = normalizePublicImageUrl(salon.cover_url) || "";
   const hero = normalizePublicImageUrl(salon.hero_url) || "";
+  const legacyHero = normalizePublicImageUrl(salon.hero_image) || "";
 
-  const candidates = [hero, cover, ...featured].filter(Boolean);
+  const candidates = [hero, cover, legacyHero, ...featured].filter(Boolean);
   const realCandidates = candidates.filter((url) => !isStockSalonImage(url));
   const usableCandidates = realCandidates.length > 0 ? realCandidates : candidates;
 

@@ -1,8 +1,3 @@
-import {
-  SALON_HERO_IMAGE_HEIGHT,
-  SALON_HERO_IMAGE_WIDTH,
-} from "@/lib/salon-hero-image";
-
 function isKnownWebPageUrl(url: URL): boolean {
   const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
   const pathname = url.pathname.toLowerCase();
@@ -15,6 +10,12 @@ function isKnownWebPageUrl(url: URL): boolean {
   );
 }
 
+function isKnownNonPhotoGoogleAsset(url: URL): boolean {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+  const pathname = url.pathname.toLowerCase();
+  return hostname === "maps.gstatic.com" && pathname.startsWith("/tactile/pane");
+}
+
 function normalizeGoogleHostedImageSize(imageUrl: URL): string | null {
   const hostname = imageUrl.hostname.toLowerCase();
   const isGoogleImageHost =
@@ -24,16 +25,15 @@ function normalizeGoogleHostedImageSize(imageUrl: URL): string | null {
     hostname.endsWith(".ggpht.com");
 
   if (isGoogleImageHost) {
-    imageUrl.pathname = imageUrl.pathname.replace(
-      /=w\d+-h\d+(?:-[a-z0-9-]+)?$/i,
-      `=w${SALON_HERO_IMAGE_WIDTH}-h${SALON_HERO_IMAGE_HEIGHT}-c-k-no`
-    );
+    // Preserve the exact direct URL saved by the admin. Google-hosted image
+    // paths can contain signed sizing tokens; rewriting them makes some valid
+    // Hero image URLs fail and incorrectly triggers the stock fallback.
     return imageUrl.toString();
   }
 
   if (hostname === "streetviewpixels-pa.googleapis.com") {
-    imageUrl.searchParams.set("w", String(SALON_HERO_IMAGE_WIDTH));
-    imageUrl.searchParams.set("h", String(SALON_HERO_IMAGE_HEIGHT));
+    // Street View thumbnail URLs may also be signed. Do not mutate their
+    // query string after it has been entered and verified by an admin.
     return imageUrl.toString();
   }
 
@@ -72,6 +72,7 @@ export function normalizePublicImageUrl(value: unknown): string | null {
     const parsed = new URL(trimmed);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
     if (isKnownWebPageUrl(parsed)) return null;
+    if (isKnownNonPhotoGoogleAsset(parsed)) return null;
     const normalizedGoogleImage = normalizeGoogleHostedImageSize(parsed);
     if (normalizedGoogleImage) return normalizedGoogleImage;
     return parsed.toString();
