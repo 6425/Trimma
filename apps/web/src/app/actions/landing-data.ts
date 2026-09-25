@@ -103,7 +103,7 @@ export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
     const { data, error } = await supabase
       .from("salons")
       .select(
-        "id, name, slug, rating, review_count, cover_url, hero_url, is_verified, onboarding_status, status"
+        "id, name, slug, rating, review_count, cover_url, hero_url, hero_image, is_verified, onboarding_status, status"
       )
       .order("is_featured", { ascending: false })
       .order("rating", { ascending: false })

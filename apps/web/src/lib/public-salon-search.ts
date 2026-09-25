@@ -135,7 +135,7 @@ export async function fetchPublicSalons(
 
   let select = `
       id, name, slug, rating, review_count,
-      city, district, province, category, logo_url, cover_url, hero_url, featured_images,
+      city, district, province, category, logo_url, cover_url, hero_url, hero_image, featured_images,
       is_featured, featured_starts_at, featured_ends_at, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail, website, map_url,
@@ -264,7 +264,7 @@ export async function fetchPublicSalons(
 
 const BUSINESS_LISTING_CARD_SELECT = `
       id, name, slug, rating, review_count,
-      city, district, province, category, logo_url, cover_url, hero_url, featured_images,
+      city, district, province, category, logo_url, cover_url, hero_url, hero_image, featured_images,
       is_featured, featured_starts_at, featured_ends_at, is_verified, working_hours, status, public_visibility,
       booking_enabled, source_type, onboarding_status,
       phone, owner_email, owner_gmail, website, map_url, business_info_extended,

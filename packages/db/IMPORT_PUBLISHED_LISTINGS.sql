@@ -74,8 +74,16 @@ BEGIN
         status = 'active',
         is_featured = COALESCE((rec->>'is_featured')::boolean, is_featured),
         logo_url = rec->>'logo_url',
-        cover_url = rec->>'cover_url',
-        hero_url = rec->>'hero_url',
+        cover_url = COALESCE(
+          NULLIF(btrim(COALESCE(rec->>'hero_url', '')), ''),
+          NULLIF(btrim(COALESCE(rec->>'cover_url', '')), ''),
+          cover_url
+        ),
+        hero_url = COALESCE(
+          NULLIF(btrim(COALESCE(rec->>'hero_url', '')), ''),
+          NULLIF(btrim(COALESCE(rec->>'cover_url', '')), ''),
+          hero_url
+        ),
         featured_images = COALESCE(
           ARRAY(SELECT jsonb_array_elements_text(COALESCE(rec->'featured_images', '[]'::jsonb))),
           featured_images

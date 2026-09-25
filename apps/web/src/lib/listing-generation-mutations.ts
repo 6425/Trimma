@@ -13,6 +13,7 @@ import { isValidFeaturedPeriod, parseFeaturedDate } from "@/lib/listing-featured
 import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { slugifySalonName } from "@/lib/google-place-profile";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 
 export type ManualListingCaptureInput = {
   name: string;
@@ -52,6 +53,16 @@ function cleanManualListingUrl(value: unknown, label: string): string | null {
   } catch {
     throw new Error(`${label} must be a valid http or https URL.`);
   }
+}
+
+function cleanManualListingImageUrl(value: unknown, label: string): string | null {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const normalized = normalizePublicImageUrl(raw);
+  if (!normalized) {
+    throw new Error(`${label} must link directly to an image, not a Google Maps page or map asset.`);
+  }
+  return normalized;
 }
 
 function cleanManualCoordinate(
@@ -221,7 +232,7 @@ export async function createManualListingSalonRecord(
   const website = cleanManualListingUrl(input.website, "Website");
   const suppliedMapUrl = cleanManualListingUrl(input.mapUrl, "Google Maps URL");
   const logoUrl = cleanManualListingUrl(input.logoUrl, "Logo URL");
-  const heroUrl = cleanManualListingUrl(input.heroUrl, "Hero image URL");
+  const heroUrl = cleanManualListingImageUrl(input.heroUrl, "Hero image URL");
   const latitude = cleanManualCoordinate(input.latitude, "Latitude", -90, 90);
   const longitude = cleanManualCoordinate(input.longitude, "Longitude", -180, 180);
 
@@ -305,6 +316,7 @@ export async function createManualListingSalonRecord(
       logo_url: logoUrl,
       hero_url: heroUrl,
       cover_url: heroUrl,
+      hero_image: heroUrl,
       owner_email: null,
       owner_gmail: null,
       subscription_plan_id: null,
@@ -360,7 +372,7 @@ export async function updateListingSalonRecord(
   const website = cleanManualListingUrl(input.website, "Website");
   const suppliedMapUrl = cleanManualListingUrl(input.mapUrl, "Google Maps URL");
   const logoUrl = cleanManualListingUrl(input.logoUrl, "Logo URL");
-  const heroUrl = cleanManualListingUrl(input.heroUrl, "Hero image URL");
+  const heroUrl = cleanManualListingImageUrl(input.heroUrl, "Hero image URL");
   const latitude = cleanManualCoordinate(input.latitude, "Latitude", -90, 90);
   const longitude = cleanManualCoordinate(input.longitude, "Longitude", -180, 180);
 
@@ -458,6 +470,7 @@ export async function updateListingSalonRecord(
     logo_url: logoUrl,
     hero_url: heroUrl,
     cover_url: heroUrl,
+    hero_image: heroUrl,
     business_info_extended: nextExt,
   });
 

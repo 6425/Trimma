@@ -134,6 +134,7 @@ AS $$
       s.logo_url,
       s.cover_url,
       s.hero_url,
+      s.hero_image,
       s.featured_images,
       s.is_featured,
       s.is_verified,
