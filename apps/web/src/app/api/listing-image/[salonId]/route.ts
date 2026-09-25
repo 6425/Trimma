@@ -66,7 +66,13 @@ async function findCurrentGoogleBusinessImage(placeId: string): Promise<string |
     html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_?&=./:%-]+/g),
     (match) => match[0]
   );
-  return matches.find((url) => !url.includes("/a-/")) || null;
+  const candidates = [...new Set(matches)].filter((url) => !url.includes("/a-/"));
+  const businessPhoto = candidates.find((url) => {
+    const dimensions = url.match(/=w(\d+)-h(\d+)/i);
+    if (!dimensions) return false;
+    return Number(dimensions[1]) >= 300 && Number(dimensions[2]) >= 200;
+  });
+  return businessPhoto || null;
 }
 
 export async function GET(_request: Request, context: RouteContext) {
