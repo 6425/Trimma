@@ -33,8 +33,7 @@ export function isStockSalonImageUrl(url: string): boolean {
   return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId));
 }
 
-// A previous repair job wrote unrelated placeholders using this filename.
-// Do not present those files as genuine business photos.
+/** A prior recovery attempt stored Google's default account avatar, not a business image. */
 function isRejectedRecoveryImage(url: string): boolean {
   return url.includes("/google_repair_");
 }

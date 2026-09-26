@@ -40,8 +40,8 @@ function ResilientBusinessListingImage({
       ...new Set(
         [
           source,
-          ...fallbackSources,
           source ? `/api/listing-image/${encodeURIComponent(listingId)}` : null,
+          ...fallbackSources,
         ].filter((url): url is string => Boolean(url))
       ),
     ]
