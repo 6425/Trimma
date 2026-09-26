@@ -14,8 +14,6 @@ import { getSalonDirectionsUrl, type SalonMapInput } from "@/lib/salon-map";
 import { useDeviceTravel, type DeviceCoords } from "@/hooks/use-device-travel";
 import { MapTravelPanel } from "./MapTravelPanel";
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
 const SRI_LANKA_CENTER = { lat: 7.8731, lng: 80.7718 };
 
 type Props = {
@@ -28,6 +26,26 @@ type MarkerPoint = {
   lat: number;
   lng: number;
 };
+
+/** Keep the map list in step with the grid when a remote listing photo expires. */
+function ResilientMapListingImage({ source }: { source: string | null }) {
+  const [imageSrc, setImageSrc] = useState(source);
+
+  if (!imageSrc) {
+    return <Store className="m-auto h-full w-6 text-slate-400" aria-hidden="true" />;
+  }
+
+  return (
+    <Image
+      src={imageSrc}
+      alt=""
+      fill
+      sizes="56px"
+      className="object-cover"
+      onError={() => setImageSrc(null)}
+    />
+  );
+}
 
 function listingToSalon(listing: BusinessListingCardData): SalonMapInput {
   return {
@@ -260,13 +278,7 @@ export function BusinessListingsMap({ listings, searchLocation = "" }: Props) {
                   >
                     <div className="flex gap-3">
                       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                        <Image
-                          src={listing.image || FALLBACK_IMAGE}
-                          alt=""
-                          fill
-                          sizes="56px"
-                          className="object-cover"
-                        />
+                        <ResilientMapListingImage key={listing.image || listing.id} source={listing.image} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-zinc-900 line-clamp-1">{listing.name}</p>
