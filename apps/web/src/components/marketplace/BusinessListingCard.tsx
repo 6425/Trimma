@@ -3,18 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Star, Phone, MapPin, Globe, Facebook, Instagram } from "lucide-react";
+import { Star, Phone, MapPin, Globe, Facebook, Instagram, Store } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
 import type { BusinessListingCardData } from "@/lib/business-listing-mapper";
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
-
-function normalizeListingImageUrl(value: string | null | undefined): string {
-  return normalizePublicImageUrl(value) || FALLBACK_IMAGE;
+function normalizeListingImageUrl(value: string | null | undefined): string | null {
+  return normalizePublicImageUrl(value);
 }
 
 function toOriginalSupabaseUrl(url: string): string | null {
@@ -30,11 +27,20 @@ function ResilientBusinessListingImage({
   alt,
   priority,
 }: {
-  source: string;
+  source: string | null;
   alt: string;
   priority: boolean;
 }) {
   const [imageSrc, setImageSrc] = useState(source);
+
+  if (!imageSrc) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-slate-100 text-slate-400">
+        <Store className="h-9 w-9" aria-hidden="true" />
+        <span className="text-[10px] font-bold uppercase tracking-wider">Photo pending</span>
+      </div>
+    );
+  }
 
   return (
     <Image
@@ -50,7 +56,7 @@ function ResilientBusinessListingImage({
           setImageSrc(original);
           return;
         }
-        if (imageSrc !== FALLBACK_IMAGE) setImageSrc(FALLBACK_IMAGE);
+        setImageSrc(null);
       }}
     />
   );

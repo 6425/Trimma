@@ -29,7 +29,7 @@ const STOCK_SALON_IMAGE_IDS = [
   "photo-1503951914875-452162b0f3f1",
 ];
 
-function isStockSalonImage(url: string): boolean {
+export function isStockSalonImageUrl(url: string): boolean {
   return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId));
 }
 
@@ -37,9 +37,11 @@ export function getSalonListingImage(
   salon: {
     cover_url?: string | null;
     hero_url?: string | null;
+    hero_image?: string | null;
     featured_images?: unknown;
   },
-  fallback: string
+  fallback: string,
+  options: { excludeStockImages?: boolean } = {}
 ): string {
   const featured = Array.isArray(salon.featured_images)
     ? salon.featured_images
@@ -48,10 +50,11 @@ export function getSalonListingImage(
     : [];
   const cover = normalizePublicImageUrl(salon.cover_url) || "";
   const hero = normalizePublicImageUrl(salon.hero_url) || "";
+  const legacyHero = normalizePublicImageUrl(salon.hero_image) || "";
 
-  const candidates = [hero, cover, ...featured].filter(Boolean);
-  const realCandidates = candidates.filter((url) => !isStockSalonImage(url));
-  const usableCandidates = realCandidates.length > 0 ? realCandidates : candidates;
+  const candidates = [hero, cover, legacyHero, ...featured].filter(Boolean);
+  const realCandidates = candidates.filter((url) => !isStockSalonImageUrl(url));
+  const usableCandidates = realCandidates.length > 0 ? realCandidates : options.excludeStockImages ? [] : candidates;
 
   if (usableCandidates.length === 0) return fallback;
   if (usableCandidates.length === 1) return usableCandidates[0];
