@@ -294,6 +294,7 @@ function isPublishedMarketplaceRow(row: Record<string, unknown>): boolean {
 /** Hide cards with transient external image links until their real image is stored in Trimma. */
 function hasPermanentListingImage(row: Record<string, unknown>): boolean {
   const imageUrl = String(row.hero_url || row.cover_url || row.hero_image || "").trim();
+  if (imageUrl.includes("/google_repair_")) return false;
   return /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(imageUrl);
 }
 
