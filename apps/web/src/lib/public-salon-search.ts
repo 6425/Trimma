@@ -291,6 +291,12 @@ function isPublishedMarketplaceRow(row: Record<string, unknown>): boolean {
   return status !== "rejected" && status !== "inactive";
 }
 
+/** Hide cards with transient external image links until their real image is stored in Trimma. */
+function hasPermanentListingImage(row: Record<string, unknown>): boolean {
+  const imageUrl = String(row.hero_url || row.cover_url || row.hero_image || "").trim();
+  return /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(imageUrl);
+}
+
 function filterBusinessListingRows(
   data: Array<Record<string, unknown>>,
   params: {
@@ -306,7 +312,7 @@ function filterBusinessListingRows(
   if (params.publishedOnly) {
     // Show every published listing. Do not hide rows because of leftover
     // is_verified / booking / source_type flags from an import or update.
-    rows = rows.filter(isPublishedMarketplaceRow);
+    rows = rows.filter(isPublishedMarketplaceRow).filter(hasPermanentListingImage);
   } else {
     rows = rows
       .filter(isSalonPublicBrowseListing)
@@ -357,7 +363,8 @@ function sortBusinessListingRows(
 // details only for the cards in this response. Pagination must follow ranking.
 const LISTING_RANK_SELECT = `
   id, name, slug, phone, rating, review_count, city, district, province, category,
-  status, onboarding_status, is_verified, featured_starts_at, featured_ends_at, is_featured
+  status, onboarding_status, is_verified, featured_starts_at, featured_ends_at, is_featured,
+  hero_url, cover_url, hero_image
 `;
 
 type PublishedListingFilters = {
