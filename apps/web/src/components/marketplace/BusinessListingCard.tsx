@@ -25,16 +25,26 @@ function toOriginalSupabaseUrl(url: string): string | null {
 function ResilientBusinessListingImage({
   source,
   fallbackSources,
+  listingId,
   alt,
   priority,
 }: {
   source: string | null;
   fallbackSources: string[];
+  listingId: string;
   alt: string;
   priority: boolean;
 }) {
   const [imageSources, setImageSources] = useState(() =>
-    [...new Set([source, ...fallbackSources].filter((url): url is string => Boolean(url)))]
+    [
+      ...new Set(
+        [
+          source,
+          ...fallbackSources,
+          source ? `/api/listing-image/${encodeURIComponent(listingId)}` : null,
+        ].filter((url): url is string => Boolean(url))
+      ),
+    ]
   );
   const imageSrc = imageSources[0] || null;
 
@@ -87,9 +97,10 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
       <Link href={profileUrl} className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
         <ResilientBusinessListingImage
-          key={[imageUrl, ...imageFallbacks].join("|")}
+          key={[imageUrl, ...imageFallbacks, listing.id].join("|")}
           source={imageUrl}
           fallbackSources={imageFallbacks}
+          listingId={listing.id}
           alt={listing.name}
           priority={priority}
         />
