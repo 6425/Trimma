@@ -70,7 +70,11 @@ async function findCurrentGoogleBusinessImage(placeId: string): Promise<string |
     html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_?&=./:%-]+/g),
     (match) => match[0]
   );
-  return matches.find((url) => !url.includes("/a-/")) || null;
+  return (
+    matches.find(
+      (url) => !url.includes("/a-/") && !url.includes("ogw/default-user")
+    ) || null
+  );
 }
 
 export async function GET(_request: Request, context: RouteContext) {

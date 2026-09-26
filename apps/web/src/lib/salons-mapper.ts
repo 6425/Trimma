@@ -33,6 +33,11 @@ export function isStockSalonImageUrl(url: string): boolean {
   return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId));
 }
 
+/** A prior recovery attempt stored Google's default account avatar, not a business image. */
+function isRejectedRecoveryImage(url: string): boolean {
+  return url.includes("/google_repair_");
+}
+
 export function getSalonListingImage(
   salon: {
     cover_url?: string | null;
@@ -52,7 +57,9 @@ export function getSalonListingImage(
   const hero = normalizePublicImageUrl(salon.hero_url) || "";
   const legacyHero = normalizePublicImageUrl(salon.hero_image) || "";
 
-  const candidates = [hero, cover, legacyHero, ...featured].filter(Boolean);
+  const candidates = [hero, cover, legacyHero, ...featured].filter(
+    (url) => Boolean(url) && !isRejectedRecoveryImage(url)
+  );
   const realCandidates = candidates.filter((url) => !isStockSalonImageUrl(url));
   const usableCandidates = realCandidates.length > 0 ? realCandidates : options.excludeStockImages ? [] : candidates;
 
