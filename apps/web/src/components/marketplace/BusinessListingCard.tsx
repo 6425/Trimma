@@ -22,6 +22,25 @@ function toOriginalSupabaseUrl(url: string): string | null {
   return `${match[1]}/storage/v1/object/public/${match[2]}`;
 }
 
+/**
+ * Google-hosted photo URLs can be viewed by a visitor's browser but reject
+ * server-side optimisation requests. Keep their original browser request.
+ */
+function isDirectGoogleImageUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return (
+      host === "googleusercontent.com" ||
+      host.endsWith(".googleusercontent.com") ||
+      host === "ggpht.com" ||
+      host.endsWith(".ggpht.com") ||
+      host === "streetviewpixels-pa.googleapis.com"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function ResilientBusinessListingImage({
   source,
   fallbackSources,
@@ -62,6 +81,7 @@ function ResilientBusinessListingImage({
       src={imageSrc}
       alt={alt}
       fill
+      unoptimized={isDirectGoogleImageUrl(imageSrc)}
       priority={priority}
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
       className="object-cover transition-transform duration-500 hover:scale-[1.03]"
