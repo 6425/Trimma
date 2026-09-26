@@ -5,12 +5,15 @@ import { isSalonClaimable } from "@/lib/salon-public-listing";
 import { readSalonSocialLinks } from "@/lib/salon-public-social";
 import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 import { getSalonMapEmbedUrl, salonHasMapData } from "@/lib/salon-map";
+import { normalizePublicImageUrl } from "@/lib/public-image-url";
 
 export type BusinessListingCardData = {
   id: string;
   slug: string;
   name: string;
   image: string | null;
+  /** Other image fields saved for this same business, tried only if the primary fails. */
+  imageFallbacks: string[];
   phone: string | null;
   rating: number;
   reviews: number;
@@ -73,6 +76,17 @@ function formatBusinessListingLocation(city: string, district: string, province:
   return parts.length ? parts.join(", ") : "Sri Lanka";
 }
 
+function savedListingImageFallbacks(row: Record<string, unknown>, primary: string | null): string[] {
+  const featured = Array.isArray(row.featured_images) ? row.featured_images : [];
+  const candidates = [row.hero_url, row.cover_url, row.hero_image, ...featured]
+    .map(normalizePublicImageUrl)
+    .filter((url): url is string => Boolean(url));
+
+  return [...new Set(candidates.filter((url) => url !== primary))].map((url) =>
+    optimizeListingImageUrl(url, 640)
+  );
+}
+
 export function mapSalonRowToBusinessListing(row: Record<string, unknown>, _idx = 0): BusinessListingCardData {
   const city = String(row.city || "").trim();
   const district = String(row.district || "").trim();
@@ -98,6 +112,8 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, _idx 
     parseCoord(row.longitude as number | string | null | undefined) ??
     parseCoord(readExtendedString(row, "longitude"));
   const placeId = String(row.place_id || readExtendedString(row, "google_place_id") || "").trim() || null;
+  const image =
+    optimizeListingImageUrl(getSalonListingImage(row, "", { excludeStockImages: true }), 640) || null;
 
   return {
     id: String(row.id),
@@ -105,9 +121,8 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, _idx 
     name: String(row.name || "Unnamed business"),
     // A business card must never borrow a stock salon image. An empty value is
     // rendered as a neutral "photo pending" state until the real photo is set.
-    image:
-      optimizeListingImageUrl(getSalonListingImage(row, "", { excludeStockImages: true }), 640) ||
-      null,
+    image,
+    imageFallbacks: savedListingImageFallbacks(row, image),
     phone,
     rating,
     reviews,

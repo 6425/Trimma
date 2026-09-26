@@ -24,14 +24,19 @@ function toOriginalSupabaseUrl(url: string): string | null {
 
 function ResilientBusinessListingImage({
   source,
+  fallbackSources,
   alt,
   priority,
 }: {
   source: string | null;
+  fallbackSources: string[];
   alt: string;
   priority: boolean;
 }) {
-  const [imageSrc, setImageSrc] = useState(source);
+  const [imageSources, setImageSources] = useState(() =>
+    [...new Set([source, ...fallbackSources].filter((url): url is string => Boolean(url)))]
+  );
+  const imageSrc = imageSources[0] || null;
 
   if (!imageSrc) {
     return (
@@ -53,10 +58,10 @@ function ResilientBusinessListingImage({
       onError={() => {
         const original = toOriginalSupabaseUrl(imageSrc);
         if (original && imageSrc.includes("/render/image/")) {
-          setImageSrc(original);
+          setImageSources((sources) => [original, ...sources.slice(1)]);
           return;
         }
-        setImageSrc(null);
+        setImageSources((sources) => sources.slice(1));
       }}
     />
   );
@@ -74,13 +79,17 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
   const profileUrl = buildSalonPublicPath(listing);
   const showFeaturedBatch = featuredBatch || listing.isFeatured;
   const imageUrl = normalizeListingImageUrl(listing.image);
+  const imageFallbacks = listing.imageFallbacks
+    .map(normalizeListingImageUrl)
+    .filter((url): url is string => Boolean(url));
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
       <Link href={profileUrl} className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
         <ResilientBusinessListingImage
-          key={imageUrl}
+          key={[imageUrl, ...imageFallbacks].join("|")}
           source={imageUrl}
+          fallbackSources={imageFallbacks}
           alt={listing.name}
           priority={priority}
         />
