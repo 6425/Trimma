@@ -80,7 +80,7 @@ function savedListingImageFallbacks(row: Record<string, unknown>, primary: strin
   const featured = Array.isArray(row.featured_images) ? row.featured_images : [];
   const candidates = [row.hero_url, row.cover_url, row.hero_image, ...featured]
     .map(normalizePublicImageUrl)
-    .filter((url): url is string => Boolean(url));
+    .filter((url): url is string => Boolean(url) && !url.includes("/google_repair_"));
 
   return [...new Set(candidates.filter((url) => url !== primary))].map((url) =>
     optimizeListingImageUrl(url, 640)
