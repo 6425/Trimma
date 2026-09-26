@@ -16,6 +16,7 @@ export const ADMIN_SALON_UPDATE_FIELDS = new Set([
   "logo_url",
   "cover_url",
   "hero_url",
+  "hero_image",
   "featured_images",
   "status",
   "is_verified",
@@ -75,12 +76,13 @@ export function applyAdminEmailOverride(raw: Record<string, unknown>): Record<st
 export function sanitizeAdminSalonPayload(payload: Record<string, unknown>): Record<string, unknown> {
   const raw = applyAdminEmailOverride(payload);
 
-  // Admin screens expose one public hero image. Keep both legacy columns in sync
-  // even when a caller sends only one of them.
-  if ("hero_url" in raw && !("cover_url" in raw)) {
-    raw.cover_url = raw.hero_url;
-  } else if ("cover_url" in raw && !("hero_url" in raw)) {
-    raw.hero_url = raw.cover_url;
+  // Admin screens expose one public hero image. Keep all current and legacy
+  // image columns in sync even when a caller sends only one of them.
+  if ("hero_url" in raw || "cover_url" in raw || "hero_image" in raw) {
+    const imageUrl = raw.hero_url ?? raw.cover_url ?? raw.hero_image;
+    raw.hero_url = imageUrl;
+    raw.cover_url = imageUrl;
+    raw.hero_image = imageUrl;
   }
 
   const sanitized: Record<string, unknown> = {};
@@ -181,6 +183,7 @@ export function buildAdminSalonFormPayload(input: {
     logo_url: input.logo_url?.trim() || null,
     cover_url: cover,
     hero_url: cover,
+    hero_image: cover,
     status,
     ...(input.onboarding_status
       ? { onboarding_status: input.onboarding_status.trim() }

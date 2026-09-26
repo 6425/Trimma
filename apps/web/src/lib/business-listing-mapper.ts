@@ -10,7 +10,7 @@ export type BusinessListingCardData = {
   id: string;
   slug: string;
   name: string;
-  image: string;
+  image: string | null;
   phone: string | null;
   rating: number;
   reviews: number;
@@ -31,13 +31,6 @@ export type BusinessListingCardData = {
   isBookable: boolean;
   isFeatured: boolean;
 };
-
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?q=80&w=600&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1621605815971-fbc98d665033?q=80&w=600&auto=format&fit=crop",
-];
 
 function readExtendedString(row: Record<string, unknown>, key: string): string | null {
   const ext = row.business_info_extended;
@@ -80,7 +73,7 @@ function formatBusinessListingLocation(city: string, district: string, province:
   return parts.length ? parts.join(", ") : "Sri Lanka";
 }
 
-export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx = 0): BusinessListingCardData {
+export function mapSalonRowToBusinessListing(row: Record<string, unknown>, _idx = 0): BusinessListingCardData {
   const city = String(row.city || "").trim();
   const district = String(row.district || "").trim();
   const province = String(row.province || "").trim();
@@ -110,10 +103,11 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, idx =
     id: String(row.id),
     slug: String(row.slug || row.id),
     name: String(row.name || "Unnamed business"),
-    image: optimizeListingImageUrl(
-      getSalonListingImage(row, FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length]),
-      640
-    ),
+    // A business card must never borrow a stock salon image. An empty value is
+    // rendered as a neutral "photo pending" state until the real photo is set.
+    image:
+      optimizeListingImageUrl(getSalonListingImage(row, "", { excludeStockImages: true }), 640) ||
+      null,
     phone,
     rating,
     reviews,
