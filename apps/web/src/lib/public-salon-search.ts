@@ -304,8 +304,9 @@ function filterBusinessListingRows(
   let rows = filterPublicSalons(data);
 
   if (params.publishedOnly) {
-    // Show every published listing. Do not hide rows because of leftover
-    // is_verified / booking / source_type flags from an import or update.
+    // Publication is the visibility decision. A listing may still be awaiting
+    // its first hero image; the card renders its neutral photo-pending state
+    // in that case instead of disappearing from the marketplace.
     rows = rows.filter(isPublishedMarketplaceRow);
   } else {
     rows = rows
