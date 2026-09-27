@@ -941,6 +941,17 @@ function ListingQueueContent({
                           <>
                             <Button
                               type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 min-h-7 px-2 text-[10px] font-bold"
+                              disabled={busyId !== null}
+                              onClick={() => setListingEditor(row)}
+                            >
+                              <Pencil className="mr-0.5 h-3 w-3" />
+                              Edit
+                            </Button>
+                            <Button
+                              type="button"
                               variant="default"
                               size="sm"
                               className="h-7 min-h-7 px-2 text-[10px] font-bold"
@@ -1154,6 +1165,26 @@ function ListingQueueContent({
               }
               return result;
             })
+          }
+          onSaveAndPublish={
+            isPendingQueueRow(listingEditor)
+              ? (values: ListingEditValues) =>
+                  runAction(listingEditor.id, async () => {
+                    const saved = await postListingAction("/api/admin/listing-generation/edit", {
+                      salonId: listingEditor.id,
+                      ...values,
+                    });
+                    if (!saved.success) return saved;
+                    const published = await postListingAction("/api/admin/listing-generation/publish", {
+                      salonId: listingEditor.id,
+                    });
+                    if (published.success) {
+                      toast.success("Business listing updated and published.");
+                      setListingEditor(null);
+                    }
+                    return published;
+                  })
+              : undefined
           }
         />
       ) : null}
