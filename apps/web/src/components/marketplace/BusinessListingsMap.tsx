@@ -29,11 +29,13 @@ type MarkerPoint = {
 
 /** Keep the map list in step with the grid when a remote listing photo expires. */
 function ResilientMapListingImage({ source }: { source: string | null }) {
-  const [imageSrc, setImageSrc] = useState(source);
+  // A changed source starts a fresh image lifecycle. Using a keyed child avoids
+  // resetting state synchronously from an effect, which blocks production builds.
+  return <MapListingImage key={source || "no-image"} source={source} />;
+}
 
-  useEffect(() => {
-    setImageSrc(source);
-  }, [source]);
+function MapListingImage({ source }: { source: string | null }) {
+  const [imageSrc, setImageSrc] = useState(source);
 
   if (!imageSrc) {
     return <Store className="m-auto h-full w-6 text-slate-400" aria-hidden="true" />;
