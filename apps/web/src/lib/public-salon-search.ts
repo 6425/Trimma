@@ -291,12 +291,6 @@ function isPublishedMarketplaceRow(row: Record<string, unknown>): boolean {
   return status !== "rejected" && status !== "inactive";
 }
 
-/** A published card needs an image stored in Trimma, not a transient external URL. */
-function hasStoredListingImage(row: Record<string, unknown>): boolean {
-  const imageUrl = String(row.hero_url || row.cover_url || row.hero_image || "").trim();
-  return /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(imageUrl);
-}
-
 function filterBusinessListingRows(
   data: Array<Record<string, unknown>>,
   params: {
@@ -310,7 +304,10 @@ function filterBusinessListingRows(
   let rows = filterPublicSalons(data);
 
   if (params.publishedOnly) {
-    rows = rows.filter(isPublishedMarketplaceRow).filter(hasStoredListingImage);
+    // Publication is the visibility decision. A listing may still be awaiting
+    // its first hero image; the card renders its neutral photo-pending state
+    // in that case instead of disappearing from the marketplace.
+    rows = rows.filter(isPublishedMarketplaceRow);
   } else {
     rows = rows
       .filter(isSalonPublicBrowseListing)
