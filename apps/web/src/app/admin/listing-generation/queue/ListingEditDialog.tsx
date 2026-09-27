@@ -74,12 +74,14 @@ export function ListingEditDialog({
   saving,
   onCancel,
   onSave,
+  onSaveAndPublish,
 }: {
   row: ListingQueueRow;
   categories: PublicCategory[];
   saving: boolean;
   onCancel: () => void;
   onSave: (values: ListingEditValues) => void | Promise<void>;
+  onSaveAndPublish?: (values: ListingEditValues) => void | Promise<void>;
 }) {
   const [values, setValues] = useState<ListingEditValues>(() => initialValues(row));
   const [showNewCity, setShowNewCity] = useState(false);
@@ -146,7 +148,7 @@ export function ListingEditDialog({
     }
   };
 
-  const submit = () => {
+  const submit = (publishAfterSave = false) => {
     if (
       !values.name.trim() ||
       !values.category ||
@@ -173,7 +175,7 @@ export function ListingEditDialog({
       toast.error("Use a public image URL or a full Google Maps photo URL.");
       return;
     }
-    void onSave(values);
+    void (publishAfterSave && onSaveAndPublish ? onSaveAndPublish(values) : onSave(values));
   };
 
   if (typeof document === "undefined") return null;
@@ -366,6 +368,12 @@ export function ListingEditDialog({
 
         <div className="flex shrink-0 flex-col gap-2 border-t border-zinc-100 bg-white px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4 sm:flex-row sm:justify-end sm:px-7 sm:pb-4">
           <Button type="button" variant="outline" disabled={saving} onClick={onCancel} className="h-11 min-h-11 w-full font-bold sm:w-auto">Cancel</Button>
+          {onSaveAndPublish ? (
+            <Button type="button" variant="default" disabled={saving} onClick={() => submit(true)} className="h-11 min-h-11 w-full px-6 font-bold sm:w-auto">
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {saving ? "Saving…" : "Save & publish"}
+            </Button>
+          ) : null}
           <Button type="button" variant="dark" disabled={saving} onClick={submit} className="h-11 min-h-11 w-full px-6 font-bold sm:w-auto">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {saving ? "Saving…" : "Save listing"}
