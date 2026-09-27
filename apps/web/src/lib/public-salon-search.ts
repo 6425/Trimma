@@ -291,10 +291,9 @@ function isPublishedMarketplaceRow(row: Record<string, unknown>): boolean {
   return status !== "rejected" && status !== "inactive";
 }
 
-/** Keep public cards hidden until their hero image is stored in Trimma. */
-function hasPermanentListingImage(row: Record<string, unknown>): boolean {
+/** A published card needs an image stored in Trimma, not a transient external URL. */
+function hasStoredListingImage(row: Record<string, unknown>): boolean {
   const imageUrl = String(row.hero_url || row.cover_url || row.hero_image || "").trim();
-  if (imageUrl.includes("/google_repair_")) return false;
   return /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(imageUrl);
 }
 
@@ -311,7 +310,7 @@ function filterBusinessListingRows(
   let rows = filterPublicSalons(data);
 
   if (params.publishedOnly) {
-    rows = rows.filter(isPublishedMarketplaceRow).filter(hasPermanentListingImage);
+    rows = rows.filter(isPublishedMarketplaceRow).filter(hasStoredListingImage);
   } else {
     rows = rows
       .filter(isSalonPublicBrowseListing)
