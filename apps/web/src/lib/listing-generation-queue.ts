@@ -265,6 +265,30 @@ export async function searchListingGenerationQueue(input: {
   return pageResult.rows;
 }
 
+/** Loads every pending listing for an offline review export, not just the current UI page. */
+export async function loadAllPendingListingGenerationQueueRows(): Promise<ListingQueueRow[]> {
+  const batchSize = 1_000;
+  const rows: ListingQueueRow[] = [];
+
+  for (let offset = 0; ; offset += batchSize) {
+    const loadBatch = async (select: string) => {
+      const query = [
+        `select=${encodeURIComponent(select)}`,
+        queueTabScope("pending"),
+        "order=created_at.desc",
+        `limit=${batchSize}`,
+        `offset=${offset}`,
+      ].join("&");
+      return mapQueueRows(asRecordArray(await restGet(`salons?${query}`)));
+    };
+    const batch = await loadBatch(QUEUE_SELECT).catch(() => loadBatch(QUEUE_SELECT_BASE));
+    rows.push(...batch);
+    if (batch.length < batchSize) break;
+  }
+
+  return sortQueueRowsNewestFirst(rows);
+}
+
 export async function loadFeaturedListingGenerationPage(input: {
   offset?: number;
   q?: string;
