@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil, XCircle } from "lucide-react";
+import { Loader2, ExternalLink, Rocket, PauseCircle, Star, Search, Pencil, XCircle, Download } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import type { PublicCategory } from "@/lib/public-categories";
 import { getDistrictFilterOptions } from "@/lib/sri-lanka-locations";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
 import { ListingEditDialog, type ListingEditValues } from "./ListingEditDialog";
+import { exportPendingListingsToExcel } from "@/lib/export-listing-queue";
 
 const DISTRICT_OPTIONS = getDistrictFilterOptions();
 const LISTING_DISPLAY_SIZE = 40;
@@ -121,6 +122,7 @@ function ListingQueueContent({
   const [requests, setRequests] = useState<SalonRequestRow[]>([]);
   const [loading, setLoading] = useState(pageRows.length === 0);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [districtSlug, setDistrictSlug] = useState("");
   const [categoryName, setCategoryName] = useState("");
@@ -368,6 +370,29 @@ function ListingQueueContent({
     }
   };
 
+  const exportAllPending = async () => {
+    try {
+      setExporting(true);
+      const response = await fetch("/api/admin/listing-generation/queue/export", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      const payload = (await response.json().catch(() => ({}))) as { rows?: ListingQueueRow[]; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Failed to export pending listings.");
+      const rows = payload.rows || [];
+      if (!rows.length) {
+        toast.message("There are no pending listings to export.");
+        return;
+      }
+      exportPendingListingsToExcel(rows);
+      toast.success(`Exported ${rows.length} pending listing business${rows.length === 1 ? "" : "es"} to Excel.`);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to export pending listings.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6 pb-12 duration-500">
       <div>
@@ -422,22 +447,34 @@ function ListingQueueContent({
           </button>
         </div>
         {activeTab === "pending" ? (
-          <Button
-            type="button"
-            variant="default"
-            className="h-11 min-h-11 w-full font-bold sm:w-auto"
-            disabled={busyId !== null || pendingCount < 1}
-            onClick={() => void publishAllPending()}
-          >
-            {busyId === "__all__" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Rocket className="mr-1.5 h-4 w-4" />
-                Publish all{pendingCount > 0 ? ` (${pendingCount})` : ""}
-              </>
-            )}
-          </Button>
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 min-h-11 flex-1 font-bold sm:flex-none"
+              disabled={exporting || pendingCount < 1}
+              onClick={() => void exportAllPending()}
+            >
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}
+              Export all pending
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              className="h-11 min-h-11 flex-1 font-bold sm:flex-none"
+              disabled={busyId !== null || pendingCount < 1}
+              onClick={() => void publishAllPending()}
+            >
+              {busyId === "__all__" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Rocket className="mr-1.5 h-4 w-4" />
+                  Publish all{pendingCount > 0 ? ` (${pendingCount})` : ""}
+                </>
+              )}
+            </Button>
+          </div>
         ) : (
           <p className="text-xs font-medium text-zinc-500">
             Feature a listed salon with a start and end date. The public{" "}
