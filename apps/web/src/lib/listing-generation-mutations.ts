@@ -354,8 +354,13 @@ export async function updateListingSalonRecord(
   if (!isListingPipelineSalon(salon)) {
     throw new Error("This salon is not in the listing generation pipeline.");
   }
-  if (salon.onboarding_status !== LISTING_ONBOARDING_STATUS.PUBLISHED) {
-    throw new Error("Publish the listing before editing its public details.");
+  const editableStatuses = new Set([
+    LISTING_ONBOARDING_STATUS.CAPTURED,
+    LISTING_ONBOARDING_STATUS.PUBLISHED,
+    "DISCOVERED",
+  ]);
+  if (!editableStatuses.has(String(salon.onboarding_status || ""))) {
+    throw new Error("Only pending or published listings can be edited.");
   }
 
   const name = cleanManualListingText(input.name, 200);

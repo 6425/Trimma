@@ -175,6 +175,10 @@ export function ListingEditDialog({
       toast.error("Use a public image URL or a full Google Maps photo URL.");
       return;
     }
+    if (publishAfterSave && !values.heroUrl.trim()) {
+      toast.error("Add a hero image URL before publishing this business.");
+      return;
+    }
     void (publishAfterSave && onSaveAndPublish ? onSaveAndPublish(values) : onSave(values));
   };
 
