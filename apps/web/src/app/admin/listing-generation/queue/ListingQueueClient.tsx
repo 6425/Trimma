@@ -1192,6 +1192,26 @@ function ListingQueueContent({
               return result;
             })
           }
+          onSaveAndPublish={
+            isPendingQueueRow(listingEditor)
+              ? (values: ListingEditValues) =>
+                  runAction(listingEditor.id, async () => {
+                    const saved = await postListingAction("/api/admin/listing-generation/edit", {
+                      salonId: listingEditor.id,
+                      ...values,
+                    });
+                    if (!saved.success) return saved;
+                    const published = await postListingAction("/api/admin/listing-generation/publish", {
+                      salonId: listingEditor.id,
+                    });
+                    if (published.success) {
+                      toast.success("Business listing updated and published.");
+                      setListingEditor(null);
+                    }
+                    return published;
+                  })
+              : undefined
+          }
         />
       ) : null}
 
