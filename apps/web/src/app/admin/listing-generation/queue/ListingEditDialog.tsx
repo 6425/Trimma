@@ -378,7 +378,7 @@ export function ListingEditDialog({
               {saving ? "Saving…" : "Save & publish"}
             </Button>
           ) : null}
-          <Button type="button" variant="dark" disabled={saving} onClick={submit} className="h-11 min-h-11 w-full px-6 font-bold sm:w-auto">
+          <Button type="button" variant="dark" disabled={saving} onClick={() => submit()} className="h-11 min-h-11 w-full px-6 font-bold sm:w-auto">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {saving ? "Saving…" : "Save listing"}
           </Button>
