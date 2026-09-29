@@ -343,33 +343,6 @@ function ListingQueueContent({
     }
   };
 
-  const publishAllPending = async () => {
-    if (pendingCount < 1) {
-      toast.message("There are no pending listings to publish.");
-      return;
-    }
-    const confirmed = window.confirm(
-      `Publish all ${pendingCount} pending listing${pendingCount === 1 ? "" : "s"} to the marketplace? Booking stays off until onboarding starts.`
-    );
-    if (!confirmed) return;
-
-    try {
-      setBusyId("__all__");
-      const result = await postListingAction("/api/admin/listing-generation/publish", { allPending: true });
-      if (result.success === false) throw new Error(result.error);
-      const count = result.publishedCount ?? pendingCount;
-      toast.success(
-        count === 0 ? "No pending listings were left to publish." : `Published ${count} listing${count === 1 ? "" : "s"}.`
-      );
-      setPage(1);
-      await Promise.all([loadPage({ page: 1 }), refreshQueueMetadata()]);
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : "Publish all failed.");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
   const exportAllPending = async () => {
     try {
       setExporting(true);
@@ -457,22 +430,6 @@ function ListingQueueContent({
             >
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}
               Export all pending
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              className="h-11 min-h-11 flex-1 font-bold sm:flex-none"
-              disabled={busyId !== null || pendingCount < 1}
-              onClick={() => void publishAllPending()}
-            >
-              {busyId === "__all__" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Rocket className="mr-1.5 h-4 w-4" />
-                  Publish all{pendingCount > 0 ? ` (${pendingCount})` : ""}
-                </>
-              )}
             </Button>
           </div>
         ) : (

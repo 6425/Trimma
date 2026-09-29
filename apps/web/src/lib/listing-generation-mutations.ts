@@ -14,6 +14,7 @@ import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { slugifySalonName } from "@/lib/google-place-profile";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
+import { applySalonGoogleImageSync, syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 
 export type ManualListingCaptureInput = {
   name: string;
@@ -63,6 +64,43 @@ function cleanManualListingImageUrl(value: unknown, label: string): string | nul
     throw new Error(`${label} must link directly to an image, not a Google Maps page or map asset.`);
   }
   return normalized;
+}
+
+type ListingImageFields = {
+  id: string;
+  name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  district?: string | null;
+  place_id?: string | null;
+  hero_url?: string | null;
+  cover_url?: string | null;
+  hero_image?: string | null;
+  featured_images?: unknown;
+};
+
+/** A listing image must be owned by Trimma so a temporary Google CDN URL cannot disappear after publishing. */
+function hasStoredListingImage(salon: ListingImageFields): boolean {
+  const featured = Array.isArray(salon.featured_images) ? salon.featured_images : [];
+  return [salon.hero_url, salon.cover_url, salon.hero_image, ...featured]
+    .map(normalizePublicImageUrl)
+    .some((url) => Boolean(url && /\/storage\/v1\/(?:object\/public|render\/image\/public)\/salon-images\//i.test(url)));
+}
+
+async function ensureStoredListingImage(supabase: SupabaseClient, salon: ListingImageFields): Promise<void> {
+  if (hasStoredListingImage(salon)) return;
+  try {
+    const images = await syncSalonImagesFromGooglePlace(
+      supabase,
+      { ...salon, name: salon.name || "Unnamed business" },
+      { maxPhotos: 1 }
+    );
+    if (!images) throw new Error("No Google Place photo is available.");
+    await applySalonGoogleImageSync(supabase, salon.id, images, salon.place_id);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "The image could not be saved.";
+    throw new Error(`This listing cannot be published or featured until Trimma has saved a working profile image. Update the image and try again. (${detail})`);
+  }
 }
 
 function cleanManualCoordinate(
@@ -494,7 +532,7 @@ export async function publishListingSalonRecord(
 ): Promise<void> {
   const { data: salon, error: fetchError } = await supabase
     .from("salons")
-    .select("id, name, source_type, onboarding_status, category, city, district")
+    .select("id, name, source_type, onboarding_status, category, city, district, address, place_id, hero_url, cover_url, hero_image, featured_images")
     .eq("id", salonId)
     .maybeSingle();
 
@@ -503,6 +541,8 @@ export async function publishListingSalonRecord(
   if (!isListingPipelineSalon(salon)) {
     throw new Error("This salon is not in the listing generation pipeline.");
   }
+
+  await ensureStoredListingImage(supabase, salon);
 
   await updateSalonWithOptionalColumns(supabase, salonId, {
     ...LISTING_PUBLISH_SALON_UPDATES,
@@ -752,7 +792,7 @@ export async function setListingFeaturedRecord(
 ): Promise<void> {
   const { data: salon, error: fetchError } = await supabase
     .from("salons")
-    .select("id, name, source_type, onboarding_status")
+    .select("id, name, source_type, onboarding_status, address, city, district, place_id, hero_url, cover_url, hero_image, featured_images")
     .eq("id", salonId)
     .maybeSingle();
 
@@ -766,6 +806,7 @@ export async function setListingFeaturedRecord(
   }
 
   if (featured) {
+    await ensureStoredListingImage(supabase, salon);
     const startsAt = parseFeaturedDate(period?.startsAt);
     const endsAt = parseFeaturedDate(period?.endsAt);
     if (!isValidFeaturedPeriod(startsAt, endsAt)) {
