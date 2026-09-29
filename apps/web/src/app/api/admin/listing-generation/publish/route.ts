@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { revalidateMarketplaceListingPages } from "@/lib/listing-marketplace-revalidate";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
-import {
-  publishAllPendingListingSalonRecords,
-  publishListingSalonRecord,
-} from "@/lib/listing-generation-mutations";
+import { publishListingSalonRecord } from "@/lib/listing-generation-mutations";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +25,10 @@ export async function POST(req: Request) {
     const supabase = createSupabaseAdminClient();
 
     if (body.allPending) {
-      const result = await publishAllPendingListingSalonRecords(supabase);
-      revalidateMarketplaceListingPages();
-      return NextResponse.json({ success: true, publishedCount: result.publishedCount });
+      return NextResponse.json(
+        { error: "Bulk publishing is disabled. Review and publish each listing individually." },
+        { status: 400 }
+      );
     }
 
     const salonId = String(body.salonId || "").trim();
