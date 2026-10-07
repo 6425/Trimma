@@ -80,16 +80,18 @@ type ListingImageFields = {
   featured_images?: unknown;
 };
 
-/** A listing image must be owned by Trimma so a temporary Google CDN URL cannot disappear after publishing. */
-function hasStoredListingImage(salon: ListingImageFields): boolean {
+/** A manually saved hero image is valid for publishing; Google recovery is only a fallback. */
+function hasSavedListingImage(salon: ListingImageFields): boolean {
   const featured = Array.isArray(salon.featured_images) ? salon.featured_images : [];
   return [salon.hero_url, salon.cover_url, salon.hero_image, ...featured]
     .map(normalizePublicImageUrl)
-    .some((url) => Boolean(url && /\/storage\/v1\/(?:object\/public|render\/image\/public)\/salon-images\//i.test(url)));
+    .some(Boolean);
 }
 
 async function ensureStoredListingImage(supabase: SupabaseClient, salon: ListingImageFields): Promise<void> {
-  if (hasStoredListingImage(salon)) return;
+  // The editor saves Hero Image URL into these fields before it calls publish.
+  // Do not discard that admin-approved value by forcing a second Google lookup.
+  if (hasSavedListingImage(salon)) return;
   try {
     const images = await syncSalonImagesFromGooglePlace(
       supabase,
