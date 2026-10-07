@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Star, Phone, MapPin, Globe, Facebook, Instagram, Store } from "lucide-react";
+import { Star, Phone, MapPin, Globe, Facebook, Instagram } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { buildSalonClaimLoginUrl } from "@/lib/salon-public-listing";
 import { buildSalonPublicPath } from "@/lib/salon-public-path";
@@ -47,12 +47,14 @@ function ResilientBusinessListingImage({
   listingId,
   alt,
   priority,
+  onUnavailable,
 }: {
   source: string | null;
   fallbackSources: string[];
   listingId: string;
   alt: string;
   priority: boolean;
+  onUnavailable: () => void;
 }) {
   const [imageSources, setImageSources] = useState(() =>
     [
@@ -67,14 +69,7 @@ function ResilientBusinessListingImage({
   );
   const imageSrc = imageSources[0] || null;
 
-  if (!imageSrc) {
-    return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-slate-100 text-slate-400">
-        <Store className="h-9 w-9" aria-hidden="true" />
-        <span className="text-[10px] font-bold uppercase tracking-wider">Photo pending</span>
-      </div>
-    );
-  }
+  if (!imageSrc) return null;
 
   return (
     <Image
@@ -91,7 +86,13 @@ function ResilientBusinessListingImage({
           setImageSources((sources) => [original, ...sources.slice(1)]);
           return;
         }
-        setImageSources((sources) => sources.slice(1));
+        setImageSources((sources) => {
+          if (sources.length <= 1) {
+            onUnavailable();
+            return [];
+          }
+          return sources.slice(1);
+        });
       }}
     />
   );
@@ -105,6 +106,7 @@ type Props = {
 };
 
 export function BusinessListingCard({ listing, priority = false, featuredBatch = false }: Props) {
+  const [imageUnavailable, setImageUnavailable] = useState(false);
   const claimUrl = buildSalonClaimLoginUrl(listing.id);
   const profileUrl = buildSalonPublicPath(listing);
   const showFeaturedBatch = featuredBatch || listing.isFeatured;
@@ -112,6 +114,10 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
   const imageFallbacks = listing.imageFallbacks
     .map(normalizeListingImageUrl)
     .filter((url): url is string => Boolean(url));
+
+  // Public data is filtered on the server. This protects against stale data
+  // and a previously valid image URL that later stops loading.
+  if (!imageUrl || imageUnavailable) return null;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
@@ -123,6 +129,7 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
           listingId={listing.id}
           alt={listing.name}
           priority={priority}
+          onUnavailable={() => setImageUnavailable(true)}
         />
         {showFeaturedBatch ? (
           <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-black shadow-sm">

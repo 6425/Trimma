@@ -5,7 +5,7 @@ import { canonicalizeCategorySlug, rejectRetiredPublicCategories } from "@/lib/p
 import { syncMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
-import { getSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+import { getSalonListingImage, hasSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 import { countPublishedListingsByCategory } from "@/lib/public-salon-search";
 
 export type LandingCategory = {
@@ -114,6 +114,7 @@ export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
 
     return filterPublicSalons(data || [])
       .filter((row) => isSalonApprovedForBookings(row))
+      .filter(hasSalonListingImage)
       .filter((row) => row.slug?.trim())
       .slice(0, limit)
       .map((row) => {
@@ -124,7 +125,7 @@ export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
           rating,
           reviews,
           badge: ratingBadge(rating),
-          img: getSalonListingImage(row, DEFAULT_IMG),
+          img: getSalonListingImage(row, "", { excludeStockImages: true }),
         };
       });
   } catch (err) {
