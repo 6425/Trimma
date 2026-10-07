@@ -38,7 +38,10 @@ export function isStockSalonImageUrl(url: string): boolean {
  * are short-lived and can leave a card blank after it has been counted.
  */
 export function isPermanentSalonListingImageUrl(url: string): boolean {
-  return /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(url);
+  return (
+    /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(url) &&
+    !/\/google_repair_/i.test(url)
+  );
 }
 
 export function getSalonListingImage(
