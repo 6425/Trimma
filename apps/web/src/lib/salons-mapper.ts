@@ -30,7 +30,7 @@ const STOCK_SALON_IMAGE_IDS = [
 ];
 
 export function isStockSalonImageUrl(url: string): boolean {
-  return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId));
+  return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId)) || /\/google_repair_/i.test(url);
 }
 
 /**
@@ -84,14 +84,14 @@ export function getSalonListingImage(
   return usableCandidates[0];
 }
 
-/** Public directories only expose a salon when it has its own usable photo. */
+/** Public directories only expose a salon when it has a real, non-placeholder photo. */
 export function hasSalonListingImage(salon: {
   cover_url?: string | null;
   hero_url?: string | null;
   hero_image?: string | null;
   featured_images?: unknown;
 }): boolean {
-  return Boolean(getPermanentSalonListingImage(salon));
+  return Boolean(getSalonListingImage(salon, "", { excludeStockImages: true }));
 }
 
 /** The single source of truth for public directory card images. */

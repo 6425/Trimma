@@ -99,9 +99,6 @@ async function ensureStoredListingImage(supabase: SupabaseClient, salon: Listing
       { maxPhotos: 1 }
     );
     if (!images) throw new Error("No Google Place photo is available.");
-    if (!hasStoredListingImage(images)) {
-      throw new Error("The saved image is a generated placeholder, not a real business photo.");
-    }
     await applySalonGoogleImageSync(supabase, salon.id, images, salon.place_id);
   } catch (error) {
     const detail = error instanceof Error ? error.message : "The image could not be saved.";
@@ -496,29 +493,6 @@ export async function updateListingSalonRecord(
   if (mapUrl) nextExt.google_maps_url = mapUrl;
   else delete nextExt.google_maps_url;
 
-  const imageSource = {
-    id: salonId,
-    name,
-    address,
-    city,
-    district,
-    place_id: placeId,
-    hero_url: heroUrl,
-    cover_url: heroUrl,
-    hero_image: heroUrl,
-    featured_images: [],
-  };
-  let syncedImages: Awaited<ReturnType<typeof syncSalonImagesFromGooglePlace>> = null;
-  if (
-    salon.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED &&
-    !hasStoredListingImage(imageSource)
-  ) {
-    syncedImages = await syncSalonImagesFromGooglePlace(supabase, imageSource, { maxPhotos: 1 });
-    if (!syncedImages || !hasStoredListingImage(syncedImages)) {
-      throw new Error("A published listing needs a real, permanently saved business photo. Update the image or Google Place and try again.");
-    }
-  }
-
   await updateSalonWithOptionalColumns(supabase, salonId, {
     name,
     category,
@@ -540,10 +514,9 @@ export async function updateListingSalonRecord(
     description,
     summary: description,
     logo_url: logoUrl,
-    hero_url: syncedImages?.hero_url || heroUrl,
-    cover_url: syncedImages?.cover_url || heroUrl,
-    hero_image: syncedImages?.hero_url || heroUrl,
-    ...(syncedImages ? { featured_images: syncedImages.featured_images } : {}),
+    hero_url: heroUrl,
+    cover_url: heroUrl,
+    hero_image: heroUrl,
     business_info_extended: nextExt,
   });
 
