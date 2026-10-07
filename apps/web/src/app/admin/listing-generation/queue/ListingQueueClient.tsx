@@ -1161,7 +1161,8 @@ function ListingQueueContent({
             })
           }
           onSaveAndPublish={
-            isPendingQueueRow(listingEditor)
+            isPendingQueueRow(listingEditor) ||
+            listingEditor.onboarding_status === LISTING_ONBOARDING_STATUS.PUBLISHED
               ? (values: ListingEditValues) =>
                   runAction(listingEditor.id, async () => {
                     const saved = await postListingAction("/api/admin/listing-generation/edit", {
