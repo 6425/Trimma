@@ -199,7 +199,7 @@ export function ListingEditDialog({
               <span className="min-w-0 break-words">Edit {row.name}</span>
             </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Update the complete public business listing. Publication and booking settings are unchanged.
+              Save listing keeps this business pending. Save & publish saves your changes and sends it live; booking remains off.
             </p>
           </div>
           <Button
