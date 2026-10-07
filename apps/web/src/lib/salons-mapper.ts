@@ -33,6 +33,14 @@ export function isStockSalonImageUrl(url: string): boolean {
   return STOCK_SALON_IMAGE_IDS.some((imageId) => url.includes(imageId));
 }
 
+/**
+ * A directory card must use an image that Trimma controls. Google photo URLs
+ * are short-lived and can leave a card blank after it has been counted.
+ */
+export function isPermanentSalonListingImageUrl(url: string): boolean {
+  return /\.supabase\.co\/storage\/v1\/(?:object|render)\/public\/salon-images\//i.test(url);
+}
+
 export function getSalonListingImage(
   salon: {
     cover_url?: string | null;
@@ -80,7 +88,21 @@ export function hasSalonListingImage(salon: {
   hero_image?: string | null;
   featured_images?: unknown;
 }): boolean {
-  return Boolean(getSalonListingImage(salon, "", { excludeStockImages: true }));
+  return Boolean(getPermanentSalonListingImage(salon));
+}
+
+/** The single source of truth for public directory card images. */
+export function getPermanentSalonListingImage(salon: {
+  cover_url?: string | null;
+  hero_url?: string | null;
+  hero_image?: string | null;
+  featured_images?: unknown;
+}): string {
+  const featured = Array.isArray(salon.featured_images) ? salon.featured_images : [];
+  const candidates = [salon.hero_url, salon.cover_url, salon.hero_image, ...featured]
+    .map(normalizePublicImageUrl)
+    .filter((url): url is string => Boolean(url) && isPermanentSalonListingImageUrl(url));
+  return candidates[0] || "";
 }
 
 export function mapSalonRowToUI(s: any, idx: number) {
