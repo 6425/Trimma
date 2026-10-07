@@ -14,6 +14,7 @@ import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { slugifySalonName } from "@/lib/google-place-profile";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
+import { hasSalonListingImage } from "@/lib/salons-mapper";
 import { applySalonGoogleImageSync, syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 
 export type ManualListingCaptureInput = {
@@ -561,7 +562,7 @@ export async function publishAllPendingListingSalonRecords(
   const pending = await fetchAllByIdCursor(async (afterId, pageSize) => {
     let query = supabase
       .from("salons")
-      .select("id")
+      .select("id, hero_url, cover_url, hero_image, featured_images")
       .eq("onboarding_status", LISTING_ONBOARDING_STATUS.CAPTURED)
       .eq("source_type", "LISTING_GENERATION")
       .order("id", { ascending: true })
@@ -572,7 +573,10 @@ export async function publishAllPendingListingSalonRecords(
     return data || [];
   });
 
-  const ids = pending.map((row) => String(row.id)).filter(Boolean);
+  const ids = pending
+    .filter(hasSalonListingImage)
+    .map((row) => String(row.id))
+    .filter(Boolean);
   if (ids.length === 0) return { publishedCount: 0 };
 
   const updates = { ...LISTING_PUBLISH_SALON_UPDATES };

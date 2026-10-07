@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonPubliclyBookable, isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
-import { mapSalonRowToUI } from "@/lib/salons-mapper";
+import { hasSalonListingImage, mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter, salonBelongsToRequestedLocation } from "@/lib/sri-lanka-locations";
@@ -212,7 +212,7 @@ export async function fetchPublicSalons(
     data = await fetchRows();
   }
 
-  let rows = filterPublicSalons(data);
+  let rows = filterPublicSalons(data).filter(hasSalonListingImage);
   if (approvedOnly) {
     rows = rows.filter(isSalonApprovedForBookings);
   } else {
@@ -301,12 +301,11 @@ function filterBusinessListingRows(
     q?: string;
   }
 ) {
-  let rows = filterPublicSalons(data);
+  // One eligibility rule backs cards, pagination, and totals: a published
+  // listing needs a real salon image before it can appear anywhere public.
+  let rows = filterPublicSalons(data).filter(hasSalonListingImage);
 
   if (params.publishedOnly) {
-    // Publication is the visibility decision. A listing may still be awaiting
-    // its first hero image; the card renders its neutral photo-pending state
-    // in that case instead of disappearing from the marketplace.
     rows = rows.filter(isPublishedMarketplaceRow);
   } else {
     rows = rows
@@ -358,7 +357,8 @@ function sortBusinessListingRows(
 // details only for the cards in this response. Pagination must follow ranking.
 const LISTING_RANK_SELECT = `
   id, name, slug, phone, rating, review_count, city, district, province, category,
-  status, onboarding_status, is_verified, featured_starts_at, featured_ends_at, is_featured
+  status, onboarding_status, is_verified, featured_starts_at, featured_ends_at, is_featured,
+  hero_url, cover_url, hero_image, featured_images
 `;
 
 type PublishedListingFilters = {
@@ -831,12 +831,14 @@ export async function countPublishedListingsForLocation(
   supabase: SupabaseClient,
   location: string
 ): Promise<number> {
-  return countPublishedMarketplaceListings(supabase, {
+  const filters = {
     q: "",
     location,
     minRating: 0,
     verifiedOnly: false,
-  });
+  };
+  const rows = await loadPublishedListingRankRows(supabase, filters);
+  return filterBusinessListingRows(rows, { ...filters, publishedOnly: true }).length;
 }
 
 export async function fetchBusinessListingCards(
@@ -864,7 +866,9 @@ export async function fetchBusinessListingCards(
 
   const categoryActive = category.replace(/-/g, " ").trim().length > 0;
 
-  if (publishedOnly && !q.trim()) {
+  // Use the same complete, image-filtered set for searches and browsing so
+  // the total is the exact number of cards eligible to appear.
+  if (publishedOnly) {
     return fetchPublishedListingSections(supabase, {
       q, location, category, categoryName, minRating, verifiedOnly,
       limit: Math.max(0, limit), offset: Math.max(0, offset), sort,
@@ -1043,6 +1047,7 @@ export async function fetchSimilarBusinessListingsForSalon(
 
   return filterPublicSalons(rows)
     .filter(isSalonPubliclyListable)
+    .filter(hasSalonListingImage)
     .filter((row) => String(row.id) !== params.salonId)
     .filter((row) => salonBelongsToRequestedLocation(row, city))
     .filter((row) => salonMatchesCategory(row, category, category))

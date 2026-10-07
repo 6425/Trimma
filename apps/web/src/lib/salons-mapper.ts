@@ -73,6 +73,16 @@ export function getSalonListingImage(
   return usableCandidates[0];
 }
 
+/** Public directories only expose a salon when it has its own usable photo. */
+export function hasSalonListingImage(salon: {
+  cover_url?: string | null;
+  hero_url?: string | null;
+  hero_image?: string | null;
+  featured_images?: unknown;
+}): boolean {
+  return Boolean(getSalonListingImage(salon, "", { excludeStockImages: true }));
+}
+
 export function mapSalonRowToUI(s: any, idx: number) {
   const prices = s.services?.map((ser: any) => Number(ser.price)) || [];
   const startingPrice = prices.length > 0 ? Math.min(...prices) : 1500;
