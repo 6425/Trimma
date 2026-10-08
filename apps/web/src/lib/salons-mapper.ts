@@ -44,6 +44,15 @@ export function isPermanentSalonListingImageUrl(url: string): boolean {
   );
 }
 
+/** Google Street View thumbnail URLs are direct, stable public image URLs. */
+function isReliableExternalListingImageUrl(url: string): boolean {
+  try {
+    return new URL(url).hostname.toLowerCase() === "streetviewpixels-pa.googleapis.com";
+  } catch {
+    return false;
+  }
+}
+
 export function getSalonListingImage(
   salon: {
     cover_url?: string | null;
@@ -84,14 +93,17 @@ export function getSalonListingImage(
   return usableCandidates[0];
 }
 
-/** Public directories only expose a salon when it has a durable Trimma-hosted photo. */
+/** Public cards allow Trimma-hosted images and verified direct Street View thumbnails. */
 export function hasSalonListingImage(salon: {
   cover_url?: string | null;
   hero_url?: string | null;
   hero_image?: string | null;
   featured_images?: unknown;
 }): boolean {
-  return Boolean(getPermanentSalonListingImage(salon));
+  const featured = Array.isArray(salon.featured_images) ? salon.featured_images : [];
+  return [salon.hero_url, salon.cover_url, salon.hero_image, ...featured]
+    .map(normalizePublicImageUrl)
+    .some((url) => Boolean(url && (isPermanentSalonListingImageUrl(url) || isReliableExternalListingImageUrl(url))));
 }
 
 /** The single source of truth for public directory card images. */
