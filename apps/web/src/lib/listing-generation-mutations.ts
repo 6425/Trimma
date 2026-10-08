@@ -14,8 +14,6 @@ import { resolveOnboardingAgentForSalon } from "@/lib/salon-onboarding-paths";
 import { slugifySalonName } from "@/lib/google-place-profile";
 import { SRI_LANKA_PROVINCES } from "@/lib/sri-lanka-locations";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
-import { hasSalonListingImage } from "@/lib/salons-mapper";
-import { applySalonGoogleImageSync, syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 
 export type ManualListingCaptureInput = {
   name: string;
@@ -80,7 +78,7 @@ type ListingImageFields = {
   featured_images?: unknown;
 };
 
-/** A manually saved hero image is valid for publishing; Google recovery is only a fallback. */
+/** A manually saved hero image is the publishing requirement. */
 function hasSavedListingImage(salon: ListingImageFields): boolean {
   const featured = Array.isArray(salon.featured_images) ? salon.featured_images : [];
   return [salon.hero_url, salon.cover_url, salon.hero_image, ...featured]
@@ -88,22 +86,9 @@ function hasSavedListingImage(salon: ListingImageFields): boolean {
     .some(Boolean);
 }
 
-async function ensureStoredListingImage(supabase: SupabaseClient, salon: ListingImageFields): Promise<void> {
-  // The editor saves Hero Image URL into these fields before it calls publish.
-  // Do not discard that admin-approved value by forcing a second Google lookup.
+function requireSavedListingImage(salon: ListingImageFields): void {
   if (hasSavedListingImage(salon)) return;
-  try {
-    const images = await syncSalonImagesFromGooglePlace(
-      supabase,
-      { ...salon, name: salon.name || "Unnamed business" },
-      { maxPhotos: 1 }
-    );
-    if (!images) throw new Error("No Google Place photo is available.");
-    await applySalonGoogleImageSync(supabase, salon.id, images, salon.place_id);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : "The image could not be saved.";
-    throw new Error(`This listing cannot be published or featured until Trimma has saved a working profile image. Update the image and try again. (${detail})`);
-  }
+  throw new Error("Add a valid Hero Image URL and save the listing before publishing or featuring it.");
 }
 
 function cleanManualCoordinate(
@@ -545,7 +530,7 @@ export async function publishListingSalonRecord(
     throw new Error("This salon is not in the listing generation pipeline.");
   }
 
-  await ensureStoredListingImage(supabase, salon);
+  requireSavedListingImage(salon);
 
   await updateSalonWithOptionalColumns(supabase, salonId, {
     ...LISTING_PUBLISH_SALON_UPDATES,
@@ -576,7 +561,7 @@ export async function publishAllPendingListingSalonRecords(
   });
 
   const ids = pending
-    .filter(hasSalonListingImage)
+    .filter(hasSavedListingImage)
     .map((row) => String(row.id))
     .filter(Boolean);
   if (ids.length === 0) return { publishedCount: 0 };
@@ -812,7 +797,7 @@ export async function setListingFeaturedRecord(
   }
 
   if (featured) {
-    await ensureStoredListingImage(supabase, salon);
+    requireSavedListingImage(salon);
     const startsAt = parseFeaturedDate(period?.startsAt);
     const endsAt = parseFeaturedDate(period?.endsAt);
     if (!isValidFeaturedPeriod(startsAt, endsAt)) {
