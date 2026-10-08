@@ -290,14 +290,12 @@ export async function createManualListingSalonRecord(
   if (nearbyError) throw new Error(nearbyError.message);
 
   const normalizedName = name.toLocaleLowerCase();
-  const normalizedAddress = address.toLocaleLowerCase();
   const duplicate = (nearbyRows || []).find((row) => {
     const sameName = String(row.name || "").trim().toLocaleLowerCase() === normalizedName;
-    const sameAddress = String(row.address || "").trim().toLocaleLowerCase() === normalizedAddress;
-    return sameName && sameAddress;
+    return sameName;
   });
   if (duplicate?.id) {
-    throw new Error(`A listing with this name and address already exists: ${duplicate.name || name}.`);
+    throw new Error(`A listing named ${duplicate.name || name} already exists in ${district}. Review that listing instead of creating a duplicate.`);
   }
 
   const slug = await createUniqueManualListingSlug(supabase, name);
