@@ -417,9 +417,13 @@ async function fetchPublishedListingSections(
   // rejected top-ranked image never leaves an almost-empty marketplace row.
   const imageScanSize = Math.max(160, Math.max(params.limit, 1) * 20);
   const topCandidates = [...topRated, ...rest].slice(0, imageScanSize);
-  const restCandidates = params.limit > 0
-    ? orderedRest.slice(params.offset, params.offset + imageScanSize)
-    : orderedRest.slice(params.offset);
+  // Offset counts cards already shown, not raw database rows. Re-scan from
+  // the start and skip that many verified cards so rejected image URLs cannot
+  // make consecutive pages repeat the same businesses.
+  const restScanSize = params.limit > 0
+    ? Math.max(imageScanSize, (params.offset + params.limit) * 20)
+    : orderedRest.length;
+  const restCandidates = orderedRest.slice(0, restScanSize);
   const selected = [...new Map(
     [...featured, ...topCandidates, ...restCandidates].map((row) => [String(row.id), row])
   ).values()];
@@ -470,16 +474,22 @@ async function fetchPublishedListingSections(
     verifiedCards(topCandidates, TOP_RATED_LISTING_COUNT),
   ]);
   const selectedTopIds = new Set(topRatedCards.map((card) => card.id));
-  const listingCards = await verifiedCards(
+  const verifiedRestCards = await verifiedCards(
     restCandidates.filter((row) => !selectedTopIds.has(String(row.id))),
-    Math.max(params.limit, 0)
+    Math.max(params.offset + params.limit, 0)
   );
+  const listingCards = params.limit > 0
+    ? verifiedRestCards.slice(params.offset, params.offset + params.limit)
+    : verifiedRestCards.slice(params.offset);
   return {
     featured: featuredCards,
     topRated: topRatedCards,
     listings: listingCards,
     totalCount: matchingRows.length,
-    hasMore: params.limit > 0 && params.offset + restCandidates.length < orderedRest.length,
+    hasMore: params.limit > 0 && (
+      restCandidates.length < orderedRest.length ||
+      verifiedRestCards.length > params.offset + listingCards.length
+    ),
   };
 }
 
