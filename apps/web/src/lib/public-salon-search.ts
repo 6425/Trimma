@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonPubliclyBookable, isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
-import { hasSalonListingImage, mapSalonRowToUI } from "@/lib/salons-mapper";
+import { hasSalonListingImage, isPermanentSalonListingImageUrl, mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter, salonBelongsToRequestedLocation } from "@/lib/sri-lanka-locations";
@@ -437,10 +437,33 @@ async function fetchPublishedListingSections(
     const detail = detailsById.get(String(row.id));
     return detail ? [mapSalonRowToBusinessListing(detail, index)] : [];
   });
+  const hasWorkingImage = async (card: BusinessListingCardData): Promise<boolean> => {
+    if (!card.image) return false;
+    if (isPermanentSalonListingImageUrl(card.image)) return true;
+    try {
+      const response = await fetch(card.image, {
+        cache: "no-store",
+        headers: { "User-Agent": "Trimma listing image check" },
+      });
+      return response.ok && Boolean(response.headers.get("content-type")?.toLowerCase().startsWith("image/"));
+    } catch {
+      return false;
+    }
+  };
+  const verifiedCards = async (rows: Array<Record<string, unknown>>) => {
+    const mapped = cards(rows);
+    const checks = await Promise.all(mapped.map(async (card) => ({ card, ok: await hasWorkingImage(card) })));
+    return checks.filter((item) => item.ok).map((item) => item.card);
+  };
+  const [featuredCards, topRatedCards, listingCards] = await Promise.all([
+    verifiedCards(featured),
+    verifiedCards(topRated),
+    verifiedCards(pagedRest),
+  ]);
   return {
-    featured: cards(featured),
-    topRated: cards(topRated),
-    listings: cards(pagedRest),
+    featured: featuredCards,
+    topRated: topRatedCards,
+    listings: listingCards,
     totalCount: matchingRows.length,
     hasMore: params.limit > 0 && params.offset + pagedRest.length < orderedRest.length,
   };
