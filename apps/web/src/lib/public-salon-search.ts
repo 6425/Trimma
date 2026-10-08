@@ -413,10 +413,16 @@ async function fetchPublishedListingSections(
   const matchingRows = filterBusinessListingRows(candidates, { ...params, publishedOnly: true });
   const { featured, topRated, rest } = splitMarketplaceListingSections(matchingRows);
   const orderedRest = params.sort === "name" ? sortBusinessListingRows(rest, "name") : rest;
-  const pagedRest = params.limit > 0
-    ? orderedRest.slice(params.offset, params.offset + params.limit)
+  // Image links from Google can expire. Look ahead for replacements so a
+  // rejected top-ranked image never leaves an almost-empty marketplace row.
+  const imageScanSize = Math.max(160, Math.max(params.limit, 1) * 20);
+  const topCandidates = [...topRated, ...rest].slice(0, imageScanSize);
+  const restCandidates = params.limit > 0
+    ? orderedRest.slice(params.offset, params.offset + imageScanSize)
     : orderedRest.slice(params.offset);
-  const selected = [...featured, ...topRated, ...pagedRest];
+  const selected = [...new Map(
+    [...featured, ...topCandidates, ...restCandidates].map((row) => [String(row.id), row])
+  ).values()];
   const client = publishedListingsClient(supabase);
   const detailsById = new Map<string, Record<string, unknown>>();
   for (let start = 0; start < selected.length; start += 100) {
@@ -450,22 +456,30 @@ async function fetchPublishedListingSections(
       return false;
     }
   };
-  const verifiedCards = async (rows: Array<Record<string, unknown>>) => {
-    const mapped = cards(rows);
-    const checks = await Promise.all(mapped.map(async (card) => ({ card, ok: await hasWorkingImage(card) })));
-    return checks.filter((item) => item.ok).map((item) => item.card);
+  const verifiedCards = async (rows: Array<Record<string, unknown>>, maximum: number) => {
+    const working: BusinessListingCardData[] = [];
+    for (let start = 0; start < rows.length && working.length < maximum; start += 12) {
+      const mapped = cards(rows.slice(start, start + 12));
+      const checks = await Promise.all(mapped.map(async (card) => ({ card, ok: await hasWorkingImage(card) })));
+      working.push(...checks.filter((item) => item.ok).map((item) => item.card));
+    }
+    return working.slice(0, maximum);
   };
-  const [featuredCards, topRatedCards, listingCards] = await Promise.all([
-    verifiedCards(featured),
-    verifiedCards(topRated),
-    verifiedCards(pagedRest),
+  const [featuredCards, topRatedCards] = await Promise.all([
+    verifiedCards(featured, FEATURED_BATCH_PUBLIC_LIMIT),
+    verifiedCards(topCandidates, TOP_RATED_LISTING_COUNT),
   ]);
+  const selectedTopIds = new Set(topRatedCards.map((card) => card.id));
+  const listingCards = await verifiedCards(
+    restCandidates.filter((row) => !selectedTopIds.has(String(row.id))),
+    Math.max(params.limit, 0)
+  );
   return {
     featured: featuredCards,
     topRated: topRatedCards,
     listings: listingCards,
     totalCount: matchingRows.length,
-    hasMore: params.limit > 0 && params.offset + pagedRest.length < orderedRest.length,
+    hasMore: params.limit > 0 && params.offset + restCandidates.length < orderedRest.length,
   };
 }
 
