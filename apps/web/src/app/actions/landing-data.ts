@@ -5,7 +5,7 @@ import { canonicalizeCategorySlug, rejectRetiredPublicCategories } from "@/lib/p
 import { syncMarketplaceCategories } from "@/lib/purge-retired-marketplace-categories";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonApprovedForBookings } from "@/lib/salon-bookability";
-import { getSalonListingImage, hasSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+import { getPermanentSalonListingImage, hasSalonListingImage, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
 import { countPublishedListingsByCategory } from "@/lib/public-salon-search";
 
 export type LandingCategory = {
@@ -125,7 +125,7 @@ export async function getTopRatedSalons(limit = 4): Promise<LandingTopSalon[]> {
           rating,
           reviews,
           badge: ratingBadge(rating),
-          img: getSalonListingImage(row, "", { excludeStockImages: true }),
+          img: getPermanentSalonListingImage(row),
         };
       });
   } catch (err) {

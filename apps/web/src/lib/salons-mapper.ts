@@ -84,14 +84,14 @@ export function getSalonListingImage(
   return usableCandidates[0];
 }
 
-/** Public directories only expose a salon when it has a real, non-placeholder photo. */
+/** Public directories only expose a salon when it has a durable Trimma-hosted photo. */
 export function hasSalonListingImage(salon: {
   cover_url?: string | null;
   hero_url?: string | null;
   hero_image?: string | null;
   featured_images?: unknown;
 }): boolean {
-  return Boolean(getSalonListingImage(salon, "", { excludeStockImages: true }));
+  return Boolean(getPermanentSalonListingImage(salon));
 }
 
 /** The single source of truth for public directory card images. */
