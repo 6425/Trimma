@@ -117,20 +117,26 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
 
   // Public data is filtered on the server. This protects against stale data
   // and a previously valid image URL that later stops loading.
-  if (!imageUrl || imageUnavailable) return null;
+  if (!imageUrl) return null;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
       <Link href={profileUrl} className="relative block aspect-[4/3] overflow-hidden bg-slate-100">
-        <ResilientBusinessListingImage
-          key={[imageUrl, ...imageFallbacks, listing.id].join("|")}
-          source={imageUrl}
-          fallbackSources={imageFallbacks}
-          listingId={listing.id}
-          alt={listing.name}
-          priority={priority}
-          onUnavailable={() => setImageUnavailable(true)}
-        />
+        {imageUnavailable ? (
+          <div className="flex h-full items-center justify-center bg-slate-100 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+            Image temporarily unavailable
+          </div>
+        ) : (
+          <ResilientBusinessListingImage
+            key={[imageUrl, ...imageFallbacks, listing.id].join("|")}
+            source={imageUrl}
+            fallbackSources={imageFallbacks}
+            listingId={listing.id}
+            alt={listing.name}
+            priority={priority}
+            onUnavailable={() => setImageUnavailable(true)}
+          />
+        )}
         {showFeaturedBatch ? (
           <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-black shadow-sm">
             Featured
