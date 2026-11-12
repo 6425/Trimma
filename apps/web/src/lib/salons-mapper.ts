@@ -63,9 +63,6 @@ export function getSalonListingImage(
   const hero = normalizePublicImageUrl(salon.hero_url) || "";
   const legacyHero = normalizePublicImageUrl(salon.hero_image) || "";
 
-  // A business logo is not a substitute for the administrator-selected
-  // listing photo. Keeping it out of this chain prevents a failed hero-photo
-  // request from silently showing the wrong business image on a directory card.
   const candidates = [hero, cover, legacyHero, ...featured].filter(Boolean);
   const realCandidates = candidates.filter((url) => !isStockSalonImageUrl(url));
   const usableCandidates = realCandidates.length > 0 ? realCandidates : options.excludeStockImages ? [] : candidates;

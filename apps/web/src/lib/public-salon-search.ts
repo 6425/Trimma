@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonPubliclyBookable, isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
-import { hasSalonListingImage, mapSalonRowToUI } from "@/lib/salons-mapper";
+import { hasSalonListingImage, isPermanentSalonListingImageUrl, mapSalonRowToUI } from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter, salonBelongsToRequestedLocation } from "@/lib/sri-lanka-locations";
@@ -285,10 +285,10 @@ function isLeadGenerationSource(row: Record<string, unknown>): boolean {
   return source === "GOOGLE_PLACES" || source === "LISTING_GENERATION";
 }
 
-function isMarketplaceDirectoryRow(row: Record<string, unknown>): boolean {
+function isPublishedMarketplaceRow(row: Record<string, unknown>): boolean {
+  if (!isListingPublished(row)) return false;
   const status = String(row.status || "").toLowerCase();
-  if (status === "rejected" || status === "inactive") return false;
-  return isListingPublished(row) || isSalonApprovedForBookings(row);
+  return status !== "rejected" && status !== "inactive";
 }
 
 function filterBusinessListingRows(
@@ -306,7 +306,7 @@ function filterBusinessListingRows(
   let rows = filterPublicSalons(data).filter(hasSalonListingImage);
 
   if (params.publishedOnly) {
-    rows = rows.filter(isMarketplaceDirectoryRow);
+    rows = rows.filter(isPublishedMarketplaceRow);
   } else {
     rows = rows
       .filter(isSalonPublicBrowseListing)
@@ -358,7 +358,7 @@ function sortBusinessListingRows(
 const LISTING_RANK_SELECT = `
   id, name, slug, phone, rating, review_count, city, district, province, category,
   status, onboarding_status, is_verified, featured_starts_at, featured_ends_at, is_featured,
-  logo_url, hero_url, cover_url, hero_image, featured_images
+  hero_url, cover_url, hero_image, featured_images
 `;
 
 type PublishedListingFilters = {
@@ -447,10 +447,19 @@ async function fetchPublishedListingSections(
     const detail = detailsById.get(String(row.id));
     return detail ? [mapSalonRowToBusinessListing(detail, index)] : [];
   });
-  // A saved non-placeholder image is enough to list a salon. Do not make
-  // directory eligibility depend on Trimma's server successfully fetching a
-  // third-party image URL at request time; that hid valid verified salons.
-  const hasWorkingImage = async (card: BusinessListingCardData): Promise<boolean> => Boolean(card.image);
+  const hasWorkingImage = async (card: BusinessListingCardData): Promise<boolean> => {
+    if (!card.image) return false;
+    if (isPermanentSalonListingImageUrl(card.image)) return true;
+    try {
+      const response = await fetch(card.image, {
+        cache: "no-store",
+        headers: { "User-Agent": "Trimma listing image check" },
+      });
+      return response.ok && Boolean(response.headers.get("content-type")?.toLowerCase().startsWith("image/"));
+    } catch {
+      return false;
+    }
+  };
   const verifiedCards = async (rows: Array<Record<string, unknown>>, maximum: number) => {
     const working: BusinessListingCardData[] = [];
     for (let start = 0; start < rows.length && working.length < maximum; start += 12) {
@@ -589,9 +598,7 @@ function applyPublishedListingFilters(
   }
 ): LooseListingQuery {
   let next = query as LooseListingQuery;
-  next = next.or(
-    `onboarding_status.eq.${LISTING_ONBOARDING_STATUS.PUBLISHED},is_verified.eq.true,onboarding_status.eq.VERIFIED`
-  );
+  next = next.eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
   next = next.not("status", "in", "(rejected,inactive)");
   const q = params.q.trim();
   for (const textFilter of textSearchOrFilters(q)) {
@@ -658,10 +665,7 @@ async function loadPublishedSalonRows(
       let query = client
         .from("salons")
         .select(select)
-        .or(
-          `onboarding_status.eq.${LISTING_ONBOARDING_STATUS.PUBLISHED},is_verified.eq.true,onboarding_status.eq.VERIFIED`
-        )
-        .not("status", "in", "(rejected,inactive)");
+        .eq("onboarding_status", LISTING_ONBOARDING_STATUS.PUBLISHED);
       if (afterId) query = query.gt("id", afterId);
       const { data: page, error } = await query.order("id", { ascending: true }).limit(pageSize);
       if (error) throw new Error(error.message);
