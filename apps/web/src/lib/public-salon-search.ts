@@ -3,7 +3,11 @@ import { createSupabaseAdminClient } from "@/config/supabase-admin";
 import { filterPublicSalons } from "@/lib/salon-list-filters";
 import { isSalonPubliclyBookable, isSalonApprovedForBookings } from "@/lib/salon-bookability";
 import { isSalonPubliclyListable, isSalonPublicBrowseListing } from "@/lib/salon-public-listing";
-import { hasSalonListingImage, mapSalonRowToUI } from "@/lib/salons-mapper";
+import {
+  getPermanentSalonListingImage,
+  hasSalonListingImage,
+  mapSalonRowToUI,
+} from "@/lib/salons-mapper";
 import { mapSalonRowToBusinessListing, type BusinessListingCardData } from "@/lib/business-listing-mapper";
 import { isListingPublished, LISTING_ONBOARDING_STATUS } from "@/lib/salon-listing-pipeline";
 import { buildSalonLocationOrFilter, salonBelongsToRequestedLocation } from "@/lib/sri-lanka-locations";
@@ -411,7 +415,18 @@ async function fetchPublishedListingSections(
 ) {
   const candidates = await loadPublishedListingRankRows(supabase, params);
   const matchingRows = filterBusinessListingRows(candidates, { ...params, publishedOnly: true });
-  const { featured, topRated, rest } = splitMarketplaceListingSections(matchingRows);
+  // Prefer salons whose original photo is already present in their own
+  // Trimma Storage folder. Their public URLs were verified in Storage and
+  // load independently of the inaccessible Google-hosted records. Keep every
+  // other verified salon in the directory after those records; no salon is
+  // hidden or removed by this ordering.
+  const storedImageRows = matchingRows.filter((row) => Boolean(getPermanentSalonListingImage(row)));
+  const externalImageRows = matchingRows.filter((row) => !getPermanentSalonListingImage(row));
+  const storedSections = splitMarketplaceListingSections(storedImageRows);
+  const externalSections = splitMarketplaceListingSections(externalImageRows);
+  const featured = [...storedSections.featured, ...externalSections.featured];
+  const topRated = [...storedSections.topRated, ...externalSections.topRated];
+  const rest = [...storedSections.rest, ...externalSections.rest];
   const orderedRest = params.sort === "name" ? sortBusinessListingRows(rest, "name") : rest;
   // Image links from Google can expire. Look ahead for replacements so a
   // rejected top-ranked image never leaves an almost-empty marketplace row.

@@ -3,7 +3,12 @@ import { isListingFeaturedNow } from "@/lib/listing-featured";
 import { isSalonPubliclyBookable } from "@/lib/salon-bookability";
 import { isSalonClaimable } from "@/lib/salon-public-listing";
 import { readSalonSocialLinks } from "@/lib/salon-public-social";
-import { getSalonListingImage, isStockSalonImageUrl, mapVerifiedSalonListingStats } from "@/lib/salons-mapper";
+import {
+  getPermanentSalonListingImage,
+  getSalonListingImage,
+  isStockSalonImageUrl,
+  mapVerifiedSalonListingStats,
+} from "@/lib/salons-mapper";
 import { getSalonMapEmbedUrl, salonHasMapData } from "@/lib/salon-map";
 import { normalizePublicImageUrl } from "@/lib/public-image-url";
 
@@ -113,7 +118,11 @@ export function mapSalonRowToBusinessListing(row: Record<string, unknown>, _idx 
     parseCoord(readExtendedString(row, "longitude"));
   const placeId = String(row.place_id || readExtendedString(row, "google_place_id") || "").trim() || null;
   const image =
-    optimizeListingImageUrl(getSalonListingImage(row, "", { excludeStockImages: true }), 640) || null;
+    optimizeListingImageUrl(
+      getPermanentSalonListingImage(row) ||
+        getSalonListingImage(row, "", { excludeStockImages: true }),
+      640
+    ) || null;
 
   return {
     id: String(row.id),
