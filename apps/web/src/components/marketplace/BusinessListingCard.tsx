@@ -71,12 +71,37 @@ function ResilientBusinessListingImage({
 
   if (!imageSrc) return null;
 
+  // These are public URLs that were deliberately saved on the salon record.
+  // Render them as a native browser image and suppress the page referrer:
+  // Google-hosted business photos can reject a Next/Image-style request made
+  // from a third-party marketplace even though the public image itself works.
+  if (isDirectGoogleImageUrl(imageSrc)) {
+    return (
+      <img
+        src={imageSrc}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        referrerPolicy="no-referrer"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+        onError={() => {
+          setImageSources((sources) => {
+            if (sources.length <= 1) {
+              onUnavailable();
+              return [];
+            }
+            return sources.slice(1);
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <Image
       src={imageSrc}
       alt={alt}
       fill
-      unoptimized={isDirectGoogleImageUrl(imageSrc)}
       priority={priority}
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
       className="object-cover transition-transform duration-500 hover:scale-[1.03]"
