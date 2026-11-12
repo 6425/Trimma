@@ -71,6 +71,31 @@ function ResilientBusinessListingImage({
 
   if (!imageSrc) return null;
 
+  // Keep administrator-saved public business photos as an ordinary browser
+  // request. They must not pass through Next's image component or a server
+  // image endpoint, which can change the request context.
+  if (isDirectGoogleImageUrl(imageSrc)) {
+    return (
+      <img
+        src={imageSrc}
+        alt={alt}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        referrerPolicy="no-referrer"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
+        onError={() => {
+          setImageSources((sources) => {
+            if (sources.length <= 1) {
+              onUnavailable();
+              return [];
+            }
+            return sources.slice(1);
+          });
+        }}
+      />
+    );
+  }
+
   return (
     <Image
       src={imageSrc}
