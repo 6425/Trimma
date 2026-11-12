@@ -8,6 +8,10 @@ import {
 /** Public listing gallery cap for Google-sourced discovery photos. */
 export const GOOGLE_PLACE_LISTING_IMAGE_LIMIT = 9;
 
+type GooglePlacePhotoReference =
+  | { legacyReference: string }
+  | { mediaName: string };
+
 export function getGoogleMapsApiKey(): string | null {
   return process.env.GOOGLE_API || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || null;
 }
@@ -26,36 +30,70 @@ export async function findGooglePlaceId(query: string, apiKey: string): Promise<
 
 export async function fetchPlacePhotoReference(placeId: string, apiKey: string): Promise<string | null> {
   const refs = await fetchPlacePhotoReferences(placeId, apiKey, 1);
-  return refs[0] || null;
+  const first = refs[0];
+  if (!first) return null;
+  return "legacyReference" in first ? first.legacyReference : first.mediaName;
 }
 
 export async function fetchPlacePhotoReferences(
   placeId: string,
   apiKey: string,
   limit = GOOGLE_PLACE_LISTING_IMAGE_LIMIT
-): Promise<string[]> {
+): Promise<GooglePlacePhotoReference[]> {
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=photos&key=${apiKey}`;
-  const res = await fetch(url);
-  const data = await res.json();
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
 
-  const photos = data.result?.photos;
-  if (!Array.isArray(photos) || photos.length === 0) {
-    return [];
+    const photos = data.result?.photos;
+    if (Array.isArray(photos) && photos.length) {
+      return photos
+        .slice(0, Math.max(1, Math.min(limit, GOOGLE_PLACE_LISTING_IMAGE_LIMIT)))
+        .map((photo: { photo_reference?: string }) => photo.photo_reference)
+        .filter((ref: string | undefined): ref is string => Boolean(ref))
+        .map((legacyReference) => ({ legacyReference }));
+    }
+  } catch {
+    // Fall through to the current Places API below.
   }
 
-  return photos
+  // New Places API is what current discovery uses. Legacy photo references
+  // are unavailable for projects that only enable the current Places API.
+  const newRes = await fetch(
+    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
+    {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "photos",
+      },
+    }
+  );
+  if (!newRes.ok) return [];
+  const newData = (await newRes.json()) as { photos?: Array<{ name?: string }> };
+  return (newData.photos || [])
     .slice(0, Math.max(1, Math.min(limit, GOOGLE_PLACE_LISTING_IMAGE_LIMIT)))
-    .map((photo: { photo_reference?: string }) => photo.photo_reference)
-    .filter((ref: string | undefined): ref is string => Boolean(ref));
+    .map((photo) => photo.name?.trim())
+    .filter((mediaName): mediaName is string => Boolean(mediaName))
+    .map((mediaName) => ({ mediaName }));
 }
 
 export async function downloadGooglePlacePhoto(
-  photoReference: string,
+  photoReference: GooglePlacePhotoReference,
   apiKey: string,
   maxWidth = 1200
 ): Promise<Buffer> {
-  const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${encodeURIComponent(photoReference)}&key=${apiKey}`;
-  const res = await fetch(url, { redirect: "follow" });
+  const res = "legacyReference" in photoReference
+    ? await fetch(
+        `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${encodeURIComponent(photoReference.legacyReference)}&key=${apiKey}`,
+        { redirect: "follow" }
+      )
+    : await fetch(
+        `https://places.googleapis.com/v1/${photoReference.mediaName}/media?maxWidthPx=${maxWidth}&maxHeightPx=900`,
+        {
+          headers: { "X-Goog-Api-Key": apiKey },
+          redirect: "follow",
+        }
+      );
 
   if (!res.ok) {
     throw new Error(`Failed to download Google photo (${res.status})`);
