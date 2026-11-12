@@ -15,7 +15,7 @@ type BatchResult = {
 
 export default function AdminImageRepairPage() {
   const [running, setRunning] = useState(false);
-  const [message, setMessage] = useState("Ready to repair expired external listing photos.");
+  const [message, setMessage] = useState("Ready to restore existing Trimma listing photos.");
 
   const repairAll = async () => {
     setRunning(true);
@@ -39,12 +39,12 @@ export default function AdminImageRepairPage() {
         skipped += result.skipped;
         failed += result.failed;
         batches += 1;
-        setMessage(`Repairing images: ${repaired} repaired, ${skipped} unavailable, ${failed} failed (${batches} batches).`);
+        setMessage(`Restoring images: ${repaired} restored, ${skipped} no stored file found, ${failed} failed (${batches} batches).`);
 
         if (result.complete || !result.nextCursor) break;
         cursor = result.nextCursor;
       }
-      setMessage(`Repair complete: ${repaired} permanent images saved; ${skipped} had no current Google photo; ${failed} can be retried.`);
+      setMessage(`Restore complete: ${repaired} original Trimma images restored; ${skipped} had no stored Trimma file; ${failed} can be retried.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Image repair stopped unexpectedly.");
     } finally {
@@ -57,12 +57,12 @@ export default function AdminImageRepairPage() {
       <div>
         <h1 className="text-2xl font-black text-zinc-900">Repair listing images</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Replaces expired external listing photos with one permanent Trimma Storage image per eligible salon.
-          Salon details, verification, and publication status are not changed.
+          Restores only a photo already stored under the same salon’s Trimma Storage folder.
+          It does not contact Google, choose a new image, or change salon details, verification, or publication status.
         </p>
       </div>
       <Button type="button" size="lg" onClick={repairAll} disabled={running}>
-        {running ? "Repairing images…" : "Repair all expired images"}
+        {running ? "Restoring stored images…" : "Restore existing Trimma images"}
       </Button>
       <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-zinc-700">{message}</p>
     </main>

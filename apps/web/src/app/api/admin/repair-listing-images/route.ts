@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/config/supabase-admin";
-import { applySalonGoogleImageSync, syncSalonImagesFromGooglePlace } from "@/lib/google-place-images";
 import { requirePlatformAdminFromCookies } from "@/lib/server-admin-auth";
 
 export const runtime = "nodejs";
@@ -9,17 +8,12 @@ export const maxDuration = 300;
 
 type RepairCandidate = {
   id: string;
-  name: string;
-  address: string | null;
-  city: string | null;
-  district: string | null;
-  place_id: string | null;
 };
 
 /**
- * Repairs a small, ordered batch of expired Google-hosted listing photos.
- * A single permanent copy is enough for a directory card, and avoids the
- * unnecessary cost of downloading a full gallery for every discovered salon.
+ * Restores the existing Trimma Storage copy for each listing. This never
+ * contacts Google, downloads a replacement, or chooses an image from another
+ * business: a file is used only when it already exists under that salon's ID.
  */
 export async function POST(request: Request) {
   const auth = await requirePlatformAdminFromCookies();
@@ -32,7 +26,7 @@ export async function POST(request: Request) {
 
   let query = supabase
     .from("salons")
-    .select("id, name, address, city, district, place_id")
+    .select("id")
     .or("onboarding_status.eq.LISTING_PUBLISHED,onboarding_status.eq.VERIFIED,is_verified.eq.true")
     .not("status", "in", "(rejected,inactive)")
     .or("hero_url.ilike.%googleusercontent.com%,cover_url.ilike.%googleusercontent.com%,hero_image.ilike.%googleusercontent.com%,logo_url.ilike.%googleusercontent.com%")
@@ -48,12 +42,38 @@ export async function POST(request: Request) {
 
   for (const salon of salons) {
     try {
-      const images = await syncSalonImagesFromGooglePlace(supabase, salon, { maxPhotos: 1 });
-      if (!images) {
+      const { data: files, error: listError } = await supabase.storage
+        .from("salon-images")
+        .list(salon.id, {
+          limit: 100,
+          sortBy: { column: "created_at", order: "desc" },
+        });
+      if (listError) throw listError;
+
+      const imageFile = (files || [])
+        .filter((file) => /\.(?:avif|gif|jpe?g|png|webp)$/i.test(file.name))
+        .sort((a, b) => {
+          const aHero = /^hero[_-]/i.test(a.name) ? 0 : 1;
+          const bHero = /^hero[_-]/i.test(b.name) ? 0 : 1;
+          return aHero - bHero;
+        })[0];
+      if (!imageFile) {
         stats.skipped += 1;
         continue;
       }
-      await applySalonGoogleImageSync(supabase, salon.id, images, salon.place_id);
+
+      const { data: publicUrl } = supabase.storage
+        .from("salon-images")
+        .getPublicUrl(`${salon.id}/${imageFile.name}`);
+      const { error: updateError } = await supabase
+        .from("salons")
+        .update({
+          hero_url: publicUrl.publicUrl,
+          cover_url: publicUrl.publicUrl,
+          hero_image: publicUrl.publicUrl,
+        })
+        .eq("id", salon.id);
+      if (updateError) throw updateError;
       stats.repaired += 1;
     } catch {
       // Continue with the remaining businesses. A retry can pick this one up
