@@ -46,7 +46,6 @@ export function isPermanentSalonListingImageUrl(url: string): boolean {
 
 export function getSalonListingImage(
   salon: {
-    logo_url?: string | null;
     cover_url?: string | null;
     hero_url?: string | null;
     hero_image?: string | null;
@@ -63,9 +62,11 @@ export function getSalonListingImage(
   const cover = normalizePublicImageUrl(salon.cover_url) || "";
   const hero = normalizePublicImageUrl(salon.hero_url) || "";
   const legacyHero = normalizePublicImageUrl(salon.hero_image) || "";
-  const logo = normalizePublicImageUrl(salon.logo_url) || "";
 
-  const candidates = [hero, cover, legacyHero, ...featured, logo].filter(Boolean);
+  // A business logo is not a substitute for the administrator-selected
+  // listing photo. Keeping it out of this chain prevents a failed hero-photo
+  // request from silently showing the wrong business image on a directory card.
+  const candidates = [hero, cover, legacyHero, ...featured].filter(Boolean);
   const realCandidates = candidates.filter((url) => !isStockSalonImageUrl(url));
   const usableCandidates = realCandidates.length > 0 ? realCandidates : options.excludeStockImages ? [] : candidates;
 
@@ -88,7 +89,6 @@ export function getSalonListingImage(
 
 /** Public cards accept each non-placeholder Hero Image URL saved by an administrator. */
 export function hasSalonListingImage(salon: {
-  logo_url?: string | null;
   cover_url?: string | null;
   hero_url?: string | null;
   hero_image?: string | null;
