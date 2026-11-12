@@ -47,14 +47,12 @@ function ResilientBusinessListingImage({
   listingId,
   alt,
   priority,
-  onUnavailable,
 }: {
   source: string | null;
   fallbackSources: string[];
   listingId: string;
   alt: string;
   priority: boolean;
-  onUnavailable: () => void;
 }) {
   const [imageSources, setImageSources] = useState(() =>
     [
@@ -86,10 +84,7 @@ function ResilientBusinessListingImage({
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 hover:scale-[1.03]"
         onError={() => {
           setImageSources((sources) => {
-            if (sources.length <= 1) {
-              onUnavailable();
-              return [];
-            }
+            if (sources.length <= 1) return [];
             return sources.slice(1);
           });
         }}
@@ -112,10 +107,7 @@ function ResilientBusinessListingImage({
           return;
         }
         setImageSources((sources) => {
-          if (sources.length <= 1) {
-            onUnavailable();
-            return [];
-          }
+            if (sources.length <= 1) return [];
           return sources.slice(1);
         });
       }}
@@ -131,7 +123,6 @@ type Props = {
 };
 
 export function BusinessListingCard({ listing, priority = false, featuredBatch = false }: Props) {
-  const [imageUnavailable, setImageUnavailable] = useState(false);
   const claimUrl = buildSalonClaimLoginUrl(listing.id);
   const profileUrl = buildSalonPublicPath(listing);
   const showFeaturedBatch = featuredBatch || listing.isFeatured;
@@ -140,9 +131,10 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
     .map(normalizeListingImageUrl)
     .filter((url): url is string => Boolean(url));
 
-  // Public data is filtered on the server. This protects against stale data
-  // and a previously valid image URL that later stops loading.
-  if (!imageUrl || imageUnavailable) return null;
+  // A listing with a saved image URL remains a listing even if one browser
+  // request is transiently rejected by the remote host. Removing the whole
+  // card here caused valid public Google-image listings to vanish on refresh.
+  if (!imageUrl) return null;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-lg">
@@ -154,7 +146,6 @@ export function BusinessListingCard({ listing, priority = false, featuredBatch =
           listingId={listing.id}
           alt={listing.name}
           priority={priority}
-          onUnavailable={() => setImageUnavailable(true)}
         />
         {showFeaturedBatch ? (
           <span className="absolute left-2 top-2 z-10 rounded-md bg-[#ffde5a] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-black shadow-sm">
