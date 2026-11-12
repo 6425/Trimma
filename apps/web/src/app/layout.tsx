@@ -14,6 +14,11 @@ import {
 } from '@/lib/public-page-metadata';
 import { absoluteUrl, getSiteUrl } from '@/lib/site-url';
 
+// Public and admin routes read live Supabase data. Rendering them dynamically
+// prevents a temporary database outage from breaking the entire Vercel build.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim();
 
 const supabaseOrigin = (() => {
