@@ -78,7 +78,7 @@ function formatBusinessListingLocation(city: string, district: string, province:
 
 function savedListingImageFallbacks(row: Record<string, unknown>, primary: string | null): string[] {
   const featured = Array.isArray(row.featured_images) ? row.featured_images : [];
-  const candidates = [row.hero_url, row.cover_url, row.hero_image, ...featured]
+  const candidates = [row.hero_url, row.cover_url, row.hero_image, ...featured, row.logo_url]
     .map(normalizePublicImageUrl)
     .filter((url): url is string => Boolean(url) && !isStockSalonImageUrl(url));
 
