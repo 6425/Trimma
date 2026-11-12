@@ -70,11 +70,19 @@ export function getSalonListingImage(
   const realCandidates = candidates.filter((url) => !isStockSalonImageUrl(url));
   const usableCandidates = realCandidates.length > 0 ? realCandidates : options.excludeStockImages ? [] : candidates;
 
-  if (usableCandidates.length === 0) return fallback;
-  if (usableCandidates.length === 1) return usableCandidates[0];
+  // Manual restoration saved durable copies in Trimma storage.  A later
+  // Google URL must never take precedence over one of those existing copies:
+  // Google links can expire, while the Supabase object is the administrator's
+  // approved listing photo. Keep external URLs as a fallback only for records
+  // that genuinely have no stored Trimma image yet.
+  const storedCandidates = usableCandidates.filter(isPermanentSalonListingImageUrl);
+  const preferredCandidates = storedCandidates.length > 0 ? storedCandidates : usableCandidates;
 
-  const usableHero = hero && usableCandidates.includes(hero) ? hero : "";
-  const usableCover = cover && usableCandidates.includes(cover) ? cover : "";
+  if (preferredCandidates.length === 0) return fallback;
+  if (preferredCandidates.length === 1) return preferredCandidates[0];
+
+  const usableHero = hero && preferredCandidates.includes(hero) ? hero : "";
+  const usableCover = cover && preferredCandidates.includes(cover) ? cover : "";
   if (usableHero && usableCover) {
     const heroTs = salonImageTimestamp(usableHero);
     const coverTs = salonImageTimestamp(usableCover);
@@ -84,7 +92,7 @@ export function getSalonListingImage(
   }
 
   // The public profile and Admin UI both define hero_url as the primary image.
-  return usableCandidates[0];
+  return preferredCandidates[0];
 }
 
 /** Public cards accept each non-placeholder Hero Image URL saved by an administrator. */
